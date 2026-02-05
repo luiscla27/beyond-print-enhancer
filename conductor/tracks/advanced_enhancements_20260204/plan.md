@@ -7,7 +7,7 @@
     - [ ] Implement `saveLayout(characterId, data)` and `loadLayout(characterId)` functions.
 - [x] Task: Conductor - User Manual Verification 'Foundation & Persistence Layer' (Protocol in workflow.md)
 
-## Phase 2: Enhanced DOM Extraction & UI Cleanup
+## Phase 2: Enhanced DOM Extraction & UI Cleanup [checkpoint: 33dd6fd]
 - [x] Task: Advanced Section Extraction 1c682fe
     - [ ] Update `js/main.js` to iterate and extract all tabs ('Actions', 'Spells', 'Equipment', 'Features & Traits').
     - [ ] Convert each extracted content block into a standard draggable container structure.
@@ -16,7 +16,7 @@
     - [ ] Implement logic to remove search boxes from all sections.
     - [ ] Inject CSS to force full height on all containers (remove `overflow: scroll`).
     - [ ] Enforce "Letter" page dimensions in print CSS media queries.
-- [ ] Task: Conductor - User Manual Verification 'Enhanced DOM Extraction & UI Cleanup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Enhanced DOM Extraction & UI Cleanup' (Protocol in workflow.md)
 
 ## Phase 3: Draggable Layout Engine
 - [ ] Task: Implement Drag-and-Drop Logic
