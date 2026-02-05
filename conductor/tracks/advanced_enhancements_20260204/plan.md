@@ -37,8 +37,8 @@
     - [ ] Ensure duplicated spell sections and their contents are included in the IndexedDB save/load payload.
 - [x] Task: Conductor - User Manual Verification 'Spell Section Specialization' (Protocol in workflow.md)
 
-## Phase 5: Final Integration & Polish
+## Phase 5: Final Integration & Polish [checkpoint: 7e84905]
 - [x] Task: End-to-End Testing 775cc90
     - [ ] Verify persistence works across page reloads for different characters.
     - [ ] Verify print layout on physical or PDF "Letter" paper.
-- [ ] Task: Conductor - User Manual Verification 'Final Integration & Polish' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final Integration & Polish' (Protocol in workflow.md)
