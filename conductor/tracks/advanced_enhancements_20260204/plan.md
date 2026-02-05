@@ -12,7 +12,7 @@
     - [ ] Update `js/main.js` to iterate and extract all tabs ('Actions', 'Spells', 'Equipment', 'Features & Traits').
     - [ ] Convert each extracted content block into a standard draggable container structure.
     - [ ] Hide original tab navigation.
-- [ ] Task: UI Refinement
+- [x] Task: UI Refinement 0bb7baf
     - [ ] Implement logic to remove search boxes from all sections.
     - [ ] Inject CSS to force full height on all containers (remove `overflow: scroll`).
     - [ ] Enforce "Letter" page dimensions in print CSS media queries.
