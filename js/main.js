@@ -42,10 +42,12 @@ function safeQueryAll(selectors, context = document) {
  */
 function findByText(text, selector = '*') {
   const elements = document.querySelectorAll(selector);
-  return Array.from(elements).find(el => 
-    el.textContent.trim().toLowerCase() === text.toLowerCase() && 
-    el.children.length === 0
-  );
+  return Array.from(elements).find(el => {
+    // Check if the element itself OR any child (like a label inside a button) matches the text
+    const exactMatch = el.textContent.trim().toLowerCase() === text.toLowerCase();
+    // For navigation, we usually want elements that DON'T have many children to avoid containers
+    return exactMatch && el.children.length < 3; 
+  });
 }
 
 /**
@@ -60,18 +62,26 @@ function findByClassPattern(pattern, tagName = '*') {
  * Navigate to a specific character sheet section (tab).
  */
 function navToSection(name) {
-  // Prioritize the known obfuscated class pattern for tab buttons
+  // Strategy 1: Look for obfuscated tab button class
   const tabs = safeQueryAll('button[class*="tabButton"]');
   let target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
   
-  // Fallback to text search on any button/link
+  // Strategy 2: Look for ANY button/link/div with the exact text
   if (!target) {
-    target = findByText(name, 'button') || findByText(name, 'a') || findByText(name, 'span');
+    target = findByText(name, 'button') || findByText(name, 'a') || findByText(name, 'div') || findByText(name, 'span');
+  }
+
+  // Strategy 3: Loose text search on all buttons
+  if (!target) {
+    const allButtons = Array.from(document.querySelectorAll('button, [role="button"]'));
+    target = allButtons.find(btn => btn.textContent.toLowerCase().includes(name.toLowerCase()));
   }
 
   if (target) {
-    const clickTarget = target.tagName === 'BUTTON' ? target : target.closest('button');
+    // If we found a label or span, click the actual interactive element
+    const clickTarget = (target.tagName === 'BUTTON' || target.tagName === 'A') ? target : target.closest('button, a, [role="button"]');
     if (clickTarget) {
+        console.log(`[DDB Print Enhance] Navigating to: ${name}`);
         clickTarget.click();
         return true;
     }
@@ -133,10 +143,10 @@ async function extractAndWrapSections() {
   for (const section of sectionsToExtract) {
     if (navToSection(section.name)) {
       // Wait for React to switch content
-      await sleep(200); 
+      await sleep(300); 
       
-      // Look for the content area which usually has 'content' in its obfuscated class
-      const content = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
+      // Content container recovery
+      const content = findByClassPattern('content', 'div') || safeQuery(['.ct-character-sheet-content', '[class*="sheet-content"]']);
       if (content) {
         extractedContainers.push(createDraggableContainer(
           section.title, 
@@ -156,8 +166,8 @@ async function extractAndWrapSections() {
 async function appendExtractedSections() {
   const containers = await extractAndWrapSections();
   
-  // Find insertion point (parent of the content area)
-  const contentArea = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
+  // Find insertion point
+  const contentArea = findByClassPattern('content', 'div') || safeQuery(['.ct-character-sheet-content', '[class*="sheet-content"]']);
   
   if (contentArea && contentArea.parentElement) {
     const parent = contentArea.parentElement;
@@ -194,7 +204,7 @@ function moveDefenses() {
  * Optimized layout for print.
  */
 function tweakStyles() {
-  // Use display: none instead of remove() for major site components to avoid breaking site scripts
+  // Hide major UI components
   safeQueryAll([
     'div.site-bar', 'header.main', '#mega-menu-target', 
     '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
@@ -203,7 +213,7 @@ function tweakStyles() {
   const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
   if (name) name.style['color'] = 'black';
 
-  // HP recovery - look for numeric patterns that look like HP (e.g. 10 / 10)
+  // HP recovery
   const allElements = Array.from(document.querySelectorAll('*'));
   const hpElements = allElements.filter(el => 
     el.textContent.trim().match(/^\d+\s*\/\s*\d+$/) && el.children.length === 0
