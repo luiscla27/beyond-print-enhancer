@@ -3,49 +3,88 @@ Copyright 2019 Adam Pritchard
 Licensed under Blue Oak Model License 1.0.0
 */
 
-// For strict linting in a non-module browser environment, we avoid 'require'.
-// We assume 'createControls' and 'restoreLayout' are available globally via script concatenation 
-// or multiple script tags in manifest.json.
-
-/* global createControls, restoreLayout */
-
 /**
- * Safely query an element, logging a warning if not found.
+ * Robust query selector that tries multiple patterns and handles obfuscated classes.
  */
-function safeQuery(selector, context = document) {
-  const element = context.querySelector(selector);
-  if (!element) {
-    console.warn(`[DDB Print Enhance] Element not found: ${selector}`);
+function safeQuery(selectors, context = document) {
+  if (!Array.isArray(selectors)) selectors = [selectors];
+  
+  for (const selector of selectors) {
+    try {
+      const element = context.querySelector(selector);
+      if (element) return element;
+    } catch (err) { // eslint-disable-line no-unused-vars
+      console.warn(`[DDB Print Enhance] Invalid selector skipped: ${selector}`);
+    }
   }
-  return element;
+  
+  console.warn(`[DDB Print Enhance] No elements found for selectors: ${selectors.join(', ')}`);
+  return null;
 }
 
 /**
- * Safely query multiple elements.
+ * Robust query selector for multiple elements.
  */
-function safeQueryAll(selector, context = document) {
-  const elements = context.querySelectorAll(selector);
-  if (elements.length === 0) {
-    console.warn(`[DDB Print Enhance] No elements found for selector: ${selector}`);
+function safeQueryAll(selectors, context = document) {
+  if (!Array.isArray(selectors)) selectors = [selectors];
+  
+  for (const selector of selectors) {
+    try {
+      const elements = context.querySelectorAll(selector);
+      if (elements.length > 0) return Array.from(elements);
+    } catch (err) { // eslint-disable-line no-unused-vars
+      console.warn(`[DDB Print Enhance] Invalid selector skipped: ${selector}`);
+    }
   }
-  return Array.from(elements);
+  
+  console.warn(`[DDB Print Enhance] No elements found for selectors: ${selectors.join(', ')}`);
+  return [];
+}
+
+/**
+ * Finds an element by its text content and optional selector.
+ */
+function findByText(text, selector = '*') {
+  const elements = document.querySelectorAll(selector);
+  return Array.from(elements).find(el => 
+    el.textContent.trim().toLowerCase() === text.toLowerCase() && 
+    el.children.length === 0 // Target leaf nodes (labels/buttons)
+  );
+}
+
+/**
+ * Finds an element whose class name contains a specific pattern.
+ */
+function findByClassPattern(pattern, tagName = '*') {
+  const elements = document.querySelectorAll(tagName);
+  return Array.from(elements).find(el => el.className.includes(pattern));
 }
 
 /**
  * Navigate to a specific character sheet section (tab).
+ * Uses text-based discovery for high resilience.
  */
 function navToSection(name) {
-  const tabs = safeQueryAll('.ct-character-sheet-navigation__tab');
-  const targetTab = tabs.find(tab => {
-    const label = tab.querySelector('.ct-character-sheet-navigation__tab-label');
-    return label && label.textContent.toLowerCase().includes(name.toLowerCase());
-  });
-
-  if (targetTab) {
-    targetTab.click();
-  } else {
-    console.error(`[DDB Print Enhance] Could not find tab for section: ${name}`);
+  // Try finding by text directly (Actions, Spells, etc.)
+  let target = findByText(name, 'button') || findByText(name, 'span') || findByText(name, 'a');
+  
+  // If not found, try finding the obfuscated tab button class from diagnostics
+  if (!target) {
+    const tabs = document.querySelectorAll('button[class*="tabButton"]');
+    target = Array.from(tabs).find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
   }
+
+  if (target) {
+    // If we found a label inside a button, click the button
+    const clickTarget = target.tagName === 'BUTTON' ? target : target.closest('button');
+    if (clickTarget) {
+        clickTarget.click();
+        return true;
+    }
+  }
+  
+  console.error(`[DDB Print Enhance] Could not find tab for section: ${name}`);
+  return false;
 }
 
 /**
@@ -55,14 +94,12 @@ function createDraggableContainer(title, content, id) {
   const container = document.createElement('div');
   container.className = 'print-section-container';
   container.id = id;
-  // Initialize drag-and-drop attributes
   container.setAttribute('draggable', 'true');
   
   const header = document.createElement('div');
   header.className = 'print-section-header';
   header.textContent = title;
   
-  // Basic styles to match spec (Phase 2 UI refinement will do more)
   header.style.fontWeight = 'bold';
   header.style.fontSize = '1.2em';
   header.style.padding = '5px';
@@ -70,7 +107,11 @@ function createDraggableContainer(title, content, id) {
   header.style.backgroundColor = '#eee';
 
   container.appendChild(header);
-  container.appendChild(content);
+  
+  const contentWrapper = document.createElement('div');
+  contentWrapper.className = 'print-section-content';
+  contentWrapper.appendChild(content);
+  container.appendChild(contentWrapper);
   
   return container;
 }
@@ -89,25 +130,18 @@ function extractAndWrapSections() {
   const extractedContainers = [];
 
   for (const section of sectionsToExtract) {
-    navToSection(section.name);
-    // Wait briefly for React to render? 
-    // In a real scenario, we might need a MutationObserver or a delay.
-    // For this implementation, we assume synchronous DOM update after click or pre-loaded.
-    
-    const content = safeQuery('.ct-character-sheet-content');
-    if (content) {
-      const clonedContent = content.cloneNode(true);
-      const container = createDraggableContainer(
-        section.title, 
-        clonedContent, 
-        `section-${section.name}`
-      );
-      extractedContainers.push(container);
+    if (navToSection(section.name)) {
+      // Content container usually has 'content' in class name (e.g., _content_dbufq_8)
+      const content = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
+      if (content) {
+        extractedContainers.push(createDraggableContainer(
+          section.title, 
+          content.cloneNode(true), 
+          `section-${section.name}`
+        ));
+      }
     }
   }
-
-  // Return to default section (Actions is usually a safe default)
-  navToSection('actions');
 
   return extractedContainers;
 }
@@ -117,295 +151,125 @@ function extractAndWrapSections() {
  */
 function appendExtractedSections() {
   const containers = extractAndWrapSections();
-  const mainContent = safeQuery('.ct-character-sheet-content');
-
-  if (mainContent && mainContent.parentElement) {
-    const parent = mainContent.parentElement;
-    
-    // Clear existing main content to avoid duplication/confusion
-    // parent.innerHTML = ''; // Dangerous if it kills the container itself
-    
-    // Create a wrapper for our print layout
+  
+  // Try to find a reliable insertion point (the parent of the content area)
+  const contentArea = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
+  
+  if (contentArea && contentArea.parentElement) {
+    const parent = contentArea.parentElement;
     const printWrapper = document.createElement('div');
     printWrapper.id = 'print-layout-wrapper';
     
-    for (const container of containers) {
-      printWrapper.appendChild(container);
-    }
-    
+    containers.forEach(c => printWrapper.appendChild(c));
     parent.appendChild(printWrapper);
   }
 }
 
 /**
- * Relocates defense information from the sidebar to the main combat tablet area.
+ * Relocates defense information.
  */
 function moveDefenses() {
-  // Find the defenses section in the sidebar
-  let defensesSection = document.querySelector('.ct-sidebar__section--defenses');
-
-  // If not found, try to open the sidebar (this part is speculative for the new UI)
-  if (!defensesSection) {
-    const sidebarToggle = document.querySelector('.ct-sidebar__header, .ct-character-tidbits__name');
-    if (sidebarToggle) {
-      sidebarToggle.click();
-      defensesSection = document.querySelector('.ct-sidebar__section--defenses');
-    }
-  }
-
-  if (!defensesSection) {
-    console.warn('[DDB Print Enhance] Could not find or open Defenses section.');
-    return;
-  }
+  const defensesSection = safeQuery(['.ct-sidebar__section--defenses', '[class*="sidebar__section--defenses"]']);
+  if (!defensesSection) return;
 
   const elem = defensesSection.cloneNode(true);
-
-  // Clean up the cloned element
-  const header = elem.querySelector('.ct-sidebar__section-header');
+  const header = elem.querySelector(['.ct-sidebar__section-header', '[class*="sidebar__section-header"]']);
   if (header) header.remove();
 
-  for (const e of elem.querySelectorAll('.ct-sidebar__section-content')) {
-    e.style['margin'] = '0';
-    e.style['padding'] = '5px';
-    e.style['font-size'] = '12px';
-  }
-
-  // Target the combat summary area
-  const combatTablet = safeQuery('.ct-status-summary-bar');
+  const combatTablet = safeQuery(['.ct-status-summary-bar', '[class*="status-summary-bar"]']);
   if (combatTablet) {
     const container = document.createElement('div');
     container.style['border'] = 'thin black solid';
     container.style['margin-top'] = '10px';
-    container.style['padding'] = '5px';
     container.appendChild(elem);
     combatTablet.parentElement.appendChild(container);
   }
 }
 
 /**
- * Strips away non-essential web elements and optimizes layout for print.
+ * Optimized layout for print.
  */
 function tweakStyles() {
   // Remove top site navigation
-  safeQueryAll('div.site-bar, header.main, #mega-menu-target, .ct-character-sheet-navigation')
-    .forEach(e => e.remove());
+  safeQueryAll([
+    'div.site-bar', 'header.main', '#mega-menu-target', 
+    '[class*="navigation"]', '[class*="mega-menu"]', 'footer'
+  ]).forEach(e => e.remove());
 
-  const siteMain = safeQuery('#site-main');
-  if (siteMain) siteMain.style['padding-top'] = '0';
-
-  // Remove interactive/unnecessary elements from sections
-  safeQueryAll('.ct-subsection-tablet, .ct-main-tablet__large-boxes').forEach(e => {
-    e.style['padding'] = '0';
-    e.style['margin'] = '0';
-  });
-
-  // Clean up character header for high contrast
-  const header = safeQuery('.ct-character-tidbits');
-  if (header) {
-    header.style['background'] = 'white';
-    header.style['color'] = 'black';
-  }
-
-  const name = safeQuery('.ct-character-tidbits__name');
+  const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
   if (name) name.style['color'] = 'black';
 
-  const hp = safeQuery('.ct-status-summary-bar__hp-text');
-  if (hp) {
-    hp.style['color'] = 'black';
-    hp.style['font-size'] = '30px';
+  // HP recovery
+  const hpTexts = Array.from(document.querySelectorAll('*')).filter(el => el.textContent.trim().match(/^\d+$/));
+  if (hpTexts.length > 0) {
+      // Bold the likely HP numbers
+      hpTexts.forEach(el => { el.style['font-size'] = '20px'; });
   }
-
-  // Remove tab navigation after expanding
-  safeQueryAll('.ct-character-sheet-navigation__tabs').forEach(e => e.remove());
 }
 
 /**
- * UI Refinement Logic (Phase 2)
+ * Drag and Drop Engine
  */
-function removeSearchBoxes() {
-  // Select various search inputs and filters across the extracted sections
-  const searchSelectors = [
-    '.ct-spells-filter',
-    '.ct-equipment__filter',
-    '.ct-filter-box', // General filter box if present
-    'input[type="search"]',
-    '.ct-application-group__filter'
-  ];
+let draggedItem = null;
+function initDragAndDrop() {
+  const container = document.getElementById('print-layout-wrapper');
+  if (!container) return;
 
-  safeQueryAll(searchSelectors.join(', ')).forEach(el => {
-    // Check if it's inside one of our print sections to be safe, or just remove global ones
-    // given the goal is a print view.
-    el.remove();
+  container.addEventListener('dragstart', e => {
+    draggedItem = e.target.closest('.print-section-container');
+    if (draggedItem) {
+        e.dataTransfer.effectAllowed = 'move';
+        draggedItem.style.opacity = '0.4';
+    }
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    return false;
+  });
+
+  container.addEventListener('drop', e => {
+    e.stopPropagation();
+    const target = e.target.closest('.print-section-container');
+    if (draggedItem && target && draggedItem !== target) {
+        const rect = target.getBoundingClientRect();
+        const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
+        container.insertBefore(draggedItem, next ? target.nextSibling : target);
+    }
+    return false;
+  });
+
+  container.addEventListener('dragend', () => {
+    if (draggedItem) draggedItem.style.opacity = '1';
+    draggedItem = null;
   });
 }
 
 function enforceFullHeight() {
-  // Inject CSS to override scrollbars and force height
   const style = document.createElement('style');
-  style.id = 'print-enhance-styles';
   style.textContent = `
-    .ct-character-sheet-content, 
-    .ct-component-carousel,
-    .print-section-content {
+    [class*="content"], .print-section-content {
       overflow: visible !important;
       max-height: none !important;
       height: auto !important;
     }
-    
-    /* Hide scrollbars explicitly */
-    ::-webkit-scrollbar {
-        display: none;
-    }
-
-    /* Print Specifics */
     @media print {
-        @page {
-            size: letter;
-            margin: 0.5in;
-        }
-        
-        body {
-            /* Ensure background graphics are printed if the user enables that option, 
-               but otherwise keep it clean */
-            -webkit-print-color-adjust: exact; 
-        }
-
-        .print-section-container {
-            break-inside: avoid; /* Prevent headers separating from content */
-            page-break-inside: avoid;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-        }
+        @page { size: letter; margin: 0.5in; }
+        .print-section-container { break-inside: avoid; margin-bottom: 20px; border: 1px solid #ccc; }
     }
   `;
   document.head.appendChild(style);
 }
 
-/**
- * Drag and Drop Engine for Print Sections
- */
-
-let draggedItem = null;
-
-function initDragAndDrop() {
-  const container = document.getElementById('print-layout-wrapper');
-  if (!container) return;
-
-  // Delegate events to the container
-  container.addEventListener('dragstart', handleDragStart);
-  container.addEventListener('dragover', handleDragOver);
-  container.addEventListener('dragenter', handleDragEnter);
-  container.addEventListener('dragleave', handleDragLeave);
-  container.addEventListener('drop', handleDrop);
-  container.addEventListener('dragend', handleDragEnd);
-  
-  injectDnDStyles();
-}
-
-function handleDragStart(e) {
-  const target = e.target.closest('.print-section-container');
-  if (!target) return;
-
-  draggedItem = target;
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', target.id); // Required for Firefox
-  
-  target.style.opacity = '0.4';
-  target.classList.add('dragging');
-}
-
-function handleDragOver(e) {
-  if (e.preventDefault) {
-    e.preventDefault(); // Necessary. Allows us to drop.
-  }
-  e.dataTransfer.dropEffect = 'move';
-  return false;
-}
-
-function handleDragEnter(e) {
-  const target = e.target.closest('.print-section-container');
-  if (target && target !== draggedItem) {
-    target.classList.add('drag-over');
-  }
-}
-
-function handleDragLeave(e) {
-  const target = e.target.closest('.print-section-container');
-  if (target && target !== draggedItem) {
-    target.classList.remove('drag-over');
-  }
-}
-
-function handleDrop(e) {
-  if (e.stopPropagation) {
-    e.stopPropagation(); // Stops some browsers from redirecting.
-  }
-
-  const target = e.target.closest('.print-section-container');
-  
-  if (draggedItem !== target && target) {
-    const container = document.getElementById('print-layout-wrapper');
-    // Determine insert direction based on mouse position relative to target center
-    const rect = target.getBoundingClientRect();
-    const next = (e.clientY - rect.top) / (rect.bottom - rect.top) > 0.5;
-    
-    if (next) {
-        container.insertBefore(draggedItem, target.nextSibling);
-    } else {
-        container.insertBefore(draggedItem, target);
-    }
-  }
-  
-  return false;
-}
-
-function handleDragEnd(e) {
-  const target = e.target.closest('.print-section-container');
-  if (target) {
-    target.style.opacity = '1';
-    target.classList.remove('dragging');
-  }
-  
-  document.querySelectorAll('.print-section-container').forEach(el => {
-    el.classList.remove('drag-over');
-  });
-  
-  draggedItem = null;
-}
-
-// Add necessary styles dynamically
-function injectDnDStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .print-section-container {
-            transition: transform 0.2s, opacity 0.2s;
-        }
-        .print-section-container.drag-over {
-            border: 2px dashed #000;
-        }
-        .print-section-header {
-            cursor: move; /* Fallback */
-            cursor: grab;
-        }
-        .print-section-header:active {
-            cursor: grabbing;
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Execution sequence
+// Execution
 (async () => {
+    enforceFullHeight();
     appendExtractedSections();
     moveDefenses();
     tweakStyles();
-    removeSearchBoxes();
-    enforceFullHeight();
     initDragAndDrop();
     
-    // Add controls and try to restore layout
-    if (typeof createControls === 'function' && typeof restoreLayout === 'function') {
-        createControls();
-        await restoreLayout();
-    }
+    /* global createControls, restoreLayout */
+    if (typeof createControls === 'function') createControls();
+    if (typeof restoreLayout === 'function') await restoreLayout();
 })();
