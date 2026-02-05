@@ -1,6 +1,6 @@
 # Implementation Plan - Selector Recovery & Resilience
 
-## Phase 1: Diagnostic & Utility Update
+## Phase 1: Diagnostic & Utility Update [checkpoint: 8f30362]
 - [x] Task: Enhanced Query Utilities bc48416
     - [ ] Update `js/main.js` with `findByText(text, selector)` and `findByClassPattern(pattern)` helpers.
     - [ ] Refactor `safeQuery` to accept an array of potential selectors.
