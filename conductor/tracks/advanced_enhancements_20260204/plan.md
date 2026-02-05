@@ -1,7 +1,7 @@
 # Implementation Plan - Advanced Layout & Persistence Enhancements
 
 ## Phase 1: Foundation & Persistence Layer
-- [ ] Task: Initialize IndexedDB Schema
+- [x] Task: Initialize IndexedDB Schema ba24774
     - [ ] Create `js/storage.js` to manage IndexedDB operations.
     - [ ] Define schema for storing character layouts (characterId, sectionOrder, customSpells).
     - [ ] Implement `saveLayout(characterId, data)` and `loadLayout(characterId)` functions.
