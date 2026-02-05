@@ -1,6 +1,6 @@
 # D&D Beyond Character Sheet Print Enhancer
 
-**This extension is now defunct.** I didn't use it enough (nor did many other people) and it's a pain to keep it updated with changes in the D&D Beyond website.
+**Modernized and restored for 2026 site changes.** This extension helps you print your D&D Beyond character sheets in a clean, high-contrast, multi-section format.
 
 ## Installation
 
