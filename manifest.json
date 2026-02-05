@@ -1,6 +1,6 @@
 {
   "name": "D&DBeyond Print Enhancer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "manifest_version": 3,
   "description": "Improves D&D Beyond's character sheet printing",
   "homepage_url": "https://github.com/adam-p/dndbeyond-printenhance",
