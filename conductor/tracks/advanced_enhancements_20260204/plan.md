@@ -33,7 +33,7 @@
     - [ ] Add "Duplicate Spells" button to the Spells container.
     - [ ] Implement cloning logic ensuring unique DOM IDs for each clone.
     - [ ] Initialize clones as empty templates as per spec.
-- [x] Task: Persistence Integration
+- [x] Task: Persistence Integration 15a7923
     - [ ] Ensure duplicated spell sections and their contents are included in the IndexedDB save/load payload.
 - [ ] Task: Conductor - User Manual Verification 'Spell Section Specialization' (Protocol in workflow.md)
 
