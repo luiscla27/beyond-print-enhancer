@@ -18,7 +18,7 @@
     - [ ] Enforce "Letter" page dimensions in print CSS media queries.
 - [x] Task: Conductor - User Manual Verification 'Enhanced DOM Extraction & UI Cleanup' (Protocol in workflow.md)
 
-## Phase 3: Draggable Layout Engine
+## Phase 3: Draggable Layout Engine [checkpoint: 8e8e85e]
 - [x] Task: Implement Drag-and-Drop Logic
     - [ ] Add event listeners for mouse/touch interactions on section headers.
     - [ ] Implement visual feedback during drag (e.g., ghosting or placeholder).
@@ -26,7 +26,7 @@
 - [x] Task: Add Control UI 9e79fd0
     - [ ] Create a "Save Layout" floating button.
     - [ ] Link the button to the Phase 1 persistence functions.
-- [ ] Task: Conductor - User Manual Verification 'Draggable Layout Engine' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Draggable Layout Engine' (Protocol in workflow.md)
 
 ## Phase 4: Spell Section Specialization
 - [ ] Task: Spell Duplication Feature
