@@ -17,7 +17,7 @@
     - [ ] Check for any usage of remote code (not allowed in V3) - unlikely given the codebase size, but necessary to verify.
 - [ ] Task: Conductor - User Manual Verification 'Manifest V3 Compliance Check' (Protocol in workflow.md)
 
-## Phase 3: D&D Beyond DOM Discovery & Documentation
+## Phase 3: D&D Beyond DOM Discovery & Documentation [checkpoint: ce76cfb]
 - [x] Task: Fetch and Analyze Reference Character Sheet 684b899
     - [ ] Access the reference URL: https://www.dndbeyond.com/characters/151911403
     - [ ] Extract the current DOM structure, specifically looking for:
