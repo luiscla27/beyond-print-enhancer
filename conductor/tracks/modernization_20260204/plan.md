@@ -29,7 +29,7 @@
 - [ ] Task: Conductor - User Manual Verification 'D&D Beyond DOM Discovery & Documentation' (Protocol in workflow.md)
 
 ## Phase 4: Functionality Verification (Code Analysis)
-- [ ] Task: DOM Selector Audit
+- [x] Task: DOM Selector Audit
     - [ ] Analyze `js/main.js` and list all CSS selectors used for DOM manipulation (e.g., `.ct-quick-nav__toggle`, `.ct-component-carousel`).
     - [ ] **Verification:** Compare the existing selectors against the findings in `dom_reference.md` from Phase 3.
 - [ ] Task: Code Logic Refactor
