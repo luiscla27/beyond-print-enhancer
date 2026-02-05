@@ -1,0 +1,8 @@
+{
+  "track_id": "advanced_enhancements_20260204",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-04T21:30:00Z",
+  "updated_at": "2026-02-04T21:30:00Z",
+  "description": "Advanced Layout & Persistence Enhancements: Draggable sections, Letter page standardization, IndexedDB persistence, and Spell section duplication."
+}
