@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Adam Pritchard",
   "license": "Blue Oak 1.0.0",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
-    "globals": "^17.3.0"
+    "globals": "^17.3.0",
+    "mocha": "^11.7.5"
   }
 }
