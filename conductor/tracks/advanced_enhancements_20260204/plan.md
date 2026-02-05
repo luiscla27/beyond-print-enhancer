@@ -1,11 +1,11 @@
 # Implementation Plan - Advanced Layout & Persistence Enhancements
 
-## Phase 1: Foundation & Persistence Layer
+## Phase 1: Foundation & Persistence Layer [checkpoint: c4a10a9]
 - [x] Task: Initialize IndexedDB Schema ba24774
     - [ ] Create `js/storage.js` to manage IndexedDB operations.
     - [ ] Define schema for storing character layouts (characterId, sectionOrder, customSpells).
     - [ ] Implement `saveLayout(characterId, data)` and `loadLayout(characterId)` functions.
-- [ ] Task: Conductor - User Manual Verification 'Foundation & Persistence Layer' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Foundation & Persistence Layer' (Protocol in workflow.md)
 
 ## Phase 2: Enhanced DOM Extraction & UI Cleanup
 - [ ] Task: Advanced Section Extraction
