@@ -14,11 +14,9 @@ function safeQuery(selectors, context = document) {
       const element = context.querySelector(selector);
       if (element) return element;
     } catch (err) { // eslint-disable-line no-unused-vars
-      console.warn(`[DDB Print Enhance] Invalid selector skipped: ${selector}`);
+      // Skip invalid selectors
     }
   }
-  
-  console.warn(`[DDB Print Enhance] No elements found for selectors: ${selectors.join(', ')}`);
   return null;
 }
 
@@ -33,11 +31,9 @@ function safeQueryAll(selectors, context = document) {
       const elements = context.querySelectorAll(selector);
       if (elements.length > 0) return Array.from(elements);
     } catch (err) { // eslint-disable-line no-unused-vars
-      console.warn(`[DDB Print Enhance] Invalid selector skipped: ${selector}`);
+      // Skip invalid selectors
     }
   }
-  
-  console.warn(`[DDB Print Enhance] No elements found for selectors: ${selectors.join(', ')}`);
   return [];
 }
 
@@ -48,7 +44,7 @@ function findByText(text, selector = '*') {
   const elements = document.querySelectorAll(selector);
   return Array.from(elements).find(el => 
     el.textContent.trim().toLowerCase() === text.toLowerCase() && 
-    el.children.length === 0 // Target leaf nodes (labels/buttons)
+    el.children.length === 0
   );
 }
 
@@ -62,20 +58,18 @@ function findByClassPattern(pattern, tagName = '*') {
 
 /**
  * Navigate to a specific character sheet section (tab).
- * Uses text-based discovery for high resilience.
  */
 function navToSection(name) {
-  // Try finding by text directly (Actions, Spells, etc.)
-  let target = findByText(name, 'button') || findByText(name, 'span') || findByText(name, 'a');
+  // Prioritize the known obfuscated class pattern for tab buttons
+  const tabs = safeQueryAll('button[class*="tabButton"]');
+  let target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
   
-  // If not found, try finding the obfuscated tab button class from diagnostics
+  // Fallback to text search on any button/link
   if (!target) {
-    const tabs = document.querySelectorAll('button[class*="tabButton"]');
-    target = Array.from(tabs).find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
+    target = findByText(name, 'button') || findByText(name, 'a') || findByText(name, 'span');
   }
 
   if (target) {
-    // If we found a label inside a button, click the button
     const clickTarget = target.tagName === 'BUTTON' ? target : target.closest('button');
     if (clickTarget) {
         clickTarget.click();
@@ -117,9 +111,16 @@ function createDraggableContainer(title, content, id) {
 }
 
 /**
+ * Sleep helper for async flows.
+ */
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Collect content from all tabs and wrap them in draggable containers.
  */
-function extractAndWrapSections() {
+async function extractAndWrapSections() {
   const sectionsToExtract = [
     { name: 'actions', title: 'Actions' },
     { name: 'spells', title: 'Spells' },
@@ -131,7 +132,10 @@ function extractAndWrapSections() {
 
   for (const section of sectionsToExtract) {
     if (navToSection(section.name)) {
-      // Content container usually has 'content' in class name (e.g., _content_dbufq_8)
+      // Wait for React to switch content
+      await sleep(100); 
+      
+      // Look for the content area which usually has 'content' in its obfuscated class
       const content = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
       if (content) {
         extractedContainers.push(createDraggableContainer(
@@ -149,10 +153,10 @@ function extractAndWrapSections() {
 /**
  * Appends all collected sections to the main sheet view.
  */
-function appendExtractedSections() {
-  const containers = extractAndWrapSections();
+async function appendExtractedSections() {
+  const containers = await extractAndWrapSections();
   
-  // Try to find a reliable insertion point (the parent of the content area)
+  // Find insertion point (parent of the content area)
   const contentArea = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
   
   if (contentArea && contentArea.parentElement) {
@@ -190,21 +194,26 @@ function moveDefenses() {
  * Optimized layout for print.
  */
 function tweakStyles() {
-  // Remove top site navigation
+  // Remove top site navigation and sidebars
   safeQueryAll([
     'div.site-bar', 'header.main', '#mega-menu-target', 
-    '[class*="navigation"]', '[class*="mega-menu"]', 'footer'
+    '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
   ]).forEach(e => e.remove());
 
   const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
   if (name) name.style['color'] = 'black';
 
-  // HP recovery
-  const hpTexts = Array.from(document.querySelectorAll('*')).filter(el => el.textContent.trim().match(/^\d+$/));
-  if (hpTexts.length > 0) {
-      // Bold the likely HP numbers
-      hpTexts.forEach(el => { el.style['font-size'] = '20px'; });
-  }
+  // HP recovery - look for numeric patterns that look like HP (e.g. 10 / 10)
+  const allElements = Array.from(document.querySelectorAll('*'));
+  const hpElements = allElements.filter(el => 
+    el.textContent.trim().match(/^\d+\s*\/\s*\d+$/) && el.children.length === 0
+  );
+  
+  hpElements.forEach(el => {
+    el.style['font-size'] = '30px';
+    el.style['font-weight'] = 'bold';
+    el.style['color'] = 'black';
+  });
 }
 
 /**
@@ -264,7 +273,7 @@ function enforceFullHeight() {
 // Execution
 (async () => {
     enforceFullHeight();
-    appendExtractedSections();
+    await appendExtractedSections();
     moveDefenses();
     tweakStyles();
     initDragAndDrop();

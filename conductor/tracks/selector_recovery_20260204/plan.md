@@ -7,7 +7,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Diagnostic & Utility Update' (Protocol in workflow.md)
 
 ## Phase 2: Navigation & Content Recovery
-- [ ] Task: Restore Navigation Logic
+- [x] Task: Restore Navigation Logic
     - [ ] Update `navToSection` to use text-based discovery for tab buttons.
     - [ ] Update `extractAndWrapSections` to verify content is actually captured before cloning.
 - [ ] Task: Restore Styling & Cleanup
