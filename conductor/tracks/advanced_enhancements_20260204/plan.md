@@ -19,7 +19,7 @@
 - [x] Task: Conductor - User Manual Verification 'Enhanced DOM Extraction & UI Cleanup' (Protocol in workflow.md)
 
 ## Phase 3: Draggable Layout Engine
-- [ ] Task: Implement Drag-and-Drop Logic
+- [x] Task: Implement Drag-and-Drop Logic
     - [ ] Add event listeners for mouse/touch interactions on section headers.
     - [ ] Implement visual feedback during drag (e.g., ghosting or placeholder).
     - [ ] Implement reordering logic when a section is dropped.
