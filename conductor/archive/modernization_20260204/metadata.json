@@ -1,0 +1,8 @@
+{
+  "track_id": "modernization_20260204",
+  "type": "maintenance",
+  "status": "new",
+  "created_at": "2026-02-04T20:25:00Z",
+  "updated_at": "2026-02-04T20:25:00Z",
+  "description": "Project Modernization & Stabilization: Audit the extension for Manifest V3 compliance, update ESLint configuration, and ensure the current DOM manipulation logic is robust against recent D&D Beyond UI changes."
+}
