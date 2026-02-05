@@ -16,7 +16,7 @@
 - [x] Task: Conductor - User Manual Verification 'Navigation & Content Recovery' (Protocol in workflow.md)
 
 ## Phase 3: Validation & Stabilization
-- [ ] Task: Integration Test
+- [x] Task: Integration Test d36bd3f
     - [ ] Update `test/e2e/extraction.test.js` to use the new obfuscated classes as a mock environment.
 - [ ] Task: Final Build
     - [ ] Verify version 1.1.1.
