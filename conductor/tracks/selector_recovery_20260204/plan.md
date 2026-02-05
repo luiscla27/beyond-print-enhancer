@@ -10,7 +10,7 @@
 - [x] Task: Restore Navigation Logic 1ab4035
     - [ ] Update `navToSection` to use text-based discovery for tab buttons.
     - [ ] Update `extractAndWrapSections` to verify content is actually captured before cloning.
-- [ ] Task: Restore Styling & Cleanup
+- [x] Task: Restore Styling & Cleanup
     - [ ] Update `tweakStyles` to remove site-bar and mega-menu using verified selectors.
     - [ ] Update HP and Character name selectors based on diagnostic data.
 - [ ] Task: Conductor - User Manual Verification 'Navigation & Content Recovery' (Protocol in workflow.md)

@@ -133,7 +133,7 @@ async function extractAndWrapSections() {
   for (const section of sectionsToExtract) {
     if (navToSection(section.name)) {
       // Wait for React to switch content
-      await sleep(100); 
+      await sleep(200); 
       
       // Look for the content area which usually has 'content' in its obfuscated class
       const content = findByClassPattern('content', 'div') || safeQuery('.ct-character-sheet-content');
@@ -194,11 +194,11 @@ function moveDefenses() {
  * Optimized layout for print.
  */
 function tweakStyles() {
-  // Remove top site navigation and sidebars
+  // Use display: none instead of remove() for major site components to avoid breaking site scripts
   safeQueryAll([
     'div.site-bar', 'header.main', '#mega-menu-target', 
     '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
-  ]).forEach(e => e.remove());
+  ]).forEach(e => { e.style.display = 'none'; });
 
   const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
   if (name) name.style['color'] = 'black';
