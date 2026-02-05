@@ -32,7 +32,7 @@
 - [x] Task: DOM Selector Audit
     - [ ] Analyze `js/main.js` and list all CSS selectors used for DOM manipulation (e.g., `.ct-quick-nav__toggle`, `.ct-component-carousel`).
     - [ ] **Verification:** Compare the existing selectors against the findings in `dom_reference.md` from Phase 3.
-- [ ] Task: Code Logic Refactor
+- [x] Task: Code Logic Refactor
     - [ ] Refactor `js/main.js` to use the new selectors identified in Phase 3.
     - [ ] Refactor `js/main.js` to include basic error handling. If a selector is not found, the script should fail gracefully or log a warning rather than crashing.
     - [ ] Ensure `navToSection`, `getAllSections`, and `moveDefenses` functions are modular and readable.
