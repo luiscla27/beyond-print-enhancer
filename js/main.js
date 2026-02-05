@@ -3,6 +3,12 @@ Copyright 2019 Adam Pritchard
 Licensed under Blue Oak Model License 1.0.0
 */
 
+// For strict linting in a non-module browser environment, we avoid 'require'.
+// We assume 'createControls' and 'restoreLayout' are available globally via script concatenation 
+// or multiple script tags in manifest.json.
+
+/* global createControls, restoreLayout */
+
 /**
  * Safely query an element, logging a warning if not found.
  */
@@ -389,9 +395,17 @@ function injectDnDStyles() {
 }
 
 // Execution sequence
-appendExtractedSections();
-moveDefenses();
-tweakStyles();
-removeSearchBoxes();
-enforceFullHeight();
-initDragAndDrop();
+(async () => {
+    appendExtractedSections();
+    moveDefenses();
+    tweakStyles();
+    removeSearchBoxes();
+    enforceFullHeight();
+    initDragAndDrop();
+    
+    // Add controls and try to restore layout
+    if (typeof createControls === 'function' && typeof restoreLayout === 'function') {
+        createControls();
+        await restoreLayout();
+    }
+})();

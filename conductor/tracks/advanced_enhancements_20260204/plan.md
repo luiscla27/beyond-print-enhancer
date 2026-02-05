@@ -23,7 +23,7 @@
     - [ ] Add event listeners for mouse/touch interactions on section headers.
     - [ ] Implement visual feedback during drag (e.g., ghosting or placeholder).
     - [ ] Implement reordering logic when a section is dropped.
-- [ ] Task: Add Control UI
+- [x] Task: Add Control UI
     - [ ] Create a "Save Layout" floating button.
     - [ ] Link the button to the Phase 1 persistence functions.
 - [ ] Task: Conductor - User Manual Verification 'Draggable Layout Engine' (Protocol in workflow.md)
