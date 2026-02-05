@@ -51,8 +51,18 @@ async function handleSaveLayout() {
   const sections = Array.from(document.querySelectorAll('.print-section-container'));
   const sectionOrder = sections.map(el => el.id);
 
-  // TODO: Gather custom spell sections (Phase 4)
-  const customSpells = []; 
+  // Gather custom spell sections (Phase 4 integration)
+  const customSpells = [];
+  sections.forEach(el => {
+    // Check if it's a custom spell section (has a numeric timestamp in ID and is not the original)
+    if (el.id.startsWith('section-spells-')) {
+        const content = el.querySelector('.print-section-content') || el.querySelector('.ct-character-sheet-content');
+        customSpells.push({
+            id: el.id,
+            htmlContent: content ? content.innerHTML : '' 
+        });
+    }
+  });
 
   const data = {
     sectionOrder,
@@ -83,15 +93,57 @@ async function restoreLayout() {
         await Storage.init();
         const data = await Storage.loadLayout(characterId);
         
-        if (data && data.sectionOrder) {
-          const container = document.getElementById('print-layout-wrapper');
-          // Reorder existing elements based on saved order
-          data.sectionOrder.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-              container.appendChild(el); // Appending moves it to the end, effectively sorting
+        if (data) {
+            const container = document.getElementById('print-layout-wrapper');
+            
+            // Restore custom spells first so they exist for reordering
+            if (data.customSpells && data.customSpells.length > 0) {
+                // We need a reference original spell container to clone style/structure
+                const originalSpells = document.getElementById('section-spells');
+                if (originalSpells) {
+                    data.customSpells.forEach(spellData => {
+                        const clone = originalSpells.cloneNode(true);
+                        clone.id = spellData.id;
+                        
+                        // Setup header
+                        const header = clone.querySelector('.print-section-header');
+                        if (header) {
+                            const oldBtn = header.querySelector('button');
+                            if (oldBtn) oldBtn.remove();
+                            header.childNodes[0].textContent = 'Prepared Spells';
+                            
+                            const removeBtn = document.createElement('button');
+                            removeBtn.textContent = 'X';
+                            removeBtn.style.float = 'right';
+                            removeBtn.style.color = 'red';
+                            removeBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                clone.remove();
+                            };
+                            header.appendChild(removeBtn);
+                        }
+                        
+                        // Restore content
+                        const content = clone.querySelector('.print-section-content') || clone.querySelector('.ct-character-sheet-content');
+                        if (content) {
+                            content.innerHTML = spellData.htmlContent;
+                            content.className = 'print-section-content';
+                        }
+                        
+                        container.appendChild(clone);
+                    });
+                }
             }
-          });
+
+            // Reorder all elements based on saved order
+            if (data.sectionOrder) {
+                data.sectionOrder.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        container.appendChild(el); // Appending moves it to the end, effectively sorting
+                    }
+                });
+            }
         }
     }
   } catch (err) {
