@@ -28,7 +28,7 @@
     - [ ] Create a reference document `conductor/tracks/modernization_20260204/dom_reference.md` listing the new selectors and structure to be used as a source of truth for the modernization.
 - [ ] Task: Conductor - User Manual Verification 'D&D Beyond DOM Discovery & Documentation' (Protocol in workflow.md)
 
-## Phase 4: Functionality Verification (Code Analysis)
+## Phase 4: Functionality Verification (Code Analysis) [checkpoint: 009fae0]
 - [x] Task: DOM Selector Audit
     - [ ] Analyze `js/main.js` and list all CSS selectors used for DOM manipulation (e.g., `.ct-quick-nav__toggle`, `.ct-component-carousel`).
     - [ ] **Verification:** Compare the existing selectors against the findings in `dom_reference.md` from Phase 3.
