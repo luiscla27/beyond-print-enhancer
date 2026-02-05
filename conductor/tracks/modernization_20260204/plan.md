@@ -9,7 +9,7 @@
     - [ ] Verify linting works by running `npx eslint .`.
 - [ ] Task: Conductor - User Manual Verification 'Environment & Tooling Update' (Protocol in workflow.md)
 
-## Phase 2: Manifest V3 Compliance Check
+## Phase 2: Manifest V3 Compliance Check [checkpoint: d0ab381]
 - [x] Task: Manifest Validation f7abe67
     - [ ] Review `manifest.json` against current Chrome Extension Manifest V3 documentation.
     - [ ] Verify `permissions` are minimal and correct (`declarativeContent`, `activeTab`, `scripting`).
