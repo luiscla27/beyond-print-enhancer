@@ -10,7 +10,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Environment & Tooling Update' (Protocol in workflow.md)
 
 ## Phase 2: Manifest V3 Compliance Check
-- [ ] Task: Manifest Validation
+- [x] Task: Manifest Validation f7abe67
     - [ ] Review `manifest.json` against current Chrome Extension Manifest V3 documentation.
     - [ ] Verify `permissions` are minimal and correct (`declarativeContent`, `activeTab`, `scripting`).
     - [ ] Confirm `background.service_worker` is correctly defined and `js/background.js` uses compliant event listeners (e.g., `chrome.runtime.onInstalled`, `chrome.action.onClicked`).
