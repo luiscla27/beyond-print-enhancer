@@ -134,8 +134,11 @@ async function extractAndWrapSections() {
   const sectionsToExtract = [
     { name: 'actions', title: 'Actions' },
     { name: 'spells', title: 'Spells' },
-    { name: 'equipment', title: 'Equipment' },
-    { name: 'features', title: 'Features & Traits' }
+    { name: 'inventory', title: 'Inventory' },
+    { name: 'feature & traits', title: 'Feature & Traits' },
+    { name: 'background', title: 'Background' },
+    { name: 'notes', title: 'Notes' },
+    { name: 'extras', title: 'Extras' }
   ];
   
   const extractedContainers = [];
@@ -264,6 +267,22 @@ function initDragAndDrop() {
   });
 }
 
+/**
+ * UI Refinement logic to remove unnecessary print elements.
+ */
+function removeSearchBoxes() {
+  const searchSelectors = [
+    '.ct-spells-filter',
+    '.ct-inventory__filter',
+    '.ct-filter-box', 
+    'input[type="search"]',
+    '[class*="filter"]',
+    '.ct-application-group__filter'
+  ];
+
+  safeQueryAll(searchSelectors).forEach(el => el.remove());
+}
+
 function enforceFullHeight() {
   const style = document.createElement('style');
   style.textContent = `
@@ -286,6 +305,7 @@ function enforceFullHeight() {
     await appendExtractedSections();
     moveDefenses();
     tweakStyles();
+    removeSearchBoxes();
     initDragAndDrop();
     
     /* global createControls, restoreLayout */
