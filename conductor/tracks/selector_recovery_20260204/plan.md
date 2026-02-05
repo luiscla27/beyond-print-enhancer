@@ -15,9 +15,9 @@
     - [ ] Update HP and Character name selectors based on diagnostic data.
 - [x] Task: Conductor - User Manual Verification 'Navigation & Content Recovery' (Protocol in workflow.md)
 
-## Phase 3: Validation & Stabilization
+## Phase 3: Validation & Stabilization [checkpoint: e35b637]
 - [x] Task: Integration Test d36bd3f
     - [ ] Update `test/e2e/extraction.test.js` to use the new obfuscated classes as a mock environment.
 - [x] Task: Final Build c22e0ea
     - [ ] Verify version 1.1.1.
-- [ ] Task: Conductor - User Manual Verification 'Validation & Stabilization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Validation & Stabilization' (Protocol in workflow.md)
