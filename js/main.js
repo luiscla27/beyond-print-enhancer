@@ -131,15 +131,11 @@ function sleep(ms) {
  * Collect content from all tabs and wrap them in draggable containers.
  */
 async function extractAndWrapSections() {
-  const sectionsToExtract = [
-    { name: 'actions', title: 'Actions' },
-    { name: 'spells', title: 'Spells' },
-    { name: 'inventory', title: 'Inventory' },
-    { name: 'feature & traits', title: 'Feature & Traits' },
-    { name: 'background', title: 'Background' },
-    { name: 'notes', title: 'Notes' },
-    { name: 'extras', title: 'Extras' }
-  ];
+  const tabButtons = [...document.querySelectorAll('[data-testid]')].filter((d) => d.className.toString().indexOf('tabButton') !== -1);
+  const sectionsToExtract = tabButtons.map(btn => ({
+    name: btn.textContent.trim(),
+    title: btn.textContent.trim()
+  }));
   
   const extractedContainers = [];
 
