@@ -28,14 +28,14 @@
     - [ ] Link the button to the Phase 1 persistence functions.
 - [x] Task: Conductor - User Manual Verification 'Draggable Layout Engine' (Protocol in workflow.md)
 
-## Phase 4: Spell Section Specialization
+## Phase 4: Spell Section Specialization [checkpoint: c057d68]
 - [x] Task: Spell Duplication Feature 8412192
     - [ ] Add "Duplicate Spells" button to the Spells container.
     - [ ] Implement cloning logic ensuring unique DOM IDs for each clone.
     - [ ] Initialize clones as empty templates as per spec.
 - [x] Task: Persistence Integration 15a7923
     - [ ] Ensure duplicated spell sections and their contents are included in the IndexedDB save/load payload.
-- [ ] Task: Conductor - User Manual Verification 'Spell Section Specialization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Spell Section Specialization' (Protocol in workflow.md)
 
 ## Phase 5: Final Integration & Polish
 - [ ] Task: End-to-End Testing
