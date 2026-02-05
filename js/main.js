@@ -43,40 +43,90 @@ function navToSection(name) {
 }
 
 /**
- * Collect content from Actions, Spells, and Equipment sections.
+ * Creates a standard draggable container for extracted content.
  */
-function getAllSections() {
-  const sectionNames = ['actions', 'spells', 'equipment'];
-  const sectionElements = [];
+function createDraggableContainer(title, content, id) {
+  const container = document.createElement('div');
+  container.className = 'print-section-container';
+  container.id = id;
+  
+  const header = document.createElement('div');
+  header.className = 'print-section-header';
+  header.textContent = title;
+  header.style.cursor = 'grab'; // Placeholder for drag phase
+  
+  // Basic styles to match spec (Phase 2 UI refinement will do more)
+  header.style.fontWeight = 'bold';
+  header.style.fontSize = '1.2em';
+  header.style.padding = '5px';
+  header.style.borderBottom = '1px solid black';
+  header.style.backgroundColor = '#eee';
 
-  for (const name of sectionNames) {
-    navToSection(name);
-    // Wait briefly for React to render? Content might be dynamic.
-    // For now, assume it's synchronous enough for cloneNode after click.
+  container.appendChild(header);
+  container.appendChild(content);
+  
+  return container;
+}
+
+/**
+ * Collect content from all tabs and wrap them in draggable containers.
+ */
+function extractAndWrapSections() {
+  const sectionsToExtract = [
+    { name: 'actions', title: 'Actions' },
+    { name: 'spells', title: 'Spells' },
+    { name: 'equipment', title: 'Equipment' },
+    { name: 'features', title: 'Features & Traits' }
+  ];
+  
+  const extractedContainers = [];
+
+  for (const section of sectionsToExtract) {
+    navToSection(section.name);
+    // Wait briefly for React to render? 
+    // In a real scenario, we might need a MutationObserver or a delay.
+    // For this implementation, we assume synchronous DOM update after click or pre-loaded.
+    
     const content = safeQuery('.ct-character-sheet-content');
     if (content) {
-      sectionElements.push(content.cloneNode(true));
+      const clonedContent = content.cloneNode(true);
+      const container = createDraggableContainer(
+        section.title, 
+        clonedContent, 
+        `section-${section.name}`
+      );
+      extractedContainers.push(container);
     }
   }
 
-  // Return to default section (usually 'Combat' or 'Main')
-  navToSection('actions'); // Or whatever the primary tab is now
+  // Return to default section (Actions is usually a safe default)
+  navToSection('actions');
 
-  return sectionElements;
+  return extractedContainers;
 }
 
 /**
  * Appends all collected sections to the main sheet view.
  */
-function appendAllSections() {
-  const sections = getAllSections();
+function appendExtractedSections() {
+  const containers = extractAndWrapSections();
   const mainContent = safeQuery('.ct-character-sheet-content');
 
   if (mainContent && mainContent.parentElement) {
     const parent = mainContent.parentElement;
-    for (const section of sections) {
-      parent.appendChild(section);
+    
+    // Clear existing main content to avoid duplication/confusion
+    // parent.innerHTML = ''; // Dangerous if it kills the container itself
+    
+    // Create a wrapper for our print layout
+    const printWrapper = document.createElement('div');
+    printWrapper.id = 'print-layout-wrapper';
+    
+    for (const container of containers) {
+      printWrapper.appendChild(container);
     }
+    
+    parent.appendChild(printWrapper);
   }
 }
 
@@ -163,6 +213,6 @@ function tweakStyles() {
 }
 
 // Execution sequence
-appendAllSections();
+appendExtractedSections();
 moveDefenses();
 tweakStyles();

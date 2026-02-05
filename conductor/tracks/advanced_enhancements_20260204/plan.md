@@ -8,7 +8,7 @@
 - [x] Task: Conductor - User Manual Verification 'Foundation & Persistence Layer' (Protocol in workflow.md)
 
 ## Phase 2: Enhanced DOM Extraction & UI Cleanup
-- [ ] Task: Advanced Section Extraction
+- [x] Task: Advanced Section Extraction
     - [ ] Update `js/main.js` to iterate and extract all tabs ('Actions', 'Spells', 'Equipment', 'Features & Traits').
     - [ ] Convert each extracted content block into a standard draggable container structure.
     - [ ] Hide original tab navigation.
