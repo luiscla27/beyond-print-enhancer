@@ -131,39 +131,95 @@ function sleep(ms) {
 /**
  * Collect content from all tabs and wrap them in draggable containers.
  */
+/**
+ * Collect content from all tabs and wrap them in draggable containers.
+ */
 async function extractAndWrapSections() {
-  const tabButtons = [...document.querySelectorAll('[data-testid]')].filter((d) => d.className.toString().indexOf('tabButton') !== -1);
-  const sectionsToExtract = tabButtons.map(btn => ({
-    name: btn.textContent.trim(),
-    title: btn.textContent.trim()
-  }));
-  
+  // Strategy: Identify sections by looking for tab buttons
+  let tabs = Array.from(document.querySelectorAll('button[class*="tabButton"]'));
+  // Fallback: manual list if detection fails
+  if (tabs.length === 0) {
+      console.warn('[DDB Print] No tabs found automatically, using default list.');
+      const defaultSections = ['Actions', 'Spells', 'Inventory', 'Features', 'Traits', 'Description', 'Notes', 'Extras'];
+      // We'll map these to dummy objects to mimic the tab structure for the loop
+      tabs = defaultSections.map(s => ({ textContent: s }));
+  }
+
+  const sectionsToExtract = tabs.map(t => ({
+      name: t.textContent.trim(),
+      title: t.textContent.trim()
+  })).filter(s => s.name);
+
   const extractedContainers = [];
 
   for (const section of sectionsToExtract) {
     const target = navToSection(section.name);
-    if (target) {
-      // Wait for React to switch content
-      await sleep(300); 
-      
-      // Content container recovery
-      const content = safeQuery(['.ddbc-box-background + div section']);
-      // const contentNodes = target.querySelectorAll('section');
-      // const contentNodes = document.querySelectorAll('.ddbc-box-background + div section');
-      if (content) {
-        const wrapper = document.createElement('div');
-        wrapper.appendChild(content.cloneNode(true));
-        
-        extractedContainers.push(createDraggableContainer(
-          section.title, 
-          wrapper, 
-          `section-${section.name}`
-        ));
-      }
+    
+    // Give React time to render. Using Promise-based delay to be safe.
+    await new Promise(r => setTimeout(r, 500));
+
+    if (target || tabs.length > 0) { // Proceed if navigation worked or we're just trying
+        // Priority: Find the main structural container that holds the styles
+        // 1. styles_primaryBox (Dynamic hash class)
+        // 2. ct-primary-box (Standard class)
+        // 3. Fallback to generic content areas
+        let content = safeQuery([
+            '[class*="styles_primaryBox"]',
+            '.ct-primary-box', 
+            '.ddbc-box-background + div section',
+            '.sheet-body section'
+        ]);
+
+        if (content) {
+            // Refinement: If we matched a child but the parent is the actual styled container, go up.
+            if (content.parentElement && (
+                content.parentElement.className.includes('primaryBox') ||
+                content.parentElement.className.includes('ct-primary-box')
+            )) {
+                content = content.parentElement;
+            }
+
+            console.log(`[DDB Print] Extracted content for ${section.name}:`, content.className);
+
+            const clone = content.cloneNode(true);
+            
+            // Create a clean wrapper for the print layout
+            const wrapper = document.createElement('div');
+            // We do NOT blindly copy parent classes here because we just cloned the PROPER container.
+            // But we can add a helper class.
+            wrapper.className = 'print-section-wrapper';
+            wrapper.appendChild(clone);
+
+            extractedContainers.push(createDraggableContainer(
+                section.title, 
+                wrapper, 
+                `section-${section.name.replace(/\s+/g, '_')}`
+            ));
+        } else {
+             console.warn(`[DDB Print] Content content not found for section: ${section.name}`);
+        }
     }
   }
 
   return extractedContainers;
+}
+
+/**
+ * Appends all collected sections to the main sheet view.
+ */
+/**
+ * Copies SVG definitions to the print wrapper to ensure icons render.
+ */
+function copySvgDefinitions(targetContainer) {
+    // Find all SVGs that might contain definitions (defs/symbol)
+    const svgs = document.querySelectorAll('svg');
+    svgs.forEach(svg => {
+        if (svg.querySelector('defs, symbol') || svg.style.display === 'none') {
+            const clone = svg.cloneNode(true);
+            clone.style.display = 'none'; // Ensure it doesn't take up space
+            targetContainer.appendChild(clone);
+        }
+    });
 }
 
 /**
@@ -175,15 +231,16 @@ async function appendExtractedSections() {
   // Find insertion point
   const contentArea = safeQuery(['.ct-character-sheet-desktop','.ct-character-sheet-content', '[class*="sheet-content"]']);
   
-  
   if (contentArea && contentArea.parentElement) {
     const parent = contentArea.parentElement;
     
-    // Check for existing wrapper or create new one
-    // Note: cleanup happens in execution block, so here we just create
     const printWrapper = document.createElement('div');
     printWrapper.id = 'print-layout-wrapper';
     
+    // Simulate main sheet structure for styles
+    printWrapper.classList.add('ct-character-sheet-desktop', 'ct-character-sheet-content'); 
+    
+    copySvgDefinitions(printWrapper); // Copy sprites/defs
     containers.forEach(c => printWrapper.appendChild(c));
     parent.appendChild(printWrapper);
   }
