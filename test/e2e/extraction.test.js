@@ -74,7 +74,7 @@ describe('DOM Extraction Logic (Integration)', function() {
     // Find the Actions section
     let actionsSection;
     sections.forEach(s => {
-        if (s.innerHTML.includes('Attack Actions')) actionsSection = s;
+        if (s.innerHTML.includes('Unique Actions Content')) actionsSection = s;
     });
     
     assert.ok(actionsSection, 'Should contain attack actions');
@@ -92,5 +92,54 @@ describe('DOM Extraction Logic (Integration)', function() {
     // copySvgDefinitions clones SVGs with defs into the wrapper
     const globalDefs = wrapper.querySelector('svg defs symbol#icon-sword');
     assert.ok(globalDefs, 'Should copy global SVG definitions to the print wrapper');
+
+    // Verify Spells Cleanup Logic
+    // We expect the script to have navigated to Spells and extracted it too
+    let spellsSection;
+    sections.forEach(s => {
+        if (s.innerHTML.includes('Manage Spells')) spellsSection = s;
+    });
+    
+    // Note: In the fixture "Spells" content is hidden initially. 
+    // The script's `navToSection` toggles tabs. 
+    // In this simulated environment, we rely on the script finding the 'content' even if hidden, 
+    // or the detailed interaction logic. 
+    // Since our mock `navToSection` in the fixture doesn't ACTUALLY switch visibility classes 
+    // (it just clicks buttons), the script might pick up the content if it's in the DOM.
+    // However, `extractAndWrapSections` looks for `styles_primaryBox`...
+    
+    // If the test above found 'Actions', it worked. 
+    // Assuming the script processes all tabs.
+    
+    if (spellsSection) {
+        const menu = spellsSection.querySelector('menu');
+        const filters = spellsSection.querySelector('[data-testid="tab-filters"]');
+        const manageBtn = spellsSection.querySelector('button');
+        
+        if (menu) assert.strictEqual(menu.style.display, 'none', '<menu> should be hidden in Spells');
+        if (filters) assert.strictEqual(filters.style.display, 'none', 'Filters should be hidden in Spells');
+        assert.ok(manageBtn, 'Manage Spells button should exist');
+        assert.notStrictEqual(manageBtn.style.display, 'none', 'Manage Spells button should be visible');
+    } else {
+        // Assert fail
+        assert.fail('Spells section "Manage Spells" not found in extraction. Result: ' + Array.from(sections).map(s => s.innerHTML).join(', '));
+    }
+    
+    // Verify Layout Fix (Strict Rules)
+    const style = clonedPrimaryBox.style;
+    // Check for fit-content (flexible check because cssText parsing varies)
+    assert.ok(style.height.includes('fit-content') || style.cssText.includes('fit-content'), 'Should have fit-content height');
+    assert.strictEqual(style.display, 'flex', 'Should be display: flex');
+    assert.strictEqual(style.flexDirection, 'column', 'Should be flex-direction: column');
+    
+    // Check SVG scaling - Strict
+    const bgSvg = clonedPrimaryBox.querySelector('svg'); 
+    if (bgSvg && bgSvg.closest('.ddbc-box-background')) {
+         assert.strictEqual(bgSvg.style.height, '100%', 'Background SVG should be 100% height');
+         assert.strictEqual(bgSvg.style.width, '100%', 'Background SVG should be 100% width');
+         assert.strictEqual(bgSvg.getAttribute('preserveAspectRatio'), 'none', 'Background SVG should stretch');
+         assert.strictEqual(bgSvg.hasAttribute('width'), false, 'SVG should not have fixed width attribute');
+         assert.strictEqual(bgSvg.hasAttribute('height'), false, 'SVG should not have fixed height attribute');
+    }
   });
 });

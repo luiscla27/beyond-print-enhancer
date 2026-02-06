@@ -160,15 +160,29 @@ async function extractAndWrapSections() {
 
     if (target || tabs.length > 0) { // Proceed if navigation worked or we're just trying
         // Priority: Find the main structural container that holds the styles
-        // 1. styles_primaryBox (Dynamic hash class)
-        // 2. ct-primary-box (Standard class)
-        // 3. Fallback to generic content areas
-        let content = safeQuery([
+        // We need to handle cases where multiple exist (some hidden)
+        const selectors = [
             '[class*="styles_primaryBox"]',
             '.ct-primary-box', 
             '.ddbc-box-background + div section',
             '.sheet-body section'
-        ]);
+        ];
+        
+        // Helper to find visible element among matches
+        let content = null;
+        for (const selector of selectors) {
+            const matches = document.querySelectorAll(selector);
+            // Find one that is not hidden.
+            const visibleMatch = Array.from(matches).find(el => {
+                const style = window.getComputedStyle(el);
+                return style.display !== 'none' && !el.classList.contains('hidden');
+            });
+            
+            if (visibleMatch) {
+                content = visibleMatch;
+                break;
+            }
+        }
 
         if (content) {
             // Refinement: If we matched a child but the parent is the actual styled container, go up.
@@ -183,6 +197,56 @@ async function extractAndWrapSections() {
 
             const clone = content.cloneNode(true);
             
+            // Ensure the content is visible (it might be hidden if tab wasn't active)
+            clone.style.display = '';
+            clone.classList.remove('hidden'); // Remove potential utility classes for hiding
+
+            
+            // Cleanup: Remove unwanted elements from the clone
+            // 1. Hide <menu> tags (often used for popups/context)
+            clone.querySelectorAll('menu').forEach(el => el.style.display = 'none');
+            
+            // 2. Hide specific filters
+            clone.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
+            
+            // 3. Layout Fix: Remove Scrollbars & Fixed Heights
+            // Force the container and its children to expand
+            // User Request: height: fit-content !important; display: flex !important;
+            clone.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
+            
+            // Apply similar logic to internal sections that might assume fixed height
+            clone.querySelectorAll('section, .ct-primary-box').forEach(el => {
+                el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
+            });
+
+            // Fix Background SVGs to stretch
+            // Usually found in .ddbc-box-background or similar containers acting as borders
+            // User Request: Recalculate paths/sizes. We achieve this by unlocking the aspect ratio 
+            // and letting the SVG conform to the flex container's fluid size.
+            const bgSvgs = clone.querySelectorAll('.ddbc-box-background svg, .ct-primary-box > svg, svg.ddbc-rep-box-background__svg');
+            bgSvgs.forEach(svg => {
+                svg.style.height = '100%';
+                svg.style.width = '100%';
+                // Important: Unset fixed attributes if they exist to let CSS rule
+                if(svg.hasAttribute('height')) svg.removeAttribute('height');
+                if(svg.hasAttribute('width')) svg.removeAttribute('width');
+                
+                // Allow stretching to fill the new container shape (which changes based on content)
+                svg.setAttribute('preserveAspectRatio', 'none');
+                
+                // Note: We do NOT remove viewBox, as it defines the coordinate system for the paths.
+                // By unconstraining aspect ratio + 100% size, the browser maps 0..623 x 0..660 to 0..clientWidth x 0..clientHeight.
+            });
+            
+            // Also target potential internal scrolling containers
+            clone.querySelectorAll('*').forEach(el => {
+                const style = window.getComputedStyle(el);
+                 if (style.overflow === 'auto' || style.overflow === 'scroll' || style.maxHeight !== 'none') {
+                     el.style.maxHeight = 'none';
+                     el.style.overflow = 'visible';
+                 }
+            });
+
             // Create a clean wrapper for the print layout
             const wrapper = document.createElement('div');
             // We do NOT blindly copy parent classes here because we just cloned the PROPER container.

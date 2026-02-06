@@ -38,12 +38,71 @@
                     <div>
                         <section>
                             <h1>Attack Actions</h1>
+                            <p>Unique Actions Content</p>
                             <svg class="icon"><use href="#icon-sword"></use></svg>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulated Content for 'Spells' (Inactive, but reachable via navToSection logic/test) -->
+             <div class="ct-subsection" style="display:none;" id="spells-content">
+                <div class="styles_primaryBox__2cqbd ct-primary-box">
+                    <div>
+                        <section>
+                            <h1>Spells</h1>
+                            <p>Unique Spells Content</p>
+                            <button>Manage Spells</button>
+                            <menu><li>Context Menu</li></menu>
+                            <div data-testid="tab-filters">Filters</div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Simulated Content for 'Inventory' -->
+             <div class="ct-subsection" style="display:none;" id="inventory-content">
+                <div class="styles_primaryBox__2cqbd ct-primary-box">
+                    <div>
+                        <section>
+                            <h1>Inventory</h1>
+                            <p>Unique Inventory Content</p>
                         </section>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        // Mock Tab Switching Logic
+        document.addEventListener('DOMContentLoaded', () => {
+             const buttons = document.querySelectorAll('.ct-character-sheet-desktop nav button');
+             // Target the primaryBox directly because JSDOM computed style checks might not propagate parent visibility perfectly
+             const actionsContent = document.querySelector('.sheet-body .ct-subsection:first-child .styles_primaryBox__2cqbd'); 
+             const spellsContent = document.querySelector('#spells-content .styles_primaryBox__2cqbd');
+             const inventoryContent = document.querySelector('#inventory-content .styles_primaryBox__2cqbd');
+
+             buttons.forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                     const txt = e.target.textContent;
+                     console.log('Mock Tab Clicked:', txt);
+                     
+                     // Reset all to hidden
+                     if(actionsContent) actionsContent.style.display = 'none';
+                     if(spellsContent) spellsContent.style.display = 'none';
+                     if(inventoryContent) inventoryContent.style.display = 'none';
+
+                     // Show target
+                     if (txt.includes('Actions')) {
+                         if(actionsContent) actionsContent.style.display = 'block';
+                     } else if (txt.includes('Spells')) {
+                         if(spellsContent) spellsContent.style.display = 'block';
+                     } else if (txt.includes('Inventory')) {
+                         if(inventoryContent) inventoryContent.style.display = 'block';
+                     }
+                 });
+             });
+        });
+    </script>
 </body>
 </html>
