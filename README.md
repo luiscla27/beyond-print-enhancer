@@ -1,10 +1,17 @@
 # D&D Beyond Character Sheet Print Enhancer
 
-**This extension is now defunct.** I didn't use it enough (nor did many other people) and it's a pain to keep it updated with changes in the D&D Beyond website.
+**Modernized and restored for 2026 site changes.** This extension helps you print your D&D Beyond character sheets in a clean, high-contrast, multi-section format.
 
-## Installation
+## Try it Live (Developer Mode)
 
-Chrome/Brave: Install the extension from the [Chrome Web Store](https://chrome.google.com/webstore/detail/ddbeyond-print-enhancer/fdajjhifhjdcdfgdkefalgombegclabc).
+To test the extension locally:
+1. Open Chrome and navigate to `chrome://extensions/`.
+2. Enable **Developer mode** in the top right corner.
+3. Click **Load unpacked**.
+4. Select the root folder of this project.
+5. Open any D&D Beyond character sheet (e.g., [this example character](https://www.dndbeyond.com/characters/151911403)).
+6. Click the extension icon in your toolbar to activate the print enhancer.
+7. Press `Ctrl+P` to view the print preview.
 
 ## Instructions for use
 

@@ -1,14 +1,19 @@
 {
   "name": "dndbeyond-print",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Adam Pritchard",
   "license": "Blue Oak 1.0.0",
   "devDependencies": {
-    "eslint": "^6.5.0"
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "fake-indexeddb": "^6.2.5",
+    "globals": "^17.3.0",
+    "jsdom": "^28.0.0",
+    "mocha": "^11.7.5"
   }
 }
