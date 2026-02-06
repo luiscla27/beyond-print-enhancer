@@ -2,10 +2,6 @@
 
 **Modernized and restored for 2026 site changes.** This extension helps you print your D&D Beyond character sheets in a clean, high-contrast, multi-section format.
 
-## Installation
-
-Chrome/Brave: Install the extension from the [Chrome Web Store](https://chrome.google.com/webstore/detail/ddbeyond-print-enhancer/fdajjhifhjdcdfgdkefalgombegclabc).
-
 ## Try it Live (Developer Mode)
 
 To test the extension locally:

@@ -3,6 +3,7 @@ Copyright 2019 Adam Pritchard
 Licensed under Blue Oak Model License 1.0.0
 */
 
+(function () {
 /**
  * Robust query selector that tries multiple patterns and handles obfuscated classes.
  */
@@ -83,12 +84,12 @@ function navToSection(name) {
     if (clickTarget) {
         console.log(`[DDB Print Enhance] Navigating to: ${name}`);
         clickTarget.click();
-        return true;
+        return target;
     }
   }
   
   console.error(`[DDB Print Enhance] Could not find tab for section: ${name}`);
-  return false;
+  return null;
 }
 
 /**
@@ -140,16 +141,22 @@ async function extractAndWrapSections() {
   const extractedContainers = [];
 
   for (const section of sectionsToExtract) {
-    if (navToSection(section.name)) {
+    const target = navToSection(section.name);
+    if (target) {
       // Wait for React to switch content
       await sleep(300); 
       
       // Content container recovery
-      const content = findByClassPattern('content', 'div') || safeQuery(['.ct-character-sheet-content', '[class*="sheet-content"]']);
+      const content = safeQuery(['.ddbc-box-background + div section']);
+      // const contentNodes = target.querySelectorAll('section');
+      // const contentNodes = document.querySelectorAll('.ddbc-box-background + div section');
       if (content) {
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(content.cloneNode(true));
+        
         extractedContainers.push(createDraggableContainer(
           section.title, 
-          content.cloneNode(true), 
+          wrapper, 
           `section-${section.name}`
         ));
       }
@@ -166,10 +173,14 @@ async function appendExtractedSections() {
   const containers = await extractAndWrapSections();
   
   // Find insertion point
-  const contentArea = findByClassPattern('content', 'div') || safeQuery(['.ct-character-sheet-content', '[class*="sheet-content"]']);
+  const contentArea = safeQuery(['.ct-character-sheet-desktop','.ct-character-sheet-content', '[class*="sheet-content"]']);
+  
   
   if (contentArea && contentArea.parentElement) {
     const parent = contentArea.parentElement;
+    
+    // Check for existing wrapper or create new one
+    // Note: cleanup happens in execution block, so here we just create
     const printWrapper = document.createElement('div');
     printWrapper.id = 'print-layout-wrapper';
     
@@ -280,7 +291,11 @@ function removeSearchBoxes() {
 }
 
 function enforceFullHeight() {
+    const styleId = 'ddb-print-enhance-style';
+    if (document.getElementById(styleId)) return;
+
   const style = document.createElement('style');
+  style.id = styleId;
   style.textContent = `
     [class*="content"], .print-section-content {
       overflow: visible !important;
@@ -297,6 +312,10 @@ function enforceFullHeight() {
 
 // Execution
 (async () => {
+    // Idempotency: cleanup previous run if exists
+    const existingWrapper = document.getElementById('print-layout-wrapper');
+    if (existingWrapper) existingWrapper.remove();
+
     enforceFullHeight();
     await appendExtractedSections();
     moveDefenses();
@@ -307,4 +326,6 @@ function enforceFullHeight() {
     /* global createControls, restoreLayout */
     if (typeof createControls === 'function') createControls();
     if (typeof restoreLayout === 'function') await restoreLayout();
+})();
+
 })();
