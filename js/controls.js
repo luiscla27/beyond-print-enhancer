@@ -47,9 +47,17 @@ async function handleSaveLayout() {
     return;
   }
 
-  // Get current order of sections
+  // Get current order and positions of sections
   const sections = Array.from(document.querySelectorAll('.print-section-container'));
-  const sectionOrder = sections.map(el => el.id);
+  const sectionOrder = sections.map(el => {
+    return {
+        id: el.id,
+        left: el.style.left,
+        top: el.style.top,
+        width: el.style.width,
+        height: el.style.height
+    };
+  });
 
   // Gather custom spell sections (Phase 4 integration)
   const customSpells = [];
@@ -94,8 +102,10 @@ async function restoreLayout() {
         const data = await Storage.loadLayout(characterId);
         
         if (data) {
-            const container = document.getElementById('print-layout-wrapper');
+            const container = document.getElementById('print-layout-wrapper') || document.querySelector('.ct-subsections');
             
+            if (!container) return;
+
             // Restore custom spells first so they exist for reordering
             if (data.customSpells && data.customSpells.length > 0) {
                 // We need a reference original spell container to clone style/structure
@@ -135,16 +145,26 @@ async function restoreLayout() {
                 }
             }
 
-            // Reorder all elements based on saved order
+            // Apply positions and sizes based on saved data
             if (data.sectionOrder) {
-                data.sectionOrder.forEach(id => {
+                data.sectionOrder.forEach(sectionData => {
+                    const id = typeof sectionData === 'string' ? sectionData : sectionData.id;
                     const el = document.getElementById(id);
                     if (el) {
-                        container.appendChild(el); // Appending moves it to the end, effectively sorting
+                        if (typeof sectionData === 'object') {
+                            if (sectionData.left) el.style.left = sectionData.left;
+                            if (sectionData.top) el.style.top = sectionData.top;
+                            if (sectionData.width) el.style.width = sectionData.width;
+                            if (sectionData.height) el.style.height = sectionData.height;
+                            el.style.margin = '0';
+                        }
+                        container.appendChild(el); 
                     }
                 });
             }
+            return true; // Layout restored
         }
+        return false; // No data found
     }
   } catch (err) {
     console.error('Failed to restore layout', err);

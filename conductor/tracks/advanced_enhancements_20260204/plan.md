@@ -41,4 +41,20 @@
 - [x] Task: End-to-End Testing 775cc90
     - [ ] Verify persistence works across page reloads for different characters.
     - [ ] Verify print layout on physical or PDF "Letter" paper.
-- [x] Task: Conductor - User Manual Verification 'Final Integration & Polish' (Protocol in workflow.md)
+## Phase 6: UX Enhancements & Reliability
+- [~] Task: Section Minimization Feature
+    - [x] Add "X" button and minimization logic to `js/main.js`.
+    - [x] Implement restore button and CSS for minimized state.
+- [~] Task: Drag and Drop Reliability Fix
+    - [x] Ensure `#print-layout-wrapper` ID is assigned to the correct container.
+    - [x] Verify fix with updated unit tests.
+- [ ] Task: Conductor - User Manual Verification 'UX Enhancements & Reliability' (Protocol in workflow.md)
+
+## Phase 7: Absolute Positioning Engine
+- [ ] Task: Transition to Absolute Layout
+    - [ ] Update `main.js` CSS to use `position: absolute` for containers.
+    - [ ] Set `position: relative` on the layout root.
+- [ ] Task: Implement Manual Dragging Logic
+    - [ ] Update `dnd.js` to track `left`/`top` offsets during drag.
+    - [ ] Update persistence to save/restore coordinates in IndexedDB.
+- [ ] Task: Conductor - User Manual Verification 'Absolute Positioning Engine' (Protocol in workflow.md)
