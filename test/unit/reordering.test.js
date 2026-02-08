@@ -43,67 +43,31 @@ describe('Drag-and-Drop Reordering Logic', function() {
     window.initDragAndDrop();
   });
 
-  it('should reorder items after horizontal drag', function() {
+  it('should update coordinates after drag and drop', function() {
       const container = document.getElementById('print-layout-wrapper');
       const item1 = document.getElementById('item-1');
-      const item2 = document.getElementById('item-2');
       
-      // Mock getBoundingClientRect for item2
-      item2.getBoundingClientRect = () => ({
-          left: 210, right: 410, top: 0, bottom: 100, width: 200, height: 100
-      });
+      // Mock getBoundingClientRect
+      container.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 1000 });
+      item1.getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 110 });
       
-      // Simulate Drag Start on Item 1 Header
+      // Simulate Drag Start on Item 1 Header (click at 15, 15 - offset 5, 5)
       const header1 = item1.querySelector('.print-section-header');
-      const startEvent = new window.MouseEvent('dragstart', { bubbles: true });
+      const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 15, clientY: 15 });
+      startEvent.dataTransfer = { effectAllowed: '', setData: () => {} };
       header1.dispatchEvent(startEvent);
       
-      // Simulate Drop on Item 2 (Right Half)
-      // clientX = 350 (Right half of 210-410)
+      // Simulate Drop at 205, 205
+      // New position: 205 - 0 - 5 = 200
       const dropEvent = new window.MouseEvent('drop', { 
           bubbles: true,
-          clientX: 350,
-          clientY: 50
+          clientX: 205,
+          clientY: 205
       });
-      // We must stop propagation in main.js, so we trigger on container but target item2
-      Object.defineProperty(dropEvent, 'target', { value: item2 });
       container.dispatchEvent(dropEvent);
       
-      // Verification: item1 should now be AFTER item2 in parent
-      const children = Array.from(container.children);
-      assert.strictEqual(children[1].id, 'item-1', 'Item 1 should be moved to position 2');
-      assert.strictEqual(children[0].id, 'item-2', 'Item 2 should be at position 1');
-  });
-
-  it('should reorder items before horizontal drag', function() {
-      const container = document.getElementById('print-layout-wrapper');
-      // Current order: item-2, item-1
-      const item1 = document.getElementById('item-1');
-      const item2 = document.getElementById('item-2');
-      
-      // Mock getBoundingClientRect for item2
-      item2.getBoundingClientRect = () => ({
-          left: 0, right: 200, top: 0, bottom: 100, width: 200, height: 100
-      });
-      
-      // Simulate Drag Start on Item 1 Header
-      const header1 = item1.querySelector('.print-section-header');
-      const startEvent = new window.MouseEvent('dragstart', { bubbles: true });
-      header1.dispatchEvent(startEvent);
-      
-      // Simulate Drop on Item 2 (Left Half)
-      // clientX = 50 (Left half of 0-200)
-      const dropEvent = new window.MouseEvent('drop', { 
-          bubbles: true,
-          clientX: 50,
-          clientY: 50
-      });
-      Object.defineProperty(dropEvent, 'target', { value: item2 });
-      container.dispatchEvent(dropEvent);
-      
-      // Verification: item1 should be BEFORE item2 again
-      const children = Array.from(container.children);
-      assert.strictEqual(children[0].id, 'item-1', 'Item 1 should be back at position 1');
-      assert.strictEqual(children[1].id, 'item-2', 'Item 2 should be at position 2');
+      // Verification: item1 should have new coordinates
+      assert.strictEqual(item1.style.left, '200px');
+      assert.strictEqual(item1.style.top, '200px');
   });
 });
