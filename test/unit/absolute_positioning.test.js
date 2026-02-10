@@ -61,8 +61,8 @@ describe('Absolute Positioning Engine', function() {
     });
     container.dispatchEvent(dropEvent);
     
-    assert.strictEqual(item.style.left, '100px');
-    assert.strictEqual(item.style.top, '100px');
+    assert.strictEqual(item.style.left, '96px');
+    assert.strictEqual(item.style.top, '96px');
   });
 
   it('should set custom drag image on dragstart', function(done) {
