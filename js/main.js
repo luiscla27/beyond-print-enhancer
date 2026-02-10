@@ -267,23 +267,28 @@ async function extractAndWrapSections() {
                 el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
             });
 
-            // Fix Background SVGs to stretch
-            // Usually found in .ddbc-box-background or similar containers acting as borders
-            // User Request: Recalculate paths/sizes. We achieve this by unlocking the aspect ratio 
-            // and letting the SVG conform to the flex container's fluid size.
-            const bgSvgs = clone.querySelectorAll('.ddbc-box-background svg, .ct-primary-box > svg, svg.ddbc-rep-box-background__svg');
+            // Targeted SVG Removal: Use helper function
+            removeSpecificSvgs(clone);
+
+            // RE-ENABLED: Fix Background SVGs to stretch for non-border backgrounds
+            // We exclude the one we just hid to avoid conflicting logic, though display:none wins.
+            const bgSvgs = clone.querySelectorAll('.ct-primary-box > svg, svg.ddbc-rep-box-background__svg, .ddbc-box-background:not([style*="display: none"]) svg');
             bgSvgs.forEach(svg => {
                 svg.style.height = '100%';
                 svg.style.width = '100%';
-                // Important: Unset fixed attributes if they exist to let CSS rule
                 if(svg.hasAttribute('height')) svg.removeAttribute('height');
                 if(svg.hasAttribute('width')) svg.removeAttribute('width');
-                
-                // Allow stretching to fill the new container shape (which changes based on content)
                 svg.setAttribute('preserveAspectRatio', 'none');
-                
-                // Note: We do NOT remove viewBox, as it defines the coordinate system for the paths.
-                // By unconstraining aspect ratio + 100% size, the browser maps 0..623 x 0..660 to 0..clientWidth x 0..clientHeight.
+            });
+            
+            // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws)
+            // Keeping this logic for now as it targets specific UI elements that might need to be visible,
+            // unless the user wants *those* borders gone too. Assuming "all svg borders" means the main container ones first.
+            const groupBoxSvgs = clone.querySelectorAll('.ct-proficiency-groups-box svg, .ct-senses-box svg, .ct-skills-box svg, .ct-saving-throws-box svg');
+            groupBoxSvgs.forEach(svg => {
+                 svg.setAttribute('preserveAspectRatio', 'none');
+                 svg.style.width = '100%';
+                 svg.style.height = '100%';
             });
             
             // Also target potential internal scrolling containers
@@ -318,6 +323,28 @@ async function extractAndWrapSections() {
 
 
   return extractedContainers;
+}
+
+/**
+ * Removes specific SVGs as requested by the user.
+ * 1. First .ddbc-box-background
+ * 2. All section > div > svg
+ */
+function removeSpecificSvgs(container) {
+    if (!container) return;
+
+    // 1. Remove first .ddbc-box-background
+    const firstBg = container.querySelector('.ddbc-box-background');
+    if (firstBg) firstBg.style.display = 'none';
+
+    // 2. Remove all section > div > svg
+    // Check nested instances
+    container.querySelectorAll('section > div > svg').forEach(svg => svg.style.display = 'none');
+    
+    // Check if container itself matches section > div > svg pattern (e.g. if container is section)
+    if (container.tagName === 'SECTION') {
+        container.querySelectorAll(':scope > div > svg').forEach(svg => svg.style.display = 'none');
+    }
 }
 
 /**
@@ -396,13 +423,25 @@ async function injectClonesIntoSpellsView() {
       el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
   });
 
-  const bgSvgs = spellsNode.querySelectorAll('.ddbc-box-background svg, .ct-primary-box > svg, svg.ddbc-rep-box-background__svg');
+  // Targeted SVG Removal for Spells: Use helper function
+  removeSpecificSvgs(spellsNode);
+
+  // We RESTORE the logic for other SVGs as per user request.
+  const bgSvgs = spellsNode.querySelectorAll('.ct-primary-box > svg, svg.ddbc-rep-box-background__svg, .ddbc-box-background:not([style*="display: none"]) svg');
   bgSvgs.forEach(svg => {
       svg.style.height = '100%';
       svg.style.width = '100%';
       if(svg.hasAttribute('height')) svg.removeAttribute('height');
       if(svg.hasAttribute('width')) svg.removeAttribute('width');
       svg.setAttribute('preserveAspectRatio', 'none');
+  });
+
+  // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws) in Spells View
+  const groupBoxSvgs = spellsNode.querySelectorAll('.ct-proficiency-groups-box svg, .ct-senses-box svg, .ct-skills-box svg, .ct-saving-throws-box svg');
+  groupBoxSvgs.forEach(svg => {
+       svg.setAttribute('preserveAspectRatio', 'none');
+       svg.style.width = '100%';
+       svg.style.height = '100%';
   });
 
   // 4. Identify the Unified Layout Root
@@ -421,6 +460,9 @@ async function injectClonesIntoSpellsView() {
           // Identify a title for the section (e.g. from a header)
           const titleEl = child.querySelector('header, .ct-subsection__header');
           const title = titleEl ? titleEl.textContent.trim() : 'Section';
+          
+          // Ensure SVGs are removed from existing sections too
+          removeSpecificSvgs(child);
           
           // Wrap it
           const wrapped = createDraggableContainer(title, child, `section-${title.replace(/\s+/g, '-')}`);
@@ -468,6 +510,7 @@ function moveDefenses() {
   if (!defensesSection) return;
 
   const elem = defensesSection.cloneNode(true);
+  removeSpecificSvgs(elem); // Ensure SVGs are removed from Defenses clone
   const header = elem.querySelector(['.ct-sidebar__section-header', '[class*="sidebar__section-header"]']);
   if (header) header.remove();
 
@@ -610,11 +653,15 @@ function enforceFullHeight() {
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
-    :not(svg):not(g)[class*="content"], .print-section-content {
+    :not(svg):not(g)[class*="content"]:not(.jsx-parser), .print-section-content {
       overflow: visible !important;
       max-height: none !important;
       height: auto !important;
+      border: 2px solid #000;
+      padding: 10px;
+      border-radius: 4px;
     }
+
     .ddbc-character-tidbits__heading,
     .ct-subsection__footer,
     .ct-character-header-desktop,

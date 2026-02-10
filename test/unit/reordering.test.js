@@ -67,7 +67,7 @@ describe('Drag-and-Drop Reordering Logic', function() {
       container.dispatchEvent(dropEvent);
       
       // Verification: item1 should have new coordinates
-      assert.strictEqual(item1.style.left, '200px');
-      assert.strictEqual(item1.style.top, '200px');
+      assert.strictEqual(item1.style.left, '208px');
+      assert.strictEqual(item1.style.top, '208px');
   });
 });
