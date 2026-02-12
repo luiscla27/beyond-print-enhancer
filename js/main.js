@@ -335,15 +335,32 @@ function removeSpecificSvgs(container) {
 
     // 1. Remove first .ddbc-box-background
     const firstBg = container.querySelector('.ddbc-box-background');
-    if (firstBg) firstBg.style.display = 'none';
+    if (firstBg) {
+        // User Request: Don't hide the background if it belongs to Armor Class or Initiative
+        const isProtected = firstBg.querySelector('.ddbc-armor-class-box-svg, .ddbc-initiative-box-svg') ||
+                            firstBg.closest('.ddbc-armor-class-box, .ddbc-initiative-box');
+        
+        if (!isProtected) {
+            firstBg.style.display = 'none';
+        }
+    }
 
     // 2. Remove all section > div > svg
     // Check nested instances
-    container.querySelectorAll('section > div > svg').forEach(svg => svg.style.display = 'none');
+    // User Request: Exclude .ddbc-armor-class-box-svg and .ddbc-initiative-box-svg
+    container.querySelectorAll('section > div > svg').forEach(svg => {
+        if (!svg.classList.contains('ddbc-armor-class-box-svg') && !svg.classList.contains('ddbc-initiative-box-svg')) {
+            svg.style.display = 'none';
+        }
+    });
     
     // Check if container itself matches section > div > svg pattern (e.g. if container is section)
     if (container.tagName === 'SECTION') {
-        container.querySelectorAll(':scope > div > svg').forEach(svg => svg.style.display = 'none');
+        container.querySelectorAll(':scope > div > svg').forEach(svg => {
+            if (!svg.classList.contains('ddbc-armor-class-box-svg') && !svg.classList.contains('ddbc-initiative-box-svg')) {
+                svg.style.display = 'none';
+            }
+        });
     }
 }
 
@@ -455,11 +472,16 @@ async function injectClonesIntoSpellsView() {
 
   // 5. Wrap existing Children (Skills, Senses, etc.)
   // These are already in the DOM, we want to wrap them if they aren't already.
+  let unnamedSectionCounter = 1;
   Array.from(layoutRoot.children).forEach(child => {
       if (!child.classList.contains('print-section-container')) {
           // Identify a title for the section (e.g. from a header)
           const titleEl = child.querySelector('header, .ct-subsection__header');
-          const title = titleEl ? titleEl.textContent.trim() : 'Section';
+          let title = titleEl ? titleEl.textContent.trim() : null;
+          
+          if (!title) {
+              title = `Section ${unnamedSectionCounter++}`;
+          }
           
           // Ensure SVGs are removed from existing sections too
           removeSpecificSvgs(child);
@@ -490,6 +512,34 @@ async function injectClonesIntoSpellsView() {
   allSectionsOrdered.forEach(container => {
       layoutRoot.appendChild(container); // Append moves them to the end or maintains order if prepended
   });
+
+  // User Request: Apply Default Coordinates - Use explicit styles and logic
+  const defaultLayouts = {
+      'section-Section-1': { left: '0px', top: '0px', width: '256px', height: '208px' },
+      'section-Section-2': { left: '0px', top: '208px', width: '256px', height: '208px' },
+      'section-Section-3': { left: '0px', top: '416px', width: '256px', height: '272px' },
+      'section-Section-4': { left: '272px', top: '0px', width: '208px', height: '688px' },
+      'section-Section-5': { left: '496px', top: '0px', width: '528px', height: '160px' },
+      'section-Section-6': { left: '1040px', top: '0px', width: '160px', height: '160px' },
+      'section-Actions':   { left: '496px', top: '160px', width: '704px', height: '1008px' }
+  };
+
+  // Give a small delay to ensure DOM is ready? Just to be safe.
+  setTimeout(() => {
+    console.log('[DDB Print] Applying Default Layouts...');
+    for (const [id, styles] of Object.entries(defaultLayouts)) {
+        const section = document.getElementById(id);
+        if (section) {
+            console.log(`[DDB Print] Applying defaults to ${id}`, styles);
+            // Explicitly set properties to ensure they take effect
+            for (const [prop, val] of Object.entries(styles)) {
+                section.style.setProperty(prop, val, 'important');
+            }
+        } else {
+            console.warn(`[DDB Print] Default layout target not found: ${id}`);
+        }
+    }
+  }, 100);
 
   // 8. Hide Navigation UI
   const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
@@ -548,6 +598,27 @@ function tweakStyles() {
     el.style['font-weight'] = 'bold';
     el.style['color'] = 'black';
   });
+}
+
+/**
+ * Moves the character portrait to the primary box.
+ */
+function movePortrait() {
+    // User Request: Append .ddbc-character-avatar__portrait to .ct-subsection.ct-subsection--primary-box
+    const portrait = document.querySelector('.ddbc-character-avatar__portrait');
+    const target = document.querySelector('.ct-subsection.ct-subsection--primary-box');
+    
+    if (portrait && target) {
+        // Ensure portrait is visible and styled properly
+        portrait.style.display = 'block';
+        portrait.style.width = '100%';
+        portrait.style.height = 'auto'; // Maintain aspect ratio
+        
+        target.appendChild(portrait);
+        console.log('[DDB Print] Moved character portrait.');
+    } else {
+        console.warn('[DDB Print] Could not find portrait or target to move.');
+    }
 }
 
 /**
@@ -653,16 +724,43 @@ function enforceFullHeight() {
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
-    :not(svg):not(g)[class*="content"]:not(.jsx-parser), .print-section-content {
+    :root {
+        /* Using your provided Base64 string */
+        --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
+    }
+
+    .print-section-wrapper > * {
+        width: 100%;
+    }
+    .print-section-content {
       overflow: visible !important;
       max-height: none !important;
       height: auto !important;
-      border: 2px solid #000;
-      padding: 10px;
-      border-radius: 4px;
+      border-width: 20px;
+      border-style: solid;
+      border-color: transparent;
+      border-image-source: var(--border-img);
+      border-image-slice: 20;
+      border-image-repeat: stretch;
+      padding: 0;
+    }
+    section {
+      max-height: 100vh !important;
+      height: 100% !important;
+      padding: 0 !important;
     }
 
+    #character-tools-target {
+        background-color: white;
+    }
+
+    .ct-character-sheet:before,
+    .ddbc-theme-link,
     .ddbc-character-tidbits__heading,
+    .ct-extras-filter__interactions,
+    .ct-inventory-filter,
+    .ct-spells-spell__action,
+    .ct-features__management-link,
     .ct-subsection__footer,
     .ct-character-header-desktop,
     .ct-quick-info__inspiration,
@@ -706,25 +804,25 @@ function enforceFullHeight() {
         overflow-y: auto !important;
         overflow-x: hidden !important;
     }
-    @page { 
-        size: letter; 
-        margin: 0.5in; 
+    .ct-character-sheet {
+        background-color: #333;
     }
-    
+    .ct-character-sheet-desktop {
+        background-color: white;
+    }
     @media screen {
         .ct-character-sheet-desktop {
             max-width: none !important;
             margin: 0 !important;
             width: 100% !important;
             min-height: 100vh !important;
-            background-color: transparent !important;
+            background-color: white !important;
             box-shadow: none !important;
         }
     }
     
     @media print {
         body, .ct-character-sheet-desktop {
-            width: 11in !important; /* 11in (landscape width) - no margins */
             margin: 0 !important;
             padding: 0 !important;
         }
@@ -741,9 +839,11 @@ function enforceFullHeight() {
         min-height: 30px !important;
         background-color: white;
         box-sizing: border-box;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         display: flex !important;
         flex-direction: column !important;
+    }
+    .print-section-container:hover { 
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     }
 
     .print-section-content {
@@ -760,12 +860,23 @@ function enforceFullHeight() {
         white-space: normal !important;
         overflow-wrap: break-word !important;
     }
+    .ct-senses__callout-value,
+    .integrated-dice__container,
+    .integrated-dice__container span {
+        font-size: 16px !important;
+    }
+    .ddbc-armor-class-box__value {
+        font-size: 26px !important;
+    }
 
     /* Scaling helper */
     .print-section-container[data-scaling="true"] .print-section-content > div {
         transform-origin: top left;
     }
 
+    .ddbc-character-avatar__portrait {
+        width: 100%;
+    }
     .print-section-header {
         cursor: move;
         user-select: none;
@@ -773,6 +884,7 @@ function enforceFullHeight() {
         padding: 4px !important;
         opacity: 0; /* Hidden by default */
         transition: opacity 0.2s;
+        height: 16px !important;
     }
 
     .print-section-container:hover {
@@ -913,6 +1025,7 @@ function autoArrangeSections() {
     let currentY = 10;
     let rowHeight = 0;
     const gutter = 15;
+    let columnsInRow = 0;
 
     sections.forEach(section => {
         section.style.left = '0px';
@@ -921,11 +1034,15 @@ function autoArrangeSections() {
         const width = section.offsetWidth || 300;
         const height = section.offsetHeight || 150;
 
-        if (currentX + width > viewportWidth - 20 && currentX > 10) {
+        // Check if we need a new row:
+        // 1. If it doesn't fit horizontally
+        // 2. OR if we've reached the 3-column limit
+        if ((currentX + width > viewportWidth - 20 && currentX > 10) || columnsInRow >= 3) {
             // New row
             currentX = 10;
             currentY += rowHeight + gutter;
             rowHeight = 0;
+            columnsInRow = 0;
         }
 
         // Snap to grid
@@ -937,6 +1054,7 @@ function autoArrangeSections() {
         
         currentX += width + gutter;
         if (height > rowHeight) rowHeight = height;
+        columnsInRow++;
     });
     
     updateLayoutBounds();
@@ -1042,11 +1160,13 @@ function updateLayoutBounds() {
     window.removeSearchBoxes = removeSearchBoxes;
     window.tweakStyles = tweakStyles;
     window.moveDefenses = moveDefenses;
+    window.movePortrait = movePortrait;
     window.initResponsiveScaling = initResponsiveScaling;
     window.initZIndexManagement = initZIndexManagement;
     window.autoArrangeSections = autoArrangeSections;
     window.initResizeLogic = initResizeLogic;
     window.updateLayoutBounds = updateLayoutBounds;
+    window.removeSpecificSvgs = removeSpecificSvgs;
 
 // Execution
 (async () => {
@@ -1061,6 +1181,7 @@ function updateLayoutBounds() {
     moveDefenses();
     tweakStyles();
     removeSearchBoxes();
+    movePortrait(); // User Request: Move portrait at the end
     initDragAndDrop();
     initResponsiveScaling();
     initZIndexManagement();
