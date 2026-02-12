@@ -1,4 +1,4 @@
-# D&D Beyond Character Sheet Print Enhancer
+# Print Enhancer for D&D Beyond
 
 **Modernized and restored for 2026 site changes.** This extension helps you print your D&D Beyond character sheets in a clean, it was forked from the abandoned project by user "Adam Pritchard" on GitHub. I made this project because I wanted print-ready character sheets for my D&D games. without having to manually edit the PDF.
 
