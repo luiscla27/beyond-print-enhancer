@@ -22,8 +22,44 @@ describe('Storage Layer', function() {
     assert.deepStrictEqual(loadedData, testData);
   });
 
-  it('should return undefined for non-existent character', async function() {
-    const loadedData = await Storage.loadLayout('non-existent');
-    assert.strictEqual(loadedData, undefined);
-  });
-});
+    it('should return undefined for non-existent character', async function() {
+
+      const loadedData = await Storage.loadLayout('non-existent');
+
+      assert.strictEqual(loadedData, undefined);
+
+    });
+
+  
+
+      it('should save and load global layout data', async function() {
+
+  
+
+        const globalData = { version: '1.0.0', sections: { 'test': {} } };
+
+  
+
+        await Storage.saveGlobalLayout(globalData);
+
+  
+
+        const loadedData = await Storage.loadGlobalLayout();
+
+  
+
+        assert.deepStrictEqual(loadedData, { ...globalData, characterId: 'GLOBAL' });
+
+  
+
+      });
+
+  
+
+    });
+
+  
+
+    
+
+  

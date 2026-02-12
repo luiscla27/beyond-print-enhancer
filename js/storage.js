@@ -91,6 +91,22 @@ const Storage = {
       request.onsuccess = (event) => resolve(event.target.result);
       request.onerror = (event) => reject(event.target.error);
     });
+  },
+
+  /**
+   * Save global layout data.
+   * @param {object} data 
+   */
+  saveGlobalLayout: (data) => {
+    return Storage.saveLayout('GLOBAL', data);
+  },
+
+  /**
+   * Load global layout data.
+   * @returns {Promise<object|undefined>}
+   */
+  loadGlobalLayout: () => {
+    return Storage.loadLayout('GLOBAL');
   }
 };
 
@@ -99,6 +115,6 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     ...Storage,
     SCHEMA_VERSION,
-    Storage
+    Storage: Storage // Ensure Storage itself is also available if needed
   };
 }
