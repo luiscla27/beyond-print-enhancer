@@ -24,11 +24,11 @@ This phase focuses on capturing the DOM state and rendering it as a new "Clone" 
 ## Phase 3: Persistence - Save/Load Integration
 Integrating clones into the existing persistence layer (IndexedDB and JSON).
 
-- [ ] Task: Write tests for the updated storage schema (ensuring clones are included in exports).
-- [ ] Task: Update the `saveLayout` and `loadLayout` functions to include the `clones` array in the data structure.
-- [ ] Task: Implement logic to restore clones on page load from the stored snapshots.
-- [ ] Task: Verify that resizing and positioning of clones are persisted correctly.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Persistence' (Protocol in workflow.md)
+- [x] Task: Write tests for the updated storage schema (ensuring clones are included in exports). 454aaa1
+- [x] Task: Update the `saveLayout` and `loadLayout` functions to include the `clones` array in the data structure. 454aaa1
+- [x] Task: Implement logic to restore clones on page load from the stored snapshots. 454aaa1
+- [x] Task: Verify that resizing and positioning of clones are persisted correctly. 454aaa1
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Persistence' (Protocol in workflow.md)
 
 ## Phase 4: Interactions - Title Editing & Deletion
 Finalizing the user interactions for managing existing clones.
