@@ -1244,8 +1244,137 @@ function enforceFullHeight() {
         background: transparent;
         color: #ccc;
     }
+
+    /* Clone Delete Button */
+    .be-clone-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        z-index: 1000000;
+        opacity: 0;
+        background: #979797;
+        border: 1px solid rgb(85, 85, 85);
+        font-size: 18px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+        padding: 0;
+        margin: 0;
+        filter: drop-shadow(2px 4px 6px black);
+        border-radius: 32px;
+        color: white;
+    }
+    .print-section-container:hover .be-clone-delete {
+        opacity: 1;
+    }
+    .be-clone-delete:hover {
+        background: #cc0000;
+    }
+    @media print {
+        .be-clone-button, .be-clone-delete {
+            display: none !important;
+        }
+    }
   `;
   document.head.appendChild(style);
+}
+
+/**
+ * Shows a modal to manage existing clones.
+ */
+function handleManageClones() {
+    const clones = document.querySelectorAll('.print-section-container.be-clone');
+    if (clones.length === 0) {
+        showFeedback('No clones found');
+        return;
+    }
+
+    // Modal for managing clones
+    const overlay = document.createElement('div');
+    overlay.className = 'be-modal-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'be-modal';
+    modal.style.width = '500px';
+    
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Manage Clones';
+    modal.appendChild(h3);
+    
+    const list = document.createElement('div');
+    list.style.maxHeight = '300px';
+    list.style.overflowY = 'auto';
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+    list.style.gap = '8px';
+    
+    clones.forEach(clone => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.padding = '8px';
+        item.style.background = '#333';
+        item.style.borderRadius = '4px';
+        
+        const titleSpan = clone.querySelector('.print-section-header span');
+        const name = titleSpan ? titleSpan.textContent : 'Unnamed Clone';
+        
+        const nameLabel = document.createElement('span');
+        nameLabel.textContent = name;
+        item.appendChild(nameLabel);
+        
+        const actions = document.createElement('div');
+        actions.style.display = 'flex';
+        actions.style.gap = '8px';
+        
+        const goBtn = document.createElement('button');
+        goBtn.textContent = '🎯';
+        goBtn.title = 'Jump to Clone';
+        goBtn.onclick = () => {
+            clone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Flash effect
+            const originalOutline = clone.style.outline;
+            clone.style.outline = '4px solid gold';
+            setTimeout(() => clone.style.outline = originalOutline, 1000);
+            overlay.remove();
+        };
+        actions.appendChild(goBtn);
+        
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '🗑️';
+        delBtn.title = 'Delete Clone';
+        delBtn.onclick = () => {
+            if (confirm(`Delete "${name}"?`)) {
+                clone.remove();
+                item.remove();
+                if (list.children.length === 0) {
+                    overlay.remove();
+                }
+                showFeedback('Clone deleted');
+                updateLayoutBounds();
+            }
+        };
+        actions.appendChild(delBtn);
+        
+        item.appendChild(actions);
+        list.appendChild(item);
+    });
+    
+    modal.appendChild(list);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.className = 'be-modal-ok';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 }
 
 /**
@@ -1303,6 +1432,37 @@ function renderClonedSection(snapshot) {
     const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
     container.classList.add('be-clone');
     container.dataset.originalId = snapshot.originalId;
+
+    // Double-click to edit title
+    const header = container.querySelector('.print-section-header');
+    if (header) {
+        header.addEventListener('dblclick', async (e) => {
+            e.stopPropagation();
+            const titleSpan = header.querySelector('span');
+            const currentTitle = titleSpan ? titleSpan.textContent.trim() : 'Clone';
+            // Use window reference for mockability in tests
+            const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
+            if (newTitle && titleSpan) {
+                titleSpan.textContent = newTitle;
+                showFeedback('Title updated');
+            }
+        });
+    }
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'be-clone-delete';
+    deleteBtn.innerHTML = '🗑️';
+    deleteBtn.title = 'Delete Clone';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm('Delete this clone?')) {
+            container.remove();
+            showFeedback('Clone deleted');
+            updateLayoutBounds();
+        }
+    };
+    container.appendChild(deleteBtn);
     
     // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
     const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
@@ -1717,13 +1877,14 @@ function createControls() {
         { label: 'Save PC', icon: '💻', action: handleSavePC },
         { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Load', icon: '📂', action: handleLoadFile },
-        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank') }
+        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), bgColor: 'rgb(115 97 29)' }
     ];
 
     buttons.forEach(btnInfo => {
         const btn = document.createElement('button');
         btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
-        btn.style.backgroundColor = '#333';
+        btn.style.backgroundColor = btnInfo.bgColor || '#333';
         btn.style.color = 'white';
         btn.style.border = '1px solid #555';
         btn.style.padding = '6px 12px';
@@ -2349,6 +2510,7 @@ function injectCloneButtons() {
     window.createControls = createControls;
     window.showFallbackModal = showFallbackModal;
     window.showInputModal = showInputModal;
+    window.handleManageClones = handleManageClones;
     window.captureSectionSnapshot = captureSectionSnapshot;
     window.renderClonedSection = renderClonedSection;
     window.Storage = Storage;
