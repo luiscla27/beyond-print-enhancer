@@ -1913,7 +1913,12 @@ function createControls() {
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
         { label: 'Save to PC', icon: '💻', action: handleSavePC },
-        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), bgColor: '#73611d' }
+        { 
+            label: 'Contribute', 
+            icon: '⭐', 
+            action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), 
+            bgColor: '#73611d' 
+        }
     ];
 
     buttons.forEach(btnInfo => {
@@ -1930,7 +1935,7 @@ function createControls() {
         btn.style.transition = 'background-color 0.2s';
         
         btn.onmouseenter = () => btn.style.backgroundColor = '#444';
-        btn.onmouseleave = () => btn.style.backgroundColor = '#333';
+        btn.onmouseleave = () => btn.style.backgroundColor = btnInfo.bgColor || '#333';
         btn.onclick = btnInfo.action;
         
         container.appendChild(btn);
