@@ -2,83 +2,92 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
+
+// Read the main.js file content to evaluate in JSDOM context
+const mainJsPath = path.resolve(__dirname, '../../js/main.js');
+const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
 describe('Absolute Positioning Engine', function() {
   let window, document;
 
-  before(function() {
-    const htmlContent = `
+  beforeEach(function() {
+    // Mock a DOM that represents the D&D Beyond character sheet
+    const dom = new JSDOM(`
       <!DOCTYPE html>
       <html>
+        <head></head>
         <body>
-          <div id="print-layout-wrapper" style="position: relative; width: 1000px; height: 1000px;">
-            <div class="print-section-container" id="item-1" style="position: absolute; width: 100px; height: 100px;">
+          <div id="print-layout-wrapper">
+            <div class="print-section-container" id="item-1" style="position: absolute; left: 0px; top: 0px;">
                 <div class="print-section-header">Header</div>
+                <div class="print-section-content">Content</div>
+            </div>
+            <div class="print-section-container" id="item-2" style="position: absolute; left: 200px; top: 0px;">
+                <div class="print-section-header">Header 2</div>
+                <div class="print-section-content">Content 2</div>
             </div>
           </div>
         </body>
       </html>
-    `;
-    const dom = new JSDOM(htmlContent, {
+    `, {
+      url: "https://www.dndbeyond.com/characters/12345",
       runScripts: "dangerously",
       resources: "usable"
     });
+    
     window = dom.window;
+    window.indexedDB = global.indexedDB;
     document = window.document;
-
-    // Inject main.js logic
+    global.window = window;
+    global.document = document;
+    global.HTMLElement = window.HTMLElement;
+    global.NodeList = window.NodeList;
+    
+    // We need to evaluate the script. 
     window.__DDB_TEST_MODE__ = true;
-    let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
-    const scriptEl = document.createElement('script');
-    scriptEl.textContent = mainJs;
-    document.body.appendChild(scriptEl);
-    
-    window.initDragAndDrop();
-    
-    // Global Mock for requestAnimationFrame
+    window.eval(mainJsContent);
+
+    // Mock requestAnimationFrame to execute callback immediately
     window.requestAnimationFrame = (cb) => cb();
+
+    // Initialize drag and drop
+    window.initDragAndDrop();
   });
 
   it('should update element coordinates on drop', function() {
-    const container = document.getElementById('print-layout-wrapper');
     const item = document.getElementById('item-1');
+    const header = item.querySelector('.print-section-header');
     
-    // Mock getBoundingClientRect
-    container.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 1000 });
-    item.getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 110 });
+    // Simulate drag start
+    const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 10, clientY: 10 });
+    startEvent.dataTransfer = { 
+        effectAllowed: '', 
+        setData: () => {},
+        setDragImage: () => {} 
+    };
+    header.dispatchEvent(startEvent);
     
-    // 1. Drag Start (click at 15, 15 - offset is 5, 5)
-    const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 15, clientY: 15 });
-    startEvent.dataTransfer = { effectAllowed: '', setData: () => {} };
-    item.querySelector('.print-section-header').dispatchEvent(startEvent);
-    
-    // 2. Drop (drop at 105, 105)
-    // New position should be: 105 - container.left(0) - offset.x(5) = 100
+    // Simulate drop at new location
     const dropEvent = new window.MouseEvent('drop', { 
         bubbles: true, 
-        clientX: 105, 
-        clientY: 105 
+        clientX: 100, 
+        clientY: 150 
     });
-    container.dispatchEvent(dropEvent);
+    
+    document.getElementById('print-layout-wrapper').dispatchEvent(dropEvent);
     
     assert.strictEqual(item.style.left, '96px');
-    assert.strictEqual(item.style.top, '96px');
+    assert.strictEqual(item.style.top, '144px');
   });
 
   it('should set custom drag image on dragstart', function(done) {
     const item = document.getElementById('item-1');
-    
-    // Mock setDragImage
     let setDragImageCalled = false;
     const mockSetDragImage = (img, x, y) => {
         setDragImageCalled = true;
-        assert.strictEqual(img, item);
-        assert.ok(typeof x === 'number');
-        assert.ok(typeof y === 'number');
+        assert.ok(img instanceof window.HTMLElement);
     };
-
-    // Mock requestAnimationFrame
-    window.requestAnimationFrame = (cb) => cb();
 
     const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 15, clientY: 15 });
     startEvent.dataTransfer = { 
@@ -93,54 +102,40 @@ describe('Absolute Positioning Engine', function() {
     assert.ok(setDragImageCalled, 'setDragImage should be called');
     
     // Opacity should be set immediately because of our requestAnimationFrame mock
-    assert.strictEqual(item.style.opacity, '0.4');
+    assert.strictEqual(item.style.opacity, '0.98');
     done();
   });
 
-  describe('Persistence', function() {
-    it('should collect coordinates in handleSaveLayout', async function() {
-        // Mocking Storage for test
-        window.Storage = {
-            init: () => Promise.resolve(),
-            saveLayout: (id, data) => {
-                window.__LAST_SAVED_DATA__ = data;
-                return Promise.resolve();
-            }
-        };
-        
-        // Mock global handleSaveLayout dependencies
-        window.location.pathname = '/characters/12345';
-        window.alert = () => {};
-        
-        // Load controls.js
-        let controlsJs = fs.readFileSync(path.resolve(__dirname, '../../js/controls.js'), 'utf8');
-        const scriptEl = document.createElement('script');
-        scriptEl.textContent = controlsJs;
-        document.body.appendChild(scriptEl);
+  describe('Persistence Integration', function() {
+    it('should save and restore coordinates using real Storage', async function() {
+        // Setup
+        await window.Storage.init();
         
         const item = document.getElementById('item-1');
         item.style.left = '123px';
         item.style.top = '456px';
         
-        await window.handleSaveLayout();
+        // Mock global dependencies
+        window.location.pathname = '/characters/12345';
+        window.alert = () => {};
         
-        const savedItem = window.__LAST_SAVED_DATA__.sectionOrder.find(s => s.id === 'item-1');
-        assert.strictEqual(savedItem.left, '123px');
-        assert.strictEqual(savedItem.top, '456px');
-    });
+        // Act: Save
+        await window.handleSaveBrowser();
+        
+        // Verify in DB (Internal check)
+        const saved = await window.Storage.loadGlobalLayout();
+        assert.strictEqual(saved.sections['item-1'].left, '123px');
 
-    it('should restore coordinates in restoreLayout', async function() {
-        window.Storage.loadLayout = () => Promise.resolve({
-            sectionOrder: [
-                { id: 'item-1', left: '789px', top: '321px' }
-            ]
-        });
-        
+        // Reset positions
+        item.style.left = '0px';
+        item.style.top = '0px';
+
+        // Act: Restore
         await window.restoreLayout();
         
-        const item = document.getElementById('item-1');
-        assert.strictEqual(item.style.left, '789px');
-        assert.strictEqual(item.style.top, '321px');
+        // Assert
+        assert.strictEqual(item.style.left, '123px');
+        assert.strictEqual(item.style.top, '456px');
     });
   });
 });

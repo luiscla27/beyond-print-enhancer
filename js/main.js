@@ -3,6 +3,135 @@ Licensed under Blue Oak Model License 1.0.0
 */
 
 (function () {
+
+/**
+ * Storage management for D&D Beyond Print Enhancer.
+ * Uses IndexedDB to persist layout configurations and custom data.
+ */
+const DB_NAME = 'DDBPrintEnhancerDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'layouts';
+const SCHEMA_VERSION = '1.0.0';
+
+const DEFAULT_LAYOUTS = {
+    'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
+    'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '176px' },
+    'section-Section-2': { left: '0px', top: '352px', width: '256px', height: '176px' },
+    'section-Section-3': { left: '0px', top: '544px', width: '256px', height: '208px' },
+    'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '592px' },
+    'section-Section-5': { left: '496px', top: '160px', width: '528px', height: '160px' },
+    'section-Section-6': { left: '1040px', top: '160px', width: '160px', height: '160px' },
+    'section-Actions':   { left: '496px', top: '336px', width: '704px', height: '1360px' },
+    'section-Notes':   { left: '0px', top: '768px', width: '480px', height: '928px' },
+    'section-Features_&_Traits':   { left: '0px', top: '1712px', width: '480px', height: '1984px' },
+    'section-Spells':   { left: '496px', top: '1712px', width: '704px', height: '816px' },
+    'section-Extras':   { left: '0px', top: '3712px', width: '480px', height: '1936px' },
+    'section-Background':   { left: '496px', top: '2544px', width: '704px', height: '1152px' },
+    'section-Inventory':   { left: '496px', top: '3712px', width: '704px', height: '1936px' }
+};
+
+let db = null;
+
+const Storage = {
+  SCHEMA_VERSION,
+
+  /**
+   * Initialize the IndexedDB connection.
+   */
+  init: () => {
+    return new Promise((resolve, reject) => {
+      if (db) return resolve(db);
+
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onerror = (event) => {
+        console.error('[DDB Print Enhance] IndexedDB error:', event.target.error);
+        reject(event.target.error);
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
+        }
+      };
+
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        resolve(db);
+      };
+    });
+  },
+
+  /**
+   * Validates if the object matches the expected layout schema.
+   * @param {object} data 
+   * @returns {boolean}
+   */
+  validateLayout: (data) => {
+      if (!data || typeof data !== 'object') return false;
+      if (data.version === undefined || data.sections === undefined) return false;
+      if (typeof data.sections !== 'object') return false;
+      return true;
+  },
+
+  /**
+   * Save character layout data.
+   * @param {string} characterId 
+   * @param {object} data - { characterId, sectionOrder, customSpells }
+   */
+  saveLayout: (characterId, data) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      // Ensure characterId is present in the data object for the keyPath
+      const payload = { ...data, characterId };
+      
+      const request = store.put(payload);
+
+      request.onsuccess = () => resolve();
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Load character layout data.
+   * @param {string} characterId 
+   * @returns {Promise<object|undefined>}
+   */
+  loadLayout: (characterId) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(characterId);
+
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Save global layout data.
+   * @param {object} data 
+   */
+  saveGlobalLayout: (data) => {
+    return Storage.saveLayout('GLOBAL', data);
+  },
+
+  /**
+   * Load global layout data.
+   * @returns {Promise<object|undefined>}
+   */
+  loadGlobalLayout: () => {
+    return Storage.loadLayout('GLOBAL');
+  }
+};
+
 /**
  * Robust query selector that tries multiple patterns and handles obfuscated classes.
  */
@@ -110,10 +239,7 @@ function createDraggableContainer(title, content, id) {
   header.setAttribute('draggable', 'true'); // Added here instead
   
   header.style.fontWeight = 'bold';
-  header.style.fontSize = '1.2em';
-  header.style.padding = '5px';
-  header.style.borderBottom = '1px solid black';
-  header.style.backgroundColor = '#eee';
+  header.style.fontSize = '18px';
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
   header.style.alignItems = 'center';
@@ -513,34 +639,6 @@ async function injectClonesIntoSpellsView() {
       layoutRoot.appendChild(container); // Append moves them to the end or maintains order if prepended
   });
 
-  // User Request: Apply Default Coordinates - Use explicit styles and logic
-  const defaultLayouts = {
-      'section-Section-1': { left: '0px', top: '0px', width: '256px', height: '208px' },
-      'section-Section-2': { left: '0px', top: '208px', width: '256px', height: '208px' },
-      'section-Section-3': { left: '0px', top: '416px', width: '256px', height: '272px' },
-      'section-Section-4': { left: '272px', top: '0px', width: '208px', height: '688px' },
-      'section-Section-5': { left: '496px', top: '0px', width: '528px', height: '160px' },
-      'section-Section-6': { left: '1040px', top: '0px', width: '160px', height: '160px' },
-      'section-Actions':   { left: '496px', top: '160px', width: '704px', height: '1008px' }
-  };
-
-  // Give a small delay to ensure DOM is ready? Just to be safe.
-  setTimeout(() => {
-    console.log('[DDB Print] Applying Default Layouts...');
-    for (const [id, styles] of Object.entries(defaultLayouts)) {
-        const section = document.getElementById(id);
-        if (section) {
-            console.log(`[DDB Print] Applying defaults to ${id}`, styles);
-            // Explicitly set properties to ensure they take effect
-            for (const [prop, val] of Object.entries(styles)) {
-                section.style.setProperty(prop, val, 'important');
-            }
-        } else {
-            console.warn(`[DDB Print] Default layout target not found: ${id}`);
-        }
-    }
-  }, 100);
-
   // 8. Hide Navigation UI
   const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
                   document.querySelector('nav[class*="styles_navigation"]');
@@ -622,6 +720,29 @@ function movePortrait() {
 }
 
 /**
+ * Moves Quick Info to a draggable container.
+ */
+function moveQuickInfo() {
+    // User Request: Make .ct-quick-info draggable
+    const quickInfo = document.querySelector('.ct-quick-info');
+    if (quickInfo) {
+        const layoutRoot = document.getElementById('print-layout-wrapper');
+        if (layoutRoot) {
+             // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
+             // Let's move it to preserve functionality.
+             const container = createDraggableContainer('Quick Info', quickInfo, 'section-Quick-Info');
+             layoutRoot.appendChild(container);
+             
+             // Ensure it's visible if parent was hidden
+             quickInfo.style.display = 'flex'; 
+             // quickInfo usually has fixed position/margin in normal sheet, reset it
+             quickInfo.style.position = 'static';
+             quickInfo.style.margin = '0';
+        }
+    }
+}
+
+/**
  * Drag and Drop Engine
  */
 let draggedItem = null;
@@ -649,7 +770,7 @@ function initDragAndDrop() {
 
         // Delay opacity change so the browser captures the full opacity element as the image
         requestAnimationFrame(() => {
-            draggedItem.style.opacity = '0.4';
+            draggedItem.style.opacity = '0.98';
         });
 
     }
@@ -724,28 +845,67 @@ function enforceFullHeight() {
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
+    @media print {
+        @page {
+            margin: 0;
+            size: letter portrait;
+        }
+        body {
+             /* User Request: Manual margins assuming 0 hardware margin */
+             margin-top: 0in !important;
+             margin-bottom: 0.25in !important;
+             margin-left: 0.1in !important;
+             margin-right: 0.1in !important;
+             padding: 0 !important;
+        }
+        
+        html {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Deep Clean: Aggressively hide top elements */
+        .site-bar, 
+        nav, 
+        header, 
+        .ddb-site-alert, 
+        .watermark, 
+        footer, 
+        #mega-menu-target, 
+        .mm-navbar,
+        .notifications-wrapper {
+            display: none !important;
+        }
+
+        .ct-character-sheet-desktop {
+            margin: 0 !important;
+            padding: 0 !important;
+            /* Force absolute top to ignore any flow */
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+        }
+             
+        p, 
+        span,
+        div.ct-content-group { 
+            break-inside: avoid; 
+        }
+    }
+
     :root {
         /* Using your provided Base64 string */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
     }
 
-    .print-section-wrapper > * {
-        width: 100%;
-    }
     .print-section-content {
       overflow: visible !important;
       max-height: none !important;
-      height: auto !important;
-      border-width: 20px;
-      border-style: solid;
-      border-color: transparent;
-      border-image-source: var(--border-img);
-      border-image-slice: 20;
-      border-image-repeat: stretch;
       padding: 0;
+      height: auto !important;
     }
     section {
-      max-height: 100vh !important;
       height: 100% !important;
       padding: 0 !important;
     }
@@ -754,6 +914,8 @@ function enforceFullHeight() {
         background-color: white;
     }
 
+    dialog + div,
+    .dice-rolling-panel,
     .ct-character-sheet:before,
     .ddbc-theme-link,
     .ddbc-character-tidbits__heading,
@@ -776,9 +938,9 @@ function enforceFullHeight() {
         position: static!important;
         display: flex!important;
         flex-flow: row!important;
+        height: 100%;
     }
     .ct-character-sheet-desktop .ct-subsections {
-        min-height: 100vh !important;
         height: auto !important;
         display: block;
         width: 100%;
@@ -809,28 +971,35 @@ function enforceFullHeight() {
     }
     .ct-character-sheet-desktop {
         background-color: white;
+        height: 100%;
+        -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
+        box-shadow: 5px 5px 15px 5px #3f3f3fff;
     }
+
+    .print-section-wrapper,
+    .print-section-wrapper > * {
+        width: 100%;
+        max-width: 1200px;
+        padding: 0 !important;
+    }
+
+    @media (min-width: 1200px) {
+        .ct-primary-box {
+            width: 100% !important;
+        }
+    }
+
     @media screen {
         .ct-character-sheet-desktop {
             max-width: none !important;
             margin: 0 !important;
             width: 100% !important;
-            min-height: 100vh !important;
             background-color: white !important;
-            box-shadow: none !important;
-        }
-    }
-    
-    @media print {
-        body, .ct-character-sheet-desktop {
-            margin: 0 !important;
-            padding: 0 !important;
         }
     }
     
     .print-section-container { 
         break-inside: avoid; 
-        border: 1px solid transparent; /* Hidden by default */
         position: absolute !important;
         z-index: 10;
         /* resize: both !important; Removed for custom handle */
@@ -841,17 +1010,17 @@ function enforceFullHeight() {
         box-sizing: border-box;
         display: flex !important;
         flex-direction: column !important;
+        border-width: 20px;
+        border-style: solid;
+        border-color: transparent;
+        border-image-source: var(--border-img);
+        border-image-slice: 20;
+        border-image-repeat: stretch;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
     }
     .print-section-container:hover { 
         box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .print-section-content {
-        flex: 1 1 auto !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-        position: relative !important;
     }
 
     .print-section-container, 
@@ -859,6 +1028,32 @@ function enforceFullHeight() {
         font-size: 8px !important;
         white-space: normal !important;
         overflow-wrap: break-word !important;
+    }
+    .print-section-container .ct-combat__statuses h2 *,
+    .print-section-container .ct-combat__statuses h2 + *,
+    .print-section-container .ct-quick-info * {
+        font-size: 12px !important;
+    }
+    .print-section-container .ct-quick-info__health * {
+        font-size: 14px !important;
+    }
+    @media print {
+        body, .ct-character-sheet-desktop {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+        .print-page-separator {
+            display: none !important;
+        }
+    }
+    .print-section-content {
+        flex: 1 1 auto !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: relative !important;
     }
     .ct-senses__callout-value,
     .integrated-dice__container,
@@ -877,20 +1072,28 @@ function enforceFullHeight() {
     .ddbc-character-avatar__portrait {
         width: 100%;
     }
+    .print-section-header span {
+        font-size: 16px !important;
+    }
     .print-section-header {
         cursor: move;
         user-select: none;
-        font-size: 10px !important;
-        padding: 4px !important;
-        opacity: 0; /* Hidden by default */
+        font-size: 18px !important;
+        opacity: 0;
+        position: absolute;
         transition: opacity 0.2s;
-        height: 16px !important;
+        margin-top: 0px;
+        z-index: 999999999;
+        width: calc(100% - 64px);
+        height: 32px;
+        background-color: #979797;
+        line-height: 18px;
+        left: 32px;
+        border-radius: 32px;
+        padding: 0 16px;
+        filter: drop-shadow(2px 4px 6px black);
+        min-width: max-content;
     }
-
-    .print-section-container:hover {
-        border: 1px solid #ccc;
-    }
-
     .print-section-container:hover .print-section-header {
         opacity: 1;
     }
@@ -908,7 +1111,7 @@ function enforceFullHeight() {
     }
     .print-section-container:hover .print-section-resize-handle {
         opacity: 1;
-        background: linear-gradient(135deg, transparent 50%, #ccc 50%);
+        background: linear-gradient(135deg, transparent 50%, #979797 50%);
     }
 
     /* Skills specific compact logic (already mostly covered by global above) */
@@ -1082,8 +1285,8 @@ function initResizeLogic() {
         resizingSection = e.target.closest('.print-section-container');
         startX = e.clientX;
         startY = e.clientY;
-        startWidth = parseInt(document.defaultView.getComputedStyle(resizingSection).width, 10);
-        startHeight = parseInt(document.defaultView.getComputedStyle(resizingSection).height, 10);
+        startWidth = parseInt(window.getComputedStyle(resizingSection).width, 10);
+        startHeight = parseInt(window.getComputedStyle(resizingSection).height, 10);
         
         document.documentElement.addEventListener('mousemove', doResize, false);
         document.documentElement.addEventListener('mouseup', stopResize, false);
@@ -1094,12 +1297,13 @@ function initResizeLogic() {
     function doResize(e) {
         if (!resizingSection) return;
         
-        let newWidth = startWidth + (e.clientX - startX);
-        let newHeight = startHeight + (e.clientY - startY);
+        // Calculate raw new dimensions
+        let rawNewWidth = startWidth + (e.clientX - startX);
+        let rawNewHeight = startHeight + (e.clientY - startY);
         
         // Snap to 16px
-        newWidth = Math.round(newWidth / 16) * 16;
-        newHeight = Math.round(newHeight / 16) * 16;
+        let newWidth = Math.round(rawNewWidth / 16) * 16;
+        let newHeight = Math.round(rawNewHeight / 16) * 16;
         
         // Min dimensions
         if (newWidth < 50) newWidth = 48; // nearest 16 is 48
@@ -1110,11 +1314,46 @@ function initResizeLogic() {
     }
 
     function stopResize() {
+        if (resizingSection) {
+            const finalWidth = parseInt(resizingSection.style.width, 10);
+            // Ensure finalWidth is valid number, fallback to computed if needed (though doResize sets style)
+            if (!isNaN(finalWidth)) {
+                const deltaX = finalWidth - startWidth;
+                if (deltaX !== 0) {
+                    adjustInnerContentWidth(resizingSection, deltaX);
+                }
+            }
+        }
+
         resizingSection = null;
         document.documentElement.removeEventListener('mousemove', doResize, false);
         document.documentElement.removeEventListener('mouseup', stopResize, false);
         updateLayoutBounds();
     }
+}
+
+/**
+ * Adjusts the width of immediate children of specific containers based on resize delta.
+ */
+function adjustInnerContentWidth(section, deltaX) {
+    // User Request: Scan for containers ending in "-row-header" or "-content"
+    const containers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
+    
+    containers.forEach(container => {
+        // User Request: Override width of IMMEDIATE divs
+        Array.from(container.children).forEach(child => {
+            if (child.tagName === 'DIV') {
+                const currentWidth = parseInt(window.getComputedStyle(child).width, 10);
+                if (!isNaN(currentWidth)) {
+                    const newWidth = currentWidth + deltaX;
+                    child.style.width = `${newWidth}px`;
+                    // Also set min/max width if they might constrain it? User said "Override", so:
+                    child.style.minWidth = `${newWidth}px`; 
+                    // child.style.maxWidth = `${newWidth}px`; // Maybe too aggressive?
+                }
+            }
+        });
+    });
 }
 
 /**
@@ -1129,6 +1368,9 @@ function updateLayoutBounds() {
 
     const sections = Array.from(document.querySelectorAll('.print-section-container'));
     sections.forEach(section => {
+        // Use getBoundingClientRect for accurate visual position relative to viewport/page
+        // BUT stick to style parsing for relative-to-parent calculation if parent is 0,0
+        // Since sections are absolute in a relative container, style.top is relative to container top.
         const top = parseInt(section.style.top) || 0;
         const left = parseInt(section.style.left) || 0;
         const width = section.offsetWidth || 0;
@@ -1146,8 +1388,571 @@ function updateLayoutBounds() {
     const newWidth = maxRight + 50;
 
     // Apply min-height/width to ensure it at least covers the viewport
-    container.style.minHeight = Math.max(newHeight, window.innerHeight) + 'px';
+    // User Request: Update body container height to always be at least the same height as furthest coordinate
+    
+    // 1. Update the wrapper itself
+    const minH = Math.max(newHeight, window.innerHeight) + 'px';
+    container.style.minHeight = minH;
+    container.style.height = minH; // Explicitly set height too just in case
     container.style.minWidth = Math.max(newWidth, window.innerWidth) + 'px';
+
+    // 2. Also attempt to update parent containers if they restrict height
+    const sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
+    if (sheetDesktop) {
+        sheetDesktop.style.minHeight = minH;
+        // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
+        sheetDesktop.style.height = 'auto'; 
+    }
+    
+    const sheetInner = document.querySelector('.ct-character-sheet__inner');
+    if (sheetInner) {
+         sheetInner.style.minHeight = minH;
+    }
+
+    drawPageSeparators(newHeight, 1200);
+}
+
+/**
+ * Creates the floating control panel.
+ */
+function createControls() {
+    const container = document.createElement('div');
+    container.id = 'print-enhance-controls';
+    container.style.position = 'fixed';
+    container.style.top = '10px';
+    container.style.left = '10px';
+    container.style.zIndex = '10000';
+    container.style.background = '#222';
+    container.style.border = '1px solid #444';
+    container.style.padding = '8px';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '8px';
+    container.style.borderRadius = '8px';
+    container.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+    container.style.opacity = '0.3';
+    container.style.transition = 'opacity 0.3s, transform 0.3s';
+    
+    // Hover logic
+    container.addEventListener('mouseenter', () => {
+        container.style.opacity = '1';
+        container.style.transform = 'scale(1.02)';
+    });
+    container.addEventListener('mouseleave', () => {
+        container.style.opacity = '0.3';
+        container.style.transform = 'scale(1)';
+    });
+
+    const buttons = [
+        { label: 'Save Browser', icon: '💾', action: handleSaveBrowser },
+        { label: 'Save PC', icon: '💻', action: handleSavePC },
+        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
+        { label: 'Load', icon: '📂', action: handleLoadFile },
+        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank') }
+    ];
+
+    buttons.forEach(btnInfo => {
+        const btn = document.createElement('button');
+        btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
+        btn.style.backgroundColor = '#333';
+        btn.style.color = 'white';
+        btn.style.border = '1px solid #555';
+        btn.style.padding = '6px 12px';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '12px';
+        btn.style.textAlign = 'left';
+        btn.style.transition = 'background-color 0.2s';
+        
+        btn.onmouseenter = () => btn.style.backgroundColor = '#444';
+        btn.onmouseleave = () => btn.style.backgroundColor = '#333';
+        btn.onclick = btnInfo.action;
+        
+        container.appendChild(btn);
+    });
+
+    document.body.appendChild(container);
+    
+    // Inject print-only styles to hide controls
+    if (!document.getElementById('ddb-print-controls-style')) {
+        const style = document.createElement('style');
+        style.id = 'ddb-print-controls-style';
+        style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
+        document.head.appendChild(style);
+    }
+}
+
+/**
+ * Handles saving the layout to IndexedDB.
+ */
+async function handleSaveBrowser() {
+    try {
+        await Storage.init();
+        const layout = scanLayout();
+        await Storage.saveGlobalLayout(layout);
+        
+        // Also save for specific character for the "revert to character" feature later
+        const characterId = window.location.pathname.split('/').pop();
+        if (characterId) {
+            await Storage.saveLayout(characterId, layout);
+        }
+        
+        showFeedback('Saved to browser!');
+    } catch (err) {
+        console.error('[DDB Print] Save failed', err);
+        alert('Failed to save layout to browser.');
+    }
+}
+
+/**
+ * Handles saving to PC.
+ */
+function handleSavePC() {
+    const layout = scanLayout();
+    const data = JSON.stringify(layout, null, 2);
+    const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
+
+    try {
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+        
+        showFeedback('Download started!');
+    } catch (err) {
+        console.error('[DDB Print] Download failed, showing modal', err);
+        showFallbackModal(data);
+    }
+}
+
+/**
+ * Applies the hardcoded default layout.
+ */
+function applyDefaultLayout() {
+    console.log('[DDB Print] Applying Default Layouts...');
+    for (const [id, styles] of Object.entries(DEFAULT_LAYOUTS)) {
+        const section = document.getElementById(id);
+        if (section) {
+            console.log(`[DDB Print] Applying defaults to ${id}`, styles);
+            // Explicitly set properties to ensure they take effect
+            for (const [prop, val] of Object.entries(styles)) {
+                section.style.setProperty(prop, val, 'important');
+            }
+        } else {
+            console.warn(`[DDB Print] Default layout target not found: ${id}`);
+        }
+    }
+    updateLayoutBounds();
+}
+
+/**
+ * Handles loading default layout.
+ */
+async function handleLoadDefault() {
+    if (!confirm('This will reset your layout to defaults. Are you sure?')) return;
+
+    try {
+        await Storage.init();
+        
+        // Remove from IndexedDB
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        store.delete('GLOBAL');
+        
+        const characterId = window.location.pathname.split('/').pop();
+        if (characterId) {
+            store.delete(characterId);
+        }
+
+        // Reset styles in DOM
+        document.querySelectorAll('.print-section-container').forEach(section => {
+            section.style.left = '';
+            section.style.top = '';
+            section.style.width = '';
+            section.style.height = '';
+            section.style.zIndex = '10';
+            section.dataset.minimized = 'false';
+            
+            const content = section.querySelector('.print-section-content');
+            if (content) content.style.display = 'flex';
+
+            // Reset inner widths
+            const inners = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"] div');
+            inners.forEach(el => {
+                if (el.tagName === 'DIV') {
+                    el.style.width = '';
+                    el.style.minWidth = '';
+                }
+            });
+        });
+
+        // Trigger default layout
+        applyDefaultLayout();
+        showFeedback('Layout reset to defaults!');
+    } catch (err) {
+        console.error('[DDB Print] Reset failed', err);
+        alert('Failed to reset layout.');
+    }
+}
+
+/**
+ * Handles loading from file.
+ */
+function handleLoadFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const layout = JSON.parse(event.target.result);
+                if (Storage.validateLayout(layout)) {
+                    applyLayout(layout);
+                    showFeedback('Layout loaded!');
+                } else {
+                    alert('Invalid layout file format.');
+                }
+            } catch (err) {
+                console.error('[DDB Print] Load failed', err);
+                alert('Failed to parse layout file.');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+/**
+ * Handles restoring the layout from IndexedDB.
+ */
+async function restoreLayout() {
+    try {
+        await Storage.init();
+        
+        // Strategy: Load character-specific first, fallback to global
+        const characterId = window.location.pathname.split('/').pop();
+        let layout = null;
+        
+        if (characterId) {
+            layout = await Storage.loadLayout(characterId);
+        }
+        
+        if (!layout) {
+            layout = await Storage.loadGlobalLayout();
+        }
+
+        if (layout && Storage.validateLayout(layout)) {
+            console.log('[DDB Print] Restoring saved layout...');
+            applyLayout(layout);
+            return true;
+        }
+    } catch (err) {
+        console.error('[DDB Print] Restore failed', err);
+    }
+    return false;
+}
+
+/**
+ * Shows a temporary feedback message.
+ */
+function showFeedback(msg) {
+    const feedback = document.createElement('div');
+    feedback.textContent = msg;
+    feedback.style.position = 'fixed';
+    feedback.style.top = '20px';
+    feedback.style.left = '50%';
+    feedback.style.transform = 'translateX(-50%)';
+    feedback.style.backgroundColor = '#333';
+    feedback.style.color = 'white';
+    feedback.style.padding = '10px 20px';
+    feedback.style.borderRadius = '5px';
+    feedback.style.zIndex = '10001';
+    feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
+    feedback.style.transition = 'opacity 0.5s';
+    
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+        feedback.style.opacity = '0';
+        setTimeout(() => feedback.remove(), 500);
+    }, 2000);
+}
+
+/**
+ * Shows a modal with layout data for manual copying.
+ * @param {string} jsonData 
+ */
+function showFallbackModal(jsonData) {
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'print-enhance-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    overlay.style.zIndex = '20000';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.backdropFilter = 'blur(4px)';
+
+    // Modal
+    const modal = document.createElement('div');
+    modal.style.backgroundColor = '#222';
+    modal.style.color = 'white';
+    modal.style.padding = '20px';
+    modal.style.borderRadius = '12px';
+    modal.style.width = '80%';
+    modal.style.maxWidth = '600px';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.gap = '15px';
+    modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+    modal.style.border = '1px solid #444';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Layout JSON Data';
+    title.style.margin = '0';
+    modal.appendChild(title);
+
+    const info = document.createElement('p');
+    info.textContent = 'Copy the layout data below to save it manually.';
+    info.style.fontSize = '14px';
+    modal.appendChild(info);
+
+    const textarea = document.createElement('textarea');
+    textarea.value = jsonData;
+    textarea.readOnly = true;
+    textarea.style.height = '200px';
+    textarea.style.backgroundColor = '#111';
+    textarea.style.color = '#0f0';
+    textarea.style.border = '1px solid #333';
+    textarea.style.padding = '10px';
+    textarea.style.fontFamily = 'monospace';
+    textarea.style.borderRadius = '4px';
+    modal.appendChild(textarea);
+
+    const btnGroup = document.createElement('div');
+    btnGroup.style.display = 'flex';
+    btnGroup.style.justifyContent = 'flex-end';
+    btnGroup.style.gap = '10px';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy to Clipboard';
+    copyBtn.style.padding = '8px 16px';
+    copyBtn.style.cursor = 'pointer';
+    copyBtn.onclick = () => {
+        textarea.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 2000);
+    };
+    btnGroup.appendChild(copyBtn);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.padding = '8px 16px';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.onclick = () => overlay.remove();
+    btnGroup.appendChild(closeBtn);
+
+    modal.appendChild(btnGroup);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+}
+
+/**
+ * Scans the current DOM for layout information.
+ * @returns {object} Layout data following the schema.
+ */
+function scanLayout() {
+    const layout = {
+        version: "1.0.0",
+        sections: {}
+    };
+
+    const sections = document.querySelectorAll('.print-section-container');
+    sections.forEach(section => {
+        const id = section.id;
+        if (!id) return;
+
+        layout.sections[id] = {
+            left: section.style.left,
+            top: section.style.top,
+            width: section.style.width,
+            height: section.style.height,
+            zIndex: section.style.zIndex || '10',
+            minimized: section.dataset.minimized === 'true',
+            innerWidths: {}
+        };
+
+        // Scan inner content for width overrides
+        const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
+        innerContainers.forEach((container, cIdx) => {
+            Array.from(container.children).forEach((child, dIdx) => {
+                if (child.tagName === 'DIV' && child.style.width) {
+                    const key = `${cIdx}-${dIdx}`;
+                    layout.sections[id].innerWidths[key] = child.style.width;
+                }
+            });
+        });
+    });
+
+    return layout;
+}
+
+/**
+ * Migrates layout data from older versions to the current schema.
+ * @param {object} data 
+ * @returns {object} Migrated data.
+ */
+function migrateLayout(data) {
+    if (!data || typeof data !== 'object') return data;
+    
+    // Future migration logic goes here
+    // Example: if (data.version === '0.9.0') { ... }
+    
+    return data;
+}
+
+/**
+ * Applies layout information to the current DOM.
+ * @param {object} layout 
+ */
+function applyLayout(layout) {
+    layout = migrateLayout(layout);
+    if (!layout || !layout.sections) return;
+
+    for (const [id, styles] of Object.entries(layout.sections)) {
+        const section = document.getElementById(id);
+        if (!section) continue;
+
+        // Apply main styles
+        if (styles.left) section.style.left = styles.left;
+        if (styles.top) section.style.top = styles.top;
+        if (styles.width) section.style.width = styles.width;
+        if (styles.height) section.style.height = styles.height;
+        if (styles.zIndex) section.style.zIndex = styles.zIndex;
+
+        // Handle minimization
+        if (styles.minimized) {
+            section.dataset.minimized = 'true';
+            const content = section.querySelector('.print-section-content');
+            if (content) content.style.display = 'none';
+        } else {
+            section.dataset.minimized = 'false';
+            const content = section.querySelector('.print-section-content');
+            if (content) content.style.display = 'flex';
+        }
+
+        // Apply inner widths
+        if (styles.innerWidths) {
+            const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
+            for (const [key, width] of Object.entries(styles.innerWidths)) {
+                const [cIdx, dIdx] = key.split('-').map(Number);
+                const container = innerContainers[cIdx];
+                if (container) {
+                    const child = container.children[dIdx];
+                    if (child && child.tagName === 'DIV') {
+                        child.style.width = width;
+                        child.style.minWidth = width;
+                    }
+                }
+            }
+        }
+    }
+
+    updateLayoutBounds();
+}
+
+/**
+ * Draws visual page separators to indicate print boundaries.
+ * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
+ */
+function drawPageSeparators(totalHeight, totalWidth) {
+    const container = document.getElementById('print-layout-wrapper');
+    if (!container) return;
+
+    // Remove existing separators
+    container.querySelectorAll('.print-page-separator').forEach(el => el.remove());
+
+    // Constants for Letter Portrait at 96 DPI
+    // Standard Letter is 8.5in x 11in.
+    // However, most browsers apply margins (approx 0.4-0.5in).
+    // Printable Area ≈ 8in x 10in.
+    // Width: 8in * 96 = 768px (safe area)
+    // Height: 10in * 96 = 960px (safe area)
+    const PAGE_WIDTH_PX = 816; // 8.5in full width for scaling calc
+    const PAGE_HEIGHT_PX = 960; // 10in height (excludes ~0.5in margins top/bottom)
+
+    // Calculate effective page height if scaled to fit
+    // If content is wider than 816px, the browser shrinks it.
+    // Scale Factor = 816 / totalWidth (e.g. 0.68)
+    // Effective Pixel Height = 1056 / Scale Factor
+    // Example: 1200px wide content. Scale = 0.68.
+    // Effective Height = 1056 / 0.68 = 1552px.
+    
+    // Default scale is 1 if content fits or is smaller
+    let effectivePageHeight = PAGE_HEIGHT_PX;
+    let scaleLabel = "100%";
+    
+    if (totalWidth > PAGE_WIDTH_PX) {
+        const scale = PAGE_WIDTH_PX / totalWidth;
+        effectivePageHeight = PAGE_HEIGHT_PX / scale;
+        scaleLabel = `${Math.round(scale * 100)}%`;
+    }
+
+    console.log(`[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`);
+
+    let currentY = effectivePageHeight;
+    let pageNum = 1;
+    
+    while (currentY < totalHeight) {
+        const separator = document.createElement('div');
+        separator.className = 'print-page-separator';
+        separator.style.position = 'absolute';
+        separator.style.left = '0';
+        separator.style.top = `${currentY}px`;
+        separator.style.width = `${totalWidth}px`;
+        separator.style.height = '2px';
+        separator.style.borderTop = '2px dashed red';
+        separator.style.zIndex = '99995'; 
+        separator.style.pointerEvents = 'none';
+        separator.style.opacity = '0.5';
+        
+        // Label
+        const label = document.createElement('span');
+        label.textContent = `Page ${pageNum} END (Scale: ${scaleLabel})`;
+        label.style.position = 'absolute';
+        label.style.right = '5px';
+        label.style.top = '-15px';
+        label.style.color = 'red';
+        label.style.fontSize = '12px';
+        label.style.fontWeight = 'bold';
+        label.style.backgroundColor = 'rgba(255,255,255,0.8)';
+        
+        separator.appendChild(label);
+        container.appendChild(separator);
+        
+        currentY += effectivePageHeight;
+        pageNum++;
+    }
 }
 
     // Expose for testing synchronously
@@ -1167,6 +1972,18 @@ function updateLayoutBounds() {
     window.initResizeLogic = initResizeLogic;
     window.updateLayoutBounds = updateLayoutBounds;
     window.removeSpecificSvgs = removeSpecificSvgs;
+    window.drawPageSeparators = drawPageSeparators;
+    window.moveQuickInfo = moveQuickInfo;
+    window.adjustInnerContentWidth = adjustInnerContentWidth;
+    window.scanLayout = scanLayout;
+    window.applyLayout = applyLayout;
+    window.applyDefaultLayout = applyDefaultLayout;
+    window.handleSaveBrowser = handleSaveBrowser;
+    window.restoreLayout = restoreLayout;
+    window.showFeedback = showFeedback;
+    window.createControls = createControls;
+    window.showFallbackModal = showFallbackModal;
+    window.Storage = Storage;
 
 // Execution
 (async () => {
@@ -1174,7 +1991,15 @@ function updateLayoutBounds() {
     
     // Idempotency: cleanup previous run if exists
     const existingWrapper = document.getElementById('print-layout-wrapper');
-    if (existingWrapper) existingWrapper.remove();
+    if (existingWrapper) {
+        // User Request: Confirmation for re-run
+        if (confirm('You need to reload to apply changes again, are you sure?')) {
+            window.location.reload();
+            return;
+        } else {
+            return; // Do nothing
+        }
+    }
 
     enforceFullHeight();
     await injectClonesIntoSpellsView();
@@ -1182,22 +2007,21 @@ function updateLayoutBounds() {
     tweakStyles();
     removeSearchBoxes();
     movePortrait(); // User Request: Move portrait at the end
+    moveQuickInfo(); // User Request: Make Quick Info draggable
     initDragAndDrop();
     initResponsiveScaling();
     initZIndexManagement();
     initResizeLogic();
     
-    /* global createControls, restoreLayout */
-    if (typeof createControls === 'function') createControls();
+    // UI Controls
+    createControls();
     
     let layoutRestored = false;
-    if (typeof restoreLayout === 'function') {
-        layoutRestored = await restoreLayout();
-        if (layoutRestored) updateLayoutBounds();
-    }
+    layoutRestored = await restoreLayout();
+    if (layoutRestored) updateLayoutBounds();
     
     if (!layoutRestored) {
-        autoArrangeSections();
+        applyDefaultLayout();
     }
 })();
 })();
