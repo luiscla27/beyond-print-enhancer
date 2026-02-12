@@ -1875,6 +1875,13 @@ async function handleLoadDefault() {
                 const y = (parseInt(original.style.top) || 0) + 32;
                 clone.style.setProperty('left', `${x}px`, 'important');
                 clone.style.setProperty('top', `${y}px`, 'important');
+                
+                // Maintain current dimensions if they exist, otherwise they might be reset by the global query
+                const currentWidth = clone.style.width;
+                const currentHeight = clone.style.height;
+                if (currentWidth) clone.style.setProperty('width', currentWidth, 'important');
+                if (currentHeight) clone.style.setProperty('height', currentHeight, 'important');
+
                 clone.style.zIndex = (parseInt(original.style.zIndex) || 10) + 1;
             }
         });
