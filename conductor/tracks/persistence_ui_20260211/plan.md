@@ -7,7 +7,7 @@ Establish the storage layer and the JSON data structure for capturing layout sta
 
 - [x] Task: Define JSON schema and versioning constants in `js/storage.js` 72e4a86
 - [x] Task: Implement IndexedDB wrapper for saving/loading global and per-character layouts c033961
-- [ ] Task: Implement "Layout Scanner" to extract coordinates, sizes, and inner widths from the DOM
+- [x] Task: Implement "Layout Scanner" to extract coordinates, sizes, and inner widths from the DOM ac81da1
 - [ ] Task: Implement "Layout Applier" to inject saved styles back into the DOM
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure' (Protocol in workflow.md)
 
