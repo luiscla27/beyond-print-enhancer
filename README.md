@@ -3,7 +3,7 @@
 **Modernized and restored for 2026 site changes.** This extension helps you print your D&D Beyond character sheets in a clean, it was forked from the abandoned project by user "Adam Pritchard" on GitHub. I made this project because I wanted print-ready character sheets for my D&D games. without having to manually edit the PDF.
 
 
-**This project is a work in progress. Feature requests and pull requests are welcome.**
+**This project is a work in progress. Feature requests, issue reports and pull requests are welcome.**
 
 ## Try it Live (Developer Mode)
 
@@ -42,8 +42,8 @@ https://github.com/user-attachments/assets/c419333d-8893-401f-8cc9-800a60a46fd6
   - Margins: 
     - Top: 0.25"
     - Bottom: 0.25"
-    - Left: 0.1"
-    - Right: 0.1"
+    - Left: 0"
+    - Right: 0"
   - Scale: Actual size.
   - Headers and footers: deselect.
   - Background graphics: deselect.

@@ -761,10 +761,39 @@ function enforceFullHeight() {
         }
         body {
              /* User Request: Manual margins assuming 0 hardware margin */
-             margin-top: 0.25in !important;
+             margin-top: 0in !important;
              margin-bottom: 0.25in !important;
              margin-left: 0.1in !important;
              margin-right: 0.1in !important;
+             padding: 0 !important;
+        }
+        
+        html {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Deep Clean: Aggressively hide top elements */
+        .site-bar, 
+        nav, 
+        header, 
+        .ddb-site-alert, 
+        .watermark, 
+        footer, 
+        #mega-menu-target, 
+        .mm-navbar,
+        .notifications-wrapper {
+            display: none !important;
+        }
+
+        .ct-character-sheet-desktop {
+            margin: 0 !important;
+            padding: 0 !important;
+            /* Force absolute top to ignore any flow */
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
         }
              
         p, 
@@ -855,20 +884,20 @@ function enforceFullHeight() {
         -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
         box-shadow: 5px 5px 15px 5px #3f3f3fff;
     }
-    .ct-character-sheet__inner {
-        transform: translate(0px, 10px);
-    }
+
     .print-section-wrapper,
     .print-section-wrapper > * {
         width: 100%;
         max-width: 1200px;
-    padding: 0 !important;
+        padding: 0 !important;
     }
+
     @media (min-width: 1200px) {
         .ct-primary-box {
             width: 100% !important;
         }
     }
+
     @media screen {
         .ct-character-sheet-desktop {
             max-width: none !important;
@@ -909,14 +938,13 @@ function enforceFullHeight() {
         white-space: normal !important;
         overflow-wrap: break-word !important;
     }
-    .print-section-container .ct-quick-info * {
-        font-size: 14px !important;
-    }
     .print-section-container .ct-combat__statuses h2 *,
     .print-section-container .ct-combat__statuses h2 + *,
-    .print-section-container .ct-quick-info h2 + *,
-    .print-section-container .ct-quick-info h2 * {
+    .print-section-container .ct-quick-info * {
         font-size: 12px !important;
+    }
+    .print-section-container .ct-quick-info__health * {
+        font-size: 14px !important;
     }
     @media print {
         body, .ct-character-sheet-desktop {
@@ -924,6 +952,9 @@ function enforceFullHeight() {
             padding: 0 !important;
             box-shadow: none !important;
             transform: none !important;
+        }
+        .print-page-separator {
+            display: none !important;
         }
     }
     .print-section-content {
