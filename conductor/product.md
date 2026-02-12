@@ -14,5 +14,6 @@ The D&D Beyond Print Enhancer transforms the interactive, tabbed D&D Beyond char
 - **Content Expansion:** Automatically expands and appends 'Actions', 'Spells', and 'Equipment' sections to the main view, eliminating the need to print multiple views or switch tabs.
 - **Layout Optimization:** Removes site headers, navigation bars, sidebars, and interactive buttons (e.g., Short/Long Rest, Manage Spells) to maximize printable space.
 - **Persistent Layout Management:** Provides a floating control panel to save custom section arrangements (coordinates, sizes, and internal scaling) to the browser (IndexedDB) or as local JSON files for portability.
+- **Section Cloning:** Allows users to create static snapshots of any section (e.g., Spells) to support multiple lists (like "Combat" vs. "Social") on a single printed page.
 - **Data Consolidation:** Relocates defense information (resistances, immunities) from hidden modals directly onto the combat tablet for immediate visibility.
 - **Print Styling:** Adjusts text colors to black for better contrast and legibility on paper, and tightens margins/padding to fit more content per page.
