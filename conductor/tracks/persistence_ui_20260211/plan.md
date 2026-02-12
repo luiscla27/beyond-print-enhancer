@@ -23,13 +23,13 @@ Build the floating control panel and the fallback modal.
 ## Phase 3: Core Logic & File I/O
 Connect the UI buttons to the persistence logic and file system.
 
-- [ ] Task: Implement "Save on Browser" logic (Scanner -> IndexedDB -> Success Feedback)
-- [ ] Task: Implement "Save on PC" logic using the Download API or Fallback Modal
-- [ ] Task: Implement "Load" logic (File Picker -> JSON Validation -> Applier)
-- [ ] Task: Implement "Load Default" logic to reset overrides and re-run default positioning
-- [ ] Task: Implement "Contribute" button link to GitHub
-- [ ] Task: Implement Auto-Load logic on extension initialization
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Core Logic' (Protocol in workflow.md)
+- [x] Task: Implement "Save on Browser" logic (Scanner -> IndexedDB -> Success Feedback) 6f69e4d
+- [x] Task: Implement "Save on PC" logic using the Download API or Fallback Modal 6f69e4d
+- [x] Task: Implement "Load" logic (File Picker -> JSON Validation -> Applier) 6f69e4d
+- [x] Task: Implement "Load Default" logic to reset overrides and re-run default positioning 6f69e4d
+- [x] Task: Implement "Contribute" button link to GitHub 6f69e4d
+- [x] Task: Implement Auto-Load logic on extension initialization 6f69e4d
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Core Logic' (Protocol in workflow.md) 6f69e4d
 
 ## Phase 4: Refinement & Validation
 Finalize visual feedback and ensure robust error handling.

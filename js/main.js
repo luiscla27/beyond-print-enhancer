@@ -1521,24 +1521,115 @@ async function handleSaveBrowser() {
 }
 
 /**
- * Handles saving to PC. (Placeholder)
+ * Handles saving to PC.
  */
 function handleSavePC() {
-    console.log('[DDB Print] Save on PC clicked');
+    const layout = scanLayout();
+    const data = JSON.stringify(layout, null, 2);
+    const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
+
+    try {
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+        
+        showFeedback('Download started!');
+    } catch (err) {
+        console.error('[DDB Print] Download failed, showing modal', err);
+        showFallbackModal(data);
+    }
 }
 
 /**
- * Handles loading default layout. (Placeholder)
+ * Handles loading default layout.
  */
-function handleLoadDefault() {
-    console.log('[DDB Print] Load Default clicked');
+async function handleLoadDefault() {
+    if (!confirm('This will reset your layout to defaults. Are you sure?')) return;
+
+    try {
+        await Storage.init();
+        
+        // Remove from IndexedDB
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        store.delete('GLOBAL');
+        
+        const characterId = window.location.pathname.split('/').pop();
+        if (characterId) {
+            store.delete(characterId);
+        }
+
+        // Reset styles in DOM
+        document.querySelectorAll('.print-section-container').forEach(section => {
+            section.style.left = '';
+            section.style.top = '';
+            section.style.width = '';
+            section.style.height = '';
+            section.style.zIndex = '10';
+            section.dataset.minimized = 'false';
+            
+            const content = section.querySelector('.print-section-content');
+            if (content) content.style.display = 'flex';
+
+            // Reset inner widths
+            const inners = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"] div');
+            inners.forEach(el => {
+                if (el.tagName === 'DIV') {
+                    el.style.width = '';
+                    el.style.minWidth = '';
+                }
+            });
+        });
+
+        // Trigger default layout
+        autoArrangeSections();
+        showFeedback('Layout reset to defaults!');
+    } catch (err) {
+        console.error('[DDB Print] Reset failed', err);
+        alert('Failed to reset layout.');
+    }
 }
 
 /**
- * Handles loading from file. (Placeholder)
+ * Handles loading from file.
  */
 function handleLoadFile() {
-    console.log('[DDB Print] Load File clicked');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const layout = JSON.parse(event.target.result);
+                if (Storage.validateLayout(layout)) {
+                    applyLayout(layout);
+                    showFeedback('Layout loaded!');
+                } else {
+                    alert('Invalid layout file format.');
+                }
+            } catch (err) {
+                console.error('[DDB Print] Load failed', err);
+                alert('Failed to parse layout file.');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    input.click();
 }
 
 /**
