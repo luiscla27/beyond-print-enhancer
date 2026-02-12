@@ -112,8 +112,6 @@ function createDraggableContainer(title, content, id) {
   header.style.fontWeight = 'bold';
   header.style.fontSize = '1.2em';
   header.style.padding = '5px';
-  header.style.borderBottom = '1px solid black';
-  header.style.backgroundColor = '#eee';
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
   header.style.alignItems = 'center';
@@ -515,14 +513,20 @@ async function injectClonesIntoSpellsView() {
 
   // User Request: Apply Default Coordinates - Use explicit styles and logic
   const defaultLayouts = {
-      'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '160px' },
-      'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '208px' },
-      'section-Section-2': { left: '0px', top: '368px', width: '256px', height: '208px' },
-      'section-Section-3': { left: '0px', top: '576px', width: '256px', height: '272px' },
-      'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '688px' },
+      'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
+      'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '176px' },
+      'section-Section-2': { left: '0px', top: '352px', width: '256px', height: '176px' },
+      'section-Section-3': { left: '0px', top: '544px', width: '256px', height: '208px' },
+      'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '592px' },
       'section-Section-5': { left: '496px', top: '160px', width: '528px', height: '160px' },
       'section-Section-6': { left: '1040px', top: '160px', width: '160px', height: '160px' },
-      'section-Actions':   { left: '496px', top: '320px', width: '704px', height: '1008px' }
+      'section-Actions':   { left: '496px', top: '336px', width: '704px', height: '1360px' },
+      'section-Notes':   { left: '0px', top: '768px', width: '480px', height: '928px' },
+      'section-Features_&_Traits':   { left: '0px', top: '1712px', width: '480px', height: '1984px' },
+      'section-Spells':   { left: '496px', top: '1712px', width: '704px', height: '816px' },
+      'section-Extras':   { left: '0px', top: '3712px', width: '480px', height: '1936px' },
+      'section-Background':   { left: '496px', top: '2544px', width: '704px', height: '1152px' },
+      'section-Inventory':   { left: '496px', top: '3712px', width: '704px', height: '1936px' }
   };
 
   // Give a small delay to ensure DOM is ready? Just to be safe.
@@ -675,7 +679,7 @@ function initDragAndDrop() {
 
         // Delay opacity change so the browser captures the full opacity element as the image
         requestAnimationFrame(() => {
-            draggedItem.style.opacity = '0.4';
+            draggedItem.style.opacity = '0.98';
         });
 
     }
@@ -750,25 +754,36 @@ function enforceFullHeight() {
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
+    @media print {
+        @page {
+            margin: 0;
+            size: letter portrait;
+        }
+        body {
+             /* User Request: Manual margins assuming 0 hardware margin */
+             margin-top: 0.25in !important;
+             margin-bottom: 0.25in !important;
+             margin-left: 0.1in !important;
+             margin-right: 0.1in !important;
+        }
+             
+        p, 
+        span,
+        div.ct-content-group { 
+            break-inside: avoid; 
+        }
+    }
+
     :root {
         /* Using your provided Base64 string */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
     }
 
-    .print-section-wrapper > * {
-        width: 100%;
-    }
     .print-section-content {
       overflow: visible !important;
       max-height: none !important;
-      height: auto !important;
-      border-width: 20px;
-      border-style: solid;
-      border-color: transparent;
-      border-image-source: var(--border-img);
-      border-image-slice: 20;
-      border-image-repeat: stretch;
       padding: 0;
+      height: auto !important;
     }
     section {
       height: 100% !important;
@@ -779,6 +794,8 @@ function enforceFullHeight() {
         background-color: white;
     }
 
+    dialog + div,
+    .dice-rolling-panel,
     .ct-character-sheet:before,
     .ddbc-theme-link,
     .ddbc-character-tidbits__heading,
@@ -841,6 +858,17 @@ function enforceFullHeight() {
     .ct-character-sheet__inner {
         transform: translate(0px, 10px);
     }
+    .print-section-wrapper,
+    .print-section-wrapper > * {
+        width: 100%;
+        max-width: 1200px;
+    padding: 0 !important;
+    }
+    @media (min-width: 1200px) {
+        .ct-primary-box {
+            width: 100% !important;
+        }
+    }
     @media screen {
         .ct-character-sheet-desktop {
             max-width: none !important;
@@ -850,18 +878,8 @@ function enforceFullHeight() {
         }
     }
     
-    @media print {
-        body, .ct-character-sheet-desktop {
-            margin: 0 !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            transform: none !important;
-        }
-    }
-    
     .print-section-container { 
         break-inside: avoid; 
-        border: 1px solid transparent; /* Hidden by default */
         position: absolute !important;
         z-index: 10;
         /* resize: both !important; Removed for custom handle */
@@ -872,17 +890,17 @@ function enforceFullHeight() {
         box-sizing: border-box;
         display: flex !important;
         flex-direction: column !important;
+        border-width: 20px;
+        border-style: solid;
+        border-color: transparent;
+        border-image-source: var(--border-img);
+        border-image-slice: 20;
+        border-image-repeat: stretch;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
     }
     .print-section-container:hover { 
         box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .print-section-content {
-        flex: 1 1 auto !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-        position: relative !important;
     }
 
     .print-section-container, 
@@ -890,6 +908,30 @@ function enforceFullHeight() {
         font-size: 8px !important;
         white-space: normal !important;
         overflow-wrap: break-word !important;
+    }
+    .print-section-container .ct-quick-info * {
+        font-size: 14px !important;
+    }
+    .print-section-container .ct-combat__statuses h2 *,
+    .print-section-container .ct-combat__statuses h2 + *,
+    .print-section-container .ct-quick-info h2 + *,
+    .print-section-container .ct-quick-info h2 * {
+        font-size: 12px !important;
+    }
+    @media print {
+        body, .ct-character-sheet-desktop {
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+    }
+    .print-section-content {
+        flex: 1 1 auto !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        position: relative !important;
     }
     .ct-senses__callout-value,
     .integrated-dice__container,
@@ -908,20 +950,23 @@ function enforceFullHeight() {
     .ddbc-character-avatar__portrait {
         width: 100%;
     }
+    .print-section-header span {
+        font-size: 16px !important;
+    }
     .print-section-header {
         cursor: move;
         user-select: none;
-        font-size: 10px !important;
-        padding: 4px !important;
-        opacity: 0; /* Hidden by default */
+        font-size: 18px !important;
+        opacity: 0;
+        position: absolute;
         transition: opacity 0.2s;
-        height: 16px !important;
+        margin-top: 0px;
+        z-index: 999999999;
+        width: calc(100% - 32px);
+        height: 32px;
+        background-color: #979797;
+        line-height: 32px;
     }
-
-    .print-section-container:hover {
-        border: 1px solid #ccc;
-    }
-
     .print-section-container:hover .print-section-header {
         opacity: 1;
     }
@@ -939,7 +984,7 @@ function enforceFullHeight() {
     }
     .print-section-container:hover .print-section-resize-handle {
         opacity: 1;
-        background: linear-gradient(135deg, transparent 50%, #ccc 50%);
+        background: linear-gradient(135deg, transparent 50%, #979797 50%);
     }
 
     /* Skills specific compact logic (already mostly covered by global above) */
@@ -1113,8 +1158,8 @@ function initResizeLogic() {
         resizingSection = e.target.closest('.print-section-container');
         startX = e.clientX;
         startY = e.clientY;
-        startWidth = parseInt(document.defaultView.getComputedStyle(resizingSection).width, 10);
-        startHeight = parseInt(document.defaultView.getComputedStyle(resizingSection).height, 10);
+        startWidth = parseInt(window.getComputedStyle(resizingSection).width, 10);
+        startHeight = parseInt(window.getComputedStyle(resizingSection).height, 10);
         
         document.documentElement.addEventListener('mousemove', doResize, false);
         document.documentElement.addEventListener('mouseup', stopResize, false);
@@ -1125,12 +1170,13 @@ function initResizeLogic() {
     function doResize(e) {
         if (!resizingSection) return;
         
-        let newWidth = startWidth + (e.clientX - startX);
-        let newHeight = startHeight + (e.clientY - startY);
+        // Calculate raw new dimensions
+        let rawNewWidth = startWidth + (e.clientX - startX);
+        let rawNewHeight = startHeight + (e.clientY - startY);
         
         // Snap to 16px
-        newWidth = Math.round(newWidth / 16) * 16;
-        newHeight = Math.round(newHeight / 16) * 16;
+        let newWidth = Math.round(rawNewWidth / 16) * 16;
+        let newHeight = Math.round(rawNewHeight / 16) * 16;
         
         // Min dimensions
         if (newWidth < 50) newWidth = 48; // nearest 16 is 48
@@ -1141,11 +1187,46 @@ function initResizeLogic() {
     }
 
     function stopResize() {
+        if (resizingSection) {
+            const finalWidth = parseInt(resizingSection.style.width, 10);
+            // Ensure finalWidth is valid number, fallback to computed if needed (though doResize sets style)
+            if (!isNaN(finalWidth)) {
+                const deltaX = finalWidth - startWidth;
+                if (deltaX !== 0) {
+                    adjustInnerContentWidth(resizingSection, deltaX);
+                }
+            }
+        }
+
         resizingSection = null;
         document.documentElement.removeEventListener('mousemove', doResize, false);
         document.documentElement.removeEventListener('mouseup', stopResize, false);
         updateLayoutBounds();
     }
+}
+
+/**
+ * Adjusts the width of immediate children of specific containers based on resize delta.
+ */
+function adjustInnerContentWidth(section, deltaX) {
+    // User Request: Scan for containers ending in "-row-header" or "-content"
+    const containers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
+    
+    containers.forEach(container => {
+        // User Request: Override width of IMMEDIATE divs
+        Array.from(container.children).forEach(child => {
+            if (child.tagName === 'DIV') {
+                const currentWidth = parseInt(window.getComputedStyle(child).width, 10);
+                if (!isNaN(currentWidth)) {
+                    const newWidth = currentWidth + deltaX;
+                    child.style.width = `${newWidth}px`;
+                    // Also set min/max width if they might constrain it? User said "Override", so:
+                    child.style.minWidth = `${newWidth}px`; 
+                    // child.style.maxWidth = `${newWidth}px`; // Maybe too aggressive?
+                }
+            }
+        });
+    });
 }
 
 /**
@@ -1202,7 +1283,7 @@ function updateLayoutBounds() {
     }
 
     // User Request: Add page separators based on scaled content
-    drawPageSeparators(newHeight, newWidth);
+    drawPageSeparators(newHeight, 1200);
 }
 
 /**
@@ -1253,10 +1334,10 @@ function drawPageSeparators(totalHeight, totalWidth) {
         separator.style.position = 'absolute';
         separator.style.left = '0';
         separator.style.top = `${currentY}px`;
-        separator.style.width = '100%';
+        separator.style.width = `${totalWidth}px`;
         separator.style.height = '2px';
         separator.style.borderTop = '2px dashed red';
-        separator.style.zIndex = '5'; 
+        separator.style.zIndex = '99995'; 
         separator.style.pointerEvents = 'none';
         separator.style.opacity = '0.5';
         
@@ -1298,6 +1379,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.removeSpecificSvgs = removeSpecificSvgs;
     window.drawPageSeparators = drawPageSeparators;
     window.moveQuickInfo = moveQuickInfo;
+    window.adjustInnerContentWidth = adjustInnerContentWidth;
 
 // Execution
 (async () => {

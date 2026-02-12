@@ -201,4 +201,55 @@ describe('Recent Layout Features', function() {
       });
   });
 
+  describe('Inner Content Resize', function() {
+      it('should adjust width of immediate children in target containers', function() {
+          // Setup
+          const section = document.createElement('section');
+          
+          // Container 1: ends in -row-header
+          const header = document.createElement('div');
+          header.className = 'some-component-row-header';
+          const child1 = document.createElement('div');
+          child1.style.width = '100px';
+          header.appendChild(child1);
+          section.appendChild(header);
+          
+          // Container 2: ends in -content
+          const content = document.createElement('div');
+          content.className = 'some-component-content';
+          const child2 = document.createElement('div');
+          child2.style.width = '200px';
+          const child3 = document.createElement('span'); // Should be ignored
+          child3.style.width = '50px';
+          content.appendChild(child2);
+          content.appendChild(child3);
+          section.appendChild(content);
+          
+          // Container 3: ignored
+          const ignored = document.createElement('div');
+          ignored.className = 'ignored-container';
+          const child4 = document.createElement('div');
+          child4.style.width = '300px';
+          ignored.appendChild(child4);
+          section.appendChild(ignored);
+          
+          document.body.appendChild(section);
+          
+          // Act: Increase by 50px
+          window.adjustInnerContentWidth(section, 50);
+          
+          // Assert
+          assert.strictEqual(child1.style.width, '150px', 'Header child should increase by 50px');
+          assert.strictEqual(child2.style.width, '250px', 'Content child should increase by 50px');
+          assert.strictEqual(child3.style.width, '50px', 'Span child should be ignored');
+          assert.strictEqual(child4.style.width, '300px', 'Ignored container child should be unchanged');
+          
+          // Act: Decrease by 20px
+          window.adjustInnerContentWidth(section, -20);
+          
+          // Assert
+          assert.strictEqual(child1.style.width, '130px', 'Header child should decrease by 20px');
+      });
+  });
+
 });
