@@ -1358,6 +1358,55 @@ function scanLayout() {
 }
 
 /**
+ * Applies layout information to the current DOM.
+ * @param {object} layout 
+ */
+function applyLayout(layout) {
+    if (!layout || !layout.sections) return;
+
+    for (const [id, styles] of Object.entries(layout.sections)) {
+        const section = document.getElementById(id);
+        if (!section) continue;
+
+        // Apply main styles
+        if (styles.left) section.style.left = styles.left;
+        if (styles.top) section.style.top = styles.top;
+        if (styles.width) section.style.width = styles.width;
+        if (styles.height) section.style.height = styles.height;
+        if (styles.zIndex) section.style.zIndex = styles.zIndex;
+
+        // Handle minimization
+        if (styles.minimized) {
+            section.dataset.minimized = 'true';
+            const content = section.querySelector('.print-section-content');
+            if (content) content.style.display = 'none';
+        } else {
+            section.dataset.minimized = 'false';
+            const content = section.querySelector('.print-section-content');
+            if (content) content.style.display = 'flex';
+        }
+
+        // Apply inner widths
+        if (styles.innerWidths) {
+            const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
+            for (const [key, width] of Object.entries(styles.innerWidths)) {
+                const [cIdx, dIdx] = key.split('-').map(Number);
+                const container = innerContainers[cIdx];
+                if (container) {
+                    const child = container.children[dIdx];
+                    if (child && child.tagName === 'DIV') {
+                        child.style.width = width;
+                        child.style.minWidth = width;
+                    }
+                }
+            }
+        }
+    }
+
+    updateLayoutBounds();
+}
+
+/**
  * Draws visual page separators to indicate print boundaries.
  * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
  */
@@ -1452,6 +1501,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.moveQuickInfo = moveQuickInfo;
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
+    window.applyLayout = applyLayout;
 
 // Execution
 (async () => {

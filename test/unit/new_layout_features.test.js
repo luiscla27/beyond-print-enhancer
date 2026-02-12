@@ -291,4 +291,47 @@ describe('Recent Layout Features', function() {
       });
   });
 
+  describe('Layout Applier', function() {
+      it('should apply coordinates, sizes and inner widths', function() {
+          const wrapper = document.getElementById('print-layout-wrapper');
+          const section = document.createElement('div');
+          section.className = 'print-section-container';
+          section.id = 'section-ApplyTest';
+          wrapper.appendChild(section);
+
+          const content = document.createElement('div');
+          content.className = 'test-content';
+          const innerDiv = document.createElement('div');
+          content.appendChild(innerDiv);
+          section.appendChild(content);
+
+          const layout = {
+              version: "1.0.0",
+              sections: {
+                  "section-ApplyTest": {
+                      left: "150px",
+                      top: "250px",
+                      width: "350px",
+                      height: "450px",
+                      zIndex: "20",
+                      innerWidths: {
+                          "0-0": "180px"
+                      }
+                  }
+              }
+          };
+
+          // Act
+          window.applyLayout(layout);
+
+          // Assert
+          assert.strictEqual(section.style.left, '150px');
+          assert.strictEqual(section.style.top, '250px');
+          assert.strictEqual(section.style.width, '350px');
+          assert.strictEqual(section.style.height, '450px');
+          assert.strictEqual(section.style.zIndex, '20');
+          assert.strictEqual(innerDiv.style.width, '180px');
+      });
+  });
+
 });
