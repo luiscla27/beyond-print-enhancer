@@ -65,9 +65,8 @@ describe('Cloning Logic', function() {
         const temp = document.createElement('div');
         temp.innerHTML = snapshot.html;
         
-        assert.strictEqual(temp.querySelector('button'), null, 'Buttons should be removed');
-        assert.strictEqual(temp.querySelector('menu'), null, 'Menu should be removed');
-        assert.strictEqual(temp.querySelector('.ct-spell-manager__button'), null, 'Spell manager buttons should be removed');
+        assert.ok(temp.querySelector('button'), 'Buttons should be preserved');
+        assert.strictEqual(temp.querySelector('menu'), null, 'Menu should still be removed');
         assert.ok(temp.querySelector('p'), 'Non-interactive content should be preserved');
     });
   });

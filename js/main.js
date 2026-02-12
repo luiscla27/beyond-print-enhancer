@@ -1263,11 +1263,8 @@ function captureSectionSnapshot(sectionId) {
     // Clone the content
     const clone = content.cloneNode(true);
 
-    // Sanitize: Remove interactive elements
+    // Sanitize: Remove extension UI elements
     const toRemove = [
-        'button',
-        'menu',
-        '.ct-spell-manager__button',
         '.be-clone-button',
         '.print-section-minimize',
         '.print-section-restore',
@@ -1277,6 +1274,9 @@ function captureSectionSnapshot(sectionId) {
     toRemove.forEach(selector => {
         clone.querySelectorAll(selector).forEach(el => el.remove());
     });
+    
+    // Also remove menu tags as they are usually tab navigation/filters
+    clone.querySelectorAll('menu').forEach(el => el.remove());
 
     return {
         originalId: sectionId,
@@ -1310,6 +1310,15 @@ function renderClonedSection(snapshot) {
     if (original) {
         container.style.left = (parseInt(original.style.left) || 0) + 32 + 'px';
         container.style.top = (parseInt(original.style.top) || 0) + 32 + 'px';
+        
+        // Ensure it's in front of the original
+        // Find max z-index in the layout
+        let maxZ = 10;
+        document.querySelectorAll('.print-section-container').forEach(el => {
+            const z = parseInt(el.style.zIndex) || 10;
+            if (z > maxZ) maxZ = z;
+        });
+        container.style.zIndex = maxZ + 1;
     } else {
         container.style.left = '32px';
         container.style.top = '32px';
