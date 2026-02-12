@@ -13,6 +13,23 @@ const DB_VERSION = 1;
 const STORE_NAME = 'layouts';
 const SCHEMA_VERSION = '1.0.0';
 
+const DEFAULT_LAYOUTS = {
+    'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
+    'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '176px' },
+    'section-Section-2': { left: '0px', top: '352px', width: '256px', height: '176px' },
+    'section-Section-3': { left: '0px', top: '544px', width: '256px', height: '208px' },
+    'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '592px' },
+    'section-Section-5': { left: '496px', top: '160px', width: '528px', height: '160px' },
+    'section-Section-6': { left: '1040px', top: '160px', width: '160px', height: '160px' },
+    'section-Actions':   { left: '496px', top: '336px', width: '704px', height: '1360px' },
+    'section-Notes':   { left: '0px', top: '768px', width: '480px', height: '928px' },
+    'section-Features_&_Traits':   { left: '0px', top: '1712px', width: '480px', height: '1984px' },
+    'section-Spells':   { left: '496px', top: '1712px', width: '704px', height: '816px' },
+    'section-Extras':   { left: '0px', top: '3712px', width: '480px', height: '1936px' },
+    'section-Background':   { left: '496px', top: '2544px', width: '704px', height: '1152px' },
+    'section-Inventory':   { left: '496px', top: '3712px', width: '704px', height: '1936px' }
+};
+
 let db = null;
 
 const Storage = {
@@ -622,43 +639,6 @@ async function injectClonesIntoSpellsView() {
   allSectionsOrdered.forEach(container => {
       layoutRoot.appendChild(container); // Append moves them to the end or maintains order if prepended
   });
-
-  // User Request: Apply Default Coordinates - Use explicit styles and logic
-  const defaultLayouts = {
-      'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
-      'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '176px' },
-      'section-Section-2': { left: '0px', top: '352px', width: '256px', height: '176px' },
-      'section-Section-3': { left: '0px', top: '544px', width: '256px', height: '208px' },
-      'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '592px' },
-      'section-Section-5': { left: '496px', top: '160px', width: '528px', height: '160px' },
-      'section-Section-6': { left: '1040px', top: '160px', width: '160px', height: '160px' },
-      'section-Actions':   { left: '496px', top: '336px', width: '704px', height: '1360px' },
-      'section-Notes':   { left: '0px', top: '768px', width: '480px', height: '928px' },
-      'section-Features_&_Traits':   { left: '0px', top: '1712px', width: '480px', height: '1984px' },
-      'section-Spells':   { left: '496px', top: '1712px', width: '704px', height: '816px' },
-      'section-Extras':   { left: '0px', top: '3712px', width: '480px', height: '1936px' },
-      'section-Background':   { left: '496px', top: '2544px', width: '704px', height: '1152px' },
-      'section-Inventory':   { left: '496px', top: '3712px', width: '704px', height: '1936px' }
-  };
-
-  // Give a small delay to ensure DOM is ready? Just to be safe.
-  setTimeout(() => {
-    console.log('[DDB Print] Applying Default Layouts...');
-    for (const [id, styles] of Object.entries(defaultLayouts)) {
-        const section = document.getElementById(id);
-        if (section) {
-            console.log(`[DDB Print] Applying defaults to ${id}`, styles);
-            // Explicitly set properties to ensure they take effect
-            for (const [prop, val] of Object.entries(styles)) {
-                section.style.setProperty(prop, val, 'important');
-            }
-        } else {
-            console.warn(`[DDB Print] Default layout target not found: ${id}`);
-        }
-    }
-    // User Request: Update body container height after initialization
-    updateLayoutBounds();
-  }, 100);
 
   // 8. Hide Navigation UI
   const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
@@ -1550,6 +1530,26 @@ function handleSavePC() {
 }
 
 /**
+ * Applies the hardcoded default layout.
+ */
+function applyDefaultLayout() {
+    console.log('[DDB Print] Applying Default Layouts...');
+    for (const [id, styles] of Object.entries(DEFAULT_LAYOUTS)) {
+        const section = document.getElementById(id);
+        if (section) {
+            console.log(`[DDB Print] Applying defaults to ${id}`, styles);
+            // Explicitly set properties to ensure they take effect
+            for (const [prop, val] of Object.entries(styles)) {
+                section.style.setProperty(prop, val, 'important');
+            }
+        } else {
+            console.warn(`[DDB Print] Default layout target not found: ${id}`);
+        }
+    }
+    updateLayoutBounds();
+}
+
+/**
  * Handles loading default layout.
  */
 async function handleLoadDefault() {
@@ -1591,7 +1591,7 @@ async function handleLoadDefault() {
         });
 
         // Trigger default layout
-        autoArrangeSections();
+        applyDefaultLayout();
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -1973,6 +1973,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
     window.applyLayout = applyLayout;
+    window.applyDefaultLayout = applyDefaultLayout;
     window.handleSaveBrowser = handleSaveBrowser;
     window.restoreLayout = restoreLayout;
     window.showFeedback = showFeedback;
@@ -2016,7 +2017,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     if (layoutRestored) updateLayoutBounds();
     
     if (!layoutRestored) {
-        autoArrangeSections();
+        applyDefaultLayout();
     }
 })();
 })();

@@ -174,30 +174,17 @@ describe('Recent Layout Features', function() {
   });
   
   describe('Default Layouts', function() {
-      it('should apply confirmed default coordinates', function(done) {
-           // This runs inside a timeout in main.js, so we might need to wait
-           setTimeout(() => {
-               const quickInfo = document.getElementById('section-Quick-Info');
-               // If moveQuickInfo ran, it created the element.
-               // Then updateLayouts (if called again or initialized) should hit it.
-               
-               // Let's manually trigger the default application logic if possible, 
-               // or just check if the main execution loop handled it.
-               
-               // Since we are mocking the whole execution, we should wait.
-               // However, `section-Quick-Info` is created by `moveQuickInfo`.
-               
-               // Let's assume the user logic relies on the IDs matching.
-               // Note: `section-Quick-Info` styling was added to `defaultLayouts` in the user edit.
-               
-               // We need to simulate the element existing BEFORE the timeout in main.js fires?
-               // Or force the loop again.
-               
-               // In main.js, the timeout is 100ms. 
-               // JSDOM timeouts can be tricky.
-               
-               done();
-           }, 150);
+      it('should apply confirmed default coordinates', function() {
+           // Arrange
+           const actionSection = document.getElementById('section-Actions');
+           
+           // Act
+           window.applyDefaultLayout();
+
+           // Assert
+           // DEFAULT_LAYOUTS['section-Actions'] = { left: '496px', top: '336px', width: '704px', height: '1360px' }
+           assert.strictEqual(actionSection.style.left, '496px');
+           assert.strictEqual(actionSection.style.top, '336px');
       });
   });
 
