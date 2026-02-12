@@ -7,7 +7,9 @@
 
 1. Drag & Drop sections to reorder them.
 2. Resizable sections.
-3. **WIP**: Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
+3. Minimize sections.
+4. **WIP**: Save & Load templates
+4. **WIP**: Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
 
 **This project is a work in progress. Feature requests and pull requests are welcome.**
 
