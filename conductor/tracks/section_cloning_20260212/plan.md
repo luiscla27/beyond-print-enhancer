@@ -33,9 +33,9 @@ Integrating clones into the existing persistence layer (IndexedDB and JSON).
 ## Phase 4: Interactions - Title Editing & Deletion
 Finalizing the user interactions for managing existing clones.
 
-- [ ] Task: Write tests for double-click title editing and deletion logic.
-- [ ] Task: Implement double-click event listener on clone headers to trigger the title edit modal.
-- [ ] Task: Add a "Delete" button (trash icon) to the hover UI of cloned sections.
-- [ ] Task: Implement the deletion logic, ensuring clones are removed from both the DOM and persistent storage.
-- [ ] Task: Add a "Manage Clones" button to the floating control panel to list and quickly jump to/edit clones.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Interactions' (Protocol in workflow.md)
+- [x] Task: Write tests for double-click title editing and deletion logic. 2674cdb
+- [x] Task: Implement double-click event listener on clone headers to trigger the title edit modal. 2674cdb
+- [x] Task: Add a "Delete" button (trash icon) to the hover UI of cloned sections. 2674cdb
+- [x] Task: Implement the deletion logic, ensuring clones are removed from both the DOM and persistent storage. 2674cdb
+- [x] Task: Add a "Manage Clones" button to the floating control panel to list and quickly jump to/edit clones. 2674cdb
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Interactions' (Protocol in workflow.md)
