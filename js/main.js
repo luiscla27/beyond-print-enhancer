@@ -539,6 +539,8 @@ async function injectClonesIntoSpellsView() {
             console.warn(`[DDB Print] Default layout target not found: ${id}`);
         }
     }
+    // User Request: Update body container height after initialization
+    updateLayoutBounds();
   }, 100);
 
   // 8. Hide Navigation UI
@@ -745,7 +747,6 @@ function enforceFullHeight() {
       padding: 0;
     }
     section {
-      max-height: 100vh !important;
       height: 100% !important;
       padding: 0 !important;
     }
@@ -778,7 +779,6 @@ function enforceFullHeight() {
         flex-flow: row!important;
     }
     .ct-character-sheet-desktop .ct-subsections {
-        min-height: 100vh !important;
         height: auto !important;
         display: block;
         width: 100%;
@@ -809,15 +809,19 @@ function enforceFullHeight() {
     }
     .ct-character-sheet-desktop {
         background-color: white;
+        height: 100%;
+        -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
+        box-shadow: 5px 5px 15px 5px #3f3f3fff;
+    }
+    .ct-character-sheet__inner {
+        transform: translate(0px, 10px);
     }
     @media screen {
         .ct-character-sheet-desktop {
             max-width: none !important;
             margin: 0 !important;
             width: 100% !important;
-            min-height: 100vh !important;
             background-color: white !important;
-            box-shadow: none !important;
         }
     }
     
@@ -825,6 +829,8 @@ function enforceFullHeight() {
         body, .ct-character-sheet-desktop {
             margin: 0 !important;
             padding: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
         }
     }
     
@@ -1129,6 +1135,9 @@ function updateLayoutBounds() {
 
     const sections = Array.from(document.querySelectorAll('.print-section-container'));
     sections.forEach(section => {
+        // Use getBoundingClientRect for accurate visual position relative to viewport/page
+        // BUT stick to style parsing for relative-to-parent calculation if parent is 0,0
+        // Since sections are absolute in a relative container, style.top is relative to container top.
         const top = parseInt(section.style.top) || 0;
         const left = parseInt(section.style.left) || 0;
         const width = section.offsetWidth || 0;
@@ -1146,8 +1155,103 @@ function updateLayoutBounds() {
     const newWidth = maxRight + 50;
 
     // Apply min-height/width to ensure it at least covers the viewport
-    container.style.minHeight = Math.max(newHeight, window.innerHeight) + 'px';
+    // User Request: Update body container height to always be at least the same height as furthest coordinate
+    
+    // 1. Update the wrapper itself
+    const minH = Math.max(newHeight, window.innerHeight) + 'px';
+    container.style.minHeight = minH;
+    container.style.height = minH; // Explicitly set height too just in case
     container.style.minWidth = Math.max(newWidth, window.innerWidth) + 'px';
+
+    // 2. Also attempt to update parent containers if they restrict height
+    const sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
+    if (sheetDesktop) {
+        sheetDesktop.style.minHeight = minH;
+        // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
+        sheetDesktop.style.height = 'auto'; 
+    }
+    
+    const sheetInner = document.querySelector('.ct-character-sheet__inner');
+    if (sheetInner) {
+         sheetInner.style.minHeight = minH;
+    }
+
+    // User Request: Add page separators based on scaled content
+    drawPageSeparators(newHeight, newWidth);
+}
+
+/**
+ * Draws visual page separators to indicate print boundaries.
+ * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
+ */
+function drawPageSeparators(totalHeight, totalWidth) {
+    const container = document.getElementById('print-layout-wrapper');
+    if (!container) return;
+
+    // Remove existing separators
+    container.querySelectorAll('.print-page-separator').forEach(el => el.remove());
+
+    // Constants for Letter Portrait at 96 DPI
+    // Standard Letter is 8.5in x 11in.
+    // However, most browsers apply margins (approx 0.4-0.5in).
+    // Printable Area ≈ 8in x 10in.
+    // Width: 8in * 96 = 768px (safe area)
+    // Height: 10in * 96 = 960px (safe area)
+    const PAGE_WIDTH_PX = 816; // 8.5in full width for scaling calc
+    const PAGE_HEIGHT_PX = 960; // 10in height (excludes ~0.5in margins top/bottom)
+
+    // Calculate effective page height if scaled to fit
+    // If content is wider than 816px, the browser shrinks it.
+    // Scale Factor = 816 / totalWidth (e.g. 0.68)
+    // Effective Pixel Height = 1056 / Scale Factor
+    // Example: 1200px wide content. Scale = 0.68.
+    // Effective Height = 1056 / 0.68 = 1552px.
+    
+    // Default scale is 1 if content fits or is smaller
+    let effectivePageHeight = PAGE_HEIGHT_PX;
+    let scaleLabel = "100%";
+    
+    if (totalWidth > PAGE_WIDTH_PX) {
+        const scale = PAGE_WIDTH_PX / totalWidth;
+        effectivePageHeight = PAGE_HEIGHT_PX / scale;
+        scaleLabel = `${Math.round(scale * 100)}%`;
+    }
+
+    console.log(`[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`);
+
+    let currentY = effectivePageHeight;
+    let pageNum = 1;
+    
+    while (currentY < totalHeight) {
+        const separator = document.createElement('div');
+        separator.className = 'print-page-separator';
+        separator.style.position = 'absolute';
+        separator.style.left = '0';
+        separator.style.top = `${currentY}px`;
+        separator.style.width = '100%';
+        separator.style.height = '2px';
+        separator.style.borderTop = '2px dashed red';
+        separator.style.zIndex = '5'; 
+        separator.style.pointerEvents = 'none';
+        separator.style.opacity = '0.5';
+        
+        // Label
+        const label = document.createElement('span');
+        label.textContent = `Page ${pageNum} END (Scale: ${scaleLabel})`;
+        label.style.position = 'absolute';
+        label.style.right = '5px';
+        label.style.top = '-15px';
+        label.style.color = 'red';
+        label.style.fontSize = '12px';
+        label.style.fontWeight = 'bold';
+        label.style.backgroundColor = 'rgba(255,255,255,0.8)';
+        
+        separator.appendChild(label);
+        container.appendChild(separator);
+        
+        currentY += effectivePageHeight;
+        pageNum++;
+    }
 }
 
     // Expose for testing synchronously
