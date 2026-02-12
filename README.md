@@ -4,6 +4,7 @@ Modernized and restored for D&D Beyond 2026 site changes. This extension helps y
 
 Credits: This project is a fork of the abandoned D&D Beyond Character Sheet Print Enhancer by Adam Pritchard, with significant updates for modern site compatibility and new features. I made this project because I wanted print-ready character sheets for my D&D games without having to manually edit or create the PDF.
 
+
 **This project is a work in progress. Feature requests, issue reports and pull requests are welcome.**
 
 ## Try it Live (Developer Mode)
