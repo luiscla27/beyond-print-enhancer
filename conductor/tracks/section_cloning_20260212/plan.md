@@ -8,9 +8,9 @@ In this phase, we will add the "Clone" button to existing sections and create th
 - [x] Task: Write unit tests for the Clone button injection logic. e6fa745
 - [x] Task: Implement `injectCloneButtons()` in `js/main.js` to add the icon to the bottom-left of sections. e6fa745
 - [x] Task: Add CSS styles for the Clone button (absolute positioning, hidden by default, visible on parent hover). e6fa745
-- [ ] Task: Create a reusable Modal component/function for title input.
-- [ ] Task: Write tests for the title modal (ensuring it returns the user input or default title).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: UI Foundation' (Protocol in workflow.md)
+- [x] Task: Create a reusable Modal component/function for title input. e2b8c40
+- [x] Task: Write tests for the title modal (ensuring it returns the user input or default title). e2b8c40
+- [x] Task: Conductor - User Manual Verification 'Phase 1: UI Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Core Logic - Snapshot & Rendering
 This phase focuses on capturing the DOM state and rendering it as a new "Clone" section.
