@@ -898,7 +898,6 @@ function enforceFullHeight() {
         /* Using your provided Base64 string for the red border */
         /* This is used by .ct-skills__box and others */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
-        --btn-color: #c53131;
     }
 
     .print-section-content {
@@ -969,7 +968,7 @@ function enforceFullHeight() {
         overflow-x: hidden !important;
     }
     .ct-character-sheet {
-        background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
+        background-color: #333;
     }
     .ct-character-sheet-desktop {
         background-color: white;
@@ -1039,29 +1038,6 @@ function enforceFullHeight() {
     .print-section-container .ct-quick-info__health * {
         font-size: 14px !important;
     }
-    .print-section-container *[class^="styles_heading__"],
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="-heading"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "],
-    .print-section-container .ct-content-group__header-content {
-        font-size: 12px !important;
-        font-weight: bold !important;
-        text-transform: uppercase;
-        border-bottom: 1px solid #979797;
-        margin-bottom: 4px;
-    }
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "] {
-        font-size: 10px !important;
-    }
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "],
-    .print-section-container *[class^="styles_heading__"] *[class$="-heading"] {
-        border-bottom: 0
-    }
     @media print {
         body, .ct-character-sheet-desktop {
             margin: 0 !important;
@@ -1069,7 +1045,6 @@ function enforceFullHeight() {
             box-shadow: none !important;
             transform: none !important;
         }
-        .ct-spells-filter,
         .print-page-separator {
             display: none !important;
         }
@@ -1112,7 +1087,7 @@ function enforceFullHeight() {
         z-index: 999999999;
         width: calc(100% - 64px);
         height: 32px;
-        background-color: var(--btn-color);
+        background-color: #979797;
         line-height: 18px;
         left: 32px;
         border-radius: 32px;
@@ -1137,7 +1112,7 @@ function enforceFullHeight() {
     }
     .print-section-container:hover .print-section-resize-handle {
         opacity: 1;
-        background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
+        background: linear-gradient(135deg, transparent 50%, #979797 50%);
     }
 
     /* Skills specific compact logic (already mostly covered by global above) */
@@ -1174,24 +1149,22 @@ function enforceFullHeight() {
     /* Clone Button */
     .be-clone-button {
         position: absolute;
-        top: 46px;
-        left: 32px;
-        width: 39px;
-        height: 32px;
+        bottom: 0;
+        left: 0;
+        width: 24px;
+        height: 24px;
         cursor: pointer;
         z-index: 20;
         opacity: 0;
-        background: var(--btn-color);
-        border: 1px solid rgb(85, 85, 85);
-        font-size: 21px !important;
+        background: none;
+        border: none;
+        font-size: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: opacity 0.2s;
         padding: 0;
         margin: 0;
-        filter: drop-shadow(2px 4px 6px black);
-        border-radius: 32px;
     }
     .ct-subsection:hover .be-clone-button,
     .ct-section:hover .be-clone-button,
@@ -1203,415 +1176,8 @@ function enforceFullHeight() {
             display: none !important;
         }
     }
-
-    /* Modal Styles */
-    .be-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 100000;
-        backdrop-filter: blur(4px);
-    }
-    .be-modal {
-        background: #222;
-        color: white;
-        padding: 24px;
-        border-radius: 12px;
-        width: 400px;
-        max-width: 90%;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        border: 1px solid #444;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    .be-modal h3 {
-        margin: 0;
-        font-size: 18px;
-    }
-    .be-modal p {
-        margin: 0;
-        font-size: 14px;
-        color: #ccc;
-    }
-    .be-modal input {
-        background: #111;
-        border: 1px solid #444;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-    .be-modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-    }
-    .be-modal-actions button {
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        border: 1px solid #555;
-    }
-    .be-modal-ok {
-        background: #444;
-        color: white;
-    }
-    .be-modal-cancel {
-        background: transparent;
-        color: #ccc;
-    }
-
-    /* Clone Delete Button */
-    .be-clone-delete {
-        position: absolute;
-        top: 46px;
-        width: 39px;
-        height: 32px;
-        left: 82px;
-        cursor: pointer;
-        z-index: 1000000;
-        opacity: 0;
-        background: var(--btn-color);
-        border: 1px solid rgb(85, 85, 85);
-        font-size: 18px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.2s;
-        padding: 0;
-        margin: 0;
-        filter: drop-shadow(2px 4px 6px black);
-        border-radius: 32px;
-        color: white;
-    }
-    .print-section-container:hover .be-clone-delete {
-        opacity: 1;
-    }
-    .be-clone-delete:hover {
-        background: #cc0000;
-    }
-    @media print {
-        .be-clone-button, .be-clone-delete {
-            display: none !important;
-        }
-    }
   `;
   document.head.appendChild(style);
-}
-
-/**
- * Shows a modal to manage existing clones.
- */
-function handleManageClones() {
-    const clones = document.querySelectorAll('.print-section-container.be-clone');
-    if (clones.length === 0) {
-        showFeedback('No clones found');
-        return;
-    }
-
-    // Modal for managing clones
-    const overlay = document.createElement('div');
-    overlay.className = 'be-modal-overlay';
-    
-    const modal = document.createElement('div');
-    modal.className = 'be-modal';
-    modal.style.width = '500px';
-    
-    const h3 = document.createElement('h3');
-    h3.textContent = 'Manage Clones';
-    modal.appendChild(h3);
-    
-    const list = document.createElement('div');
-    list.style.maxHeight = '300px';
-    list.style.overflowY = 'auto';
-    list.style.display = 'flex';
-    list.style.flexDirection = 'column';
-    list.style.gap = '8px';
-    
-    clones.forEach(clone => {
-        const item = document.createElement('div');
-        item.style.display = 'flex';
-        item.style.justifyContent = 'space-between';
-        item.style.alignItems = 'center';
-        item.style.padding = '8px';
-        item.style.background = '#333';
-        item.style.borderRadius = '4px';
-        
-        const titleSpan = clone.querySelector('.print-section-header span');
-        const name = titleSpan ? titleSpan.textContent : 'Unnamed Clone';
-        
-        const nameLabel = document.createElement('span');
-        nameLabel.textContent = name;
-        item.appendChild(nameLabel);
-        
-        const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.gap = '8px';
-        
-        const goBtn = document.createElement('button');
-        goBtn.textContent = '🎯';
-        goBtn.title = 'Jump to Clone';
-        goBtn.onclick = () => {
-            clone.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Flash effect
-            const originalOutline = clone.style.outline;
-            clone.style.outline = '4px solid gold';
-            setTimeout(() => clone.style.outline = originalOutline, 1000);
-            overlay.remove();
-        };
-        actions.appendChild(goBtn);
-        
-        const delBtn = document.createElement('button');
-        delBtn.textContent = '🗑️';
-        delBtn.title = 'Delete Clone';
-        delBtn.onclick = () => {
-            if (confirm(`Delete "${name}"?`)) {
-                clone.remove();
-                item.remove();
-                if (list.children.length === 0) {
-                    overlay.remove();
-                }
-                showFeedback('Clone deleted');
-                updateLayoutBounds();
-            }
-        };
-        actions.appendChild(delBtn);
-        
-        item.appendChild(actions);
-        list.appendChild(item);
-    });
-    
-    modal.appendChild(list);
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.className = 'be-modal-ok';
-    closeBtn.onclick = () => overlay.remove();
-    modal.appendChild(closeBtn);
-    
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-}
-
-/**
- * Captures a static snapshot of a section's content.
- * @param {string} sectionId 
- * @returns {object} Snapshot data.
- */
-function captureSectionSnapshot(sectionId) {
-    const section = document.getElementById(sectionId);
-    if (!section) return null;
-
-    const content = section.querySelector('.print-section-content');
-    if (!content) return null;
-
-    // Clone the content
-    const clone = content.cloneNode(true);
-
-    // Sanitize: Remove extension UI elements
-    const toRemove = [
-        '.be-clone-button',
-        '.print-section-minimize',
-        '.print-section-restore',
-        '.print-section-resize-handle'
-    ];
-
-    toRemove.forEach(selector => {
-        clone.querySelectorAll(selector).forEach(el => el.remove());
-    });
-    
-    // Also remove menu tags as they are usually tab navigation/filters
-    clone.querySelectorAll('menu').forEach(el => el.remove());
-
-    // Specifically for spells: remove filter bar
-    clone.querySelectorAll('.ct-spells-filter').forEach(el => el.remove());
-
-    return {
-        originalId: sectionId,
-        html: clone.innerHTML,
-        styles: {
-            width: section.style.width,
-            height: section.style.height
-        }
-    };
-}
-
-/**
- * Renders a cloned section from snapshot data.
- * @param {object} snapshot 
- * @returns {HTMLElement} The created container.
- */
-function renderClonedSection(snapshot) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = snapshot.html;
-    
-    // Create the static header requested by user
-    const staticHeader = document.createElement('div');
-    staticHeader.className = 'ct-content-group__header';
-    const staticHeaderContent = document.createElement('div');
-    staticHeaderContent.className = 'ct-content-group__header-content';
-    staticHeaderContent.textContent = snapshot.title;
-    staticHeader.appendChild(staticHeaderContent);
-    
-    // Prepend to content
-    tempDiv.prepend(staticHeader);
-
-    const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
-    container.classList.add('be-clone');
-    container.dataset.originalId = snapshot.originalId;
-
-    // Double-click to edit title
-    const header = container.querySelector('.print-section-header');
-    if (header) {
-        header.addEventListener('dblclick', async (e) => {
-            e.stopPropagation();
-            const titleSpan = header.querySelector('span');
-            const staticTitleSpan = container.querySelector('.ct-content-group__header-content');
-            const currentTitle = titleSpan ? titleSpan.textContent.trim() : 'Clone';
-            // Use window reference for mockability in tests
-            const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
-            if (newTitle) {
-                if (titleSpan) titleSpan.textContent = newTitle;
-                if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
-                showFeedback('Title updated');
-            }
-        });
-    }
-
-    // Delete button
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'be-clone-delete';
-    deleteBtn.innerHTML = '🗑️';
-    deleteBtn.title = 'Delete Clone';
-    deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm('Delete this clone?')) {
-            container.remove();
-            showFeedback('Clone deleted');
-            updateLayoutBounds();
-        }
-    };
-    container.appendChild(deleteBtn);
-    
-    // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
-    const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
-    const height = snapshot.height || (snapshot.styles && snapshot.styles.height);
-    const left = snapshot.left;
-    const top = snapshot.top;
-    const zIndex = snapshot.zIndex;
-
-    if (width) container.style.width = width;
-    if (height) container.style.height = height;
-    if (zIndex) container.style.zIndex = zIndex;
-
-    if (left && top) {
-        container.style.left = left;
-        container.style.top = top;
-    } else {
-        // Position it slightly offset from original or at top-left
-        const original = document.getElementById(snapshot.originalId);
-        if (original) {
-            container.style.left = (parseInt(original.style.left) || 0) + 32 + 'px';
-            container.style.top = (parseInt(original.style.top) || 0) + 32 + 'px';
-            
-            // Ensure it's in front of the original
-            // Find max z-index in the layout
-            let maxZ = 10;
-            document.querySelectorAll('.print-section-container').forEach(el => {
-                const z = parseInt(el.style.zIndex) || 10;
-                if (z > maxZ) maxZ = z;
-            });
-            container.style.zIndex = maxZ + 1;
-        } else {
-            container.style.left = '32px';
-            container.style.top = '32px';
-        }
-    }
-
-    if (snapshot.minimized) {
-        container.dataset.minimized = 'true';
-        container.classList.add('minimized');
-    }
-
-    const layoutRoot = document.getElementById('print-layout-wrapper');
-    if (layoutRoot) {
-        layoutRoot.appendChild(container);
-    }
-
-    // Re-init resize logic for the new container
-    if (window.initResizeLogic) window.initResizeLogic();
-    
-    return container;
-}
-
-/**
- * Shows a modal with an input field.
- * @returns {Promise<string|null>}
- */
-function showInputModal(title, message, defaultValue = '') {
-    return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'be-modal-overlay';
-        
-        const modal = document.createElement('div');
-        modal.className = 'be-modal';
-        
-        const h3 = document.createElement('h3');
-        h3.textContent = title;
-        modal.appendChild(h3);
-        
-        const p = document.createElement('p');
-        p.textContent = message;
-        modal.appendChild(p);
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = defaultValue;
-        modal.appendChild(input);
-        
-        const actions = document.createElement('div');
-        actions.className = 'be-modal-actions';
-        
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'be-modal-cancel';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.onclick = () => {
-            overlay.remove();
-            resolve(null);
-        };
-        actions.appendChild(cancelBtn);
-        
-        const okBtn = document.createElement('button');
-        okBtn.className = 'be-modal-ok';
-        okBtn.textContent = 'OK';
-        okBtn.onclick = () => {
-            const val = input.value;
-            overlay.remove();
-            resolve(val);
-        };
-        actions.appendChild(okBtn);
-        
-        modal.appendChild(actions);
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        input.focus();
-        input.select();
-        
-        // Handle Enter/Esc
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter') okBtn.click();
-            if (e.key === 'Escape') cancelBtn.click();
-        };
-    });
 }
 
 /**
@@ -1896,35 +1462,31 @@ function createControls() {
     container.style.gap = '8px';
     container.style.borderRadius = '8px';
     container.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+    container.style.opacity = '0.3';
     container.style.transition = 'opacity 0.3s, transform 0.3s';
     
     // Hover logic
     container.addEventListener('mouseenter', () => {
+        container.style.opacity = '1';
         container.style.transform = 'scale(1.02)';
     });
     container.addEventListener('mouseleave', () => {
+        container.style.opacity = '0.3';
         container.style.transform = 'scale(1)';
     });
 
     const buttons = [
-        { label: 'Load', icon: '📂', action: handleLoadFile },
+        { label: 'Save Browser', icon: '💾', action: handleSaveBrowser },
+        { label: 'Save PC', icon: '💻', action: handleSavePC },
         { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
-        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
-        { label: 'Print', icon: '🖨️', action: () => window.print() },
-        { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
-        { label: 'Save to PC', icon: '💻', action: handleSavePC },
-        { 
-            label: 'Contribute', 
-            icon: '⭐', 
-            action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), 
-            bgColor: '#73611d' 
-        }
+        { label: 'Load', icon: '📂', action: handleLoadFile },
+        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank') }
     ];
 
     buttons.forEach(btnInfo => {
         const btn = document.createElement('button');
         btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
-        btn.style.backgroundColor = btnInfo.bgColor || '#333';
+        btn.style.backgroundColor = '#333';
         btn.style.color = 'white';
         btn.style.border = '1px solid #555';
         btn.style.padding = '6px 12px';
@@ -1935,7 +1497,7 @@ function createControls() {
         btn.style.transition = 'background-color 0.2s';
         
         btn.onmouseenter = () => btn.style.backgroundColor = '#444';
-        btn.onmouseleave = () => btn.style.backgroundColor = btnInfo.bgColor || '#333';
+        btn.onmouseleave = () => btn.style.backgroundColor = '#333';
         btn.onclick = btnInfo.action;
         
         container.appendChild(btn);
@@ -2066,27 +1628,6 @@ async function handleLoadDefault() {
 
         // Trigger default layout
         applyDefaultLayout();
-
-        // Reposition clones in front of their parents
-        document.querySelectorAll('.print-section-container.be-clone').forEach(clone => {
-            const originalId = clone.dataset.originalId;
-            const original = document.getElementById(originalId);
-            if (original) {
-                const x = (parseInt(original.style.left) || 0) + 32;
-                const y = (parseInt(original.style.top) || 0) + 32;
-                clone.style.setProperty('left', `${x}px`, 'important');
-                clone.style.setProperty('top', `${y}px`, 'important');
-                
-                // Maintain current dimensions if they exist, otherwise they might be reset by the global query
-                const currentWidth = clone.style.width;
-                const currentHeight = clone.style.height;
-                if (currentWidth) clone.style.setProperty('width', currentWidth, 'important');
-                if (currentHeight) clone.style.setProperty('height', currentHeight, 'important');
-
-                clone.style.zIndex = (parseInt(original.style.zIndex) || 10) + 1;
-            }
-        });
-
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -2275,31 +1816,13 @@ function showFallbackModal(jsonData) {
 function scanLayout() {
     const layout = {
         version: "1.0.0",
-        sections: {},
-        clones: []
+        sections: {}
     };
 
     const sections = document.querySelectorAll('.print-section-container');
     sections.forEach(section => {
         const id = section.id;
         if (!id) return;
-
-        if (section.classList.contains('be-clone')) {
-            const content = section.querySelector('.print-section-content');
-            const header = section.querySelector('.print-section-header span');
-            layout.clones.push({
-                id: id,
-                title: header ? header.textContent.trim() : 'Clone',
-                html: content ? content.innerHTML : '',
-                left: section.style.left,
-                top: section.style.top,
-                width: section.style.width,
-                height: section.style.height,
-                zIndex: section.style.zIndex || '10',
-                minimized: section.dataset.minimized === 'true'
-            });
-            return;
-        }
 
         layout.sections[id] = {
             left: section.style.left,
@@ -2347,16 +1870,6 @@ function migrateLayout(data) {
 function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
-
-    // Remove existing clones to avoid duplicates on re-apply
-    document.querySelectorAll('.print-section-container.be-clone').forEach(el => el.remove());
-
-    // Restore clones
-    if (layout.clones && Array.isArray(layout.clones)) {
-        layout.clones.forEach(cloneData => {
-            renderClonedSection(cloneData);
-        });
-    }
 
     for (const [id, styles] of Object.entries(layout.sections)) {
         const section = document.getElementById(id);
@@ -2487,31 +2000,12 @@ function injectCloneButtons() {
         btn.innerHTML = '📋'; // Clipboard icon
         btn.title = 'Clone Section';
         
-        btn.onclick = async (e) => {
+        // Use captureSectionSnapshot when implemented
+        btn.onclick = (e) => {
             e.stopPropagation();
             const id = section.id || 'unknown';
-            
-            // Get section name for default title
-            const header = section.querySelector('.ct-subsection__header, .ct-section__header, .print-section-header span');
-            const sectionName = header ? header.textContent.trim() : 'Section';
-            
-            const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
-            
-            if (title) {
-                const snapshot = captureSectionSnapshot(id);
-                if (snapshot) {
-                    snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-                    snapshot.title = title;
-                    
-                    const clone = renderClonedSection(snapshot);
-                    if (clone) {
-                        showFeedback(`Cloned: ${title}`);
-                        updateLayoutBounds();
-                    }
-                } else {
-                    showFeedback('Failed to capture snapshot.');
-                }
-            }
+            console.log(`[DDB Print] Cloning section: ${id}`);
+            // Logic for cloning will be added in Phase 2
         };
 
         section.appendChild(btn);
@@ -2542,17 +2036,10 @@ function injectCloneButtons() {
     window.applyLayout = applyLayout;
     window.applyDefaultLayout = applyDefaultLayout;
     window.handleSaveBrowser = handleSaveBrowser;
-    window.handleLoadDefault = handleLoadDefault;
-    window.handleSavePC = handleSavePC;
-    window.handleLoadFile = handleLoadFile;
     window.restoreLayout = restoreLayout;
     window.showFeedback = showFeedback;
     window.createControls = createControls;
     window.showFallbackModal = showFallbackModal;
-    window.showInputModal = showInputModal;
-    window.handleManageClones = handleManageClones;
-    window.captureSectionSnapshot = captureSectionSnapshot;
-    window.renderClonedSection = renderClonedSection;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
 
