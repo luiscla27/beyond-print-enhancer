@@ -1145,6 +1145,37 @@ function enforceFullHeight() {
     .print-section-container.minimized .print-section-restore {
         display: block !important;
     }
+
+    /* Clone Button */
+    .be-clone-button {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        z-index: 20;
+        opacity: 0;
+        background: none;
+        border: none;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+        padding: 0;
+        margin: 0;
+    }
+    .ct-subsection:hover .be-clone-button,
+    .ct-section:hover .be-clone-button,
+    .print-section-container:hover .be-clone-button {
+        opacity: 1;
+    }
+    @media print {
+        .be-clone-button {
+            display: none !important;
+        }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -1956,6 +1987,31 @@ function drawPageSeparators(totalHeight, totalWidth) {
     }
 }
 
+/**
+ * Injects a clone button into each section container.
+ */
+function injectCloneButtons() {
+    document.querySelectorAll('.ct-subsection, .ct-section, .print-section-container').forEach(section => {
+        // Avoid duplicate buttons
+        if (section.querySelector('.be-clone-button')) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'be-clone-button';
+        btn.innerHTML = '📋'; // Clipboard icon
+        btn.title = 'Clone Section';
+        
+        // Use captureSectionSnapshot when implemented
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            const id = section.id || 'unknown';
+            console.log(`[DDB Print] Cloning section: ${id}`);
+            // Logic for cloning will be added in Phase 2
+        };
+
+        section.appendChild(btn);
+    });
+}
+
     // Expose for testing synchronously
 
     window.createDraggableContainer = createDraggableContainer;
@@ -1985,6 +2041,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.createControls = createControls;
     window.showFallbackModal = showFallbackModal;
     window.Storage = Storage;
+    window.injectCloneButtons = injectCloneButtons;
 
 // Execution
 (async () => {
@@ -2009,6 +2066,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     removeSearchBoxes();
     movePortrait(); // User Request: Move portrait at the end
     moveQuickInfo(); // User Request: Make Quick Info draggable
+    injectCloneButtons();
     initDragAndDrop();
     initResponsiveScaling();
     initZIndexManagement();
