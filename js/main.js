@@ -1303,28 +1303,44 @@ function renderClonedSection(snapshot) {
     const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
     container.classList.add('be-clone');
     
-    if (snapshot.styles) {
-        if (snapshot.styles.width) container.style.width = snapshot.styles.width;
-        if (snapshot.styles.height) container.style.height = snapshot.styles.height;
+    // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
+    const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
+    const height = snapshot.height || (snapshot.styles && snapshot.styles.height);
+    const left = snapshot.left;
+    const top = snapshot.top;
+    const zIndex = snapshot.zIndex;
+
+    if (width) container.style.width = width;
+    if (height) container.style.height = height;
+    if (zIndex) container.style.zIndex = zIndex;
+
+    if (left && top) {
+        container.style.left = left;
+        container.style.top = top;
+    } else {
+        // Position it slightly offset from original or at top-left
+        const original = document.getElementById(snapshot.originalId);
+        if (original) {
+            container.style.left = (parseInt(original.style.left) || 0) + 32 + 'px';
+            container.style.top = (parseInt(original.style.top) || 0) + 32 + 'px';
+            
+            // Ensure it's in front of the original
+            // Find max z-index in the layout
+            let maxZ = 10;
+            document.querySelectorAll('.print-section-container').forEach(el => {
+                const z = parseInt(el.style.zIndex) || 10;
+                if (z > maxZ) maxZ = z;
+            });
+            container.style.zIndex = maxZ + 1;
+        } else {
+            container.style.left = '32px';
+            container.style.top = '32px';
+        }
     }
 
-    // Position it slightly offset from original or at top-left
-    const original = document.getElementById(snapshot.originalId);
-    if (original) {
-        container.style.left = (parseInt(original.style.left) || 0) + 32 + 'px';
-        container.style.top = (parseInt(original.style.top) || 0) + 32 + 'px';
-        
-        // Ensure it's in front of the original
-        // Find max z-index in the layout
-        let maxZ = 10;
-        document.querySelectorAll('.print-section-container').forEach(el => {
-            const z = parseInt(el.style.zIndex) || 10;
-            if (z > maxZ) maxZ = z;
-        });
-        container.style.zIndex = maxZ + 1;
-    } else {
-        container.style.left = '32px';
-        container.style.top = '32px';
+    if (snapshot.minimized) {
+        container.dataset.minimized = 'true';
+        container.classList.add('minimized');
     }
 
     const layoutRoot = document.getElementById('print-layout-wrapper');
@@ -2036,13 +2052,31 @@ function showFallbackModal(jsonData) {
 function scanLayout() {
     const layout = {
         version: "1.0.0",
-        sections: {}
+        sections: {},
+        clones: []
     };
 
     const sections = document.querySelectorAll('.print-section-container');
     sections.forEach(section => {
         const id = section.id;
         if (!id) return;
+
+        if (section.classList.contains('be-clone')) {
+            const content = section.querySelector('.print-section-content');
+            const header = section.querySelector('.print-section-header span');
+            layout.clones.push({
+                id: id,
+                title: header ? header.textContent.trim() : 'Clone',
+                html: content ? content.innerHTML : '',
+                left: section.style.left,
+                top: section.style.top,
+                width: section.style.width,
+                height: section.style.height,
+                zIndex: section.style.zIndex || '10',
+                minimized: section.dataset.minimized === 'true'
+            });
+            return;
+        }
 
         layout.sections[id] = {
             left: section.style.left,
@@ -2090,6 +2124,16 @@ function migrateLayout(data) {
 function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
+
+    // Remove existing clones to avoid duplicates on re-apply
+    document.querySelectorAll('.print-section-container.be-clone').forEach(el => el.remove());
+
+    // Restore clones
+    if (layout.clones && Array.isArray(layout.clones)) {
+        layout.clones.forEach(cloneData => {
+            renderClonedSection(cloneData);
+        });
+    }
 
     for (const [id, styles] of Object.entries(layout.sections)) {
         const section = document.getElementById(id);
