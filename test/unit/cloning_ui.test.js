@@ -62,4 +62,38 @@ describe('Cloning UI Injection', function() {
         assert.strictEqual(cloneBtn.tagName, 'BUTTON');
     });
   });
+
+  describe('Custom Modal', function() {
+    it('should show a modal and resolve with the input value', async function() {
+        if (typeof window.showInputModal !== 'function') {
+            assert.fail('window.showInputModal is not defined');
+        }
+
+        // We need to simulate user interaction
+        const promise = window.showInputModal('Title', 'Message', 'Default');
+        
+        const modal = document.querySelector('.be-modal-overlay');
+        assert.ok(modal, 'Modal overlay not found');
+        
+        const input = modal.querySelector('input');
+        assert.strictEqual(input.value, 'Default');
+        
+        input.value = 'New Title';
+        const okBtn = modal.querySelector('.be-modal-ok');
+        okBtn.click();
+        
+        const result = await promise;
+        assert.strictEqual(result, 'New Title');
+        assert.strictEqual(document.querySelector('.be-modal-overlay'), null, 'Modal not removed');
+    });
+
+    it('should resolve with null when cancelled', async function() {
+        const promise = window.showInputModal('Title', 'Message', 'Default');
+        const cancelBtn = document.querySelector('.be-modal-cancel');
+        cancelBtn.click();
+        
+        const result = await promise;
+        assert.strictEqual(result, null);
+    });
+  });
 });
