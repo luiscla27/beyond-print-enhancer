@@ -96,6 +96,10 @@ describe('Cloning Logic', function() {
         
         const titleSpan = clone.querySelector('.print-section-header span');
         assert.strictEqual(titleSpan.textContent, 'Action Clone');
+
+        const staticTitle = clone.querySelector('.ct-content-group__header-content');
+        assert.ok(staticTitle, 'Static header content missing');
+        assert.strictEqual(staticTitle.textContent, 'Action Clone');
         
         const content = clone.querySelector('.print-section-content');
         assert.ok(content.innerHTML.includes('Snapshot Content'));

@@ -37,7 +37,7 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 2. Resizable sections.
 3. Minimize sections.
 4. Save & Load templates
-5. Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
+5. **WIP**: Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
 6. **WIP**: Editable content and maybe font resizing
 
 ## Instructions for use
