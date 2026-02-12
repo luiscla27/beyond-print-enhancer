@@ -1302,6 +1302,7 @@ function renderClonedSection(snapshot) {
     
     const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
     container.classList.add('be-clone');
+    container.dataset.originalId = snapshot.originalId;
     
     // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
     const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
@@ -1864,6 +1865,20 @@ async function handleLoadDefault() {
 
         // Trigger default layout
         applyDefaultLayout();
+
+        // Reposition clones in front of their parents
+        document.querySelectorAll('.print-section-container.be-clone').forEach(clone => {
+            const originalId = clone.dataset.originalId;
+            const original = document.getElementById(originalId);
+            if (original) {
+                const x = (parseInt(original.style.left) || 0) + 32;
+                const y = (parseInt(original.style.top) || 0) + 32;
+                clone.style.setProperty('left', `${x}px`, 'important');
+                clone.style.setProperty('top', `${y}px`, 'important');
+                clone.style.zIndex = (parseInt(original.style.zIndex) || 10) + 1;
+            }
+        });
+
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -2319,6 +2334,9 @@ function injectCloneButtons() {
     window.applyLayout = applyLayout;
     window.applyDefaultLayout = applyDefaultLayout;
     window.handleSaveBrowser = handleSaveBrowser;
+    window.handleLoadDefault = handleLoadDefault;
+    window.handleSavePC = handleSavePC;
+    window.handleLoadFile = handleLoadFile;
     window.restoreLayout = restoreLayout;
     window.showFeedback = showFeedback;
     window.createControls = createControls;
