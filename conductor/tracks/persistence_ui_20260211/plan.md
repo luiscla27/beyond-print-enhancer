@@ -6,7 +6,7 @@ This plan covers the implementation of a floating control panel to manage layout
 Establish the storage layer and the JSON data structure for capturing layout state.
 
 - [x] Task: Define JSON schema and versioning constants in `js/storage.js` 72e4a86
-- [ ] Task: Implement IndexedDB wrapper for saving/loading global and per-character layouts
+- [x] Task: Implement IndexedDB wrapper for saving/loading global and per-character layouts c033961
 - [ ] Task: Implement "Layout Scanner" to extract coordinates, sizes, and inner widths from the DOM
 - [ ] Task: Implement "Layout Applier" to inject saved styles back into the DOM
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure' (Protocol in workflow.md)
