@@ -1318,6 +1318,46 @@ function updateLayoutBounds() {
 }
 
 /**
+ * Scans the current DOM for layout information.
+ * @returns {object} Layout data following the schema.
+ */
+function scanLayout() {
+    const layout = {
+        version: "1.0.0",
+        sections: {}
+    };
+
+    const sections = document.querySelectorAll('.print-section-container');
+    sections.forEach(section => {
+        const id = section.id;
+        if (!id) return;
+
+        layout.sections[id] = {
+            left: section.style.left,
+            top: section.style.top,
+            width: section.style.width,
+            height: section.style.height,
+            zIndex: section.style.zIndex || '10',
+            minimized: section.dataset.minimized === 'true',
+            innerWidths: {}
+        };
+
+        // Scan inner content for width overrides
+        const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
+        innerContainers.forEach((container, cIdx) => {
+            Array.from(container.children).forEach((child, dIdx) => {
+                if (child.tagName === 'DIV' && child.style.width) {
+                    const key = `${cIdx}-${dIdx}`;
+                    layout.sections[id].innerWidths[key] = child.style.width;
+                }
+            });
+        });
+    });
+
+    return layout;
+}
+
+/**
  * Draws visual page separators to indicate print boundaries.
  * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
  */
@@ -1411,6 +1451,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.drawPageSeparators = drawPageSeparators;
     window.moveQuickInfo = moveQuickInfo;
     window.adjustInnerContentWidth = adjustInnerContentWidth;
+    window.scanLayout = scanLayout;
 
 // Execution
 (async () => {

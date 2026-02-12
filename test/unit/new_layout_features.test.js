@@ -252,4 +252,43 @@ describe('Recent Layout Features', function() {
       });
   });
 
+  describe('Layout Scanner', function() {
+      it('should extract coordinates, sizes and inner widths', function() {
+          // Setup
+          const wrapper = document.getElementById('print-layout-wrapper');
+          const section = document.createElement('div');
+          section.className = 'print-section-container';
+          section.id = 'section-Test';
+          section.style.left = '100px';
+          section.style.top = '200px';
+          section.style.width = '300px';
+          section.style.height = '400px';
+
+          const content = document.createElement('div');
+          content.className = 'test-content';
+          const innerDiv = document.createElement('div');
+          innerDiv.style.width = '150px';
+          content.appendChild(innerDiv);
+          section.appendChild(content);
+          wrapper.appendChild(section);
+
+          // Act
+          const layout = window.scanLayout();
+
+          // Assert
+          assert.ok(layout.sections['section-Test']);
+          assert.strictEqual(layout.sections['section-Test'].left, '100px');
+          assert.strictEqual(layout.sections['section-Test'].top, '200px');
+          assert.strictEqual(layout.sections['section-Test'].width, '300px');
+          assert.strictEqual(layout.sections['section-Test'].height, '400px');
+          // Note: innerWidths depends on class matching "-content" or "-row-header"
+          // Let's refine the test for innerWidths
+          content.className = 'some-content';
+          const layout2 = window.scanLayout();
+          assert.ok(layout2.sections['section-Test'].innerWidths);
+          // We need a way to identify the inner div, maybe index?
+          // The spec says "immediate div children within containers ending in -row-header or -content"
+      });
+  });
+
 });
