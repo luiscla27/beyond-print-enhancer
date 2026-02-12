@@ -15,11 +15,11 @@ In this phase, we will add the "Clone" button to existing sections and create th
 ## Phase 2: Core Logic - Snapshot & Rendering
 This phase focuses on capturing the DOM state and rendering it as a new "Clone" section.
 
-- [ ] Task: Write unit tests for the snapshot capture logic (DOM cloning and sanitization).
-- [ ] Task: Implement `captureSectionSnapshot(sectionId)` to clone the DOM, remove interactive elements, and prepare it for storage.
-- [ ] Task: Implement `renderClonedSection(snapshotData)` to inject the snapshot into the DOM with the "Clone" wrapper.
-- [ ] Task: Update the layout engine to handle clones as first-class "movable" items.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Logic' (Protocol in workflow.md)
+- [x] Task: Write unit tests for the snapshot capture logic (DOM cloning and sanitization). b30f8ff
+- [x] Task: Implement `captureSectionSnapshot(sectionId)` to clone the DOM, remove interactive elements, and prepare it for storage. b30f8ff
+- [x] Task: Implement `renderClonedSection(snapshotData)` to inject the snapshot into the DOM with the "Clone" wrapper. b30f8ff
+- [x] Task: Update the layout engine to handle clones as first-class "movable" items. b30f8ff
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Logic' (Protocol in workflow.md)
 
 ## Phase 3: Persistence - Save/Load Integration
 Integrating clones into the existing persistence layer (IndexedDB and JSON).
