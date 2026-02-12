@@ -6,10 +6,13 @@
 const DB_NAME = 'DDBPrintEnhancerDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'layouts';
+const SCHEMA_VERSION = '1.0.0';
 
 let db = null;
 
 const Storage = {
+  SCHEMA_VERSION,
+
   /**
    * Initialize the IndexedDB connection.
    */
@@ -36,6 +39,18 @@ const Storage = {
         resolve(db);
       };
     });
+  },
+
+  /**
+   * Validates if the object matches the expected layout schema.
+   * @param {object} data 
+   * @returns {boolean}
+   */
+  validateLayout: (data) => {
+      if (!data || typeof data !== 'object') return false;
+      if (data.version === undefined || data.sections === undefined) return false;
+      if (typeof data.sections !== 'object') return false;
+      return true;
   },
 
   /**
@@ -81,5 +96,9 @@ const Storage = {
 
 // Export for Node.js/Test environment
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = Storage;
+  module.exports = {
+    ...Storage,
+    SCHEMA_VERSION,
+    Storage
+  };
 }
