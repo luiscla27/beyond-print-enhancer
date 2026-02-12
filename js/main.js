@@ -1278,6 +1278,9 @@ function captureSectionSnapshot(sectionId) {
     // Also remove menu tags as they are usually tab navigation/filters
     clone.querySelectorAll('menu').forEach(el => el.remove());
 
+    // Specifically for spells: remove filter bar
+    clone.querySelectorAll('.ct-spells-filter').forEach(el => el.remove());
+
     return {
         originalId: sectionId,
         html: clone.innerHTML,
