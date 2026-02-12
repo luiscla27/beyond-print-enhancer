@@ -14,11 +14,11 @@ Establish the storage layer and the JSON data structure for capturing layout sta
 ## Phase 2: UI Components & Aesthetics
 Build the floating control panel and the fallback modal.
 
-- [ ] Task: Implement the vertical control panel container with hover/transparency logic
-- [ ] Task: Style buttons with a modern "cool" aesthetic (dark theme, shadows)
-- [ ] Task: Implement the "Fallback Modal" for manual JSON copy-pasting
-- [ ] Task: Ensure all UI elements are excluded from `@media print`
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: UI Components' (Protocol in workflow.md)
+- [x] Task: Implement the vertical control panel container with hover/transparency logic 52d64fc
+- [x] Task: Style buttons with a modern "cool" aesthetic (dark theme, shadows) 52d64fc
+- [x] Task: Implement the "Fallback Modal" for manual JSON copy-pasting 52d64fc
+- [x] Task: Ensure all UI elements are excluded from `@media print` 52d64fc
+- [x] Task: Conductor - User Manual Verification 'Phase 2: UI Components' (Protocol in workflow.md) a3cc719
 
 ## Phase 3: Core Logic & File I/O
 Connect the UI buttons to the persistence logic and file system.

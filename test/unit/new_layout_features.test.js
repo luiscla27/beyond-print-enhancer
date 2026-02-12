@@ -334,4 +334,50 @@ describe('Recent Layout Features', function() {
       });
   });
 
+  describe('Control Panel UI', function() {
+      it('should create a vertical control panel in the top-left', function() {
+          // Act
+          window.createControls();
+          
+          const controls = document.getElementById('print-enhance-controls');
+          assert.ok(controls, 'Controls container should exist');
+          assert.strictEqual(controls.style.position, 'fixed');
+          assert.strictEqual(controls.style.left, '10px');
+          assert.strictEqual(controls.style.top, '10px');
+          assert.strictEqual(controls.style.display, 'flex');
+          assert.strictEqual(controls.style.flexDirection, 'column');
+          assert.strictEqual(controls.style.opacity, '0.3');
+          
+          // Verify buttons
+          const buttons = controls.querySelectorAll('button');
+          const labels = Array.from(buttons).map(b => b.textContent.trim());
+          assert.ok(labels.some(l => l.includes('Save Browser')));
+          assert.ok(labels.some(l => l.includes('Save PC')));
+          assert.ok(labels.some(l => l.includes('Load Default')));
+          assert.ok(labels.some(l => l.includes('Load')));
+          assert.ok(labels.some(l => l.includes('Contribute')));
+      });
+  });
+
+  describe('Fallback Modal', function() {
+      it('should create an overlay and modal with textarea', function() {
+          const testJson = '{"test": true}';
+          window.showFallbackModal(testJson);
+          
+          const overlay = document.getElementById('print-enhance-overlay');
+          assert.ok(overlay, 'Overlay should exist');
+          
+          const textarea = overlay.querySelector('textarea');
+          assert.ok(textarea, 'Textarea should exist');
+          assert.strictEqual(textarea.value, testJson);
+          
+          const closeBtn = Array.from(overlay.querySelectorAll('button')).find(b => b.textContent === 'Close');
+          assert.ok(closeBtn, 'Close button should exist');
+          
+          // Close it
+          closeBtn.click();
+          assert.ok(!document.getElementById('print-enhance-overlay'), 'Overlay should be removed');
+      });
+  });
+
 });

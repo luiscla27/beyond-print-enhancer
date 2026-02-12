@@ -1425,8 +1425,77 @@ function updateLayoutBounds() {
          sheetInner.style.minHeight = minH;
     }
 
-    // User Request: Add page separators based on scaled content
     drawPageSeparators(newHeight, 1200);
+}
+
+/**
+ * Creates the floating control panel.
+ */
+function createControls() {
+    const container = document.createElement('div');
+    container.id = 'print-enhance-controls';
+    container.style.position = 'fixed';
+    container.style.top = '10px';
+    container.style.left = '10px';
+    container.style.zIndex = '10000';
+    container.style.background = '#222';
+    container.style.border = '1px solid #444';
+    container.style.padding = '8px';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '8px';
+    container.style.borderRadius = '8px';
+    container.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+    container.style.opacity = '0.3';
+    container.style.transition = 'opacity 0.3s, transform 0.3s';
+    
+    // Hover logic
+    container.addEventListener('mouseenter', () => {
+        container.style.opacity = '1';
+        container.style.transform = 'scale(1.02)';
+    });
+    container.addEventListener('mouseleave', () => {
+        container.style.opacity = '0.3';
+        container.style.transform = 'scale(1)';
+    });
+
+    const buttons = [
+        { label: 'Save Browser', icon: '💾', action: handleSaveBrowser },
+        { label: 'Save PC', icon: '💻', action: handleSavePC },
+        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
+        { label: 'Load', icon: '📂', action: handleLoadFile },
+        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank') }
+    ];
+
+    buttons.forEach(btnInfo => {
+        const btn = document.createElement('button');
+        btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
+        btn.style.backgroundColor = '#333';
+        btn.style.color = 'white';
+        btn.style.border = '1px solid #555';
+        btn.style.padding = '6px 12px';
+        btn.style.borderRadius = '4px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '12px';
+        btn.style.textAlign = 'left';
+        btn.style.transition = 'background-color 0.2s';
+        
+        btn.onmouseenter = () => btn.style.backgroundColor = '#444';
+        btn.onmouseleave = () => btn.style.backgroundColor = '#333';
+        btn.onclick = btnInfo.action;
+        
+        container.appendChild(btn);
+    });
+
+    document.body.appendChild(container);
+    
+    // Inject print-only styles to hide controls
+    if (!document.getElementById('ddb-print-controls-style')) {
+        const style = document.createElement('style');
+        style.id = 'ddb-print-controls-style';
+        style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
+        document.head.appendChild(style);
+    }
 }
 
 /**
@@ -1449,6 +1518,27 @@ async function handleSaveBrowser() {
         console.error('[DDB Print] Save failed', err);
         alert('Failed to save layout to browser.');
     }
+}
+
+/**
+ * Handles saving to PC. (Placeholder)
+ */
+function handleSavePC() {
+    console.log('[DDB Print] Save on PC clicked');
+}
+
+/**
+ * Handles loading default layout. (Placeholder)
+ */
+function handleLoadDefault() {
+    console.log('[DDB Print] Load Default clicked');
+}
+
+/**
+ * Handles loading from file. (Placeholder)
+ */
+function handleLoadFile() {
+    console.log('[DDB Print] Load File clicked');
 }
 
 /**
@@ -1505,6 +1595,91 @@ function showFeedback(msg) {
         feedback.style.opacity = '0';
         setTimeout(() => feedback.remove(), 500);
     }, 2000);
+}
+
+/**
+ * Shows a modal with layout data for manual copying.
+ * @param {string} jsonData 
+ */
+function showFallbackModal(jsonData) {
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'print-enhance-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    overlay.style.zIndex = '20000';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.backdropFilter = 'blur(4px)';
+
+    // Modal
+    const modal = document.createElement('div');
+    modal.style.backgroundColor = '#222';
+    modal.style.color = 'white';
+    modal.style.padding = '20px';
+    modal.style.borderRadius = '12px';
+    modal.style.width = '80%';
+    modal.style.maxWidth = '600px';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.gap = '15px';
+    modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+    modal.style.border = '1px solid #444';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Layout JSON Data';
+    title.style.margin = '0';
+    modal.appendChild(title);
+
+    const info = document.createElement('p');
+    info.textContent = 'Copy the layout data below to save it manually.';
+    info.style.fontSize = '14px';
+    modal.appendChild(info);
+
+    const textarea = document.createElement('textarea');
+    textarea.value = jsonData;
+    textarea.readOnly = true;
+    textarea.style.height = '200px';
+    textarea.style.backgroundColor = '#111';
+    textarea.style.color = '#0f0';
+    textarea.style.border = '1px solid #333';
+    textarea.style.padding = '10px';
+    textarea.style.fontFamily = 'monospace';
+    textarea.style.borderRadius = '4px';
+    modal.appendChild(textarea);
+
+    const btnGroup = document.createElement('div');
+    btnGroup.style.display = 'flex';
+    btnGroup.style.justifyContent = 'flex-end';
+    btnGroup.style.gap = '10px';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy to Clipboard';
+    copyBtn.style.padding = '8px 16px';
+    copyBtn.style.cursor = 'pointer';
+    copyBtn.onclick = () => {
+        textarea.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 2000);
+    };
+    btnGroup.appendChild(copyBtn);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.padding = '8px 16px';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.onclick = () => overlay.remove();
+    btnGroup.appendChild(closeBtn);
+
+    modal.appendChild(btnGroup);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 }
 
 /**
@@ -1695,6 +1870,8 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.handleSaveBrowser = handleSaveBrowser;
     window.restoreLayout = restoreLayout;
     window.showFeedback = showFeedback;
+    window.createControls = createControls;
+    window.showFallbackModal = showFallbackModal;
     window.Storage = Storage;
 
 // Execution
@@ -1725,14 +1902,12 @@ function drawPageSeparators(totalHeight, totalWidth) {
     initZIndexManagement();
     initResizeLogic();
     
-    /* global createControls, restoreLayout */
-    if (typeof createControls === 'function') createControls();
+    // UI Controls
+    createControls();
     
     let layoutRestored = false;
-    if (typeof restoreLayout === 'function') {
-        layoutRestored = await restoreLayout();
-        if (layoutRestored) updateLayoutBounds();
-    }
+    layoutRestored = await restoreLayout();
+    if (layoutRestored) updateLayoutBounds();
     
     if (!layoutRestored) {
         autoArrangeSections();
