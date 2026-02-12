@@ -1249,6 +1249,84 @@ function enforceFullHeight() {
 }
 
 /**
+ * Captures a static snapshot of a section's content.
+ * @param {string} sectionId 
+ * @returns {object} Snapshot data.
+ */
+function captureSectionSnapshot(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) return null;
+
+    const content = section.querySelector('.print-section-content');
+    if (!content) return null;
+
+    // Clone the content
+    const clone = content.cloneNode(true);
+
+    // Sanitize: Remove interactive elements
+    const toRemove = [
+        'button',
+        'menu',
+        '.ct-spell-manager__button',
+        '.be-clone-button',
+        '.print-section-minimize',
+        '.print-section-restore',
+        '.print-section-resize-handle'
+    ];
+
+    toRemove.forEach(selector => {
+        clone.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    return {
+        originalId: sectionId,
+        html: clone.innerHTML,
+        styles: {
+            width: section.style.width,
+            height: section.style.height
+        }
+    };
+}
+
+/**
+ * Renders a cloned section from snapshot data.
+ * @param {object} snapshot 
+ * @returns {HTMLElement} The created container.
+ */
+function renderClonedSection(snapshot) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = snapshot.html;
+    
+    const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
+    container.classList.add('be-clone');
+    
+    if (snapshot.styles) {
+        if (snapshot.styles.width) container.style.width = snapshot.styles.width;
+        if (snapshot.styles.height) container.style.height = snapshot.styles.height;
+    }
+
+    // Position it slightly offset from original or at top-left
+    const original = document.getElementById(snapshot.originalId);
+    if (original) {
+        container.style.left = (parseInt(original.style.left) || 0) + 32 + 'px';
+        container.style.top = (parseInt(original.style.top) || 0) + 32 + 'px';
+    } else {
+        container.style.left = '32px';
+        container.style.top = '32px';
+    }
+
+    const layoutRoot = document.getElementById('print-layout-wrapper');
+    if (layoutRoot) {
+        layoutRoot.appendChild(container);
+    }
+
+    // Re-init resize logic for the new container
+    if (window.initResizeLogic) window.initResizeLogic();
+    
+    return container;
+}
+
+/**
  * Shows a modal with an input field.
  * @returns {Promise<string|null>}
  */
@@ -2141,9 +2219,19 @@ function injectCloneButtons() {
             const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
             
             if (title) {
-                console.log(`[DDB Print] Cloning section: ${id} with title: ${title}`);
-                // captureSectionSnapshot and renderClonedSection will be implemented in Phase 2
-                showFeedback(`Ready to clone: ${title}`);
+                const snapshot = captureSectionSnapshot(id);
+                if (snapshot) {
+                    snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                    snapshot.title = title;
+                    
+                    const clone = renderClonedSection(snapshot);
+                    if (clone) {
+                        showFeedback(`Cloned: ${title}`);
+                        updateLayoutBounds();
+                    }
+                } else {
+                    showFeedback('Failed to capture snapshot.');
+                }
             }
         };
 
@@ -2180,6 +2268,8 @@ function injectCloneButtons() {
     window.createControls = createControls;
     window.showFallbackModal = showFallbackModal;
     window.showInputModal = showInputModal;
+    window.captureSectionSnapshot = captureSectionSnapshot;
+    window.renderClonedSection = renderClonedSection;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
 
