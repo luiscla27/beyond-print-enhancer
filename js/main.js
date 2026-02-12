@@ -898,6 +898,7 @@ function enforceFullHeight() {
         /* Using your provided Base64 string for the red border */
         /* This is used by .ct-skills__box and others */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
+        --btn-color: #c53131;
     }
 
     .print-section-content {
@@ -1111,7 +1112,7 @@ function enforceFullHeight() {
         z-index: 999999999;
         width: calc(100% - 64px);
         height: 32px;
-        background-color: #979797;
+        background-color: var(--btn-color);
         line-height: 18px;
         left: 32px;
         border-radius: 32px;
@@ -1136,7 +1137,7 @@ function enforceFullHeight() {
     }
     .print-section-container:hover .print-section-resize-handle {
         opacity: 1;
-        background: linear-gradient(135deg, transparent 50%, #979797 50%);
+        background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
     }
 
     /* Skills specific compact logic (already mostly covered by global above) */
@@ -1180,7 +1181,7 @@ function enforceFullHeight() {
         cursor: pointer;
         z-index: 20;
         opacity: 0;
-        background: #979797;
+        background: var(--btn-color);
         border: 1px solid rgb(85, 85, 85);
         font-size: 21px !important;
         display: flex;
@@ -1278,7 +1279,7 @@ function enforceFullHeight() {
         cursor: pointer;
         z-index: 1000000;
         opacity: 0;
-        background: #979797;
+        background: var(--btn-color);
         border: 1px solid rgb(85, 85, 85);
         font-size: 18px !important;
         display: flex;
@@ -1906,12 +1907,12 @@ function createControls() {
     });
 
     const buttons = [
-        { label: 'Load', icon: '�', action: handleLoadFile },
+        { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
-        { label: 'Manage Clones', icon: '�', action: handleManageClones },
-        { label: 'Print', icon: '�️', action: () => window.print() },
-        { label: 'Save Browser', icon: '💾', action: handleSaveBrowser },
-        { label: 'Save PC', icon: '💻', action: handleSavePC },
+        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Print', icon: '🖨️', action: () => window.print() },
+        { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
+        { label: 'Save to PC', icon: '💻', action: handleSavePC },
         { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), bgColor: '#73611d' }
     ];
 
