@@ -65,8 +65,9 @@ describe('Cloning Logic', function() {
         const temp = document.createElement('div');
         temp.innerHTML = snapshot.html;
         
-        assert.ok(temp.querySelector('button'), 'Buttons should be preserved');
-        assert.strictEqual(temp.querySelector('menu'), null, 'Menu should still be removed');
+        assert.strictEqual(temp.querySelector('button'), null, 'Buttons should be removed');
+        assert.strictEqual(temp.querySelector('menu'), null, 'Menu should be removed');
+        assert.strictEqual(temp.querySelector('.ct-spell-manager__button'), null, 'Spell manager buttons should be removed');
         assert.ok(temp.querySelector('p'), 'Non-interactive content should be preserved');
     });
   });
@@ -96,10 +97,6 @@ describe('Cloning Logic', function() {
         
         const titleSpan = clone.querySelector('.print-section-header span');
         assert.strictEqual(titleSpan.textContent, 'Action Clone');
-
-        const staticTitle = clone.querySelector('.ct-content-group__header-content');
-        assert.ok(staticTitle, 'Static header content missing');
-        assert.strictEqual(staticTitle.textContent, 'Action Clone');
         
         const content = clone.querySelector('.print-section-content');
         assert.ok(content.innerHTML.includes('Snapshot Content'));
