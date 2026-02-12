@@ -28,9 +28,8 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 
 ## Known issues
 
-1. The extension does not work on mobile devices.
-2. The extension does not work on the D&D Beyond mobile app.
-3. The extension is not meant to let you edit your character sheet. Except for the SPELL section.
+1. The extension does not work on mobile browser devices nor the D&D Beyond mobile app.
+3. The extension is not meant to let you edit your character sheet nor throw dices. Only the SPELL section "Manage spells" should be usable.
 
 ## Features
 
@@ -38,7 +37,8 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 2. Resizable sections.
 3. Minimize sections.
 4. Save & Load templates
-4. **WIP**: Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
+5. **WIP**: Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
+6. **WIP**: Editable content and maybe font resizing
 
 ## Instructions for use
 

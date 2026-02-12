@@ -968,7 +968,7 @@ function enforceFullHeight() {
         overflow-x: hidden !important;
     }
     .ct-character-sheet {
-        background-color: #333;
+        background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
     }
     .ct-character-sheet-desktop {
         background-color: white;
@@ -1037,6 +1037,29 @@ function enforceFullHeight() {
     }
     .print-section-container .ct-quick-info__health * {
         font-size: 14px !important;
+    }
+    .print-section-container *[class^="styles_heading__"],
+    .print-section-container *[class^="styles_sectionHeading__"],
+    .print-section-container *[class$="-heading"],
+    .print-section-container *[class$="__heading"],
+    .print-section-container *[class$="__heading "],
+    .print-section-container .ct-content-group__header-content {
+        font-size: 12px !important;
+        font-weight: bold !important;
+        text-transform: uppercase;
+        border-bottom: 1px solid #979797;
+        margin-bottom: 4px;
+    }
+    .print-section-container *[class^="styles_sectionHeading__"],
+    .print-section-container *[class$="__heading"],
+    .print-section-container *[class$="__heading "] {
+        font-size: 10px !important;
+    }
+    .print-section-container *[class^="styles_sectionHeading__"],
+    .print-section-container *[class$="__heading"],
+    .print-section-container *[class$="__heading "],
+    .print-section-container *[class^="styles_heading__"] *[class$="-heading"] {
+        border-bottom: 0
     }
     @media print {
         body, .ct-character-sheet-desktop {
@@ -1248,10 +1271,10 @@ function enforceFullHeight() {
     /* Clone Delete Button */
     .be-clone-delete {
         position: absolute;
-        top: 0;
-        right: 0;
-        width: 32px;
+        top: 46px;
+        width: 39px;
         height: 32px;
+        left: 82px;
         cursor: pointer;
         z-index: 1000000;
         opacity: 0;
@@ -1429,6 +1452,17 @@ function renderClonedSection(snapshot) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = snapshot.html;
     
+    // Create the static header requested by user
+    const staticHeader = document.createElement('div');
+    staticHeader.className = 'ct-content-group__header';
+    const staticHeaderContent = document.createElement('div');
+    staticHeaderContent.className = 'ct-content-group__header-content';
+    staticHeaderContent.textContent = snapshot.title;
+    staticHeader.appendChild(staticHeaderContent);
+    
+    // Prepend to content
+    tempDiv.prepend(staticHeader);
+
     const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
     container.classList.add('be-clone');
     container.dataset.originalId = snapshot.originalId;
@@ -1439,11 +1473,13 @@ function renderClonedSection(snapshot) {
         header.addEventListener('dblclick', async (e) => {
             e.stopPropagation();
             const titleSpan = header.querySelector('span');
+            const staticTitleSpan = container.querySelector('.ct-content-group__header-content');
             const currentTitle = titleSpan ? titleSpan.textContent.trim() : 'Clone';
             // Use window reference for mockability in tests
             const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
-            if (newTitle && titleSpan) {
-                titleSpan.textContent = newTitle;
+            if (newTitle) {
+                if (titleSpan) titleSpan.textContent = newTitle;
+                if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
                 showFeedback('Title updated');
             }
         });
@@ -1859,26 +1895,24 @@ function createControls() {
     container.style.gap = '8px';
     container.style.borderRadius = '8px';
     container.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
-    container.style.opacity = '0.3';
     container.style.transition = 'opacity 0.3s, transform 0.3s';
     
     // Hover logic
     container.addEventListener('mouseenter', () => {
-        container.style.opacity = '1';
         container.style.transform = 'scale(1.02)';
     });
     container.addEventListener('mouseleave', () => {
-        container.style.opacity = '0.3';
         container.style.transform = 'scale(1)';
     });
 
     const buttons = [
+        { label: 'Load', icon: '�', action: handleLoadFile },
+        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
+        { label: 'Manage Clones', icon: '�', action: handleManageClones },
+        { label: 'Print', icon: '�️', action: () => window.print() },
         { label: 'Save Browser', icon: '💾', action: handleSaveBrowser },
         { label: 'Save PC', icon: '💻', action: handleSavePC },
-        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
-        { label: 'Load', icon: '📂', action: handleLoadFile },
-        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
-        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), bgColor: 'rgb(115 97 29)' }
+        { label: 'Contribute', icon: '⭐', action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), bgColor: '#73611d' }
     ];
 
     buttons.forEach(btnInfo => {
