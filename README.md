@@ -16,7 +16,10 @@ To test the extension locally:
 6. Click the extension icon in your toolbar to activate the print enhancer.
 7. Press `Ctrl+P` to view the print preview.
 
-https://github.com/user-attachments/assets/c419333d-8893-401f-8cc9-800a60a46fd6
+
+
+https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
+
 
 ## Known issues
 
