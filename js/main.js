@@ -1814,10 +1814,25 @@ function scanLayout() {
 }
 
 /**
+ * Migrates layout data from older versions to the current schema.
+ * @param {object} data 
+ * @returns {object} Migrated data.
+ */
+function migrateLayout(data) {
+    if (!data || typeof data !== 'object') return data;
+    
+    // Future migration logic goes here
+    // Example: if (data.version === '0.9.0') { ... }
+    
+    return data;
+}
+
+/**
  * Applies layout information to the current DOM.
  * @param {object} layout 
  */
 function applyLayout(layout) {
+    layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
 
     for (const [id, styles] of Object.entries(layout.sections)) {
