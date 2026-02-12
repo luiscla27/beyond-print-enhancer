@@ -1,0 +1,8 @@
+{
+  "track_id": "section_cloning_20260212",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-12T10:21:00Z",
+  "updated_at": "2026-02-12T10:21:00Z",
+  "description": "Add a feature to clone sections (snapshots), specifically for spells, with unique IDs and persistence."
+}
