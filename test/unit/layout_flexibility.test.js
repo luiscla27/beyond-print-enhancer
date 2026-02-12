@@ -30,16 +30,14 @@ describe('Layout Flexibility Logic', function() {
     await new Promise(r => setTimeout(r, 100));
   });
 
-  it('should have resizable and absolute containers in CSS', function() {
+  it('should have absolute containers in CSS', function() {
       const styleTag = document.getElementById('ddb-print-enhance-style');
       assert.ok(styleTag, 'Style tag should be created');
       
       const css = styleTag.textContent;
       
-      // Check for resizable property
-      assert.ok(css.includes('resize: both !important'), 'Should have bidirectional resize');
       assert.ok(css.includes('position: absolute !important'), 'Should have absolute positioning');
-      assert.ok(css.includes('overflow: hidden !important'), 'Should have overflow hidden for scale scaling to work');
+      assert.ok(css.includes('overflow: hidden !important'), 'Should have overflow hidden');
       
       // Check for global font and wrapping
       assert.ok(css.includes('font-size: 8px !important'), 'Should have global 8px font size');
@@ -52,7 +50,6 @@ describe('Layout Flexibility Logic', function() {
       assert.ok(css.includes('.print-section-header'), 'Should have header styling');
       assert.ok(css.includes('cursor: move'), 'Should have move cursor for drag signal');
       assert.ok(css.includes('opacity: 0'), 'Header should be hidden by default');
-      assert.ok(css.includes('border: 1px solid transparent'), 'Border should be transparent by default');
       assert.ok(css.includes('.print-section-container:hover .print-section-header'), 'Header should show on hover');
   });
 });

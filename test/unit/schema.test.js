@@ -1,20 +1,33 @@
 const assert = require('assert');
+const { JSDOM } = require('jsdom');
+const fs = require('fs');
+const path = require('path');
+
+const mainJsPath = path.resolve(__dirname, '../../js/main.js');
+const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
 describe('Data Schema & Versioning', function() {
+  let window;
+
+  before(function() {
+    const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+      url: "http://localhost",
+      runScripts: "dangerously"
+    });
+    window = dom.window;
+    window.indexedDB = global.indexedDB;
+    window.__DDB_TEST_MODE__ = true;
+    window.eval(mainJsContent);
+  });
+
   it('should have a current version constant', function() {
-    // This will be in storage.js
-    const { SCHEMA_VERSION } = require('../../js/storage.js');
-    assert.ok(SCHEMA_VERSION, 'SCHEMA_VERSION should be defined');
-    assert.strictEqual(typeof SCHEMA_VERSION, 'string', 'SCHEMA_VERSION should be a string');
+    assert.ok(window.Storage.SCHEMA_VERSION, 'SCHEMA_VERSION should be defined');
+    assert.strictEqual(typeof window.Storage.SCHEMA_VERSION, 'string', 'SCHEMA_VERSION should be a string');
   });
 
   it('should define a valid layout schema structure', function() {
-    // Mocking the check for the schema definition
-    const { validateLayout } = require('../../js/storage.js');
-    
     const validLayout = {
         version: "1.0.0",
-        global: true,
         sections: {
             "section-Actions": {
                 left: "10px",
@@ -28,9 +41,9 @@ describe('Data Schema & Versioning', function() {
         }
     };
 
-    assert.ok(validateLayout(validLayout), 'Should validate a correct layout object');
+    assert.ok(window.Storage.validateLayout(validLayout), 'Should validate a correct layout object');
     
     const invalidLayout = { version: "1.0.0" }; // Missing sections
-    assert.strictEqual(validateLayout(invalidLayout), false, 'Should fail validation if sections are missing');
+    assert.strictEqual(window.Storage.validateLayout(invalidLayout), false, 'Should fail validation if sections are missing');
   });
 });

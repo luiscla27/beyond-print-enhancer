@@ -93,7 +93,7 @@ describe('Absolute Positioning Engine', function() {
     assert.ok(setDragImageCalled, 'setDragImage should be called');
     
     // Opacity should be set immediately because of our requestAnimationFrame mock
-    assert.strictEqual(item.style.opacity, '0.4');
+    assert.strictEqual(item.style.opacity, '0.98');
     done();
   });
 

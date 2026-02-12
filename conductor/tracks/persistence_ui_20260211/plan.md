@@ -9,7 +9,7 @@ Establish the storage layer and the JSON data structure for capturing layout sta
 - [x] Task: Implement IndexedDB wrapper for saving/loading global and per-character layouts c033961
 - [x] Task: Implement "Layout Scanner" to extract coordinates, sizes, and inner widths from the DOM ac81da1
 - [x] Task: Implement "Layout Applier" to inject saved styles back into the DOM b98e7bc
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure' (Protocol in workflow.md) a3cc719
 
 ## Phase 2: UI Components & Aesthetics
 Build the floating control panel and the fallback modal.

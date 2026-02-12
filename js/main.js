@@ -3,6 +3,118 @@ Licensed under Blue Oak Model License 1.0.0
 */
 
 (function () {
+
+/**
+ * Storage management for D&D Beyond Print Enhancer.
+ * Uses IndexedDB to persist layout configurations and custom data.
+ */
+const DB_NAME = 'DDBPrintEnhancerDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'layouts';
+const SCHEMA_VERSION = '1.0.0';
+
+let db = null;
+
+const Storage = {
+  SCHEMA_VERSION,
+
+  /**
+   * Initialize the IndexedDB connection.
+   */
+  init: () => {
+    return new Promise((resolve, reject) => {
+      if (db) return resolve(db);
+
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onerror = (event) => {
+        console.error('[DDB Print Enhance] IndexedDB error:', event.target.error);
+        reject(event.target.error);
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
+        }
+      };
+
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        resolve(db);
+      };
+    });
+  },
+
+  /**
+   * Validates if the object matches the expected layout schema.
+   * @param {object} data 
+   * @returns {boolean}
+   */
+  validateLayout: (data) => {
+      if (!data || typeof data !== 'object') return false;
+      if (data.version === undefined || data.sections === undefined) return false;
+      if (typeof data.sections !== 'object') return false;
+      return true;
+  },
+
+  /**
+   * Save character layout data.
+   * @param {string} characterId 
+   * @param {object} data - { characterId, sectionOrder, customSpells }
+   */
+  saveLayout: (characterId, data) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      // Ensure characterId is present in the data object for the keyPath
+      const payload = { ...data, characterId };
+      
+      const request = store.put(payload);
+
+      request.onsuccess = () => resolve();
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Load character layout data.
+   * @param {string} characterId 
+   * @returns {Promise<object|undefined>}
+   */
+  loadLayout: (characterId) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(characterId);
+
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Save global layout data.
+   * @param {object} data 
+   */
+  saveGlobalLayout: (data) => {
+    return Storage.saveLayout('GLOBAL', data);
+  },
+
+  /**
+   * Load global layout data.
+   * @returns {Promise<object|undefined>}
+   */
+  loadGlobalLayout: () => {
+    return Storage.loadLayout('GLOBAL');
+  }
+};
+
 /**
  * Robust query selector that tries multiple patterns and handles obfuscated classes.
  */
@@ -1318,6 +1430,84 @@ function updateLayoutBounds() {
 }
 
 /**
+ * Handles saving the layout to IndexedDB.
+ */
+async function handleSaveBrowser() {
+    try {
+        await Storage.init();
+        const layout = scanLayout();
+        await Storage.saveGlobalLayout(layout);
+        
+        // Also save for specific character for the "revert to character" feature later
+        const characterId = window.location.pathname.split('/').pop();
+        if (characterId) {
+            await Storage.saveLayout(characterId, layout);
+        }
+        
+        showFeedback('Saved to browser!');
+    } catch (err) {
+        console.error('[DDB Print] Save failed', err);
+        alert('Failed to save layout to browser.');
+    }
+}
+
+/**
+ * Handles restoring the layout from IndexedDB.
+ */
+async function restoreLayout() {
+    try {
+        await Storage.init();
+        
+        // Strategy: Load character-specific first, fallback to global
+        const characterId = window.location.pathname.split('/').pop();
+        let layout = null;
+        
+        if (characterId) {
+            layout = await Storage.loadLayout(characterId);
+        }
+        
+        if (!layout) {
+            layout = await Storage.loadGlobalLayout();
+        }
+
+        if (layout && Storage.validateLayout(layout)) {
+            console.log('[DDB Print] Restoring saved layout...');
+            applyLayout(layout);
+            return true;
+        }
+    } catch (err) {
+        console.error('[DDB Print] Restore failed', err);
+    }
+    return false;
+}
+
+/**
+ * Shows a temporary feedback message.
+ */
+function showFeedback(msg) {
+    const feedback = document.createElement('div');
+    feedback.textContent = msg;
+    feedback.style.position = 'fixed';
+    feedback.style.top = '20px';
+    feedback.style.left = '50%';
+    feedback.style.transform = 'translateX(-50%)';
+    feedback.style.backgroundColor = '#333';
+    feedback.style.color = 'white';
+    feedback.style.padding = '10px 20px';
+    feedback.style.borderRadius = '5px';
+    feedback.style.zIndex = '10001';
+    feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
+    feedback.style.transition = 'opacity 0.5s';
+    
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+        feedback.style.opacity = '0';
+        setTimeout(() => feedback.remove(), 500);
+    }, 2000);
+}
+
+/**
  * Scans the current DOM for layout information.
  * @returns {object} Layout data following the schema.
  */
@@ -1502,6 +1692,10 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
     window.applyLayout = applyLayout;
+    window.handleSaveBrowser = handleSaveBrowser;
+    window.restoreLayout = restoreLayout;
+    window.showFeedback = showFeedback;
+    window.Storage = Storage;
 
 // Execution
 (async () => {
