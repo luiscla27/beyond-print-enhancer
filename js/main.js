@@ -1045,6 +1045,7 @@ function enforceFullHeight() {
             box-shadow: none !important;
             transform: none !important;
         }
+        .ct-spells-filter,
         .print-page-separator {
             display: none !important;
         }
@@ -1149,22 +1150,24 @@ function enforceFullHeight() {
     /* Clone Button */
     .be-clone-button {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 24px;
-        height: 24px;
+        top: 46px;
+        left: 32px;
+        width: 39px;
+        height: 32px;
         cursor: pointer;
         z-index: 20;
         opacity: 0;
-        background: none;
-        border: none;
-        font-size: 16px;
+        background: #979797;
+        border: 1px solid rgb(85, 85, 85);
+        font-size: 21px !important;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: opacity 0.2s;
         padding: 0;
         margin: 0;
+        filter: drop-shadow(2px 4px 6px black);
+        border-radius: 32px;
     }
     .ct-subsection:hover .be-clone-button,
     .ct-section:hover .be-clone-button,
@@ -2127,12 +2130,21 @@ function injectCloneButtons() {
         btn.innerHTML = '📋'; // Clipboard icon
         btn.title = 'Clone Section';
         
-        // Use captureSectionSnapshot when implemented
-        btn.onclick = (e) => {
+        btn.onclick = async (e) => {
             e.stopPropagation();
             const id = section.id || 'unknown';
-            console.log(`[DDB Print] Cloning section: ${id}`);
-            // Logic for cloning will be added in Phase 2
+            
+            // Get section name for default title
+            const header = section.querySelector('.ct-subsection__header, .ct-section__header, .print-section-header span');
+            const sectionName = header ? header.textContent.trim() : 'Section';
+            
+            const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
+            
+            if (title) {
+                console.log(`[DDB Print] Cloning section: ${id} with title: ${title}`);
+                // captureSectionSnapshot and renderClonedSection will be implemented in Phase 2
+                showFeedback(`Ready to clone: ${title}`);
+            }
         };
 
         section.appendChild(btn);
