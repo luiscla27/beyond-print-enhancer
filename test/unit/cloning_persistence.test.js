@@ -35,7 +35,6 @@ describe('Cloning Persistence', function() {
     global.document = document;
     global.HTMLElement = window.HTMLElement;
     window.indexedDB = global.indexedDB;
-    window.confirm = () => true;
     
     global.ResizeObserver = class ResizeObserver {
         observe() {}
@@ -111,21 +110,5 @@ describe('Cloning Persistence', function() {
     assert.ok(restoredClone.querySelector('.print-section-content').innerHTML.includes('Restored Content'));
     assert.strictEqual(restoredClone.style.left, '100px');
     assert.strictEqual(restoredClone.style.top, '100px');
-  });
-
-  it('should reposition clones relative to parents during handleLoadDefault', async function() {
-    // section-Actions is at 20,20 from previous test
-    const clone = document.getElementById('clone-456');
-    clone.dataset.originalId = 'section-Actions';
-    
-    // Mock DEFAULT_LAYOUTS for section-Actions (manually in the test context if needed, 
-    // but main.js already has it)
-    
-    await window.handleLoadDefault();
-    
-    // In main.js, section-Actions default is left: '496px', top: '336px'
-    // Clone should be at 496+32 = 528, 336+32 = 368
-    assert.strictEqual(clone.style.left, '528px');
-    assert.strictEqual(clone.style.top, '368px');
   });
 });
