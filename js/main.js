@@ -515,13 +515,14 @@ async function injectClonesIntoSpellsView() {
 
   // User Request: Apply Default Coordinates - Use explicit styles and logic
   const defaultLayouts = {
-      'section-Section-1': { left: '0px', top: '0px', width: '256px', height: '208px' },
-      'section-Section-2': { left: '0px', top: '208px', width: '256px', height: '208px' },
-      'section-Section-3': { left: '0px', top: '416px', width: '256px', height: '272px' },
-      'section-Section-4': { left: '272px', top: '0px', width: '208px', height: '688px' },
-      'section-Section-5': { left: '496px', top: '0px', width: '528px', height: '160px' },
-      'section-Section-6': { left: '1040px', top: '0px', width: '160px', height: '160px' },
-      'section-Actions':   { left: '496px', top: '160px', width: '704px', height: '1008px' }
+      'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '160px' },
+      'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '208px' },
+      'section-Section-2': { left: '0px', top: '368px', width: '256px', height: '208px' },
+      'section-Section-3': { left: '0px', top: '576px', width: '256px', height: '272px' },
+      'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '688px' },
+      'section-Section-5': { left: '496px', top: '160px', width: '528px', height: '160px' },
+      'section-Section-6': { left: '1040px', top: '160px', width: '160px', height: '160px' },
+      'section-Actions':   { left: '496px', top: '320px', width: '704px', height: '1008px' }
   };
 
   // Give a small delay to ensure DOM is ready? Just to be safe.
@@ -620,6 +621,29 @@ function movePortrait() {
         console.log('[DDB Print] Moved character portrait.');
     } else {
         console.warn('[DDB Print] Could not find portrait or target to move.');
+    }
+}
+
+/**
+ * Moves Quick Info to a draggable container.
+ */
+function moveQuickInfo() {
+    // User Request: Make .ct-quick-info draggable
+    const quickInfo = document.querySelector('.ct-quick-info');
+    if (quickInfo) {
+        const layoutRoot = document.getElementById('print-layout-wrapper');
+        if (layoutRoot) {
+             // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
+             // Let's move it to preserve functionality.
+             const container = createDraggableContainer('Quick Info', quickInfo, 'section-Quick-Info');
+             layoutRoot.appendChild(container);
+             
+             // Ensure it's visible if parent was hidden
+             quickInfo.style.display = 'flex'; 
+             // quickInfo usually has fixed position/margin in normal sheet, reset it
+             quickInfo.style.position = 'static';
+             quickInfo.style.margin = '0';
+        }
     }
 }
 
@@ -777,6 +801,7 @@ function enforceFullHeight() {
         position: static!important;
         display: flex!important;
         flex-flow: row!important;
+        height: 100%;
     }
     .ct-character-sheet-desktop .ct-subsections {
         height: auto !important;
@@ -1271,6 +1296,8 @@ function drawPageSeparators(totalHeight, totalWidth) {
     window.initResizeLogic = initResizeLogic;
     window.updateLayoutBounds = updateLayoutBounds;
     window.removeSpecificSvgs = removeSpecificSvgs;
+    window.drawPageSeparators = drawPageSeparators;
+    window.moveQuickInfo = moveQuickInfo;
 
 // Execution
 (async () => {
@@ -1278,7 +1305,15 @@ function drawPageSeparators(totalHeight, totalWidth) {
     
     // Idempotency: cleanup previous run if exists
     const existingWrapper = document.getElementById('print-layout-wrapper');
-    if (existingWrapper) existingWrapper.remove();
+    if (existingWrapper) {
+        // User Request: Confirmation for re-run
+        if (confirm('You need to reload to apply changes again, are you sure?')) {
+            window.location.reload();
+            return;
+        } else {
+            return; // Do nothing
+        }
+    }
 
     enforceFullHeight();
     await injectClonesIntoSpellsView();
@@ -1286,6 +1321,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     tweakStyles();
     removeSearchBoxes();
     movePortrait(); // User Request: Move portrait at the end
+    moveQuickInfo(); // User Request: Make Quick Info draggable
     initDragAndDrop();
     initResponsiveScaling();
     initZIndexManagement();
