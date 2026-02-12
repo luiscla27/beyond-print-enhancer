@@ -7,3 +7,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Advanced Layout & Persistence Enhancements**
   *Link: [./tracks/advanced_enhancements_20260204/](./tracks/advanced_enhancements_20260204/)*
 
+---
+
+- [x] **Track: Section Cloning**
+  *Link: [./tracks/section_cloning_20260212/](./tracks/section_cloning_20260212/)*
