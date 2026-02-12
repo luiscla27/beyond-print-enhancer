@@ -239,8 +239,7 @@ function createDraggableContainer(title, content, id) {
   header.setAttribute('draggable', 'true'); // Added here instead
   
   header.style.fontWeight = 'bold';
-  header.style.fontSize = '1.2em';
-  header.style.padding = '5px';
+  header.style.fontSize = '18px';
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
   header.style.alignItems = 'center';
@@ -1085,10 +1084,15 @@ function enforceFullHeight() {
         transition: opacity 0.2s;
         margin-top: 0px;
         z-index: 999999999;
-        width: calc(100% - 32px);
+        width: calc(100% - 64px);
         height: 32px;
         background-color: #979797;
-        line-height: 32px;
+        line-height: 18px;
+        left: 32px;
+        border-radius: 32px;
+        padding: 0 16px;
+        filter: drop-shadow(2px 4px 6px black);
+        min-width: max-content;
     }
     .print-section-container:hover .print-section-header {
         opacity: 1;
