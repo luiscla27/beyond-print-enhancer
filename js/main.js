@@ -1176,8 +1176,135 @@ function enforceFullHeight() {
             display: none !important;
         }
     }
+
+    /* Modal Styles */
+    .be-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100000;
+        backdrop-filter: blur(4px);
+    }
+    .be-modal {
+        background: #222;
+        color: white;
+        padding: 24px;
+        border-radius: 12px;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border: 1px solid #444;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .be-modal h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+    .be-modal p {
+        margin: 0;
+        font-size: 14px;
+        color: #ccc;
+    }
+    .be-modal input {
+        background: #111;
+        border: 1px solid #444;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .be-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    .be-modal-actions button {
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        border: 1px solid #555;
+    }
+    .be-modal-ok {
+        background: #444;
+        color: white;
+    }
+    .be-modal-cancel {
+        background: transparent;
+        color: #ccc;
+    }
   `;
   document.head.appendChild(style);
+}
+
+/**
+ * Shows a modal with an input field.
+ * @returns {Promise<string|null>}
+ */
+function showInputModal(title, message, defaultValue = '') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = title;
+        modal.appendChild(h3);
+        
+        const p = document.createElement('p');
+        p.textContent = message;
+        modal.appendChild(p);
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = defaultValue;
+        modal.appendChild(input);
+        
+        const actions = document.createElement('div');
+        actions.className = 'be-modal-actions';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        actions.appendChild(cancelBtn);
+        
+        const okBtn = document.createElement('button');
+        okBtn.className = 'be-modal-ok';
+        okBtn.textContent = 'OK';
+        okBtn.onclick = () => {
+            const val = input.value;
+            overlay.remove();
+            resolve(val);
+        };
+        actions.appendChild(okBtn);
+        
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        input.focus();
+        input.select();
+        
+        // Handle Enter/Esc
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter') okBtn.click();
+            if (e.key === 'Escape') cancelBtn.click();
+        };
+    });
 }
 
 /**
@@ -2040,6 +2167,7 @@ function injectCloneButtons() {
     window.showFeedback = showFeedback;
     window.createControls = createControls;
     window.showFallbackModal = showFallbackModal;
+    window.showInputModal = showInputModal;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
 
