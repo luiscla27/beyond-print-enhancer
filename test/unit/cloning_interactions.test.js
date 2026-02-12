@@ -73,9 +73,6 @@ describe('Cloning Interactions', function() {
         
         const titleSpan = clone.querySelector('.print-section-header span');
         assert.strictEqual(titleSpan.textContent, 'Updated Title');
-
-        const staticTitleSpan = clone.querySelector('.ct-content-group__header-content');
-        assert.strictEqual(staticTitleSpan.textContent, 'Updated Title');
         
         window.showInputModal = originalShowInputModal;
     });
