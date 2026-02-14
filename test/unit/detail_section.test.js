@@ -126,7 +126,7 @@ describe('UI - Spell Detail Section', function() {
 
     // Mock layout wrapper Rect
     const layoutRoot = document.getElementById('print-layout-wrapper');
-    layoutRoot.getBoundingClientRect = () => ({ top: 0, left: 0 });
+    layoutRoot.getBoundingClientRect = () => ({ top: 0, left: 0, width: 1200 });
 
     // Create the detail section
     await window.createSpellDetailSection(spellName, { x: 400, y: 400 });
@@ -141,8 +141,8 @@ describe('UI - Spell Detail Section', function() {
     window.confirm = () => true;
     await window.handleLoadDefault();
     
-    // Should be at left: 0, top: 500, and width: 300px
-    assert.strictEqual(detail.style.left, '0px');
+    // Should be at left: 1200, top: 500, and width: 300px
+    assert.strictEqual(detail.style.left, '1200px');
     assert.strictEqual(detail.style.top, '500px');
     assert.strictEqual(detail.style.width, '300px');
   });

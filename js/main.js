@@ -2563,14 +2563,18 @@ async function handleLoadDefault() {
                     
                     // Calculate Y relative to the layout wrapper
                     const y = labelRect.top - rootRect.top;
+                    // Position X "outside the limits" (at the right edge of the current wrapper)
+                    const x = rootRect.width;
                     
-                    detail.style.setProperty('left', '0px', 'important');
+                    detail.style.setProperty('left', `${x}px`, 'important');
                     detail.style.setProperty('top', `${y}px`, 'important');
                     detail.style.setProperty('width', '300px', 'important');
                     detail.style.setProperty('height', 'auto', 'important');
                 } else {
-                    // Fallback: if label not found (e.g. tab changed), just move to left 0
-                    detail.style.setProperty('left', '0px', 'important');
+                    // Fallback: move to the right edge
+                    const layoutRoot = document.getElementById('print-layout-wrapper');
+                    const rootRect = layoutRoot ? layoutRoot.getBoundingClientRect() : { width: 1200 };
+                    detail.style.setProperty('left', `${rootRect.width}px`, 'important');
                     detail.style.setProperty('width', '300px', 'important');
                     detail.style.setProperty('height', 'auto', 'important');
                 }
