@@ -1102,7 +1102,7 @@ function enforceFullHeight() {
         overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
         min-width: 50px !important;
         min-height: 30px !important;
-        background-color: white;
+        background-color: rgba(255, 255, 255, 0.75);
         box-sizing: border-box;
         display: flex !important;
         flex-direction: column !important;
