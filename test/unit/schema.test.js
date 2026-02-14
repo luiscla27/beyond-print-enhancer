@@ -22,7 +22,45 @@ describe('Data Schema & Versioning', function() {
 
   it('should have a current version constant', function() {
     assert.ok(window.Storage.SCHEMA_VERSION, 'SCHEMA_VERSION should be defined');
-    assert.strictEqual(typeof window.Storage.SCHEMA_VERSION, 'string', 'SCHEMA_VERSION should be a string');
+    assert.strictEqual(window.Storage.SCHEMA_VERSION, '1.1.0', 'SCHEMA_VERSION should be 1.1.0');
+  });
+
+  it('should handle version mismatch in handleLoadFile', async function() {
+    let alertMessage = '';
+    window.alert = (msg) => { alertMessage = msg; };
+    
+    // Mock FileReader
+    class MockFileReader {
+      readAsText(file) {
+        const layout = { version: "1.0.0", sections: {} };
+        this.onload({ target: { result: JSON.stringify(layout) } });
+      }
+    }
+    window.FileReader = MockFileReader;
+
+    // Trigger load
+    // We need to mock the file input click
+    const originalCreateElement = window.document.createElement;
+    window.document.createElement = function(tagName) {
+        const el = originalCreateElement.call(window.document, tagName);
+        if (tagName === 'input') {
+            setTimeout(() => {
+                if (el.onchange) {
+                    el.onchange({ target: { files: [new window.Blob(['{}'], { type: 'application/json' })] } });
+                }
+            }, 0);
+        }
+        return el;
+    };
+
+    window.handleLoadFile();
+    
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    assert.ok(alertMessage.includes('older than the current version'), 'Should alert about older version');
+    
+    // Clean up
+    window.document.createElement = originalCreateElement;
   });
 
   it('should define a valid layout schema structure', function() {

@@ -12,7 +12,7 @@ const DB_NAME = 'DDBPrintEnhancerDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
-const SCHEMA_VERSION = '1.0.0';
+const SCHEMA_VERSION = '1.1.0';
 
 const DEFAULT_LAYOUTS = {
     'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
@@ -2362,6 +2362,10 @@ function handleLoadFile() {
             try {
                 const layout = JSON.parse(event.target.result);
                 if (Storage.validateLayout(layout)) {
+                    // Check version compatibility
+                    if (layout.version !== Storage.SCHEMA_VERSION) {
+                        alert(`Warning: The loaded layout version (${layout.version}) is older than the current version (${Storage.SCHEMA_VERSION}). Some newer features might not be present. It is recommended to save your layout again to upgrade the file.`);
+                    }
                     applyLayout(layout);
                     showFeedback('Layout loaded!');
                 } else {
