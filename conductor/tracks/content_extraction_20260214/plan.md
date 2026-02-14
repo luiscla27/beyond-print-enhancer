@@ -3,9 +3,9 @@
 This plan follows the TDD methodology and quality gates defined in `workflow.md`.
 
 ## Phase 1: CSS & Visual Triggers
-- [ ] Task: Define CSS for `.be-extractable` class, including dashed outline and `:before` pseudo-element tooltip
-- [ ] Task: Implement `flagExtractableElements()` to scan the DOM and apply the activation class to target selectors
-- [ ] Task: Implement nesting logic to ensure only top-level matching elements are flagged
+- [~] Task: Define CSS for `.be-extractable` class, including dashed outline and `:before` pseudo-element tooltip
+- [~] Task: Implement `flagExtractableElements()` to scan the DOM and apply the activation class to target selectors
+- [~] Task: Implement nesting logic to ensure only top-level matching elements are flagged
 - [ ] Task: Write unit tests verifying that correct elements are flagged and nested ones are ignored
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Visual Triggers' (Protocol in workflow.md)
 

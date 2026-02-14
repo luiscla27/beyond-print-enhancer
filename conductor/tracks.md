@@ -3,9 +3,9 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Advanced Layout & Persistence Enhancements** (Ongoing refinements)
+- [~] **Track: Advanced Layout & Persistence Enhancements** (Ongoing refinements)
   *Link: [./tracks/advanced_enhancements_20260204/](./tracks/advanced_enhancements_20260204/)*
-- [ ] **Track: Dynamic Content Extraction Trigger**
+- [~] **Track: Dynamic Content Extraction Trigger**
   *Link: [./tracks/content_extraction_20260214/](./tracks/content_extraction_20260214/)*
 
 ## Archived Tracks

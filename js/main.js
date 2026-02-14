@@ -599,6 +599,34 @@ function injectSpellDetailTriggers(context = document) {
 }
 
 /**
+ * Scans the DOM for elements that match extraction criteria and flags them.
+ * Implements Top-Down Priority: nested matching elements are ignored.
+ */
+function flagExtractableElements() {
+    const selectors = [
+        '[class$="-group"]',
+        '[class$="-snippet--class"]',
+        '[class^="styles_actionsList__"]',
+        '[class^="styles_attackTable__"]',
+        '[class$="__traits"]'
+    ];
+
+    const elements = Array.from(document.querySelectorAll(selectors.join(', ')));
+    
+    elements.forEach(el => {
+        // Nesting logic: Top-Down Priority.
+        // Check if any matching element strictly contains this one.
+        const isNested = elements.some(other => {
+            return other !== el && other.contains(el);
+        });
+
+        if (!isNested) {
+            el.classList.add('be-extractable');
+        }
+    });
+}
+
+/**
  * Injects extracted clones into the live Spells view to create the print layout.
  */
 async function injectClonesIntoSpellsView() {
@@ -1102,7 +1130,7 @@ function enforceFullHeight() {
         overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
         min-width: 50px !important;
         min-height: 30px !important;
-        background-color: rgba(255, 255, 255, 0.75);
+        background-color: rgba(255, 255, 255, 0.85);
         box-sizing: border-box;
         display: flex !important;
         flex-direction: column !important;
@@ -3289,6 +3317,31 @@ function injectCompactStyles() {
         }
         .be-retry-button { background: #4CAF50 !important; color: white !important; }
         .be-delete-button { background: #f44336 !important; color: white !important; }
+
+        /* Dynamic Extraction Trigger */
+        .be-extractable {
+            transition: outline 0.1s ease-in-out;
+            margin: 2px;
+        }
+        .be-extractable:hover {
+            outline: 2px dashed black !important;
+            position: relative;
+        }
+        .be-extractable:hover:before {
+            content: "Extract content with double click";
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: black;
+            color: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 10001;
+            pointer-events: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
     `;
     document.head.appendChild(style);
 }
@@ -3302,6 +3355,7 @@ function injectCompactStyles() {
     window.enforceFullHeight = enforceFullHeight;
     window.removeSearchBoxes = removeSearchBoxes;
     window.tweakStyles = tweakStyles;
+    window.injectCompactStyles = injectCompactStyles;
     window.moveDefenses = moveDefenses;
     window.movePortrait = movePortrait;
     window.initResponsiveScaling = initResponsiveScaling;
@@ -3331,6 +3385,7 @@ function injectCompactStyles() {
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
+    window.flagExtractableElements = flagExtractableElements;
     window.createSpellDetailSection = createSpellDetailSection;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
@@ -3361,6 +3416,7 @@ function injectCompactStyles() {
     movePortrait(); // User Request: Move portrait at the end
     moveQuickInfo(); // User Request: Make Quick Info draggable
     injectCloneButtons();
+    flagExtractableElements();
     initDragAndDrop();
     initResponsiveScaling();
     initZIndexManagement();
