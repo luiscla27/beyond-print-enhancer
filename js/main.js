@@ -2566,9 +2566,13 @@ async function handleLoadDefault() {
                     
                     detail.style.setProperty('left', '0px', 'important');
                     detail.style.setProperty('top', `${y}px`, 'important');
+                    detail.style.setProperty('width', '300px', 'important');
+                    detail.style.setProperty('height', 'auto', 'important');
                 } else {
                     // Fallback: if label not found (e.g. tab changed), just move to left 0
                     detail.style.setProperty('left', '0px', 'important');
+                    detail.style.setProperty('width', '300px', 'important');
+                    detail.style.setProperty('height', 'auto', 'important');
                 }
             }
         });

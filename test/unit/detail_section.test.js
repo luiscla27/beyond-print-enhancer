@@ -133,15 +133,17 @@ describe('UI - Spell Detail Section', function() {
     const detail = Array.from(document.querySelectorAll('.be-spell-detail'))
                         .find(s => s.textContent.includes(spellName));
     
-    // Initial position should be around 400, 400 (relative to root)
-    assert.strictEqual(detail.style.left, '400px');
+    // Initial position and size
+    detail.style.left = '400px';
+    detail.style.width = '500px';
     
     // Trigger Load Default
     window.confirm = () => true;
     await window.handleLoadDefault();
     
-    // Should be at left: 0 and top: 500
+    // Should be at left: 0, top: 500, and width: 300px
     assert.strictEqual(detail.style.left, '0px');
     assert.strictEqual(detail.style.top, '500px');
+    assert.strictEqual(detail.style.width, '300px');
   });
 });
