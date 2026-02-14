@@ -99,4 +99,49 @@ describe('UI - Spell Detail Section', function() {
     assert.ok(section.textContent.toLowerCase().includes('available'), 'Should show error message guidance');
     assert.ok(section.querySelector('.be-retry-button'), 'Should have retry button');
   });
+
+  it('should reposition to left:0 and spell Y during handleLoadDefault', async function() {
+    const spellName = 'Cure Wounds';
+    
+    // Create a mock spell label in the DOM
+    const spellsContainer = document.createElement('div');
+    spellsContainer.innerHTML = `
+        <div class="ct-spells-spell">
+            <div class="ct-spells-spell__label">Cure Wounds</div>
+        </div>
+    `;
+    // Position it at Y=500
+    spellsContainer.style.position = 'absolute';
+    spellsContainer.style.top = '500px';
+    document.body.appendChild(spellsContainer);
+    
+    // Mock getBoundingClientRect for the label
+    const label = spellsContainer.querySelector('.ct-spells-spell__label');
+    label.getBoundingClientRect = () => ({
+        top: 500,
+        left: 100,
+        width: 100,
+        height: 20
+    });
+
+    // Mock layout wrapper Rect
+    const layoutRoot = document.getElementById('print-layout-wrapper');
+    layoutRoot.getBoundingClientRect = () => ({ top: 0, left: 0 });
+
+    // Create the detail section
+    await window.createSpellDetailSection(spellName, { x: 400, y: 400 });
+    const detail = Array.from(document.querySelectorAll('.be-spell-detail'))
+                        .find(s => s.textContent.includes(spellName));
+    
+    // Initial position should be around 400, 400 (relative to root)
+    assert.strictEqual(detail.style.left, '400px');
+    
+    // Trigger Load Default
+    window.confirm = () => true;
+    await window.handleLoadDefault();
+    
+    // Should be at left: 0 and top: 500
+    assert.strictEqual(detail.style.left, '0px');
+    assert.strictEqual(detail.style.top, '500px');
+  });
 });

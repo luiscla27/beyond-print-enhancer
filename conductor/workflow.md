@@ -149,6 +149,7 @@ Before marking any task complete, verify:
 - [ ] No security vulnerabilities introduced
 - [ ] **JSON Schema Versioning:** If the JSON structure for exported layouts has changed, the `SCHEMA_VERSION` in `js/main.js` MUST be incremented, and the import logic must handle version warnings/upgrades.
 - [ ] **Persistence Support:** Ensure any new state or feature is correctly handled by Save/Load functionality (update `scanLayout` and `applyLayout` in `main.js`).
+- [ ] **Load Default Handling:** Ensure any new kind of section (clones, detail sections, etc.) is correctly repositioned or handled in `handleLoadDefault` (update `handleLoadDefault` in `main.js`).
 
 ## Development Commands
 

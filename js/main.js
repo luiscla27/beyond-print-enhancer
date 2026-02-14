@@ -1686,7 +1686,9 @@ async function createSpellDetailSection(spellName, coords) {
             if (z > maxZ) maxZ = z;
         });
         existing.style.zIndex = maxZ + 1;
-        existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (existing.scrollIntoView) {
+            existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         showFeedback(`${spellName} is already open`);
         return;
     }
@@ -2542,6 +2544,32 @@ async function handleLoadDefault() {
                 if (currentHeight) clone.style.setProperty('height', currentHeight, 'important');
 
                 clone.style.zIndex = (parseInt(original.style.zIndex) || 10) + 1;
+            }
+        });
+
+        // Reposition spell detail sections to the Y of their original spell label, at left: 0
+        document.querySelectorAll('.print-section-container.be-spell-detail').forEach(detail => {
+            const titleSpan = detail.querySelector('.print-section-header span');
+            if (titleSpan) {
+                const spellName = titleSpan.textContent.trim();
+                // Find the original spell label in the DOM (searching for exact text match)
+                const labels = Array.from(document.querySelectorAll('.ct-spells-spell__label'));
+                const originalLabel = labels.find(l => l.textContent.trim() === spellName);
+                
+                if (originalLabel) {
+                    const layoutRoot = document.getElementById('print-layout-wrapper');
+                    const rootRect = layoutRoot.getBoundingClientRect();
+                    const labelRect = originalLabel.getBoundingClientRect();
+                    
+                    // Calculate Y relative to the layout wrapper
+                    const y = labelRect.top - rootRect.top;
+                    
+                    detail.style.setProperty('left', '0px', 'important');
+                    detail.style.setProperty('top', `${y}px`, 'important');
+                } else {
+                    // Fallback: if label not found (e.g. tab changed), just move to left 0
+                    detail.style.setProperty('left', '0px', 'important');
+                }
             }
         });
 
