@@ -9,8 +9,9 @@ Licensed under Blue Oak Model License 1.0.0
  * Uses IndexedDB to persist layout configurations and custom data.
  */
 const DB_NAME = 'DDBPrintEnhancerDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'layouts';
+const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.0.0';
 
 const DEFAULT_LAYOUTS = {
@@ -53,6 +54,9 @@ const Storage = {
         const db = event.target.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           db.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
+        }
+        if (!db.objectStoreNames.contains(SPELL_CACHE_STORE)) {
+          db.createObjectStore(SPELL_CACHE_STORE, { keyPath: 'name' });
         }
       };
 
@@ -129,6 +133,42 @@ const Storage = {
    */
   loadGlobalLayout: () => {
     return Storage.loadLayout('GLOBAL');
+  },
+
+  /**
+   * Save multiple spells to the cache.
+   * @param {Array} spells 
+   */
+  saveSpells: (spells) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([SPELL_CACHE_STORE], 'readwrite');
+      const store = transaction.objectStore(SPELL_CACHE_STORE);
+      
+      spells.forEach(spell => store.put(spell));
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Get a spell from the cache by name.
+   * @param {string} name 
+   * @returns {Promise<object|undefined>}
+   */
+  getSpell: (name) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([SPELL_CACHE_STORE], 'readonly');
+      const store = transaction.objectStore(SPELL_CACHE_STORE);
+      const request = store.get(name);
+
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
   }
 };
 
@@ -1562,6 +1602,12 @@ function renderClonedSection(snapshot) {
         container.classList.add('minimized');
     }
 
+    if (snapshot.compact) {
+        container.classList.add('be-compact-mode');
+        // Button style will be handled by injection or separate update if needed, 
+        // but let's try to set it if button exists contextually (though injection happens later usually)
+    }
+
     const layoutRoot = document.getElementById('print-layout-wrapper');
     if (layoutRoot) {
         layoutRoot.appendChild(container);
@@ -1572,7 +1618,53 @@ function renderClonedSection(snapshot) {
     
     return container;
 }
+async function getCharacterSpells(charId) {
+    const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Could not fetch character data. Are you logged in?");
+        
+        const json = await response.json();
+        const data = json.data;
 
+        // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
+        // We flatten them all into one list
+        const spellSources = [
+            ...(data.classSpells || []),
+            ...(data.spells.race || []),
+            ...(data.spells.class || []),
+            ...(data.spells.feat || []),
+            ...(data.spells.item || [])
+        ];
+
+        // Some sources (like classSpells) are nested differently
+        const spells = [];
+        
+        spellSources.forEach(source => {
+            // Handle class-specific nested spells
+            if (source.spells) {
+                source.spells.forEach(s => spells.push(s.definition));
+            } 
+            // Handle flat spell objects (items/feats/race)
+            else if (source.definition) {
+                spells.push(source.definition);
+            }
+        });
+
+        // Map it to a cleaner format (Name + Description)
+        return spells.map(s => ({
+            name: s.name,
+            level: s.level,
+            description: s.description.replace(/<[^>]*>?/gm, ''), // Strips HTML tags
+            range: `${s.range.rangeValue || ''} ${s.range.origin}`,
+            school: s.school
+        }));
+
+    } catch (err) {
+        console.error("Error fetching spells:", err);
+    }
+}
 /**
  * Shows a modal with an input field.
  * @returns {Promise<string|null>}
@@ -2455,7 +2547,8 @@ function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: section.style.zIndex || '10',
-                minimized: section.dataset.minimized === 'true'
+                minimized: section.dataset.minimized === 'true',
+                compact: section.classList.contains('be-compact-mode')
             });
             return;
         }
@@ -2467,6 +2560,7 @@ function scanLayout() {
             height: section.style.height,
             zIndex: section.style.zIndex || '10',
             minimized: section.dataset.minimized === 'true',
+            compact: section.classList.contains('be-compact-mode'),
             innerWidths: {}
         };
 
@@ -2537,6 +2631,17 @@ function applyLayout(layout) {
             section.dataset.minimized = 'false';
             const content = section.querySelector('.print-section-content');
             if (content) content.style.display = 'flex';
+        }
+
+        // Handle compact mode restoration
+        if (styles.compact) {
+            section.classList.add('be-compact-mode');
+            const btn = section.querySelector('.be-compact-button');
+            if (btn) btn.style.backgroundColor = 'var(--btn-color)';
+        } else {
+            section.classList.remove('be-compact-mode');
+            const btn = section.querySelector('.be-compact-button');
+            if (btn) btn.style.backgroundColor = 'var(--btn-color-highlight)';
         }
 
         // Apply inner widths
