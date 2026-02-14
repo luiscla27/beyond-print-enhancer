@@ -16,6 +16,7 @@
     - **No Navigation:** All navigation elements (tabs, menus, portals) are stripped away.
  The user should never need to "navigate" the sheet once the extension is active.
     - **Expanded View:** "Hidden" information that usually requires clicks (like expanding the 'Defenses' modal or switching tabs to 'Spells') is programmatically extracted and rendered statically on the main page.
+- **Layout Density (Compact Mode):** For data-heavy sections like Spells, users can toggle a "Compact Mode" that aggressively reduces white space, scales down icons, and tightens text leading to fit significantly more rows on a single sheet.
 - **Destructive UI:** The extension actively removes interactive elements that don't make sense on paper (e.g., "Short Rest" buttons, "Manage Custom" links, filter toggles).
 
 ## Technical Principles
