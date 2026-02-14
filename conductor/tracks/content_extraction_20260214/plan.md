@@ -17,9 +17,9 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Extraction Core' (Protocol in workflow.md) 28d542c
 
 ## Phase 3: UI Enhancements & Discovery
-- [ ] Task: Implement `findSectionTitle(element)` using the prioritized selector list (`h1`-`h5`, `head`)
-- [ ] Task: Integrate manual title prompt fallback using `showInputModal`
-- [ ] Task: Ensure prepended standardized D&D Beyond headers are included in the extracted content area
+- [~] Task: Implement `findSectionTitle(element)` using the prioritized selector list (`h1`-`h5`, `head`)
+- [~] Task: Integrate manual title prompt fallback using `showInputModal`
+- [~] Task: Ensure prepended standardized D&D Beyond headers are included in the extracted content area
 - [ ] Task: Write unit tests for title discovery logic and manual fallback
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: UI & Title Discovery' (Protocol in workflow.md)
 

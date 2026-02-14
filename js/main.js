@@ -624,9 +624,9 @@ function flagExtractableElements() {
             el.classList.add('be-extractable');
             
             // Attach extraction listener
-            el.ondblclick = (e) => {
+            el.ondblclick = async (e) => {
                 e.stopPropagation();
-                handleElementExtraction(el);
+                await handleElementExtraction(el);
             };
         }
     });
@@ -635,14 +635,18 @@ function flagExtractableElements() {
 /**
  * Handles the extraction of an element into a new floating section.
  */
-function handleElementExtraction(el) {
+async function handleElementExtraction(el) {
     // 1. Ensure original has an ID for tracking
     if (!el.id) {
         el.id = `be-auto-id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
 
-    // 2. Discover Title (Phase 3 will refine this)
-    const title = findSectionTitle(el) || 'Extracted Section';
+    // 2. Discover Title
+    let title = findSectionTitle(el);
+    if (!title) {
+        title = await (window.showInputModal || showInputModal)('Extract Content', 'No title found. Enter a name for this section:', 'Extracted Section');
+        if (!title) return; // User cancelled
+    }
 
     // 3. Clone content
     const clone = el.cloneNode(true);
@@ -2701,6 +2705,14 @@ async function handleLoadDefault() {
             }
         });
 
+        // Rollback all extractions
+        document.querySelectorAll('.print-section-container.be-extracted-section').forEach(section => {
+            const originalId = section.dataset.originalId;
+            const original = document.getElementById(originalId);
+            if (original) original.style.display = '';
+            section.remove();
+        });
+
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -3475,6 +3487,7 @@ function injectCompactStyles() {
     window.injectCloneButtons = injectCloneButtons;
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
     window.flagExtractableElements = flagExtractableElements;
+    window.findSectionTitle = findSectionTitle;
     window.createSpellDetailSection = createSpellDetailSection;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;

@@ -5,6 +5,7 @@ const path = require('path');
 
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+require("fake-indexeddb/auto");
 
 describe('Extraction Core & Lifecycle', function() {
   let window, document;
@@ -27,6 +28,7 @@ describe('Extraction Core & Lifecycle', function() {
     });
     window = dom.window;
     document = window.document;
+    window.indexedDB = global.indexedDB;
     window.__DDB_TEST_MODE__ = true;
     window.eval(mainJsContent);
     
@@ -76,5 +78,23 @@ describe('Extraction Core & Lifecycle', function() {
     
     // Original should be visible
     assert.notStrictEqual(target.style.display, 'none', 'Original element should be restored');
+  });
+
+  it('should rollback all extractions during handleLoadDefault', async function() {
+    const target = document.getElementById('target-element');
+    const dblClickEvent = new window.MouseEvent('dblclick', { bubbles: true });
+    target.dispatchEvent(dblClickEvent);
+    
+    assert.strictEqual(target.style.display, 'none', 'Should be hidden after extraction');
+    assert.ok(document.querySelector('.be-extracted-section'), 'Extracted section should exist');
+
+    // Mock confirm for handleLoadDefault
+    window.confirm = () => true;
+    
+    // Trigger Load Default
+    await window.handleLoadDefault();
+    
+    assert.strictEqual(document.querySelector('.be-extracted-section'), null, 'Extracted section should be removed');
+    assert.notStrictEqual(target.style.display, 'none', 'Original should be restored');
   });
 });
