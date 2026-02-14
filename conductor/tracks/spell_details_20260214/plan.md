@@ -25,7 +25,7 @@ This plan outlines the steps to implement floating spell detail sections with In
 - [x] Task: Conductor - User Manual Verification 'Phase 3: UI - Buttons' (Protocol in workflow.md) f56ab39
 
 ## Phase 4: UI - Spell Detail Section
-- [ ] Task: Implement `createSpellDetailSection(coords)` to immediately place a shell section at click location
+- [~] Task: Implement `createSpellDetailSection(coords)` to immediately place a shell section at click location
 - [ ] Task: Implement internal section UI: Loading spinner, Data display (Name, Level, School, Range, Description)
 - [ ] Task: Implement "Close" functionality and coordinate handling for dragging (if applicable)
 - [ ] Task: Implement Error State UI: "Retry" and "Delete" buttons with the required guidance message
