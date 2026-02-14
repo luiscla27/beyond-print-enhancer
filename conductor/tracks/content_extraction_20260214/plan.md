@@ -23,13 +23,13 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Write unit tests for title discovery logic and manual fallback 76aba0b
 - [x] Task: Conductor - User Manual Verification 'Phase 3: UI & Title Discovery' (Protocol in workflow.md) 76aba0b
 
-## Phase 4: Persistence & State Management
-- [~] Task: Update the layout schema to support a new `extractions` array (tracking original ID and coordinates)
-- [~] Task: Update `scanLayout` to capture the state of all currently extracted sections
-- [~] Task: Update `applyLayout` to automatically hide original elements and re-create floating sections on load
+## Phase 4: Persistence & State Management [checkpoint: 5487e92]
+- [x] Task: Update the layout schema to support a new `extractions` array (tracking original ID and coordinates) 5487e92
+- [x] Task: Update `scanLayout` to capture the state of all currently extracted sections 5487e92
+- [x] Task: Update `applyLayout` to automatically hide original elements and re-create floating sections on load 5487e92
 - [x] Task: Update `handleLoadDefault` to reset all extractions b01e344
-- [ ] Task: Write integration tests for save/load persistence of dynamic extractions
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md)
+- [x] Task: Write integration tests for save/load persistence of dynamic extractions 5487e92
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md) 5487e92
 
 ## Phase 5: Final Integration & E2E
 - [ ] Task: Perform full E2E manual verification of the extraction flow on a live character sheet
