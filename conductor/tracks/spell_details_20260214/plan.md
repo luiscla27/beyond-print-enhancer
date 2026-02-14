@@ -13,15 +13,15 @@ This plan outlines the steps to implement floating spell detail sections with In
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Storage' (Protocol in workflow.md) df2dff4
 
 ## Phase 2: Data Service & Cache Logic
-- [ ] Task: Refactor `getCharacterSpells` to return raw data suitable for caching if not already optimal
-- [ ] Task: Implement `fetchSpellWithCache(spellName)` logic: Check IndexedDB -> Fetch API on miss -> Update Cache
-- [ ] Task: Write unit tests for the Cache-First retrieval strategy
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Data Service' (Protocol in workflow.md)
+- [x] Task: Refactor `getCharacterSpells` to return raw data suitable for caching if not already optimal c9d46e2
+- [x] Task: Implement `fetchSpellWithCache(spellName)` logic: Check IndexedDB -> Fetch API on miss -> Update Cache c9d46e2
+- [x] Task: Write unit tests for the Cache-First retrieval strategy c9d46e2
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Data Service' (Protocol in workflow.md)
 
 ## Phase 3: UI - Trigger Injection
-- [ ] Task: Implement CSS for the hidden/hover "Details" button in spell rows
-- [ ] Task: Implement button injection logic for `div.ct-spells-spell` (supporting original and clones)
-- [ ] Task: Write unit tests verifying button injection in various section states
+- [x] Task: Implement CSS for the hidden/hover "Details" button in spell rows c9d46e2
+- [x] Task: Implement button injection logic for `div.ct-spells-spell` (supporting original and clones) c9d46e2
+- [x] Task: Write unit tests verifying button injection in various section states c9d46e2
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: UI - Buttons' (Protocol in workflow.md)
 
 ## Phase 4: UI - Spell Detail Section

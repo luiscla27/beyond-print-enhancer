@@ -32,6 +32,7 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 2. Currently, only red theme is supported.
 3. The extension is not meant to let you edit your character sheet nor throw dices. Only the SPELL section "Manage spells" should be usable.
 4. Spell description sheets can ONLY gather information from the original "known spells" of D&D Beyond. The tool mitigates this by saving previously known spells. However, if a description was never seen before, it will not be available.
+5. Sometimes, when using the "load" button, the inner contents of a section get messed up. It gets fixed when you resize the section again.
 
 ## Features
 

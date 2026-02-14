@@ -569,6 +569,36 @@ function copySvgDefinitions(targetContainer) {
  * Appends all collected sections to the main sheet view.
  */
 /**
+ * Injects detail section triggers into spell rows.
+ */
+function injectSpellDetailTriggers(context = document) {
+    context.querySelectorAll('.ct-spells-spell').forEach(row => {
+        if (row.querySelector('.be-spell-details-button')) return;
+
+        const label = row.querySelector('.ct-spells-spell__label');
+        if (!label) return;
+
+        const spellName = label.textContent.trim();
+        
+        const btn = document.createElement('button');
+        btn.className = 'be-spell-details-button';
+        btn.innerText = 'Details';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            // Coordinates for floating section
+            const coords = { x: e.clientX, y: e.clientY };
+            if (window.createSpellDetailSection) {
+                window.createSpellDetailSection(spellName, coords);
+            } else {
+                console.log(`[DDB Print] Details clicked for ${spellName} at`, coords);
+            }
+        };
+
+        row.appendChild(btn);
+    });
+}
+
+/**
  * Injects extracted clones into the live Spells view to create the print layout.
  */
 async function injectClonesIntoSpellsView() {
@@ -702,6 +732,9 @@ async function injectClonesIntoSpellsView() {
   if (navTabs) {
       navTabs.style.display = 'none';
   }
+  
+  // 9. Inject spell detail triggers into all sections
+  injectSpellDetailTriggers(layoutRoot);
   
   // Clean up global definitions
   copySvgDefinitions(document.body); 
@@ -2857,6 +2890,7 @@ function injectCloneButtons() {
                         updateLayoutBounds();
                         // Re-run injection to ensure new clone gets buttons
                         injectCloneButtons(); 
+                        injectSpellDetailTriggers(clone);
                     }
                 } else {
                     showFeedback('Failed to capture snapshot.');
@@ -3050,6 +3084,34 @@ function injectCompactStyles() {
             width: auto !important;
             max-width: none !important;
         }
+
+        /* Spell Details Trigger Button */
+        .ct-spells-spell {
+            position: relative;
+        }
+        .be-spell-details-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            background: #242528;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .ct-spells-spell:hover .be-spell-details-button {
+            display: block;
+        }
+        .be-spell-details-button:hover {
+            background: #333;
+            border-color: #666;
+        }
     `;
     document.head.appendChild(style);
 }
@@ -3091,6 +3153,7 @@ function injectCompactStyles() {
     window.renderClonedSection = renderClonedSection;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
+    window.injectSpellDetailTriggers = injectSpellDetailTriggers;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
     window.getCharacterSpells = getCharacterSpells;
