@@ -31,6 +31,8 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 1. The extension does not work on mobile browser devices nor the D&D Beyond mobile app.
 2. Currently, only red theme is supported.
 3. The extension is not meant to let you edit your character sheet nor throw dices. Only the SPELL section "Manage spells" should be usable.
+4. Spell description sheets can ONLY gather information from the original "known spells" of D&D Beyond. The tool mitigates this by saving previously known spells. However, if a description was never seen before, it will not be available.
+5. Sometimes, when using the "load" button, the inner contents of a section get messed up. It gets fixed when you resize the section again.
 
 ## Features
 
@@ -40,9 +42,11 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 4. Save & Load templates.
 5. Clone sections, specifically for the SPELL section (e.g., "Combat Spells" vs "Utility Spells").
 6. Compact Mode to maximize information density in heavy sections like Spells.
-7. **WIP**: Editable content and font resizing.
-8. **WIP**: Support for other color themes (beyond Red).
-9. **WIP**: Content extractions and spell description sheets.
+7. Spell description sheets.
+8. **WIP**: Merge sections: Dragging a section over another section will merge them. 
+9. **WIP**: Content extractions
+10. **WIP**: Editable content and font resizing.
+11. **WIP**: Support for other color themes (beyond Red).
 
 ## Instructions for use
 

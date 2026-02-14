@@ -49,7 +49,7 @@ describe('Cloning Persistence', function() {
     await Storage.init();
   });
 
-  it('should include clones in scanLayout', function() {
+  it('should include clones in scanLayout', async function() {
     // Manually add a clone to the DOM
     const clone = document.createElement('div');
     clone.id = 'clone-123';
@@ -71,7 +71,7 @@ describe('Cloning Persistence', function() {
     
     document.getElementById('print-layout-wrapper').appendChild(clone);
     
-    const layout = window.scanLayout();
+    const layout = await window.scanLayout();
     
     assert.ok(layout.clones, 'Clones array missing in layout');
     const savedClone = layout.clones.find(c => c.id === 'clone-123');
@@ -82,29 +82,28 @@ describe('Cloning Persistence', function() {
     assert.strictEqual(savedClone.top, '50px');
   });
 
-  it('should restore clones in applyLayout', function() {
-    const layout = {
-        version: '1.0.0',
-        sections: {
-            'section-Actions': { left: '20px', top: '20px' }
-        },
-        clones: [
-            {
-                id: 'clone-456',
-                originalId: 'section-Actions',
-                title: 'Restored Clone',
-                html: '<p>Restored Content</p>',
-                left: '100px',
-                top: '100px',
-                width: '200px',
-                height: '200px'
-            }
-        ]
-    };
-    
-    window.applyLayout(layout);
-    
-    const restoredClone = document.getElementById('clone-456');
+    it('should restore clones in applyLayout', async function() {
+      const layout = {
+          version: '1.0.0',
+          sections: {
+              'section-Actions': { left: '20px', top: '20px' }
+          },
+          clones: [
+              {
+                  id: 'clone-456',
+                  originalId: 'section-Actions',
+                  title: 'Restored Clone',
+                  html: '<p>Restored Content</p>',
+                  left: '100px',
+                  top: '100px',
+                  width: '200px',
+                  height: '200px'
+              }
+          ]
+      };
+  
+      await window.applyLayout(layout);
+      const restoredClone = document.getElementById('clone-456');
     assert.ok(restoredClone, 'Clone 456 not restored in DOM');
     assert.ok(restoredClone.classList.contains('be-clone'), 'Missing be-clone class');
     assert.strictEqual(restoredClone.querySelector('.print-section-header span').textContent, 'Restored Clone');

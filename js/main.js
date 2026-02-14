@@ -9,9 +9,10 @@ Licensed under Blue Oak Model License 1.0.0
  * Uses IndexedDB to persist layout configurations and custom data.
  */
 const DB_NAME = 'DDBPrintEnhancerDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'layouts';
-const SCHEMA_VERSION = '1.0.0';
+const SPELL_CACHE_STORE = 'spell_cache';
+const SCHEMA_VERSION = '1.1.0';
 
 const DEFAULT_LAYOUTS = {
     'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
@@ -53,6 +54,9 @@ const Storage = {
         const db = event.target.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           db.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
+        }
+        if (!db.objectStoreNames.contains(SPELL_CACHE_STORE)) {
+          db.createObjectStore(SPELL_CACHE_STORE, { keyPath: 'name' });
         }
       };
 
@@ -129,6 +133,59 @@ const Storage = {
    */
   loadGlobalLayout: () => {
     return Storage.loadLayout('GLOBAL');
+  },
+
+  /**
+   * Save multiple spells to the cache.
+   * @param {Array} spells 
+   */
+  saveSpells: (spells) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([SPELL_CACHE_STORE], 'readwrite');
+      const store = transaction.objectStore(SPELL_CACHE_STORE);
+      
+      spells.forEach(spell => store.put(spell));
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Get a spell from the cache by name.
+   * @param {string} name 
+   * @returns {Promise<object|undefined>}
+   */
+  getSpell: (name) => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([SPELL_CACHE_STORE], 'readonly');
+      const store = transaction.objectStore(SPELL_CACHE_STORE);
+      const request = store.get(name);
+
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Get all spells from the cache.
+   * @returns {Promise<Array>}
+   */
+  getAllSpells: () => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([SPELL_CACHE_STORE], 'readonly');
+      const store = transaction.objectStore(SPELL_CACHE_STORE);
+      const request = store.getAll();
+
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
   }
 };
 
@@ -236,7 +293,7 @@ function createDraggableContainer(title, content, id) {
   titleSpan.textContent = title;
   header.appendChild(titleSpan);
 
-  header.setAttribute('draggable', 'true'); // Added here instead
+  header.setAttribute('draggable', 'true');
   
   header.style.fontWeight = 'bold';
   header.style.fontSize = '18px';
@@ -512,6 +569,36 @@ function copySvgDefinitions(targetContainer) {
  * Appends all collected sections to the main sheet view.
  */
 /**
+ * Injects detail section triggers into spell rows.
+ */
+function injectSpellDetailTriggers(context = document) {
+    context.querySelectorAll('.ct-spells-spell').forEach(row => {
+        if (row.querySelector('.be-spell-details-button')) return;
+
+        const label = row.querySelector('.ct-spells-spell__label');
+        if (!label) return;
+
+        const spellName = label.textContent.trim();
+        
+        const btn = document.createElement('button');
+        btn.className = 'be-spell-details-button';
+        btn.innerText = 'Details';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            // Coordinates for floating section
+            const coords = { x: e.clientX, y: e.clientY, pageX: e.pageX, pageY: e.pageY };
+            if (window.createSpellDetailSection) {
+                window.createSpellDetailSection(spellName, coords);
+            } else {
+                console.log(`[DDB Print] Details clicked for ${spellName} at`, coords);
+            }
+        };
+
+        row.appendChild(btn);
+    });
+}
+
+/**
  * Injects extracted clones into the live Spells view to create the print layout.
  */
 async function injectClonesIntoSpellsView() {
@@ -645,6 +732,9 @@ async function injectClonesIntoSpellsView() {
   if (navTabs) {
       navTabs.style.display = 'none';
   }
+  
+  // 9. Inject spell detail triggers into all sections
+  injectSpellDetailTriggers(layoutRoot);
   
   // Clean up global definitions
   copySvgDefinitions(document.body); 
@@ -1496,7 +1586,7 @@ function renderClonedSection(snapshot) {
             e.stopPropagation();
             const titleSpan = header.querySelector('span');
             const staticTitleSpan = container.querySelector('.ct-content-group__header-content');
-            const currentTitle = titleSpan ? titleSpan.textContent.trim() : 'Clone';
+            const currentTitle = titleSpan ? titleSpan.textContent.trim() : (staticTitleSpan ? staticTitleSpan.textContent.trim() : 'Clone');
             // Use window reference for mockability in tests
             const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
             if (newTitle) {
@@ -1562,6 +1652,12 @@ function renderClonedSection(snapshot) {
         container.classList.add('minimized');
     }
 
+    if (snapshot.compact) {
+        container.classList.add('be-compact-mode');
+        // Button style will be handled by injection or separate update if needed, 
+        // but let's try to set it if button exists contextually (though injection happens later usually)
+    }
+
     const layoutRoot = document.getElementById('print-layout-wrapper');
     if (layoutRoot) {
         layoutRoot.appendChild(container);
@@ -1572,7 +1668,220 @@ function renderClonedSection(snapshot) {
     
     return container;
 }
+/**
+ * Creates and manages a floating spell detail section.
+ */
+async function createSpellDetailSection(spellName, coords) {
+    // 0. Check for existing section for this spell
+    const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
+                          .find(el => {
+                              const title = el.querySelector('.print-section-header span');
+                              return title && title.textContent.trim() === spellName;
+                          });
+    if (existing) {
+        // Bring to front
+        let maxZ = 10000;
+        document.querySelectorAll('.print-section-container').forEach(el => {
+            const z = parseInt(el.style.zIndex) || 10;
+            if (z > maxZ) maxZ = z;
+        });
+        existing.style.zIndex = maxZ + 1;
+        if (existing.scrollIntoView) {
+            existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showFeedback(`${spellName} is already open`);
+        return;
+    }
 
+    const id = `spell-detail-${Date.now()}`;
+    
+    // 1. Create immediate shell
+    const content = document.createElement('div');
+    content.className = 'print-section-content';
+    content.innerHTML = '<div class="be-spinner"></div>';
+    
+    const container = createDraggableContainer(spellName, content, id);
+    container.classList.add('be-spell-detail');
+    
+    // Customize Header: Add Close Button (instead of/beside minimize)
+    const header = container.querySelector('.print-section-header');
+    if (header) {
+        // Change existing X button to remove for spell details
+        const xBtn = header.querySelector('.print-section-minimize');
+        if (xBtn) {
+            xBtn.title = 'Remove Section';
+            xBtn.onclick = (e) => {
+                e.stopPropagation();
+                container.remove();
+                updateLayoutBounds();
+            };
+        }
+    }
+
+    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    
+    // Calculate relative coordinates to the layout wrapper
+    const rootRect = layoutRoot.getBoundingClientRect();
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
+    const x = coords.x - rootRect.left;
+    const y = coords.y - rootRect.top;
+
+    container.style.position = 'absolute'; 
+    container.style.left = `${x}px`;
+    container.style.top = `${y}px`;
+    container.style.width = '300px';
+    container.style.height = 'auto';
+    container.style.zIndex = '10000';
+
+    layoutRoot.appendChild(container);
+
+    // 2. Fetch Data
+    const spell = await fetchSpellWithCache(spellName);
+    
+    const contentWrapper = container.querySelector('.print-section-content');
+    if (!contentWrapper) return;
+
+    if (spell) {
+        // 3. Render Data
+        const header = document.createElement('div');
+        header.className = 'ct-content-group__header';
+        const headerContent = document.createElement('div');
+        headerContent.className = 'ct-content-group__header-content';
+        headerContent.textContent = spell.name;
+        header.appendChild(headerContent);
+
+        contentWrapper.innerHTML = `
+            <div style="padding: 10px; color: black; background: white;">
+                <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">
+                    Level ${spell.level} ${spell.school}
+                </div>
+                <div style="margin-bottom: 10px; font-style: italic; font-size: 0.9em;">
+                    Range: ${spell.range}
+                </div>
+                <div class="spell-description" style="white-space: pre-wrap; font-size: 13px;">${spell.description}</div>
+            </div>
+        `;
+        contentWrapper.prepend(header);
+    } else {
+        // 4. Render Error
+        contentWrapper.innerHTML = `
+            <div style="padding: 15px; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
+                Only previously loaded spells and current ones from the original section are available. 
+                Please add the spell from the manage spells button and try again.
+                <div class="be-error-actions">
+                    <button class="ct-theme-button be-retry-button">Retry</button>
+                    <button class="ct-theme-button be-delete-button">Delete</button>
+                </div>
+            </div>
+        `;
+        
+        contentWrapper.querySelector('.be-delete-button').onclick = () => container.remove();
+        contentWrapper.querySelector('.be-retry-button').onclick = () => {
+            contentWrapper.innerHTML = '<div class="be-spinner"></div>';
+            createSpellDetailSection(spellName, coords);
+            container.remove(); // Replace old with new
+        };
+    }
+
+    // Re-init resize logic for the new container
+    if (window.initResizeLogic) window.initResizeLogic();
+    updateLayoutBounds();
+}
+
+/**
+ * Gets the character ID from the URL.
+ */
+function getCharacterId() {
+    return window.location.pathname.split('/').pop();
+}
+
+/**
+ * Retrieves a spell from cache or API.
+ */
+async function fetchSpellWithCache(spellName) {
+    try {
+        await Storage.init();
+        
+        // 1. Check Cache
+        const cached = await Storage.getSpell(spellName);
+        if (cached) {
+            console.log(`[DDB Print] Cache Hit: ${spellName}`);
+            return cached;
+        }
+
+        console.log(`[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`);
+
+        // 2. Fetch API on miss
+        const charId = getCharacterId();
+        if (!charId || charId === 'characters') {
+            console.error('[DDB Print] Could not determine character ID for spell fetch');
+            return null;
+        }
+
+        const spells = await getCharacterSpells(charId);
+        if (spells && spells.length > 0) {
+            // 3. Update Cache with ALL spells
+            await Storage.saveSpells(spells);
+            
+            // 4. Return the specific spell
+            return spells.find(s => s.name === spellName) || null;
+        }
+    } catch (err) {
+        console.error('[DDB Print] Error in fetchSpellWithCache', err);
+    }
+    return null;
+}
+
+async function getCharacterSpells(charId) {
+    const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Could not fetch character data. Are you logged in?");
+        
+        const json = await response.json();
+        const data = json.data;
+
+        // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
+        // We flatten them all into one list
+        const spellSources = [
+            ...(data.classSpells || []),
+            ...(data.spells.race || []),
+            ...(data.spells.class || []),
+            ...(data.spells.feat || []),
+            ...(data.spells.item || [])
+        ];
+
+        // Some sources (like classSpells) are nested differently
+        const spells = [];
+        
+        spellSources.forEach(source => {
+            // Handle class-specific nested spells
+            if (source.spells) {
+                source.spells.forEach(s => spells.push(s.definition));
+            } 
+            // Handle flat spell objects (items/feats/race)
+            else if (source.definition) {
+                spells.push(source.definition);
+            }
+        });
+
+        // Map it to a cleaner format (Name + Description)
+        return spells.map(s => ({
+            name: s.name,
+            level: s.level,
+            description: s.description.replace(/<[^>]*>?/gm, ''), // Strips HTML tags
+            range: `${s.range.rangeValue || ''} ${s.range.origin}`,
+            school: s.school
+        }));
+
+    } catch (err) {
+        console.error("Error fetching spells:", err);
+    }
+}
 /**
  * Shows a modal with an input field.
  * @returns {Promise<string|null>}
@@ -2117,11 +2426,11 @@ function handleManageCompact() {
 async function handleSaveBrowser() {
     try {
         await Storage.init();
-        const layout = scanLayout();
+        const layout = await scanLayout();
         await Storage.saveGlobalLayout(layout);
         
         // Also save for specific character for the "revert to character" feature later
-        const characterId = window.location.pathname.split('/').pop();
+        const characterId = getCharacterId();
         if (characterId) {
             await Storage.saveLayout(characterId, layout);
         }
@@ -2136,8 +2445,8 @@ async function handleSaveBrowser() {
 /**
  * Handles saving to PC.
  */
-function handleSavePC() {
-    const layout = scanLayout();
+async function handleSavePC() {
+    const layout = await scanLayout();
     const data = JSON.stringify(layout, null, 2);
     const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
 
@@ -2196,7 +2505,7 @@ async function handleLoadDefault() {
         const store = transaction.objectStore(STORE_NAME);
         store.delete('GLOBAL');
         
-        const characterId = window.location.pathname.split('/').pop();
+        const characterId = getCharacterId();
         if (characterId) {
             store.delete(characterId);
         }
@@ -2246,6 +2555,35 @@ async function handleLoadDefault() {
             }
         });
 
+        // Reposition spell detail sections to the Y of their original spell label, at left: 0
+        document.querySelectorAll('.print-section-container.be-spell-detail').forEach(detail => {
+            const titleSpan = detail.querySelector('.print-section-header span');
+            if (titleSpan) {
+                const spellName = titleSpan.textContent.trim();
+                // Find the original spell label in the DOM (searching for exact text match)
+                const labels = Array.from(document.querySelectorAll('.ct-spells-spell__label'));
+                const originalLabel = labels.find(l => l.textContent.trim() === spellName);
+                
+                if (originalLabel) {
+                    const layoutRoot = document.getElementById('print-layout-wrapper');
+                    const rootRect = layoutRoot.getBoundingClientRect();
+                    const labelRect = originalLabel.getBoundingClientRect();
+                    
+                    // Calculate Y relative to the layout wrapper
+                    const y = labelRect.top - rootRect.top;
+                    detail.style.setProperty('left', `1200px`, 'important');
+                    detail.style.setProperty('top', `${y}px`, 'important');
+                    detail.style.setProperty('width', '300px', 'important');
+                    detail.style.setProperty('height', 'auto', 'important');
+                } else {
+                    // Fallback: move to the right edge
+                    detail.style.setProperty('left', `1200px`, 'important');
+                    detail.style.setProperty('width', '300px', 'important');
+                    detail.style.setProperty('height', 'auto', 'important');
+                }
+            }
+        });
+
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -2266,11 +2604,15 @@ function handleLoadFile() {
         if (!file) return;
         
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const layout = JSON.parse(event.target.result);
                 if (Storage.validateLayout(layout)) {
-                    applyLayout(layout);
+                    // Check version compatibility
+                    if (layout.version !== Storage.SCHEMA_VERSION) {
+                        alert(`Warning: The loaded layout version (${layout.version}) is older than the current version (${Storage.SCHEMA_VERSION}). Some newer features might not be present. It is recommended to save your layout again to upgrade the file.`);
+                    }
+                    await applyLayout(layout);
                     showFeedback('Layout loaded!');
                 } else {
                     alert('Invalid layout file format.');
@@ -2294,7 +2636,7 @@ async function restoreLayout() {
         await Storage.init();
         
         // Strategy: Load character-specific first, fallback to global
-        const characterId = window.location.pathname.split('/').pop();
+        const characterId = getCharacterId();
         let layout = null;
         
         if (characterId) {
@@ -2307,7 +2649,7 @@ async function restoreLayout() {
 
         if (layout && Storage.validateLayout(layout)) {
             console.log('[DDB Print] Restoring saved layout...');
-            applyLayout(layout);
+            await applyLayout(layout);
             return true;
         }
     } catch (err) {
@@ -2431,12 +2773,21 @@ function showFallbackModal(jsonData) {
  * Scans the current DOM for layout information.
  * @returns {object} Layout data following the schema.
  */
-function scanLayout() {
+async function scanLayout() {
     const layout = {
-        version: "1.0.0",
+        version: Storage.SCHEMA_VERSION,
         sections: {},
-        clones: []
+        clones: [],
+        spell_cache: []
     };
+
+    // Include cached spells
+    try {
+        await Storage.init();
+        layout.spell_cache = await Storage.getAllSpells();
+    } catch (err) {
+        console.error('[DDB Print] Could not scan spell cache', err);
+    }
 
     const sections = document.querySelectorAll('.print-section-container');
     sections.forEach(section => {
@@ -2455,7 +2806,8 @@ function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: section.style.zIndex || '10',
-                minimized: section.dataset.minimized === 'true'
+                minimized: section.dataset.minimized === 'true',
+                compact: section.classList.contains('be-compact-mode')
             });
             return;
         }
@@ -2467,6 +2819,7 @@ function scanLayout() {
             height: section.style.height,
             zIndex: section.style.zIndex || '10',
             minimized: section.dataset.minimized === 'true',
+            compact: section.classList.contains('be-compact-mode'),
             innerWidths: {}
         };
 
@@ -2503,9 +2856,19 @@ function migrateLayout(data) {
  * Applies layout information to the current DOM.
  * @param {object} layout 
  */
-function applyLayout(layout) {
+async function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
+
+    // Save spells to cache if present
+    if (layout.spell_cache && Array.isArray(layout.spell_cache)) {
+        try {
+            await Storage.init();
+            await Storage.saveSpells(layout.spell_cache);
+        } catch (err) {
+            console.error('[DDB Print] Could not restore spell cache', err);
+        }
+    }
 
     // Remove existing clones to avoid duplicates on re-apply
     document.querySelectorAll('.print-section-container.be-clone').forEach(el => el.remove());
@@ -2537,6 +2900,17 @@ function applyLayout(layout) {
             section.dataset.minimized = 'false';
             const content = section.querySelector('.print-section-content');
             if (content) content.style.display = 'flex';
+        }
+
+        // Handle compact mode restoration
+        if (styles.compact) {
+            section.classList.add('be-compact-mode');
+            const btn = section.querySelector('.be-compact-button');
+            if (btn) btn.style.backgroundColor = 'var(--btn-color)';
+        } else {
+            section.classList.remove('be-compact-mode');
+            const btn = section.querySelector('.be-compact-button');
+            if (btn) btn.style.backgroundColor = 'var(--btn-color-highlight)';
         }
 
         // Apply inner widths
@@ -2668,6 +3042,7 @@ function injectCloneButtons() {
                         updateLayoutBounds();
                         // Re-run injection to ensure new clone gets buttons
                         injectCloneButtons(); 
+                        injectSpellDetailTriggers(clone);
                     }
                 } else {
                     showFeedback('Failed to capture snapshot.');
@@ -2861,6 +3236,59 @@ function injectCompactStyles() {
             width: auto !important;
             max-width: none !important;
         }
+
+        /* Spell Details Trigger Button */
+        .ct-spells-spell {
+            position: relative;
+        }
+        .be-spell-details-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: none;
+            background: #242528;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .ct-spells-spell:hover .be-spell-details-button {
+            display: block;
+        }
+        .be-spell-details-button:hover {
+            background: #333;
+            border-color: #666;
+        }
+
+        /* Loading Spinner */
+        .be-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #EC2127;
+            animation: be-spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes be-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error UI Buttons */
+        .be-error-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .be-retry-button { background: #4CAF50 !important; color: white !important; }
+        .be-delete-button { background: #f44336 !important; color: white !important; }
     `;
     document.head.appendChild(style);
 }
@@ -2902,6 +3330,11 @@ function injectCompactStyles() {
     window.renderClonedSection = renderClonedSection;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
+    window.injectSpellDetailTriggers = injectSpellDetailTriggers;
+    window.createSpellDetailSection = createSpellDetailSection;
+    window.getCharacterId = getCharacterId;
+    window.fetchSpellWithCache = fetchSpellWithCache;
+    window.getCharacterSpells = getCharacterSpells;
 
 // Execution
 (async () => {
