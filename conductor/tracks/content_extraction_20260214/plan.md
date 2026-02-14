@@ -10,9 +10,9 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Visual Triggers' (Protocol in workflow.md) 09931d6
 
 ## Phase 2: Extraction Core & Lifecycle
-- [ ] Task: Implement `handleElementExtraction(element)` to clone content and create a new floating section
-- [ ] Task: Implement ID tracking system to link floating sections with their hidden original elements
-- [ ] Task: Implement the "Rollback" logic triggered by closing a dynamically created section
+- [~] Task: Implement `handleElementExtraction(element)` to clone content and create a new floating section
+- [~] Task: Implement ID tracking system to link floating sections with their hidden original elements
+- [~] Task: Implement the "Rollback" logic triggered by closing a dynamically created section
 - [ ] Task: Write unit tests for the extraction lifecycle: Hide original -> Create clone -> Restore on close
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Extraction Core' (Protocol in workflow.md)
 

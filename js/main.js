@@ -622,8 +622,97 @@ function flagExtractableElements() {
 
         if (!isNested) {
             el.classList.add('be-extractable');
+            
+            // Attach extraction listener
+            el.ondblclick = (e) => {
+                e.stopPropagation();
+                handleElementExtraction(el);
+            };
         }
     });
+}
+
+/**
+ * Handles the extraction of an element into a new floating section.
+ */
+function handleElementExtraction(el) {
+    // 1. Ensure original has an ID for tracking
+    if (!el.id) {
+        el.id = `be-auto-id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+
+    // 2. Discover Title (Phase 3 will refine this)
+    const title = findSectionTitle(el) || 'Extracted Section';
+
+    // 3. Clone content
+    const clone = el.cloneNode(true);
+    clone.style.display = ''; // Ensure clone is visible
+    clone.classList.remove('be-extractable'); // Avoid nested triggers in clone
+    
+    // Hide original header/title inside the clone to avoid duplication
+    const originalHeader = clone.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+    if (originalHeader) {
+        originalHeader.style.display = 'none';
+    }
+    
+    // Add standardized header to content area
+    const header = document.createElement('div');
+    header.className = 'ct-content-group__header';
+    const headerContent = document.createElement('div');
+    headerContent.className = 'ct-content-group__header-content';
+    headerContent.textContent = title;
+    header.appendChild(headerContent);
+
+    const contentWrapper = document.createElement('div');
+    contentWrapper.appendChild(header);
+    contentWrapper.appendChild(clone);
+
+    // 4. Create floating section
+    const sectionId = `extracted-section-${Date.now()}`;
+    const container = createDraggableContainer(title, contentWrapper, sectionId);
+    container.classList.add('be-extracted-section');
+    container.dataset.originalId = el.id;
+
+    // 5. Customize Close Button for Rollback
+    const xBtn = container.querySelector('.print-section-minimize');
+    if (xBtn) {
+        xBtn.title = 'Rollback Extraction';
+        xBtn.onclick = (e) => {
+            e.stopPropagation();
+            // Rollback
+            const original = document.getElementById(el.id);
+            if (original) original.style.display = '';
+            container.remove();
+            updateLayoutBounds();
+            showFeedback('Extraction rolled back');
+        };
+    }
+
+    // 6. Position and Hide Original
+    const rect = el.getBoundingClientRect();
+    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    const rootRect = layoutRoot.getBoundingClientRect();
+    
+    container.style.position = 'absolute';
+    container.style.left = `${rect.left - rootRect.left + rect.width + 20}px`; // To the right of original
+    container.style.top = `${rect.top - rootRect.top}px`;
+    container.style.width = `${rect.width}px`;
+    container.style.height = 'auto';
+    container.style.zIndex = '10000';
+
+    layoutRoot.appendChild(container);
+    el.style.display = 'none';
+    
+    updateLayoutBounds();
+    showFeedback(`Extracted ${title}`);
+}
+
+/**
+ * Basic title discovery (to be refined in Phase 3).
+ */
+function findSectionTitle(el) {
+    const titleEl = el.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+    return titleEl ? titleEl.textContent.trim() : null;
 }
 
 /**
