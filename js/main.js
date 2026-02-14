@@ -586,7 +586,7 @@ function injectSpellDetailTriggers(context = document) {
         btn.onclick = (e) => {
             e.stopPropagation();
             // Coordinates for floating section
-            const coords = { x: e.clientX, y: e.clientY };
+            const coords = { x: e.clientX, y: e.clientY, pageX: e.pageX, pageY: e.pageY };
             if (window.createSpellDetailSection) {
                 window.createSpellDetailSection(spellName, coords);
             } else {
@@ -1668,6 +1668,119 @@ function renderClonedSection(snapshot) {
     
     return container;
 }
+/**
+ * Creates and manages a floating spell detail section.
+ */
+async function createSpellDetailSection(spellName, coords) {
+    // 0. Check for existing section for this spell
+    const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
+                          .find(el => {
+                              const title = el.querySelector('.print-section-header span');
+                              return title && title.textContent.trim() === spellName;
+                          });
+    if (existing) {
+        // Bring to front
+        let maxZ = 10000;
+        document.querySelectorAll('.print-section-container').forEach(el => {
+            const z = parseInt(el.style.zIndex) || 10;
+            if (z > maxZ) maxZ = z;
+        });
+        existing.style.zIndex = maxZ + 1;
+        existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showFeedback(`${spellName} is already open`);
+        return;
+    }
+
+    const id = `spell-detail-${Date.now()}`;
+    
+    // 1. Create immediate shell
+    const content = document.createElement('div');
+    content.className = 'print-section-content';
+    content.innerHTML = '<div class="be-spinner"></div>';
+    
+    const container = createDraggableContainer(spellName, content, id);
+    container.classList.add('be-spell-detail');
+    
+    // Customize Header: Add Close Button (instead of/beside minimize)
+    const header = container.querySelector('.print-section-header');
+    if (header) {
+        // Change existing X button to remove for spell details
+        const xBtn = header.querySelector('.print-section-minimize');
+        if (xBtn) {
+            xBtn.title = 'Remove Section';
+            xBtn.onclick = (e) => {
+                e.stopPropagation();
+                container.remove();
+                updateLayoutBounds();
+            };
+        }
+    }
+
+    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    
+    // Calculate relative coordinates to the layout wrapper
+    const rootRect = layoutRoot.getBoundingClientRect();
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
+    const x = coords.x - rootRect.left;
+    const y = coords.y - rootRect.top;
+
+    container.style.position = 'absolute'; 
+    container.style.left = `${x}px`;
+    container.style.top = `${y}px`;
+    container.style.width = '300px';
+    container.style.height = 'auto';
+    container.style.zIndex = '10000';
+
+    layoutRoot.appendChild(container);
+
+    // 2. Fetch Data
+    const spell = await fetchSpellWithCache(spellName);
+    
+    const contentWrapper = container.querySelector('.print-section-content');
+    if (!contentWrapper) return;
+
+    if (spell) {
+        // 3. Render Data
+        contentWrapper.innerHTML = `
+            <div style="padding: 10px; color: black; background: white;">
+                <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">
+                    Level ${spell.level} ${spell.school}
+                </div>
+                <div style="margin-bottom: 10px; font-style: italic; font-size: 0.9em;">
+                    Range: ${spell.range}
+                </div>
+                <div class="spell-description" style="white-space: pre-wrap; font-size: 13px;">${spell.description}</div>
+            </div>
+        `;
+    } else {
+        // 4. Render Error
+        contentWrapper.innerHTML = `
+            <div style="padding: 15px; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
+                Only previously loaded spells and current ones from the original section are available. 
+                Please add the spell from the manage spells button and try again.
+                <div class="be-error-actions">
+                    <button class="ct-theme-button be-retry-button">Retry</button>
+                    <button class="ct-theme-button be-delete-button">Delete</button>
+                </div>
+            </div>
+        `;
+        
+        contentWrapper.querySelector('.be-delete-button').onclick = () => container.remove();
+        contentWrapper.querySelector('.be-retry-button').onclick = () => {
+            contentWrapper.innerHTML = '<div class="be-spinner"></div>';
+            createSpellDetailSection(spellName, coords);
+            container.remove(); // Replace old with new
+        };
+    }
+
+    // Re-init resize logic for the new container
+    if (window.initResizeLogic) window.initResizeLogic();
+    updateLayoutBounds();
+}
+
 /**
  * Gets the character ID from the URL.
  */
@@ -3112,6 +3225,31 @@ function injectCompactStyles() {
             background: #333;
             border-color: #666;
         }
+
+        /* Loading Spinner */
+        .be-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #EC2127;
+            animation: be-spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes be-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error UI Buttons */
+        .be-error-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        .be-retry-button { background: #4CAF50 !important; color: white !important; }
+        .be-delete-button { background: #f44336 !important; color: white !important; }
     `;
     document.head.appendChild(style);
 }
@@ -3154,6 +3292,7 @@ function injectCompactStyles() {
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
+    window.createSpellDetailSection = createSpellDetailSection;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
     window.getCharacterSpells = getCharacterSpells;
