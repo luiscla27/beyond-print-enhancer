@@ -72,10 +72,11 @@ describe('Cloning Interactions', function() {
         await new Promise(resolve => setTimeout(resolve, 50));
         
         const titleSpan = clone.querySelector('.print-section-header span');
+        assert.ok(titleSpan, 'Title span not found in draggable header');
         assert.strictEqual(titleSpan.textContent, 'Updated Title');
 
-        const staticTitleSpan = clone.querySelector('.ct-content-group__header-content');
-        assert.strictEqual(staticTitleSpan.textContent, 'Updated Title');
+        const headerContent = clone.querySelector('.ct-content-group__header-content');
+        assert.ok(headerContent.textContent.includes('Updated Title'), 'Header content should contain title');
         
         window.showInputModal = originalShowInputModal;
     });

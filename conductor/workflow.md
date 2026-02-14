@@ -150,6 +150,7 @@ Before marking any task complete, verify:
 - [ ] **JSON Schema Versioning:** If the JSON structure for exported layouts has changed, the `SCHEMA_VERSION` in `js/main.js` MUST be incremented, and the import logic must handle version warnings/upgrades.
 - [ ] **Persistence Support:** Ensure any new state or feature is correctly handled by Save/Load functionality (update `scanLayout` and `applyLayout` in `main.js`).
 - [ ] **Load Default Handling:** Ensure any new kind of section (clones, detail sections, etc.) is correctly repositioned or handled in `handleLoadDefault` (update `handleLoadDefault` in `main.js`).
+- [ ] **Section Header Standards:** Ensure any new section type (clones, detail sections) includes a standardized D&D Beyond header (`div.ct-content-group__header` > `div.ct-content-group__header-content`) prepended to its *content* area. Draggable container headers should remain simple.
 
 ## Development Commands
 

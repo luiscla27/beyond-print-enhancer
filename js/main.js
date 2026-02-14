@@ -293,7 +293,7 @@ function createDraggableContainer(title, content, id) {
   titleSpan.textContent = title;
   header.appendChild(titleSpan);
 
-  header.setAttribute('draggable', 'true'); // Added here instead
+  header.setAttribute('draggable', 'true');
   
   header.style.fontWeight = 'bold';
   header.style.fontSize = '18px';
@@ -1586,7 +1586,7 @@ function renderClonedSection(snapshot) {
             e.stopPropagation();
             const titleSpan = header.querySelector('span');
             const staticTitleSpan = container.querySelector('.ct-content-group__header-content');
-            const currentTitle = titleSpan ? titleSpan.textContent.trim() : 'Clone';
+            const currentTitle = titleSpan ? titleSpan.textContent.trim() : (staticTitleSpan ? staticTitleSpan.textContent.trim() : 'Clone');
             // Use window reference for mockability in tests
             const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
             if (newTitle) {
@@ -1746,6 +1746,13 @@ async function createSpellDetailSection(spellName, coords) {
 
     if (spell) {
         // 3. Render Data
+        const header = document.createElement('div');
+        header.className = 'ct-content-group__header';
+        const headerContent = document.createElement('div');
+        headerContent.className = 'ct-content-group__header-content';
+        headerContent.textContent = spell.name;
+        header.appendChild(headerContent);
+
         contentWrapper.innerHTML = `
             <div style="padding: 10px; color: black; background: white;">
                 <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">
@@ -1757,6 +1764,7 @@ async function createSpellDetailSection(spellName, coords) {
                 <div class="spell-description" style="white-space: pre-wrap; font-size: 13px;">${spell.description}</div>
             </div>
         `;
+        contentWrapper.prepend(header);
     } else {
         // 4. Render Error
         contentWrapper.innerHTML = `
@@ -2572,9 +2580,7 @@ async function handleLoadDefault() {
                     detail.style.setProperty('height', 'auto', 'important');
                 } else {
                     // Fallback: move to the right edge
-                    const layoutRoot = document.getElementById('print-layout-wrapper');
-                    const rootRect = layoutRoot ? layoutRoot.getBoundingClientRect() : { width: 1200 };
-                    detail.style.setProperty('left', `${rootRect.width}px`, 'important');
+                    detail.style.setProperty('left', `1200px`, 'important');
                     detail.style.setProperty('width', '300px', 'important');
                     detail.style.setProperty('height', 'auto', 'important');
                 }

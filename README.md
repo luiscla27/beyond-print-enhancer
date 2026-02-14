@@ -43,9 +43,10 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 5. Clone sections, specifically for the SPELL section (e.g., "Combat Spells" vs "Utility Spells").
 6. Compact Mode to maximize information density in heavy sections like Spells.
 7. Spell description sheets.
-8. **WIP**: Editable content and font resizing.
-9. **WIP**: Support for other color themes (beyond Red).
-10. **WIP**: Content extractions
+8. **WIP**: Merge sections: Dragging a section over another section will merge them. 
+9. **WIP**: Content extractions
+10. **WIP**: Editable content and font resizing.
+11. **WIP**: Support for other color themes (beyond Red).
 
 ## Instructions for use
 
