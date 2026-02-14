@@ -9,12 +9,12 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Write unit tests verifying that correct elements are flagged and nested ones are ignored 09931d6
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Visual Triggers' (Protocol in workflow.md) 09931d6
 
-## Phase 2: Extraction Core & Lifecycle
-- [~] Task: Implement `handleElementExtraction(element)` to clone content and create a new floating section
-- [~] Task: Implement ID tracking system to link floating sections with their hidden original elements
-- [~] Task: Implement the "Rollback" logic triggered by closing a dynamically created section
-- [ ] Task: Write unit tests for the extraction lifecycle: Hide original -> Create clone -> Restore on close
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Extraction Core' (Protocol in workflow.md)
+## Phase 2: Extraction Core & Lifecycle [checkpoint: 28d542c]
+- [x] Task: Implement `handleElementExtraction(element)` to clone content and create a new floating section 28d542c
+- [x] Task: Implement ID tracking system to link floating sections with their hidden original elements 28d542c
+- [x] Task: Implement the "Rollback" logic triggered by closing a dynamically created section 28d542c
+- [x] Task: Write unit tests for the extraction lifecycle: Hide original -> Create clone -> Restore on close 28d542c
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Extraction Core' (Protocol in workflow.md) 28d542c
 
 ## Phase 3: UI Enhancements & Discovery
 - [ ] Task: Implement `findSectionTitle(element)` using the prioritized selector list (`h1`-`h5`, `head`)
