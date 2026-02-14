@@ -24,15 +24,15 @@ This plan outlines the steps to implement floating spell detail sections with In
 - [x] Task: Write unit tests verifying button injection in various section states c9d46e2
 - [x] Task: Conductor - User Manual Verification 'Phase 3: UI - Buttons' (Protocol in workflow.md) f56ab39
 
-## Phase 4: UI - Spell Detail Section
-- [~] Task: Implement `createSpellDetailSection(coords)` to immediately place a shell section at click location
-- [ ] Task: Implement internal section UI: Loading spinner, Data display (Name, Level, School, Range, Description)
-- [ ] Task: Implement "Close" functionality and coordinate handling for dragging (if applicable)
-- [ ] Task: Implement Error State UI: "Retry" and "Delete" buttons with the required guidance message
-- [ ] Task: Write unit tests for section rendering, loading states, and error interactions
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: UI - Detail Sections' (Protocol in workflow.md)
+## Phase 4: UI - Spell Detail Section [checkpoint: f120a74]
+- [x] Task: Implement `createSpellDetailSection(coords)` to immediately place a shell section at click location 21455fa
+- [x] Task: Implement internal section UI: Loading spinner, Data display (Name, Level, School, Range, Description) 21455fa
+- [x] Task: Implement "Close" functionality and coordinate handling for dragging (if applicable) 21455fa
+- [x] Task: Implement Error State UI: "Retry" and "Delete" buttons with the required guidance message 21455fa
+- [x] Task: Write unit tests for section rendering, loading states, and error interactions 21455fa
+- [x] Task: Conductor - User Manual Verification 'Phase 4: UI - Detail Sections' (Protocol in workflow.md) f120a74
 
-## Phase 5: Final Integration & E2E
-- [ ] Task: Perform E2E manual verification of the full flow
-- [ ] Task: Verify performance of bulk cache updates on first-time fetch
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md)
+## Phase 5: Final Integration & E2E [checkpoint: f120a74]
+- [x] Task: Perform E2E manual verification of the full flow f120a74
+- [x] Task: Verify performance of bulk cache updates on first-time fetch f120a74
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md) f120a74
