@@ -1635,6 +1635,50 @@ function renderClonedSection(snapshot) {
     
     return container;
 }
+/**
+ * Gets the character ID from the URL.
+ */
+function getCharacterId() {
+    return window.location.pathname.split('/').pop();
+}
+
+/**
+ * Retrieves a spell from cache or API.
+ */
+async function fetchSpellWithCache(spellName) {
+    try {
+        await Storage.init();
+        
+        // 1. Check Cache
+        const cached = await Storage.getSpell(spellName);
+        if (cached) {
+            console.log(`[DDB Print] Cache Hit: ${spellName}`);
+            return cached;
+        }
+
+        console.log(`[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`);
+
+        // 2. Fetch API on miss
+        const charId = getCharacterId();
+        if (!charId || charId === 'characters') {
+            console.error('[DDB Print] Could not determine character ID for spell fetch');
+            return null;
+        }
+
+        const spells = await getCharacterSpells(charId);
+        if (spells && spells.length > 0) {
+            // 3. Update Cache with ALL spells
+            await Storage.saveSpells(spells);
+            
+            // 4. Return the specific spell
+            return spells.find(s => s.name === spellName) || null;
+        }
+    } catch (err) {
+        console.error('[DDB Print] Error in fetchSpellWithCache', err);
+    }
+    return null;
+}
+
 async function getCharacterSpells(charId) {
     const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
     
@@ -2230,7 +2274,7 @@ async function handleSaveBrowser() {
         await Storage.saveGlobalLayout(layout);
         
         // Also save for specific character for the "revert to character" feature later
-        const characterId = window.location.pathname.split('/').pop();
+        const characterId = getCharacterId();
         if (characterId) {
             await Storage.saveLayout(characterId, layout);
         }
@@ -2305,7 +2349,7 @@ async function handleLoadDefault() {
         const store = transaction.objectStore(STORE_NAME);
         store.delete('GLOBAL');
         
-        const characterId = window.location.pathname.split('/').pop();
+        const characterId = getCharacterId();
         if (characterId) {
             store.delete(characterId);
         }
@@ -2407,7 +2451,7 @@ async function restoreLayout() {
         await Storage.init();
         
         // Strategy: Load character-specific first, fallback to global
-        const characterId = window.location.pathname.split('/').pop();
+        const characterId = getCharacterId();
         let layout = null;
         
         if (characterId) {
@@ -3047,6 +3091,9 @@ function injectCompactStyles() {
     window.renderClonedSection = renderClonedSection;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
+    window.getCharacterId = getCharacterId;
+    window.fetchSpellWithCache = fetchSpellWithCache;
+    window.getCharacterSpells = getCharacterSpells;
 
 // Execution
 (async () => {
