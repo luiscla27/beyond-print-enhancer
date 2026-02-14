@@ -2580,7 +2580,9 @@ async function handleLoadDefault() {
                     detail.style.setProperty('height', 'auto', 'important');
                 } else {
                     // Fallback: move to the right edge
-                    detail.style.setProperty('left', `1200px`, 'important');
+                    const layoutRoot = document.getElementById('print-layout-wrapper');
+                    const rootRect = layoutRoot ? layoutRoot.getBoundingClientRect() : { width: 1200 };
+                    detail.style.setProperty('left', `${rootRect.width}px`, 'important');
                     detail.style.setProperty('width', '300px', 'important');
                     detail.style.setProperty('height', 'auto', 'important');
                 }
