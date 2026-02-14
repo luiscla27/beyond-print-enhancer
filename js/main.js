@@ -169,6 +169,23 @@ const Storage = {
       request.onsuccess = (event) => resolve(event.target.result);
       request.onerror = (event) => reject(event.target.error);
     });
+  },
+
+  /**
+   * Get all spells from the cache.
+   * @returns {Promise<Array>}
+   */
+  getAllSpells: () => {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error('Database not initialized'));
+
+      const transaction = db.transaction([SPELL_CACHE_STORE], 'readonly');
+      const store = transaction.objectStore(SPELL_CACHE_STORE);
+      const request = store.getAll();
+
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
   }
 };
 
@@ -2209,7 +2226,7 @@ function handleManageCompact() {
 async function handleSaveBrowser() {
     try {
         await Storage.init();
-        const layout = scanLayout();
+        const layout = await scanLayout();
         await Storage.saveGlobalLayout(layout);
         
         // Also save for specific character for the "revert to character" feature later
@@ -2228,8 +2245,8 @@ async function handleSaveBrowser() {
 /**
  * Handles saving to PC.
  */
-function handleSavePC() {
-    const layout = scanLayout();
+async function handleSavePC() {
+    const layout = await scanLayout();
     const data = JSON.stringify(layout, null, 2);
     const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
 
@@ -2358,7 +2375,7 @@ function handleLoadFile() {
         if (!file) return;
         
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             try {
                 const layout = JSON.parse(event.target.result);
                 if (Storage.validateLayout(layout)) {
@@ -2366,7 +2383,7 @@ function handleLoadFile() {
                     if (layout.version !== Storage.SCHEMA_VERSION) {
                         alert(`Warning: The loaded layout version (${layout.version}) is older than the current version (${Storage.SCHEMA_VERSION}). Some newer features might not be present. It is recommended to save your layout again to upgrade the file.`);
                     }
-                    applyLayout(layout);
+                    await applyLayout(layout);
                     showFeedback('Layout loaded!');
                 } else {
                     alert('Invalid layout file format.');
@@ -2403,7 +2420,7 @@ async function restoreLayout() {
 
         if (layout && Storage.validateLayout(layout)) {
             console.log('[DDB Print] Restoring saved layout...');
-            applyLayout(layout);
+            await applyLayout(layout);
             return true;
         }
     } catch (err) {
@@ -2527,12 +2544,21 @@ function showFallbackModal(jsonData) {
  * Scans the current DOM for layout information.
  * @returns {object} Layout data following the schema.
  */
-function scanLayout() {
+async function scanLayout() {
     const layout = {
-        version: "1.0.0",
+        version: Storage.SCHEMA_VERSION,
         sections: {},
-        clones: []
+        clones: [],
+        spell_cache: []
     };
+
+    // Include cached spells
+    try {
+        await Storage.init();
+        layout.spell_cache = await Storage.getAllSpells();
+    } catch (err) {
+        console.error('[DDB Print] Could not scan spell cache', err);
+    }
 
     const sections = document.querySelectorAll('.print-section-container');
     sections.forEach(section => {
@@ -2601,9 +2627,19 @@ function migrateLayout(data) {
  * Applies layout information to the current DOM.
  * @param {object} layout 
  */
-function applyLayout(layout) {
+async function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
+
+    // Save spells to cache if present
+    if (layout.spell_cache && Array.isArray(layout.spell_cache)) {
+        try {
+            await Storage.init();
+            await Storage.saveSpells(layout.spell_cache);
+        } catch (err) {
+            console.error('[DDB Print] Could not restore spell cache', err);
+        }
+    }
 
     // Remove existing clones to avoid duplicates on re-apply
     document.querySelectorAll('.print-section-container.be-clone').forEach(el => el.remove());
