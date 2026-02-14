@@ -5,6 +5,8 @@ This file tracks all major development tracks for the project.
 ## Current Tracks
 - [ ] **Track: Advanced Layout & Persistence Enhancements** (Ongoing refinements)
   *Link: [./tracks/advanced_enhancements_20260204/](./tracks/advanced_enhancements_20260204/)*
+- [ ] **Track: Spell Detail Section Injection**
+  *Link: [./tracks/spell_details_20260214/](./tracks/spell_details_20260214/)*
 
 ## Archived Tracks
 - [x] **Track: Section Cloning** (Completed: 2026-02-12)

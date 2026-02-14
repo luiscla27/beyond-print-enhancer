@@ -1,0 +1,8 @@
+{
+  "track_id": "spell_details_20260214",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-14T11:53:00Z",
+  "updated_at": "2026-02-14T11:53:00Z",
+  "description": "I added the function getCharacterSpells to gather existing known spells data which is currently not being used. Lets inject a button on the SPELL sections (and its clones) to create a new section with spell details. Also, gathered spells data from that function should be stored at a new indexdb table t prevent innecesary calls (its a cache, If a spell already exists on indexdb it should go to the endpoint. Instead it should load its data from the stored indexdb). Also, it should be added to the created JSON for save/shared/load data. if the user is trying to open an unavailable spell a message should appear "Only previusly loaded spells and current ones from the oriiginal section are available". The new button should be position absolute and visible only when hovering the div.ct-spells-spell dom element, also the name oof the spell to match the stored spell data its located at its dom child div.ct-spells-spell__label attribute innerText"
+}
