@@ -2,7 +2,7 @@
 
 This plan outlines the steps to implement floating spell detail sections with IndexedDB caching, following the project's TDD workflow.
 
-## Phase 1: Storage & Persistence Integration
+## Phase 1: Storage & Persistence Integration [checkpoint: df2dff4]
 - [x] Task: Initialize `spell_cache` object store in `DDBPrintEnhancerDB` (Update `Storage.init` in `js/main.js`) c89d0bb
 - [x] Task: Implement `Storage` methods for spell cache: `getSpell(name)`, `saveSpells(spells)` c89d0bb
 - [x] Task: Write unit tests for `spell_cache` IndexedDB operations c89d0bb
@@ -10,7 +10,7 @@ This plan outlines the steps to implement floating spell detail sections with In
 - [x] Task: Update JSON Export/Import logic to include `spell_cache` data cf9a09e
 - [x] Task: Update `workflow.md` to mandate `SCHEMA_VERSION` increments for any JSON structure changes 3a4e11d
 - [x] Task: Write unit tests for spell cache persistence and version validation cf9a09e
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Storage' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Storage' (Protocol in workflow.md) df2dff4
 
 ## Phase 2: Data Service & Cache Logic
 - [ ] Task: Refactor `getCharacterSpells` to return raw data suitable for caching if not already optimal
