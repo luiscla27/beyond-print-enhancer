@@ -919,6 +919,7 @@ function enforceFullHeight() {
 
     dialog + div,
     .dice-rolling-panel,
+    [class$="__actions--collapsed"],
     .ct-character-sheet:before,
     .ddbc-theme-link,
     .ddbc-character-tidbits__heading,
@@ -1042,11 +1043,11 @@ function enforceFullHeight() {
     .print-section-container .ct-quick-info__health * {
         font-size: 14px !important;
     }
-    .print-section-container *[class^="styles_heading__"],
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="-heading"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "],
+    .print-section-container [class^="styles_heading__"],
+    .print-section-container [class^="styles_sectionHeading__"],
+    .print-section-container [class$="-heading"],
+    .print-section-container [class$="__heading"],
+    .print-section-container [class$="__heading "],
     .print-section-container .ct-content-group__header-content {
         font-size: 12px !important;
         font-weight: bold !important;
@@ -1054,15 +1055,15 @@ function enforceFullHeight() {
         border-bottom: 1px solid #979797;
         margin-bottom: 4px;
     }
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "] {
+    .print-section-container [class^="styles_sectionHeading__"],
+    .print-section-container [class$="__heading"],
+    .print-section-container [class$="__heading "] {
         font-size: 10px !important;
     }
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "],
-    .print-section-container *[class^="styles_heading__"] *[class$="-heading"] {
+    .print-section-container [class^="styles_sectionHeading__"],
+    .print-section-container [class$="__heading"],
+    .print-section-container [class$="__heading "],
+    .print-section-container [class^="styles_heading__"] [class$="-heading"] {
         border-bottom: 0
     }
     @media print {
@@ -1104,9 +1105,14 @@ function enforceFullHeight() {
         min-width: 38px;
     }
     .print-section-container div[class$="-row-header"] div[class$="--name"], 
-    .print-section-container div[class$="-content"] div[class$="__name"] 
-    {
+    .print-section-container div[class$="-content"] div[class$="__name"] {
         max-width: 72px;
+    }
+    .print-section-container div[class$="-content"] div[class$="-slot__name"] {
+        max-width: 200px;
+    }
+    .print-section-container div[class$="-content"] div[class$="-item__name"] {
+        max-width: 136px;
     }
 
     .ddbc-character-avatar__portrait {
@@ -1931,9 +1937,15 @@ function createControls() {
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
         { label: 'Save to PC', icon: '💻', action: handleSavePC },
+        { 
+            label: 'Bugs & Feature Request', 
+            icon: '🐛', 
+            action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer/issues', '_blank') 
+        },
         { 
             label: 'Contribute', 
             icon: '⭐', 
@@ -1972,6 +1984,131 @@ function createControls() {
         style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
         document.head.appendChild(style);
     }
+}
+
+/**
+ * Shows a modal to manage Compact Mode status for named sections.
+ */
+function handleManageCompact() {
+    // Find all sections that are candidates for compact mode logic
+    // Criteria: Named sections (excluding section-\d+), or clones of named sections.
+    const allSections = Array.from(document.querySelectorAll('.print-section-container'));
+    
+    const candidates = allSections.filter(section => {
+        const sourceId = section.dataset.originalId || section.id || '';
+        const isNumbered = /^section-Section-\d+$/.test(sourceId);
+        return sourceId && !isNumbered; // Only named sections
+    });
+
+    if (candidates.length === 0) {
+        showFeedback('No compact-compatible sections found');
+        return;
+    }
+
+    // Modal
+    const overlay = document.createElement('div');
+    overlay.className = 'be-modal-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'be-modal';
+    modal.style.width = '500px';
+    
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Manage Compact Mode';
+    modal.appendChild(h3);
+
+    // Toggle All Button
+    const toggleAllBtn = document.createElement('button');
+    toggleAllBtn.textContent = 'Toggle All';
+    toggleAllBtn.className = 'be-modal-ok'; // Reusing style
+    toggleAllBtn.style.marginBottom = '10px';
+    toggleAllBtn.style.alignSelf = 'flex-start';
+    
+    // Check if majority are currently compact to decide initial toggle direction
+    const compactCount = candidates.filter(s => s.classList.contains('be-compact-mode')).length;
+    const allCompact = compactCount === candidates.length;
+    
+    toggleAllBtn.onclick = () => {
+        const newState = !allCompact; // If all are on, turn off. Otherwise turn on.
+        candidates.forEach(section => {
+             // Update class
+            if (newState) section.classList.add('be-compact-mode');
+            else section.classList.remove('be-compact-mode');
+            
+            // Sync button style if present
+            const btn = section.querySelector('.be-compact-button');
+            if (btn) {
+                 btn.style.backgroundColor = newState ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
+            }
+        });
+        updateLayoutBounds();
+        overlay.remove();
+        showFeedback(newState ? 'All sections compacted' : 'All sections expanded');
+    };
+    modal.appendChild(toggleAllBtn);
+
+    
+    const list = document.createElement('div');
+    list.style.maxHeight = '300px';
+    list.style.overflowY = 'auto';
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+    list.style.gap = '8px';
+    
+    candidates.forEach(section => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.padding = '8px';
+        item.style.background = '#333';
+        item.style.borderRadius = '4px';
+        
+        const titleSpan = section.querySelector('.print-section-header span, .ct-subsection__header, .ct-section__header');
+        const name = titleSpan ? titleSpan.textContent.trim() : (section.id || 'Unnamed');
+        
+        const nameLabel = document.createElement('span');
+        nameLabel.textContent = name;
+        item.appendChild(nameLabel);
+        
+        const toggleBtn = document.createElement('button');
+        const isCompact = section.classList.contains('be-compact-mode');
+        toggleBtn.textContent = isCompact ? 'ON' : 'OFF';
+        toggleBtn.style.backgroundColor = isCompact ? '#4CAF50' : '#f44336';
+        toggleBtn.style.color = 'white';
+        toggleBtn.style.border = 'none';
+        toggleBtn.style.padding = '4px 8px';
+        toggleBtn.style.borderRadius = '4px';
+        toggleBtn.style.cursor = 'pointer';
+        
+        toggleBtn.onclick = () => {
+            const newState = section.classList.toggle('be-compact-mode');
+            toggleBtn.textContent = newState ? 'ON' : 'OFF';
+            toggleBtn.style.backgroundColor = newState ? '#4CAF50' : '#f44336';
+            
+            // Sync the manual button on the section if it exists
+            const manualBtn = section.querySelector('.be-compact-button');
+            if (manualBtn) {
+                manualBtn.style.backgroundColor = newState ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
+            }
+            updateLayoutBounds();
+        };
+        
+        item.appendChild(toggleBtn);
+        list.appendChild(item);
+    });
+    
+    modal.appendChild(list);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.className = 'be-modal-ok';
+    closeBtn.style.marginTop = '10px';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 }
 
 /**
@@ -2540,13 +2677,16 @@ function injectCloneButtons() {
 
         section.appendChild(btn);
 
-        // Inject Compact Mode button if it looks like a Spells section
-        // Check for ID, data-original-id (for clones), or presence of spell headers
-        const isSpells = section.id === 'section-Spells' || 
-                        section.dataset.originalId === 'section-Spells' || 
-                        section.querySelector('.ct-spells-level__header');
+        // Inject Compact Mode button to NAMED sections (e.g. Spells, Actions, etc)
+        // EXCLUDE numbered sections (section-1, section-2, etc)
+        // Also support clones of these named sections (via data-original-id)
         
-        if (isSpells && !section.querySelector('.be-compact-button')) {
+        const sourceId = section.dataset.originalId || section.id || '';
+        const isNumbered = /^section-Section-\d+$/.test(sourceId);
+        
+        // Ensure it's not a numbered section, but HAS an ID (or is a clone of one)
+        // And ensure we don't duplicate the button
+        if (sourceId && !isNumbered && !section.querySelector('.be-compact-button')) {
             const compactBtn = document.createElement('button');
             compactBtn.className = 'be-compact-button';
             compactBtn.innerHTML = '📏'; 
@@ -2585,25 +2725,36 @@ function injectCompactStyles() {
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
         }
-        .print-section-container.be-compact-mode *[class$="__header"] {
+        .print-section-container.be-compact-mode [class^="styles_tableHeader__"],
+        .print-section-container.be-compact-mode [class$="__header"],
+         {
             margin-top: 10px !important;
             margin-bottom: 5px !important;
             padding-bottom: 2px !important;
             border-bottom: 1px solid #ccc !important;
         }
-        
-        .print-section-container.be-compact-mode .ct-spells-spell {
-            padding: 2px 0 !important;
+        .print-section-container.be-compact-mode [class$="__heading"] {
+            margin: 0px !important;
+        }
+        .print-section-container.be-compact-mode [class$="-row"] {
+            padding: 2px 0px !important;
+        }
+        .print-section-container.be-compact-mode [class$="__row-header"] [class$="--primary"],
+        .print-section-container.be-compact-mode [class$="-row"] [class$="-row__primary"] {
+            max-width: 80px !important;
+        }
+        .print-section-container.be-compact-mode [class$="-content"] > div {
+            padding: 0 !important;
             min-height: auto !important;
             border-bottom: 1px dashed #eee !important;
         }
         
         /* Hide or shrink icons */
-        .print-section-container.be-compact-mode *[class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode *[class$="__range-icon"],
-        .print-section-container.be-compact-mode *[class$="__casting-time-icon"],
-        .print-section-container.be-compact-mode *[class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode *[class$="__damage-effect-icon"]{
+        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
+        .print-section-container.be-compact-mode [class$="__range-icon"],
+        .print-section-container.be-compact-mode [class$="__casting-time-icon"],
+        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
+        .print-section-container.be-compact-mode [class$="__damage-effect-icon"]{
             transform: scale(0.8);
             margin: 0 !important;
         }
@@ -2612,47 +2763,54 @@ function injectCompactStyles() {
             width: 16px !important;
             height: 16px !important;
         }
+        
+        /* Hide previews for extras */
+        .print-section-container.be-compact-mode .ct-extras [class$="--preview"],
+        .print-section-container.be-compact-mode .ct-extras [class$="__preview"] {
+            display: none !important;
+        }
 
         /* Tighten text */
-        .print-section-container.be-compact-mode *[class$="__label"],
-        .print-section-container.be-compact-mode *[class$="__header"],
-        .print-section-container.be-compact-mode *[class$="__notes"] {
+        .print-section-container.be-compact-mode [class$="__label"],
+        .print-section-container.be-compact-mode [class$="__header"],
+        .print-section-container.be-compact-mode [class$="__notes"] {
             font-size: 11px !important;
             line-height: 1.2 !important;
         }
         
-        .print-section-container.be-compact-mode *[class$="__activation"],
-        .print-section-container.be-compact-mode *[class$="__range"],
-        .print-section-container.be-compact-mode *[class$="__hit-dc"],
-        .print-section-container.be-compact-mode *[class$="__effect"] {
+        .print-section-container.be-compact-mode [class$="__activation"],
+        .print-section-container.be-compact-mode [class$="__range"],
+        .print-section-container.be-compact-mode [class$="__hit-dc"],
+        .print-section-container.be-compact-mode [class$="__effect"] {
             font-size: 11px !important;
             padding: 0 2px !important;
             vertical-align: middle !important;
         }
 
         /* Buttons (Cast, At Will, etc) */
+        .print-section-container.be-compact-mode button[class$="__container"],
         .print-section-container.be-compact-mode .ct-button {
             height: 20px !important;
             line-height: 20px !important;
-            padding: 0 8px !important;
+            padding: 0!important;
             font-size: 10px !important;
             min-height: 0 !important;
         }
 
         /* Slots Checkboxes - Align to immediate left of "SLOTS" label if possible, or just left align container */
-        .print-section-container.be-compact-mode *[class$="__slots"] {
+        .print-section-container.be-compact-mode [class$="__slots"] {
             margin-left: 10px !important;
             margin-right: auto !important; /* Push to left */
             transform: scale(0.9);
             transform-origin: left center;
         }
         
-        .print-section-container.be-compact-mode *[class$="__header-content"] {
+        .print-section-container.be-compact-mode [class$="__header-content"] {
             flex: 0 0 auto !important; /* Stop taking full width */
             margin-right: 10px !important;
         }
         
-        .print-section-container.be-compact-mode *[class$="__header"] {
+        .print-section-container.be-compact-mode [class$="__header"] {
             justify-content: flex-start !important; /* Align content to start */
         }
 
@@ -2697,9 +2855,9 @@ function injectCompactStyles() {
 
 
         /* General width reductions for columns */
-        .print-section-container.be-compact-mode *[class$="__action"],
-        .print-section-container.be-compact-mode *[class$="__distance"],
-        .print-section-container.be-compact-mode *[class$="__meta"] {
+        .print-section-container.be-compact-mode [class$="__action"],
+        .print-section-container.be-compact-mode [class$="__distance"],
+        .print-section-container.be-compact-mode [class$="__meta"] {
             width: auto !important;
             max-width: none !important;
         }
