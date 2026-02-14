@@ -4,12 +4,12 @@ This plan outlines the steps to implement floating spell detail sections with In
 
 ## Phase 1: Storage & Persistence Integration
 - [x] Task: Initialize `spell_cache` object store in `DDBPrintEnhancerDB` (Update `Storage.init` in `js/main.js`) c89d0bb
-- [ ] Task: Implement `Storage` methods for spell cache: `getSpell(name)`, `saveSpells(spells)`
-- [ ] Task: Write unit tests for `spell_cache` IndexedDB operations
-- [ ] Task: **JSON Schema Upgrade:** Increment `SCHEMA_VERSION` and implement upgrade alert logic (Warn user and suggest re-download if loaded JSON is older)
-- [ ] Task: Update JSON Export/Import logic to include `spell_cache` data
-- [ ] Task: Update `workflow.md` to mandate `SCHEMA_VERSION` increments for any JSON structure changes
-- [ ] Task: Write unit tests for spell cache persistence and version validation
+- [x] Task: Implement `Storage` methods for spell cache: `getSpell(name)`, `saveSpells(spells)` c89d0bb
+- [x] Task: Write unit tests for `spell_cache` IndexedDB operations c89d0bb
+- [x] Task: **JSON Schema Upgrade:** Increment `SCHEMA_VERSION` and implement upgrade alert logic (Warn user and suggest re-download if loaded JSON is older) 3a4e11d
+- [x] Task: Update JSON Export/Import logic to include `spell_cache` data cf9a09e
+- [x] Task: Update `workflow.md` to mandate `SCHEMA_VERSION` increments for any JSON structure changes 3a4e11d
+- [x] Task: Write unit tests for spell cache persistence and version validation cf9a09e
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Storage' (Protocol in workflow.md)
 
 ## Phase 2: Data Service & Cache Logic

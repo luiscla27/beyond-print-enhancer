@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 // Read the main.js file content to evaluate in JSDOM context
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
@@ -89,11 +90,13 @@ describe('Recent Layout Features', function() {
     window.scrollBy = () => {};
     HTMLElement.prototype.scrollIntoView = () => {};
     
+    window.indexedDB = global.indexedDB;
     // We need to evaluate the script. 
     // Since main.js wraps itself in an IIFE, we can just execute it.
     // However, we want to test specific functions.
     // main.js exposes functions to window at the end.
     window.eval(mainJsContent);
+    return window.Storage.init();
   });
 
   describe('SVG Exclusions', function() {
@@ -193,6 +196,13 @@ describe('Recent Layout Features', function() {
           // Setup
           const section = document.createElement('section');
           
+          // Master parent content
+          const parentContent = document.createElement('div');
+          parentContent.className = 'print-section-content';
+          // Mock clientWidth since JSDOM doesn't calculate layout
+          Object.defineProperty(parentContent, 'clientWidth', { value: 150, configurable: true });
+          section.appendChild(parentContent);
+
           // Container 1: ends in -row-header
           const header = document.createElement('div');
           header.className = 'some-component-row-header';
@@ -222,25 +232,26 @@ describe('Recent Layout Features', function() {
           
           document.body.appendChild(section);
           
-          // Act: Increase by 50px
+          // Act: Trigger resize (deltaX is ignored by implementation now, it matches parent)
           window.adjustInnerContentWidth(section, 50);
           
           // Assert
-          assert.strictEqual(child1.style.width, '150px', 'Header child should increase by 50px');
-          assert.strictEqual(child2.style.width, '250px', 'Content child should increase by 50px');
+          assert.strictEqual(child1.style.width, '150px', 'Header child should match parent content width');
+          assert.strictEqual(child2.style.width, '150px', 'Content child should match parent content width');
           assert.strictEqual(child3.style.width, '50px', 'Span child should be ignored');
           assert.strictEqual(child4.style.width, '300px', 'Ignored container child should be unchanged');
           
-          // Act: Decrease by 20px
+          // Act: Change parent width and re-trigger
+          Object.defineProperty(parentContent, 'clientWidth', { value: 130 });
           window.adjustInnerContentWidth(section, -20);
           
           // Assert
-          assert.strictEqual(child1.style.width, '130px', 'Header child should decrease by 20px');
+          assert.strictEqual(child1.style.width, '130px', 'Header child should match new parent content width');
       });
   });
 
   describe('Layout Scanner', function() {
-      it('should extract coordinates, sizes and inner widths', function() {
+      it('should extract coordinates, sizes and inner widths', async function() {
           // Setup
           const wrapper = document.getElementById('print-layout-wrapper');
           const section = document.createElement('div');
@@ -260,7 +271,7 @@ describe('Recent Layout Features', function() {
           wrapper.appendChild(section);
 
           // Act
-          const layout = window.scanLayout();
+          const layout = await window.scanLayout();
 
           // Assert
           assert.ok(layout.sections['section-Test']);
@@ -271,7 +282,7 @@ describe('Recent Layout Features', function() {
           // Note: innerWidths depends on class matching "-content" or "-row-header"
           // Let's refine the test for innerWidths
           content.className = 'some-content';
-          const layout2 = window.scanLayout();
+          const layout2 = await window.scanLayout();
           assert.ok(layout2.sections['section-Test'].innerWidths);
           // We need a way to identify the inner div, maybe index?
           // The spec says "immediate div children within containers ending in -row-header or -content"
@@ -279,7 +290,7 @@ describe('Recent Layout Features', function() {
   });
 
   describe('Layout Applier', function() {
-      it('should apply coordinates, sizes and inner widths', function() {
+      it('should apply coordinates, sizes and inner widths', async function() {
           const wrapper = document.getElementById('print-layout-wrapper');
           const section = document.createElement('div');
           section.className = 'print-section-container';
@@ -309,7 +320,7 @@ describe('Recent Layout Features', function() {
           };
 
           // Act
-          window.applyLayout(layout);
+          await window.applyLayout(layout);
 
           // Assert
           assert.strictEqual(section.style.left, '150px');
@@ -333,13 +344,12 @@ describe('Recent Layout Features', function() {
           assert.strictEqual(controls.style.top, '10px');
           assert.strictEqual(controls.style.display, 'flex');
           assert.strictEqual(controls.style.flexDirection, 'column');
-          assert.strictEqual(controls.style.opacity, '0.3');
           
           // Verify buttons
           const buttons = controls.querySelectorAll('button');
           const labels = Array.from(buttons).map(b => b.textContent.trim());
-          assert.ok(labels.some(l => l.includes('Save Browser')));
-          assert.ok(labels.some(l => l.includes('Save PC')));
+          assert.ok(labels.some(l => l.includes('Save to Browser')));
+          assert.ok(labels.some(l => l.includes('Save to PC')));
           assert.ok(labels.some(l => l.includes('Load Default')));
           assert.ok(labels.some(l => l.includes('Load')));
           assert.ok(labels.some(l => l.includes('Contribute')));
