@@ -24,10 +24,10 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Conductor - User Manual Verification 'Phase 3: UI & Title Discovery' (Protocol in workflow.md) 76aba0b
 
 ## Phase 4: Persistence & State Management
-- [ ] Task: Update the layout schema to support a new `extractions` array (tracking original ID and coordinates)
-- [ ] Task: Update `scanLayout` to capture the state of all currently extracted sections
-- [ ] Task: Update `applyLayout` to automatically hide original elements and re-create floating sections on load
-- [ ] Task: Update `handleLoadDefault` to reset all extractions
+- [~] Task: Update the layout schema to support a new `extractions` array (tracking original ID and coordinates)
+- [~] Task: Update `scanLayout` to capture the state of all currently extracted sections
+- [~] Task: Update `applyLayout` to automatically hide original elements and re-create floating sections on load
+- [x] Task: Update `handleLoadDefault` to reset all extractions b01e344
 - [ ] Task: Write integration tests for save/load persistence of dynamic extractions
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md)
 

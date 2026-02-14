@@ -12,7 +12,7 @@ const DB_NAME = 'DDBPrintEnhancerDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
-const SCHEMA_VERSION = '1.1.0';
+const SCHEMA_VERSION = '1.2.0';
 
 const DEFAULT_LAYOUTS = {
     'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
@@ -707,8 +707,66 @@ async function handleElementExtraction(el) {
     layoutRoot.appendChild(container);
     el.style.display = 'none';
     
+    if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
     showFeedback(`Extracted ${title}`);
+}
+
+/**
+ * Renders an extracted section from a snapshot.
+ */
+function renderExtractedSection(snapshot) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = snapshot.html;
+
+    const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
+    container.classList.add('be-extracted-section');
+    container.dataset.originalId = snapshot.originalId;
+
+    // Link rollback logic
+    const xBtn = container.querySelector('.print-section-minimize');
+    if (xBtn) {
+        xBtn.title = 'Rollback Extraction';
+        xBtn.onclick = (e) => {
+            e.stopPropagation();
+            const original = document.getElementById(snapshot.originalId);
+            if (original) original.style.display = '';
+            container.remove();
+            updateLayoutBounds();
+            showFeedback('Extraction rolled back');
+        };
+    }
+
+    // Hide original in DOM if it exists
+    const original = document.getElementById(snapshot.originalId);
+    if (original) {
+        original.style.display = 'none';
+    }
+
+    // Apply styles
+    if (snapshot.width) container.style.width = snapshot.width;
+    if (snapshot.height) container.style.height = snapshot.height;
+    if (snapshot.left) container.style.left = snapshot.left;
+    if (snapshot.top) container.style.top = snapshot.top;
+    if (snapshot.zIndex) container.style.zIndex = snapshot.zIndex;
+
+    if (snapshot.minimized) {
+        container.dataset.minimized = 'true';
+        container.classList.add('minimized');
+    }
+
+    if (snapshot.compact) {
+        container.classList.add('be-compact-mode');
+    }
+
+    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    layoutRoot.appendChild(container);
+    
+    if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.initResizeLogic) window.initResizeLogic();
+    
+    return container;
 }
 
 /**
@@ -2907,6 +2965,7 @@ async function scanLayout() {
         version: Storage.SCHEMA_VERSION,
         sections: {},
         clones: [],
+        extractions: [],
         spell_cache: []
     };
 
@@ -2929,6 +2988,25 @@ async function scanLayout() {
             layout.clones.push({
                 id: id,
                 title: header ? header.textContent.trim() : 'Clone',
+                html: content ? content.innerHTML : '',
+                left: section.style.left,
+                top: section.style.top,
+                width: section.style.width,
+                height: section.style.height,
+                zIndex: section.style.zIndex || '10',
+                minimized: section.dataset.minimized === 'true',
+                compact: section.classList.contains('be-compact-mode')
+            });
+            return;
+        }
+
+        if (section.classList.contains('be-extracted-section')) {
+            const content = section.querySelector('.print-section-content');
+            const header = section.querySelector('.print-section-header span');
+            layout.extractions.push({
+                id: id,
+                originalId: section.dataset.originalId,
+                title: header ? header.textContent.trim() : 'Extracted',
                 html: content ? content.innerHTML : '',
                 left: section.style.left,
                 top: section.style.top,
@@ -3001,11 +3079,25 @@ async function applyLayout(layout) {
 
     // Remove existing clones to avoid duplicates on re-apply
     document.querySelectorAll('.print-section-container.be-clone').forEach(el => el.remove());
+    // Remove existing extractions to avoid duplicates
+    document.querySelectorAll('.print-section-container.be-extracted-section').forEach(el => {
+        const originalId = el.dataset.originalId;
+        const original = document.getElementById(originalId);
+        if (original) original.style.display = '';
+        el.remove();
+    });
 
     // Restore clones
     if (layout.clones && Array.isArray(layout.clones)) {
         layout.clones.forEach(cloneData => {
             renderClonedSection(cloneData);
+        });
+    }
+
+    // Restore extractions
+    if (layout.extractions && Array.isArray(layout.extractions)) {
+        layout.extractions.forEach(exData => {
+            renderExtractedSection(exData);
         });
     }
 
@@ -3139,8 +3231,18 @@ function drawPageSeparators(totalHeight, totalWidth) {
 /**
  * Injects a clone button into each section container.
  */
-function injectCloneButtons() {
-    document.querySelectorAll('.ct-subsection, .ct-section, .print-section-container').forEach(section => {
+/**
+ * Injects clone buttons and compact toggles into sections.
+ */
+function injectCloneButtons(context = document) {
+    const selector = '.ct-subsection, .ct-section, .print-section-container';
+    // If the context itself matches the selector, include it
+    const elements = Array.from(context.querySelectorAll(selector));
+    if (context instanceof HTMLElement && context.matches(selector)) {
+        elements.push(context);
+    }
+
+    elements.forEach(section => {
         // Avoid duplicate buttons
         if (section.querySelector('.be-clone-button')) return;
 

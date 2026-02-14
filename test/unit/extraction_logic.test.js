@@ -57,6 +57,12 @@ describe('Extraction Core & Lifecycle', function() {
     // Link tracking
     assert.strictEqual(section.dataset.originalId, 'target-element', 'Section should track original ID');
 
+    // Resize handle
+    assert.ok(section.querySelector('.print-section-resize-handle'), 'Should have a resize handle');
+
+    // Compact button
+    assert.ok(section.querySelector('.be-compact-button'), 'Should have a compact mode button');
+
     // Original header inside clone should be hidden
     const clonedHeader = section.querySelector('.ct-actions-group h3.head');
     assert.ok(clonedHeader, 'Cloned header should exist');
