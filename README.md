@@ -29,6 +29,7 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 ## Known issues
 
 1. The extension does not work on mobile browser devices nor the D&D Beyond mobile app.
+2. Currently, only red theme is supported.
 3. The extension is not meant to let you edit your character sheet nor throw dices. Only the SPELL section "Manage spells" should be usable.
 
 ## Features
@@ -36,9 +37,12 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 1. Drag & Drop sections to reorder them.
 2. Resizable sections.
 3. Minimize sections.
-4. Save & Load templates
-5. Clone sections, specifically for the SPELL section as I wanted to have all "purpose" spells on the same page with a header (like: "Spells for negtiation", "Spells for cave-combat", "Spells for dark encounter", etc.).
-6. **WIP**: Editable content and maybe font resizing
+4. Save & Load templates.
+5. Clone sections, specifically for the SPELL section (e.g., "Combat Spells" vs "Utility Spells").
+6. Compact Mode to maximize information density in heavy sections like Spells.
+7. **WIP**: Editable content and font resizing.
+8. **WIP**: Support for other color themes (beyond Red).
+9. **WIP**: Content extractions and spell description sheets.
 
 ## Instructions for use
 

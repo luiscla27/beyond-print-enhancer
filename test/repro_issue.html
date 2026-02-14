@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reproduction: Clone Button Event Loss</title>
+</head>
+<body>
+    <div id="print-layout-wrapper">
+        <div id="section-Spells" class="print-section-container">
+            <div class="print-section-content">
+                <div class="ct-spells-level__header">Cantrips</div>
+                <!-- Simulating a button added by the extension -->
+                <button class="be-compact-button">📏</button>
+            </div>
+        </div>
+    </div>
+    <div id="output"></div>
+
+    <script>
+        function log(msg) {
+            document.getElementById('output').innerHTML += msg + '<br>';
+        }
+
+        // Mock of captureSectionSnapshot from main.js (BEFORE FIX)
+        function captureSectionSnapshot(sectionId) {
+            const section = document.getElementById(sectionId);
+            const content = section.querySelector('.print-section-content');
+            const clone = content.cloneNode(true);
+
+            // The ORIGINAL logic only removes these:
+            const toRemove = [
+                '.be-clone-button',
+                '.print-section-minimize',
+                '.print-section-restore',
+                '.print-section-resize-handle'
+            ];
+
+            toRemove.forEach(selector => {
+                clone.querySelectorAll(selector).forEach(el => el.remove());
+            });
+            
+            return { html: clone.innerHTML };
+        }
+
+        function runTest() {
+            // 1. Setup original button with listener
+            const originalBtn = document.querySelector('#section-Spells .be-compact-button');
+            originalBtn.onclick = () => log("Original Button Clicked");
+
+            // 2. Capture snapshot
+            const snapshot = captureSectionSnapshot('section-Spells');
+            
+            // 3. Render clone
+            const cloneContainer = document.createElement('div');
+            cloneContainer.innerHTML = snapshot.html;
+            document.body.appendChild(cloneContainer);
+
+            // 4. Check if button exists in clone
+            const cloneBtn = cloneContainer.querySelector('.be-compact-button');
+            if (cloneBtn) {
+                log("Clone has button: YES");
+                // 5. Check if it works (it shouldn't)
+                cloneBtn.click(); // Should NOT log "Original Button Clicked"
+                
+                if (cloneBtn.onclick) {
+                   log("Clone button has handler: YES (Unexpected for cloneNode?)");
+                } else {
+                   log("Clone button has handler: NO (Expected, logic must re-inject)");
+                }
+            } else {
+                log("Clone has button: NO");
+            }
+        }
+
+        runTest();
+    </script>
+</body>
+</html>

@@ -899,6 +899,7 @@ function enforceFullHeight() {
         /* This is used by .ct-skills__box and others */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
         --btn-color: #c53131;
+        --btn-color-highlight: #f18383ff;
     }
 
     .print-section-content {
@@ -918,6 +919,7 @@ function enforceFullHeight() {
 
     dialog + div,
     .dice-rolling-panel,
+    [class$="__actions--collapsed"],
     .ct-character-sheet:before,
     .ddbc-theme-link,
     .ddbc-character-tidbits__heading,
@@ -1001,6 +1003,8 @@ function enforceFullHeight() {
     }
     
     .print-section-container { 
+        --reduce-height-by: 0px;
+        --reduce-width-by: 0px;
         break-inside: avoid; 
         position: absolute !important;
         z-index: 10;
@@ -1039,11 +1043,11 @@ function enforceFullHeight() {
     .print-section-container .ct-quick-info__health * {
         font-size: 14px !important;
     }
-    .print-section-container *[class^="styles_heading__"],
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="-heading"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "],
+    .print-section-container [class^="styles_heading__"],
+    .print-section-container [class^="styles_sectionHeading__"],
+    .print-section-container [class$="-heading"],
+    .print-section-container [class$="__heading"],
+    .print-section-container [class$="__heading "],
     .print-section-container .ct-content-group__header-content {
         font-size: 12px !important;
         font-weight: bold !important;
@@ -1051,15 +1055,15 @@ function enforceFullHeight() {
         border-bottom: 1px solid #979797;
         margin-bottom: 4px;
     }
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "] {
+    .print-section-container [class^="styles_sectionHeading__"],
+    .print-section-container [class$="__heading"],
+    .print-section-container [class$="__heading "] {
         font-size: 10px !important;
     }
-    .print-section-container *[class^="styles_sectionHeading__"],
-    .print-section-container *[class$="__heading"],
-    .print-section-container *[class$="__heading "],
-    .print-section-container *[class^="styles_heading__"] *[class$="-heading"] {
+    .print-section-container [class^="styles_sectionHeading__"],
+    .print-section-container [class$="__heading"],
+    .print-section-container [class$="__heading "],
+    .print-section-container [class^="styles_heading__"] [class$="-heading"] {
         border-bottom: 0
     }
     @media print {
@@ -1069,7 +1073,9 @@ function enforceFullHeight() {
             box-shadow: none !important;
             transform: none !important;
         }
-        .ct-spells-filter,
+        .ct-spells-filter {
+            visibility: hidden;
+        }
         .print-page-separator {
             display: none !important;
         }
@@ -1093,6 +1099,20 @@ function enforceFullHeight() {
     /* Scaling helper */
     .print-section-container[data-scaling="true"] .print-section-content > div {
         transform-origin: top left;
+    }
+    .print-section-container div[class$="-row-header"] > div, 
+    .print-section-container div[class$="-content"] > div > div {
+        min-width: 38px;
+    }
+    .print-section-container div[class$="-row-header"] div[class$="--name"], 
+    .print-section-container div[class$="-content"] div[class$="__name"] {
+        max-width: 72px;
+    }
+    .print-section-container div[class$="-content"] div[class$="-slot__name"] {
+        max-width: 200px;
+    }
+    .print-section-container div[class$="-content"] div[class$="-item__name"] {
+        max-width: 136px;
     }
 
     .ddbc-character-avatar__portrait {
@@ -1419,6 +1439,7 @@ function captureSectionSnapshot(sectionId) {
     // Sanitize: Remove extension UI elements
     const toRemove = [
         '.be-clone-button',
+        '.be-compact-button',
         '.print-section-minimize',
         '.print-section-restore',
         '.print-section-resize-handle'
@@ -1805,18 +1826,24 @@ function adjustInnerContentWidth(section, deltaX) {
     // User Request: Scan for containers ending in "-row-header" or "-content"
     const containers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
     
+    // Find the master parent content width
+    const parentContent = section.querySelector('.print-section-content');
+    if (!parentContent) return;
+
+    // Use padding-box width (clientWidth) or computed width
+    // The previous logic relied on delta, but user wants EXACT match to parent.
+    // However, .print-section-content might have padding, so inner divs should likely match CLIENT width.
+    const parentWidth = parentContent.clientWidth;
+
+    if (!parentWidth) return;
+
     containers.forEach(container => {
         // User Request: Override width of IMMEDIATE divs
         Array.from(container.children).forEach(child => {
             if (child.tagName === 'DIV') {
-                const currentWidth = parseInt(window.getComputedStyle(child).width, 10);
-                if (!isNaN(currentWidth)) {
-                    const newWidth = currentWidth + deltaX;
-                    child.style.width = `${newWidth}px`;
-                    // Also set min/max width if they might constrain it? User said "Override", so:
-                    child.style.minWidth = `${newWidth}px`; 
-                    // child.style.maxWidth = `${newWidth}px`; // Maybe too aggressive?
-                }
+                // Set width to match the PARENT content width
+                child.style.setProperty('width', `${parentWidth}px`, 'important');
+                child.style.setProperty('min-width', `${parentWidth}px`, 'important');
             }
         });
     });
@@ -1910,14 +1937,21 @@ function createControls() {
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
         { label: 'Save to PC', icon: '💻', action: handleSavePC },
         { 
+            label: 'Bugs & Feature Request', 
+            icon: '🐛', 
+            action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer/issues', '_blank') 
+        },
+        { 
             label: 'Contribute', 
             icon: '⭐', 
             action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), 
-            bgColor: '#73611d' 
+            bgLightColor: '#a79863',
+            bgColor: '#73611d'
         }
     ];
 
@@ -1934,7 +1968,7 @@ function createControls() {
         btn.style.textAlign = 'left';
         btn.style.transition = 'background-color 0.2s';
         
-        btn.onmouseenter = () => btn.style.backgroundColor = '#444';
+        btn.onmouseenter = () => btn.style.backgroundColor = btnInfo.bgLightColor || '#444';
         btn.onmouseleave = () => btn.style.backgroundColor = btnInfo.bgColor || '#333';
         btn.onclick = btnInfo.action;
         
@@ -1950,6 +1984,131 @@ function createControls() {
         style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
         document.head.appendChild(style);
     }
+}
+
+/**
+ * Shows a modal to manage Compact Mode status for named sections.
+ */
+function handleManageCompact() {
+    // Find all sections that are candidates for compact mode logic
+    // Criteria: Named sections (excluding section-\d+), or clones of named sections.
+    const allSections = Array.from(document.querySelectorAll('.print-section-container'));
+    
+    const candidates = allSections.filter(section => {
+        const sourceId = section.dataset.originalId || section.id || '';
+        const isNumbered = /^section-Section-\d+$/.test(sourceId);
+        return sourceId && !isNumbered; // Only named sections
+    });
+
+    if (candidates.length === 0) {
+        showFeedback('No compact-compatible sections found');
+        return;
+    }
+
+    // Modal
+    const overlay = document.createElement('div');
+    overlay.className = 'be-modal-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'be-modal';
+    modal.style.width = '500px';
+    
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Manage Compact Mode';
+    modal.appendChild(h3);
+
+    // Toggle All Button
+    const toggleAllBtn = document.createElement('button');
+    toggleAllBtn.textContent = 'Toggle All';
+    toggleAllBtn.className = 'be-modal-ok'; // Reusing style
+    toggleAllBtn.style.marginBottom = '10px';
+    toggleAllBtn.style.alignSelf = 'flex-start';
+    
+    // Check if majority are currently compact to decide initial toggle direction
+    const compactCount = candidates.filter(s => s.classList.contains('be-compact-mode')).length;
+    const allCompact = compactCount === candidates.length;
+    
+    toggleAllBtn.onclick = () => {
+        const newState = !allCompact; // If all are on, turn off. Otherwise turn on.
+        candidates.forEach(section => {
+             // Update class
+            if (newState) section.classList.add('be-compact-mode');
+            else section.classList.remove('be-compact-mode');
+            
+            // Sync button style if present
+            const btn = section.querySelector('.be-compact-button');
+            if (btn) {
+                 btn.style.backgroundColor = newState ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
+            }
+        });
+        updateLayoutBounds();
+        overlay.remove();
+        showFeedback(newState ? 'All sections compacted' : 'All sections expanded');
+    };
+    modal.appendChild(toggleAllBtn);
+
+    
+    const list = document.createElement('div');
+    list.style.maxHeight = '300px';
+    list.style.overflowY = 'auto';
+    list.style.display = 'flex';
+    list.style.flexDirection = 'column';
+    list.style.gap = '8px';
+    
+    candidates.forEach(section => {
+        const item = document.createElement('div');
+        item.style.display = 'flex';
+        item.style.justifyContent = 'space-between';
+        item.style.alignItems = 'center';
+        item.style.padding = '8px';
+        item.style.background = '#333';
+        item.style.borderRadius = '4px';
+        
+        const titleSpan = section.querySelector('.print-section-header span, .ct-subsection__header, .ct-section__header');
+        const name = titleSpan ? titleSpan.textContent.trim() : (section.id || 'Unnamed');
+        
+        const nameLabel = document.createElement('span');
+        nameLabel.textContent = name;
+        item.appendChild(nameLabel);
+        
+        const toggleBtn = document.createElement('button');
+        const isCompact = section.classList.contains('be-compact-mode');
+        toggleBtn.textContent = isCompact ? 'ON' : 'OFF';
+        toggleBtn.style.backgroundColor = isCompact ? '#4CAF50' : '#f44336';
+        toggleBtn.style.color = 'white';
+        toggleBtn.style.border = 'none';
+        toggleBtn.style.padding = '4px 8px';
+        toggleBtn.style.borderRadius = '4px';
+        toggleBtn.style.cursor = 'pointer';
+        
+        toggleBtn.onclick = () => {
+            const newState = section.classList.toggle('be-compact-mode');
+            toggleBtn.textContent = newState ? 'ON' : 'OFF';
+            toggleBtn.style.backgroundColor = newState ? '#4CAF50' : '#f44336';
+            
+            // Sync the manual button on the section if it exists
+            const manualBtn = section.querySelector('.be-compact-button');
+            if (manualBtn) {
+                manualBtn.style.backgroundColor = newState ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
+            }
+            updateLayoutBounds();
+        };
+        
+        item.appendChild(toggleBtn);
+        list.appendChild(item);
+    });
+    
+    modal.appendChild(list);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.className = 'be-modal-ok';
+    closeBtn.style.marginTop = '10px';
+    closeBtn.onclick = () => overlay.remove();
+    modal.appendChild(closeBtn);
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
 }
 
 /**
@@ -2507,6 +2666,8 @@ function injectCloneButtons() {
                     if (clone) {
                         showFeedback(`Cloned: ${title}`);
                         updateLayoutBounds();
+                        // Re-run injection to ensure new clone gets buttons
+                        injectCloneButtons(); 
                     }
                 } else {
                     showFeedback('Failed to capture snapshot.');
@@ -2515,7 +2676,193 @@ function injectCloneButtons() {
         };
 
         section.appendChild(btn);
+
+        // Inject Compact Mode button to NAMED sections (e.g. Spells, Actions, etc)
+        // EXCLUDE numbered sections (section-1, section-2, etc)
+        // Also support clones of these named sections (via data-original-id)
+        
+        const sourceId = section.dataset.originalId || section.id || '';
+        const isNumbered = /^section-Section-\d+$/.test(sourceId);
+        
+        // Ensure it's not a numbered section, but HAS an ID (or is a clone of one)
+        // And ensure we don't duplicate the button
+        if (sourceId && !isNumbered && !section.querySelector('.be-compact-button')) {
+            const compactBtn = document.createElement('button');
+            compactBtn.className = 'be-compact-button';
+            compactBtn.innerHTML = '📏'; 
+            compactBtn.title = 'Toggle Compact Mode';
+            
+            compactBtn.onclick = (e) => {
+                e.stopPropagation();
+                const isCompact = section.classList.toggle('be-compact-mode');
+                
+                if (isCompact) {
+                    compactBtn.style.backgroundColor = 'var(--btn-color)';
+                } else {
+                    compactBtn.style.backgroundColor = 'var(--btn-color-highlight)';
+                }
+                
+                // Trigger layout update
+                updateLayoutBounds();
+            };
+
+            // Append next to clone button
+            section.appendChild(compactBtn);
+        }
     });
+}
+
+/**
+ * Injects CSS for Compact Mode.
+ */
+function injectCompactStyles() {
+    if (document.getElementById('ddb-print-compact-style')) return;
+
+    const style = document.createElement('style');
+    style.id = 'ddb-print-compact-style';
+    style.textContent = `
+        .print-section-container.be-compact-mode {
+            --reduce-height-by: 0px;
+            --reduce-width-by: 0px;
+        }
+        .print-section-container.be-compact-mode [class^="styles_tableHeader__"],
+        .print-section-container.be-compact-mode [class$="__header"],
+         {
+            margin-top: 10px !important;
+            margin-bottom: 5px !important;
+            padding-bottom: 2px !important;
+            border-bottom: 1px solid #ccc !important;
+        }
+        .print-section-container.be-compact-mode [class$="__heading"] {
+            margin: 0px !important;
+        }
+        .print-section-container.be-compact-mode [class$="-row"] {
+            padding: 2px 0px !important;
+        }
+        .print-section-container.be-compact-mode [class$="__row-header"] [class$="--primary"],
+        .print-section-container.be-compact-mode [class$="-row"] [class$="-row__primary"] {
+            max-width: 80px !important;
+        }
+        .print-section-container.be-compact-mode [class$="-content"] > div {
+            padding: 0 !important;
+            min-height: auto !important;
+            border-bottom: 1px dashed #eee !important;
+        }
+        
+        /* Hide or shrink icons */
+        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
+        .print-section-container.be-compact-mode [class$="__range-icon"],
+        .print-section-container.be-compact-mode [class$="__casting-time-icon"],
+        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
+        .print-section-container.be-compact-mode [class$="__damage-effect-icon"]{
+            transform: scale(0.8);
+            margin: 0 !important;
+        }
+        
+        .print-section-container.be-compact-mode .ddbc-file-icon {
+            width: 16px !important;
+            height: 16px !important;
+        }
+        
+        /* Hide previews for extras */
+        .print-section-container.be-compact-mode .ct-extras [class$="--preview"],
+        .print-section-container.be-compact-mode .ct-extras [class$="__preview"] {
+            display: none !important;
+        }
+
+        /* Tighten text */
+        .print-section-container.be-compact-mode [class$="__label"],
+        .print-section-container.be-compact-mode [class$="__header"],
+        .print-section-container.be-compact-mode [class$="__notes"] {
+            font-size: 11px !important;
+            line-height: 1.2 !important;
+        }
+        
+        .print-section-container.be-compact-mode [class$="__activation"],
+        .print-section-container.be-compact-mode [class$="__range"],
+        .print-section-container.be-compact-mode [class$="__hit-dc"],
+        .print-section-container.be-compact-mode [class$="__effect"] {
+            font-size: 11px !important;
+            padding: 0 2px !important;
+            vertical-align: middle !important;
+        }
+
+        /* Buttons (Cast, At Will, etc) */
+        .print-section-container.be-compact-mode button[class$="__container"],
+        .print-section-container.be-compact-mode .ct-button {
+            height: 20px !important;
+            line-height: 20px !important;
+            padding: 0!important;
+            font-size: 10px !important;
+            min-height: 0 !important;
+        }
+
+        /* Slots Checkboxes - Align to immediate left of "SLOTS" label if possible, or just left align container */
+        .print-section-container.be-compact-mode [class$="__slots"] {
+            margin-left: 10px !important;
+            margin-right: auto !important; /* Push to left */
+            transform: scale(0.9);
+            transform-origin: left center;
+        }
+        
+        .print-section-container.be-compact-mode [class$="__header-content"] {
+            flex: 0 0 auto !important; /* Stop taking full width */
+            margin-right: 10px !important;
+        }
+        
+        .print-section-container.be-compact-mode [class$="__header"] {
+            justify-content: flex-start !important; /* Align content to start */
+        }
+
+        /* Reuse Clone Button Styles for Compact Button, but shifted */
+        .be-compact-button {
+            position: absolute;
+            top: 46px; /* Same as clone button */
+            left: 75px; /* 32px (clone left) + 39px (clone width) + 4px (gap) */
+            width: 39px;
+            height: 32px;
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            background: var(--btn-color);
+            border: 1px solid rgb(85, 85, 85);
+            font-size: 20px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+            padding: 0;
+            margin: 0;
+            filter: drop-shadow(2px 4px 6px black);
+            border-radius: 32px;
+        }
+
+        /* Shift for clones to avoid Delete button (at left: 82px) */
+        .be-clone .be-compact-button {
+            left: 132px !important; /* 82px (delete left) + 39px (width) + 7px (gap) */
+        }    
+
+        /* Show on hover of the container - GENERIC */
+        .print-section-container:hover .be-compact-button {
+            opacity: 1;
+        }
+        
+        @media print {
+            .be-compact-button {
+                display: none !important;
+            }
+        }
+
+
+        /* General width reductions for columns */
+        .print-section-container.be-compact-mode [class$="__action"],
+        .print-section-container.be-compact-mode [class$="__distance"],
+        .print-section-container.be-compact-mode [class$="__meta"] {
+            width: auto !important;
+            max-width: none !important;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
     // Expose for testing synchronously
@@ -2576,6 +2923,7 @@ function injectCloneButtons() {
     await injectClonesIntoSpellsView();
     moveDefenses();
     tweakStyles();
+    injectCompactStyles();
     removeSearchBoxes();
     movePortrait(); // User Request: Move portrait at the end
     moveQuickInfo(); // User Request: Make Quick Info draggable
