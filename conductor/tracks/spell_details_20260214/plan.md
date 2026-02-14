@@ -12,17 +12,17 @@ This plan outlines the steps to implement floating spell detail sections with In
 - [x] Task: Write unit tests for spell cache persistence and version validation cf9a09e
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Storage' (Protocol in workflow.md) df2dff4
 
-## Phase 2: Data Service & Cache Logic
+## Phase 2: Data Service & Cache Logic [checkpoint: f56ab39]
 - [x] Task: Refactor `getCharacterSpells` to return raw data suitable for caching if not already optimal c9d46e2
 - [x] Task: Implement `fetchSpellWithCache(spellName)` logic: Check IndexedDB -> Fetch API on miss -> Update Cache c9d46e2
 - [x] Task: Write unit tests for the Cache-First retrieval strategy c9d46e2
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Data Service' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Data Service' (Protocol in workflow.md) f56ab39
 
-## Phase 3: UI - Trigger Injection
+## Phase 3: UI - Trigger Injection [checkpoint: f56ab39]
 - [x] Task: Implement CSS for the hidden/hover "Details" button in spell rows c9d46e2
 - [x] Task: Implement button injection logic for `div.ct-spells-spell` (supporting original and clones) c9d46e2
 - [x] Task: Write unit tests verifying button injection in various section states c9d46e2
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: UI - Buttons' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: UI - Buttons' (Protocol in workflow.md) f56ab39
 
 ## Phase 4: UI - Spell Detail Section
 - [ ] Task: Implement `createSpellDetailSection(coords)` to immediately place a shell section at click location
