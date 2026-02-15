@@ -3,6 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
+- [ ] **Track: Selector Abstraction Refactor**
+  *Link: [./tracks/selector_abstraction_refactor_20260215/](./tracks/selector_abstraction_refactor_20260215/)*
 - [x] **Track: Merge & Append Sections** (Completed: 2026-02-14)
   *Link: [./tracks/merge_sections_20260214/](./tracks/merge_sections_20260214/)*
 
