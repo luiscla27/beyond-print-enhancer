@@ -32,7 +32,7 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Write integration tests for save/load persistence of merged/appended sections aaa8275
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md) aaa8275
 
-## Phase 5: Final Integration & E2E
-- [~] Task: Perform full E2E manual verification of merging spells into actions, groups into groups, and sections into sections
-- [~] Task: Verify that "Compact Mode" and "Resize" work correctly on merged containers
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md)
+## Phase 5: Final Integration & E2E [checkpoint: fd5b98d]
+- [x] Task: Perform full E2E manual verification of merging spells into actions, groups into groups, and sections into sections fd5b98d
+- [x] Task: Verify that "Compact Mode" and "Resize" work correctly on merged containers fd5b98d
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md) fd5b98d
