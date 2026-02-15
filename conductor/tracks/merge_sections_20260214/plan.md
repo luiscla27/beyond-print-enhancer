@@ -3,7 +3,7 @@
 This plan follows the TDD methodology and quality gates defined in `workflow.md`.
 
 ## Phase 1: Standardization & Spell Optimization
-- [ ] Task: Mark `be-spell-detail` sections with the `.be-extracted-section` class
+- [~] Task: Mark `be-spell-detail` sections with the `.be-extracted-section` class
 - [ ] Task: Refactor spell detail persistence to save only the spell name and reconstruct content from `spell_cache` during load
 - [ ] Task: Update `scanLayout` and `applyLayout` to handle the new optimized spell storage
 - [ ] Task: Write unit tests for cache-based spell reconstruction and optimized persistence

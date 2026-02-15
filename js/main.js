@@ -1904,14 +1904,14 @@ function renderClonedSection(snapshot) {
 /**
  * Creates and manages a floating spell detail section.
  */
-async function createSpellDetailSection(spellName, coords) {
+async function createSpellDetailSection(spellName, coords, restoreData = null) {
     // 0. Check for existing section for this spell
     const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
                           .find(el => {
                               const title = el.querySelector('.print-section-header span');
                               return title && title.textContent.trim() === spellName;
                           });
-    if (existing) {
+    if (existing && !restoreData) {
         // Bring to front
         let maxZ = 10000;
         document.querySelectorAll('.print-section-container').forEach(el => {
@@ -1926,7 +1926,7 @@ async function createSpellDetailSection(spellName, coords) {
         return;
     }
 
-    const id = `spell-detail-${Date.now()}`;
+    const id = restoreData ? restoreData.id : `spell-detail-${Date.now()}`;
     
     // 1. Create immediate shell
     const content = document.createElement('div');
@@ -1934,7 +1934,7 @@ async function createSpellDetailSection(spellName, coords) {
     content.innerHTML = '<div class="be-spinner"></div>';
     
     const container = createDraggableContainer(spellName, content, id);
-    container.classList.add('be-spell-detail');
+    container.classList.add('be-spell-detail', 'be-extracted-section');
     
     // Customize Header: Add Close Button (instead of/beside minimize)
     const header = container.querySelector('.print-section-header');
@@ -1953,21 +1953,32 @@ async function createSpellDetailSection(spellName, coords) {
 
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
     
-    // Calculate relative coordinates to the layout wrapper
-    const rootRect = layoutRoot.getBoundingClientRect();
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
-    const x = coords.x - rootRect.left;
-    const y = coords.y - rootRect.top;
+    if (restoreData) {
+        if (restoreData.left) container.style.setProperty('left', restoreData.left, 'important');
+        if (restoreData.top) container.style.setProperty('top', restoreData.top, 'important');
+        if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
+        if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
+        if (restoreData.zIndex) container.style.setProperty('z-index', restoreData.zIndex, 'important');
+        
+        if (restoreData.minimized) {
+            container.dataset.minimized = 'true';
+            container.classList.add('minimized');
+        }
+    } else {
+        // Calculate relative coordinates to the layout wrapper
+        const rootRect = layoutRoot.getBoundingClientRect();
+        
+        // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
+        const x = coords.x - rootRect.left;
+        const y = coords.y - rootRect.top;
 
-    container.style.position = 'absolute'; 
-    container.style.left = `${x}px`;
-    container.style.top = `${y}px`;
-    container.style.width = '300px';
-    container.style.height = 'auto';
-    container.style.zIndex = '10000';
+        container.style.position = 'absolute'; 
+        container.style.left = `${x}px`;
+        container.style.top = `${y}px`;
+        container.style.width = '300px';
+        container.style.height = 'auto';
+        container.style.zIndex = '10000';
+    }
 
     layoutRoot.appendChild(container);
 
@@ -2477,10 +2488,10 @@ function createControls() {
 
     const buttons = [
         { label: 'Load', icon: '📂', action: handleLoadFile },
+        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
+        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
-        { label: 'Clones Manager', icon: '📋', action: handleManageClones },
-        { label: 'Compact Mode Manager', icon: '📏', action: handleManageCompact },
-        { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
         { label: 'Save to PC', icon: '💻', action: handleSavePC },
         { 
@@ -3020,6 +3031,7 @@ async function scanLayout() {
         sections: {},
         clones: [],
         extractions: [],
+        spell_details: [],
         spell_cache: []
     };
 
@@ -3068,6 +3080,21 @@ async function scanLayout() {
                 zIndex: section.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode')
+            });
+            return;
+        }
+
+        if (section.classList.contains('be-spell-detail')) {
+            const header = section.querySelector('.print-section-header span');
+            layout.spell_details.push({
+                id: id,
+                spellName: header ? header.textContent.trim() : 'Spell',
+                left: section.style.left,
+                top: section.style.top,
+                width: section.style.width,
+                height: section.style.height,
+                zIndex: section.style.zIndex || '10',
+                minimized: section.dataset.minimized === 'true'
             });
             return;
         }
@@ -3182,6 +3209,13 @@ async function applyLayout(layout) {
     if (layout.extractions && Array.isArray(layout.extractions)) {
         layout.extractions.forEach(exData => {
             renderExtractedSection(exData);
+        });
+    }
+
+    // Restore spell details
+    if (layout.spell_details && Array.isArray(layout.spell_details)) {
+        layout.spell_details.forEach(spellData => {
+            createSpellDetailSection(spellData.spellName, null, spellData);
         });
     }
 
