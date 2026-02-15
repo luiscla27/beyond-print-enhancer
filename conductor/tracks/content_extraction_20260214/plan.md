@@ -31,7 +31,7 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Write integration tests for save/load persistence of dynamic extractions 5487e92
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md) 5487e92
 
-## Phase 5: Final Integration & E2E
-- [~] Task: Perform full E2E manual verification of the extraction flow on a live character sheet
-- [~] Task: Verify performance impact of hover/outline logic on large sheets
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md)
+## Phase 5: Final Integration & E2E [checkpoint: 0fe3045]
+- [x] Task: Perform full E2E manual verification of the extraction flow on a live character sheet 0fe3045
+- [x] Task: Verify performance impact of hover/outline logic on large sheets 0fe3045
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md) 0fe3045
