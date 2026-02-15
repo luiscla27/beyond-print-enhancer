@@ -64,3 +64,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     });
   }
 });
+
+// Handle cross-origin fetch for character data
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === 'FETCH_CHARACTER_DATA') {
+    fetch(request.url)
+      .then(response => response.json())
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep channel open for async response
+  }
+});

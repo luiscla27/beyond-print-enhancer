@@ -18,6 +18,39 @@ describe('Data Service & Cache Logic', function() {
     window = dom.window;
     window.indexedDB = global.indexedDB;
     window.__DDB_TEST_MODE__ = true;
+
+    // Mock chrome.runtime.sendMessage for MV3 background fetch
+    window.chrome = {
+      runtime: {
+        sendMessage: (message, callback) => {
+          if (message.type === 'FETCH_CHARACTER_DATA') {
+            callback({
+              success: true,
+              data: {
+                data: {
+                  classSpells: [],
+                  spells: {
+                    race: [],
+                    class: [{ 
+                      definition: { 
+                        name: 'Misty Step', 
+                        level: 2, 
+                        description: 'Briefly surrounded by silvery mist...', 
+                        range: { origin: 'Self' }, 
+                        school: 'Conjuration' 
+                      } 
+                    }],
+                    feat: [],
+                    item: []
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    };
+
     window.eval(mainJsContent);
     Storage = window.Storage;
     await Storage.init();

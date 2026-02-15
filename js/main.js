@@ -278,6 +278,49 @@ function navToSection(name) {
 }
 
 /**
+ * Helper to identify the base selector for an element
+ */
+function getBaseSelector(el) {
+    const targets = [
+        { pattern: /-group$/, selector: '[class*="-group"]' },
+        { pattern: /-snippet--class$/, selector: '[class*="-snippet--class"]' },
+        { pattern: /^styles_actionsList__/, selector: '[class*="styles_actionsList__"]' },
+        { pattern: /^styles_attackTable__/, selector: '[class*="styles_attackTable__"]' },
+        { pattern: /__traits$/, selector: '[class*="__traits"]' }
+    ];
+
+    const classes = Array.from(el.classList);
+    for (const target of targets) {
+        if (classes.some(c => c !== 'be-extractable' && target.pattern.test(c))) {
+            return target.selector;
+        }
+    }
+    return null;
+}
+
+/**
+ * Helper to get a stable unique selector for extraction.
+ * @param {HTMLElement} el The element to identify.
+ * @param {boolean} includeContainers If true, includes elements inside .print-section-container.
+ */
+function getExtractionSelector(el, includeContainers = false) {
+    const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
+    const selector = idClass ? `.${idClass}.be-extractable` : getBaseSelector(el);
+    if (!selector) return null;
+
+    let matches = Array.from(document.querySelectorAll(selector));
+    if (!includeContainers) {
+        matches = matches.filter(m => !m.closest('.print-section-container'));
+    }
+    const index = matches.indexOf(el);
+    
+    if (index !== -1) {
+        return { selector, index };
+    }
+    return null;
+}
+
+/**
  * Creates a standard draggable container for extracted content.
  */
 function createDraggableContainer(title, content, id) {
@@ -669,7 +712,8 @@ async function handleElementExtraction(el) {
     }
 
     // 3. Clone content
-    const clone = el.cloneNode(true);
+    const sanitizedClone = getSanitizedContent(el);
+    const clone = sanitizedClone; // Alias for existing logic compliance
     clone.style.display = ''; // Ensure clone is visible
     clone.classList.remove('be-extractable'); // Avoid nested triggers in clone
     
@@ -679,23 +723,36 @@ async function handleElementExtraction(el) {
         originalHeader.style.display = 'none';
     }
     
-    // Add standardized header to content area
+    // Create section content using a DocumentFragment to avoid extra intermediate DIVs
+    const fragment = document.createDocumentFragment();
+
+    // Standardized header
     const header = document.createElement('div');
     header.className = 'ct-content-group__header';
     const headerContent = document.createElement('div');
     headerContent.className = 'ct-content-group__header-content';
     headerContent.textContent = title;
     header.appendChild(headerContent);
+    fragment.appendChild(header);
 
-    const contentWrapper = document.createElement('div');
-    contentWrapper.appendChild(header);
-    contentWrapper.appendChild(clone);
+    // If it's a merge wrapper, we take its children to avoid redundant DIV nesting
+    if (clone.classList.contains('be-merge-wrapper')) {
+        while (clone.firstChild) {
+            fragment.appendChild(clone.firstChild);
+        }
+    } else {
+        fragment.appendChild(clone);
+    }
 
     // 4. Create floating section
     const sectionId = `extracted-section-${Date.now()}`;
-    const container = createDraggableContainer(title, contentWrapper, sectionId);
+    const container = createDraggableContainer(title, fragment, sectionId);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = el.id;
+    
+    // Store identification class for future merges
+    const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
+    if (idClass) container.dataset.beExtClass = idClass;
 
     // 5. Customize Close Button for Rollback
     const xBtn = container.querySelector('.print-section-minimize');
@@ -703,12 +760,7 @@ async function handleElementExtraction(el) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
             e.stopPropagation();
-            // Rollback
-            const original = document.getElementById(el.id);
-            if (original) original.style.display = '';
-            container.remove();
-            updateLayoutBounds();
-            showFeedback('Extraction rolled back');
+            rollbackSection(container);
         };
     }
 
@@ -725,12 +777,26 @@ async function handleElementExtraction(el) {
     container.style.zIndex = '10000';
 
     layoutRoot.appendChild(container);
-    el.style.setProperty('display', 'none', 'important');
+    
+    // In the case of spell sections, destroy original instead of hiding
+    // (They are ephemeral and don't have a home on the sheet to rollback to)
+    const isSpell = el.classList.contains('be-spell-detail') || 
+                    el.id.startsWith('spell-detail-') || 
+                    el.querySelector('[data-be-spell-merge]');
+
+    if (isSpell) {
+        el.remove();
+    } else {
+        el.style.setProperty('display', 'none', 'important');
+    }
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
     showFeedback(`Extracted ${title}`);
+
+    return container;
 }
 
 /**
@@ -756,7 +822,8 @@ function renderExtractedSection(snapshot) {
     }
 
     // 2. Clone LIVE content
-    const sourceElement = original.cloneNode(true);
+    const sanitizedClone = getSanitizedContent(original);
+    const sourceElement = sanitizedClone; // Alias for existing logic compliance
     sourceElement.style.display = ''; 
     sourceElement.classList.remove('be-extractable');
     
@@ -767,7 +834,7 @@ function renderExtractedSection(snapshot) {
     }
 
     // 3. Assemble standardized header
-    const contentWrapper = document.createElement('div');
+    const fragment = document.createDocumentFragment();
     const header = document.createElement('div');
     header.className = 'ct-content-group__header';
     const headerContent = document.createElement('div');
@@ -775,12 +842,26 @@ function renderExtractedSection(snapshot) {
     headerContent.textContent = snapshot.title;
     header.appendChild(headerContent);
 
-    contentWrapper.appendChild(header);
-    contentWrapper.appendChild(sourceElement);
+    fragment.appendChild(header);
+    
+    // Promote children if it's a merge wrapper, otherwise append the clone
+    if (sourceElement.classList.contains('be-merge-wrapper')) {
+        while (sourceElement.firstChild) {
+            fragment.appendChild(sourceElement.firstChild);
+        }
+    } else {
+        fragment.appendChild(sourceElement);
+    }
 
-    const container = createDraggableContainer(snapshot.title, contentWrapper, snapshot.id);
+    const container = createDraggableContainer(snapshot.title, fragment, snapshot.id);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = snapshot.originalId;
+    
+    // Restore identification class for future merges
+    if (snapshot.selector) {
+        const idClass = snapshot.selector.split('.')[1]; // .be-ext-xxx.be-extractable -> be-ext-xxx
+        if (idClass) container.dataset.beExtClass = idClass;
+    }
 
     // 4. Link rollback logic
     const xBtn = container.querySelector('.print-section-minimize');
@@ -788,10 +869,7 @@ function renderExtractedSection(snapshot) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
             e.stopPropagation();
-            if (original) original.style.setProperty('display', '', 'important');
-            container.remove();
-            updateLayoutBounds();
-            showFeedback('Extraction rolled back');
+            rollbackSection(container);
         };
     }
 
@@ -818,6 +896,7 @@ function renderExtractedSection(snapshot) {
     layoutRoot.appendChild(container);
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
     
     return container;
@@ -827,8 +906,299 @@ function renderExtractedSection(snapshot) {
  * Basic title discovery (to be refined in Phase 3).
  */
 function findSectionTitle(el) {
-    const titleEl = el.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+    const titleEl = el.querySelector('h1, h2, h3, h4, h5, [class*="head"], [data-testid*="header"], [data-testid*="heading"]');
     return titleEl ? titleEl.textContent.trim() : null;
+}
+
+/**
+ * Sanitizes a content node by removing extension UI elements and preventing header duplication.
+ * @param {HTMLElement} node The node to sanitize.
+ * @returns {HTMLElement} A sanitized clone of the node.
+ */
+function getSanitizedContent(node) {
+    const clone = node.cloneNode(true);
+    const toRemove = [
+        '.be-clone-button',
+        '.be-compact-button',
+        '.be-append-button',
+        '.be-section-actions',
+        '.print-section-minimize',
+        '.print-section-restore',
+        '.print-section-resize-handle',
+        '.ct-spells-filter',
+        'menu'
+    ];
+
+    toRemove.forEach(selector => {
+        clone.querySelectorAll(selector).forEach(el => el.remove());
+    });
+
+    // Prevent header duplication: remove top-level standardized headers
+    // because new ones are added when wrapping/rendering.
+    const existingHeaders = clone.querySelectorAll(':scope > .ct-content-group__header');
+    existingHeaders.forEach(h => h.remove());
+
+    return clone;
+}
+
+/**
+ * Gathers all potential merge targets and their display names.
+ * Targets include .be-extractable (on sheet) and .be-extracted-section (floating).
+ */
+function getMergeTargets() {
+    const targets = [];
+
+    // 1. Sheet Targets (be-extractable)
+    document.querySelectorAll('.be-extractable').forEach(el => {
+        // Find parent section for breadcrumb
+        const parentSection = el.closest('.print-section-container');
+        let sectionName = 'Sheet';
+        if (parentSection) {
+            const header = parentSection.querySelector('.print-section-header span');
+            sectionName = header ? header.textContent.trim() : 'Section';
+        }
+
+        const itemName = findSectionTitle(el) || el.textContent.trim().substring(0, 20);
+        targets.push({
+            type: 'sheet',
+            id: el.id,
+            name: `${sectionName} > ${itemName}`,
+            element: el
+        });
+    });
+
+    // 2. Floating Targets (be-extracted-section)
+    document.querySelectorAll('.print-section-container.be-extracted-section').forEach(el => {
+        const header = el.querySelector('.print-section-header span');
+        const itemName = header ? header.textContent.trim() : 'Extracted Section';
+        
+        // Find the inner standardized header if it exists for extra detail
+        const subHeader = el.querySelector('.ct-content-group__header-content');
+        const detail = subHeader ? ` (${subHeader.textContent.trim()})` : '';
+
+        targets.push({
+            type: 'section',
+            id: el.id,
+            name: `Floating: ${itemName}${detail}`,
+            element: el
+        });
+    });
+
+    return targets;
+}
+
+/**
+ * Injects an "Append after" button into an extracted section's header.
+ */
+function injectAppendButton(container) {
+    const actionContainer = getOrCreateActionContainer(container);
+    if (actionContainer.querySelector('.be-append-button')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'be-append-button';
+    btn.innerHTML = '🔗';
+    btn.title = 'Append after...';
+    
+    btn.onclick = async (e) => {
+        e.stopPropagation();
+        const targets = getMergeTargets().filter(t => t.element !== container);
+        if (targets.length === 0) {
+            showFeedback('No available targets found');
+            return;
+        }
+
+        const selectedTarget = await showTargetSelectionModal(targets);
+        if (selectedTarget) {
+            handleMergeSections(container, selectedTarget);
+        }
+    };
+
+    actionContainer.appendChild(btn);
+}
+
+/**
+ * Shows a modal to select a merge target.
+ */
+function showTargetSelectionModal(targets) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        overlay.style.zIndex = '30000'; // Higher than floating sections
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        modal.style.width = '500px';
+        modal.style.maxHeight = '80vh';
+        modal.style.overflowY = 'auto';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Select Append Target';
+        modal.appendChild(h3);
+
+        const list = document.createElement('div');
+        list.style.display = 'flex';
+        list.style.flexDirection = 'column';
+        list.style.gap = '5px';
+        list.style.marginTop = '15px';
+
+        targets.forEach(target => {
+            const btn = document.createElement('button');
+            btn.textContent = target.name;
+            btn.className = 'ct-theme-button';
+            btn.style.textAlign = 'left';
+            btn.style.padding = '8px 12px';
+            btn.style.width = '100%';
+            btn.onclick = () => {
+                overlay.remove();
+                resolve(target);
+            };
+            list.appendChild(btn);
+        });
+
+        modal.appendChild(list);
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.style.marginTop = '15px';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        modal.appendChild(cancelBtn);
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+    });
+}
+
+/**
+ * Handles the logic of merging one section into another target.
+ */
+function handleMergeSections(sourceContainer, targetInfo) {
+    const sourceContent = sourceContainer.querySelector('.print-section-content');
+    if (!sourceContent) return;
+
+    const sourceId = sourceContainer.dataset.originalId;
+    const sourceAssociatedIds = sourceContainer.dataset.associatedIds ? JSON.parse(sourceContainer.dataset.associatedIds) : [];
+    const allSourceIds = [sourceId, ...sourceAssociatedIds].filter(id => id);
+
+    let targetContainer = null;
+    let appendTarget = null;
+
+    if (targetInfo.type === 'section') {
+        targetContainer = targetInfo.element;
+        appendTarget = targetContainer.querySelector('.print-section-content');
+    } else {
+        // Sheet target: append after the element
+        appendTarget = targetInfo.element;
+        // Search for the closest section container OR the sheet body wrapper
+        targetContainer = appendTarget.closest('.print-section-container') || document.getElementById('print-layout-wrapper');
+    }
+
+    if (appendTarget) {
+        // Create a wrapper that mimics the target's classes (to preserve styling)
+        const wrapper = document.createElement('div');
+        // Copy classes from target element, but exclude our identification/trigger classes
+        const targetClasses = Array.from(targetInfo.element.classList)
+                                   .filter(c => c !== 'be-extractable' && !c.startsWith('be-ext-'));
+        wrapper.className = targetClasses.join(' ');
+        
+        wrapper.classList.add('be-merge-wrapper');
+        // ADD BACK the essential extraction classes for the merged content itself
+        wrapper.classList.add('be-extractable');
+        const idClass = sourceContainer.dataset.beExtClass;
+        if (idClass) wrapper.classList.add(idClass);
+        
+        // Tag for persistence if it's a group extraction
+        const sourceId = sourceContainer.dataset.originalId;
+        const isSpell = sourceContainer.classList.contains('be-spell-detail');
+        if (!isSpell) {
+            wrapper.setAttribute('data-be-group-merge', sourceId);
+        }
+
+        // Store target metadata for persistence
+        wrapper.setAttribute('data-be-target-type', targetInfo.type);
+        wrapper.setAttribute('data-be-target-id', targetInfo.id || '');
+        if (targetInfo.type === 'sheet') {
+            const res = getExtractionSelector(targetInfo.element, true); // True to include elements in containers
+            if (res) {
+                wrapper.setAttribute('data-be-target-selector', res.selector);
+                wrapper.setAttribute('data-be-target-index', res.index);
+                wrapper.setAttribute('data-be-target-name', targetInfo.name || '');
+            }
+        }
+
+        // Attach extraction listener to the new merged wrapper
+        wrapper.ondblclick = async (e) => {
+            e.stopPropagation();
+            await handleElementExtraction(wrapper);
+        };
+
+        // If source is a spell detail, tag it for persistence
+        const spellName = isSpell ? (sourceContainer.querySelector('.print-section-header span')?.textContent.trim()) : null;
+        let tagged = false;
+
+        // Move all children of sourceContent to the wrapper
+        while (sourceContent.firstChild) {
+            const child = sourceContent.firstChild;
+            
+            if (child.nodeType === 1) { // Element
+                // Clear dimensions that might have been set by resize logic
+                child.style.width = '';
+                child.style.minWidth = '';
+                child.style.height = '';
+
+                if (isSpell && !tagged) {
+                    child.setAttribute('data-be-spell-merge', spellName);
+                    child.setAttribute('data-be-original-id', sourceId);
+                    tagged = true;
+                }
+            }
+            wrapper.appendChild(child);
+        }
+
+        // Now append the wrapper to the final target
+        if (targetInfo.type === 'section') {
+            appendTarget.appendChild(wrapper);
+        } else {
+            // Insert after target element on sheet
+            appendTarget.parentNode.insertBefore(wrapper, appendTarget.nextSibling);
+        }
+
+        // If target is a section, track IDs for rollback
+        if (targetContainer) {
+            const targetAssociatedIds = targetContainer.dataset.associatedIds ? JSON.parse(targetContainer.dataset.associatedIds) : [];
+            const newAssociatedIds = [...targetAssociatedIds, ...allSourceIds];
+            targetContainer.dataset.associatedIds = JSON.stringify(newAssociatedIds);
+        }
+
+        // Destroy source container
+        sourceContainer.remove();
+        updateLayoutBounds();
+        showFeedback(`Merged into ${targetInfo.name}`);
+    }
+}
+
+/**
+ * Rolls back a section, restoring all associated original elements.
+ */
+function rollbackSection(container) {
+    const originalId = container.dataset.originalId;
+    const associatedIds = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
+    
+    const allIds = [originalId, ...associatedIds].filter(id => id);
+    
+    allIds.forEach(id => {
+        const original = document.getElementById(id);
+        if (original) {
+            original.style.setProperty('display', '', 'important');
+        }
+    });
+
+    container.remove();
+    updateLayoutBounds();
+    showFeedback('Extraction rolled back');
 }
 
 /**
@@ -1514,35 +1884,52 @@ function enforceFullHeight() {
         display: block !important;
     }
 
-    /* Clone Button */
-    .be-clone-button {
+    /* Unified Section Action Buttons */
+    .be-section-actions {
         position: absolute;
         top: 46px;
         left: 32px;
+        display: flex;
+        gap: 8px;
+        z-index: 20;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+    }
+    .ct-subsection:hover .be-section-actions,
+    .ct-section:hover .be-section-actions,
+    .print-section-container:hover .be-section-actions {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .be-section-actions button {
         width: 39px;
         height: 32px;
         cursor: pointer;
-        z-index: 20;
-        opacity: 0;
         background: var(--btn-color);
         border: 1px solid rgb(85, 85, 85);
-        font-size: 21px !important;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: opacity 0.2s;
         padding: 0;
         margin: 0;
         filter: drop-shadow(2px 4px 6px black);
         border-radius: 32px;
+        color: white;
+        font-size: 18px !important;
+        transition: background-color 0.2s;
     }
-    .ct-subsection:hover .be-clone-button,
-    .ct-section:hover .be-clone-button,
-    .print-section-container:hover .be-clone-button {
-        opacity: 1;
+    .be-section-actions button:hover {
+        background-color: var(--btn-color-highlight);
+    }
+    .be-clone-button {
+        font-size: 21px !important;
+    }
+    .be-clone-delete:hover {
+        background: #cc0000 !important;
     }
     @media print {
-        .be-clone-button {
+        .be-section-actions {
             display: none !important;
         }
     }
@@ -1610,41 +1997,6 @@ function enforceFullHeight() {
     .be-modal-cancel {
         background: transparent;
         color: #ccc;
-    }
-
-    /* Clone Delete Button */
-    .be-clone-delete {
-        position: absolute;
-        top: 46px;
-        width: 39px;
-        height: 32px;
-        left: 82px;
-        cursor: pointer;
-        z-index: 1000000;
-        opacity: 0;
-        background: var(--btn-color);
-        border: 1px solid rgb(85, 85, 85);
-        font-size: 18px !important;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.2s;
-        padding: 0;
-        margin: 0;
-        filter: drop-shadow(2px 4px 6px black);
-        border-radius: 32px;
-        color: white;
-    }
-    .print-section-container:hover .be-clone-delete {
-        opacity: 1;
-    }
-    .be-clone-delete:hover {
-        background: #cc0000;
-    }
-    @media print {
-        .be-clone-button, .be-clone-delete {
-            display: none !important;
-        }
     }
   `;
   document.head.appendChild(style);
@@ -1756,31 +2108,12 @@ function captureSectionSnapshot(sectionId) {
     const content = section.querySelector('.print-section-content');
     if (!content) return null;
 
-    // Clone the content
-    const clone = content.cloneNode(true);
-
-    // Sanitize: Remove extension UI elements
-    const toRemove = [
-        '.be-clone-button',
-        '.be-compact-button',
-        '.print-section-minimize',
-        '.print-section-restore',
-        '.print-section-resize-handle'
-    ];
-
-    toRemove.forEach(selector => {
-        clone.querySelectorAll(selector).forEach(el => el.remove());
-    });
-    
-    // Also remove menu tags as they are usually tab navigation/filters
-    clone.querySelectorAll('menu').forEach(el => el.remove());
-
-    // Specifically for spells: remove filter bar
-    clone.querySelectorAll('.ct-spells-filter').forEach(el => el.remove());
+    // Use centralized sanitization
+    const sanitizedClone = getSanitizedContent(content);
 
     return {
         originalId: sectionId,
-        html: clone.innerHTML,
+        html: sanitizedClone.innerHTML,
         styles: {
             width: section.style.width,
             height: section.style.height
@@ -1794,8 +2127,12 @@ function captureSectionSnapshot(sectionId) {
  * @returns {HTMLElement} The created container.
  */
 function renderClonedSection(snapshot) {
+    const fragment = document.createDocumentFragment();
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = snapshot.html;
+    
+    // Sanitize loaded HTML to prevent duplication
+    const sanitizedClone = getSanitizedContent(tempDiv);
     
     // Create the static header requested by user
     const staticHeader = document.createElement('div');
@@ -1805,10 +2142,15 @@ function renderClonedSection(snapshot) {
     staticHeaderContent.textContent = snapshot.title;
     staticHeader.appendChild(staticHeaderContent);
     
-    // Prepend to content
-    tempDiv.prepend(staticHeader);
+    // Append header first
+    fragment.appendChild(staticHeader);
+    
+    // Move all sanitized children to the fragment
+    while (sanitizedClone.firstChild) {
+        fragment.appendChild(sanitizedClone.firstChild);
+    }
 
-    const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
+    const container = createDraggableContainer(snapshot.title, fragment, snapshot.id);
     container.classList.add('be-clone');
     container.dataset.originalId = snapshot.originalId;
 
@@ -1831,6 +2173,7 @@ function renderClonedSection(snapshot) {
     }
 
     // Delete button
+    const actionContainer = getOrCreateActionContainer(container);
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'be-clone-delete';
     deleteBtn.innerHTML = '🗑️';
@@ -1843,7 +2186,7 @@ function renderClonedSection(snapshot) {
             updateLayoutBounds();
         }
     };
-    container.appendChild(deleteBtn);
+    actionContainer.appendChild(deleteBtn);
     
     // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
     const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
@@ -1904,14 +2247,14 @@ function renderClonedSection(snapshot) {
 /**
  * Creates and manages a floating spell detail section.
  */
-async function createSpellDetailSection(spellName, coords) {
+async function createSpellDetailSection(spellName, coords, restoreData = null) {
     // 0. Check for existing section for this spell
     const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
                           .find(el => {
                               const title = el.querySelector('.print-section-header span');
                               return title && title.textContent.trim() === spellName;
                           });
-    if (existing) {
+    if (existing && !restoreData) {
         // Bring to front
         let maxZ = 10000;
         document.querySelectorAll('.print-section-container').forEach(el => {
@@ -1926,7 +2269,7 @@ async function createSpellDetailSection(spellName, coords) {
         return;
     }
 
-    const id = `spell-detail-${Date.now()}`;
+    const id = restoreData ? restoreData.id : `spell-detail-${Date.now()}`;
     
     // 1. Create immediate shell
     const content = document.createElement('div');
@@ -1934,43 +2277,57 @@ async function createSpellDetailSection(spellName, coords) {
     content.innerHTML = '<div class="be-spinner"></div>';
     
     const container = createDraggableContainer(spellName, content, id);
-    container.classList.add('be-spell-detail');
+    container.classList.add('be-spell-detail', 'be-extracted-section');
     
     // Customize Header: Add Close Button (instead of/beside minimize)
     const header = container.querySelector('.print-section-header');
     if (header) {
         // Change existing X button to remove for spell details
-        const xBtn = header.querySelector('.print-section-minimize');
-        if (xBtn) {
-            xBtn.title = 'Remove Section';
-            xBtn.onclick = (e) => {
-                e.stopPropagation();
-                container.remove();
-                updateLayoutBounds();
-            };
-        }
+            const xBtn = header.querySelector('.print-section-minimize');
+            if (xBtn) {
+                xBtn.title = 'Remove Section';
+                xBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    rollbackSection(container);
+                };
+            }
+        
     }
 
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
     
-    // Calculate relative coordinates to the layout wrapper
-    const rootRect = layoutRoot.getBoundingClientRect();
-    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
-    const x = coords.x - rootRect.left;
-    const y = coords.y - rootRect.top;
+    if (restoreData) {
+        if (restoreData.left) container.style.setProperty('left', restoreData.left, 'important');
+        if (restoreData.top) container.style.setProperty('top', restoreData.top, 'important');
+        if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
+        if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
+        if (restoreData.zIndex) container.style.setProperty('z-index', restoreData.zIndex, 'important');
+        
+        if (restoreData.minimized) {
+            container.dataset.minimized = 'true';
+            container.classList.add('minimized');
+        }
+    } else {
+        // Calculate relative coordinates to the layout wrapper
+        const rootRect = layoutRoot.getBoundingClientRect();
+        
+        // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
+        const x = coords.x - rootRect.left;
+        const y = coords.y - rootRect.top;
 
-    container.style.position = 'absolute'; 
-    container.style.left = `${x}px`;
-    container.style.top = `${y}px`;
-    container.style.width = '300px';
-    container.style.height = 'auto';
-    container.style.zIndex = '10000';
+        container.style.position = 'absolute'; 
+        container.style.left = `${x}px`;
+        container.style.top = `${y}px`;
+        container.style.width = '300px';
+        container.style.height = 'auto';
+        container.style.zIndex = '10000';
+    }
 
     layoutRoot.appendChild(container);
 
+    if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.injectAppendButton) window.injectAppendButton(container);
+    
     // 2. Fetch Data
     const spell = await fetchSpellWithCache(spellName);
     
@@ -2022,6 +2379,8 @@ async function createSpellDetailSection(spellName, coords) {
     // Re-init resize logic for the new container
     if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
+
+    return container;
 }
 
 /**
@@ -2072,10 +2431,18 @@ async function getCharacterSpells(charId) {
     const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
     
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Could not fetch character data. Are you logged in?");
+        // In MV3, cross-origin fetch must be done from background script
+        const response = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: 'FETCH_CHARACTER_DATA', url }, (result) => {
+                resolve(result);
+            });
+        });
+
+        if (!response || !response.success) {
+            throw new Error(response ? response.error : "Could not fetch character data via background.");
+        }
         
-        const json = await response.json();
+        const json = response.data;
         const data = json.data;
 
         // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
@@ -2477,7 +2844,7 @@ function createControls() {
 
     const buttons = [
         { label: 'Load', icon: '📂', action: handleLoadFile },
-        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
+        { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
@@ -2788,7 +3155,25 @@ async function handleLoadDefault() {
             }
         });
 
-        // Reposition spell detail sections to the Y of their original spell label, at left: 0
+        // Handle merged sections: Rollback groups and prepare spells for recreation
+        const mergedSpells = Array.from(document.querySelectorAll('[data-be-spell-merge]'));
+        const spellNamesToRecreate = [...new Set(mergedSpells.map(el => el.getAttribute('data-be-spell-merge')))];
+
+        document.querySelectorAll('.be-merge-wrapper').forEach(wrapper => {
+            const groupMergeId = wrapper.getAttribute('data-be-group-merge');
+            if (groupMergeId) {
+                const original = document.getElementById(groupMergeId);
+                if (original) original.style.setProperty('display', '', 'important');
+            }
+            wrapper.remove();
+        });
+
+        // Recreate merged spells as floating sections
+        for (const spellName of spellNamesToRecreate) {
+            await createSpellDetailSection(spellName, { x: 0, y: 0 });
+        }
+
+        // Reposition all spell detail sections to the Y of their original spell label, at left: 1200px
         document.querySelectorAll('.print-section-container.be-spell-detail').forEach(detail => {
             const titleSpan = detail.querySelector('.print-section-header span');
             if (titleSpan) {
@@ -2817,14 +3202,23 @@ async function handleLoadDefault() {
             }
         });
 
-        // Rollback all extractions
-        document.querySelectorAll('.print-section-container.be-extracted-section').forEach(section => {
+        // Rollback all OTHER extractions
+        document.querySelectorAll('.print-section-container.be-extracted-section:not(.be-spell-detail)').forEach(section => {
+            // Use rollbackSection logic but avoiding multiple feedbacks/bounds updates
             const originalId = section.dataset.originalId;
-            const original = document.getElementById(originalId);
-            if (original) original.style.display = '';
+            const associatedIds = section.dataset.associatedIds ? JSON.parse(section.dataset.associatedIds) : [];
+            const allIds = [originalId, ...associatedIds].filter(id => id);
+            
+            allIds.forEach(id => {
+                const original = document.getElementById(id);
+                if (original) {
+                    original.style.setProperty('display', '', 'important');
+                }
+            });
             section.remove();
         });
 
+        updateLayoutBounds();
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -3014,31 +3408,19 @@ function showFallbackModal(jsonData) {
  * Scans the current DOM for layout information.
  * @returns {object} Layout data following the schema.
  */
+/**
+ * Scans the current DOM for layout information.
+ * @returns {object} Layout data following the schema.
+ */
 async function scanLayout() {
     const layout = {
         version: Storage.SCHEMA_VERSION,
         sections: {},
         clones: [],
         extractions: [],
+        spell_details: [],
+        merges: [],
         spell_cache: []
-    };
-
-    // Helper to get a stable unique selector for extraction
-    const getExtractionSelector = (el) => {
-        // Find the identification class (prefixed with be-ext-)
-        const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
-        if (!idClass) return null;
-
-        const selector = `.${idClass}.be-extractable`;
-
-        // Find the index among all elements matching this name-based class (excluding our containers)
-        const matches = Array.from(document.querySelectorAll(selector));
-        const index = matches.indexOf(el);
-        
-        if (index !== -1) {
-            return { selector, index };
-        }
-        return null;
     };
 
     // Include cached spells
@@ -3049,18 +3431,21 @@ async function scanLayout() {
         console.error('[DDB Print] Could not scan spell cache', err);
     }
 
+    // 1. Scan for standard sections and floating containers
     const sections = document.querySelectorAll('.print-section-container');
     sections.forEach(section => {
         const id = section.id;
         if (!id) return;
 
+        const header = section.querySelector('.print-section-header span');
+        const content = section.querySelector('.print-section-content');
+
         if (section.classList.contains('be-clone')) {
-            const content = section.querySelector('.print-section-content');
-            const header = section.querySelector('.print-section-header span');
+            const sanitizedHtml = content ? getSanitizedContent(content).innerHTML : '';
             layout.clones.push({
                 id: id,
                 title: header ? header.textContent.trim() : 'Clone',
-                html: content ? content.innerHTML : '',
+                html: sanitizedHtml,
                 left: section.style.left,
                 top: section.style.top,
                 width: section.style.width,
@@ -3072,8 +3457,21 @@ async function scanLayout() {
             return;
         }
 
+        if (section.classList.contains('be-spell-detail')) {
+            layout.spell_details.push({
+                id: id,
+                spellName: header ? header.textContent.trim() : 'Spell',
+                left: section.style.left,
+                top: section.style.top,
+                width: section.style.width,
+                height: section.style.height,
+                zIndex: section.style.zIndex || '10',
+                minimized: section.dataset.minimized === 'true'
+            });
+            return;
+        }
+
         if (section.classList.contains('be-extracted-section')) {
-            const header = section.querySelector('.print-section-header span');
             const originalId = section.dataset.originalId;
             const original = document.getElementById(originalId);
             
@@ -3090,9 +3488,8 @@ async function scanLayout() {
                 compact: section.classList.contains('be-compact-mode')
             };
 
-            // Add selector for stable resolution across reloads
             if (original) {
-                const resolution = getExtractionSelector(original);
+                const resolution = getExtractionSelector(original, true);
                 if (resolution) {
                     extractionData.selector = resolution.selector;
                     extractionData.index = resolution.index;
@@ -3114,7 +3511,6 @@ async function scanLayout() {
             innerWidths: {}
         };
 
-        // Scan inner content for width overrides
         const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
         innerContainers.forEach((container, cIdx) => {
             Array.from(container.children).forEach((child, dIdx) => {
@@ -3126,8 +3522,53 @@ async function scanLayout() {
         });
     });
 
+    // 2. Scan for Merges (systematic approach using stored attributes)
+    document.querySelectorAll('.be-merge-wrapper').forEach(wrapper => {
+        const groupId = wrapper.getAttribute('data-be-group-merge');
+        const spellMergeChild = wrapper.querySelector('[data-be-spell-merge]');
+        const spellName = spellMergeChild ? spellMergeChild.getAttribute('data-be-spell-merge') : null;
+
+        if (!groupId && !spellName) return;
+
+        // Retrieve target metadata stored during merge
+        const targetType = wrapper.getAttribute('data-be-target-type');
+        const targetId = wrapper.getAttribute('data-be-target-id');
+        const targetSelector = wrapper.getAttribute('data-be-target-selector');
+        const targetIndex = wrapper.getAttribute('data-be-target-index');
+        const targetName = wrapper.getAttribute('data-be-target-name');
+
+        if (!targetType) return;
+
+        const mergeEntry = {
+            source: spellName ? { type: 'spell', spellName } : { type: 'group', originalId: groupId },
+            target: {
+                type: targetType,
+                id: targetId,
+                selector: targetSelector,
+                index: targetIndex !== null ? parseInt(targetIndex) : undefined,
+                name: targetName
+            }
+        };
+
+        // Source details for groups
+        if (mergeEntry.source.type === 'group') {
+            const orig = document.getElementById(groupId);
+            if (orig) {
+                const res = getExtractionSelector(orig, true);
+                if (res) {
+                    mergeEntry.source.selector = res.selector;
+                    mergeEntry.source.index = res.index;
+                    mergeEntry.source.title = findSectionTitle(orig) || 'Merged Content';
+                }
+            }
+        }
+
+        layout.merges.push(mergeEntry);
+    });
+
     return layout;
 }
+
 
 /**
  * Migrates layout data from older versions to the current schema.
@@ -3137,8 +3578,59 @@ async function scanLayout() {
 function migrateLayout(data) {
     if (!data || typeof data !== 'object') return data;
     
-    // Future migration logic goes here
-    // Example: if (data.version === '0.9.0') { ... }
+    // Initialize merges array if missing
+    if (!data.merges) data.merges = [];
+
+    // Helper to extract merges from legacy associatedExtractions
+    const extractLegacyMerges = (containerId, associated) => {
+        if (!Array.isArray(associated)) return;
+        associated.forEach(aEx => {
+            // Avoid duplicates if already migrated
+            const exists = data.merges.some(m => 
+                m.target.id === containerId && 
+                (m.source.originalId === aEx.originalId || m.source.spellName === aEx.spellName)
+            );
+            if (exists) return;
+
+            data.merges.push({
+                source: aEx, // Structure matches (type, originalId, spellName, etc)
+                target: {
+                    type: 'section',
+                    id: containerId
+                }
+            });
+        });
+    };
+
+    // Scan extractions
+    if (data.extractions) {
+        data.extractions.forEach(ex => {
+            if (ex.associatedExtractions) {
+                extractLegacyMerges(ex.id, ex.associatedExtractions);
+                delete ex.associatedExtractions;
+            }
+        });
+    }
+
+    // Scan clones
+    if (data.clones) {
+        data.clones.forEach(cl => {
+            if (cl.associatedExtractions) {
+                extractLegacyMerges(cl.id, cl.associatedExtractions);
+                delete cl.associatedExtractions;
+            }
+        });
+    }
+
+    // Scan standard sections
+    if (data.sections) {
+        Object.entries(data.sections).forEach(([id, sect]) => {
+            if (sect.associatedExtractions) {
+                extractLegacyMerges(id, sect.associatedExtractions);
+                delete sect.associatedExtractions;
+            }
+        });
+    }
     
     return data;
 }
@@ -3150,6 +3642,9 @@ function migrateLayout(data) {
 async function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
+
+    // 0. Ensure elements are flagged (crucial for selector-based restoration)
+    flagExtractableElements();
 
     // Save spells to cache if present
     if (layout.spell_cache && Array.isArray(layout.spell_cache)) {
@@ -3180,8 +3675,28 @@ async function applyLayout(layout) {
 
     // Restore extractions
     if (layout.extractions && Array.isArray(layout.extractions)) {
+        const deferredExtractions = [];
         layout.extractions.forEach(exData => {
-            renderExtractedSection(exData);
+            const success = renderExtractedSection(exData);
+            if (!success) deferredExtractions.push(exData);
+        });
+
+        // Retry deferred extractions once after a delay (React lazy-load buffer)
+        if (deferredExtractions.length > 0) {
+            setTimeout(() => {
+                // Re-flag elements just in case new ones appeared
+                flagExtractableElements();
+                deferredExtractions.forEach(exData => {
+                    renderExtractedSection(exData);
+                });
+            }, 1000);
+        }
+    }
+
+    // Restore spell details
+    if (layout.spell_details && Array.isArray(layout.spell_details)) {
+        layout.spell_details.forEach(spellData => {
+            createSpellDetailSection(spellData.spellName, null, spellData);
         });
     }
 
@@ -3231,6 +3746,71 @@ async function applyLayout(layout) {
                         child.style.minWidth = width;
                     }
                 }
+            }
+        }
+    }
+
+    // 5. Restore Systematic Merges
+    if (layout.merges && Array.isArray(layout.merges)) {
+        for (const merge of layout.merges) {
+            try {
+                let sourceContainer = null;
+                
+                // 5.1 Resolve or Create Source
+                if (merge.source.type === 'spell') {
+                    sourceContainer = await createSpellDetailSection(merge.source.spellName, { x: 0, y: 0 });
+                } else if (merge.source.type === 'group') {
+                    // Re-extract the group
+                    let original = document.getElementById(merge.source.originalId);
+                    if (!original && merge.source.selector) {
+                        const matches = document.querySelectorAll(merge.source.selector);
+                        original = matches[merge.source.index];
+                        if (original) original.id = merge.source.originalId;
+                    }
+                    if (original) {
+                        sourceContainer = await handleElementExtraction(original);
+                    }
+                }
+
+                if (!sourceContainer) continue;
+
+                // 5.2 Resolve Target
+                let targetInfo = null;
+                if (merge.target.type === 'section') {
+                    const tEl = document.getElementById(merge.target.id);
+                    if (tEl) {
+                        targetInfo = {
+                            type: 'section',
+                            id: merge.target.id,
+                            element: tEl,
+                            name: merge.target.id
+                        };
+                    }
+                } else if (merge.target.type === 'sheet') {
+                    let tEl = document.getElementById(merge.target.id);
+                    if (!tEl && merge.target.selector) {
+                        const matches = document.querySelectorAll(merge.target.selector);
+                        tEl = matches[merge.target.index];
+                    }
+                    if (tEl) {
+                        targetInfo = {
+                            type: 'sheet',
+                            id: merge.target.id,
+                            element: tEl,
+                            name: merge.target.name || 'Sheet Target'
+                        };
+                    }
+                }
+
+                // 5.3 Execute Merge
+                if (targetInfo && sourceContainer) {
+                    // console.log(`[DDB Print] Restoring merge: ${sourceContainer.id} -> ${targetInfo.name || targetInfo.id}`);
+                    handleMergeSections(sourceContainer, targetInfo);
+                } else {
+                    console.warn('[DDB Print] Could not resolve merge target or source', merge.target, !!sourceContainer);
+                }
+            } catch (err) {
+                console.error('[DDB Print] Failed to process merge', merge, err);
             }
         }
     }
@@ -3318,6 +3898,21 @@ function drawPageSeparators(totalHeight, totalWidth) {
 /**
  * Injects clone buttons and compact toggles into sections.
  */
+/**
+ * Gets or creates a container for section-level action buttons (Clone, Compact, Append, Delete).
+ * @param {HTMLElement} section The section element.
+ * @returns {HTMLElement} The container element.
+ */
+function getOrCreateActionContainer(section) {
+    let container = section.querySelector('.be-section-actions');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'be-section-actions';
+        section.appendChild(container);
+    }
+    return container;
+}
+
 function injectCloneButtons(context = document) {
     const selector = '.ct-subsection, .ct-section, .print-section-container';
     // If the context itself matches the selector, include it
@@ -3327,56 +3922,52 @@ function injectCloneButtons(context = document) {
     }
 
     elements.forEach(section => {
-        // Avoid duplicate buttons
-        if (section.querySelector('.be-clone-button')) return;
+        const actionContainer = getOrCreateActionContainer(section);
 
-        const btn = document.createElement('button');
-        btn.className = 'be-clone-button';
-        btn.innerHTML = '📋'; // Clipboard icon
-        btn.title = 'Clone Section';
-        
-        btn.onclick = async (e) => {
-            e.stopPropagation();
-            const id = section.id || 'unknown';
+        // 1. Clone Button
+        if (!actionContainer.querySelector('.be-clone-button')) {
+            const btn = document.createElement('button');
+            btn.className = 'be-clone-button';
+            btn.innerHTML = '📋'; // Clipboard icon
+            btn.title = 'Clone Section';
             
-            // Get section name for default title
-            const header = section.querySelector('.ct-subsection__header, .ct-section__header, .print-section-header span');
-            const sectionName = header ? header.textContent.trim() : 'Section';
-            
-            const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
-            
-            if (title) {
-                const snapshot = captureSectionSnapshot(id);
-                if (snapshot) {
-                    snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-                    snapshot.title = title;
-                    
-                    const clone = renderClonedSection(snapshot);
-                    if (clone) {
-                        showFeedback(`Cloned: ${title}`);
-                        updateLayoutBounds();
-                        // Re-run injection to ensure new clone gets buttons
-                        injectCloneButtons(); 
-                        injectSpellDetailTriggers(clone);
+            btn.onclick = async (e) => {
+                e.stopPropagation();
+                const id = section.id || 'unknown';
+                
+                // Get section name for default title
+                const header = section.querySelector('.ct-subsection__header, .ct-section__header, .print-section-header span');
+                const sectionName = header ? header.textContent.trim() : 'Section';
+                
+                const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
+                
+                if (title) {
+                    const snapshot = captureSectionSnapshot(id);
+                    if (snapshot) {
+                        snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                        snapshot.title = title;
+                        
+                        const clone = renderClonedSection(snapshot);
+                        if (clone) {
+                            showFeedback(`Cloned: ${title}`);
+                            updateLayoutBounds();
+                            // Re-run injection to ensure new clone gets buttons
+                            injectCloneButtons(); 
+                            injectSpellDetailTriggers(clone);
+                        }
+                    } else {
+                        showFeedback('Failed to capture snapshot.');
                     }
-                } else {
-                    showFeedback('Failed to capture snapshot.');
                 }
-            }
-        };
+            };
+            actionContainer.appendChild(btn);
+        }
 
-        section.appendChild(btn);
-
-        // Inject Compact Mode button to NAMED sections (e.g. Spells, Actions, etc)
-        // EXCLUDE numbered sections (section-1, section-2, etc)
-        // Also support clones of these named sections (via data-original-id)
-        
+        // 2. Compact Mode Button
         const sourceId = section.dataset.originalId || section.id || '';
         const isNumbered = /^section-Section-\d+$/.test(sourceId);
         
-        // Ensure it's not a numbered section, but HAS an ID (or is a clone of one)
-        // And ensure we don't duplicate the button
-        if (sourceId && !isNumbered && !section.querySelector('.be-compact-button')) {
+        if (sourceId && !isNumbered && !actionContainer.querySelector('.be-compact-button')) {
             const compactBtn = document.createElement('button');
             compactBtn.className = 'be-compact-button';
             compactBtn.innerHTML = '📏'; 
@@ -3392,12 +3983,10 @@ function injectCloneButtons(context = document) {
                     compactBtn.style.backgroundColor = 'var(--btn-color-highlight)';
                 }
                 
-                // Trigger layout update
                 updateLayoutBounds();
             };
 
-            // Append next to clone button
-            section.appendChild(compactBtn);
+            actionContainer.appendChild(compactBtn);
         }
     });
 }
@@ -3503,46 +4092,6 @@ function injectCompactStyles() {
         .print-section-container.be-compact-mode [class$="__header"] {
             justify-content: flex-start !important; /* Align content to start */
         }
-
-        /* Reuse Clone Button Styles for Compact Button, but shifted */
-        .be-compact-button {
-            position: absolute;
-            top: 46px; /* Same as clone button */
-            left: 75px; /* 32px (clone left) + 39px (clone width) + 4px (gap) */
-            width: 39px;
-            height: 32px;
-            cursor: pointer;
-            z-index: 20;
-            opacity: 0;
-            background: var(--btn-color);
-            border: 1px solid rgb(85, 85, 85);
-            font-size: 20px !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.2s;
-            padding: 0;
-            margin: 0;
-            filter: drop-shadow(2px 4px 6px black);
-            border-radius: 32px;
-        }
-
-        /* Shift for clones to avoid Delete button (at left: 82px) */
-        .be-clone .be-compact-button {
-            left: 132px !important; /* 82px (delete left) + 39px (width) + 7px (gap) */
-        }    
-
-        /* Show on hover of the container - GENERIC */
-        .print-section-container:hover .be-compact-button {
-            opacity: 1;
-        }
-        
-        @media print {
-            .be-compact-button {
-                display: none !important;
-            }
-        }
-
 
         /* General width reductions for columns */
         .print-section-container.be-compact-mode [class$="__action"],
@@ -3675,6 +4224,11 @@ function injectCompactStyles() {
     window.flagExtractableElements = flagExtractableElements;
     window.findSectionTitle = findSectionTitle;
     window.createSpellDetailSection = createSpellDetailSection;
+    window.injectAppendButton = injectAppendButton;
+    window.getMergeTargets = getMergeTargets;
+    window.handleMergeSections = handleMergeSections;
+    window.handleElementExtraction = handleElementExtraction;
+    window.rollbackSection = rollbackSection;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
     window.getCharacterSpells = getCharacterSpells;

@@ -45,7 +45,7 @@ describe('Extraction Persistence', function() {
     const layout = await window.scanLayout();
     assert.ok(layout.extractions, 'Layout should have extractions array');
     assert.strictEqual(layout.extractions.length, 1, 'Should have one extraction');
-    assert.strictEqual(layout.extractions[0].selector, '.be-ext-actions');
+    assert.strictEqual(layout.extractions[0].selector, '.be-ext-actions.be-extractable');
     assert.strictEqual(layout.extractions[0].index, 0);
     assert.strictEqual(layout.extractions[0].originalId, 'target-1');
     // HTML should be removed from persistence
