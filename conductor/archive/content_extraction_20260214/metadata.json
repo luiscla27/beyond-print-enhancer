@@ -1,0 +1,8 @@
+{
+  "track_id": "content_extraction_20260214",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-14T15:30:00Z",
+  "updated_at": "2026-02-14T15:30:00Z",
+  "description": "add a new CSS class meant to identify "extractable" content, when any HTML Element is hovered the html should be outlined with a "before" text saying "Extract content with double click", the ":before" content should look like a cool tooltip. And when double clicked, a new section should be created at the side of the "extracted" content. The new section should directly append a clone of the ooutlined content. The outlined content must be set to "display:none" and be tracked with an ID from the newly created section, the new ID should be used to be able to "rollback" the extraction. The rollback will be performed when the new section its "closed". By default, all elements of the following selector should behave as described: `[class$="-group"]`, `[class$="-snippet--class"]`, `[class^="styles_actionsList__"]`, `[class^="styles_attackTable__"]`, `[class$="__traits"]`. The only exception would be nested elements, the reason for this behaviour to work with the CSS class as an activation flag, is so we can easily apply this functionality in the future to other elements"
+}
