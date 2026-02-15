@@ -728,6 +728,7 @@ async function handleElementExtraction(el) {
     el.style.setProperty('display', 'none', 'important');
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
     showFeedback(`Extracted ${title}`);
@@ -818,6 +819,7 @@ function renderExtractedSection(snapshot) {
     layoutRoot.appendChild(container);
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
     
     return container;
@@ -829,6 +831,155 @@ function renderExtractedSection(snapshot) {
 function findSectionTitle(el) {
     const titleEl = el.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
     return titleEl ? titleEl.textContent.trim() : null;
+}
+
+/**
+ * Gathers all potential merge targets and their display names.
+ * Targets include .be-extractable (on sheet) and .be-extracted-section (floating).
+ */
+function getMergeTargets() {
+    const targets = [];
+
+    // 1. Sheet Targets (be-extractable)
+    document.querySelectorAll('.be-extractable').forEach(el => {
+        // Find parent section for breadcrumb
+        const parentSection = el.closest('.print-section-container');
+        let sectionName = 'Sheet';
+        if (parentSection) {
+            const header = parentSection.querySelector('.print-section-header span');
+            sectionName = header ? header.textContent.trim() : 'Section';
+        }
+
+        const itemName = findSectionTitle(el) || el.textContent.trim().substring(0, 20);
+        targets.push({
+            type: 'sheet',
+            id: el.id,
+            name: `${sectionName} > ${itemName}`,
+            element: el
+        });
+    });
+
+    // 2. Floating Targets (be-extracted-section)
+    document.querySelectorAll('.print-section-container.be-extracted-section').forEach(el => {
+        const header = el.querySelector('.print-section-header span');
+        const itemName = header ? header.textContent.trim() : 'Extracted Section';
+        
+        // Find the inner standardized header if it exists for extra detail
+        const subHeader = el.querySelector('.ct-content-group__header-content');
+        const detail = subHeader ? ` (${subHeader.textContent.trim()})` : '';
+
+        targets.push({
+            type: 'section',
+            id: el.id,
+            name: `Floating: ${itemName}${detail}`,
+            element: el
+        });
+    });
+
+    return targets;
+}
+
+/**
+ * Injects an "Append after" button into an extracted section's header.
+ */
+function injectAppendButton(container) {
+    const header = container.querySelector('.print-section-header');
+    if (!header || header.querySelector('.be-append-button')) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'be-append-button';
+    btn.innerHTML = '🔗';
+    btn.title = 'Append after...';
+    btn.style.cursor = 'pointer';
+    btn.style.background = 'none';
+    btn.style.border = 'none';
+    btn.style.padding = '0 5px';
+    btn.style.fontSize = '14px';
+    
+    btn.onclick = async (e) => {
+        e.stopPropagation();
+        const targets = getMergeTargets().filter(t => t.element !== container);
+        if (targets.length === 0) {
+            showFeedback('No available targets found');
+            return;
+        }
+
+        const selectedTarget = await showTargetSelectionModal(targets);
+        if (selectedTarget) {
+            handleMergeSections(container, selectedTarget);
+        }
+    };
+
+    // Insert before compact button or X button
+    const compactBtn = header.querySelector('.be-compact-button');
+    const xBtn = header.querySelector('.print-section-minimize');
+    if (compactBtn) header.insertBefore(btn, compactBtn);
+    else if (xBtn) header.insertBefore(btn, xBtn);
+    else header.appendChild(btn);
+}
+
+/**
+ * Shows a modal to select a merge target.
+ */
+function showTargetSelectionModal(targets) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        overlay.style.zIndex = '30000'; // Higher than floating sections
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        modal.style.width = '500px';
+        modal.style.maxHeight = '80vh';
+        modal.style.overflowY = 'auto';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Select Append Target';
+        modal.appendChild(h3);
+
+        const list = document.createElement('div');
+        list.style.display = 'flex';
+        list.style.flexDirection = 'column';
+        list.style.gap = '5px';
+        list.style.marginTop = '15px';
+
+        targets.forEach(target => {
+            const btn = document.createElement('button');
+            btn.textContent = target.name;
+            btn.className = 'ct-theme-button';
+            btn.style.textAlign = 'left';
+            btn.style.padding = '8px 12px';
+            btn.style.width = '100%';
+            btn.onclick = () => {
+                overlay.remove();
+                resolve(target);
+            };
+            list.appendChild(btn);
+        });
+
+        modal.appendChild(list);
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.style.marginTop = '15px';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        modal.appendChild(cancelBtn);
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+    });
+}
+
+/**
+ * Handles the logic of merging one section into another target.
+ */
+function handleMergeSections(sourceContainer, targetInfo) {
+    console.log(`[DDB Print] Merging ${sourceContainer.id} into ${targetInfo.id} (${targetInfo.type})`);
+    // Phase 3 implementation
 }
 
 /**
@@ -1982,6 +2133,9 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
 
     layoutRoot.appendChild(container);
 
+    if (window.injectCloneButtons) window.injectCloneButtons(container);
+    if (window.injectAppendButton) window.injectAppendButton(container);
+    
     // 2. Fetch Data
     const spell = await fetchSpellWithCache(spellName);
     
@@ -3709,6 +3863,9 @@ function injectCompactStyles() {
     window.flagExtractableElements = flagExtractableElements;
     window.findSectionTitle = findSectionTitle;
     window.createSpellDetailSection = createSpellDetailSection;
+    window.injectAppendButton = injectAppendButton;
+    window.getMergeTargets = getMergeTargets;
+    window.handleMergeSections = handleMergeSections;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
     window.getCharacterSpells = getCharacterSpells;

@@ -2,18 +2,18 @@
 
 This plan follows the TDD methodology and quality gates defined in `workflow.md`.
 
-## Phase 1: Standardization & Spell Optimization
-- [~] Task: Mark `be-spell-detail` sections with the `.be-extracted-section` class
-- [ ] Task: Refactor spell detail persistence to save only the spell name and reconstruct content from `spell_cache` during load
-- [ ] Task: Update `scanLayout` and `applyLayout` to handle the new optimized spell storage
-- [ ] Task: Write unit tests for cache-based spell reconstruction and optimized persistence
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Standardization' (Protocol in workflow.md)
+## Phase 1: Standardization & Spell Optimization [checkpoint: 213bb3e]
+- [x] Task: Mark `be-spell-detail` sections with the `.be-extracted-section` class 213bb3e
+- [x] Task: Refactor spell detail persistence to save only the spell name and reconstruct content from `spell_cache` during load 213bb3e
+- [x] Task: Update `scanLayout` and `applyLayout` to handle the new optimized spell storage 213bb3e
+- [x] Task: Write unit tests for cache-based spell reconstruction and optimized persistence 213bb3e
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Standardization' (Protocol in workflow.md) 213bb3e
 
 ## Phase 2: Merge UI & Discovery
-- [ ] Task: Implement the "Append after" button injection logic for all `.be-extracted-section` headers
-- [ ] Task: Implement target discovery logic to gather all `be-extractable` groups and `be-extracted-section` containers
-- [ ] Task: Implement hierarchical breadcrumb naming (e.g., "Actions > Attacks") for target identification
-- [ ] Task: Create the Merge Target Modal UI to display and select targets
+- [~] Task: Implement the "Append after" button injection logic for all `.be-extracted-section` headers
+- [~] Task: Implement target discovery logic to gather all `be-extractable` groups and `be-extracted-section` containers
+- [~] Task: Implement hierarchical breadcrumb naming (e.g., "Actions > Attacks") for target identification
+- [~] Task: Create the Merge Target Modal UI to display and select targets
 - [ ] Task: Write unit tests for target list generation and breadcrumb formatting
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Merge UI' (Protocol in workflow.md)
 
