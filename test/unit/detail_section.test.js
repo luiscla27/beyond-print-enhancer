@@ -27,16 +27,28 @@ describe('UI - Spell Detail Section', function() {
     window.indexedDB = global.indexedDB;
     window.__DDB_TEST_MODE__ = true;
     
-    // Mock fetch BEFORE eval
-    window.fetch = async () => ({
-      ok: true,
-      json: async () => ({
-        data: {
-          classSpells: [],
-          spells: { race: [], class: [], feat: [], item: [] }
+    // Mock chrome.runtime.sendMessage for MV3 background fetch
+    window.chrome = {
+      runtime: {
+        sendMessage: (message, callback) => {
+          if (message.type === 'FETCH_CHARACTER_DATA') {
+            if (message.url.includes('NonExistent')) {
+              callback({ success: false, error: 'Not Found' });
+            } else {
+              callback({
+                success: true,
+                data: {
+                  data: {
+                    classSpells: [],
+                    spells: { race: [], class: [], feat: [], item: [] }
+                  }
+                }
+              });
+            }
+          }
         }
-      })
-    });
+      }
+    };
 
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {

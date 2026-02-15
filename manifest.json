@@ -13,6 +13,10 @@
     "scripting",
     "contextMenus"
   ],
+  "host_permissions": [
+    "https://www.dndbeyond.com/characters/*",
+    "https://character-service.dndbeyond.com/character/v5/character/*"
+  ],
   "background": {
     "service_worker": "js/background.js"
   },

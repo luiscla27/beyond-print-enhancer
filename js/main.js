@@ -2431,10 +2431,18 @@ async function getCharacterSpells(charId) {
     const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
     
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Could not fetch character data. Are you logged in?");
+        // In MV3, cross-origin fetch must be done from background script
+        const response = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: 'FETCH_CHARACTER_DATA', url }, (result) => {
+                resolve(result);
+            });
+        });
+
+        if (!response || !response.success) {
+            throw new Error(response ? response.error : "Could not fetch character data via background.");
+        }
         
-        const json = await response.json();
+        const json = response.data;
         const data = json.data;
 
         // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
