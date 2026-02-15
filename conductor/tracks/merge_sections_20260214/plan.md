@@ -24,15 +24,15 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Write unit tests for the merge lifecycle: Move -> Destroy Source -> Multi-Rollback 95b9117
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Merge Execution' (Protocol in workflow.md) 95b9117
 
-## Phase 4: Relationship Persistence
-- [ ] Task: Update the layout schema to support nesting relationships (tracking which IDs are appended to which sections)
-- [ ] Task: Update `scanLayout` to capture the hierarchical state of merged sections
-- [ ] Task: Update `applyLayout` to reconstruct merged structures and hide all associated original elements
-- [ ] Task: Update `handleLoadDefault` to ensure all merged sections are fully unrolled and removed
-- [ ] Task: Write integration tests for save/load persistence of merged/appended sections
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md)
+## Phase 4: Relationship Persistence [checkpoint: aaa8275]
+- [x] Task: Update the layout schema to support nesting relationships (tracking which IDs are appended to which sections) aaa8275
+- [x] Task: Update `scanLayout` to capture the hierarchical state of merged sections aaa8275
+- [x] Task: Update `applyLayout` to reconstruct merged structures and hide all associated original elements aaa8275
+- [x] Task: Update `handleLoadDefault` to ensure all merged sections are fully unrolled and removed aaa8275
+- [x] Task: Write integration tests for save/load persistence of merged/appended sections aaa8275
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Persistence' (Protocol in workflow.md) aaa8275
 
 ## Phase 5: Final Integration & E2E
-- [ ] Task: Perform full E2E manual verification of merging spells into actions, groups into groups, and sections into sections
-- [ ] Task: Verify that "Compact Mode" and "Resize" work correctly on merged containers
+- [~] Task: Perform full E2E manual verification of merging spells into actions, groups into groups, and sections into sections
+- [~] Task: Verify that "Compact Mode" and "Resize" work correctly on merged containers
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Final Verification' (Protocol in workflow.md)
