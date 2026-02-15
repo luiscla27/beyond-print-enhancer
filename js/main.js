@@ -703,12 +703,7 @@ async function handleElementExtraction(el) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
             e.stopPropagation();
-            // Rollback
-            const original = document.getElementById(el.id);
-            if (original) original.style.display = '';
-            container.remove();
-            updateLayoutBounds();
-            showFeedback('Extraction rolled back');
+            rollbackSection(container);
         };
     }
 
@@ -789,10 +784,7 @@ function renderExtractedSection(snapshot) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
             e.stopPropagation();
-            if (original) original.style.setProperty('display', '', 'important');
-            container.remove();
-            updateLayoutBounds();
-            showFeedback('Extraction rolled back');
+            rollbackSection(container);
         };
     }
 
@@ -978,8 +970,85 @@ function showTargetSelectionModal(targets) {
  * Handles the logic of merging one section into another target.
  */
 function handleMergeSections(sourceContainer, targetInfo) {
-    console.log(`[DDB Print] Merging ${sourceContainer.id} into ${targetInfo.id} (${targetInfo.type})`);
-    // Phase 3 implementation
+    const sourceContent = sourceContainer.querySelector('.print-section-content');
+    if (!sourceContent) return;
+
+    const sourceId = sourceContainer.dataset.originalId;
+    const sourceAssociatedIds = sourceContainer.dataset.associatedIds ? JSON.parse(sourceContainer.dataset.associatedIds) : [];
+    const allSourceIds = [sourceId, ...sourceAssociatedIds].filter(id => id);
+
+    let targetContainer = null;
+    let appendTarget = null;
+
+    if (targetInfo.type === 'section') {
+        targetContainer = targetInfo.element;
+        appendTarget = targetContainer.querySelector('.print-section-content');
+    } else {
+        // Sheet target: append after the element
+        appendTarget = targetInfo.element;
+        // In this case, there's no "container" to hold associated IDs in the DOM,
+        // UNLESS we wrap the appended content in a marker div?
+        // But the requirement is "append after".
+        // Let's create a marker div to hold the rolled back content if needed?
+        // No, the requirement says "rollback will be performed when the NEW section is closed".
+        // If it's appended to the sheet, it's NOT a section.
+        // Wait, "They should be able to be appended at any other section AFTER any content marked as be-extractable".
+        // This means appending to the sheet content.
+        // If it's on the sheet, it doesn't have a close button. 
+        // So maybe only sections (floating) can be "Closed"?
+        // Yes, "rollback will be performed when the NEW section its closed".
+    }
+
+    if (appendTarget) {
+        // Move all children of sourceContent to appendTarget
+        while (sourceContent.firstChild) {
+            const child = sourceContent.firstChild;
+            // Add a class to identify merged blocks for easier rollback if needed?
+            // Actually the IDs are enough.
+            
+            if (targetInfo.type === 'section') {
+                appendTarget.appendChild(child);
+            } else {
+                // Insert after target element on sheet
+                appendTarget.parentNode.insertBefore(child, appendTarget.nextSibling);
+                // Update appendTarget pointer so next child goes after this one
+                appendTarget = child;
+            }
+        }
+
+        // If target is a section, track IDs for rollback
+        if (targetContainer) {
+            const targetAssociatedIds = targetContainer.dataset.associatedIds ? JSON.parse(targetContainer.dataset.associatedIds) : [];
+            const newAssociatedIds = [...targetAssociatedIds, ...allSourceIds];
+            targetContainer.dataset.associatedIds = JSON.stringify(newAssociatedIds);
+        }
+
+        // Destroy source container
+        sourceContainer.remove();
+        updateLayoutBounds();
+        showFeedback(`Merged into ${targetInfo.name}`);
+    }
+}
+
+/**
+ * Rolls back a section, restoring all associated original elements.
+ */
+function rollbackSection(container) {
+    const originalId = container.dataset.originalId;
+    const associatedIds = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
+    
+    const allIds = [originalId, ...associatedIds].filter(id => id);
+    
+    allIds.forEach(id => {
+        const original = document.getElementById(id);
+        if (original) {
+            original.style.setProperty('display', '', 'important');
+        }
+    });
+
+    container.remove();
+    updateLayoutBounds();
+    showFeedback('Extraction rolled back');
 }
 
 /**
@@ -2091,15 +2160,15 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
     const header = container.querySelector('.print-section-header');
     if (header) {
         // Change existing X button to remove for spell details
-        const xBtn = header.querySelector('.print-section-minimize');
-        if (xBtn) {
-            xBtn.title = 'Remove Section';
-            xBtn.onclick = (e) => {
-                e.stopPropagation();
-                container.remove();
-                updateLayoutBounds();
-            };
-        }
+            const xBtn = header.querySelector('.print-section-minimize');
+            if (xBtn) {
+                xBtn.title = 'Remove Section';
+                xBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    rollbackSection(container);
+                };
+            }
+        
     }
 
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
@@ -3866,6 +3935,7 @@ function injectCompactStyles() {
     window.injectAppendButton = injectAppendButton;
     window.getMergeTargets = getMergeTargets;
     window.handleMergeSections = handleMergeSections;
+    window.rollbackSection = rollbackSection;
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
     window.getCharacterSpells = getCharacterSpells;

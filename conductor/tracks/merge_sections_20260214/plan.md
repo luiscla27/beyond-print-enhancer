@@ -9,18 +9,18 @@ This plan follows the TDD methodology and quality gates defined in `workflow.md`
 - [x] Task: Write unit tests for cache-based spell reconstruction and optimized persistence 213bb3e
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Standardization' (Protocol in workflow.md) 213bb3e
 
-## Phase 2: Merge UI & Discovery
-- [~] Task: Implement the "Append after" button injection logic for all `.be-extracted-section` headers
-- [~] Task: Implement target discovery logic to gather all `be-extractable` groups and `be-extracted-section` containers
-- [~] Task: Implement hierarchical breadcrumb naming (e.g., "Actions > Attacks") for target identification
-- [~] Task: Create the Merge Target Modal UI to display and select targets
-- [ ] Task: Write unit tests for target list generation and breadcrumb formatting
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Merge UI' (Protocol in workflow.md)
+## Phase 2: Merge UI & Discovery [checkpoint: a8f6b84]
+- [x] Task: Implement the "Append after" button injection logic for all `.be-extracted-section` headers a8f6b84
+- [x] Task: Implement target discovery logic to gather all `be-extractable` groups and `be-extracted-section` containers a8f6b84
+- [x] Task: Implement hierarchical breadcrumb naming (e.g., "Actions > Attacks") for target identification a8f6b84
+- [x] Task: Create the Merge Target Modal UI to display and select targets a8f6b84
+- [x] Task: Write unit tests for target list generation and breadcrumb formatting a8f6b84
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Merge UI' (Protocol in workflow.md) a8f6b84
 
 ## Phase 3: Merge Execution & Rollback
-- [ ] Task: Implement merge execution logic: move content to target location and destroy source container
-- [ ] Task: Implement relationship tracking to support "Independent Rollback" (restoring multiple associated original elements)
-- [ ] Task: Update the section 'X' button logic to handle rolling back all merged/appended content
+- [~] Task: Implement merge execution logic: move content to target location and destroy source container
+- [~] Task: Implement relationship tracking to support "Independent Rollback" (restoring multiple associated original elements)
+- [~] Task: Update the section 'X' button logic to handle rolling back all merged/appended content
 - [ ] Task: Write unit tests for the merge lifecycle: Move -> Destroy Source -> Multi-Rollback
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Merge Execution' (Protocol in workflow.md)
 
