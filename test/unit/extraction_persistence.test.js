@@ -34,7 +34,7 @@ describe('Extraction Persistence', function() {
     await window.Storage.init();
   });
 
-  it('should include extractions in scanLayout', async function() {
+  it('should include extractions in scanLayout with selector info', async function() {
     const target = document.getElementById('target-1');
     window.flagExtractableElements();
     
@@ -45,11 +45,18 @@ describe('Extraction Persistence', function() {
     const layout = await window.scanLayout();
     assert.ok(layout.extractions, 'Layout should have extractions array');
     assert.strictEqual(layout.extractions.length, 1, 'Should have one extraction');
+    assert.strictEqual(layout.extractions[0].selector, '.be-ext-actions');
+    assert.strictEqual(layout.extractions[0].index, 0);
     assert.strictEqual(layout.extractions[0].originalId, 'target-1');
-    assert.ok(layout.extractions[0].html.includes('Content 1'));
+    // HTML should be removed from persistence
+    assert.strictEqual(layout.extractions[0].html, undefined, 'HTML should not be saved');
   });
 
-  it('should restore extractions in applyLayout', async function() {
+  it('should restore extractions in applyLayout using live content and selector', async function() {
+    // Update live content before apply
+    const liveOriginal = document.getElementById('target-1');
+    liveOriginal.innerHTML = '<h3 class="head">Live Actions</h3><p>Live Updated Content</p>';
+
     const layout = {
         version: '1.2.0',
         sections: {},
@@ -57,8 +64,9 @@ describe('Extraction Persistence', function() {
         extractions: [{
             id: 'ext-123',
             originalId: 'target-1',
-            title: 'Saved Extraction',
-            html: '<div class="ct-content-group__header">Saved Extraction</div><div id="target-1">Restored Content</div>',
+            selector: '.be-ext-actions',
+            index: 0,
+            title: 'Saved Title',
             left: '100px',
             top: '200px'
         }]
@@ -68,11 +76,10 @@ describe('Extraction Persistence', function() {
     
     const extraction = document.getElementById('ext-123');
     assert.ok(extraction, 'Extraction should be rendered');
+    assert.ok(extraction.textContent.includes('Live Updated Content'), 'Should show live content from DOM');
     assert.strictEqual(extraction.style.left, '100px');
     
     const original = document.getElementById('target-1');
-    // Note: In JSDOM, if we replace the body or have multiple elements with same ID it might be tricky.
-    // But renderExtractedSection looks for originalId in document.
     assert.strictEqual(original.style.display, 'none', 'Original element should be hidden on restore');
   });
 });

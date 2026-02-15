@@ -602,13 +602,18 @@ function injectSpellDetailTriggers(context = document) {
  * Scans the DOM for elements that match extraction criteria and flags them.
  * Implements Top-Down Priority: nested matching elements are ignored.
  */
+/**
+ * Scans the DOM for elements that match extraction criteria and flags them.
+ * Implements Top-Down Priority: nested matching elements are ignored.
+ * Also injects a unique-ish class based on content for stable persistence.
+ */
 function flagExtractableElements() {
     const selectors = [
-        '[class$="-group"]',
-        '[class$="-snippet--class"]',
-        '[class^="styles_actionsList__"]',
-        '[class^="styles_attackTable__"]',
-        '[class$="__traits"]'
+        '[class*="-group"]',
+        '[class*="-snippet--class"]',
+        '[class*="styles_actionsList__"]',
+        '[class*="styles_attackTable__"]',
+        '[class*="__traits"]'
     ];
 
     const elements = Array.from(document.querySelectorAll(selectors.join(', ')));
@@ -623,6 +628,21 @@ function flagExtractableElements() {
         if (!isNested) {
             el.classList.add('be-extractable');
             
+            // Generate and add an extraction-specific identification class
+            let title = findSectionTitle(el);
+            if (!title) {
+                title = el.textContent.trim().substring(0, 8);
+            }
+            
+            if (title) {
+                const sanitized = title.toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '_')
+                    .replace(/^_+|_+$/g, '');
+                
+                const idClass = `be-ext-${sanitized || 'content'}`;
+                el.classList.add(idClass);
+            }
+
             // Attach extraction listener
             el.ondblclick = async (e) => {
                 e.stopPropagation();
@@ -705,7 +725,7 @@ async function handleElementExtraction(el) {
     container.style.zIndex = '10000';
 
     layoutRoot.appendChild(container);
-    el.style.display = 'none';
+    el.style.setProperty('display', 'none', 'important');
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.initResizeLogic) window.initResizeLogic();
@@ -717,39 +737,73 @@ async function handleElementExtraction(el) {
  * Renders an extracted section from a snapshot.
  */
 function renderExtractedSection(snapshot) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = snapshot.html;
+    // 1. Resolve the original element
+    let original = document.getElementById(snapshot.originalId);
+    
+    // If ID lookup fails (common on reloads), use the selector path
+    if (!original && snapshot.selector && snapshot.index !== undefined) {
+        const matches = document.querySelectorAll(snapshot.selector);
+        original = matches[snapshot.index];
+        // Re-assign the ID if found so rollback works
+        if (original) {
+            original.id = snapshot.originalId;
+        }
+    }
 
-    const container = createDraggableContainer(snapshot.title, tempDiv, snapshot.id);
+    if (!original) {
+        console.warn(`[DDB Print] Could not resolve original for extraction: ${snapshot.title}`);
+        return null;
+    }
+
+    // 2. Clone LIVE content
+    const sourceElement = original.cloneNode(true);
+    sourceElement.style.display = ''; 
+    sourceElement.classList.remove('be-extractable');
+    
+    // Hide original title inside the live clone to avoid duplication
+    const originalHeader = sourceElement.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+    if (originalHeader) {
+        originalHeader.style.display = 'none';
+    }
+
+    // 3. Assemble standardized header
+    const contentWrapper = document.createElement('div');
+    const header = document.createElement('div');
+    header.className = 'ct-content-group__header';
+    const headerContent = document.createElement('div');
+    headerContent.className = 'ct-content-group__header-content';
+    headerContent.textContent = snapshot.title;
+    header.appendChild(headerContent);
+
+    contentWrapper.appendChild(header);
+    contentWrapper.appendChild(sourceElement);
+
+    const container = createDraggableContainer(snapshot.title, contentWrapper, snapshot.id);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = snapshot.originalId;
 
-    // Link rollback logic
+    // 4. Link rollback logic
     const xBtn = container.querySelector('.print-section-minimize');
     if (xBtn) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
             e.stopPropagation();
-            const original = document.getElementById(snapshot.originalId);
-            if (original) original.style.display = '';
+            if (original) original.style.setProperty('display', '', 'important');
             container.remove();
             updateLayoutBounds();
             showFeedback('Extraction rolled back');
         };
     }
 
-    // Hide original in DOM if it exists
-    const original = document.getElementById(snapshot.originalId);
-    if (original) {
-        original.style.display = 'none';
-    }
+    // 5. Hide original in DOM
+    original.style.setProperty('display', 'none', 'important');
 
-    // Apply styles
-    if (snapshot.width) container.style.width = snapshot.width;
-    if (snapshot.height) container.style.height = snapshot.height;
-    if (snapshot.left) container.style.left = snapshot.left;
-    if (snapshot.top) container.style.top = snapshot.top;
-    if (snapshot.zIndex) container.style.zIndex = snapshot.zIndex;
+    // 6. Apply styles
+    if (snapshot.width) container.style.setProperty('width', snapshot.width, 'important');
+    if (snapshot.height) container.style.setProperty('height', snapshot.height, 'important');
+    if (snapshot.left) container.style.setProperty('left', snapshot.left, 'important');
+    if (snapshot.top) container.style.setProperty('top', snapshot.top, 'important');
+    if (snapshot.zIndex) container.style.setProperty('z-index', snapshot.zIndex, 'important');
 
     if (snapshot.minimized) {
         container.dataset.minimized = 'true';
@@ -2969,6 +3023,24 @@ async function scanLayout() {
         spell_cache: []
     };
 
+    // Helper to get a stable unique selector for extraction
+    const getExtractionSelector = (el) => {
+        // Find the identification class (prefixed with be-ext-)
+        const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
+        if (!idClass) return null;
+
+        const selector = `.${idClass}.be-extractable`;
+
+        // Find the index among all elements matching this name-based class (excluding our containers)
+        const matches = Array.from(document.querySelectorAll(selector));
+        const index = matches.indexOf(el);
+        
+        if (index !== -1) {
+            return { selector, index };
+        }
+        return null;
+    };
+
     // Include cached spells
     try {
         await Storage.init();
@@ -3001,13 +3073,14 @@ async function scanLayout() {
         }
 
         if (section.classList.contains('be-extracted-section')) {
-            const content = section.querySelector('.print-section-content');
             const header = section.querySelector('.print-section-header span');
-            layout.extractions.push({
+            const originalId = section.dataset.originalId;
+            const original = document.getElementById(originalId);
+            
+            const extractionData = {
                 id: id,
-                originalId: section.dataset.originalId,
+                originalId: originalId,
                 title: header ? header.textContent.trim() : 'Extracted',
-                html: content ? content.innerHTML : '',
                 left: section.style.left,
                 top: section.style.top,
                 width: section.style.width,
@@ -3015,7 +3088,18 @@ async function scanLayout() {
                 zIndex: section.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode')
-            });
+            };
+
+            // Add selector for stable resolution across reloads
+            if (original) {
+                const resolution = getExtractionSelector(original);
+                if (resolution) {
+                    extractionData.selector = resolution.selector;
+                    extractionData.index = resolution.index;
+                }
+            }
+
+            layout.extractions.push(extractionData);
             return;
         }
 
