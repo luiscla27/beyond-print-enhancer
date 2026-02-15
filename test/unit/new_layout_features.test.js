@@ -350,7 +350,7 @@ describe('Recent Layout Features', function() {
           const labels = Array.from(buttons).map(b => b.textContent.trim());
           assert.ok(labels.some(l => l.includes('Save to Browser')));
           assert.ok(labels.some(l => l.includes('Save to PC')));
-          assert.ok(labels.some(l => l.includes('Load Default')));
+          assert.ok(labels.some(l => l.includes('Reset to Default')));
           assert.ok(labels.some(l => l.includes('Load')));
           assert.ok(labels.some(l => l.includes('Contribute')));
       });

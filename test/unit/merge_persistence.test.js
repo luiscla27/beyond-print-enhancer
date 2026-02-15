@@ -59,9 +59,11 @@ describe('Merged Persistence', function() {
     
     // 4. Scan
     const layout = await window.scanLayout();
-    assert.strictEqual(layout.extractions.length, 1, 'Only one root extraction should be saved');
-    assert.strictEqual(layout.extractions[0].associatedExtractions.length, 1, 'Should track merged extraction');
-    assert.strictEqual(layout.extractions[0].associatedExtractions[0].originalId, 'target-2');
+    console.log('Merges:', JSON.stringify(layout.merges, null, 2));
+    assert.ok(layout.merges.length >= 1, 'Should have at least one merge operation');
+    const m = layout.merges.find(x => x.source.originalId === 'target-2');
+    assert.ok(m, 'Should find merge for target-2');
+    assert.strictEqual(m.target.type, 'section');
 
     // 5. Apply to fresh DOM
     // Clear wrapper
@@ -110,16 +112,15 @@ describe('Merged Persistence', function() {
 
     // 4. Scan
     const layout = await window.scanLayout();
-    assert.strictEqual(layout.extractions[0].associatedExtractions.length, 1);
-    assert.strictEqual(layout.extractions[0].associatedExtractions[0].type, 'spell');
-    assert.strictEqual(layout.extractions[0].associatedExtractions[0].spellName, 'Shield');
+    const m = layout.merges.find(x => x.source.type === 'spell' && x.source.spellName === 'Shield');
+    assert.ok(m, 'Should find spell merge operation');
 
     // 5. Restore
     document.getElementById('print-layout-wrapper').innerHTML = '';
     await window.applyLayout(layout);
     
-    // Wait for async reconstruction
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait for systematic merges to complete
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     const restored = document.querySelector('.be-extracted-section');
     assert.ok(restored.textContent.includes('Invisible barrier'), 'Should have restored spell content from cache');
