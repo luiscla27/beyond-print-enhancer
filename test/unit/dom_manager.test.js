@@ -28,18 +28,9 @@ describe('DomManager & ElementWrapper', () => {
         global.HTMLElement = window.HTMLElement;
         global.NodeList = window.NodeList;
 
-        // Load modules (simulated require if they were ES modules, but we'll use CommonJS for test compatibility if needed, 
-        // or just require them normally assuming they are written as CommonJS or we have a transform. 
-        // Given the project seems to use vanilla JS for extension, I'll likely need to use standard require.
-        // If the files are ES modules (with export), Node might complain without configuration.
-        // Let's assume standard CommonJS for now or that I can require them.
-        
-        // Wait, the project is a Chrome Extension, usually vanilla JS. 
-        // I might need to mock the module loading if they are just scripts.
-        // But for unit testing logic, I should write them as testable modules.
-        // I will write them as classes that can be exported.
-        
-        ElementWrapper = require('../../js/dom/element_wrapper.js');
+        // Load modules
+        global.ElementWrapper = require('../../js/dom/element_wrapper.js');
+        ElementWrapper = global.ElementWrapper;
         DomManager = require('../../js/dom/dom_manager.js');
     });
 
@@ -110,6 +101,55 @@ describe('DomManager & ElementWrapper', () => {
             assert.ok(manager.selectors.CORE);
         });
 
-        // We will add specific selector tests in the next phase/task when we populate them
+        describe('Core Layout Methods', () => {
+            let manager;
+            
+            before(() => {
+                manager = DomManager.getInstance();
+            });
+
+            it('should retrieve the character sheet', () => {
+                // Setup fake DOM
+                document.body.innerHTML = '<div class="ct-character-sheet-desktop"></div>';
+                const wrapper = manager.getCharacterSheet();
+                assert.ok(wrapper instanceof ElementWrapper);
+                assert.ok(wrapper.element);
+                assert.strictEqual(wrapper.element.className, 'ct-character-sheet-desktop');
+            });
+
+            it('should retrieve the sidebar', () => {
+                document.body.innerHTML = '<div class="ct-sidebar"></div>';
+                const wrapper = manager.getSidebar();
+                assert.ok(wrapper instanceof ElementWrapper);
+                assert.strictEqual(wrapper.element.className, 'ct-sidebar');
+            });
+            
+            it('should retrieve navigation tabs', () => {
+                document.body.innerHTML = `
+                    <div class="ct-character-sheet-desktop">
+                        <nav>
+                            <div class="ct-primary-box__tab--actions">Actions</div>
+                            <div class="ct-primary-box__tab--spells">Spells</div>
+                        </nav>
+                    </div>`;
+                const wrapper = manager.getNavigation();
+                assert.ok(wrapper instanceof ElementWrapper);
+                assert.strictEqual(wrapper.element.tagName, 'NAV');
+            });
+
+            it('should hide core interface elements', () => {
+                document.body.innerHTML = `
+                    <div class="site-bar">Site Bar</div>
+                    <header class="main">Header</header>
+                    <div class="ct-sidebar">Sidebar</div>
+                    <nav class="navigation">Nav</nav>
+                `;
+                manager.hideCoreInterface();
+                assert.strictEqual(document.querySelector('.site-bar').style.display, 'none');
+                assert.strictEqual(document.querySelector('header.main').style.display, 'none');
+                assert.strictEqual(document.querySelector('.ct-sidebar').style.display, 'none');
+                assert.strictEqual(document.querySelector('nav.navigation').style.display, 'none');
+            });
+        });
     });
 });

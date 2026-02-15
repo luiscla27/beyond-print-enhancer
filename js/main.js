@@ -1330,10 +1330,14 @@ async function injectClonesIntoSpellsView() {
   });
 
   // 8. Hide Navigation UI
-  const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
-                  document.querySelector('nav[class*="styles_navigation"]');
-  if (navTabs) {
-      navTabs.style.display = 'none';
+  if (window.DomManager) {
+    window.DomManager.getInstance().getNavigation().hide();
+  } else {
+    const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
+                    document.querySelector('nav[class*="styles_navigation"]');
+    if (navTabs) {
+        navTabs.style.display = 'none';
+    }
   }
   
   // 9. Inject spell detail triggers into all sections
@@ -1370,10 +1374,15 @@ function moveDefenses() {
  */
 function tweakStyles() {
   // Hide major UI components
-  safeQueryAll([
-    'div.site-bar', 'header.main', '#mega-menu-target', 
-    '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
-  ]).forEach(e => { e.style.display = 'none'; });
+  if (window.DomManager) {
+    window.DomManager.getInstance().hideCoreInterface();
+  } else {
+    // Fallback or legacy (though DomManager should be present)
+    safeQueryAll([
+      'div.site-bar', 'header.main', '#mega-menu-target', 
+      '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
+    ]).forEach(e => { e.style.display = 'none'; });
+  }
 
   const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
   if (name) name.style['color'] = 'black';
@@ -1417,7 +1426,14 @@ function movePortrait() {
  */
 function moveQuickInfo() {
     // User Request: Make .ct-quick-info draggable
-    const quickInfo = document.querySelector('.ct-quick-info');
+    let quickInfo;
+    if (window.DomManager) {
+        const wrapper = window.DomManager.getInstance().getQuickInfo();
+        quickInfo = wrapper ? wrapper.element : null;
+    } else {
+        quickInfo = document.querySelector('.ct-quick-info');
+    }
+
     if (quickInfo) {
         const layoutRoot = document.getElementById('print-layout-wrapper');
         if (layoutRoot) {
