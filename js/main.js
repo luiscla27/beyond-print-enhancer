@@ -679,23 +679,36 @@ async function handleElementExtraction(el) {
         originalHeader.style.display = 'none';
     }
     
-    // Add standardized header to content area
+    // Create section content using a DocumentFragment to avoid extra intermediate DIVs
+    const fragment = document.createDocumentFragment();
+
+    // Standardized header
     const header = document.createElement('div');
     header.className = 'ct-content-group__header';
     const headerContent = document.createElement('div');
     headerContent.className = 'ct-content-group__header-content';
     headerContent.textContent = title;
     header.appendChild(headerContent);
+    fragment.appendChild(header);
 
-    const contentWrapper = document.createElement('div');
-    contentWrapper.appendChild(header);
-    contentWrapper.appendChild(clone);
+    // If it's a merge wrapper, we take its children to avoid redundant DIV nesting
+    if (clone.classList.contains('be-merge-wrapper')) {
+        while (clone.firstChild) {
+            fragment.appendChild(clone.firstChild);
+        }
+    } else {
+        fragment.appendChild(clone);
+    }
 
     // 4. Create floating section
     const sectionId = `extracted-section-${Date.now()}`;
-    const container = createDraggableContainer(title, contentWrapper, sectionId);
+    const container = createDraggableContainer(title, fragment, sectionId);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = el.id;
+    
+    // Store identification class for future merges
+    const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
+    if (idClass) container.dataset.beExtClass = idClass;
 
     // 5. Customize Close Button for Rollback
     const xBtn = container.querySelector('.print-section-minimize');
@@ -720,7 +733,18 @@ async function handleElementExtraction(el) {
     container.style.zIndex = '10000';
 
     layoutRoot.appendChild(container);
-    el.style.setProperty('display', 'none', 'important');
+    
+    // In the case of spell sections, destroy original instead of hiding
+    // (They are ephemeral and don't have a home on the sheet to rollback to)
+    const isSpell = el.classList.contains('be-spell-detail') || 
+                    el.id.startsWith('spell-detail-') || 
+                    el.querySelector('[data-be-spell-merge]');
+
+    if (isSpell) {
+        el.remove();
+    } else {
+        el.style.setProperty('display', 'none', 'important');
+    }
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
@@ -777,6 +801,12 @@ function renderExtractedSection(snapshot) {
     const container = createDraggableContainer(snapshot.title, contentWrapper, snapshot.id);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = snapshot.originalId;
+    
+    // Restore identification class for future merges
+    if (snapshot.selector) {
+        const idClass = snapshot.selector.split('.')[1]; // .be-ext-xxx.be-extractable -> be-ext-xxx
+        if (idClass) container.dataset.beExtClass = idClass;
+    }
 
     // 4. Link rollback logic
     const xBtn = container.querySelector('.print-section-minimize');
@@ -837,8 +867,22 @@ function renderExtractedSection(snapshot) {
                     `;
 
                     const aWrapper = document.createElement('div');
+                    aWrapper.classList.add('be-merge-wrapper');
                     aWrapper.appendChild(aStdHeader);
                     aWrapper.appendChild(aContent);
+
+                    // Make merged spell extractable again
+                    aWrapper.classList.add('be-extractable');
+                    const aSanitized = spell.name.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '_')
+                        .replace(/^_+|_+$/g, '');
+                    aWrapper.classList.add(`be-ext-${aSanitized}`);
+                    
+                    aWrapper.ondblclick = async (e) => {
+                        e.stopPropagation();
+                        await handleElementExtraction(aWrapper);
+                    };
+
                     contentWrapper.appendChild(aWrapper);
 
                     const associated = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
@@ -872,8 +916,20 @@ function renderExtractedSection(snapshot) {
                     aStdHeader.appendChild(aStdHeaderContent);
 
                     const aWrapper = document.createElement('div');
+                    aWrapper.classList.add('be-merge-wrapper');
                     aWrapper.appendChild(aStdHeader);
                     aWrapper.appendChild(aClone);
+
+                    // Make merged group extractable again
+                    aWrapper.classList.add('be-extractable');
+                    if (aEx.selector) {
+                        const aIdClass = aEx.selector.split('.')[1];
+                        if (aIdClass) aWrapper.classList.add(aIdClass);
+                    }
+                    aWrapper.ondblclick = async (e) => {
+                        e.stopPropagation();
+                        await handleElementExtraction(aWrapper);
+                    };
 
                     // Append to host content
                     if (contentWrapper) {
@@ -1068,33 +1124,68 @@ function handleMergeSections(sourceContainer, targetInfo) {
     } else {
         // Sheet target: append after the element
         appendTarget = targetInfo.element;
-        targetContainer = appendTarget.closest('.print-section-container');
+        // Search for the closest section container OR the sheet body wrapper
+        targetContainer = appendTarget.closest('.print-section-container') || document.getElementById('print-layout-wrapper');
     }
 
     if (appendTarget) {
+        // Create a wrapper that mimics the target's classes (to preserve styling)
+        const wrapper = document.createElement('div');
+        // Copy classes from target element, but exclude our identification/trigger classes
+        const targetClasses = Array.from(targetInfo.element.classList)
+                                   .filter(c => c !== 'be-extractable' && !c.startsWith('be-ext-'));
+        wrapper.className = targetClasses.join(' ');
+        
+        wrapper.classList.add('be-merge-wrapper');
+        // ADD BACK the essential extraction classes for the merged content itself
+        // ADD BACK the essential extraction classes for the merged content itself
+        wrapper.classList.add('be-extractable');
+        const idClass = sourceContainer.dataset.beExtClass;
+        if (idClass) wrapper.classList.add(idClass);
+        
+        // Tag for persistence if it's a group extraction
+        const sourceId = sourceContainer.dataset.originalId;
+        const isSpell = sourceContainer.classList.contains('be-spell-detail');
+        if (!isSpell) {
+            wrapper.setAttribute('data-be-group-merge', sourceId);
+        }
+
+        // Attach extraction listener to the new merged wrapper
+        wrapper.ondblclick = async (e) => {
+            e.stopPropagation();
+            await handleElementExtraction(wrapper);
+        };
+
         // If source is a spell detail, tag it for persistence
         const isSpell = sourceContainer.classList.contains('be-spell-detail');
         const spellName = isSpell ? (sourceContainer.querySelector('.print-section-header span')?.textContent.trim()) : null;
         let tagged = false;
 
-        // Move all children of sourceContent to appendTarget
+        // Move all children of sourceContent to the wrapper
         while (sourceContent.firstChild) {
             const child = sourceContent.firstChild;
             
-            if (isSpell && child.nodeType === 1 && !tagged) {
-                child.setAttribute('data-be-spell-merge', spellName);
-                child.setAttribute('data-be-original-id', sourceId);
-                tagged = true;
-            }
+            if (child.nodeType === 1) { // Element
+                // Clear dimensions that might have been set by resize logic
+                child.style.width = '';
+                child.style.minWidth = '';
+                child.style.height = '';
 
-            if (targetInfo.type === 'section') {
-                appendTarget.appendChild(child);
-            } else {
-                // Insert after target element on sheet
-                appendTarget.parentNode.insertBefore(child, appendTarget.nextSibling);
-                // Update appendTarget pointer so next child goes after this one
-                appendTarget = child;
+                if (isSpell && !tagged) {
+                    child.setAttribute('data-be-spell-merge', spellName);
+                    child.setAttribute('data-be-original-id', sourceId);
+                    tagged = true;
+                }
             }
+            wrapper.appendChild(child);
+        }
+
+        // Now append the wrapper to the final target
+        if (targetInfo.type === 'section') {
+            appendTarget.appendChild(wrapper);
+        } else {
+            // Insert after target element on sheet
+            appendTarget.parentNode.insertBefore(wrapper, appendTarget.nextSibling);
         }
 
         // If target is a section, track IDs for rollback

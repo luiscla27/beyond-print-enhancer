@@ -46,6 +46,11 @@ describe('Merge Execution & Rollback', function() {
     const source = document.getElementById('source-section');
     const target = document.getElementById('target-section');
     
+    // Add dummy classes to target to test mimicking
+    target.classList.add('ct-actions-group');
+    // Add identification class to source
+    source.dataset.beExtClass = 'be-ext-source';
+
     window.handleMergeSections(source, { type: 'section', id: 'target-section', element: target, name: 'Target' });
     
     // Source should be removed
@@ -54,6 +59,13 @@ describe('Merge Execution & Rollback', function() {
     // Target should have source content
     assert.ok(target.textContent.includes('Source Content'));
     
+    // Verify wrapper classes
+    const wrapper = target.querySelector('.print-section-content > div');
+    assert.ok(wrapper.classList.contains('ct-actions-group'), 'Wrapper should mimic target visual classes');
+    assert.ok(wrapper.classList.contains('be-extractable'), 'Wrapper should be extractable');
+    assert.ok(wrapper.classList.contains('be-ext-source'), 'Wrapper should have source ID class');
+    assert.strictEqual(typeof wrapper.ondblclick, 'function', 'Wrapper should have double click handler');
+
     // Target should track orig-source
     const associated = JSON.parse(target.dataset.associatedIds);
     assert.ok(associated.includes('orig-source'));
