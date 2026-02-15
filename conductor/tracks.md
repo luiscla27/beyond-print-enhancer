@@ -3,6 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
+- [ ] **Track: Merge & Append Sections**
+  *Link: [./tracks/merge_sections_20260214/](./tracks/merge_sections_20260214/)*
 
 ## Archived Tracks
 - [x] **Track: Advanced Layout & Persistence Enhancements** (Completed: 2026-02-14)

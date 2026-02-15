@@ -2477,10 +2477,10 @@ function createControls() {
 
     const buttons = [
         { label: 'Load', icon: '📂', action: handleLoadFile },
-        { label: 'Load Default', icon: '🔄', action: handleLoadDefault },
-        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
-        { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
+        { label: 'Clones Manager', icon: '📋', action: handleManageClones },
+        { label: 'Compact Mode Manager', icon: '📏', action: handleManageCompact },
+        { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
         { label: 'Save to PC', icon: '💻', action: handleSavePC },
         { 
