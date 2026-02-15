@@ -5,10 +5,10 @@ This file tracks all major development tracks for the project.
 ## Current Tracks
 - [~] **Track: Advanced Layout & Persistence Enhancements** (Ongoing refinements)
   *Link: [./tracks/advanced_enhancements_20260204/](./tracks/advanced_enhancements_20260204/)*
-- [x] **Track: Dynamic Content Extraction Trigger**
-  *Link: [./tracks/content_extraction_20260214/](./tracks/content_extraction_20260214/)*
 
 ## Archived Tracks
+- [x] **Track: Dynamic Content Extraction Trigger** (Completed: 2026-02-14)
+  *Link: [./archive/content_extraction_20260214/](./archive/content_extraction_20260214/)*
 - [x] **Track: Spell Detail Section Injection** (Completed: 2026-02-14)
   *Link: [./tracks/spell_details_20260214/](./tracks/spell_details_20260214/)*
 - [x] **Track: Section Cloning** (Completed: 2026-02-12)
