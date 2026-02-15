@@ -810,6 +810,88 @@ function renderExtractedSection(snapshot) {
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
     layoutRoot.appendChild(container);
     
+    // 7. Restore associated extractions (merges)
+    if (snapshot.associatedExtractions && Array.isArray(snapshot.associatedExtractions)) {
+        snapshot.associatedExtractions.forEach(async aEx => {
+            if (aEx.type === 'spell') {
+                const spell = await fetchSpellWithCache(aEx.spellName);
+                if (spell) {
+                    const aStdHeader = document.createElement('div');
+                    aStdHeader.className = 'ct-content-group__header';
+                    const aStdHeaderContent = document.createElement('div');
+                    aStdHeaderContent.className = 'ct-content-group__header-content';
+                    aStdHeaderContent.textContent = spell.name;
+                    aStdHeader.appendChild(aStdHeaderContent);
+
+                    const aContent = document.createElement('div');
+                    aContent.innerHTML = `
+                        <div style="padding: 10px; color: black; background: white;">
+                            <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">
+                                Level ${spell.level} ${spell.school}
+                            </div>
+                            <div style="margin-bottom: 10px; font-style: italic; font-size: 0.9em;">
+                                Range: ${spell.range}
+                            </div>
+                            <div class="spell-description" style="white-space: pre-wrap; font-size: 13px;">${spell.description}</div>
+                        </div>
+                    `;
+
+                    const aWrapper = document.createElement('div');
+                    aWrapper.appendChild(aStdHeader);
+                    aWrapper.appendChild(aContent);
+                    contentWrapper.appendChild(aWrapper);
+
+                    const associated = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
+                    associated.push(aEx.originalId);
+                    container.dataset.associatedIds = JSON.stringify(associated);
+                }
+            } else {
+                // Find original element for merged content (type group)
+                let aOrig = document.getElementById(aEx.originalId);
+                if (!aOrig && aEx.selector) {
+                    const matches = document.querySelectorAll(aEx.selector);
+                    aOrig = matches[aEx.index];
+                    if (aOrig) aOrig.id = aEx.originalId;
+                }
+
+                if (aOrig) {
+                    // Clone and hide original
+                    const aClone = aOrig.cloneNode(true);
+                    aClone.style.display = '';
+                    aClone.classList.remove('be-extractable');
+                    
+                    const aHeader = aClone.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+                    if (aHeader) aHeader.style.display = 'none';
+
+                    // Add standard header
+                    const aStdHeader = document.createElement('div');
+                    aStdHeader.className = 'ct-content-group__header';
+                    const aStdHeaderContent = document.createElement('div');
+                    aStdHeaderContent.className = 'ct-content-group__header-content';
+                    aStdHeaderContent.textContent = aEx.title || 'Merged Content';
+                    aStdHeader.appendChild(aStdHeaderContent);
+
+                    const aWrapper = document.createElement('div');
+                    aWrapper.appendChild(aStdHeader);
+                    aWrapper.appendChild(aClone);
+
+                    // Append to host content
+                    if (contentWrapper) {
+                        contentWrapper.appendChild(aWrapper);
+                    }
+
+                    // Hide original on sheet
+                    aOrig.style.setProperty('display', 'none', 'important');
+
+                    // Track ID for host rollback
+                    const associated = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
+                    associated.push(aEx.originalId);
+                    container.dataset.associatedIds = JSON.stringify(associated);
+                }
+            }
+        });
+    }
+
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
@@ -986,26 +1068,25 @@ function handleMergeSections(sourceContainer, targetInfo) {
     } else {
         // Sheet target: append after the element
         appendTarget = targetInfo.element;
-        // In this case, there's no "container" to hold associated IDs in the DOM,
-        // UNLESS we wrap the appended content in a marker div?
-        // But the requirement is "append after".
-        // Let's create a marker div to hold the rolled back content if needed?
-        // No, the requirement says "rollback will be performed when the NEW section is closed".
-        // If it's appended to the sheet, it's NOT a section.
-        // Wait, "They should be able to be appended at any other section AFTER any content marked as be-extractable".
-        // This means appending to the sheet content.
-        // If it's on the sheet, it doesn't have a close button. 
-        // So maybe only sections (floating) can be "Closed"?
-        // Yes, "rollback will be performed when the NEW section its closed".
+        targetContainer = appendTarget.closest('.print-section-container');
     }
 
     if (appendTarget) {
+        // If source is a spell detail, tag it for persistence
+        const isSpell = sourceContainer.classList.contains('be-spell-detail');
+        const spellName = isSpell ? (sourceContainer.querySelector('.print-section-header span')?.textContent.trim()) : null;
+        let tagged = false;
+
         // Move all children of sourceContent to appendTarget
         while (sourceContent.firstChild) {
             const child = sourceContent.firstChild;
-            // Add a class to identify merged blocks for easier rollback if needed?
-            // Actually the IDs are enough.
             
+            if (isSpell && child.nodeType === 1 && !tagged) {
+                child.setAttribute('data-be-spell-merge', spellName);
+                child.setAttribute('data-be-original-id', sourceId);
+                tagged = true;
+            }
+
             if (targetInfo.type === 'section') {
                 appendTarget.appendChild(child);
             } else {
@@ -3051,14 +3132,23 @@ async function handleLoadDefault() {
             }
         });
 
-        // Rollback all extractions
+        // Rollback all extractions (including merged ones)
         document.querySelectorAll('.print-section-container.be-extracted-section').forEach(section => {
+            // Use rollbackSection logic but avoiding multiple feedbacks/bounds updates
             const originalId = section.dataset.originalId;
-            const original = document.getElementById(originalId);
-            if (original) original.style.display = '';
+            const associatedIds = section.dataset.associatedIds ? JSON.parse(section.dataset.associatedIds) : [];
+            const allIds = [originalId, ...associatedIds].filter(id => id);
+            
+            allIds.forEach(id => {
+                const original = document.getElementById(id);
+                if (original) {
+                    original.style.setProperty('display', '', 'important');
+                }
+            });
             section.remove();
         });
 
+        updateLayoutBounds();
         showFeedback('Layout reset to defaults!');
     } catch (err) {
         console.error('[DDB Print] Reset failed', err);
@@ -3337,8 +3427,44 @@ async function scanLayout() {
                 height: section.style.height,
                 zIndex: section.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
-                compact: section.classList.contains('be-compact-mode')
+                compact: section.classList.contains('be-compact-mode'),
+                associatedExtractions: []
             };
+
+            // Capture merged relationships by scanning the content area for markers or associated IDs
+            const associatedIds = section.dataset.associatedIds ? JSON.parse(section.dataset.associatedIds) : [];
+            
+            // Check for spell merges via markers
+            const content = section.querySelector('.print-section-content');
+            if (content) {
+                content.querySelectorAll('[data-be-spell-merge]').forEach(m => {
+                    extractionData.associatedExtractions.push({
+                        type: 'spell',
+                        originalId: m.getAttribute('data-be-original-id'),
+                        spellName: m.getAttribute('data-be-spell-merge')
+                    });
+                });
+            }
+
+            // Check for other group merges
+            associatedIds.forEach(aId => {
+                // If it's already added as a spell, skip
+                if (extractionData.associatedExtractions.some(e => e.originalId === aId)) return;
+
+                const aOrig = document.getElementById(aId);
+                if (aOrig) {
+                    const resolution = getExtractionSelector(aOrig);
+                    if (resolution) {
+                        extractionData.associatedExtractions.push({
+                            type: 'group',
+                            originalId: aId,
+                            selector: resolution.selector,
+                            index: resolution.index,
+                            title: findSectionTitle(aOrig) || 'Merged Content'
+                        });
+                    }
+                }
+            });
 
             // Add selector for stable resolution across reloads
             if (original) {
