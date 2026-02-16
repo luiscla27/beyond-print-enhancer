@@ -66,3 +66,6 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
   - Background graphics: deselect.
 5. Review the print preview.
 6. Print!
+
+## Legal ##
+Beyond Print Enhancer is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
