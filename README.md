@@ -1,3 +1,6 @@
+
+https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
+
 # Print Enhancer for D&D Beyond
 
 Modernized and restored for D&D Beyond 2026 site changes. This extension helps you print your D&D Beyond character sheets in a clean, print-friendly format.
@@ -20,11 +23,6 @@ To test the extension locally:
 5. Open any D&D Beyond character sheet (e.g., [this example character](https://www.dndbeyond.com/characters/151911403)).
 6. Click the extension icon in your toolbar to activate the print enhancer.
 7. Press `Ctrl+P` to view the print preview.
-
-
-
-https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
-
 
 ## Features
 
