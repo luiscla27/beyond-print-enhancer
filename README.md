@@ -42,10 +42,10 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 3. Minimize sections.
 4. Save & Load templates.
 5. Clone sections, specifically for the SPELL section (e.g., "Combat Spells" vs "Utility Spells").
-6. Compact Mode to maximize information density in heavy sections like Spells.
+6. Compact mode to maximize information density in heavy sections like Spells.
 7. Spell description cards.
-8. Merge sections: Section can be merged together to save space by removing borders. 
-9. Content extractions: It lets you create specific cards for specific content
+8. Merge sections together to save space. 
+9. Extrac specific cards content into its own cards
 11. **WIP**: Editable content and font resizing.
 12. **WIP**: Support for other color themes (beyond Red).
 
