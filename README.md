@@ -8,7 +8,7 @@ Credits: This project is a fork of the abandoned D&D Beyond Character Sheet Prin
 **This project is a work in progress. Feature requests, issue reports and pull requests are welcome.**
 
 ## Try the Chrome Extension
-1. Pending approval
+1. [Version 1.1.1 approved, its currently missing changes from 1.2.0, 1.2.1 and 1.3.0](https://chromewebstore.google.com/detail/beyond-print-enhancer/obmbfcnlmoegklgdlkcanlkiadhengbc)
 
 ## Try it Live (Developer Mode)
 
