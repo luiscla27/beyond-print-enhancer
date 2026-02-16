@@ -45,9 +45,9 @@ https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
 6. Compact Mode to maximize information density in heavy sections like Spells.
 7. Spell description cards.
 8. Merge sections: Section can be merged together to save space by removing borders. 
-9. Content extractions
-10. **WIP**: Editable content and font resizing.
-11. **WIP**: Support for other color themes (beyond Red).
+9. Content extractions: It lets you create specific cards for specific content
+11. **WIP**: Editable content and font resizing.
+12. **WIP**: Support for other color themes (beyond Red).
 
 ## Instructions for use
 
