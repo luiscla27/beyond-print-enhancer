@@ -86,7 +86,7 @@ This phase addresses the user's feedback about missing *nested* selectors in CSS
     - [x] Update `injectCompactStyles` to use template interpolation for ALL parts of compound selectors (e.g., `${s.UI.EXTRACTABLE} ${s.COMPACT.HEADING}`).
 - [x] Task: Conductor - User Manual Verification 'Nested Selector Deep Clean' (Protocol in workflow.md)
 
-## Phase 8: Final CSS Sweep
+## Phase 8: Final CSS Sweep [checkpoint: 780fb95]
 This phase addresses the remaining nested selectors identified by the user (sidebar inner, character sheet root, primary box, etc.) that were missed in previous passes.
 
 - [x] Task: specific - Map Remaining Selectors
@@ -105,4 +105,4 @@ This phase addresses the remaining nested selectors identified by the user (side
         - `div[class$="-content"] div[class$="-item__name"]`
 - [x] Task: specific - Refactor Remaining CSS
     - [x] Update `enforceFullHeight` and `injectCompactStyles` (or other locations) to use these new keys.
-- [ ] Task: Conductor - User Manual Verification 'Final CSS Sweep' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final CSS Sweep' (Protocol in workflow.md)
