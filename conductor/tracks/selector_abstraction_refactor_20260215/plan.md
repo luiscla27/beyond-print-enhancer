@@ -1,6 +1,6 @@
 # Implementation Plan - Selector Abstraction Refactor
 
-## Phase 1: Foundation & Core Layout Abstraction
+## Phase 1: Foundation & Core Layout Abstraction [checkpoint: 1eef013]
 This phase establishes the `DomManager` architecture and migrates the fundamental page structure selectors (Container, Header, Sidebar, Tabs).
 
 - [x] Task: specific - Analyze Core DOM Usage & Design Wrappers
@@ -16,7 +16,7 @@ This phase establishes the `DomManager` architecture and migrates the fundamenta
     - [x] Update `DomManager` to expose methods returning `ElementWrapper`s (e.g., `getCharacterSheet()`, `getSidebar()`).
     - [x] Refactor `js/main.js` to use `DomManager` for Core Layout, replacing direct DOM manipulation with Wrapper methods.
     - [x] Verify that features relying on these elements (e.g., "Minimize Header", "Hide Sidebar") still work.
-- [ ] Task: Conductor - User Manual Verification 'Foundation & Core Layout Abstraction' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Foundation & Core Layout Abstraction' (Protocol in workflow.md)
 
 ## Phase 2: Spells Module Abstraction
 This phase tackles the complex Spells tab, including lists, headers, rows, and detail panes.
