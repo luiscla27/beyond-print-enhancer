@@ -3,19 +3,19 @@
 ## Phase 1: Foundation & Core Layout Abstraction
 This phase establishes the `DomManager` architecture and migrates the fundamental page structure selectors (Container, Header, Sidebar, Tabs).
 
-- [ ] Task: specific - Analyze Core DOM Usage & Design Wrappers
-    - [ ] Audit `main.js` and `background.js` to list all properties, attributes, and methods currently accessed on Core elements (e.g., `.style.display`, `.classList.contains`, `.dataset.id`, `.innerText`).
-    - [ ] Design the `ElementWrapper` interface to expose semantic methods for these operations (e.g., `isVisible()`, `toggleDisplay()`, `getData(key)`, `addClass()`, `removeClass()`).
-- [ ] Task: specific - Create `DomManager` & `ElementWrapper` Implementation
-    - [ ] Create `js/dom/dom_manager.js` and `js/dom/element_wrapper.js`.
-    - [ ] Implement `ElementWrapper` with the designed semantic interface.
-    - [ ] Implement `DomManager` with the `selectors` registry.
-    - [ ] Write unit tests for `DomManager` and `ElementWrapper` in `test/unit/dom_manager.test.js` covering the new interface methods.
-- [ ] Task: specific - Migrate Core Layout Selectors & Logic
-    - [ ] Add Core Layout selectors (Character Sheet root, Sidebar, Header, Navigation Tabs) to `DomManager`.
-    - [ ] Update `DomManager` to expose methods returning `ElementWrapper`s (e.g., `getCharacterSheet()`, `getSidebar()`).
-    - [ ] Refactor `js/main.js` to use `DomManager` for Core Layout, replacing direct DOM manipulation with Wrapper methods.
-    - [ ] Verify that features relying on these elements (e.g., "Minimize Header", "Hide Sidebar") still work.
+- [x] Task: specific - Analyze Core DOM Usage & Design Wrappers
+    - [x] Audit `main.js` and `background.js` to list all properties, attributes, and methods currently accessed on Core elements (e.g., `.style.display`, `.classList.contains`, `.dataset.id`, `.innerText`).
+    - [x] Design the `ElementWrapper` interface to expose semantic methods for these operations (e.g., `isVisible()`, `toggleDisplay()`, `getData(key)`, `addClass()`, `removeClass()`).
+- [x] Task: specific - Create `DomManager` & `ElementWrapper` Implementation
+    - [x] Create `js/dom/dom_manager.js` and `js/dom/element_wrapper.js`.
+    - [x] Implement `ElementWrapper` with the designed semantic interface.
+    - [x] Implement `DomManager` with the `selectors` registry.
+    - [x] Write unit tests for `DomManager` and `ElementWrapper` in `test/unit/dom_manager.test.js` covering the new interface methods.
+- [x] Task: specific - Migrate Core Layout Selectors & Logic
+    - [x] Add Core Layout selectors (Character Sheet root, Sidebar, Header, Navigation Tabs) to `DomManager`.
+    - [x] Update `DomManager` to expose methods returning `ElementWrapper`s (e.g., `getCharacterSheet()`, `getSidebar()`).
+    - [x] Refactor `js/main.js` to use `DomManager` for Core Layout, replacing direct DOM manipulation with Wrapper methods.
+    - [x] Verify that features relying on these elements (e.g., "Minimize Header", "Hide Sidebar") still work.
 - [ ] Task: Conductor - User Manual Verification 'Foundation & Core Layout Abstraction' (Protocol in workflow.md)
 
 ## Phase 2: Spells Module Abstraction
