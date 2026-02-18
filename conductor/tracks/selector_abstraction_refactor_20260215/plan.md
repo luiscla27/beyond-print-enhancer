@@ -21,15 +21,15 @@ This phase establishes the `DomManager` architecture and migrates the fundamenta
 ## Phase 2: Spells Module Abstraction
 This phase tackles the complex Spells tab, including lists, headers, rows, and detail panes.
 
-- [ ] Task: specific - Define Spell Wrappers & Selectors
-    - [ ] Identify all Spell-related selectors (Spell Container, Spell Row, Spell Name, Spell Level, Spell School, Spell Casting Time, Spell Range, Spell Components, Spell Duration, Spell Description).
-    - [ ] Add these to `DomManager`.
-    - [ ] Create specialized wrappers if necessary (e.g., `SpellRowWrapper` that has specific methods like `getLevel()`).
-    - [ ] Update `DomManager` to return these wrappers (e.g., `getSpells()`, `getSpellAt(index)`).
-    - [ ] Write unit tests for Spell retrieval and wrapper functionality.
-- [ ] Task: specific - Refactor Spell Logic
-    - [ ] Replace direct DOM usage in `js/spells.js` (and relevant parts of `js/main.js`) with `DomManager`.
-    - [ ] Ensure "Expand Spells", "Spell Cloning", and "Spell Filtering" features function correctly using the new abstraction.
+- [x] Task: specific - Define Spell Wrappers & Selectors
+    - [x] Identify all Spell-related selectors (Spell Container, Spell Row, Spell Name, Spell Level, Spell School, Spell Casting Time, Spell Range, Spell Components, Spell Duration, Spell Description).
+    - [x] Add these to `DomManager`.
+    - [x] Create specialized wrappers if necessary (e.g., `SpellRowWrapper` that has specific methods like `getLevel()`).
+    - [x] Update `DomManager` to return these wrappers (e.g., `getSpells()`, `getSpellAt(index)`).
+    - [x] Write unit tests for Spell retrieval and wrapper functionality.
+- [x] Task: specific - Refactor Spell Logic
+    - [x] Replace direct DOM usage in `js/spells.js` (and relevant parts of `js/main.js`) with `DomManager`.
+    - [x] Ensure "Expand Spells", "Spell Cloning", and "Spell Filtering" features function correctly using the new abstraction.
 - [ ] Task: Conductor - User Manual Verification 'Spells Module Abstraction' (Protocol in workflow.md)
 
 ## Phase 3: Actions, Equipment & Remaining Modules
