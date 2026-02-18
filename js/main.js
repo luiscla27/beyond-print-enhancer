@@ -2846,14 +2846,24 @@ function updateLayoutBounds() {
     container.style.minWidth = Math.max(newWidth, window.innerWidth) + 'px';
 
     // 2. Also attempt to update parent containers if they restrict height
-    const sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
+    let sheetDesktop, sheetInner;
+    if (window.DomManager) {
+        const desktopWrapper = window.DomManager.getInstance().getCharacterSheet();
+        sheetDesktop = desktopWrapper ? desktopWrapper.element : null;
+        
+        const innerWrapper = window.DomManager.getInstance().getSheetInner();
+        sheetInner = innerWrapper ? innerWrapper.element : null;
+    } else {
+        sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
+        sheetInner = document.querySelector('.ct-character-sheet__inner');
+    }
+
     if (sheetDesktop) {
         sheetDesktop.style.minHeight = minH;
         // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
         sheetDesktop.style.height = 'auto'; 
     }
     
-    const sheetInner = document.querySelector('.ct-character-sheet__inner');
     if (sheetInner) {
          sheetInner.style.minHeight = minH;
     }

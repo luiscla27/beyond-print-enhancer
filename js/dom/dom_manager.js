@@ -85,6 +85,14 @@ class DomManager {
     }
 
     /**
+     * Gets the inner sheet container.
+     * @returns {ElementWrapper}
+     */
+    getSheetInner() {
+        return this._wrap(this.selectors.CORE.SHEET_INNER);
+    }
+
+    /**
      * Gets the sidebar container.
      * @returns {ElementWrapper}
      */
