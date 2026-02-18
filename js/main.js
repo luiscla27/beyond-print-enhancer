@@ -1553,6 +1553,14 @@ function removeSearchBoxes() {
     '.ct-application-group__filter'
   ];
 
+  if (window.DomManager) {
+      // Use abstracted selectors if available to make it more robust
+      const s = window.DomManager.getInstance().selectors;
+      if (s.SPELLS && s.SPELLS.FILTER) searchSelectors.push(s.SPELLS.FILTER);
+      if (s.EQUIPMENT && s.EQUIPMENT.FILTER) searchSelectors.push(s.EQUIPMENT.FILTER);
+      if (s.EQUIPMENT && s.EQUIPMENT.INVENTORY_FILTER) searchSelectors.push(s.EQUIPMENT.INVENTORY_FILTER);
+  }
+
   safeQueryAll(searchSelectors).forEach(el => {
     // User Request: Preserve Filters on Live Spells Tab
     // Check if element is inside Spells container (or is the spells filter itself checking ancestors)

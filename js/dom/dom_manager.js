@@ -26,6 +26,16 @@ class DomManager {
                 LEVEL_HEADER: '.ct-content-group__header', // Generic but often used in spells
                 SPELL_NAME: '.ct-spell-name', // Hypothetical, need to verify if distinct from label
                 DETAIL_BUTTON: '.be-spell-details-button'
+            },
+            ACTIONS: {
+                CONTAINER: '[class*="styles_actionsList__"]',
+                LIST: '[class*="styles_actionsList__"]',
+                ATTACK_ROW: '[class*="styles_attackTable__"]' // Based on main.js analysis
+            },
+            EQUIPMENT: {
+                CONTAINER: '.ct-equipment', // Need to verify if this exists or is generic
+                FILTER: '.ct-equipment__filter',
+                INVENTORY_FILTER: '.ct-inventory__filter'
             }
         };
     }
@@ -143,6 +153,22 @@ class DomManager {
         // If context is provided, query within it, otherwise global
         const els = context.querySelectorAll ? context.querySelectorAll(this.selectors.SPELLS.ROW) : document.querySelectorAll(this.selectors.SPELLS.ROW);
         return Array.from(els).map(el => new ElementWrapper(el));
+    }
+
+    /**
+     * Gets the actions container.
+     * @returns {ElementWrapper}
+     */
+    getActionsContainer() {
+        return this._wrap(this.selectors.ACTIONS.CONTAINER);
+    }
+
+    /**
+     * Gets the equipment container.
+     * @returns {ElementWrapper}
+     */
+    getEquipmentContainer() {
+        return this._wrap(this.selectors.EQUIPMENT.CONTAINER);
     }
 }
 
