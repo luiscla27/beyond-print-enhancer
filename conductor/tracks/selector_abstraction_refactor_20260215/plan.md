@@ -106,3 +106,13 @@ This phase addresses the remaining nested selectors identified by the user (side
 - [x] Task: specific - Refactor Remaining CSS
     - [x] Update `enforceFullHeight` and `injectCompactStyles` (or other locations) to use these new keys.
 - [x] Task: Conductor - User Manual Verification 'Final CSS Sweep' (Protocol in workflow.md)
+
+## Phase 9: Fallback Logic Extraction
+This phase separates the "legacy fallback" selector definitions from the main business logic files (`js/main.js`) into a dedicated module, ensuring separation of concerns.
+
+- [ ] Task: specific - Create Fallback Module
+    - [ ] Create `js/dom/legacy_fallback.js` (or `fallback_selectors.js`).
+    - [ ] Implement a function `getFallbackSelectors()` that returns the full `selectors` object structure used as a fallback.
+- [ ] Task: specific - Refactor Main to Use Fallback Module
+    - [ ] Update `js/main.js` to import/use the fallback module instead of defining the object inline in `injectCompactStyles` and `enforceFullHeight`.
+- [ ] Task: Conductor - User Manual Verification 'Fallback Logic Extraction' (Protocol in workflow.md)
