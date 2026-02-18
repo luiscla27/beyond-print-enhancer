@@ -76,7 +76,14 @@ class DomManager {
                 HEADER_CONTENT: '[class$="__header-content"]',
                 ACTION: '[class$="__action"]',
                 DISTANCE: '[class$="__distance"]',
-                META: '[class$="__meta"]'
+                META: '[class$="__meta"]',
+                // Phase 8 additions
+                ROW_HEADER_DIV: 'div[class$="-row-header"] > div',
+                GENERIC_CONTENT_DIV_DIV: 'div[class$="-content"] > div > div',
+                ROW_HEADER_NAME: 'div[class$="-row-header"] div[class$="--name"]',
+                CONTENT_NAME: 'div[class$="-content"] div[class$="__name"]',
+                CONTENT_SLOT_NAME: 'div[class$="-content"] div[class$="-slot__name"]',
+                CONTENT_ITEM_NAME: 'div[class$="-content"] div[class$="-item__name"]'
             },
             UI: {
                 SPINNER: '.be-spinner',
@@ -99,7 +106,14 @@ class DomManager {
                 PORTRAIT: '.ddbc-character-avatar__portrait',
                 // Extension-owned classes that wrap DDB content
                 PRINT_CONTAINER: '.print-section-container',
-                COMPACT_MODE: '.be-compact-mode'
+                COMPACT_MODE: '.be-compact-mode',
+                // Phase 8 additions
+                SIDEBAR_INNER: '.ct-sidebar__inner',
+                CHARACTER_SHEET: '.ct-character-sheet', // Background/root
+                PRIMARY_BOX: '.ct-primary-box',
+                TOOLS_TARGET: '#character-tools-target',
+                SUBSECTION: '.ct-subsection',
+                SECTION: '.ct-section'
             },
             SKILLS: {
                 BOX: '.ct-skills__box',

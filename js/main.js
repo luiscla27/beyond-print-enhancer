@@ -1755,11 +1755,11 @@ function enforceFullHeight() {
     ${s.CORE.SIDEBAR} {
         position: static !important;
     }
-    .ct-sidebar__inner {
+    ${s.UI.SIDEBAR_INNER} {
         overflow-y: auto !important;
         overflow-x: hidden !important;
     }
-    .ct-character-sheet {
+    ${s.UI.CHARACTER_SHEET} {
         background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
     }
     ${s.CORE.SHEET_DESKTOP} {
@@ -1777,7 +1777,7 @@ function enforceFullHeight() {
     }
 
     @media (min-width: 1200px) {
-        .ct-primary-box {
+        ${s.UI.PRIMARY_BOX} {
             width: 100% !important;
         }
     }
@@ -1885,29 +1885,28 @@ function enforceFullHeight() {
         font-size: 26px !important;
     }
 
-    /* Scaling helper */
-    ${s.UI.PRINT_CONTAINER}[data-scaling="true"] .print-section-content > div {
-        transform-origin: top left;
-    }
-    ${s.UI.PRINT_CONTAINER} div[class$="-row-header"] > div, 
-    ${s.UI.PRINT_CONTAINER} div[class$="-content"] > div > div {
-        min-width: 38px;
-    }
-    ${s.UI.PRINT_CONTAINER} div[class$="-row-header"] div[class$="--name"], 
-    ${s.UI.PRINT_CONTAINER} div[class$="-content"] div[class$="__name"] {
-        max-width: 72px;
-    }
-    ${s.UI.PRINT_CONTAINER} div[class$="-content"] div[class$="-slot__name"] {
-        max-width: 200px;
-    }
-    ${s.UI.PRINT_CONTAINER} div[class$="-content"] div[class$="-item__name"] {
-        max-width: 136px;
-    }
-
-    ${s.UI.PORTRAIT} {
-        width: 100%;
-    }
-    .print-section-header span {
+            /* Scaling helper */
+        ${s.UI.PRINT_CONTAINER}[data-scaling="true"] .print-section-content > div {
+            transform-origin: top left;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.ROW_HEADER_DIV}, 
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.GENERIC_CONTENT_DIV_DIV} {
+            min-width: 38px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.ROW_HEADER_NAME}, 
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.CONTENT_NAME} {
+            max-width: 72px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.CONTENT_SLOT_NAME} {
+            max-width: 200px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.CONTENT_ITEM_NAME} {
+            max-width: 136px;
+        }
+    
+        ${s.UI.PORTRAIT} {
+            width: 100%;
+        }    .print-section-header span {
         font-size: 16px !important;
     }
     .print-section-header {
