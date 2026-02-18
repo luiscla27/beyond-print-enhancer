@@ -1593,6 +1593,21 @@ function enforceFullHeight() {
             SHEET_DESKTOP: '.ct-character-sheet-desktop',
             CONTENT_GROUP: 'div.ct-content-group'
         };
+        // Basic fallback for UI
+        s.UI = {
+            DICE_ROLLER: '.dice-rolling-panel',
+            COLLAPSED_ACTIONS: '[class$="__actions--collapsed"]',
+            THEME_LINK: '.ddbc-theme-link',
+            TIDBITS_HEADING: '.ddbc-character-tidbits__heading',
+            FEATURES_LINK: '.ct-features__management-link',
+            SUBSECTION_FOOTER: '.ct-subsection__footer',
+            HEADER_DESKTOP: '.ct-character-header-desktop',
+            QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
+            QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div'
+        };
+        s.EQUIPMENT = { FILTER: '.ct-inventory-filter' }; // Note: Slightly different class in CSS block
+        s.EXTRAS = { INTERACTIONS: '.ct-extras-filter__interactions' };
+        s.SPELLS = { ACTION: '.ct-spells-spell__action' };
     }
 
   const style = document.createElement('style');
@@ -1673,19 +1688,19 @@ function enforceFullHeight() {
     dialog + div,
     div#section-Section-6 .print-section-header > span, 
     div#section-Section-6 .print-section-content .ct-primary-box,
-    .dice-rolling-panel,
-    [class$="__actions--collapsed"],
+    ${s.UI.DICE_ROLLER},
+    ${s.UI.COLLAPSED_ACTIONS},
     .ct-character-sheet:before,
-    .ddbc-theme-link,
-    .ddbc-character-tidbits__heading,
-    .ct-extras-filter__interactions,
-    .ct-inventory-filter,
-    .ct-spells-spell__action,
-    .ct-features__management-link,
-    .ct-subsection__footer,
-    .ct-character-header-desktop,
-    .ct-quick-info__inspiration,
-    .ct-quick-info__health h1 + div {
+    ${s.UI.THEME_LINK},
+    ${s.UI.TIDBITS_HEADING},
+    ${s.EXTRAS.INTERACTIONS},
+    ${s.EQUIPMENT.FILTER},
+    ${s.SPELLS.ACTION},
+    ${s.UI.FEATURES_LINK},
+    ${s.UI.SUBSECTION_FOOTER},
+    ${s.UI.HEADER_DESKTOP},
+    ${s.UI.QUICK_INFO_INSPIRATION},
+    ${s.UI.QUICK_INFO_HEALTH_HEADER} {
       display: none!important;
     }
     .ct-quick-info__health h1 {

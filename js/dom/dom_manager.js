@@ -77,6 +77,23 @@ class DomManager {
                 ACTION: '[class$="__action"]',
                 DISTANCE: '[class$="__distance"]',
                 META: '[class$="__meta"]'
+            },
+            UI: {
+                SPINNER: '.be-spinner',
+                ERROR_ACTIONS: '.be-error-actions',
+                RETRY_BTN: '.be-retry-button',
+                DELETE_BTN: '.be-delete-button',
+                EXTRACTABLE: '.be-extractable',
+                // New additions from user request logic (display: none items)
+                DICE_ROLLER: '.dice-rolling-panel',
+                COLLAPSED_ACTIONS: '[class$="__actions--collapsed"]',
+                THEME_LINK: '.ddbc-theme-link',
+                TIDBITS_HEADING: '.ddbc-character-tidbits__heading',
+                FEATURES_LINK: '.ct-features__management-link',
+                SUBSECTION_FOOTER: '.ct-subsection__footer',
+                HEADER_DESKTOP: '.ct-character-sheet-desktop .ct-character-header-desktop', // Specific
+                QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
+                QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div'
             }
         };
     }
