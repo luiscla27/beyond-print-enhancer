@@ -32,7 +32,7 @@ This phase tackles the complex Spells tab, including lists, headers, rows, and d
     - [x] Ensure "Expand Spells", "Spell Cloning", and "Spell Filtering" features function correctly using the new abstraction.
 - [x] Task: Conductor - User Manual Verification 'Spells Module Abstraction' (Protocol in workflow.md)
 
-## Phase 3: Actions, Equipment & Remaining Modules
+## Phase 3: Actions, Equipment & Remaining Modules [checkpoint: 0906065]
 This phase covers the remaining major tabs and any other scattered selectors.
 
 - [x] Task: specific - Migrate Actions & Equipment
@@ -43,7 +43,7 @@ This phase covers the remaining major tabs and any other scattered selectors.
     - [x] Identify selectors for Features & Traits, Description, Notes, and Extras tabs.
     - [x] Add to `DomManager` and create wrappers.
     - [x] Refactor logic.
-- [ ] Task: Conductor - User Manual Verification 'Actions, Equipment & Remaining Modules' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Actions, Equipment & Remaining Modules' (Protocol in workflow.md)
 
 ## Phase 4: Final Cleanup & Verification
 Ensure the abstraction is complete and no legacy direct DOM access remains.
