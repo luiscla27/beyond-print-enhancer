@@ -1397,7 +1397,10 @@ function tweakStyles() {
     safeQueryAll([
       'div.site-bar', 'header.main', '#mega-menu-target', 
       '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
-    ]).forEach(e => { e.style.display = 'none'; });
+    ]).forEach(e => { 
+        if (e.classList.contains('ct-sidebar__portal') || e.closest('.ct-sidebar__portal')) return;
+        e.style.display = 'none'; 
+    });
   }
 
   const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);

@@ -135,7 +135,11 @@ class DomManager {
         
         // Handle sidebars
         const sidebars = document.querySelectorAll('[class*="sidebar"]');
-        sidebars.forEach(el => el.style.display = 'none');
+        sidebars.forEach(el => {
+            // User Request: Exclude the portal which contains modals
+            if (el.classList.contains('ct-sidebar__portal') || el.closest('.ct-sidebar__portal')) return;
+            el.style.display = 'none';
+        });
         
         // Handle navigation variations
         const navs = document.querySelectorAll('[class*="navigation"]');
