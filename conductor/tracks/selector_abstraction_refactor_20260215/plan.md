@@ -48,8 +48,8 @@ This phase covers the remaining major tabs and any other scattered selectors.
 ## Phase 4: Final Cleanup & Verification
 Ensure the abstraction is complete and no legacy direct DOM access remains.
 
-- [ ] Task: specific - Global Scan & Cleanup
-    - [ ] Search codebase for any remaining `document.querySelector` or `document.querySelectorAll` calls that should be managed by `DomManager`.
-    - [ ] Refactor or whitelist valid exceptions (if any).
-    - [ ] Ensure all new files follow project style guidelines.
+- [x] Task: specific - Global Scan & Cleanup
+    - [x] Search codebase for any remaining `document.querySelector` or `document.querySelectorAll` calls that should be managed by `DomManager`.
+    - [x] Refactor or whitelist valid exceptions (if any).
+    - [x] Ensure all new files follow project style guidelines.
 - [ ] Task: Conductor - User Manual Verification 'Final Cleanup & Verification' (Protocol in workflow.md)
