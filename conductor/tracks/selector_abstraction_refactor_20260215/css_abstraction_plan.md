@@ -19,7 +19,25 @@ This document analyzes the purpose of each CSS selector used in the injected sty
 | **Sheet Container** | `.ct-character-sheet-desktop` | DDB | `CORE.SHEET_DESKTOP` |
 | **Print Break Avoidance** | `div.ct-content-group` | DDB | `CORE.CONTENT_GROUP` |
 
-## 2. Compact Mode (`injectCompactStyles`)
+## 2. Layout & Typography Fixes (Inside `enforceFullHeight` CSS block)
+**Purpose:** Adjusts font sizes, hides specific internal elements, and fixes layout glitches.
+
+| Purpose | Selector | Source | DomManager Key |
+| :--- | :--- | :--- | :--- |
+| **Skills Box** | `.ct-skills__box` | DDB | `SKILLS.BOX` |
+| **Combat Statuses** | `.ct-combat__statuses` | DDB | `COMBAT.STATUSES` |
+| **Quick Info** | `.ct-quick-info` | DDB | `CORE.QUICK_INFO` |
+| **Quick Info Health** | `.ct-quick-info__health` | DDB | `UI.QUICK_INFO_HEALTH` |
+| **Headings** | `[class^="styles_heading__"]`, `[class^="styles_sectionHeading__"]` | DDB | `CORE.HEADING_STYLES`, `CORE.SECTION_HEADING_STYLES` |
+| **Generic Heading Suffix** | `[class$="-heading"]`, `[class$="__heading"]` | DDB | `CORE.HEADING_SUFFIX` |
+| **Content Group Header** | `.ct-content-group__header-content` | DDB | `CORE.GROUP_HEADER_CONTENT` |
+| **Senses Callout** | `.ct-senses__callout-value` | DDB | `SENSES.CALLOUT_VALUE` |
+| **Dice Container** | `.integrated-dice__container` | DDB | `CORE.DICE_CONTAINER` |
+| **AC Value** | `.ddbc-armor-class-box__value` | DDB | `COMBAT.AC_VALUE` |
+| **Portrait** | `.ddbc-character-avatar__portrait` | DDB | `UI.PORTRAIT` |
+| **Skills Container** | `.ct-skills` | DDB | `SKILLS.CONTAINER` |
+
+## 3. Compact Mode (`injectCompactStyles`)
 **Purpose:** Condenses the layout for Spells, Actions, and other lists to save paper space.
 
 | Purpose | Selector | Source | DomManager Key |
@@ -51,7 +69,7 @@ This document analyzes the purpose of each CSS selector used in the injected sty
 | **Distance** | `[class$="__distance"]` | DDB | `COMPACT.DISTANCE` |
 | **Meta Info** | `[class$="__meta"]` | DDB | `COMPACT.META` |
 
-## 3. UI Elements (Extension Specific)
+## 4. UI Elements (Extension Specific)
 **Purpose:** Styles for elements created by the extension. These are owned by us, but good to track.
 
 | Purpose | Selector | Source | DomManager Key |

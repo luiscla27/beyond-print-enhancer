@@ -1605,9 +1605,24 @@ function enforceFullHeight() {
             QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
             QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div'
         };
+        // Basic fallback for Phase 7 keys if missing
+        s.SKILLS = { BOX: '.ct-skills__box', CONTAINER: '.ct-skills' };
+        s.COMBAT = { STATUSES: '.ct-combat__statuses', AC_VALUE: '.ddbc-armor-class-box__value' };
+        s.SENSES = { CALLOUT_VALUE: '.ct-senses__callout-value' };
+        
         s.EQUIPMENT = { FILTER: '.ct-inventory-filter' }; // Note: Slightly different class in CSS block
         s.EXTRAS = { INTERACTIONS: '.ct-extras-filter__interactions' };
         s.SPELLS = { ACTION: '.ct-spells-spell__action' };
+        
+        // Ensure Phase 7 specific CORE keys exist in fallback
+        if (!s.CORE.HEADING_STYLES) s.CORE.HEADING_STYLES = '[class^="styles_heading__"]';
+        if (!s.CORE.SECTION_HEADING_STYLES) s.CORE.SECTION_HEADING_STYLES = '[class^="styles_sectionHeading__"]';
+        if (!s.CORE.HEADING_SUFFIX) s.CORE.HEADING_SUFFIX = '[class$="-heading"]';
+        if (!s.CORE.HEADING_SUFFIX_ALT) s.CORE.HEADING_SUFFIX_ALT = '[class$="__heading"]';
+        if (!s.CORE.GROUP_HEADER_CONTENT) s.CORE.GROUP_HEADER_CONTENT = '.ct-content-group__header-content';
+        if (!s.CORE.DICE_CONTAINER) s.CORE.DICE_CONTAINER = '.integrated-dice__container';
+        if (!s.UI.PORTRAIT) s.UI.PORTRAIT = '.ddbc-character-avatar__portrait';
+        if (!s.UI.QUICK_INFO_HEALTH) s.UI.QUICK_INFO_HEALTH = '.ct-quick-info__health';
     }
 
   const style = document.createElement('style');
@@ -1664,7 +1679,7 @@ function enforceFullHeight() {
 
     :root {
         /* Using your provided Base64 string for the red border */
-        /* This is used by .ct-skills__box and others */
+        /* This is used by ${s.SKILLS.BOX} and others */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
         --btn-color: #c53131;
         --btn-color-highlight: #f18383ff;
@@ -1703,18 +1718,18 @@ function enforceFullHeight() {
     ${s.UI.QUICK_INFO_HEALTH_HEADER} {
       display: none!important;
     }
-    .ct-quick-info__health h1 {
+    ${s.UI.QUICK_INFO_HEALTH} h1 {
       position: static;
       transform: none;
     }
     /* REsizable */
-    .ct-character-sheet-desktop .ct-subsection {
+    ${s.CORE.SHEET_DESKTOP} .ct-subsection {
         position: static!important;
         display: flex!important;
         flex-flow: row!important;
         height: 100%;
     }
-    .ct-character-sheet-desktop .ct-subsections {
+    ${s.CORE.SHEET_DESKTOP} .ct-subsections {
         height: auto !important;
         display: block;
         width: 100%;
@@ -1722,18 +1737,18 @@ function enforceFullHeight() {
     }
 
     /* User Request: Side Panel Fixed & Scrollable */
-    .ct-sidebar__portal {
+    ${s.CORE.SIDEBAR_PORTAL} {
         position: fixed !important;
         top: 0 !important;
         right: 0 !important;
         height: 100% !important;
         z-index: 9999 !important;
     }
-    .ct-spell-manager {
+    ${s.CORE.SPELL_MANAGER} {
         overflow-y: auto !important;
         max-height: 100% !important;
     }
-    .ct-sidebar {
+    ${s.CORE.SIDEBAR} {
         position: static !important;
     }
     .ct-sidebar__inner {
@@ -1743,7 +1758,7 @@ function enforceFullHeight() {
     .ct-character-sheet {
         background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
     }
-    .ct-character-sheet-desktop {
+    ${s.CORE.SHEET_DESKTOP} {
         background-color: white;
         height: 100%;
         -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
@@ -1764,7 +1779,7 @@ function enforceFullHeight() {
     }
 
     @media screen {
-        .ct-character-sheet-desktop {
+        ${s.CORE.SHEET_DESKTOP} {
             max-width: none !important;
             margin: 0 !important;
             width: 100% !important;
@@ -1805,45 +1820,45 @@ function enforceFullHeight() {
         white-space: normal !important;
         overflow-wrap: break-word !important;
     }
-    .print-section-container .ct-combat__statuses h2 *,
-    .print-section-container .ct-combat__statuses h2 + *,
-    .print-section-container .ct-quick-info * {
+    .print-section-container ${s.COMBAT.STATUSES} h2 *,
+    .print-section-container ${s.COMBAT.STATUSES} h2 + *,
+    .print-section-container ${s.CORE.QUICK_INFO} * {
         font-size: 12px !important;
     }
-    .print-section-container .ct-quick-info__health * {
+    .print-section-container ${s.UI.QUICK_INFO_HEALTH} * {
         font-size: 14px !important;
     }
-    .print-section-container [class^="styles_heading__"],
-    .print-section-container [class^="styles_sectionHeading__"],
-    .print-section-container [class$="-heading"],
-    .print-section-container [class$="__heading"],
-    .print-section-container [class$="__heading "],
-    .print-section-container .ct-content-group__header-content {
+    .print-section-container ${s.CORE.HEADING_STYLES},
+    .print-section-container ${s.CORE.SECTION_HEADING_STYLES},
+    .print-section-container ${s.CORE.HEADING_SUFFIX},
+    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT},
+    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT} ,
+    .print-section-container ${s.CORE.GROUP_HEADER_CONTENT} {
         font-size: 12px !important;
         font-weight: bold !important;
         text-transform: uppercase;
         border-bottom: 1px solid #979797;
         margin-bottom: 4px;
     }
-    .print-section-container [class^="styles_sectionHeading__"],
-    .print-section-container [class$="__heading"],
-    .print-section-container [class$="__heading "] {
+    .print-section-container ${s.CORE.SECTION_HEADING_STYLES},
+    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT},
+    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT}  {
         font-size: 10px !important;
     }
-    .print-section-container [class^="styles_sectionHeading__"],
-    .print-section-container [class$="__heading"],
-    .print-section-container [class$="__heading "],
-    .print-section-container [class^="styles_heading__"] [class$="-heading"] {
+    .print-section-container ${s.CORE.SECTION_HEADING_STYLES},
+    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT},
+    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT} ,
+    .print-section-container ${s.CORE.HEADING_STYLES} ${s.CORE.HEADING_SUFFIX} {
         border-bottom: 0
     }
     @media print {
-        body, .ct-character-sheet-desktop {
+        body, ${s.CORE.SHEET_DESKTOP} {
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             transform: none !important;
         }
-        .ct-spells-filter {
+        ${s.SPELLS.FILTER} {
             visibility: hidden;
         }
         .print-page-separator {
@@ -1857,12 +1872,12 @@ function enforceFullHeight() {
         flex-direction: column !important;
         position: relative !important;
     }
-    .ct-senses__callout-value,
-    .integrated-dice__container,
-    .integrated-dice__container span {
+    ${s.SENSES.CALLOUT_VALUE},
+    ${s.CORE.DICE_CONTAINER},
+    ${s.CORE.DICE_CONTAINER} span {
         font-size: 16px !important;
     }
-    .ddbc-armor-class-box__value {
+    ${s.COMBAT.AC_VALUE} {
         font-size: 26px !important;
     }
 
@@ -1885,7 +1900,7 @@ function enforceFullHeight() {
         max-width: 136px;
     }
 
-    .ddbc-character-avatar__portrait {
+    ${s.UI.PORTRAIT} {
         width: 100%;
     }
     .print-section-header span {
@@ -1931,23 +1946,9 @@ function enforceFullHeight() {
     }
 
     /* Skills specific compact logic (already mostly covered by global above) */
-    .ct-skills, .ct-skills * {
+    ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
         font-size: 8px !important;
     }
-
-    /* Minimized state */
-    .print-section-container.minimized {
-        position: fixed !important;
-        left: 0 !important;
-        bottom: 0 !important;
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        z-index: 10000 !important;
-        background-color: #eee !important;
-        resize: none !important;
         overflow: hidden !important;
         border: 1px solid black !important;
     }

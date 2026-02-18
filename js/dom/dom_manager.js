@@ -93,9 +93,31 @@ class DomManager {
                 SUBSECTION_FOOTER: '.ct-subsection__footer',
                 HEADER_DESKTOP: '.ct-character-sheet-desktop .ct-character-header-desktop', // Specific
                 QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
-                QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div'
+                QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div',
+                // Added Phase 7
+                QUICK_INFO_HEALTH: '.ct-quick-info__health',
+                PORTRAIT: '.ddbc-character-avatar__portrait'
+            },
+            SKILLS: {
+                BOX: '.ct-skills__box',
+                CONTAINER: '.ct-skills'
+            },
+            COMBAT: {
+                STATUSES: '.ct-combat__statuses',
+                AC_VALUE: '.ddbc-armor-class-box__value'
+            },
+            SENSES: {
+                CALLOUT_VALUE: '.ct-senses__callout-value'
             }
         };
+        
+        // Add new keys for Phase 7 analysis (if not in object literal above)
+        this.selectors.CORE.HEADING_STYLES = '[class^="styles_heading__"]';
+        this.selectors.CORE.SECTION_HEADING_STYLES = '[class^="styles_sectionHeading__"]';
+        this.selectors.CORE.HEADING_SUFFIX = '[class$="-heading"]';
+        this.selectors.CORE.HEADING_SUFFIX_ALT = '[class$="__heading"]';
+        this.selectors.CORE.GROUP_HEADER_CONTENT = '.ct-content-group__header-content';
+        this.selectors.CORE.DICE_CONTAINER = '.integrated-dice__container';
     }
 
     static getInstance() {
