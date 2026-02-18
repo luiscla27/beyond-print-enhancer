@@ -1606,7 +1606,8 @@ function enforceFullHeight() {
             SUBSECTION_FOOTER: '.ct-subsection__footer',
             HEADER_DESKTOP: '.ct-character-header-desktop',
             QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
-            QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div'
+            QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div',
+            SIDEBAR_INNER: '.ct-sidebar__inner'
         };
         // Basic fallback for Phase 7 keys if missing
         s.SKILLS = { BOX: '.ct-skills__box', CONTAINER: '.ct-skills' };

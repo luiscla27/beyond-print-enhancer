@@ -89,8 +89,8 @@ This phase addresses the user's feedback about missing *nested* selectors in CSS
 ## Phase 8: Final CSS Sweep
 This phase addresses the remaining nested selectors identified by the user (sidebar inner, character sheet root, primary box, etc.) that were missed in previous passes.
 
-- [ ] Task: specific - Map Remaining Selectors
-    - [ ] Map the following to `DomManager`:
+- [x] Task: specific - Map Remaining Selectors
+    - [x] Map the following to `DomManager`:
         - `.ct-sidebar__inner`
         - `.ct-character-sheet`
         - `.ct-primary-box`
@@ -103,6 +103,6 @@ This phase addresses the remaining nested selectors identified by the user (side
         - `div[class$="-content"] div[class$="__name"]`
         - `div[class$="-content"] div[class$="-slot__name"]`
         - `div[class$="-content"] div[class$="-item__name"]`
-- [ ] Task: specific - Refactor Remaining CSS
-    - [ ] Update `enforceFullHeight` and `injectCompactStyles` (or other locations) to use these new keys.
+- [x] Task: specific - Refactor Remaining CSS
+    - [x] Update `enforceFullHeight` and `injectCompactStyles` (or other locations) to use these new keys.
 - [ ] Task: Conductor - User Manual Verification 'Final CSS Sweep' (Protocol in workflow.md)
