@@ -68,11 +68,11 @@ This phase addresses the hardcoded CSS selectors within injected style blocks (e
 ## Phase 6: Comprehensive CSS Analysis & Abstraction
 This phase tackles the deep analysis and abstraction of remaining CSS selectors, particularly those in the large injected blocks, ensuring every D&D Beyond dependency is identified, documented, and abstracted.
 
-- [ ] Task: specific - Detailed CSS Audit
-    - [ ] Analyze `js/main.js` specifically lines 1579-2062 (and similar blocks).
-    - [ ] Create a detailed map of each selector, its purpose (e.g., "Hides rolling panel", "Shrinks icon"), and its source (DDB vs. Extension).
-    - [ ] Document this analysis in `css_abstraction_plan.md` (updating the existing file).
-- [ ] Task: specific - Refined Abstraction
-    - [ ] Update `DomManager` with semantic keys based on the analysis (e.g., `UI.DICE_ROLLER`, `UI.COLLAPSED_ACTIONS`).
-    - [ ] Refactor the CSS strings to use these new semantic keys.
+- [x] Task: specific - Detailed CSS Audit
+    - [x] Analyze `js/main.js` specifically lines 1579-2062 (and similar blocks).
+    - [x] Create a detailed map of each selector, its purpose (e.g., "Hides rolling panel", "Shrinks icon"), and its source (DDB vs. Extension).
+    - [x] Document this analysis in `css_abstraction_plan.md` (updating the existing file).
+- [x] Task: specific - Refined Abstraction
+    - [x] Update `DomManager` with semantic keys based on the analysis (e.g., `UI.DICE_ROLLER`, `UI.COLLAPSED_ACTIONS`).
+    - [x] Refactor the CSS strings to use these new semantic keys.
 - [ ] Task: Conductor - User Manual Verification 'Comprehensive CSS Analysis & Abstraction' (Protocol in workflow.md)

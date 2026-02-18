@@ -1,62 +1,69 @@
-# CSS Abstraction Plan
+# CSS Abstraction Plan (Detailed)
 
-## Goal
-Centralize hardcoded CSS selectors found in `injectCompactStyles` and `enforceFullHeight` into `DomManager`.
+## Overview
+This document analyzes the purpose of each CSS selector used in the injected style blocks (`enforceFullHeight` and `injectCompactStyles`) and maps them to semantic keys in `DomManager`.
 
-## Selectors to Abstract
+## 1. Global / Print Layout (`enforceFullHeight`)
+**Purpose:** Hides site navigation, ads, and sets up the print page boundaries.
 
-### Core / Global (enforceFullHeight)
-| Current Selector | DomManager Key |
-| :--- | :--- |
-| `.site-bar` | `CORE.SITE_BAR` (Exists) |
-| `nav` | `CORE.NAVIGATION` (Exists) |
-| `header` | `CORE.HEADER_MAIN` (Exists - ish, assumes header.main) |
-| `.ddb-site-alert` | `CORE.SITE_ALERT` (Exists) |
-| `.watermark` | `CORE.WATERMARK` (Exists) |
-| `#mega-menu-target` | `CORE.MEGA_MENU_TARGET` (Exists) |
-| `.mm-navbar` | `CORE.MM_NAVBAR` (New) |
-| `.notifications-wrapper` | `CORE.NOTIFICATIONS` (Exists) |
-| `.ct-character-sheet-desktop` | `CORE.SHEET_DESKTOP` (Exists) |
-| `div.ct-content-group` | `CORE.CONTENT_GROUP` (New) |
+| Purpose | Selector | Source | DomManager Key |
+| :--- | :--- | :--- | :--- |
+| **Site Navigation** | `.site-bar` | DDB | `CORE.SITE_BAR` |
+| **Main Header** | `nav`, `header` | DDB | `CORE.NAVIGATION`, `CORE.HEADER_MAIN` |
+| **Site Alerts** | `.ddb-site-alert` | DDB | `CORE.SITE_ALERT` |
+| **Branding/Watermark** | `.watermark` | DDB | `CORE.WATERMARK` |
+| **Mega Menu** | `#mega-menu-target` | DDB | `CORE.MEGA_MENU_TARGET` |
+| **Mobile Nav** | `.mm-navbar` | DDB | `CORE.MM_NAVBAR` |
+| **Notifications** | `.notifications-wrapper` | DDB | `CORE.NOTIFICATIONS` |
+| **Footer** | `footer` | DDB | `CORE.FOOTER` |
+| **Sheet Container** | `.ct-character-sheet-desktop` | DDB | `CORE.SHEET_DESKTOP` |
+| **Print Break Avoidance** | `div.ct-content-group` | DDB | `CORE.CONTENT_GROUP` |
 
-### Compact Mode (injectCompactStyles)
-Most of these are generic suffix selectors. We should store the *roots* or *patterns* in DomManager.
+## 2. Compact Mode (`injectCompactStyles`)
+**Purpose:** Condenses the layout for Spells, Actions, and other lists to save paper space.
 
-| Current Selector | DomManager Key |
-| :--- | :--- |
-| `[class^="styles_tableHeader__"]` | `COMPACT.TABLE_HEADER` |
-| `[class$="__header"]` | `COMPACT.GENERIC_HEADER` |
-| `[class$="__heading"]` | `COMPACT.GENERIC_HEADING` |
-| `[class$="-row"]` | `COMPACT.GENERIC_ROW` |
-| `[class$="__row-header"]` | `COMPACT.ROW_HEADER` |
-| `[class$="--primary"]` | `COMPACT.PRIMARY` |
-| `[class$="-row__primary"]` | `COMPACT.ROW_PRIMARY` |
-| `[class$="-content"]` | `COMPACT.GENERIC_CONTENT` |
-| `[class$="__attack-save-icon"]` | `COMPACT.ICON_ATTACK` |
-| `[class$="__range-icon"]` | `COMPACT.ICON_RANGE` |
-| `[class$="__casting-time-icon"]` | `COMPACT.ICON_CAST_TIME` |
-| `[class$="__damage-effect-icon"]` | `COMPACT.ICON_DAMAGE` |
-| `.ddbc-file-icon` | `COMPACT.ICON_FILE` |
-| `.ct-extras` | `EXTRAS.CONTAINER` (Exists) |
-| `[class$="--preview"]` | `COMPACT.PREVIEW` |
-| `[class$="__preview"]` | `COMPACT.PREVIEW_ALT` |
-| `[class$="__label"]` | `COMPACT.LABEL` |
-| `[class$="__notes"]` | `COMPACT.NOTES` |
-| `[class$="__activation"]` | `COMPACT.ACTIVATION` |
-| `[class$="__range"]` | `COMPACT.RANGE` |
-| `[class$="__hit-dc"]` | `COMPACT.HIT_DC` |
-| `[class$="__effect"]` | `COMPACT.EFFECT` |
-| `button[class$="__container"]` | `COMPACT.BUTTON_CONTAINER` |
-| `.ct-button` | `CORE.BUTTON` (New) |
-| `[class$="__slots"]` | `COMPACT.SLOTS` |
-| `[class$="__header-content"]` | `COMPACT.HEADER_CONTENT` |
-| `[class$="__action"]` | `COMPACT.ACTION` |
-| `[class$="__distance"]` | `COMPACT.DISTANCE` |
-| `[class$="__meta"]` | `COMPACT.META` |
-| `.ct-spells-spell` | `SPELLS.ROW` (Exists) |
+| Purpose | Selector | Source | DomManager Key |
+| :--- | :--- | :--- | :--- |
+| **Table Headers** | `[class^="styles_tableHeader__"]` | DDB | `COMPACT.TABLE_HEADER` |
+| **Generic Headers** | `[class$="__header"]` | DDB | `COMPACT.GENERIC_HEADER` |
+| **Section Headings** | `[class$="__heading"]` | DDB | `COMPACT.GENERIC_HEADING` |
+| **List Rows** | `[class$="-row"]` | DDB | `COMPACT.GENERIC_ROW` |
+| **Row Headers** | `[class$="__row-header"]` | DDB | `COMPACT.ROW_HEADER` |
+| **Primary Text** | `[class$="--primary"]` | DDB | `COMPACT.PRIMARY` |
+| **Row Primary** | `[class$="-row__primary"]` | DDB | `COMPACT.ROW_PRIMARY` |
+| **Content Body** | `[class$="-content"]` | DDB | `COMPACT.GENERIC_CONTENT` |
+| **Attack Icon** | `[class$="__attack-save-icon"]` | DDB | `COMPACT.ICON_ATTACK` |
+| **Range Icon** | `[class$="__range-icon"]` | DDB | `COMPACT.ICON_RANGE` |
+| **Cast Time Icon** | `[class$="__casting-time-icon"]` | DDB | `COMPACT.ICON_CAST_TIME` |
+| **Damage Icon** | `[class$="__damage-effect-icon"]` | DDB | `COMPACT.ICON_DAMAGE` |
+| **File Icon** | `.ddbc-file-icon` | DDB | `COMPACT.ICON_FILE` |
+| **Preview Pane** | `[class$="--preview"]`, `[class$="__preview"]` | DDB | `COMPACT.PREVIEW`, `COMPACT.PREVIEW_ALT` |
+| **Labels** | `[class$="__label"]` | DDB | `COMPACT.LABEL` |
+| **Notes** | `[class$="__notes"]` | DDB | `COMPACT.NOTES` |
+| **Activation Time** | `[class$="__activation"]` | DDB | `COMPACT.ACTIVATION` |
+| **Range Text** | `[class$="__range"]` | DDB | `COMPACT.RANGE` |
+| **Hit/DC Text** | `[class$="__hit-dc"]` | DDB | `COMPACT.HIT_DC` |
+| **Effect Text** | `[class$="__effect"]` | DDB | `COMPACT.EFFECT` |
+| **Action Buttons** | `button[class$="__container"]` | DDB | `COMPACT.BUTTON_CONTAINER` |
+| **Spell Slots** | `[class$="__slots"]` | DDB | `COMPACT.SLOTS` |
+| **Header Content** | `[class$="__header-content"]` | DDB | `COMPACT.HEADER_CONTENT` |
+| **Action Type** | `[class$="__action"]` | DDB | `COMPACT.ACTION` |
+| **Distance** | `[class$="__distance"]` | DDB | `COMPACT.DISTANCE` |
+| **Meta Info** | `[class$="__meta"]` | DDB | `COMPACT.META` |
 
-## Strategy
-1.  Update `DomManager.js` with new keys.
-2.  Refactor `enforceFullHeight` to construct the style string using `DomManager.selectors`.
-3.  Refactor `injectCompactStyles` to construct the style string using `DomManager.selectors`.
-    *   Since `injectCompactStyles` uses a template literal with many selectors, we can create a helper in `main.js` or `DomManager` to generate the CSS block, or just interpolate variables.
+## 3. UI Elements (Extension Specific)
+**Purpose:** Styles for elements created by the extension. These are owned by us, but good to track.
+
+| Purpose | Selector | Source | DomManager Key |
+| :--- | :--- | :--- | :--- |
+| **Loading Spinner** | `.be-spinner` | Ext | `UI.SPINNER` |
+| **Error Actions** | `.be-error-actions` | Ext | `UI.ERROR_ACTIONS` |
+| **Retry Button** | `.be-retry-button` | Ext | `UI.RETRY_BTN` |
+| **Delete Button** | `.be-delete-button` | Ext | `UI.DELETE_BTN` |
+| **Extractable Trigger** | `.be-extractable` | Ext | `UI.EXTRACTABLE` |
+| **Spell Detail Btn** | `.be-spell-details-button` | Ext | `SPELLS.DETAIL_BUTTON` (Exists) |
+
+## Implementation
+- Update `DomManager` with the `UI` namespace.
+- Update `DomManager` `COMPACT` namespace with any missing definitions.
+- Refactor `js/main.js` to use these keys in the `injectCompactStyles` function template literal.
