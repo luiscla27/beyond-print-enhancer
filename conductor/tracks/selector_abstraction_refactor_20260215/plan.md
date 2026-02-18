@@ -57,10 +57,10 @@ Ensure the abstraction is complete and no legacy direct DOM access remains.
 ## Phase 5: CSS Injection Abstraction
 This phase addresses the hardcoded CSS selectors within injected style blocks (e.g., `injectCompactStyles`, `enforceFullHeight`).
 
-- [ ] Task: specific - Analyze Injected CSS
-    - [ ] Audit `js/main.js` for `injectCompactStyles`, `enforceFullHeight`, and any other style injection functions.
-    - [ ] Identify all D&D Beyond specific selectors used in these strings.
-- [ ] Task: specific - Centralize CSS Selectors
-    - [ ] Update `DomManager` (or create a `CssManager`) to store these selectors or generating functions.
-    - [ ] Refactor the CSS strings to use the centralized constants.
+- [x] Task: specific - Analyze Injected CSS
+    - [x] Audit `js/main.js` for `injectCompactStyles`, `enforceFullHeight`, and any other style injection functions.
+    - [x] Identify all D&D Beyond specific selectors used in these strings.
+- [x] Task: specific - Centralize CSS Selectors
+    - [x] Update `DomManager` (or create a `CssManager`) to store these selectors or generating functions.
+    - [x] Refactor the CSS strings to use the centralized constants.
 - [ ] Task: Conductor - User Manual Verification 'CSS Injection Abstraction' (Protocol in workflow.md)
