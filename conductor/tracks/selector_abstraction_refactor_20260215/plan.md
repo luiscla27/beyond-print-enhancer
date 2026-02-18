@@ -35,14 +35,14 @@ This phase tackles the complex Spells tab, including lists, headers, rows, and d
 ## Phase 3: Actions, Equipment & Remaining Modules
 This phase covers the remaining major tabs and any other scattered selectors.
 
-- [ ] Task: specific - Migrate Actions & Equipment
-    - [ ] Identify selectors for Actions tab (Attack rows, Action details) and Equipment tab.
-    - [ ] Add to `DomManager` and create wrappers.
-    - [ ] Refactor logic in `js/main.js` (and any other files) to use `DomManager`.
-- [ ] Task: specific - Migrate Traits, Features & Extras
-    - [ ] Identify selectors for Features & Traits, Description, Notes, and Extras tabs.
-    - [ ] Add to `DomManager` and create wrappers.
-    - [ ] Refactor logic.
+- [x] Task: specific - Migrate Actions & Equipment
+    - [x] Identify selectors for Actions tab (Attack rows, Action details) and Equipment tab.
+    - [x] Add to `DomManager` and create wrappers.
+    - [x] Refactor logic in `js/main.js` (and any other files) to use `DomManager`.
+- [x] Task: specific - Migrate Traits, Features & Extras
+    - [x] Identify selectors for Features & Traits, Description, Notes, and Extras tabs.
+    - [x] Add to `DomManager` and create wrappers.
+    - [x] Refactor logic.
 - [ ] Task: Conductor - User Manual Verification 'Actions, Equipment & Remaining Modules' (Protocol in workflow.md)
 
 ## Phase 4: Final Cleanup & Verification

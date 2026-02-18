@@ -1656,6 +1656,8 @@ function enforceFullHeight() {
     }
 
     dialog + div,
+    div#section-Section-6 .print-section-header > span, 
+    div#section-Section-6 .print-section-content .ct-primary-box,
     .dice-rolling-panel,
     [class$="__actions--collapsed"],
     .ct-character-sheet:before,
