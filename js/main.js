@@ -1580,6 +1580,21 @@ function enforceFullHeight() {
     const styleId = 'ddb-print-enhance-style';
     if (document.getElementById(styleId)) return;
 
+    let s = { CORE: {}, SPELLS: {}, COMPACT: {} };
+    if (window.DomManager) {
+        s = window.DomManager.getInstance().selectors;
+    } else {
+        // Fallback or explicit strings if DomManager missing during init
+        s.CORE = {
+            SITE_BAR: '.site-bar', NAVIGATION: 'nav', HEADER_MAIN: 'header',
+            SITE_ALERT: '.ddb-site-alert', WATERMARK: '.watermark',
+            FOOTER: 'footer', MEGA_MENU_TARGET: '#mega-menu-target',
+            MM_NAVBAR: '.mm-navbar', NOTIFICATIONS: '.notifications-wrapper',
+            SHEET_DESKTOP: '.ct-character-sheet-desktop',
+            CONTENT_GROUP: 'div.ct-content-group'
+        };
+    }
+
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
@@ -1603,19 +1618,19 @@ function enforceFullHeight() {
         }
 
         /* Deep Clean: Aggressively hide top elements */
-        .site-bar, 
-        nav, 
-        header, 
-        .ddb-site-alert, 
-        .watermark, 
-        footer, 
-        #mega-menu-target, 
-        .mm-navbar,
-        .notifications-wrapper {
+        ${s.CORE.SITE_BAR}, 
+        ${s.CORE.NAVIGATION}, 
+        ${s.CORE.HEADER_MAIN}, 
+        ${s.CORE.SITE_ALERT}, 
+        ${s.CORE.WATERMARK}, 
+        ${s.CORE.FOOTER}, 
+        ${s.CORE.MEGA_MENU_TARGET}, 
+        ${s.CORE.MM_NAVBAR},
+        ${s.CORE.NOTIFICATIONS} {
             display: none !important;
         }
 
-        .ct-character-sheet-desktop {
+        ${s.CORE.SHEET_DESKTOP} {
             margin: 0 !important;
             padding: 0 !important;
             /* Force absolute top to ignore any flow */
@@ -1627,7 +1642,7 @@ function enforceFullHeight() {
              
         p, 
         span,
-        div.ct-content-group { 
+        ${s.CORE.CONTENT_GROUP} { 
             break-inside: avoid; 
         }
     }
@@ -4054,6 +4069,25 @@ function injectCloneButtons(context = document) {
 function injectCompactStyles() {
     if (document.getElementById('ddb-print-compact-style')) return;
 
+    let s = { CORE: {}, EXTRAS: {}, SPELLS: {}, COMPACT: {} };
+    if (window.DomManager) {
+        s = window.DomManager.getInstance().selectors;
+    } else {
+        // Fallback hardcoded if needed, but DomManager should be there
+        // Simplified fallback for brevity if DomManager fails
+        s.COMPACT = {
+            TABLE_HEADER: '[class^="styles_tableHeader__"]',
+            GENERIC_HEADER: '[class$="__header"]',
+            // ... add others if strict fallback needed
+        };
+        s.EXTRAS = { CONTAINER: '.ct-extras' };
+        s.SPELLS = { ROW: '.ct-spells-spell' };
+        s.CORE = { BUTTON: '.ct-button' };
+    }
+    
+    // Ensure all keys exist to prevent template error if fallback was partial
+    const c = s.COMPACT; 
+
     const style = document.createElement('style');
     style.id = 'ddb-print-compact-style';
     style.textContent = `
@@ -4061,71 +4095,71 @@ function injectCompactStyles() {
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
         }
-        .print-section-container.be-compact-mode [class^="styles_tableHeader__"],
-        .print-section-container.be-compact-mode [class$="__header"],
+        .print-section-container.be-compact-mode ${c.TABLE_HEADER},
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADER},
          {
             margin-top: 10px !important;
             margin-bottom: 5px !important;
             padding-bottom: 2px !important;
             border-bottom: 1px solid #ccc !important;
         }
-        .print-section-container.be-compact-mode [class$="__heading"] {
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADING} {
             margin: 0px !important;
         }
-        .print-section-container.be-compact-mode [class$="-row"] {
+        .print-section-container.be-compact-mode ${c.GENERIC_ROW} {
             padding: 2px 0px !important;
         }
-        .print-section-container.be-compact-mode [class$="__row-header"] [class$="--primary"],
-        .print-section-container.be-compact-mode [class$="-row"] [class$="-row__primary"] {
+        .print-section-container.be-compact-mode ${c.ROW_HEADER} ${c.PRIMARY},
+        .print-section-container.be-compact-mode ${c.GENERIC_ROW} ${c.ROW_PRIMARY} {
             max-width: 80px !important;
         }
-        .print-section-container.be-compact-mode [class$="-content"] > div {
+        .print-section-container.be-compact-mode ${c.GENERIC_CONTENT} > div {
             padding: 0 !important;
             min-height: auto !important;
             border-bottom: 1px dashed #eee !important;
         }
         
         /* Hide or shrink icons */
-        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode [class$="__range-icon"],
-        .print-section-container.be-compact-mode [class$="__casting-time-icon"],
-        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode [class$="__damage-effect-icon"]{
+        .print-section-container.be-compact-mode ${c.ICON_ATTACK},
+        .print-section-container.be-compact-mode ${c.ICON_RANGE},
+        .print-section-container.be-compact-mode ${c.ICON_CAST_TIME},
+        .print-section-container.be-compact-mode ${c.ICON_ATTACK},
+        .print-section-container.be-compact-mode ${c.ICON_DAMAGE}{
             transform: scale(0.8);
             margin: 0 !important;
         }
         
-        .print-section-container.be-compact-mode .ddbc-file-icon {
+        .print-section-container.be-compact-mode ${c.ICON_FILE} {
             width: 16px !important;
             height: 16px !important;
         }
         
         /* Hide previews for extras */
-        .print-section-container.be-compact-mode .ct-extras [class$="--preview"],
-        .print-section-container.be-compact-mode .ct-extras [class$="__preview"] {
+        .print-section-container.be-compact-mode ${s.EXTRAS.CONTAINER} ${c.PREVIEW},
+        .print-section-container.be-compact-mode ${s.EXTRAS.CONTAINER} ${c.PREVIEW_ALT} {
             display: none !important;
         }
 
         /* Tighten text */
-        .print-section-container.be-compact-mode [class$="__label"],
-        .print-section-container.be-compact-mode [class$="__header"],
-        .print-section-container.be-compact-mode [class$="__notes"] {
+        .print-section-container.be-compact-mode ${c.LABEL},
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADER},
+        .print-section-container.be-compact-mode ${c.NOTES} {
             font-size: 11px !important;
             line-height: 1.2 !important;
         }
         
-        .print-section-container.be-compact-mode [class$="__activation"],
-        .print-section-container.be-compact-mode [class$="__range"],
-        .print-section-container.be-compact-mode [class$="__hit-dc"],
-        .print-section-container.be-compact-mode [class$="__effect"] {
+        .print-section-container.be-compact-mode ${c.ACTIVATION},
+        .print-section-container.be-compact-mode ${c.RANGE},
+        .print-section-container.be-compact-mode ${c.HIT_DC},
+        .print-section-container.be-compact-mode ${c.EFFECT} {
             font-size: 11px !important;
             padding: 0 2px !important;
             vertical-align: middle !important;
         }
 
         /* Buttons (Cast, At Will, etc) */
-        .print-section-container.be-compact-mode button[class$="__container"],
-        .print-section-container.be-compact-mode .ct-button {
+        .print-section-container.be-compact-mode ${c.BUTTON_CONTAINER},
+        .print-section-container.be-compact-mode ${s.CORE.BUTTON} {
             height: 20px !important;
             line-height: 20px !important;
             padding: 0!important;
@@ -4134,32 +4168,32 @@ function injectCompactStyles() {
         }
 
         /* Slots Checkboxes - Align to immediate left of "SLOTS" label if possible, or just left align container */
-        .print-section-container.be-compact-mode [class$="__slots"] {
+        .print-section-container.be-compact-mode ${c.SLOTS} {
             margin-left: 10px !important;
             margin-right: auto !important; /* Push to left */
             transform: scale(0.9);
             transform-origin: left center;
         }
         
-        .print-section-container.be-compact-mode [class$="__header-content"] {
+        .print-section-container.be-compact-mode ${c.HEADER_CONTENT} {
             flex: 0 0 auto !important; /* Stop taking full width */
             margin-right: 10px !important;
         }
         
-        .print-section-container.be-compact-mode [class$="__header"] {
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADER} {
             justify-content: flex-start !important; /* Align content to start */
         }
 
         /* General width reductions for columns */
-        .print-section-container.be-compact-mode [class$="__action"],
-        .print-section-container.be-compact-mode [class$="__distance"],
-        .print-section-container.be-compact-mode [class$="__meta"] {
+        .print-section-container.be-compact-mode ${c.ACTION},
+        .print-section-container.be-compact-mode ${c.DISTANCE},
+        .print-section-container.be-compact-mode ${c.META} {
             width: auto !important;
             max-width: none !important;
         }
 
         /* Spell Details Trigger Button */
-        .ct-spells-spell {
+        ${s.SPELLS.ROW} {
             position: relative;
         }
         .be-spell-details-button {
@@ -4178,7 +4212,7 @@ function injectCompactStyles() {
             z-index: 100;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-        .ct-spells-spell:hover .be-spell-details-button {
+        ${s.SPELLS.ROW}:hover .be-spell-details-button {
             display: block;
         }
         .be-spell-details-button:hover {

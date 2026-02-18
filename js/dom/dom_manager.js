@@ -15,7 +15,10 @@ class DomManager {
                 NOTIFICATIONS: '.notifications-wrapper',
                 SIDEBAR_PORTAL: '.ct-sidebar__portal',
                 SPELL_MANAGER: '.ct-spell-manager',
-                SHEET_INNER: '.ct-character-sheet__inner'
+                SHEET_INNER: '.ct-character-sheet__inner',
+                MM_NAVBAR: '.mm-navbar',
+                CONTENT_GROUP: 'div.ct-content-group',
+                BUTTON: '.ct-button'
             },
             SPELLS: {
                 CONTAINER: '.ct-spells',
@@ -45,6 +48,35 @@ class DomManager {
                 CONTAINER: '.ct-extras', // Based on analysis
                 FILTER: '.ct-extras__filter',
                 INTERACTIONS: '.ct-extras-filter__interactions'
+            },
+            COMPACT: {
+                TABLE_HEADER: '[class^="styles_tableHeader__"]',
+                GENERIC_HEADER: '[class$="__header"]',
+                GENERIC_HEADING: '[class$="__heading"]',
+                GENERIC_ROW: '[class$="-row"]',
+                ROW_HEADER: '[class$="__row-header"]',
+                PRIMARY: '[class$="--primary"]',
+                ROW_PRIMARY: '[class$="-row__primary"]',
+                GENERIC_CONTENT: '[class$="-content"]',
+                ICON_ATTACK: '[class$="__attack-save-icon"]',
+                ICON_RANGE: '[class$="__range-icon"]',
+                ICON_CAST_TIME: '[class$="__casting-time-icon"]',
+                ICON_DAMAGE: '[class$="__damage-effect-icon"]',
+                ICON_FILE: '.ddbc-file-icon',
+                PREVIEW: '[class$="--preview"]',
+                PREVIEW_ALT: '[class$="__preview"]',
+                LABEL: '[class$="__label"]',
+                NOTES: '[class$="__notes"]',
+                ACTIVATION: '[class$="__activation"]',
+                RANGE: '[class$="__range"]',
+                HIT_DC: '[class$="__hit-dc"]',
+                EFFECT: '[class$="__effect"]',
+                BUTTON_CONTAINER: 'button[class$="__container"]',
+                SLOTS: '[class$="__slots"]',
+                HEADER_CONTENT: '[class$="__header-content"]',
+                ACTION: '[class$="__action"]',
+                DISTANCE: '[class$="__distance"]',
+                META: '[class$="__meta"]'
             }
         };
     }
