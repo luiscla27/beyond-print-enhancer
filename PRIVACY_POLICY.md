@@ -1,7 +1,5 @@
 # Privacy Policy for Beyond Print Enhancer
 
-**Last Updated:** February 12, 2026
-
 "Beyond Print Enhancer" ("the Extension") is an open-source browser extension designed to improve the layout of D&D Beyond character sheets for printing.
 
 This Privacy Policy describes how the Extension collects, uses, and handles your data. The Extension is designed with privacy in mind and operates almost entirely locally on your device.

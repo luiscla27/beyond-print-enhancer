@@ -21,7 +21,11 @@ chrome.runtime.onInstalled.addListener(function() {
 chrome.action.onClicked.addListener(function(tab) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    files: ['js/main.js']
+    files: [
+      'js/dom/element_wrapper.js',
+      'js/dom/dom_manager.js',
+      'js/main.js'
+    ]
   });
 });
 

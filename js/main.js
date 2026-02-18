@@ -462,7 +462,7 @@ async function extractAndWrapSections() {
         // User Request: DONT clone the "spells" tab (keep it live/interactive)
             // Fix: Skip Spells in the loop to avoid breaking iteration.
             // Strict Check: Use data-testid="SPELLS" if available, or name fallback
-            if (section.name === 'Spells' || section.title === 'Spells' || section.testId === 'SPELLS') {
+            if (section.name.includes('Spells') || section.title.includes('Spells') || section.testId === 'SPELLS') {
                 console.log('[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
                 continue;
             }
@@ -615,7 +615,17 @@ function copySvgDefinitions(targetContainer) {
  * Injects detail section triggers into spell rows.
  */
 function injectSpellDetailTriggers(context = document) {
-    context.querySelectorAll('.ct-spells-spell').forEach(row => {
+    let rows;
+    if (window.DomManager) {
+        // If context is an ElementWrapper, DomManager handles it
+        // If context is raw HTMLElement, we can wrap it or pass it if DomManager supports
+        // Our getSpellRows supports HTMLElement context
+        rows = window.DomManager.getInstance().getSpellRows(context).map(w => w.element);
+    } else {
+        rows = context.querySelectorAll('.ct-spells-spell');
+    }
+
+    rows.forEach(row => {
         if (row.querySelector('.be-spell-details-button')) return;
 
         const label = row.querySelector('.ct-spells-spell__label');
@@ -1212,32 +1222,37 @@ async function injectClonesIntoSpellsView() {
   await new Promise(r => setTimeout(r, 200));
 
   // 2. Find the Live Spells Node (which is now visible)
-  const selectors = [
-      '[class*="styles_primaryBox"]',
-      '.ct-primary-box', 
-      '.ddbc-box-background + div section',
-      '.sheet-body section'
-  ];
-  
-  let spellsNode = null;
-  for (const selector of selectors) {
-      const matches = document.querySelectorAll(selector);
-      const visibleMatch = Array.from(matches).find(el => {
-          const style = window.getComputedStyle(el);
-          return style.display !== 'none' && !el.classList.contains('hidden');
-      });
-      if (visibleMatch) {
-          spellsNode = visibleMatch;
-          break;
-      }
-  }
-
-  // Go up to structural parent if needed
-  if (spellsNode && (
-      spellsNode.parentElement.className.includes('primaryBox') ||
-      spellsNode.parentElement.className.includes('ct-primary-box')
-  )) {
-      spellsNode = spellsNode.parentElement;
+  let spellsNode;
+  if (window.DomManager) {
+      const wrapper = window.DomManager.getInstance().getSpellsContainer();
+      spellsNode = wrapper ? wrapper.element : null;
+  } else {
+    const selectors = [
+        '[class*="styles_primaryBox"]',
+        '.ct-primary-box', 
+        '.ddbc-box-background + div section',
+        '.sheet-body section'
+    ];
+    
+    for (const selector of selectors) {
+        const matches = document.querySelectorAll(selector);
+        const visibleMatch = Array.from(matches).find(el => {
+            const style = window.getComputedStyle(el);
+            return style.display !== 'none' && !el.classList.contains('hidden');
+        });
+        if (visibleMatch) {
+            spellsNode = visibleMatch;
+            break;
+        }
+    }
+    
+    // Go up to structural parent if needed
+    if (spellsNode && (
+        spellsNode.parentElement.className.includes('primaryBox') ||
+        spellsNode.parentElement.className.includes('ct-primary-box')
+    )) {
+        spellsNode = spellsNode.parentElement;
+    }
   }
 
   if (!spellsNode) {
@@ -1248,7 +1263,8 @@ async function injectClonesIntoSpellsView() {
   // 3. Clean up the Live Spells Node (Hide UI, Fix Layout)
   // We apply the same fixes as we did for clones, but IN PLACE.
   spellsNode.querySelectorAll('menu').forEach(el => el.style.display = 'none');
-  spellsNode.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
+  // Removed aggressive hiding of tab-filters for the live Spells node to preserve interactivity
+  // spellsNode.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
   
   spellsNode.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
   
@@ -1330,10 +1346,14 @@ async function injectClonesIntoSpellsView() {
   });
 
   // 8. Hide Navigation UI
-  const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
-                  document.querySelector('nav[class*="styles_navigation"]');
-  if (navTabs) {
-      navTabs.style.display = 'none';
+  if (window.DomManager) {
+    window.DomManager.getInstance().getNavigation().hide();
+  } else {
+    const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
+                    document.querySelector('nav[class*="styles_navigation"]');
+    if (navTabs) {
+        navTabs.style.display = 'none';
+    }
   }
   
   // 9. Inject spell detail triggers into all sections
@@ -1370,10 +1390,18 @@ function moveDefenses() {
  */
 function tweakStyles() {
   // Hide major UI components
-  safeQueryAll([
-    'div.site-bar', 'header.main', '#mega-menu-target', 
-    '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
-  ]).forEach(e => { e.style.display = 'none'; });
+  if (window.DomManager) {
+    window.DomManager.getInstance().hideCoreInterface();
+  } else {
+    // Fallback or legacy (though DomManager should be present)
+    safeQueryAll([
+      'div.site-bar', 'header.main', '#mega-menu-target', 
+      '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
+    ]).forEach(e => { 
+        if (e.classList.contains('ct-sidebar__portal') || e.closest('.ct-sidebar__portal')) return;
+        e.style.display = 'none'; 
+    });
+  }
 
   const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
   if (name) name.style['color'] = 'black';
@@ -1417,7 +1445,14 @@ function movePortrait() {
  */
 function moveQuickInfo() {
     // User Request: Make .ct-quick-info draggable
-    const quickInfo = document.querySelector('.ct-quick-info');
+    let quickInfo;
+    if (window.DomManager) {
+        const wrapper = window.DomManager.getInstance().getQuickInfo();
+        quickInfo = wrapper ? wrapper.element : null;
+    } else {
+        quickInfo = document.querySelector('.ct-quick-info');
+    }
+
     if (quickInfo) {
         const layoutRoot = document.getElementById('print-layout-wrapper');
         if (layoutRoot) {
@@ -1521,6 +1556,16 @@ function removeSearchBoxes() {
     '.ct-application-group__filter'
   ];
 
+  if (window.DomManager) {
+      // Use abstracted selectors if available to make it more robust
+      const s = window.DomManager.getInstance().selectors;
+      if (s.SPELLS && s.SPELLS.FILTER) searchSelectors.push(s.SPELLS.FILTER);
+      if (s.EQUIPMENT && s.EQUIPMENT.FILTER) searchSelectors.push(s.EQUIPMENT.FILTER);
+      if (s.EQUIPMENT && s.EQUIPMENT.INVENTORY_FILTER) searchSelectors.push(s.EQUIPMENT.INVENTORY_FILTER);
+      if (s.EXTRAS && s.EXTRAS.FILTER) searchSelectors.push(s.EXTRAS.FILTER);
+      if (s.TRAITS && s.TRAITS.MANAGEMENT_LINK) searchSelectors.push(s.TRAITS.MANAGEMENT_LINK);
+  }
+
   safeQueryAll(searchSelectors).forEach(el => {
     // User Request: Preserve Filters on Live Spells Tab
     // Check if element is inside Spells container (or is the spells filter itself checking ancestors)
@@ -1534,6 +1579,56 @@ function removeSearchBoxes() {
 function enforceFullHeight() {
     const styleId = 'ddb-print-enhance-style';
     if (document.getElementById(styleId)) return;
+
+    let s = { CORE: {}, SPELLS: {}, COMPACT: {} };
+    if (window.DomManager) {
+        s = window.DomManager.getInstance().selectors;
+    } else {
+        // Fallback or explicit strings if DomManager missing during init
+        s.CORE = {
+            SITE_BAR: '.site-bar', NAVIGATION: 'nav', HEADER_MAIN: 'header',
+            SITE_ALERT: '.ddb-site-alert', WATERMARK: '.watermark',
+            FOOTER: 'footer', MEGA_MENU_TARGET: '#mega-menu-target',
+            MM_NAVBAR: '.mm-navbar', NOTIFICATIONS: '.notifications-wrapper',
+            SHEET_DESKTOP: '.ct-character-sheet-desktop',
+            CONTENT_GROUP: 'div.ct-content-group',
+            SIDEBAR_PORTAL: '.ct-sidebar__portal',
+            SPELL_MANAGER: '.ct-spell-manager',
+            SIDEBAR: '.ct-sidebar'
+        };
+        // Basic fallback for UI
+        s.UI = {
+            DICE_ROLLER: '.dice-rolling-panel',
+            COLLAPSED_ACTIONS: '[class$="__actions--collapsed"]',
+            THEME_LINK: '.ddbc-theme-link',
+            TIDBITS_HEADING: '.ddbc-character-tidbits__heading',
+            FEATURES_LINK: '.ct-features__management-link',
+            SUBSECTION_FOOTER: '.ct-subsection__footer',
+            HEADER_DESKTOP: '.ct-character-header-desktop',
+            QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
+            QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div',
+            SIDEBAR_INNER: '.ct-sidebar__inner'
+        };
+        // Basic fallback for Phase 7 keys if missing
+        s.SKILLS = { BOX: '.ct-skills__box', CONTAINER: '.ct-skills' };
+        s.COMBAT = { STATUSES: '.ct-combat__statuses', AC_VALUE: '.ddbc-armor-class-box__value' };
+        s.SENSES = { CALLOUT_VALUE: '.ct-senses__callout-value' };
+        
+        s.EQUIPMENT = { FILTER: '.ct-inventory-filter' }; // Note: Slightly different class in CSS block
+        s.EXTRAS = { INTERACTIONS: '.ct-extras-filter__interactions' };
+        s.SPELLS = { ACTION: '.ct-spells-spell__action' };
+        
+        // Ensure Phase 7 specific CORE keys exist in fallback
+        if (!s.CORE.HEADING_STYLES) s.CORE.HEADING_STYLES = '[class^="styles_heading__"]';
+        if (!s.CORE.SECTION_HEADING_STYLES) s.CORE.SECTION_HEADING_STYLES = '[class^="styles_sectionHeading__"]';
+        if (!s.CORE.HEADING_SUFFIX) s.CORE.HEADING_SUFFIX = '[class$="-heading"]';
+        if (!s.CORE.HEADING_SUFFIX_ALT) s.CORE.HEADING_SUFFIX_ALT = '[class$="__heading"]';
+        if (!s.CORE.GROUP_HEADER_CONTENT) s.CORE.GROUP_HEADER_CONTENT = '.ct-content-group__header-content';
+        if (!s.CORE.DICE_CONTAINER) s.CORE.DICE_CONTAINER = '.integrated-dice__container';
+        if (!s.UI.PORTRAIT) s.UI.PORTRAIT = '.ddbc-character-avatar__portrait';
+        if (!s.UI.QUICK_INFO_HEALTH) s.UI.QUICK_INFO_HEALTH = '.ct-quick-info__health';
+        if (!s.UI.PRINT_CONTAINER) s.UI.PRINT_CONTAINER = '.print-section-container';
+    }
 
   const style = document.createElement('style');
   style.id = styleId;
@@ -1558,19 +1653,19 @@ function enforceFullHeight() {
         }
 
         /* Deep Clean: Aggressively hide top elements */
-        .site-bar, 
-        nav, 
-        header, 
-        .ddb-site-alert, 
-        .watermark, 
-        footer, 
-        #mega-menu-target, 
-        .mm-navbar,
-        .notifications-wrapper {
+        ${s.CORE.SITE_BAR}, 
+        ${s.CORE.NAVIGATION}, 
+        ${s.CORE.HEADER_MAIN}, 
+        ${s.CORE.SITE_ALERT}, 
+        ${s.CORE.WATERMARK}, 
+        ${s.CORE.FOOTER}, 
+        ${s.CORE.MEGA_MENU_TARGET}, 
+        ${s.CORE.MM_NAVBAR},
+        ${s.CORE.NOTIFICATIONS} {
             display: none !important;
         }
 
-        .ct-character-sheet-desktop {
+        ${s.CORE.SHEET_DESKTOP} {
             margin: 0 !important;
             padding: 0 !important;
             /* Force absolute top to ignore any flow */
@@ -1582,14 +1677,14 @@ function enforceFullHeight() {
              
         p, 
         span,
-        div.ct-content-group { 
+        ${s.CORE.CONTENT_GROUP} { 
             break-inside: avoid; 
         }
     }
 
     :root {
         /* Using your provided Base64 string for the red border */
-        /* This is used by .ct-skills__box and others */
+        /* This is used by ${s.SKILLS.BOX} and others */
         --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
         --btn-color: #c53131;
         --btn-color-highlight: #f18383ff;
@@ -1611,33 +1706,35 @@ function enforceFullHeight() {
     }
 
     dialog + div,
-    .dice-rolling-panel,
-    [class$="__actions--collapsed"],
+    div#section-Section-6 .print-section-header > span, 
+    div#section-Section-6 .print-section-content .ct-primary-box,
+    ${s.UI.DICE_ROLLER},
+    ${s.UI.COLLAPSED_ACTIONS},
     .ct-character-sheet:before,
-    .ddbc-theme-link,
-    .ddbc-character-tidbits__heading,
-    .ct-extras-filter__interactions,
-    .ct-inventory-filter,
-    .ct-spells-spell__action,
-    .ct-features__management-link,
-    .ct-subsection__footer,
-    .ct-character-header-desktop,
-    .ct-quick-info__inspiration,
-    .ct-quick-info__health h1 + div {
+    ${s.UI.THEME_LINK},
+    ${s.UI.TIDBITS_HEADING},
+    ${s.EXTRAS.INTERACTIONS},
+    ${s.EQUIPMENT.FILTER},
+    ${s.SPELLS.ACTION},
+    ${s.UI.FEATURES_LINK},
+    ${s.UI.SUBSECTION_FOOTER},
+    ${s.UI.HEADER_DESKTOP},
+    ${s.UI.QUICK_INFO_INSPIRATION},
+    ${s.UI.QUICK_INFO_HEALTH_HEADER} {
       display: none!important;
     }
-    .ct-quick-info__health h1 {
+    ${s.UI.QUICK_INFO_HEALTH} h1 {
       position: static;
       transform: none;
     }
     /* REsizable */
-    .ct-character-sheet-desktop .ct-subsection {
+    ${s.CORE.SHEET_DESKTOP} .ct-subsection {
         position: static!important;
         display: flex!important;
         flex-flow: row!important;
         height: 100%;
     }
-    .ct-character-sheet-desktop .ct-subsections {
+    ${s.CORE.SHEET_DESKTOP} .ct-subsections {
         height: auto !important;
         display: block;
         width: 100%;
@@ -1645,28 +1742,28 @@ function enforceFullHeight() {
     }
 
     /* User Request: Side Panel Fixed & Scrollable */
-    .ct-sidebar__portal {
+    ${s.CORE.SIDEBAR_PORTAL} {
         position: fixed !important;
         top: 0 !important;
         right: 0 !important;
         height: 100% !important;
         z-index: 9999 !important;
     }
-    .ct-spell-manager {
+    ${s.CORE.SPELL_MANAGER} {
         overflow-y: auto !important;
         max-height: 100% !important;
     }
-    .ct-sidebar {
+    ${s.CORE.SIDEBAR} {
         position: static !important;
     }
-    .ct-sidebar__inner {
+    ${s.UI.SIDEBAR_INNER} {
         overflow-y: auto !important;
         overflow-x: hidden !important;
     }
-    .ct-character-sheet {
+    ${s.UI.CHARACTER_SHEET} {
         background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
     }
-    .ct-character-sheet-desktop {
+    ${s.CORE.SHEET_DESKTOP} {
         background-color: white;
         height: 100%;
         -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
@@ -1681,13 +1778,13 @@ function enforceFullHeight() {
     }
 
     @media (min-width: 1200px) {
-        .ct-primary-box {
+        ${s.UI.PRIMARY_BOX} {
             width: 100% !important;
         }
     }
 
     @media screen {
-        .ct-character-sheet-desktop {
+        ${s.CORE.SHEET_DESKTOP} {
             max-width: none !important;
             margin: 0 !important;
             width: 100% !important;
@@ -1695,7 +1792,7 @@ function enforceFullHeight() {
         }
     }
     
-    .print-section-container { 
+    ${s.UI.PRINT_CONTAINER} { 
         --reduce-height-by: 0px;
         --reduce-width-by: 0px;
         break-inside: avoid; 
@@ -1718,55 +1815,55 @@ function enforceFullHeight() {
         box-decoration-break: clone;
         -webkit-box-decoration-break: clone;
     }
-    .print-section-container:hover { 
+    ${s.UI.PRINT_CONTAINER}:hover { 
         box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     }
 
-    .print-section-container, 
-    .print-section-container * {
+    ${s.UI.PRINT_CONTAINER}, 
+    ${s.UI.PRINT_CONTAINER} * {
         font-size: 8px !important;
         white-space: normal !important;
         overflow-wrap: break-word !important;
     }
-    .print-section-container .ct-combat__statuses h2 *,
-    .print-section-container .ct-combat__statuses h2 + *,
-    .print-section-container .ct-quick-info * {
+    ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 *,
+    ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 + *,
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.QUICK_INFO} * {
         font-size: 12px !important;
     }
-    .print-section-container .ct-quick-info__health * {
+    ${s.UI.PRINT_CONTAINER} ${s.UI.QUICK_INFO_HEALTH} * {
         font-size: 14px !important;
     }
-    .print-section-container [class^="styles_heading__"],
-    .print-section-container [class^="styles_sectionHeading__"],
-    .print-section-container [class$="-heading"],
-    .print-section-container [class$="__heading"],
-    .print-section-container [class$="__heading "],
-    .print-section-container .ct-content-group__header-content {
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.GROUP_HEADER_CONTENT} {
         font-size: 12px !important;
         font-weight: bold !important;
         text-transform: uppercase;
         border-bottom: 1px solid #979797;
         margin-bottom: 4px;
     }
-    .print-section-container [class^="styles_sectionHeading__"],
-    .print-section-container [class$="__heading"],
-    .print-section-container [class$="__heading "] {
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT}  {
         font-size: 10px !important;
     }
-    .print-section-container [class^="styles_sectionHeading__"],
-    .print-section-container [class$="__heading"],
-    .print-section-container [class$="__heading "],
-    .print-section-container [class^="styles_heading__"] [class$="-heading"] {
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES} ${s.CORE.HEADING_SUFFIX} {
         border-bottom: 0
     }
     @media print {
-        body, .ct-character-sheet-desktop {
+        body, ${s.CORE.SHEET_DESKTOP} {
             margin: 0 !important;
             padding: 0 !important;
             box-shadow: none !important;
             transform: none !important;
         }
-        .ct-spells-filter {
+        ${s.SPELLS.FILTER} {
             visibility: hidden;
         }
         .print-page-separator {
@@ -1780,38 +1877,37 @@ function enforceFullHeight() {
         flex-direction: column !important;
         position: relative !important;
     }
-    .ct-senses__callout-value,
-    .integrated-dice__container,
-    .integrated-dice__container span {
+    ${s.SENSES.CALLOUT_VALUE},
+    ${s.CORE.DICE_CONTAINER},
+    ${s.CORE.DICE_CONTAINER} span {
         font-size: 16px !important;
     }
-    .ddbc-armor-class-box__value {
+    ${s.COMBAT.AC_VALUE} {
         font-size: 26px !important;
     }
 
-    /* Scaling helper */
-    .print-section-container[data-scaling="true"] .print-section-content > div {
-        transform-origin: top left;
-    }
-    .print-section-container div[class$="-row-header"] > div, 
-    .print-section-container div[class$="-content"] > div > div {
-        min-width: 38px;
-    }
-    .print-section-container div[class$="-row-header"] div[class$="--name"], 
-    .print-section-container div[class$="-content"] div[class$="__name"] {
-        max-width: 72px;
-    }
-    .print-section-container div[class$="-content"] div[class$="-slot__name"] {
-        max-width: 200px;
-    }
-    .print-section-container div[class$="-content"] div[class$="-item__name"] {
-        max-width: 136px;
-    }
-
-    .ddbc-character-avatar__portrait {
-        width: 100%;
-    }
-    .print-section-header span {
+            /* Scaling helper */
+        ${s.UI.PRINT_CONTAINER}[data-scaling="true"] .print-section-content > div {
+            transform-origin: top left;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.ROW_HEADER_DIV}, 
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.GENERIC_CONTENT_DIV_DIV} {
+            min-width: 38px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.ROW_HEADER_NAME}, 
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.CONTENT_NAME} {
+            max-width: 72px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.CONTENT_SLOT_NAME} {
+            max-width: 200px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMPACT.CONTENT_ITEM_NAME} {
+            max-width: 136px;
+        }
+    
+        ${s.UI.PORTRAIT} {
+            width: 100%;
+        }    .print-section-header span {
         font-size: 16px !important;
     }
     .print-section-header {
@@ -1833,7 +1929,7 @@ function enforceFullHeight() {
         filter: drop-shadow(2px 4px 6px black);
         min-width: max-content;
     }
-    .print-section-container:hover .print-section-header {
+    ${s.UI.PRINT_CONTAINER}:hover .print-section-header {
         opacity: 1;
     }
 
@@ -1848,29 +1944,15 @@ function enforceFullHeight() {
         z-index: 20;
         opacity: 0; /* Hidden by default */
     }
-    .print-section-container:hover .print-section-resize-handle {
+    ${s.UI.PRINT_CONTAINER}:hover .print-section-resize-handle {
         opacity: 1;
         background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
     }
 
     /* Skills specific compact logic (already mostly covered by global above) */
-    .ct-skills, .ct-skills * {
+    ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
         font-size: 8px !important;
     }
-
-    /* Minimized state */
-    .print-section-container.minimized {
-        position: fixed !important;
-        left: 0 !important;
-        bottom: 0 !important;
-        width: 16px !important;
-        height: 16px !important;
-        min-width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        z-index: 10000 !important;
-        background-color: #eee !important;
-        resize: none !important;
         overflow: hidden !important;
         border: 1px solid black !important;
     }
@@ -2799,14 +2881,24 @@ function updateLayoutBounds() {
     container.style.minWidth = Math.max(newWidth, window.innerWidth) + 'px';
 
     // 2. Also attempt to update parent containers if they restrict height
-    const sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
+    let sheetDesktop, sheetInner;
+    if (window.DomManager) {
+        const desktopWrapper = window.DomManager.getInstance().getCharacterSheet();
+        sheetDesktop = desktopWrapper ? desktopWrapper.element : null;
+        
+        const innerWrapper = window.DomManager.getInstance().getSheetInner();
+        sheetInner = innerWrapper ? innerWrapper.element : null;
+    } else {
+        sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
+        sheetInner = document.querySelector('.ct-character-sheet__inner');
+    }
+
     if (sheetDesktop) {
         sheetDesktop.style.minHeight = minH;
         // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
         sheetDesktop.style.height = 'auto'; 
     }
     
-    const sheetInner = document.querySelector('.ct-character-sheet__inner');
     if (sheetInner) {
          sheetInner.style.minHeight = minH;
     }
@@ -3997,6 +4089,25 @@ function injectCloneButtons(context = document) {
 function injectCompactStyles() {
     if (document.getElementById('ddb-print-compact-style')) return;
 
+    let s = { CORE: {}, EXTRAS: {}, SPELLS: {}, COMPACT: {} };
+    if (window.DomManager) {
+        s = window.DomManager.getInstance().selectors;
+    } else {
+        // Fallback hardcoded if needed, but DomManager should be there
+        // Simplified fallback for brevity if DomManager fails
+        s.COMPACT = {
+            TABLE_HEADER: '[class^="styles_tableHeader__"]',
+            GENERIC_HEADER: '[class$="__header"]',
+            // ... add others if strict fallback needed
+        };
+        s.EXTRAS = { CONTAINER: '.ct-extras' };
+        s.SPELLS = { ROW: '.ct-spells-spell' };
+        s.CORE = { BUTTON: '.ct-button' };
+    }
+    
+    // Ensure all keys exist to prevent template error if fallback was partial
+    const c = s.COMPACT; 
+
     const style = document.createElement('style');
     style.id = 'ddb-print-compact-style';
     style.textContent = `
@@ -4004,71 +4115,71 @@ function injectCompactStyles() {
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
         }
-        .print-section-container.be-compact-mode [class^="styles_tableHeader__"],
-        .print-section-container.be-compact-mode [class$="__header"],
+        .print-section-container.be-compact-mode ${c.TABLE_HEADER},
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADER},
          {
             margin-top: 10px !important;
             margin-bottom: 5px !important;
             padding-bottom: 2px !important;
             border-bottom: 1px solid #ccc !important;
         }
-        .print-section-container.be-compact-mode [class$="__heading"] {
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADING} {
             margin: 0px !important;
         }
-        .print-section-container.be-compact-mode [class$="-row"] {
+        .print-section-container.be-compact-mode ${c.GENERIC_ROW} {
             padding: 2px 0px !important;
         }
-        .print-section-container.be-compact-mode [class$="__row-header"] [class$="--primary"],
-        .print-section-container.be-compact-mode [class$="-row"] [class$="-row__primary"] {
+        .print-section-container.be-compact-mode ${c.ROW_HEADER} ${c.PRIMARY},
+        .print-section-container.be-compact-mode ${c.GENERIC_ROW} ${c.ROW_PRIMARY} {
             max-width: 80px !important;
         }
-        .print-section-container.be-compact-mode [class$="-content"] > div {
+        .print-section-container.be-compact-mode ${c.GENERIC_CONTENT} > div {
             padding: 0 !important;
             min-height: auto !important;
             border-bottom: 1px dashed #eee !important;
         }
         
         /* Hide or shrink icons */
-        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode [class$="__range-icon"],
-        .print-section-container.be-compact-mode [class$="__casting-time-icon"],
-        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode [class$="__damage-effect-icon"]{
+        .print-section-container.be-compact-mode ${c.ICON_ATTACK},
+        .print-section-container.be-compact-mode ${c.ICON_RANGE},
+        .print-section-container.be-compact-mode ${c.ICON_CAST_TIME},
+        .print-section-container.be-compact-mode ${c.ICON_ATTACK},
+        .print-section-container.be-compact-mode ${c.ICON_DAMAGE}{
             transform: scale(0.8);
             margin: 0 !important;
         }
         
-        .print-section-container.be-compact-mode .ddbc-file-icon {
+        .print-section-container.be-compact-mode ${c.ICON_FILE} {
             width: 16px !important;
             height: 16px !important;
         }
         
         /* Hide previews for extras */
-        .print-section-container.be-compact-mode .ct-extras [class$="--preview"],
-        .print-section-container.be-compact-mode .ct-extras [class$="__preview"] {
+        .print-section-container.be-compact-mode ${s.EXTRAS.CONTAINER} ${c.PREVIEW},
+        .print-section-container.be-compact-mode ${s.EXTRAS.CONTAINER} ${c.PREVIEW_ALT} {
             display: none !important;
         }
 
         /* Tighten text */
-        .print-section-container.be-compact-mode [class$="__label"],
-        .print-section-container.be-compact-mode [class$="__header"],
-        .print-section-container.be-compact-mode [class$="__notes"] {
+        .print-section-container.be-compact-mode ${c.LABEL},
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADER},
+        .print-section-container.be-compact-mode ${c.NOTES} {
             font-size: 11px !important;
             line-height: 1.2 !important;
         }
         
-        .print-section-container.be-compact-mode [class$="__activation"],
-        .print-section-container.be-compact-mode [class$="__range"],
-        .print-section-container.be-compact-mode [class$="__hit-dc"],
-        .print-section-container.be-compact-mode [class$="__effect"] {
+        .print-section-container.be-compact-mode ${c.ACTIVATION},
+        .print-section-container.be-compact-mode ${c.RANGE},
+        .print-section-container.be-compact-mode ${c.HIT_DC},
+        .print-section-container.be-compact-mode ${c.EFFECT} {
             font-size: 11px !important;
             padding: 0 2px !important;
             vertical-align: middle !important;
         }
 
         /* Buttons (Cast, At Will, etc) */
-        .print-section-container.be-compact-mode button[class$="__container"],
-        .print-section-container.be-compact-mode .ct-button {
+        .print-section-container.be-compact-mode ${c.BUTTON_CONTAINER},
+        .print-section-container.be-compact-mode ${s.CORE.BUTTON} {
             height: 20px !important;
             line-height: 20px !important;
             padding: 0!important;
@@ -4077,32 +4188,32 @@ function injectCompactStyles() {
         }
 
         /* Slots Checkboxes - Align to immediate left of "SLOTS" label if possible, or just left align container */
-        .print-section-container.be-compact-mode [class$="__slots"] {
+        .print-section-container.be-compact-mode ${c.SLOTS} {
             margin-left: 10px !important;
             margin-right: auto !important; /* Push to left */
             transform: scale(0.9);
             transform-origin: left center;
         }
         
-        .print-section-container.be-compact-mode [class$="__header-content"] {
+        .print-section-container.be-compact-mode ${c.HEADER_CONTENT} {
             flex: 0 0 auto !important; /* Stop taking full width */
             margin-right: 10px !important;
         }
         
-        .print-section-container.be-compact-mode [class$="__header"] {
+        .print-section-container.be-compact-mode ${c.GENERIC_HEADER} {
             justify-content: flex-start !important; /* Align content to start */
         }
 
         /* General width reductions for columns */
-        .print-section-container.be-compact-mode [class$="__action"],
-        .print-section-container.be-compact-mode [class$="__distance"],
-        .print-section-container.be-compact-mode [class$="__meta"] {
+        .print-section-container.be-compact-mode ${c.ACTION},
+        .print-section-container.be-compact-mode ${c.DISTANCE},
+        .print-section-container.be-compact-mode ${c.META} {
             width: auto !important;
             max-width: none !important;
         }
 
         /* Spell Details Trigger Button */
-        .ct-spells-spell {
+        ${s.SPELLS.ROW} {
             position: relative;
         }
         .be-spell-details-button {
@@ -4121,7 +4232,7 @@ function injectCompactStyles() {
             z-index: 100;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-        .ct-spells-spell:hover .be-spell-details-button {
+        ${s.SPELLS.ROW}:hover .be-spell-details-button {
             display: block;
         }
         .be-spell-details-button:hover {
