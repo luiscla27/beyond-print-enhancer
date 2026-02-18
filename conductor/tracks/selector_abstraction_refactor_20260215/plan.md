@@ -45,11 +45,11 @@ This phase covers the remaining major tabs and any other scattered selectors.
     - [x] Refactor logic.
 - [x] Task: Conductor - User Manual Verification 'Actions, Equipment & Remaining Modules' (Protocol in workflow.md)
 
-## Phase 4: Final Cleanup & Verification
+## Phase 4: Final Cleanup & Verification [checkpoint: 61cb6a9]
 Ensure the abstraction is complete and no legacy direct DOM access remains.
 
 - [x] Task: specific - Global Scan & Cleanup
     - [x] Search codebase for any remaining `document.querySelector` or `document.querySelectorAll` calls that should be managed by `DomManager`.
     - [x] Refactor or whitelist valid exceptions (if any).
     - [x] Ensure all new files follow project style guidelines.
-- [ ] Task: Conductor - User Manual Verification 'Final Cleanup & Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final Cleanup & Verification' (Protocol in workflow.md)
