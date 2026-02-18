@@ -18,7 +18,7 @@ This phase establishes the `DomManager` architecture and migrates the fundamenta
     - [x] Verify that features relying on these elements (e.g., "Minimize Header", "Hide Sidebar") still work.
 - [x] Task: Conductor - User Manual Verification 'Foundation & Core Layout Abstraction' (Protocol in workflow.md)
 
-## Phase 2: Spells Module Abstraction
+## Phase 2: Spells Module Abstraction [checkpoint: a6fa071]
 This phase tackles the complex Spells tab, including lists, headers, rows, and detail panes.
 
 - [x] Task: specific - Define Spell Wrappers & Selectors
@@ -30,7 +30,7 @@ This phase tackles the complex Spells tab, including lists, headers, rows, and d
 - [x] Task: specific - Refactor Spell Logic
     - [x] Replace direct DOM usage in `js/spells.js` (and relevant parts of `js/main.js`) with `DomManager`.
     - [x] Ensure "Expand Spells", "Spell Cloning", and "Spell Filtering" features function correctly using the new abstraction.
-- [ ] Task: Conductor - User Manual Verification 'Spells Module Abstraction' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Spells Module Abstraction' (Protocol in workflow.md)
 
 ## Phase 3: Actions, Equipment & Remaining Modules
 This phase covers the remaining major tabs and any other scattered selectors.
