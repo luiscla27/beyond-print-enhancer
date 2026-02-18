@@ -1263,7 +1263,8 @@ async function injectClonesIntoSpellsView() {
   // 3. Clean up the Live Spells Node (Hide UI, Fix Layout)
   // We apply the same fixes as we did for clones, but IN PLACE.
   spellsNode.querySelectorAll('menu').forEach(el => el.style.display = 'none');
-  spellsNode.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
+  // Removed aggressive hiding of tab-filters for the live Spells node to preserve interactivity
+  // spellsNode.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
   
   spellsNode.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
   
