@@ -1559,6 +1559,8 @@ function removeSearchBoxes() {
       if (s.SPELLS && s.SPELLS.FILTER) searchSelectors.push(s.SPELLS.FILTER);
       if (s.EQUIPMENT && s.EQUIPMENT.FILTER) searchSelectors.push(s.EQUIPMENT.FILTER);
       if (s.EQUIPMENT && s.EQUIPMENT.INVENTORY_FILTER) searchSelectors.push(s.EQUIPMENT.INVENTORY_FILTER);
+      if (s.EXTRAS && s.EXTRAS.FILTER) searchSelectors.push(s.EXTRAS.FILTER);
+      if (s.TRAITS && s.TRAITS.MANAGEMENT_LINK) searchSelectors.push(s.TRAITS.MANAGEMENT_LINK);
   }
 
   safeQueryAll(searchSelectors).forEach(el => {

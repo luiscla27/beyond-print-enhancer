@@ -36,6 +36,15 @@ class DomManager {
                 CONTAINER: '.ct-equipment', // Need to verify if this exists or is generic
                 FILTER: '.ct-equipment__filter',
                 INVENTORY_FILTER: '.ct-inventory__filter'
+            },
+            TRAITS: {
+                CONTAINER: '[class*="__traits"]',
+                MANAGEMENT_LINK: '.ct-features__management-link' // Often shared or similar
+            },
+            EXTRAS: {
+                CONTAINER: '.ct-extras', // Based on analysis
+                FILTER: '.ct-extras__filter',
+                INTERACTIONS: '.ct-extras-filter__interactions'
             }
         };
     }
@@ -169,6 +178,14 @@ class DomManager {
      */
     getEquipmentContainer() {
         return this._wrap(this.selectors.EQUIPMENT.CONTAINER);
+    }
+
+    /**
+     * Gets the extras container.
+     * @returns {ElementWrapper}
+     */
+    getExtrasContainer() {
+        return this._wrap(this.selectors.EXTRAS.CONTAINER);
     }
 }
 
