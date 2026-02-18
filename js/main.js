@@ -615,7 +615,17 @@ function copySvgDefinitions(targetContainer) {
  * Injects detail section triggers into spell rows.
  */
 function injectSpellDetailTriggers(context = document) {
-    context.querySelectorAll('.ct-spells-spell').forEach(row => {
+    let rows;
+    if (window.DomManager) {
+        // If context is an ElementWrapper, DomManager handles it
+        // If context is raw HTMLElement, we can wrap it or pass it if DomManager supports
+        // Our getSpellRows supports HTMLElement context
+        rows = window.DomManager.getInstance().getSpellRows(context).map(w => w.element);
+    } else {
+        rows = context.querySelectorAll('.ct-spells-spell');
+    }
+
+    rows.forEach(row => {
         if (row.querySelector('.be-spell-details-button')) return;
 
         const label = row.querySelector('.ct-spells-spell__label');
@@ -1212,32 +1222,37 @@ async function injectClonesIntoSpellsView() {
   await new Promise(r => setTimeout(r, 200));
 
   // 2. Find the Live Spells Node (which is now visible)
-  const selectors = [
-      '[class*="styles_primaryBox"]',
-      '.ct-primary-box', 
-      '.ddbc-box-background + div section',
-      '.sheet-body section'
-  ];
-  
-  let spellsNode = null;
-  for (const selector of selectors) {
-      const matches = document.querySelectorAll(selector);
-      const visibleMatch = Array.from(matches).find(el => {
-          const style = window.getComputedStyle(el);
-          return style.display !== 'none' && !el.classList.contains('hidden');
-      });
-      if (visibleMatch) {
-          spellsNode = visibleMatch;
-          break;
-      }
-  }
-
-  // Go up to structural parent if needed
-  if (spellsNode && (
-      spellsNode.parentElement.className.includes('primaryBox') ||
-      spellsNode.parentElement.className.includes('ct-primary-box')
-  )) {
-      spellsNode = spellsNode.parentElement;
+  let spellsNode;
+  if (window.DomManager) {
+      const wrapper = window.DomManager.getInstance().getSpellsContainer();
+      spellsNode = wrapper ? wrapper.element : null;
+  } else {
+    const selectors = [
+        '[class*="styles_primaryBox"]',
+        '.ct-primary-box', 
+        '.ddbc-box-background + div section',
+        '.sheet-body section'
+    ];
+    
+    for (const selector of selectors) {
+        const matches = document.querySelectorAll(selector);
+        const visibleMatch = Array.from(matches).find(el => {
+            const style = window.getComputedStyle(el);
+            return style.display !== 'none' && !el.classList.contains('hidden');
+        });
+        if (visibleMatch) {
+            spellsNode = visibleMatch;
+            break;
+        }
+    }
+    
+    // Go up to structural parent if needed
+    if (spellsNode && (
+        spellsNode.parentElement.className.includes('primaryBox') ||
+        spellsNode.parentElement.className.includes('ct-primary-box')
+    )) {
+        spellsNode = spellsNode.parentElement;
+    }
   }
 
   if (!spellsNode) {

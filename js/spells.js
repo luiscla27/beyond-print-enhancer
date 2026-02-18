@@ -5,7 +5,14 @@
 /* eslint-disable no-undef */
 
 function initSpellDuplication() {
-  const spellContainer = document.getElementById('section-spells');
+  let spellContainer;
+  if (window.DomManager) {
+      const wrapper = window.DomManager.getInstance().getSpellsContainer();
+      spellContainer = wrapper ? wrapper.element : null;
+  } else {
+      spellContainer = document.getElementById('section-spells');
+  }
+  
   if (!spellContainer) return; // Might not exist if user has no spells
 
   const header = spellContainer.querySelector('.print-section-header');
