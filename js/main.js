@@ -1623,6 +1623,7 @@ function enforceFullHeight() {
         if (!s.CORE.DICE_CONTAINER) s.CORE.DICE_CONTAINER = '.integrated-dice__container';
         if (!s.UI.PORTRAIT) s.UI.PORTRAIT = '.ddbc-character-avatar__portrait';
         if (!s.UI.QUICK_INFO_HEALTH) s.UI.QUICK_INFO_HEALTH = '.ct-quick-info__health';
+        if (!s.UI.PRINT_CONTAINER) s.UI.PRINT_CONTAINER = '.print-section-container';
     }
 
   const style = document.createElement('style');
@@ -1787,7 +1788,7 @@ function enforceFullHeight() {
         }
     }
     
-    .print-section-container { 
+    ${s.UI.PRINT_CONTAINER} { 
         --reduce-height-by: 0px;
         --reduce-width-by: 0px;
         break-inside: avoid; 
@@ -1810,45 +1811,45 @@ function enforceFullHeight() {
         box-decoration-break: clone;
         -webkit-box-decoration-break: clone;
     }
-    .print-section-container:hover { 
+    ${s.UI.PRINT_CONTAINER}:hover { 
         box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     }
 
-    .print-section-container, 
-    .print-section-container * {
+    ${s.UI.PRINT_CONTAINER}, 
+    ${s.UI.PRINT_CONTAINER} * {
         font-size: 8px !important;
         white-space: normal !important;
         overflow-wrap: break-word !important;
     }
-    .print-section-container ${s.COMBAT.STATUSES} h2 *,
-    .print-section-container ${s.COMBAT.STATUSES} h2 + *,
-    .print-section-container ${s.CORE.QUICK_INFO} * {
+    ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 *,
+    ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 + *,
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.QUICK_INFO} * {
         font-size: 12px !important;
     }
-    .print-section-container ${s.UI.QUICK_INFO_HEALTH} * {
+    ${s.UI.PRINT_CONTAINER} ${s.UI.QUICK_INFO_HEALTH} * {
         font-size: 14px !important;
     }
-    .print-section-container ${s.CORE.HEADING_STYLES},
-    .print-section-container ${s.CORE.SECTION_HEADING_STYLES},
-    .print-section-container ${s.CORE.HEADING_SUFFIX},
-    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT},
-    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT} ,
-    .print-section-container ${s.CORE.GROUP_HEADER_CONTENT} {
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.GROUP_HEADER_CONTENT} {
         font-size: 12px !important;
         font-weight: bold !important;
         text-transform: uppercase;
         border-bottom: 1px solid #979797;
         margin-bottom: 4px;
     }
-    .print-section-container ${s.CORE.SECTION_HEADING_STYLES},
-    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT},
-    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT}  {
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT}  {
         font-size: 10px !important;
     }
-    .print-section-container ${s.CORE.SECTION_HEADING_STYLES},
-    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT},
-    .print-section-container ${s.CORE.HEADING_SUFFIX_ALT} ,
-    .print-section-container ${s.CORE.HEADING_STYLES} ${s.CORE.HEADING_SUFFIX} {
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
+    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES} ${s.CORE.HEADING_SUFFIX} {
         border-bottom: 0
     }
     @media print {
@@ -1882,21 +1883,21 @@ function enforceFullHeight() {
     }
 
     /* Scaling helper */
-    .print-section-container[data-scaling="true"] .print-section-content > div {
+    ${s.UI.PRINT_CONTAINER}[data-scaling="true"] .print-section-content > div {
         transform-origin: top left;
     }
-    .print-section-container div[class$="-row-header"] > div, 
-    .print-section-container div[class$="-content"] > div > div {
+    ${s.UI.PRINT_CONTAINER} div[class$="-row-header"] > div, 
+    ${s.UI.PRINT_CONTAINER} div[class$="-content"] > div > div {
         min-width: 38px;
     }
-    .print-section-container div[class$="-row-header"] div[class$="--name"], 
-    .print-section-container div[class$="-content"] div[class$="__name"] {
+    ${s.UI.PRINT_CONTAINER} div[class$="-row-header"] div[class$="--name"], 
+    ${s.UI.PRINT_CONTAINER} div[class$="-content"] div[class$="__name"] {
         max-width: 72px;
     }
-    .print-section-container div[class$="-content"] div[class$="-slot__name"] {
+    ${s.UI.PRINT_CONTAINER} div[class$="-content"] div[class$="-slot__name"] {
         max-width: 200px;
     }
-    .print-section-container div[class$="-content"] div[class$="-item__name"] {
+    ${s.UI.PRINT_CONTAINER} div[class$="-content"] div[class$="-item__name"] {
         max-width: 136px;
     }
 
@@ -1925,7 +1926,7 @@ function enforceFullHeight() {
         filter: drop-shadow(2px 4px 6px black);
         min-width: max-content;
     }
-    .print-section-container:hover .print-section-header {
+    ${s.UI.PRINT_CONTAINER}:hover .print-section-header {
         opacity: 1;
     }
 
@@ -1940,7 +1941,7 @@ function enforceFullHeight() {
         z-index: 20;
         opacity: 0; /* Hidden by default */
     }
-    .print-section-container:hover .print-section-resize-handle {
+    ${s.UI.PRINT_CONTAINER}:hover .print-section-resize-handle {
         opacity: 1;
         background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
     }

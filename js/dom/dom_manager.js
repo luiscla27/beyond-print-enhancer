@@ -96,7 +96,10 @@ class DomManager {
                 QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div',
                 // Added Phase 7
                 QUICK_INFO_HEALTH: '.ct-quick-info__health',
-                PORTRAIT: '.ddbc-character-avatar__portrait'
+                PORTRAIT: '.ddbc-character-avatar__portrait',
+                // Extension-owned classes that wrap DDB content
+                PRINT_CONTAINER: '.print-section-container',
+                COMPACT_MODE: '.be-compact-mode'
             },
             SKILLS: {
                 BOX: '.ct-skills__box',
