@@ -76,3 +76,12 @@ This phase tackles the deep analysis and abstraction of remaining CSS selectors,
     - [x] Update `DomManager` with semantic keys based on the analysis (e.g., `UI.DICE_ROLLER`, `UI.COLLAPSED_ACTIONS`).
     - [x] Refactor the CSS strings to use these new semantic keys.
 - [x] Task: Conductor - User Manual Verification 'Comprehensive CSS Analysis & Abstraction' (Protocol in workflow.md)
+
+## Phase 7: Nested Selector Deep Clean
+This phase addresses the user's feedback about missing *nested* selectors in CSS injections (e.g., `.print-section-container [class$="__heading"]`).
+
+- [x] Task: specific - Analyze Nested Selectors
+    - [x] Audit `js/main.js` (especially `injectCompactStyles`) for compound selectors where one part is abstracted but the other isn't, or where the combination needs to be constructed.
+- [x] Task: specific - Refactor Nested Selectors
+    - [x] Update `injectCompactStyles` to use template interpolation for ALL parts of compound selectors (e.g., `${s.UI.EXTRACTABLE} ${s.COMPACT.HEADING}`).
+- [ ] Task: Conductor - User Manual Verification 'Nested Selector Deep Clean' (Protocol in workflow.md)

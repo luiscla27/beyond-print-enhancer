@@ -1591,7 +1591,10 @@ function enforceFullHeight() {
             FOOTER: 'footer', MEGA_MENU_TARGET: '#mega-menu-target',
             MM_NAVBAR: '.mm-navbar', NOTIFICATIONS: '.notifications-wrapper',
             SHEET_DESKTOP: '.ct-character-sheet-desktop',
-            CONTENT_GROUP: 'div.ct-content-group'
+            CONTENT_GROUP: 'div.ct-content-group',
+            SIDEBAR_PORTAL: '.ct-sidebar__portal',
+            SPELL_MANAGER: '.ct-spell-manager',
+            SIDEBAR: '.ct-sidebar'
         };
         // Basic fallback for UI
         s.UI = {
