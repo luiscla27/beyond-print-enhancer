@@ -53,3 +53,14 @@ Ensure the abstraction is complete and no legacy direct DOM access remains.
     - [x] Refactor or whitelist valid exceptions (if any).
     - [x] Ensure all new files follow project style guidelines.
 - [x] Task: Conductor - User Manual Verification 'Final Cleanup & Verification' (Protocol in workflow.md)
+
+## Phase 5: CSS Injection Abstraction
+This phase addresses the hardcoded CSS selectors within injected style blocks (e.g., `injectCompactStyles`, `enforceFullHeight`).
+
+- [ ] Task: specific - Analyze Injected CSS
+    - [ ] Audit `js/main.js` for `injectCompactStyles`, `enforceFullHeight`, and any other style injection functions.
+    - [ ] Identify all D&D Beyond specific selectors used in these strings.
+- [ ] Task: specific - Centralize CSS Selectors
+    - [ ] Update `DomManager` (or create a `CssManager`) to store these selectors or generating functions.
+    - [ ] Refactor the CSS strings to use the centralized constants.
+- [ ] Task: Conductor - User Manual Verification 'CSS Injection Abstraction' (Protocol in workflow.md)
