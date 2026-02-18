@@ -462,7 +462,7 @@ async function extractAndWrapSections() {
         // User Request: DONT clone the "spells" tab (keep it live/interactive)
             // Fix: Skip Spells in the loop to avoid breaking iteration.
             // Strict Check: Use data-testid="SPELLS" if available, or name fallback
-            if (section.name === 'Spells' || section.title === 'Spells' || section.testId === 'SPELLS') {
+            if (section.name.includes('Spells') || section.title.includes('Spells') || section.testId === 'SPELLS') {
                 console.log('[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
                 continue;
             }
