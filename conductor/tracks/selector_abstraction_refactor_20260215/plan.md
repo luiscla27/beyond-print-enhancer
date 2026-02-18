@@ -64,3 +64,15 @@ This phase addresses the hardcoded CSS selectors within injected style blocks (e
     - [x] Update `DomManager` (or create a `CssManager`) to store these selectors or generating functions.
     - [x] Refactor the CSS strings to use the centralized constants.
 - [x] Task: Conductor - User Manual Verification 'CSS Injection Abstraction' (Protocol in workflow.md)
+
+## Phase 6: Comprehensive CSS Analysis & Abstraction
+This phase tackles the deep analysis and abstraction of remaining CSS selectors, particularly those in the large injected blocks, ensuring every D&D Beyond dependency is identified, documented, and abstracted.
+
+- [ ] Task: specific - Detailed CSS Audit
+    - [ ] Analyze `js/main.js` specifically lines 1579-2062 (and similar blocks).
+    - [ ] Create a detailed map of each selector, its purpose (e.g., "Hides rolling panel", "Shrinks icon"), and its source (DDB vs. Extension).
+    - [ ] Document this analysis in `css_abstraction_plan.md` (updating the existing file).
+- [ ] Task: specific - Refined Abstraction
+    - [ ] Update `DomManager` with semantic keys based on the analysis (e.g., `UI.DICE_ROLLER`, `UI.COLLAPSED_ACTIONS`).
+    - [ ] Refactor the CSS strings to use these new semantic keys.
+- [ ] Task: Conductor - User Manual Verification 'Comprehensive CSS Analysis & Abstraction' (Protocol in workflow.md)
