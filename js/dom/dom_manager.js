@@ -16,6 +16,16 @@ class DomManager {
                 SIDEBAR_PORTAL: '.ct-sidebar__portal',
                 SPELL_MANAGER: '.ct-spell-manager',
                 SHEET_INNER: '.ct-character-sheet__inner'
+            },
+            SPELLS: {
+                CONTAINER: '.ct-spells',
+                ROW: '.ct-spells-spell',
+                LABEL: '.ct-spells-spell__label',
+                FILTER: '.ct-spells-filter',
+                ACTION: '.ct-spells-spell__action',
+                LEVEL_HEADER: '.ct-content-group__header', // Generic but often used in spells
+                SPELL_NAME: '.ct-spell-name', // Hypothetical, need to verify if distinct from label
+                DETAIL_BUTTON: '.be-spell-details-button'
             }
         };
     }
@@ -35,6 +45,16 @@ class DomManager {
     _wrap(selector) {
         const el = document.querySelector(selector);
         return new ElementWrapper(el);
+    }
+
+    /**
+     * Helper to wrap all elements matching selector.
+     * @param {string} selector 
+     * @returns {ElementWrapper[]}
+     */
+    _wrapAll(selector) {
+        const els = document.querySelectorAll(selector);
+        return Array.from(els).map(el => new ElementWrapper(el));
     }
 
     /**
@@ -104,6 +124,25 @@ class DomManager {
 
         const megaMenus = document.querySelectorAll('[class*="mega-menu"]');
         megaMenus.forEach(el => el.style.display = 'none');
+    }
+
+    /**
+     * Gets the main spells container.
+     * @returns {ElementWrapper}
+     */
+    getSpellsContainer() {
+        return this._wrap(this.selectors.SPELLS.CONTAINER);
+    }
+
+    /**
+     * Gets all spell rows.
+     * @returns {ElementWrapper[]}
+     */
+    getSpellRows(context = document) {
+        if (context instanceof ElementWrapper) context = context.element;
+        // If context is provided, query within it, otherwise global
+        const els = context.querySelectorAll ? context.querySelectorAll(this.selectors.SPELLS.ROW) : document.querySelectorAll(this.selectors.SPELLS.ROW);
+        return Array.from(els).map(el => new ElementWrapper(el));
     }
 }
 

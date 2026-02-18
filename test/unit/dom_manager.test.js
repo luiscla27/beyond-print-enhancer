@@ -151,5 +151,41 @@ describe('DomManager & ElementWrapper', () => {
                 assert.strictEqual(document.querySelector('nav.navigation').style.display, 'none');
             });
         });
+
+        describe('Spells Module Methods', () => {
+            let manager;
+            
+            before(() => {
+                manager = DomManager.getInstance();
+            });
+
+            it('should retrieve spells container', () => {
+                document.body.innerHTML = '<div class="ct-spells"></div>';
+                const wrapper = manager.getSpellsContainer();
+                assert.strictEqual(wrapper.element.className, 'ct-spells');
+            });
+
+            it('should retrieve spell rows', () => {
+                document.body.innerHTML = `
+                    <div class="ct-spells">
+                        <div class="ct-spells-spell">Spell 1</div>
+                        <div class="ct-spells-spell">Spell 2</div>
+                    </div>`;
+                const rows = manager.getSpellRows();
+                assert.strictEqual(rows.length, 2);
+                assert.strictEqual(rows[0].text(), 'Spell 1');
+            });
+
+            it('should retrieve spell rows within context', () => {
+                 document.body.innerHTML = `
+                    <div id="group1"><div class="ct-spells-spell">Spell A</div></div>
+                    <div id="group2"><div class="ct-spells-spell">Spell B</div></div>
+                 `;
+                 const group1 = new ElementWrapper(document.getElementById('group1'));
+                 const rows = manager.getSpellRows(group1);
+                 assert.strictEqual(rows.length, 1);
+                 assert.strictEqual(rows[0].text(), 'Spell A');
+            });
+        });
     });
 });
