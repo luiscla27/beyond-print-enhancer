@@ -22,6 +22,7 @@ The Extension requests the minimum permissions necessary to function:
 *   `activeTab`: To analyze and modify the specific tab you are viewing when you click the extension action, enabling the print layout features.
 *   `scripting`: To execute the layout adjustment scripts on the page you are viewing.
 *   `contextMenus`: To provide a "Donate" link in the right-click menu. This only opens a URL and does not access page content.
+*   `host_permissions`: Required to fetch consolidated spell data from a subdomain on the same site. Spell details are not available on the primary character view, this is a new feature to enhance the printable layout
 
 ## 3. Third-Party Services
 
