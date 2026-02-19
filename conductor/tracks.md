@@ -8,6 +8,11 @@ This file tracks all major development tracks for the project.
 - [x] **Track: Merge & Append Sections** (Completed: 2026-02-14)
   *Link: [./tracks/merge_sections_20260214/](./tracks/merge_sections_20260214/)*
 
+---
+
+- [ ] **Track: Section Border Style Selection**
+*Link: [./tracks/section_border_selection_20260218/](./tracks/section_border_selection_20260218/)*
+
 ## Archived Tracks
 - [x] **Track: Advanced Layout & Persistence Enhancements** (Completed: 2026-02-14)
   *Link: [./archive/advanced_enhancements_20260204/](./archive/advanced_enhancements_20260204/)*
