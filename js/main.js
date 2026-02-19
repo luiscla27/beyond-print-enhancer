@@ -2581,6 +2581,127 @@ function showInputModal(title, message, defaultValue = '') {
 }
 
 /**
+ * Shows a modal to pick a border style.
+ * @param {string} currentStyle The current border class name.
+ * @returns {Promise<{style: string, applyToAll: boolean}|null>}
+ */
+function showBorderPickerModal(currentStyle = 'default-border') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        modal.style.width = '450px';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Select Section Border';
+        modal.appendChild(h3);
+        
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'be-border-options';
+        
+        const styles = [
+            { id: 'default-border', label: 'Default' },
+            { id: 'ability_border', label: 'Ability' },
+            { id: 'spikes_border', label: 'Spikes' }
+        ];
+        
+        let selectedStyle = currentStyle || 'default-border';
+        const optionEls = [];
+
+        styles.forEach(style => {
+            const opt = document.createElement('div');
+            opt.className = 'be-border-option';
+            if (selectedStyle === style.id) opt.classList.add('selected');
+            
+            const preview = document.createElement('div');
+            preview.className = `be-border-preview ${style.id}`;
+            opt.appendChild(preview);
+            
+            const label = document.createElement('div');
+            label.textContent = style.label;
+            label.style.fontSize = '12px';
+            opt.appendChild(label);
+            
+            opt.onclick = () => {
+                optionEls.forEach(el => el.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedStyle = style.id;
+            };
+            
+            optionEls.push(opt);
+            optionsContainer.appendChild(opt);
+        });
+        
+        modal.appendChild(optionsContainer);
+        
+        // Scope Toggle
+        const scopeContainer = document.createElement('div');
+        scopeContainer.style.display = 'flex';
+        scopeContainer.style.alignItems = 'center';
+        scopeContainer.style.gap = '8px';
+        scopeContainer.style.fontSize = '14px';
+        scopeContainer.style.color = '#ccc';
+        scopeContainer.style.marginBottom = '10px';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'be-border-scope-toggle';
+        checkbox.style.cursor = 'pointer';
+        
+        const label = document.createElement('label');
+        label.htmlFor = 'be-border-scope-toggle';
+        label.textContent = 'Apply to all sections of this type';
+        label.style.cursor = 'pointer';
+        
+        scopeContainer.appendChild(checkbox);
+        scopeContainer.appendChild(label);
+        modal.appendChild(scopeContainer);
+        
+        const actions = document.createElement('div');
+        actions.className = 'be-modal-actions';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        actions.appendChild(cancelBtn);
+        
+        const okBtn = document.createElement('button');
+        okBtn.className = 'be-modal-ok';
+        okBtn.textContent = 'Apply';
+        okBtn.onclick = () => {
+            overlay.remove();
+            resolve({
+                style: selectedStyle,
+                applyToAll: checkbox.checked
+            });
+        };
+        actions.appendChild(okBtn);
+        
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Handle Esc
+        window.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                cancelBtn.click();
+                window.removeEventListener('keydown', escHandler);
+            }
+            if (e.key === 'Enter') {
+                okBtn.click();
+                window.removeEventListener('keydown', escHandler);
+            }
+        });
+    });
+}
+
+/**
  * Initializes ResizeObserver to scale content to fit its container.
  */
 function initResponsiveScaling() {
@@ -4032,6 +4153,52 @@ function injectCloneButtons(context = document) {
             };
 
             actionContainer.appendChild(compactBtn);
+        }
+
+        // 3. Border Style Button
+        if (!actionContainer.querySelector('.be-border-button')) {
+            const borderBtn = document.createElement('button');
+            borderBtn.className = 'be-border-button';
+            borderBtn.innerHTML = '🖼️'; 
+            borderBtn.title = 'Select Border Style';
+            
+            borderBtn.onclick = async (e) => {
+                e.stopPropagation();
+                
+                // Determine current style
+                let currentStyle = 'default-border';
+                if (section.classList.contains('ability_border')) currentStyle = 'ability_border';
+                if (section.classList.contains('spikes_border')) currentStyle = 'spikes_border';
+                
+                const result = await showBorderPickerModal(currentStyle);
+                
+                if (result) {
+                    const applyStyle = (target) => {
+                        target.classList.remove('default-border', 'ability_border', 'spikes_border');
+                        target.classList.add(result.style);
+                    };
+
+                    if (result.applyToAll) {
+                        const originalId = section.dataset.originalId || section.id;
+                        if (originalId) {
+                            const sections = document.querySelectorAll(`${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container`);
+                            sections.forEach(s => {
+                                const sId = s.dataset.originalId || s.id;
+                                if (sId === originalId) {
+                                    applyStyle(s);
+                                }
+                            });
+                            showFeedback(`Applied ${result.style} to all similar sections`);
+                        }
+                    } else {
+                        applyStyle(section);
+                    }
+                    
+                    updateLayoutBounds();
+                }
+            };
+
+            actionContainer.appendChild(borderBtn);
         }
     });
 }
