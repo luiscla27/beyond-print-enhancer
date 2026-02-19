@@ -1,9 +1,9 @@
 # Implementation Plan: Section Border Style Selection
 
-## Phase 1: CSS & Styling Setup
+## Phase 1: CSS & Styling Setup [checkpoint: 9b4bf40]
 - [x] Task: Verify and refine border style CSS classes (`default-border`, `ability_border`, `spikes_border`) in `js/main.js`. (b691458)
 - [x] Task: Implement modal-specific styling for the border picker (previews, options grid). (b691458)
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: CSS & Styling Setup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: CSS & Styling Setup' (Protocol in workflow.md) (9b4bf40)
 
 ## Phase 2: Border Picker Modal Implementation
 - [ ] Task: Create `showBorderPickerModal(currentStyle)` function in `js/main.js`.
