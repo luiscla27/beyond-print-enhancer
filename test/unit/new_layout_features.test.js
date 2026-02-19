@@ -8,6 +8,11 @@ require("fake-indexeddb/auto");
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
+const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
+const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
+const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
+const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
+
 describe('Recent Layout Features', function() {
   let window, document;
 
@@ -95,6 +100,8 @@ describe('Recent Layout Features', function() {
     // Since main.js wraps itself in an IIFE, we can just execute it.
     // However, we want to test specific functions.
     // main.js exposes functions to window at the end.
+    window.eval(elementWrapperContent);
+    window.eval(domManagerContent);
     window.eval(mainJsContent);
     return window.Storage.init();
   });

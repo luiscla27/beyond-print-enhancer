@@ -18,7 +18,28 @@ class DomManager {
                 SHEET_INNER: '.ct-character-sheet__inner',
                 MM_NAVBAR: '.mm-navbar',
                 CONTENT_GROUP: 'div.ct-content-group',
-                BUTTON: '.ct-button'
+                BUTTON: '.ct-button',
+                THEME_BUTTON: '.ct-theme-button',
+                TAB_BUTTON: 'button[class*="tabButton"]',
+                PRIMARY_BOX_WRAPPER: '[class*="styles_primaryBox"]',
+                HEADING_STYLES: '[class^="styles_heading__"]',
+                SECTION_HEADING_STYLES: '[class^="styles_sectionHeading__"]',
+                HEADING_SUFFIX: '[class$="-heading"]',
+                HEADING_SUFFIX_ALT: '[class$="__heading"]',
+                GROUP_HEADER_CONTENT: '.ct-content-group__header-content',
+                DICE_CONTAINER: '.integrated-dice__container',
+                DEFENSES: '.ct-sidebar__section--defenses',
+                DEFENSES_ALT: '[class*="sidebar__section--defenses"]',
+                DEFENSES_HEADER: '.ct-sidebar__section-header',
+                DEFENSES_HEADER_ALT: '[class*="sidebar__section-header"]',
+                COMBAT_TABLET: '.ct-status-summary-bar',
+                COMBAT_TABLET_ALT: '[class*="status-summary-bar"]',
+                TIDBITS_NAME: '.ct-character-tidbits__name',
+                TIDBITS_NAME_ALT: '[class*="tidbits__name"]',
+                SUBSECTION_HEADER: '.ct-subsection__header',
+                SECTION_HEADER: '.ct-section__header',
+                CHARACTER_TOOLS: '#character-tools-target',
+                SUBSECTIONS: '.ct-subsections' // Added
             },
             SPELLS: {
                 CONTAINER: '.ct-spells',
@@ -28,7 +49,8 @@ class DomManager {
                 ACTION: '.ct-spells-spell__action',
                 LEVEL_HEADER: '.ct-content-group__header', // Generic but often used in spells
                 SPELL_NAME: '.ct-spell-name', // Hypothetical, need to verify if distinct from label
-                DETAIL_BUTTON: '.be-spell-details-button'
+                DETAIL_BUTTON: '.be-spell-details-button',
+                FILTER_CLASS: '.ct-spells-filter' // For removal
             },
             ACTIONS: {
                 CONTAINER: '[class*="styles_actionsList__"]',
@@ -77,7 +99,6 @@ class DomManager {
                 ACTION: '[class$="__action"]',
                 DISTANCE: '[class$="__distance"]',
                 META: '[class$="__meta"]',
-                // Phase 8 additions
                 ROW_HEADER_DIV: 'div[class$="-row-header"] > div',
                 GENERIC_CONTENT_DIV_DIV: 'div[class$="-content"] > div > div',
                 ROW_HEADER_NAME: 'div[class$="-row-header"] div[class$="--name"]',
@@ -91,29 +112,29 @@ class DomManager {
                 RETRY_BTN: '.be-retry-button',
                 DELETE_BTN: '.be-delete-button',
                 EXTRACTABLE: '.be-extractable',
-                // New additions from user request logic (display: none items)
                 DICE_ROLLER: '.dice-rolling-panel',
                 COLLAPSED_ACTIONS: '[class$="__actions--collapsed"]',
                 THEME_LINK: '.ddbc-theme-link',
                 TIDBITS_HEADING: '.ddbc-character-tidbits__heading',
                 FEATURES_LINK: '.ct-features__management-link',
                 SUBSECTION_FOOTER: '.ct-subsection__footer',
-                HEADER_DESKTOP: '.ct-character-sheet-desktop .ct-character-header-desktop', // Specific
+                HEADER_DESKTOP: '.ct-character-sheet-desktop .ct-character-header-desktop',
                 QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
                 QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div',
-                // Added Phase 7
                 QUICK_INFO_HEALTH: '.ct-quick-info__health',
                 PORTRAIT: '.ddbc-character-avatar__portrait',
-                // Extension-owned classes that wrap DDB content
                 PRINT_CONTAINER: '.print-section-container',
                 COMPACT_MODE: '.be-compact-mode',
-                // Phase 8 additions
                 SIDEBAR_INNER: '.ct-sidebar__inner',
-                CHARACTER_SHEET: '.ct-character-sheet', // Background/root
+                CHARACTER_SHEET: '.ct-character-sheet',
                 PRIMARY_BOX: '.ct-primary-box',
                 TOOLS_TARGET: '#character-tools-target',
                 SUBSECTION: '.ct-subsection',
-                SECTION: '.ct-section'
+                SECTION: '.ct-section',
+                MENU: 'menu',
+                HEADER_WRAPPER: '.header-wrapper',
+                SEARCH_INPUT: 'input[type="search"]',
+                FILTER_GENERIC: '[class*="filter"]'
             },
             SKILLS: {
                 BOX: '.ct-skills__box',
@@ -125,16 +146,40 @@ class DomManager {
             },
             SENSES: {
                 CALLOUT_VALUE: '.ct-senses__callout-value'
+            },
+            // Extractables
+            EXTRACTABLE: {
+                GROUP: '[class*="-group"]',
+                SNIPPET_CLASS: '[class*="-snippet--class"]',
+                ACTIONS_LIST: '[class*="styles_actionsList__"]',
+                ATTACK_TABLE: '[class*="styles_attackTable__"]',
+                TRAITS: '[class*="__traits"]',
+                HEADER_GENERIC: 'h1, h2, h3, h4, h5, [class*="head"], [data-testid*="header"], [data-testid*="heading"]',
+                CONTENT_GROUP_HEADER: '.ct-content-group__header',
+                ID_PREFIX: 'be-ext-'
+            },
+            // SVGs
+            SVG: {
+                BOX_BACKGROUND: '.ddbc-box-background',
+                ARMOR_CLASS: '.ddbc-armor-class-box-svg',
+                INITIATIVE: '.ddbc-initiative-box-svg',
+                ARMOR_CLASS_BOX: '.ddbc-armor-class-box',
+                INITIATIVE_BOX: '.ddbc-initiative-box',
+                REP_BOX: 'svg.ddbc-rep-box-background__svg',
+                PROFICIENCY: '.ct-proficiency-groups-box svg',
+                SENSES: '.ct-senses-box svg',
+                SKILLS: '.ct-skills-box svg',
+                SAVING_THROWS: '.ct-saving-throws-box svg',
+                GENERIC_SECTION: 'section > div > svg',
+                DEFS: 'svg definitions', // internal marker
+                ALL: 'svg'
+            },
+            // CSS Generation extras
+            CSS: {
+                DIALOG_SIBLING: 'dialog + div',
+                SHEET_BEFORE: '.ct-character-sheet:before'
             }
         };
-        
-        // Add new keys for Phase 7 analysis (if not in object literal above)
-        this.selectors.CORE.HEADING_STYLES = '[class^="styles_heading__"]';
-        this.selectors.CORE.SECTION_HEADING_STYLES = '[class^="styles_sectionHeading__"]';
-        this.selectors.CORE.HEADING_SUFFIX = '[class$="-heading"]';
-        this.selectors.CORE.HEADING_SUFFIX_ALT = '[class$="__heading"]';
-        this.selectors.CORE.GROUP_HEADER_CONTENT = '.ct-content-group__header-content';
-        this.selectors.CORE.DICE_CONTAINER = '.integrated-dice__container';
     }
 
     static getInstance() {

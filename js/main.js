@@ -190,87 +190,23 @@ const Storage = {
 };
 
 /**
- * Robust query selector that tries multiple patterns and handles obfuscated classes.
- */
-function safeQuery(selectors, context = document) {
-  if (!Array.isArray(selectors)) selectors = [selectors];
-  
-  for (const selector of selectors) {
-    try {
-      const element = context.querySelector(selector);
-      if (element) return element;
-    } catch (err) { // eslint-disable-line no-unused-vars
-      // Skip invalid selectors
-    }
-  }
-  return null;
-}
-
-/**
- * Robust query selector for multiple elements.
- */
-function safeQueryAll(selectors, context = document) {
-  if (!Array.isArray(selectors)) selectors = [selectors];
-  
-  for (const selector of selectors) {
-    try {
-      const elements = context.querySelectorAll(selector);
-      if (elements.length > 0) return Array.from(elements);
-    } catch (err) { // eslint-disable-line no-unused-vars
-      // Skip invalid selectors
-    }
-  }
-  return [];
-}
-
-/**
- * Finds an element by its text content and optional selector.
- */
-function findByText(text, selector = '*') {
-  const elements = document.querySelectorAll(selector);
-  return Array.from(elements).find(el => {
-    // Check if the element itself OR any child (like a label inside a button) matches the text
-    const exactMatch = el.textContent.trim().toLowerCase() === text.toLowerCase();
-    // For navigation, we usually want elements that DON'T have many children to avoid containers
-    return exactMatch && el.children.length < 3; 
-  });
-}
-
-/**
- * Finds an element whose class name contains a specific pattern.
- */
-function findByClassPattern(pattern, tagName = '*') {
-  const elements = document.querySelectorAll(tagName);
-  return Array.from(elements).find(el => el.className.includes(pattern));
-}
-
-/**
  * Navigate to a specific character sheet section (tab).
  */
 function navToSection(name) {
-  // Strategy 1: Look for obfuscated tab button class
-  const tabs = safeQueryAll('button[class*="tabButton"]');
+  const dom = window.DomManager.getInstance();
+  const tabs = dom.selectors.CORE.TAB_BUTTON ? 
+               Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON)) : [];
+  
   let target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
   
-  // Strategy 2: Look for ANY button/link/div with the exact text
-  if (!target) {
-    target = findByText(name, 'button') || findByText(name, 'a') || findByText(name, 'div') || findByText(name, 'span');
-  }
-
-  // Strategy 3: Loose text search on all buttons
-  if (!target) {
-    const allButtons = Array.from(document.querySelectorAll('button, [role="button"]'));
-    target = allButtons.find(btn => btn.textContent.toLowerCase().includes(name.toLowerCase()));
-  }
-
+  // Minimal fallback: if not found in specific class, look in all buttons if allowed by user rules (removing brittle logic implies usage of DomManager primarily)
+  // But to be safe if 'tabButton' class changes, we might want to check generic buttons? 
+  // For now, strict DomManager usage as per plan.
+  
   if (target) {
-    // If we found a label or span, click the actual interactive element
-    const clickTarget = (target.tagName === 'BUTTON' || target.tagName === 'A') ? target : target.closest('button, a, [role="button"]');
-    if (clickTarget) {
-        console.log(`[DDB Print Enhance] Navigating to: ${name}`);
-        clickTarget.click();
-        return target;
-    }
+      console.log(`[DDB Print Enhance] Navigating to: ${name}`);
+      target.click();
+      return target;
   }
   
   console.error(`[DDB Print Enhance] Could not find tab for section: ${name}`);
@@ -281,12 +217,30 @@ function navToSection(name) {
  * Helper to identify the base selector for an element
  */
 function getBaseSelector(el) {
+    const dom = window.DomManager.getInstance();
+    const s = dom.selectors.EXTRACTABLE;
+    // We match the pattern from DomManager selector strings
+    // Assumption: The selector string IS the class selector.
+    // We can extract the class name from the selector string (e.g. '[class*="-group"]' -> '-group')
+    // Or just use the selector string itself as the source of truth for the regex if possible?
+    // Let's use the explicit constants to build the regex logic if user insists on "no strings".
+    // "No css selector" implies string literals.
+    
+    // We can derive regex from the selector string if it follows '[class*="pattern"]'
+    const getPattern = (sel) => {
+        const match = sel.match(/class\*="([^"]+)"/);
+        return match ? new RegExp(match[1] + '$') : null;
+    };
+    
+    // Or we just map them manually since regex logic is code, not selector string.
+    // The "string" in the code below is the key from DomManager, or we construct the target object using DomManager values.
+    
     const targets = [
-        { pattern: /-group$/, selector: '[class*="-group"]' },
-        { pattern: /-snippet--class$/, selector: '[class*="-snippet--class"]' },
-        { pattern: /^styles_actionsList__/, selector: '[class*="styles_actionsList__"]' },
-        { pattern: /^styles_attackTable__/, selector: '[class*="styles_attackTable__"]' },
-        { pattern: /__traits$/, selector: '[class*="__traits"]' }
+        { pattern: /-group$/, selector: s.GROUP },
+        { pattern: /-snippet--class$/, selector: s.SNIPPET_CLASS },
+        { pattern: /^styles_actionsList__/, selector: s.ACTIONS_LIST },
+        { pattern: /^styles_attackTable__/, selector: s.ATTACK_TABLE },
+        { pattern: /__traits$/, selector: s.TRAITS }
     ];
 
     const classes = Array.from(el.classList);
@@ -400,152 +354,164 @@ function sleep(ms) {
  * Collect content from all tabs and wrap them in draggable containers.
  */
 async function extractAndWrapSections() {
-  // Strategy: Identify sections by looking for tab buttons
-  let tabs = Array.from(document.querySelectorAll('button[class*="tabButton"]'));
-  // Fallback: manual list if detection fails
-  if (tabs.length === 0) {
-      console.warn('[DDB Print] No tabs found automatically, using default list.');
-      const defaultSections = ['Actions', 'Spells', 'Inventory', 'Features', 'Traits', 'Description', 'Notes', 'Extras'];
-      // We'll map these to dummy objects to mimic the tab structure for the loop
-      tabs = defaultSections.map(s => ({ textContent: s }));
-  }
-
-  const sectionsToExtract = tabs.map(t => ({
-      name: t.textContent.trim(),
-      title: t.textContent.trim(),
-      testId: t.getAttribute('data-testid')
-  })).filter(s => s.name);
-
-  const extractedContainers = [];
-
-  for (const section of sectionsToExtract) {
-    const target = navToSection(section.name);
+    const dom = window.DomManager.getInstance();
     
-    // Give React time to render. Using Promise-based delay to be safe.
-    await new Promise(r => setTimeout(r, 100));
+    // Strategy: Identify sections by looking for tab buttons using DomManager
+    // We strictly use the defined selectors, no more fallbacks to hardcoded lists.
+    let tabs = [];
+    if (dom.selectors.CORE.TAB_BUTTON) {
+        tabs = Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON));
+    }
+    
+    // If no tabs found, we can't extract dynamic sections.
+    if (tabs.length === 0) {
+        console.warn('[DDB Print] No tabs found using DomManager selectors. Extraction aborted.');
+        return [];
+    }
 
-    if (target || tabs.length > 0) { // Proceed if navigation worked or we're just trying
-        // Priority: Find the main structural container that holds the styles
-        // We need to handle cases where multiple exist (some hidden)
-        const selectors = [
-            '[class*="styles_primaryBox"]',
-            '.ct-primary-box', 
-            '.ddbc-box-background + div section',
-            '.sheet-body section'
-        ];
+    const sectionsToExtract = tabs.map(t => ({
+        name: t.textContent.trim(),
+        title: t.textContent.trim(),
+        testId: t.getAttribute('data-testid')
+    })).filter(s => s.name);
+
+    const extractedContainers = [];
+
+    for (const section of sectionsToExtract) {
+        const target = navToSection(section.name);
         
-        // Helper to find visible element among matches
-        let content = null;
-        for (const selector of selectors) {
-            const matches = document.querySelectorAll(selector);
-            // Find one that is not hidden.
-            const visibleMatch = Array.from(matches).find(el => {
-                const style = window.getComputedStyle(el);
-                return style.display !== 'none' && !el.classList.contains('hidden');
-            });
+        // Give React time to render. Using Promise-based delay to be safe.
+        await new Promise(r => setTimeout(r, 100));
+
+        if (target) { 
+            // Priority: Find the main structural container that holds the styles
+            // We use DomManager selectors
+            const selectors = [
+                dom.selectors.CORE.PRIMARY_BOX_WRAPPER,
+                dom.selectors.UI.PRIMARY_BOX,
+                // Removed specific fallbacks as per user request to have NO CSS strings in main.js
+            ];
             
-            if (visibleMatch) {
-                content = visibleMatch;
-                break;
-            }
-        }
-
-        if (content) {
-            // Refinement: If we matched a child but the parent is the actual styled container, go up.
-            if (content.parentElement && (
-                content.parentElement.className.includes('primaryBox') ||
-                content.parentElement.className.includes('ct-primary-box')
-            )) {
-                content = content.parentElement;
-            }
-
-        // User Request: DONT clone the "spells" tab (keep it live/interactive)
-            // Fix: Skip Spells in the loop to avoid breaking iteration.
-            // Strict Check: Use data-testid="SPELLS" if available, or name fallback
-            if (section.name.includes('Spells') || section.title.includes('Spells') || section.testId === 'SPELLS') {
-                console.log('[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
-                continue;
+            // Helper to find visible element among matches
+            let content = null;
+            for (const selector of selectors) {
+                if (!selector) continue;
+                const matches = document.querySelectorAll(selector);
+                // Find one that is not hidden.
+                const visibleMatch = Array.from(matches).find(el => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && !el.classList.contains('hidden');
+                });
+                
+                if (visibleMatch) {
+                    content = visibleMatch;
+                    break;
+                }
             }
 
-            const nodeToWrap = content.cloneNode(true);
-            
-            const clone = nodeToWrap; // Alias for existing logic compliance
-            
-            // Ensure the content is visible (it might be hidden if tab wasn't active)
-            clone.style.display = '';
-            clone.classList.remove('hidden'); // Remove potential utility classes for hiding
+            if (content) {
+                // Refinement: If we matched a child but the parent is the actual styled container, go up.
+                if (content.parentElement && (
+                    content.parentElement.className.includes('primaryBox') ||
+                    content.parentElement.className.includes('ct-primary-box')
+                )) {
+                    content = content.parentElement;
+                }
 
-            
-            // Cleanup: Remove unwanted elements from the clone
-            // 1. Hide <menu> tags (often used for popups/context)
-            clone.querySelectorAll('menu').forEach(el => el.style.display = 'none');
-            
-            // 2. Hide specific filters
-            clone.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
-            
-            // 3. Layout Fix: Remove Scrollbars & Fixed Heights
-            // Force the container and its children to expand
-            // User Request: height: fit-content !important; display: flex !important;
-            clone.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
-            
-            // Apply similar logic to internal sections that might assume fixed height
-            clone.querySelectorAll('section, .ct-primary-box').forEach(el => {
-                el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
-            });
+            // User Request: DONT clone the "spells" tab (keep it live/interactive)
+                // Fix: Skip Spells in the loop to avoid breaking iteration.
+                // Strict Check: Use data-testid="SPELLS" if available, or name fallback
+                if (section.name.includes('Spells') || section.title.includes('Spells') || section.testId === 'SPELLS') {
+                    console.log('[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
+                    continue;
+                }
 
-            // Targeted SVG Removal: Use helper function
-            removeSpecificSvgs(clone);
+                const nodeToWrap = content.cloneNode(true);
+                
+                const clone = nodeToWrap; // Alias for existing logic compliance
+                
+                // Ensure the content is visible (it might be hidden if tab wasn't active)
+                clone.style.display = '';
+                clone.classList.remove('hidden'); // Remove potential utility classes for hiding
 
-            // RE-ENABLED: Fix Background SVGs to stretch for non-border backgrounds
-            // We exclude the one we just hid to avoid conflicting logic, though display:none wins.
-            const bgSvgs = clone.querySelectorAll('.ct-primary-box > svg, svg.ddbc-rep-box-background__svg, .ddbc-box-background:not([style*="display: none"]) svg');
-            bgSvgs.forEach(svg => {
-                svg.style.height = '100%';
-                svg.style.width = '100%';
-                if(svg.hasAttribute('height')) svg.removeAttribute('height');
-                if(svg.hasAttribute('width')) svg.removeAttribute('width');
-                svg.setAttribute('preserveAspectRatio', 'none');
-            });
-            
-            // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws)
-            // Keeping this logic for now as it targets specific UI elements that might need to be visible,
-            // unless the user wants *those* borders gone too. Assuming "all svg borders" means the main container ones first.
-            const groupBoxSvgs = clone.querySelectorAll('.ct-proficiency-groups-box svg, .ct-senses-box svg, .ct-skills-box svg, .ct-saving-throws-box svg');
-            groupBoxSvgs.forEach(svg => {
-                 svg.setAttribute('preserveAspectRatio', 'none');
-                 svg.style.width = '100%';
-                 svg.style.height = '100%';
-            });
-            
-            // Also target potential internal scrolling containers
-            clone.querySelectorAll('*').forEach(el => {
-                const tag = el.tagName.toLowerCase();
-                if (tag === 'svg' || tag === 'g' || tag === 'path' || tag === 'symbol' || tag === 'defs') return;
+                
+                // Cleanup: Remove unwanted elements from the clone
+                // 1. Hide <menu> tags (often used for popups/context)
+                clone.querySelectorAll('menu').forEach(el => el.style.display = 'none');
+                
+                // 2. Hide specific filters
+                clone.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
+                
+                // 3. Layout Fix: Remove Scrollbars & Fixed Heights
+                // Force the container and its children to expand
+                // User Request: height: fit-content !important; display: flex !important;
+                clone.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
+                
+                // Apply similar logic to internal sections that might assume fixed height
+                clone.querySelectorAll('section, .ct-primary-box').forEach(el => {
+                    el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
+                });
 
-                const style = window.getComputedStyle(el);
-                 if (style.overflow === 'auto' || style.overflow === 'scroll' || style.maxHeight !== 'none') {
-                     el.style.maxHeight = 'none';
-                     el.style.overflow = 'visible';
-                 }
-            });
+                // Targeted SVG Removal: Use helper function
+                removeSpecificSvgs(clone);
 
-            // Create a clean wrapper for the print layout
-            const wrapper = document.createElement('div');
-            // We do NOT blindly copy parent classes here because we just cloned the PROPER container.
-            // But we can add a helper class.
-            wrapper.className = 'print-section-wrapper';
-            wrapper.appendChild(clone);
+                // RE-ENABLED: Fix Background SVGs to stretch for non-border backgrounds
+                const bgSvgs = clone.querySelectorAll([
+                    dom.selectors.UI.PRIMARY_BOX + ' > ' + dom.selectors.SVG.ALL,
+                    dom.selectors.SVG.REP_BOX,
+                    dom.selectors.SVG.BOX_BACKGROUND + ':not([style*="display: none"]) ' + dom.selectors.SVG.ALL
+                ].join(', '));
+                
+                bgSvgs.forEach(svg => {
+                    svg.style.height = '100%';
+                    svg.style.width = '100%';
+                    if(svg.hasAttribute('height')) svg.removeAttribute('height');
+                    if(svg.hasAttribute('width')) svg.removeAttribute('width');
+                    svg.setAttribute('preserveAspectRatio', 'none');
+                });
+                
+                // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws)
+                const groupBoxSvgs = clone.querySelectorAll([
+                    dom.selectors.SVG.PROFICIENCY,
+                    dom.selectors.SVG.SENSES,
+                    dom.selectors.SVG.SKILLS,
+                    dom.selectors.SVG.SAVING_THROWS
+                ].join(', '));
+                groupBoxSvgs.forEach(svg => {
+                        svg.setAttribute('preserveAspectRatio', 'none');
+                        svg.style.width = '100%';
+                        svg.style.height = '100%';
+                });
+                
+                // Also target potential internal scrolling containers
+                clone.querySelectorAll('*').forEach(el => {
+                    const tag = el.tagName.toLowerCase();
+                    if (tag === 'svg' || tag === 'g' || tag === 'path' || tag === 'symbol' || tag === 'defs') return;
 
-            extractedContainers.push(createDraggableContainer(
-                section.title, 
-                wrapper, 
-                `section-${section.name.replace(/\s+/g, '_')}`
-            ));
-        } else {
-             console.warn(`[DDB Print] Content content not found for section: ${section.name}`);
+                    const style = window.getComputedStyle(el);
+                        if (style.overflow === 'auto' || style.overflow === 'scroll' || style.maxHeight !== 'none') {
+                            el.style.maxHeight = 'none';
+                            el.style.overflow = 'visible';
+                        }
+                });
+
+                // Create a clean wrapper for the print layout
+                const wrapper = document.createElement('div');
+                // We do NOT blindly copy parent classes here because we just cloned the PROPER container.
+                // But we can add a helper class.
+                wrapper.className = 'print-section-wrapper';
+                wrapper.appendChild(clone);
+
+                extractedContainers.push(createDraggableContainer(
+                    section.title, 
+                    wrapper, 
+                    `section-${section.name.replace(/\s+/g, '_')}`
+                ));
+            } else {
+                    console.warn(`[DDB Print] Content content not found for section: ${section.name}`);
+            }
         }
     }
-  }
 
 
   return extractedContainers;
@@ -559,12 +525,15 @@ async function extractAndWrapSections() {
 function removeSpecificSvgs(container) {
     if (!container) return;
 
+    const dom = window.DomManager.getInstance();
+    const s = dom.selectors.SVG;
+
     // 1. Remove first .ddbc-box-background
-    const firstBg = container.querySelector('.ddbc-box-background');
+    const firstBg = container.querySelector(s.BOX_BACKGROUND);
     if (firstBg) {
         // User Request: Don't hide the background if it belongs to Armor Class or Initiative
-        const isProtected = firstBg.querySelector('.ddbc-armor-class-box-svg, .ddbc-initiative-box-svg') ||
-                            firstBg.closest('.ddbc-armor-class-box, .ddbc-initiative-box');
+        const isProtected = firstBg.querySelector(s.ARMOR_CLASS + ', ' + s.INITIATIVE) ||
+                            firstBg.closest(s.ARMOR_CLASS_BOX + ', ' + s.INITIATIVE_BOX);
         
         if (!isProtected) {
             firstBg.style.display = 'none';
@@ -573,17 +542,16 @@ function removeSpecificSvgs(container) {
 
     // 2. Remove all section > div > svg
     // Check nested instances
-    // User Request: Exclude .ddbc-armor-class-box-svg and .ddbc-initiative-box-svg
-    container.querySelectorAll('section > div > svg').forEach(svg => {
-        if (!svg.classList.contains('ddbc-armor-class-box-svg') && !svg.classList.contains('ddbc-initiative-box-svg')) {
+    container.querySelectorAll(s.GENERIC_SECTION).forEach(svg => {
+        if (!svg.classList.contains(s.ARMOR_CLASS.replace('.', '')) && !svg.classList.contains(s.INITIATIVE.replace('.', ''))) {
             svg.style.display = 'none';
         }
     });
     
     // Check if container itself matches section > div > svg pattern (e.g. if container is section)
     if (container.tagName === 'SECTION') {
-        container.querySelectorAll(':scope > div > svg').forEach(svg => {
-            if (!svg.classList.contains('ddbc-armor-class-box-svg') && !svg.classList.contains('ddbc-initiative-box-svg')) {
+        container.querySelectorAll(':scope > div > ' + s.ALL).forEach(svg => {
+             if (!svg.classList.contains(s.ARMOR_CLASS.replace('.', '')) && !svg.classList.contains(s.INITIATIVE.replace('.', ''))) {
                 svg.style.display = 'none';
             }
         });
@@ -598,9 +566,11 @@ function removeSpecificSvgs(container) {
  */
 function copySvgDefinitions(targetContainer) {
     // Find all SVGs that might contain definitions (defs/symbol)
-    const svgs = document.querySelectorAll('svg');
+    // Find all SVGs that might contain definitions (defs/symbol)
+    const dom = window.DomManager.getInstance();
+    const svgs = document.querySelectorAll(dom.selectors.SVG.ALL);
     svgs.forEach(svg => {
-        if (svg.querySelector('defs, symbol') || svg.style.display === 'none') {
+        if (svg.querySelector(dom.selectors.SVG.DEFS.replace('svg ', '')) || svg.style.display === 'none') {
             const clone = svg.cloneNode(true);
             clone.style.display = 'none'; // Ensure it doesn't take up space
             targetContainer.appendChild(clone);
@@ -661,12 +631,14 @@ function injectSpellDetailTriggers(context = document) {
  * Also injects a unique-ish class based on content for stable persistence.
  */
 function flagExtractableElements() {
+    const dom = window.DomManager.getInstance();
+    const s = dom.selectors.EXTRACTABLE;
     const selectors = [
-        '[class*="-group"]',
-        '[class*="-snippet--class"]',
-        '[class*="styles_actionsList__"]',
-        '[class*="styles_attackTable__"]',
-        '[class*="__traits"]'
+        s.GROUP,
+        s.SNIPPET_CLASS,
+        s.ACTIONS_LIST,
+        s.ATTACK_TABLE,
+        s.TRAITS
     ];
 
     const elements = Array.from(document.querySelectorAll(selectors.join(', ')));
@@ -916,7 +888,8 @@ function renderExtractedSection(snapshot) {
  * Basic title discovery (to be refined in Phase 3).
  */
 function findSectionTitle(el) {
-    const titleEl = el.querySelector('h1, h2, h3, h4, h5, [class*="head"], [data-testid*="header"], [data-testid*="heading"]');
+    const dom = window.DomManager.getInstance();
+    const titleEl = el.querySelector(dom.selectors.EXTRACTABLE.HEADER_GENERIC);
     return titleEl ? titleEl.textContent.trim() : null;
 }
 
@@ -927,6 +900,7 @@ function findSectionTitle(el) {
  */
 function getSanitizedContent(node) {
     const clone = node.cloneNode(true);
+    const dom = window.DomManager.getInstance();
     const toRemove = [
         '.be-clone-button',
         '.be-compact-button',
@@ -935,8 +909,8 @@ function getSanitizedContent(node) {
         '.print-section-minimize',
         '.print-section-restore',
         '.print-section-resize-handle',
-        '.ct-spells-filter',
-        'menu'
+        dom.selectors.SPELLS.FILTER_CLASS,
+        dom.selectors.UI.MENU
     ];
 
     toRemove.forEach(selector => {
@@ -945,8 +919,12 @@ function getSanitizedContent(node) {
 
     // Prevent header duplication: remove top-level standardized headers
     // because new ones are added when wrapping/rendering.
-    const existingHeaders = clone.querySelectorAll(':scope > .ct-content-group__header');
-    existingHeaders.forEach(h => h.remove());
+
+    if (window.DomManager) {
+        const dom = window.DomManager.getInstance();
+        const existingHeaders = clone.querySelectorAll(':scope > ' + dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER);
+        existingHeaders.forEach(h => h.remove());
+    }
 
     return clone;
 }
@@ -1054,7 +1032,8 @@ function showTargetSelectionModal(targets) {
         targets.forEach(target => {
             const btn = document.createElement('button');
             btn.textContent = target.name;
-            btn.className = 'ct-theme-button';
+            const dom = window.DomManager.getInstance();
+            btn.className = dom.selectors.CORE.THEME_BUTTON.substring(1);
             btn.style.textAlign = 'left';
             btn.style.padding = '8px 12px';
             btn.style.width = '100%';
@@ -1223,36 +1202,19 @@ async function injectClonesIntoSpellsView() {
 
   // 2. Find the Live Spells Node (which is now visible)
   let spellsNode;
-  if (window.DomManager) {
-      const wrapper = window.DomManager.getInstance().getSpellsContainer();
-      spellsNode = wrapper ? wrapper.element : null;
-  } else {
-    const selectors = [
-        '[class*="styles_primaryBox"]',
-        '.ct-primary-box', 
-        '.ddbc-box-background + div section',
-        '.sheet-body section'
-    ];
-    
-    for (const selector of selectors) {
-        const matches = document.querySelectorAll(selector);
-        const visibleMatch = Array.from(matches).find(el => {
+  const dom = window.DomManager.getInstance();
+  const wrapper = dom.getSpellsContainer();
+  spellsNode = wrapper ? wrapper.element : null;
+
+  // Fallback to primary box if getSpellsContainer fails but we are on Spells tab?
+  // If getSpellsContainer relies on a specific class that might be missing, we could try finding the visible primary box.
+  if (!spellsNode) {
+      // Use DomManager's generic PRIMARY_BOX selector
+       const primaryBoxes = document.querySelectorAll(dom.selectors.UI.PRIMARY_BOX);
+       spellsNode = Array.from(primaryBoxes).find(el => {
             const style = window.getComputedStyle(el);
             return style.display !== 'none' && !el.classList.contains('hidden');
-        });
-        if (visibleMatch) {
-            spellsNode = visibleMatch;
-            break;
-        }
-    }
-    
-    // Go up to structural parent if needed
-    if (spellsNode && (
-        spellsNode.parentElement.className.includes('primaryBox') ||
-        spellsNode.parentElement.className.includes('ct-primary-box')
-    )) {
-        spellsNode = spellsNode.parentElement;
-    }
+       });
   }
 
   if (!spellsNode) {
@@ -1263,12 +1225,11 @@ async function injectClonesIntoSpellsView() {
   // 3. Clean up the Live Spells Node (Hide UI, Fix Layout)
   // We apply the same fixes as we did for clones, but IN PLACE.
   spellsNode.querySelectorAll('menu').forEach(el => el.style.display = 'none');
-  // Removed aggressive hiding of tab-filters for the live Spells node to preserve interactivity
-  // spellsNode.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
+
   
   spellsNode.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
   
-  spellsNode.querySelectorAll('section, .ct-primary-box').forEach(el => {
+  spellsNode.querySelectorAll(dom.selectors.UI.PRIMARY_BOX + ', section').forEach(el => {
       el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
   });
 
@@ -1276,7 +1237,12 @@ async function injectClonesIntoSpellsView() {
   removeSpecificSvgs(spellsNode);
 
   // We RESTORE the logic for other SVGs as per user request.
-  const bgSvgs = spellsNode.querySelectorAll('.ct-primary-box > svg, svg.ddbc-rep-box-background__svg, .ddbc-box-background:not([style*="display: none"]) svg');
+
+  const bgSvgs = spellsNode.querySelectorAll([
+      dom.selectors.UI.PRIMARY_BOX + ' > ' + dom.selectors.SVG.ALL,
+      dom.selectors.SVG.REP_BOX,
+      dom.selectors.SVG.BOX_BACKGROUND + ':not([style*="display: none"]) ' + dom.selectors.SVG.ALL
+  ].join(', '));
   bgSvgs.forEach(svg => {
       svg.style.height = '100%';
       svg.style.width = '100%';
@@ -1286,7 +1252,13 @@ async function injectClonesIntoSpellsView() {
   });
 
   // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws) in Spells View
-  const groupBoxSvgs = spellsNode.querySelectorAll('.ct-proficiency-groups-box svg, .ct-senses-box svg, .ct-skills-box svg, .ct-saving-throws-box svg');
+
+  const groupBoxSvgs = spellsNode.querySelectorAll([
+        dom.selectors.SVG.PROFICIENCY,
+        dom.selectors.SVG.SENSES,
+        dom.selectors.SVG.SKILLS,
+        dom.selectors.SVG.SAVING_THROWS
+    ].join(', '));
   groupBoxSvgs.forEach(svg => {
        svg.setAttribute('preserveAspectRatio', 'none');
        svg.style.width = '100%';
@@ -1295,7 +1267,7 @@ async function injectClonesIntoSpellsView() {
 
   // 4. Identify the Unified Layout Root
   // We want to move everything to .ct-subsections
-  const layoutRoot = document.querySelector('.ct-subsections');
+  const layoutRoot = document.querySelector(dom.selectors.CORE.SUBSECTIONS);
   if (!layoutRoot) {
       console.warn('[DDB Print] Could not find .ct-subsections! Falling back to original parent.');
       return;
@@ -1308,7 +1280,7 @@ async function injectClonesIntoSpellsView() {
   Array.from(layoutRoot.children).forEach(child => {
       if (!child.classList.contains('print-section-container')) {
           // Identify a title for the section (e.g. from a header)
-          const titleEl = child.querySelector('header, .ct-subsection__header');
+          const titleEl = child.querySelector('header, ' + dom.selectors.CORE.SUBSECTION_HEADER);
           let title = titleEl ? titleEl.textContent.trim() : null;
           
           if (!title) {
@@ -1345,16 +1317,9 @@ async function injectClonesIntoSpellsView() {
       layoutRoot.appendChild(container); // Append moves them to the end or maintains order if prepended
   });
 
-  // 8. Hide Navigation UI
-  if (window.DomManager) {
-    window.DomManager.getInstance().getNavigation().hide();
-  } else {
-    const navTabs = document.querySelector('.ct-character-sheet-desktop nav') || 
-                    document.querySelector('nav[class*="styles_navigation"]');
-    if (navTabs) {
-        navTabs.style.display = 'none';
-    }
-  }
+  // 8. Hide Navigation UI (Using DomManager)
+  window.DomManager.getInstance().getNavigation().hide();
+
   
   // 9. Inject spell detail triggers into all sections
   injectSpellDetailTriggers(layoutRoot);
@@ -1367,15 +1332,22 @@ async function injectClonesIntoSpellsView() {
  * Relocates defense information.
  */
 function moveDefenses() {
-  const defensesSection = safeQuery(['.ct-sidebar__section--defenses', '[class*="sidebar__section--defenses"]']);
+  const dom = window.DomManager.getInstance();
+  const defensesSection = document.querySelector(dom.selectors.CORE.DEFENSES) || 
+                          document.querySelector(dom.selectors.CORE.DEFENSES_ALT);
   if (!defensesSection) return;
 
   const elem = defensesSection.cloneNode(true);
   removeSpecificSvgs(elem); // Ensure SVGs are removed from Defenses clone
-  const header = elem.querySelector(['.ct-sidebar__section-header', '[class*="sidebar__section-header"]']);
+  
+  // Remove header
+  const header = elem.querySelector(dom.selectors.CORE.DEFENSES_HEADER) || 
+                 elem.querySelector(dom.selectors.CORE.DEFENSES_HEADER_ALT);
   if (header) header.remove();
 
-  const combatTablet = safeQuery(['.ct-status-summary-bar', '[class*="status-summary-bar"]']);
+  const combatTablet = document.querySelector(dom.selectors.CORE.COMBAT_TABLET) || 
+                       document.querySelector(dom.selectors.CORE.COMBAT_TABLET_ALT);
+                       
   if (combatTablet) {
     const container = document.createElement('div');
     container.style['border'] = 'thin black solid';
@@ -1389,21 +1361,12 @@ function moveDefenses() {
  * Optimized layout for print.
  */
 function tweakStyles() {
-  // Hide major UI components
-  if (window.DomManager) {
-    window.DomManager.getInstance().hideCoreInterface();
-  } else {
-    // Fallback or legacy (though DomManager should be present)
-    safeQueryAll([
-      'div.site-bar', 'header.main', '#mega-menu-target', 
-      '[class*="navigation"]', '[class*="mega-menu"]', '[class*="sidebar"]', 'footer'
-    ]).forEach(e => { 
-        if (e.classList.contains('ct-sidebar__portal') || e.closest('.ct-sidebar__portal')) return;
-        e.style.display = 'none'; 
-    });
-  }
+  // Hide major UI components using DomManager
+  window.DomManager.getInstance().hideCoreInterface();
 
-  const name = safeQuery(['.ct-character-tidbits__name', '[class*="tidbits__name"]']);
+  const dom = window.DomManager.getInstance();
+  const name = document.querySelector(dom.selectors.CORE.TIDBITS_NAME) || 
+               document.querySelector(dom.selectors.CORE.TIDBITS_NAME_ALT);
   if (name) name.style['color'] = 'black';
 
   // HP recovery
@@ -1424,7 +1387,10 @@ function tweakStyles() {
  */
 function movePortrait() {
     // User Request: Append .ddbc-character-avatar__portrait to .ct-subsection.ct-subsection--primary-box
-    const portrait = document.querySelector('.ddbc-character-avatar__portrait');
+    const dom = window.DomManager.getInstance();
+    const portrait = document.querySelector(dom.selectors.UI.PORTRAIT);
+    // UI.PRIMARY_BOX might be .ct-primary-box, check if we have the specific subsection target
+    // The previous code targeted .ct-subsection.ct-subsection--primary-box
     const target = document.querySelector('.ct-subsection.ct-subsection--primary-box');
     
     if (portrait && target) {
@@ -1446,12 +1412,9 @@ function movePortrait() {
 function moveQuickInfo() {
     // User Request: Make .ct-quick-info draggable
     let quickInfo;
-    if (window.DomManager) {
-        const wrapper = window.DomManager.getInstance().getQuickInfo();
-        quickInfo = wrapper ? wrapper.element : null;
-    } else {
-        quickInfo = document.querySelector('.ct-quick-info');
-    }
+    const dom = window.DomManager.getInstance();
+    const wrapper = dom.getQuickInfo();
+    quickInfo = wrapper ? wrapper.element : null;
 
     if (quickInfo) {
         const layoutRoot = document.getElementById('print-layout-wrapper');
@@ -1543,30 +1506,23 @@ function initDragAndDrop() {
  * UI Refinement logic to remove unnecessary print elements.
  */
 function removeSearchBoxes() {
+  const dom = window.DomManager.getInstance();
+  const s = dom.selectors;
   const searchSelectors = [
-    '.header-wrapper',
-    '.ct-spells-filter',
-    '.ct-inventory__filter',
-    '.ct-equipment__filter',
-    '.ct-extras__filter',
-    '.ct-features__management-link',
-    '.ct-filter-box', 
-    'input[type="search"]',
-    '[class*="filter"]',
-    '.ct-application-group__filter'
-  ];
+    s.UI.HEADER_WRAPPER,
+    s.UI.SEARCH_INPUT,
+    s.UI.FILTER_GENERIC,
+     // Add DomManager selectors
+     s.SPELLS.FILTER,
+     s.EQUIPMENT.FILTER,
+     s.EQUIPMENT.INVENTORY_FILTER,
+     s.EXTRAS.FILTER,
+     s.TRAITS.MANAGEMENT_LINK
+  ].filter(Boolean); // Filter out undefineds
 
-  if (window.DomManager) {
-      // Use abstracted selectors if available to make it more robust
-      const s = window.DomManager.getInstance().selectors;
-      if (s.SPELLS && s.SPELLS.FILTER) searchSelectors.push(s.SPELLS.FILTER);
-      if (s.EQUIPMENT && s.EQUIPMENT.FILTER) searchSelectors.push(s.EQUIPMENT.FILTER);
-      if (s.EQUIPMENT && s.EQUIPMENT.INVENTORY_FILTER) searchSelectors.push(s.EQUIPMENT.INVENTORY_FILTER);
-      if (s.EXTRAS && s.EXTRAS.FILTER) searchSelectors.push(s.EXTRAS.FILTER);
-      if (s.TRAITS && s.TRAITS.MANAGEMENT_LINK) searchSelectors.push(s.TRAITS.MANAGEMENT_LINK);
-  }
-
-  safeQueryAll(searchSelectors).forEach(el => {
+  // Flatten and query
+  const allSelectors = searchSelectors.join(',');
+  document.querySelectorAll(allSelectors).forEach(el => {
     // User Request: Preserve Filters on Live Spells Tab
     // Check if element is inside Spells container (or is the spells filter itself checking ancestors)
     if (el.closest('.ct-spells') || el.closest('[data-testid="SPELLS"]')) {
@@ -1580,311 +1536,248 @@ function enforceFullHeight() {
     const styleId = 'ddb-print-enhance-style';
     if (document.getElementById(styleId)) return;
 
-    let s = { CORE: {}, SPELLS: {}, COMPACT: {} };
-    if (window.DomManager) {
-        s = window.DomManager.getInstance().selectors;
-    } else {
-        // Fallback or explicit strings if DomManager missing during init
-        s.CORE = {
-            SITE_BAR: '.site-bar', NAVIGATION: 'nav', HEADER_MAIN: 'header',
-            SITE_ALERT: '.ddb-site-alert', WATERMARK: '.watermark',
-            FOOTER: 'footer', MEGA_MENU_TARGET: '#mega-menu-target',
-            MM_NAVBAR: '.mm-navbar', NOTIFICATIONS: '.notifications-wrapper',
-            SHEET_DESKTOP: '.ct-character-sheet-desktop',
-            CONTENT_GROUP: 'div.ct-content-group',
-            SIDEBAR_PORTAL: '.ct-sidebar__portal',
-            SPELL_MANAGER: '.ct-spell-manager',
-            SIDEBAR: '.ct-sidebar'
-        };
-        // Basic fallback for UI
-        s.UI = {
-            DICE_ROLLER: '.dice-rolling-panel',
-            COLLAPSED_ACTIONS: '[class$="__actions--collapsed"]',
-            THEME_LINK: '.ddbc-theme-link',
-            TIDBITS_HEADING: '.ddbc-character-tidbits__heading',
-            FEATURES_LINK: '.ct-features__management-link',
-            SUBSECTION_FOOTER: '.ct-subsection__footer',
-            HEADER_DESKTOP: '.ct-character-header-desktop',
-            QUICK_INFO_INSPIRATION: '.ct-quick-info__inspiration',
-            QUICK_INFO_HEALTH_HEADER: '.ct-quick-info__health h1 + div',
-            SIDEBAR_INNER: '.ct-sidebar__inner'
-        };
-        // Basic fallback for Phase 7 keys if missing
-        s.SKILLS = { BOX: '.ct-skills__box', CONTAINER: '.ct-skills' };
-        s.COMBAT = { STATUSES: '.ct-combat__statuses', AC_VALUE: '.ddbc-armor-class-box__value' };
-        s.SENSES = { CALLOUT_VALUE: '.ct-senses__callout-value' };
-        
-        s.EQUIPMENT = { FILTER: '.ct-inventory-filter' }; // Note: Slightly different class in CSS block
-        s.EXTRAS = { INTERACTIONS: '.ct-extras-filter__interactions' };
-        s.SPELLS = { ACTION: '.ct-spells-spell__action' };
-        
-        // Ensure Phase 7 specific CORE keys exist in fallback
-        if (!s.CORE.HEADING_STYLES) s.CORE.HEADING_STYLES = '[class^="styles_heading__"]';
-        if (!s.CORE.SECTION_HEADING_STYLES) s.CORE.SECTION_HEADING_STYLES = '[class^="styles_sectionHeading__"]';
-        if (!s.CORE.HEADING_SUFFIX) s.CORE.HEADING_SUFFIX = '[class$="-heading"]';
-        if (!s.CORE.HEADING_SUFFIX_ALT) s.CORE.HEADING_SUFFIX_ALT = '[class$="__heading"]';
-        if (!s.CORE.GROUP_HEADER_CONTENT) s.CORE.GROUP_HEADER_CONTENT = '.ct-content-group__header-content';
-        if (!s.CORE.DICE_CONTAINER) s.CORE.DICE_CONTAINER = '.integrated-dice__container';
-        if (!s.UI.PORTRAIT) s.UI.PORTRAIT = '.ddbc-character-avatar__portrait';
-        if (!s.UI.QUICK_INFO_HEALTH) s.UI.QUICK_INFO_HEALTH = '.ct-quick-info__health';
-        if (!s.UI.PRINT_CONTAINER) s.UI.PRINT_CONTAINER = '.print-section-container';
-    }
+    const dom = window.DomManager.getInstance();
+    let s = dom.selectors;
 
-  const style = document.createElement('style');
-  style.id = styleId;
-  style.textContent = `
-    @media print {
-        @page {
-            margin: 0;
-            size: letter portrait;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        @media print {
+            @page {
+                margin: 0;
+                size: letter portrait;
+            }
+            body {
+                /* User Request: Manual margins assuming 0 hardware margin */
+                margin-top: 0in !important;
+                margin-bottom: 0.25in !important;
+                margin-left: 0.1in !important;
+                margin-right: 0.1in !important;
+                padding: 0 !important;
+            }
+            
+            html {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
         }
-        body {
-             /* User Request: Manual margins assuming 0 hardware margin */
-             margin-top: 0in !important;
-             margin-bottom: 0.25in !important;
-             margin-left: 0.1in !important;
-             margin-right: 0.1in !important;
-             padding: 0 !important;
+        :root {
+            /* Using your provided Base64 string for the red border */
+            /* This is used by ${s.SKILLS.BOX} and others */
+            --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAG1ElEQVR42u2c309URxTH+Zd8b99taRp/PDUxio2k8QHThyZtUhSsRX6ULm2gLiBFBBFKSSGhWLDYXQFbUINSCcVSiyIqLQqyUGiRhX5P870wO8y9iwu73b2Xh5Pd3Dt35pzPnTl3fpyZtNXV1bSXlZvp6bXXdu2ah6wmqcyLjrHYlhYjED8KDWlK/A15DpmCPII8hDyDrNgovQCZhcxB/qLM8dqCzTMrzH+Cv3NMK8/OQJaYblx0TBgQFFgO+UMB8QskCGmFNEPqIQ2QH2mgZdAyZBoywvSXIJ2QHyidvBZkmmk+Yz0vefUy7yZIO+QyRZ67zXRPRcdEAmkiiCfj5eUNTmlHc3LuIN0ApANvrfqB31+42XIkrTwjz0JuSl6b0G2MurUkBAhrwX3I4lBmZluUppWNdBX4zY1FOS2v48irEr95Tumg0wWk+4fNqjWuQFDAOVZlqcZDpjSoMVlQ+iju78Ub3r1VEIZasw95v4kyXnPQc5j+5lfROS5AWG1HIWGpIai+xYa3c1F8CJTO324QBjDvoSwfyvzU0Ew/p1MXXX8X3bcNCAr8jE7uCR3WFK75tFpRwKbhjzcIQ1PKQ9mnDHoLlMfUWZzzJbElZiAw8hy99gQ/Z1IFJ0C/Riu4St4A3tjpRMPQaksVdMnTasoZpfmIDZPyZRLbNgUECU8g0xo8FGBGYetzhzfRjfvva83oA1wv/r9AGGpLruhkuF7Pl/ucn27pJjSLrbDpQyMQ3KxnuwuRZpifr2E8VGHwKRV4A75kgaH5j7NRPgpLFGlKY2L7BiCg2M8e3yq75X0mEMw4R/cjySTiaEVHhw/Ed+zZiq0zsP26CYj0KhcFBii3OWRWlcwwFCg+6FrtUJO+4ouXcc9PG4DgxlV2ee84FJKLh0uTHYbyksug88cOL/dnOtpuE5AgB2W9NkQLUMDJVIGhOlroXmQDpJv9lKsmIDKweqDe1J1oqsFQdPfbXA/QyXaagHRB/oT0Gx48hW/9sVQFAt2zYEOmwa4+VoIuE5BBOpkbWt+kFNdKUhWGYl+WDRD59A5GAIHR5bwhfY8erQ3WJWJskoBa8i5s+cjQZF6I7WBQsgYETucbq1cKr9yhPZTytUNt+tpXM8C+SBgM/CqQZgVIq1I7XgHZI24BAlvegU2vKkC6FCBla0AEgjVVhxtXFKKvuwWGYtNepSvRQr+5LIPUNSCgdo1AFpAoyMTFkAy3AYFNRyGf8H8JJ5GWweA/VyEwbkHG6FwG4FwKCakAVeyA24DAprdhW75SY2Si+gWujUDaxfBFTuULkFol4SG3wTDZhv9naLuMaUICRF3zqFES7ncxkP3K/y+stSNhkaaseYTVbjtuZrgViGobl1SsibAIIDJ1fw8+pBnOJhuyx61AxDbIYQLppe0bgEg7GpU1UTieg26FoTjXN2Dradh8nbZHAsFN6Zz0ux2Eoba0w/YFE5AV3GzwIJAGsd0ERHqpZz0IpFL50m4AcsGDQGrtgEiT+dqDQJrtmowAadwBEtlkzu80mUggdTtONbLJBHY+u+tAlnFTFqpuoReX7SEg/dIpNXXdlwhmHkCqPdB1P8jw0t+MXXcr5BGDuz6ZX4S85fLB3XEZyMqA1m5wJ0CuKEPkQx4Z/gcjhv/aBNGXSsJ9HpkgqomYINKmEOuUhBkuBqJOIdbqU4j6JHORyyeZD4htXLEsZFDx+iSzB5chDlshpdLvYpDQ+jKEBxeq0hU431sx+BELVR5ayjyiLWW2GJcyPbTYXaItdncYF7s9Eg6RL7ZogHqtLSsR4RAeCZgpEVu0azcYnjnotZCqY6Z4eEYQjduFVLk56K7CIejurl3QnVvDMk+K7rGEZboxcLdUdI4SuPvYGLjr0tDuKoce67f8iISMod0uC/732QX/i010pvOOwf8u2h7iMzlRghimTWHaOGu7PcQlG4iK9Q1EorPoruwfDtO2gOMGohTfYiZhDR3WAE2pLTXU39piJv9vb3qLWYpuQpRt9xWig8GPTFFn0T24pU2IKbBNNZ/75i4a/EgxN1uHqfP2bVO12bMW3sRG5j1x2si8W/KWMqQsGz2HqONI3DYyb2Gre+U2bXXPZV7ZUZp4G/tT9+O+1V2B0qgchtAY5TM4pB2GUPQStaFIOQxhQPJySi+60F+IbjFFMmzluIxJJXpRBkg9EHk7LcpxFn3aOSPLHG7f5Tiig0ddWMdlXOa1bqaZ0Y7LCDHPJpbRwjJ7mN5acJpM6HEZsrlPOxfEOiDFOkzlHp3ZpMOBKvM8cGWaec3y/zOH02tWmOcoy3jEMvUDWKTfVJZIIOd5ukuyHrkzJzrGYtu/fsyBBPwDtsMAAAAASUVORK5CYII=');
+            --btn-color: #c53131;
+            --btn-color-highlight: #f18383ff;
         }
-        
-        html {
-            margin: 0 !important;
+
+        .print-section-content {
+            overflow: visible !important;
+            max-height: none !important;
+            padding: 0;
+            height: auto !important;
+        }
+        section {
+            height: 100% !important;
             padding: 0 !important;
+        }
+
+        ${s.UI.TOOLS_TARGET} {
+            background-color: white;
         }
 
         /* Deep Clean: Aggressively hide top elements */
-        ${s.CORE.SITE_BAR}, 
-        ${s.CORE.NAVIGATION}, 
-        ${s.CORE.HEADER_MAIN}, 
-        ${s.CORE.SITE_ALERT}, 
-        ${s.CORE.WATERMARK}, 
+        [data-original-id="section-Section-6"] .print-section-header > span, 
+        [data-original-id="section-Section-6"] .print-section-content ${s.UI.PRIMARY_BOX}, 
+        div#section-Section-6 .print-section-header > span, 
+        div#section-Section-6 .print-section-content ${s.UI.PRIMARY_BOX}, 
         ${s.CORE.FOOTER}, 
+        ${s.CORE.HEADER_MAIN}, 
         ${s.CORE.MEGA_MENU_TARGET}, 
         ${s.CORE.MM_NAVBAR},
-        ${s.CORE.NOTIFICATIONS} {
+        ${s.CORE.NAVIGATION}, 
+        ${s.CORE.NOTIFICATIONS},
+        ${s.CORE.SITE_ALERT}, 
+        ${s.CORE.SITE_BAR}, 
+        ${s.CORE.WATERMARK}, 
+        ${s.CSS.DIALOG_SIBLING},
+        ${s.CSS.SHEET_BEFORE},
+        ${s.EQUIPMENT.FILTER},
+        ${s.EXTRAS.INTERACTIONS},
+        ${s.SPELLS.ACTION},
+        ${s.UI.COLLAPSED_ACTIONS},
+        ${s.UI.DICE_ROLLER},
+        ${s.UI.FEATURES_LINK},
+        ${s.UI.HEADER_DESKTOP},
+        ${s.UI.QUICK_INFO_HEALTH_HEADER},
+        ${s.UI.QUICK_INFO_INSPIRATION},
+        ${s.UI.SUBSECTION_FOOTER},
+        ${s.UI.THEME_LINK},
+        ${s.UI.TIDBITS_HEADING} {
             display: none !important;
         }
 
-        ${s.CORE.SHEET_DESKTOP} {
-            margin: 0 !important;
-            padding: 0 !important;
-            /* Force absolute top to ignore any flow */
-            position: absolute !important;
+        ${s.UI.QUICK_INFO_HEALTH} h1 {
+            position: static;
+            transform: none;
+        }
+        /* REsizable */
+        ${s.CORE.SHEET_DESKTOP} ${s.UI.SUBSECTION} {
+            position: static!important;
+            display: flex!important;
+            flex-flow: row!important;
+            height: 100%;
+        }
+        ${s.CORE.SHEET_DESKTOP} ${s.CORE.SUBSECTIONS} {
+            height: auto !important;
+            display: block;
+            width: 100%;
+            position: relative !important;
+        }
+
+        /* User Request: Side Panel Fixed & Scrollable */
+        ${s.CORE.SIDEBAR_PORTAL} {
+            position: fixed !important;
             top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
+            right: 0 !important;
+            height: 100% !important;
+            z-index: 9999 !important;
         }
-             
-        p, 
-        span,
-        ${s.CORE.CONTENT_GROUP} { 
-            break-inside: avoid; 
+        ${s.CORE.SPELL_MANAGER} {
+            overflow-y: auto !important;
+            max-height: 100% !important;
         }
-    }
-
-    :root {
-        /* Using your provided Base64 string for the red border */
-        /* This is used by ${s.SKILLS.BOX} and others */
-        --border-img: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAABECAYAAAA4E5OyAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAQ9SURBVHhe7ZxBbtswFERzpZwj58g5cozkGMkhukm67K6rFAnQrtpdu3KKETrCePw/JaquqEYcYBBXssXPx0/yW7Z78bZAH6+u3j5cXm7aiHGJLvzAHHUgJm98q16iaiDfHh6OGv1ydzccy/z55mZ8Lkbt+fb27ev9/SzjuZqNuJZfX41YNDYcq1UVkF+vr0cNfrq+9qeM+vH0NHYGf9HBw+GwyHitXgvXzoSYNEbEXKPZQBwGHAWGUWLwGOGfLy8nHVxqXAvXJBi05UJMHmcNlFlAokaQvio0ytFB0N6Zc5tg0KZ3WKdpafAiFYFoJ9U+VTh3MWrnzIgpoy1mo2dLFrfDc4VA8CJfoGjNjLWzInOWLVGmEF4GZgRCCBFZ2Ocs1xQc//74eBLk2kYMzBbtrK5pbvTV4YxAMhCwpyNhYAQ8sNZmVngGZBlPMNQIJKLo9CDCwEU8GHhtefswBzeKPQKjVW0IxHcQagrGVoCUoFBeMFIjECWWVXhoBC/2xrcIBEasviNS6KP2mRqAcOTpaM8G0RKM1vJ4FEqU8V5bMZMGINlJf3FpN2ktj4dGzNEgZ0kwAPH0cSA4NlVntJbHo2adonIgXCZCICquyt6Iu7U8Hjf64OVDCsS3IhXm4FR2/A9AeCtBpX0mrAGIbkG6KjNz/OKRW8vjiayZAGkxyoW3CGRudsCt5fFE9ixJgUQnuLP4RTO3lseTGX3ijhIlwgAkqlLxt+a9Smt5PJnZLyiqVi/wQIFwcamZLnBreTyZddroZkIOAxAehLno4HHNfdDW8ngyo0/oG+TlRggE84tPrLn71VoeT2b0iQPvFfoARA8oEJz0i5XcWh5PyehbBAQ+AYJ5Vbugwq3l8ZTM/nlBGgLhYlrbSGt5PCVD/iHYCRCc5HZUkl9cG2kpj2duXOizgulAOpBjdSCmDsTUgZg6EFMHYupATJNA8Pg9VapTSoEomPcEJDI0WbrT/c2dHdj9239Pm93fIHIg/RZiv8k8whiA4IQCYS1Su7C2lseTmf2CWGYQCNQ/qPrT76MPqqITUM20aS2PJ/LsjzIzILv9sNsLFNXcLGktj8ft2QFpn4++DuHbj2qXX5hxILv/SpVXbA5kd1+6y06qsOhgDnqDWweCmLlgqrIkGIBAelJXYtVuvrgLRdWqa1df7VYgNFZlv+AUlLXl7Zdg4N9eYqRAtEhx+3ZFKDXvddYyR95hRCBonVYjENLLwICigiEUHC/tPmv57D8gUmWpBev6gucR4FSd8i/NOgOxaOd0nVA7BFUIhNIOO1kV4WEkau6y/a1X+xGiy/ds2HeitbMlywooyoyotoo0CwjENWOqEZ2zCPqcGbOZHzJTDsWnjgqBEQz+1tyfdW/yp+6UV3gYJRzL7AUQRtj/04PM/mESruXXV/tGgGO1qgYCaaNb9hItApLt61uyVp816kBMvwHf7+SOVWGMwQAAAABJRU5ErkJggg==');
-        --btn-color: #c53131;
-        --btn-color-highlight: #f18383ff;
-    }
-
-    .print-section-content {
-      overflow: visible !important;
-      max-height: none !important;
-      padding: 0;
-      height: auto !important;
-    }
-    section {
-      height: 100% !important;
-      padding: 0 !important;
-    }
-
-    #character-tools-target {
-        background-color: white;
-    }
-
-    dialog + div,
-    div#section-Section-6 .print-section-header > span, 
-    div#section-Section-6 .print-section-content .ct-primary-box,
-    ${s.UI.DICE_ROLLER},
-    ${s.UI.COLLAPSED_ACTIONS},
-    .ct-character-sheet:before,
-    ${s.UI.THEME_LINK},
-    ${s.UI.TIDBITS_HEADING},
-    ${s.EXTRAS.INTERACTIONS},
-    ${s.EQUIPMENT.FILTER},
-    ${s.SPELLS.ACTION},
-    ${s.UI.FEATURES_LINK},
-    ${s.UI.SUBSECTION_FOOTER},
-    ${s.UI.HEADER_DESKTOP},
-    ${s.UI.QUICK_INFO_INSPIRATION},
-    ${s.UI.QUICK_INFO_HEALTH_HEADER} {
-      display: none!important;
-    }
-    ${s.UI.QUICK_INFO_HEALTH} h1 {
-      position: static;
-      transform: none;
-    }
-    /* REsizable */
-    ${s.CORE.SHEET_DESKTOP} .ct-subsection {
-        position: static!important;
-        display: flex!important;
-        flex-flow: row!important;
-        height: 100%;
-    }
-    ${s.CORE.SHEET_DESKTOP} .ct-subsections {
-        height: auto !important;
-        display: block;
-        width: 100%;
-        position: relative !important;
-    }
-
-    /* User Request: Side Panel Fixed & Scrollable */
-    ${s.CORE.SIDEBAR_PORTAL} {
-        position: fixed !important;
-        top: 0 !important;
-        right: 0 !important;
-        height: 100% !important;
-        z-index: 9999 !important;
-    }
-    ${s.CORE.SPELL_MANAGER} {
-        overflow-y: auto !important;
-        max-height: 100% !important;
-    }
-    ${s.CORE.SIDEBAR} {
-        position: static !important;
-    }
-    ${s.UI.SIDEBAR_INNER} {
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-    }
-    ${s.UI.CHARACTER_SHEET} {
-        background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
-    }
-    ${s.CORE.SHEET_DESKTOP} {
-        background-color: white;
-        height: 100%;
-        -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
-        box-shadow: 5px 5px 15px 5px #3f3f3fff;
-    }
-
-    .print-section-wrapper,
-    .print-section-wrapper > * {
-        width: 100%;
-        max-width: 1200px;
-        padding: 0 !important;
-    }
-
-    @media (min-width: 1200px) {
-        ${s.UI.PRIMARY_BOX} {
-            width: 100% !important;
+        ${s.CORE.SIDEBAR} {
+            position: static !important;
         }
-    }
-
-    @media screen {
+        ${s.UI.SIDEBAR_INNER} {
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+        ${s.UI.CHARACTER_SHEET} {
+            background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
+        }
         ${s.CORE.SHEET_DESKTOP} {
-            max-width: none !important;
-            margin: 0 !important;
-            width: 100% !important;
-            background-color: white !important;
+            background-color: white;
+            height: 100%;
+            -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
+            box-shadow: 5px 5px 15px 5px #3f3f3fff;
         }
-    }
-    
-    ${s.UI.PRINT_CONTAINER} { 
-        --reduce-height-by: 0px;
-        --reduce-width-by: 0px;
-        break-inside: avoid; 
-        position: absolute !important;
-        z-index: 10;
-        /* resize: both !important; Removed for custom handle */
-        overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
-        min-width: 50px !important;
-        min-height: 30px !important;
-        background-color: rgba(255, 255, 255, 0.85);
-        box-sizing: border-box;
-        display: flex !important;
-        flex-direction: column !important;
-        border-width: 20px;
-        border-style: solid;
-        border-color: transparent;
-        border-image-source: var(--border-img);
-        border-image-slice: 30;
-        border-image-repeat: round;
-        box-decoration-break: clone;
-        -webkit-box-decoration-break: clone;
-    }
-    ${s.UI.PRINT_CONTAINER}:hover { 
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-    }
 
-    ${s.UI.PRINT_CONTAINER}, 
-    ${s.UI.PRINT_CONTAINER} * {
-        font-size: 8px !important;
-        white-space: normal !important;
-        overflow-wrap: break-word !important;
-    }
-    ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 *,
-    ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 + *,
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.QUICK_INFO} * {
-        font-size: 12px !important;
-    }
-    ${s.UI.PRINT_CONTAINER} ${s.UI.QUICK_INFO_HEALTH} * {
-        font-size: 14px !important;
-    }
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.GROUP_HEADER_CONTENT} {
-        font-size: 12px !important;
-        font-weight: bold !important;
-        text-transform: uppercase;
-        border-bottom: 1px solid #979797;
-        margin-bottom: 4px;
-    }
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT}  {
-        font-size: 10px !important;
-    }
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
-    ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES} ${s.CORE.HEADING_SUFFIX} {
-        border-bottom: 0
-    }
-    @media print {
-        body, ${s.CORE.SHEET_DESKTOP} {
-            margin: 0 !important;
+        .print-section-wrapper,
+        .print-section-wrapper > * {
+            width: 100%;
+            max-width: 1200px;
             padding: 0 !important;
-            box-shadow: none !important;
-            transform: none !important;
         }
-        ${s.SPELLS.FILTER} {
-            visibility: hidden;
+
+        @media (min-width: 1200px) {
+            ${s.UI.PRIMARY_BOX} {
+                width: 100% !important;
+            }
         }
-        .print-page-separator {
-            display: none !important;
+
+        @media screen {
+            ${s.CORE.SHEET_DESKTOP} {
+                max-width: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                background-color: white !important;
+            }
         }
-    }
-    .print-section-content {
-        flex: 1 1 auto !important;
-        overflow: hidden !important;
-        display: flex !important;
-        flex-direction: column !important;
-        position: relative !important;
-    }
-    ${s.SENSES.CALLOUT_VALUE},
-    ${s.CORE.DICE_CONTAINER},
-    ${s.CORE.DICE_CONTAINER} span {
-        font-size: 16px !important;
-    }
-    ${s.COMBAT.AC_VALUE} {
-        font-size: 26px !important;
-    }
+        
+        ${s.UI.PRINT_CONTAINER} { 
+            --reduce-height-by: 0px;
+            --reduce-width-by: 0px;
+            break-inside: avoid; 
+            position: absolute !important;
+            z-index: 10;
+            /* resize: both !important; Removed for custom handle */
+            overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
+            min-width: 50px !important;
+            min-height: 30px !important;
+            background-color: rgba(255, 255, 255, 0.85);
+            box-sizing: border-box;
+            display: flex !important;
+            flex-direction: column !important;
+            border-width: 20px;
+            border-style: solid;
+            border-color: transparent;
+            border-image-source: var(--border-img);
+            border-image-slice: 30;
+            border-image-repeat: round;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+        }
+        ${s.UI.PRINT_CONTAINER}:hover { 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        ${s.UI.PRINT_CONTAINER}, 
+        ${s.UI.PRINT_CONTAINER} * {
+            font-size: 8px !important;
+            white-space: normal !important;
+            overflow-wrap: break-word !important;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 *,
+        ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 + *,
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.QUICK_INFO} * {
+            font-size: 12px !important;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.UI.QUICK_INFO_HEALTH} * {
+            font-size: 14px !important;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.GROUP_HEADER_CONTENT} {
+            font-size: 12px !important;
+            font-weight: bold !important;
+            text-transform: uppercase;
+            border-bottom: 1px solid #979797;
+            margin-bottom: 4px;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT}  {
+            font-size: 10px !important;
+        }
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.SECTION_HEADING_STYLES},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT},
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_SUFFIX_ALT} ,
+        ${s.UI.PRINT_CONTAINER} ${s.CORE.HEADING_STYLES} ${s.CORE.HEADING_SUFFIX} {
+            border-bottom: 0
+        }
+        @media print {
+            body, ${s.CORE.SHEET_DESKTOP} {
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                transform: none !important;
+            }
+            ${s.SPELLS.FILTER} {
+                visibility: hidden;
+            }
+            .print-page-separator {
+                display: none !important;
+            }
+        }
+        .print-section-content {
+            flex: 1 1 auto !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            position: relative !important;
+        }
+        ${s.SENSES.CALLOUT_VALUE},
+        ${s.CORE.DICE_CONTAINER},
+        ${s.CORE.DICE_CONTAINER} span {
+            font-size: 16px !important;
+        }
+        ${s.COMBAT.AC_VALUE} {
+            font-size: 26px !important;
+        }
 
             /* Scaling helper */
         ${s.UI.PRINT_CONTAINER}[data-scaling="true"] .print-section-content > div {
@@ -1907,181 +1800,185 @@ function enforceFullHeight() {
     
         ${s.UI.PORTRAIT} {
             width: 100%;
-        }    .print-section-header span {
-        font-size: 16px !important;
-    }
-    .print-section-header {
-        cursor: move;
-        user-select: none;
-        font-size: 18px !important;
-        opacity: 0;
-        position: absolute;
-        transition: opacity 0.2s;
-        margin-top: 0px;
-        z-index: 999999999;
-        width: calc(100% - 64px);
-        height: 32px;
-        background-color: var(--btn-color);
-        line-height: 18px;
-        left: 32px;
-        border-radius: 32px;
-        padding: 0 16px;
-        filter: drop-shadow(2px 4px 6px black);
-        min-width: max-content;
-    }
-    ${s.UI.PRINT_CONTAINER}:hover .print-section-header {
-        opacity: 1;
-    }
+        }
+        
+        .print-section-header span {
+            font-size: 16px !important;
+        }
+        .print-section-header {
+            cursor: move;
+            user-select: none;
+            font-size: 18px !important;
+            opacity: 0;
+            position: absolute;
+            transition: opacity 0.2s;
+            margin-top: 0px;
+            z-index: 999999999;
+            width: calc(100% - 64px);
+            height: 32px;
+            background-color: var(--btn-color);
+            line-height: 18px;
+            left: 32px;
+            border-radius: 32px;
+            padding: 0 16px;
+            filter: drop-shadow(2px 4px 6px black);
+            min-width: max-content;
+        }
+        ${s.UI.PRINT_CONTAINER}:hover .print-section-header {
+            opacity: 1;
+        }
 
-    /* Custom Resize Handle */
-    .print-section-resize-handle {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 16px;
-        height: 16px;
-        cursor: se-resize;
-        z-index: 20;
-        opacity: 0; /* Hidden by default */
-    }
-    ${s.UI.PRINT_CONTAINER}:hover .print-section-resize-handle {
-        opacity: 1;
-        background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
-    }
+        /* Custom Resize Handle */
+        .print-section-resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            cursor: se-resize;
+            z-index: 20;
+            opacity: 0; /* Hidden by default */
+        }
+        ${s.UI.PRINT_CONTAINER}:hover .print-section-resize-handle {
+            opacity: 1;
+            background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
+        }
 
-    /* Skills specific compact logic (already mostly covered by global above) */
-    ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
-        font-size: 8px !important;
-    }
-        overflow: hidden !important;
-        border: 1px solid black !important;
-    }
+        /* Skills specific compact logic (already mostly covered by global above) */
+        ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
+            font-size: 8px !important;
+        }
 
-    .print-section-container.minimized .print-section-header,
-    .print-section-container.minimized .print-section-content {
-        display: none !important;
-    }
+        ${s.SKILLS.BOX} {
+            overflow: hidden !important;
+            border: 1px solid black !important;
+        }
 
-    .print-section-container.minimized .print-section-restore {
-        display: block !important;
-    }
-
-    /* Unified Section Action Buttons */
-    .be-section-actions {
-        position: absolute;
-        top: 46px;
-        left: 32px;
-        display: flex;
-        gap: 8px;
-        z-index: 20;
-        opacity: 0;
-        transition: opacity 0.2s;
-        pointer-events: none;
-    }
-    .ct-subsection:hover .be-section-actions,
-    .ct-section:hover .be-section-actions,
-    .print-section-container:hover .be-section-actions {
-        opacity: 1;
-        pointer-events: auto;
-    }
-    .be-section-actions button {
-        width: 39px;
-        height: 32px;
-        cursor: pointer;
-        background: var(--btn-color);
-        border: 1px solid rgb(85, 85, 85);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        margin: 0;
-        filter: drop-shadow(2px 4px 6px black);
-        border-radius: 32px;
-        color: white;
-        font-size: 18px !important;
-        transition: background-color 0.2s;
-    }
-    .be-section-actions button:hover {
-        background-color: var(--btn-color-highlight);
-    }
-    .be-clone-button {
-        font-size: 21px !important;
-    }
-    .be-clone-delete:hover {
-        background: #cc0000 !important;
-    }
-    @media print {
-        .be-section-actions {
+        .print-section-container.minimized .print-section-header,
+        .print-section-container.minimized .print-section-content {
             display: none !important;
         }
-    }
 
-    /* Modal Styles */
-    .be-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 100000;
-        backdrop-filter: blur(4px);
-    }
-    .be-modal {
-        background: #222;
-        color: white;
-        padding: 24px;
-        border-radius: 12px;
-        width: 400px;
-        max-width: 90%;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        border: 1px solid #444;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    .be-modal h3 {
-        margin: 0;
-        font-size: 18px;
-    }
-    .be-modal p {
-        margin: 0;
-        font-size: 14px;
-        color: #ccc;
-    }
-    .be-modal input {
-        background: #111;
-        border: 1px solid #444;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-    .be-modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-    }
-    .be-modal-actions button {
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        border: 1px solid #555;
-    }
-    .be-modal-ok {
-        background: #444;
-        color: white;
-    }
-    .be-modal-cancel {
-        background: transparent;
-        color: #ccc;
-    }
-  `;
-  document.head.appendChild(style);
+        .print-section-container.minimized .print-section-restore {
+            display: block !important;
+        }
+
+        /* Unified Section Action Buttons */
+        .be-section-actions {
+            position: absolute;
+            top: 46px;
+            left: 32px;
+            display: flex;
+            gap: 8px;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        ${s.UI.SUBSECTION}:hover .be-section-actions,
+        ${s.UI.SECTION}:hover .be-section-actions,
+        .print-section-container:hover .be-section-actions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .be-section-actions button {
+            width: 39px;
+            height: 32px;
+            cursor: pointer;
+            background: var(--btn-color);
+            border: 1px solid rgb(85, 85, 85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+            filter: drop-shadow(2px 4px 6px black);
+            border-radius: 32px;
+            color: white;
+            font-size: 18px !important;
+            transition: background-color 0.2s;
+        }
+        .be-section-actions button:hover {
+            background-color: var(--btn-color-highlight);
+        }
+        .be-clone-button {
+            font-size: 21px !important;
+        }
+        .be-clone-delete:hover {
+            background: #cc0000 !important;
+        }
+        @media print {
+            .be-section-actions {
+                display: none !important;
+            }
+        }
+
+        /* Modal Styles */
+        .be-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            backdrop-filter: blur(4px);
+        }
+        .be-modal {
+            background: #222;
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .be-modal h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .be-modal p {
+            margin: 0;
+            font-size: 14px;
+            color: #ccc;
+        }
+        .be-modal input {
+            background: #111;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .be-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .be-modal-actions button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            border: 1px solid #555;
+        }
+        .be-modal-ok {
+            background: #444;
+            color: white;
+        }
+        .be-modal-cancel {
+            background: transparent;
+            color: #ccc;
+        }
+    `;
+    document.head.appendChild(style);
 }
 
 /**
@@ -2217,10 +2114,11 @@ function renderClonedSection(snapshot) {
     const sanitizedClone = getSanitizedContent(tempDiv);
     
     // Create the static header requested by user
+    const dom = window.DomManager.getInstance();
     const staticHeader = document.createElement('div');
-    staticHeader.className = 'ct-content-group__header';
+    staticHeader.className = dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER.substring(1);
     const staticHeaderContent = document.createElement('div');
-    staticHeaderContent.className = 'ct-content-group__header-content';
+    staticHeaderContent.className = dom.selectors.CORE.GROUP_HEADER_CONTENT.substring(1);
     staticHeaderContent.textContent = snapshot.title;
     staticHeader.appendChild(staticHeaderContent);
     
@@ -2242,7 +2140,7 @@ function renderClonedSection(snapshot) {
         header.addEventListener('dblclick', async (e) => {
             e.stopPropagation();
             const titleSpan = header.querySelector('span');
-            const staticTitleSpan = container.querySelector('.ct-content-group__header-content');
+            const staticTitleSpan = container.querySelector(dom.selectors.CORE.GROUP_HEADER_CONTENT);
             const currentTitle = titleSpan ? titleSpan.textContent.trim() : (staticTitleSpan ? staticTitleSpan.textContent.trim() : 'Clone');
             // Use window reference for mockability in tests
             const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
@@ -2418,10 +2316,11 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
 
     if (spell) {
         // 3. Render Data
+        const dom = window.DomManager.getInstance();
         const header = document.createElement('div');
-        header.className = 'ct-content-group__header';
+        header.className = dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER.substring(1);
         const headerContent = document.createElement('div');
-        headerContent.className = 'ct-content-group__header-content';
+        headerContent.className = dom.selectors.CORE.GROUP_HEADER_CONTENT.substring(1);
         headerContent.textContent = spell.name;
         header.appendChild(headerContent);
 
@@ -3984,12 +3883,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
     }
 }
 
-/**
- * Injects a clone button into each section container.
- */
-/**
- * Injects clone buttons and compact toggles into sections.
- */
+
 /**
  * Gets or creates a container for section-level action buttons (Clone, Compact, Append, Delete).
  * @param {HTMLElement} section The section element.
@@ -4005,8 +3899,12 @@ function getOrCreateActionContainer(section) {
     return container;
 }
 
+/**
+ * Injects clone buttons and compact toggles into sections.
+ */
 function injectCloneButtons(context = document) {
-    const selector = '.ct-subsection, .ct-section, .print-section-container';
+    const s = window.DomManager.getInstance().selectors;
+    const selector = `${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container`;
     // If the context itself matches the selector, include it
     const elements = Array.from(context.querySelectorAll(selector));
     if (context instanceof HTMLElement && context.matches(selector)) {
@@ -4028,7 +3926,7 @@ function injectCloneButtons(context = document) {
                 const id = section.id || 'unknown';
                 
                 // Get section name for default title
-                const header = section.querySelector('.ct-subsection__header, .ct-section__header, .print-section-header span');
+                const header = section.querySelector(`${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`);
                 const sectionName = header ? header.textContent.trim() : 'Section';
                 
                 const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
@@ -4089,21 +3987,7 @@ function injectCloneButtons(context = document) {
 function injectCompactStyles() {
     if (document.getElementById('ddb-print-compact-style')) return;
 
-    let s = { CORE: {}, EXTRAS: {}, SPELLS: {}, COMPACT: {} };
-    if (window.DomManager) {
-        s = window.DomManager.getInstance().selectors;
-    } else {
-        // Fallback hardcoded if needed, but DomManager should be there
-        // Simplified fallback for brevity if DomManager fails
-        s.COMPACT = {
-            TABLE_HEADER: '[class^="styles_tableHeader__"]',
-            GENERIC_HEADER: '[class$="__header"]',
-            // ... add others if strict fallback needed
-        };
-        s.EXTRAS = { CONTAINER: '.ct-extras' };
-        s.SPELLS = { ROW: '.ct-spells-spell' };
-        s.CORE = { BUTTON: '.ct-button' };
-    }
+    const s = window.DomManager.getInstance().selectors;
     
     // Ensure all keys exist to prevent template error if fallback was partial
     const c = s.COMPACT; 

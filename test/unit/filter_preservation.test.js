@@ -36,6 +36,8 @@ describe('Filter Preservation Logic', function() {
 
     // Inject main.js logic
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+    let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
+    let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
     
     // Create a script that only exposes and runs removeSearchBoxes
     // We need to extract the function or just run the file and call a global if exposed...
