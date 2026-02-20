@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Inject Ability Summary CSS & Update Workflow**
+- [x] **Track: Inject Ability Summary CSS & Update Workflow** (Completed: 2026-02-19)
   *Link: [./tracks/ability_summary_css_20260219/](./tracks/ability_summary_css_20260219/)*
 
 ## Archived Tracks
