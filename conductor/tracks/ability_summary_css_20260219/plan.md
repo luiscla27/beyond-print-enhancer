@@ -1,7 +1,7 @@
 # Implementation Plan: Inject Ability Summary CSS & Update Workflow
 
 ## Phase 1: Workflow Update
-- [ ] Task: Update `conductor/workflow.md` to include the rule: "All CSS selectors MUST be moved to DomManager and have corresponding unit tests."
+- [x] Task: Update `conductor/workflow.md` to include the rule: "All CSS selectors MUST be moved to DomManager and have corresponding unit tests." [4fa7fcc]
 - [ ] Task: Conductor - User Manual Verification 'Workflow Update' (Protocol in workflow.md)
 
 ## Phase 2: DomManager Enhancement
