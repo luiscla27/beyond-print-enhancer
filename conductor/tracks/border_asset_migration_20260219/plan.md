@@ -1,10 +1,10 @@
 # Implementation Plan: Border Asset Migration & Optimization
 
-## Phase 1: Research and Metadata Extraction
+## Phase 1: Research and Metadata Extraction [checkpoint: 826e93e]
 - [x] Task: Identify all base64-encoded border strings in the codebase.
 - [x] Task: Extract image dimensions for each `.gif` in `./assets` using shell commands.
 - [x] Task: Calculate static constants for `--border-img-width` and `--border-img-slice` for each style.
-- [ ] Task: Conductor - User Manual Verification 'Research and Metadata Extraction' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Research and Metadata Extraction' (Protocol in workflow.md)
 
 ## Phase 2: Manifest and CSS Refactoring
 - [ ] Task: Update `manifest.json` with `web_accessible_resources` for `assets/*.gif`.
