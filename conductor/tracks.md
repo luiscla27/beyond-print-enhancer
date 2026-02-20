@@ -3,10 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [x] **Track: Individual Ability Score Sections** (Completed: 2026-02-19)
-  *Link: [./tracks/ability_separation_20260219/](./tracks/ability_separation_20260219/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Individual Ability Score Sections** (Completed: 2026-02-19)
+  *Link: [./archive/ability_separation_20260219/](./archive/ability_separation_20260219/)*
 - [x] **Track: Border Asset Migration & Optimization** (Completed: 2026-02-19)
   *Link: [./archive/border_asset_migration_20260219/](./archive/border_asset_migration_20260219/)*
 - [x] **Track: Section Border Style Selection** (Completed: 2026-02-18)
