@@ -2,11 +2,9 @@
 
 This file tracks all major development tracks for the project.
 
-## Current Tracks
-- [x] **Track: Inject Ability Summary CSS & Update Workflow** (Completed: 2026-02-19)
-  *Link: [./tracks/ability_summary_css_20260219/](./tracks/ability_summary_css_20260219/)*
-
 ## Archived Tracks
+- [x] **Track: Inject Ability Summary CSS & Update Workflow** (Completed: 2026-02-19)
+  *Link: [./archive/ability_summary_css_20260219/](./ability_summary_css_20260219/)*
 - [x] **Track: Individual Ability Score Sections** (Completed: 2026-02-19)
   *Link: [./archive/ability_separation_20260219/](./archive/ability_separation_20260219/)*
 - [x] **Track: Border Asset Migration & Optimization** (Completed: 2026-02-19)
