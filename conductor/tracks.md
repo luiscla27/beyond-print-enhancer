@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Quick Info Box Extraction & Stabilization**
+- [x] **Track: Quick Info Box Extraction & Stabilization** (Completed: 2026-02-20)
   *Link: [./tracks/quick_info_stabilization_20260220/](./quick_info_stabilization_20260220/)*
 
 ## Archived Tracks
