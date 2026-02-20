@@ -6,12 +6,12 @@
 - [x] Task: Calculate static constants for `--border-img-width` and `--border-img-slice` for each style.
 - [x] Task: Conductor - User Manual Verification 'Research and Metadata Extraction' (Protocol in workflow.md)
 
-## Phase 2: Manifest and CSS Refactoring
+## Phase 2: Manifest and CSS Refactoring [checkpoint: 8b72118]
 - [x] Task: Update `manifest.json` with `web_accessible_resources` for `assets/*.gif`.
 - [x] Task: Create failing tests for asset-based CSS injection.
 - [x] Task: Refactor CSS injection to use `chrome.runtime.getURL()` and pre-calculated variables.
 - [x] Task: Remove all base64-encoded border strings from the source code.
-- [ ] Task: Conductor - User Manual Verification 'Manifest and CSS Refactoring' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Manifest and CSS Refactoring' (Protocol in workflow.md)
 
 ## Phase 3: Final Verification
 - [ ] Task: Verify all border styles render correctly in unit tests.
