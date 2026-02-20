@@ -2,6 +2,9 @@
 
 This file tracks all major development tracks for the project.
 
+## Current Tracks
+*(No active tracks)*
+
 ## Archived Tracks
 - [x] **Track: Border Asset Migration & Optimization** (Completed: 2026-02-19)
   *Link: [./archive/border_asset_migration_20260219/](./archive/border_asset_migration_20260219/)*
