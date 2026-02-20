@@ -35,9 +35,11 @@ describe('Spells Node Wrapping Logic', function() {
     // Inject main.js logic
     window.__DDB_TEST_MODE__ = true;
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+    let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
+    let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
     
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = mainJs;
+    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     
     // Mock navToSection to do nothing (we already have the DOM in Spells state)

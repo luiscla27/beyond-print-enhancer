@@ -8,6 +8,11 @@ require("fake-indexeddb/auto");
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
+const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
+const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
+const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
+const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
+
 describe('Absolute Positioning Engine', function() {
   let window, document;
 
@@ -44,8 +49,10 @@ describe('Absolute Positioning Engine', function() {
     global.HTMLElement = window.HTMLElement;
     global.NodeList = window.NodeList;
     
-    // We need to evaluate the script. 
+    // We need to evaluate the scripts. 
     window.__DDB_TEST_MODE__ = true;
+    window.eval(elementWrapperContent);
+    window.eval(domManagerContent);
     window.eval(mainJsContent);
 
     // Mock requestAnimationFrame to execute callback immediately

@@ -44,10 +44,12 @@ describe('Spells Exclusion Logic', function() {
 
     // Inject main.js logic (it self-exposes window.extractAndWrapSections)
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+    let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
+    let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
     
     // Inject script
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = mainJs;
+    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     await new Promise(r => setTimeout(r, 100));
   });

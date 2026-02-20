@@ -16,12 +16,21 @@ describe('Sidebar Styles Injection', function() {
     window = dom.window;
     document = window.document;
 
+    // Mock chrome
+    window.chrome = {
+        runtime: {
+            getURL: (path) => `chrome-extension://mock/${path}`
+        }
+    };
+
     // Inject main.js logic
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+    let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
+    let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
     
     // Create a script that runs the IIFE (which triggers enforceFullHeight)
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = mainJs;
+    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     await new Promise(r => setTimeout(r, 100));
   });

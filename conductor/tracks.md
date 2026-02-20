@@ -3,12 +3,23 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [~] **Track: Selector Abstraction Refactor**
-  *Link: [./tracks/selector_abstraction_refactor_20260215/](./tracks/selector_abstraction_refactor_20260215/)*
-- [x] **Track: Merge & Append Sections** (Completed: 2026-02-14)
-  *Link: [./tracks/merge_sections_20260214/](./tracks/merge_sections_20260214/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Quick Info Box Extraction & Stabilization** (Completed: 2026-02-20)
+  *Link: [./archive/quick_info_stabilization_20260220/](./archive/quick_info_stabilization_20260220/)*
+- [x] **Track: Inject Ability Summary CSS & Update Workflow** (Completed: 2026-02-19)
+  *Link: [./archive/ability_summary_css_20260219/](./ability_summary_css_20260219/)*
+- [x] **Track: Individual Ability Score Sections** (Completed: 2026-02-19)
+  *Link: [./archive/ability_separation_20260219/](./archive/ability_separation_20260219/)*
+- [x] **Track: Border Asset Migration & Optimization** (Completed: 2026-02-19)
+  *Link: [./archive/border_asset_migration_20260219/](./archive/border_asset_migration_20260219/)*
+- [x] **Track: Section Border Style Selection** (Completed: 2026-02-18)
+  *Link: [./archive/section_border_selection_20260218/](./archive/section_border_selection_20260218/)*
+- [x] **Track: Selector Abstraction Refactor** (Completed: 2026-02-18)
+  *Link: [./archive/selector_abstraction_refactor_20260215/](./archive/selector_abstraction_refactor_20260215/)*
+- [x] **Track: Merge & Append Sections** (Completed: 2026-02-14)
+  *Link: [./archive/merge_sections_20260214/](./archive/merge_sections_20260214/)*
 - [x] **Track: Advanced Layout & Persistence Enhancements** (Completed: 2026-02-14)
   *Link: [./archive/advanced_enhancements_20260204/](./archive/advanced_enhancements_20260204/)*
 - [x] **Track: Dynamic Content Extraction Trigger** (Completed: 2026-02-14)

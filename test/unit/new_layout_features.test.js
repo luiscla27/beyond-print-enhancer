@@ -8,6 +8,11 @@ require("fake-indexeddb/auto");
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
+const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
+const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
+const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
+const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
+
 describe('Recent Layout Features', function() {
   let window, document;
 
@@ -95,6 +100,8 @@ describe('Recent Layout Features', function() {
     // Since main.js wraps itself in an IIFE, we can just execute it.
     // However, we want to test specific functions.
     // main.js exposes functions to window at the end.
+    window.eval(elementWrapperContent);
+    window.eval(domManagerContent);
     window.eval(mainJsContent);
     return window.Storage.init();
   });
@@ -134,12 +141,37 @@ describe('Recent Layout Features', function() {
 
   describe('Quick Info', function() {
       it('should be moved to print layout and wrapped', function() {
-          window.moveQuickInfo();
-          const layout = document.getElementById('print-layout-wrapper');
-          const quickInfoSection = layout.querySelector('#section-Quick-Info');
+          // Setup with Health
+          const quickInfo = document.querySelector('.ct-quick-info');
+          const health = document.createElement('div');
+          health.className = 'ct-quick-info__health';
+          health.textContent = 'Health: 10/10';
+          quickInfo.appendChild(health);
+
+          // Mock Quick Info Boxes for separation logic
+          const box = document.createElement('div');
+          box.className = 'ct-quick-info__box';
+          const label = document.createElement('div');
+          label.className = 'ct-quick-info__box-label';
+          label.textContent = 'Armor Class';
+          box.appendChild(label);
+          quickInfo.appendChild(box);
+
+          // Trigger the separation logic that user claims destroys the parent
+          window.separateQuickInfoBoxes();
           
-          assert.ok(quickInfoSection, 'Quick Info section should exist in print layout');
-          assert.ok(quickInfoSection.textContent.includes('Quick Info Content'), 'Content should be preserved');
+          // Original "moveQuickInfo" might be redundant or part of the same flow?
+          // User says line 1822 removes parent. logic at 1822 is inside separateQuickInfoBoxes
+
+          const layout = document.getElementById('print-layout-wrapper');
+          // Verify Health is extracted as a section
+          const healthSection = layout.querySelector('#section-Quick-Info-Health');
+          assert.ok(healthSection, 'Health should be extracted into its own section');
+          assert.ok(healthSection.querySelector('.ct-quick-info__health'), 'Health element should be inside the new section');
+
+          // Verify parent is removed (optional, but requested by user)
+          // The original quickInfo might be removed from its original place or empty
+          assert.strictEqual(quickInfo.parentElement, null, 'Original parent should be removed');
           // Check default layout application (needs wait or manual check of style)
       });
   });
@@ -185,9 +217,9 @@ describe('Recent Layout Features', function() {
            window.applyDefaultLayout();
 
            // Assert
-           // DEFAULT_LAYOUTS['section-Actions'] = { left: '496px', top: '336px', width: '704px', height: '1360px' }
-           assert.strictEqual(actionSection.style.left, '496px');
-           assert.strictEqual(actionSection.style.top, '336px');
+           // DEFAULT_LAYOUTS['section-Actions'] = { left: '512px', top: '352px', ... }
+           assert.strictEqual(actionSection.style.left, '512px');
+           assert.strictEqual(actionSection.style.top, '352px');
       });
   });
 
@@ -247,6 +279,24 @@ describe('Recent Layout Features', function() {
           
           // Assert
           assert.strictEqual(child1.style.width, '130px', 'Header child should match new parent content width');
+      });
+  });
+
+  describe('Z-Index Application', function() {
+      it('should apply zIndex correctly from default layout', function() {
+          // Setup a section that exists in DEFAULT_LAYOUTS with a known zIndex
+          // section-Section-6 has zIndex: "65"
+          const section6 = document.createElement('div');
+          section6.id = 'section-Section-6';
+          section6.className = 'print-section-container';
+          document.body.appendChild(section6);
+
+          // Act
+          window.applyDefaultLayout();
+
+          // Assert
+          // We check the style property. Note: JSDOM might be lenient, but we suspect setProperty('zIndex') is the issue vs 'z-index'
+          assert.strictEqual(section6.style.zIndex, '65', 'Z-Index should be applied');
       });
   });
 

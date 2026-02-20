@@ -6,6 +6,11 @@ const path = require('path');
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
+const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
+const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
+const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
+const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
+
 describe('Cloning Logic', function() {
   let window, document;
 
@@ -47,6 +52,8 @@ describe('Cloning Logic', function() {
         disconnect() {}
     };
     
+    window.eval(elementWrapperContent);
+    window.eval(domManagerContent);
     window.eval(mainJsContent);
   });
 
@@ -69,9 +76,30 @@ describe('Cloning Logic', function() {
         assert.strictEqual(temp.querySelector('menu'), null, 'Menu should still be removed');
         assert.ok(temp.querySelector('p'), 'Non-interactive content should be preserved');
     });
+
+    it('should capture border style', function() {
+        const section = document.getElementById('section-Actions');
+        section.classList.add('ability_border');
+        
+        const snapshot = window.captureSectionSnapshot('section-Actions');
+        assert.strictEqual(snapshot.borderStyle, 'ability_border');
+    });
   });
 
   describe('renderClonedSection', function() {
+    it('should apply border style from snapshot', function() {
+        const snapshot = {
+            id: 'clone-123',
+            originalId: 'section-Actions',
+            title: 'Action Clone',
+            html: '<p>Content</p>',
+            borderStyle: 'spikes_border'
+        };
+        
+        const clone = window.renderClonedSection(snapshot);
+        assert.ok(clone.classList.contains('spikes_border'));
+    });
+
     it('should create a new section container from snapshot data', function() {
         if (typeof window.renderClonedSection !== 'function') {
             assert.fail('window.renderClonedSection is not defined');

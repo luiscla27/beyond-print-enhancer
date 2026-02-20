@@ -26,6 +26,8 @@ describe('Regression: Variable Scope Safety', function() {
         // Load main.js logic
         const mainJsPath = path.resolve(__dirname, '../../js/main.js');
         let mainJs = fs.readFileSync(mainJsPath, 'utf8');
+        let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
+        let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
         
         // Expose function for testing
         mainJs = mainJs.replace('})();', `
@@ -37,7 +39,7 @@ describe('Regression: Variable Scope Safety', function() {
         })();`);
 
         const scriptEl = document.createElement('script');
-        scriptEl.textContent = mainJs;
+        scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
         document.body.appendChild(scriptEl);
 
         // Allow script to init

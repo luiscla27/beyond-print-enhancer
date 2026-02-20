@@ -5,7 +5,7 @@
 - **Color Palette:** Strictly High Contrast Black & White.
     - Text: Forced Black (#000000) for maximum legibility on printed paper.
     - Backgrounds: Forced White (#FFFFFF) to save ink and ensure clean printing.
-    - Borders: Thin black solid lines (e.g., `border: thin black solid`) for clearly defining sections like the defenses box.
+    - Borders: Adjustable styles (Solid, Decorative, or None) to clearly define sections or reduce visual noise.
 - **Typography:**
     - Font sizes for headings and data items are reduced (e.g., `12px`) to fit more density on the page.
     - Key stats (like HP) are enlarged (e.g., `40px`) for visibility at a glance.
