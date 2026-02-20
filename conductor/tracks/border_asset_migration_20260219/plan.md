@@ -7,10 +7,10 @@
 - [x] Task: Conductor - User Manual Verification 'Research and Metadata Extraction' (Protocol in workflow.md)
 
 ## Phase 2: Manifest and CSS Refactoring
-- [~] Task: Update `manifest.json` with `web_accessible_resources` for `assets/*.gif`.
-- [ ] Task: Create failing tests for asset-based CSS injection.
-- [ ] Task: Refactor CSS injection to use `chrome.runtime.getURL()` and pre-calculated variables.
-- [ ] Task: Remove all base64-encoded border strings from the source code.
+- [x] Task: Update `manifest.json` with `web_accessible_resources` for `assets/*.gif`.
+- [x] Task: Create failing tests for asset-based CSS injection.
+- [x] Task: Refactor CSS injection to use `chrome.runtime.getURL()` and pre-calculated variables.
+- [x] Task: Remove all base64-encoded border strings from the source code.
 - [ ] Task: Conductor - User Manual Verification 'Manifest and CSS Refactoring' (Protocol in workflow.md)
 
 ## Phase 3: Final Verification
