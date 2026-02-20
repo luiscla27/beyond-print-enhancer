@@ -16,6 +16,7 @@ The D&D Beyond Print Enhancer transforms the interactive, tabbed D&D Beyond char
 - **Persistent Layout Management:** Provides a floating control panel to save custom section arrangements (coordinates, sizes, and internal scaling) to the browser (IndexedDB) or as local JSON files for portability.
 - **Section Cloning:** Allows users to create static snapshots of any section (e.g., Spells) to support multiple lists (like "Combat" vs. "Social") on a single printed page.
 - **Dynamic Content Extraction:** Enables users to selectively extract specific blocks of content (e.g., individual action lists, traits, or snippets) into new floating sections via double-click, automatically hiding the original content to prevent redundancy.
+- **Customizable Borders:** Allows users to choose between different border styles (e.g., Default, Ability, Spikes, or None) for individual sections to better define layout groups or add visual flair.
 - **Section Merging & Nesting:** Allows users to merge floating sections into each other or append them back to specific locations on the sheet, facilitating complex custom layouts and group consolidations.
 - **Compact Mode:** Provides a toggleable condensed layout for complex sections (like Spells), reducing margins, padding, and font sizes to maximize information density on paper.
 - **Data Consolidation:** Relocates defense information (resistances, immunities) from hidden modals directly onto the combat tablet for immediate visibility.
