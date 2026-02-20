@@ -187,5 +187,13 @@ describe('DomManager & ElementWrapper', () => {
                  assert.strictEqual(rows[0].text(), 'Spell A');
             });
         });
+
+        describe('Ability Selectors', () => {
+            it('should have ability summary selectors', () => {
+                const manager = DomManager.getInstance();
+                assert.strictEqual(manager.selectors.ABILITY.SUMMARY, '.ddbc-ability-summary');
+                assert.strictEqual(manager.selectors.ABILITY.SUMMARY_SECONDARY, '.ddbc-ability-summary__secondary');
+            });
+        });
     });
 });

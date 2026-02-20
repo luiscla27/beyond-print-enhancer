@@ -149,6 +149,10 @@ class DomManager {
             SENSES: {
                 CALLOUT_VALUE: '.ct-senses__callout-value'
             },
+            ABILITY: {
+                SUMMARY: '.ddbc-ability-summary',
+                SUMMARY_SECONDARY: '.ddbc-ability-summary__secondary'
+            },
             // Extractables
             EXTRACTABLE: {
                 GROUP: '[class*="-group"]',
