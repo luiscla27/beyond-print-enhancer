@@ -1861,6 +1861,19 @@ function enforceFullHeight() {
             --border-img-outset: 50px;
         }
 
+        ${s.ABILITY.SUMMARY} {
+            display: contents;
+        }
+        ${s.ABILITY.SUMMARY_SECONDARY} {
+            position: static;
+            border: 2px solid var(--btn-color);
+            border-radius: 150px;
+            padding: 8px 13px;
+            font-size: 16px !important;
+            width: fit-content;
+            background: white;
+        }
+
         @media print {
             @page {
                 margin: 0;
