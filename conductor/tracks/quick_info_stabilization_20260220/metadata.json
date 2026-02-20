@@ -1,0 +1,8 @@
+{
+  "track_id": "quick_info_stabilization_20260220",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-20T00:29:00Z",
+  "updated_at": "2026-02-20T00:29:00Z",
+  "description": "Extract .ct-quick-info__box into individual sections and suppress layout-breaking resize events."
+}
