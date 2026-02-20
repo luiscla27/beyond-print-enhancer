@@ -731,6 +731,13 @@ async function handleElementExtraction(el) {
     const container = createDraggableContainer(title, fragment, sectionId);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = el.id;
+
+    // Store parent section ID for "Apply to all" and grouping logic
+    const s = window.DomManager.getInstance().selectors;
+    const parentSection = el.closest(`${s.UI.SUBSECTION}, ${s.UI.SECTION}`);
+    if (parentSection) {
+        container.dataset.parentSectionId = parentSection.id;
+    }
     
     // Store identification class for future merges
     const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
@@ -838,6 +845,12 @@ function renderExtractedSection(snapshot) {
     const container = createDraggableContainer(snapshot.title, fragment, snapshot.id);
     container.classList.add('be-extracted-section');
     container.dataset.originalId = snapshot.originalId;
+    if (snapshot.parentSectionId) {
+        container.dataset.parentSectionId = snapshot.parentSectionId;
+    }
+    if (snapshot.borderStyle) {
+        container.classList.add(snapshot.borderStyle);
+    }
     
     // Restore identification class for future merges
     if (snapshot.selector) {
@@ -1552,6 +1565,10 @@ function enforceFullHeight() {
             --btn-color: #c53131;
             --btn-color-highlight: #f18383ff;
         }
+        .no-border {
+            border-image-source: none !important;
+            border-style: none !important;
+        }
         .default-border {
             /* Use default from :root, but allow explicit selection */
             --border-img: url('data:image/png;base64,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');
@@ -2145,9 +2162,18 @@ function captureSectionSnapshot(sectionId) {
     // Use centralized sanitization
     const sanitizedClone = getSanitizedContent(content);
 
+    const getBorderStyle = (el) => {
+        if (el.classList.contains('no-border')) return 'no-border';
+        if (el.classList.contains('ability_border')) return 'ability_border';
+        if (el.classList.contains('spikes_border')) return 'spikes_border';
+        if (el.classList.contains('default-border')) return 'default-border';
+        return null;
+    };
+
     return {
         originalId: sectionId,
         html: sanitizedClone.innerHTML,
+        borderStyle: getBorderStyle(section),
         styles: {
             width: section.style.width,
             height: section.style.height
@@ -2267,6 +2293,10 @@ function renderClonedSection(snapshot) {
         container.classList.add('be-compact-mode');
         // Button style will be handled by injection or separate update if needed, 
         // but let's try to set it if button exists contextually (though injection happens later usually)
+    }
+
+    if (snapshot.borderStyle) {
+        container.classList.add(snapshot.borderStyle);
     }
 
     const layoutRoot = document.getElementById('print-layout-wrapper');
@@ -2603,6 +2633,7 @@ function showBorderPickerModal(currentStyle = 'default-border') {
         
         const styles = [
             { id: 'default-border', label: 'Default' },
+            { id: 'no-border', label: 'None' },
             { id: 'ability_border', label: 'Ability' },
             { id: 'spikes_border', label: 'Spikes' }
         ];
@@ -2636,29 +2667,6 @@ function showBorderPickerModal(currentStyle = 'default-border') {
         
         modal.appendChild(optionsContainer);
         
-        // Scope Toggle
-        const scopeContainer = document.createElement('div');
-        scopeContainer.style.display = 'flex';
-        scopeContainer.style.alignItems = 'center';
-        scopeContainer.style.gap = '8px';
-        scopeContainer.style.fontSize = '14px';
-        scopeContainer.style.color = '#ccc';
-        scopeContainer.style.marginBottom = '10px';
-        
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = 'be-border-scope-toggle';
-        checkbox.style.cursor = 'pointer';
-        
-        const label = document.createElement('label');
-        label.htmlFor = 'be-border-scope-toggle';
-        label.textContent = 'Apply to all sections of this type';
-        label.style.cursor = 'pointer';
-        
-        scopeContainer.appendChild(checkbox);
-        scopeContainer.appendChild(label);
-        modal.appendChild(scopeContainer);
-        
         const actions = document.createElement('div');
         actions.className = 'be-modal-actions';
         
@@ -2677,8 +2685,7 @@ function showBorderPickerModal(currentStyle = 'default-border') {
         okBtn.onclick = () => {
             overlay.remove();
             resolve({
-                style: selectedStyle,
-                applyToAll: checkbox.checked
+                style: selectedStyle
             });
         };
         actions.appendChild(okBtn);
@@ -3607,6 +3614,14 @@ async function scanLayout() {
         const header = section.querySelector('.print-section-header span');
         const content = section.querySelector('.print-section-content');
 
+        const getBorderStyle = (el) => {
+            if (el.classList.contains('no-border')) return 'no-border';
+            if (el.classList.contains('ability_border')) return 'ability_border';
+            if (el.classList.contains('spikes_border')) return 'spikes_border';
+            if (el.classList.contains('default-border')) return 'default-border';
+            return null;
+        };
+
         if (section.classList.contains('be-clone')) {
             const sanitizedHtml = content ? getSanitizedContent(content).innerHTML : '';
             layout.clones.push({
@@ -3619,7 +3634,8 @@ async function scanLayout() {
                 height: section.style.height,
                 zIndex: section.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
-                compact: section.classList.contains('be-compact-mode')
+                compact: section.classList.contains('be-compact-mode'),
+                borderStyle: getBorderStyle(section)
             });
             return;
         }
@@ -3633,7 +3649,8 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: section.style.zIndex || '10',
-                minimized: section.dataset.minimized === 'true'
+                minimized: section.dataset.minimized === 'true',
+                borderStyle: getBorderStyle(section)
             });
             return;
         }
@@ -3645,6 +3662,7 @@ async function scanLayout() {
             const extractionData = {
                 id: id,
                 originalId: originalId,
+                parentSectionId: section.dataset.parentSectionId,
                 title: header ? header.textContent.trim() : 'Extracted',
                 left: section.style.left,
                 top: section.style.top,
@@ -3652,7 +3670,8 @@ async function scanLayout() {
                 height: section.style.height,
                 zIndex: section.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
-                compact: section.classList.contains('be-compact-mode')
+                compact: section.classList.contains('be-compact-mode'),
+                borderStyle: getBorderStyle(section)
             };
 
             if (original) {
@@ -3675,6 +3694,7 @@ async function scanLayout() {
             zIndex: section.style.zIndex || '10',
             minimized: section.dataset.minimized === 'true',
             compact: section.classList.contains('be-compact-mode'),
+            borderStyle: getBorderStyle(section),
             innerWidths: {}
         };
 
@@ -3863,13 +3883,22 @@ async function applyLayout(layout) {
     // Restore spell details
     if (layout.spell_details && Array.isArray(layout.spell_details)) {
         layout.spell_details.forEach(spellData => {
-            createSpellDetailSection(spellData.spellName, null, spellData);
+            const container = createSpellDetailSection(spellData.spellName, null, spellData);
+            if (container && spellData.borderStyle) {
+                container.classList.add(spellData.borderStyle);
+            }
         });
     }
 
     for (const [id, styles] of Object.entries(layout.sections)) {
         const section = document.getElementById(id);
         if (!section) continue;
+
+        // Apply border style
+        section.classList.remove('default-border', 'ability_border', 'spikes_border', 'no-border');
+        if (styles.borderStyle) {
+            section.classList.add(styles.borderStyle);
+        }
 
         // Apply main styles
         if (styles.left) section.style.left = styles.left;
@@ -4167,32 +4196,15 @@ function injectCloneButtons(context = document) {
                 
                 // Determine current style
                 let currentStyle = 'default-border';
+                if (section.classList.contains('no-border')) currentStyle = 'no-border';
                 if (section.classList.contains('ability_border')) currentStyle = 'ability_border';
                 if (section.classList.contains('spikes_border')) currentStyle = 'spikes_border';
                 
                 const result = await showBorderPickerModal(currentStyle);
                 
                 if (result) {
-                    const applyStyle = (target) => {
-                        target.classList.remove('default-border', 'ability_border', 'spikes_border');
-                        target.classList.add(result.style);
-                    };
-
-                    if (result.applyToAll) {
-                        const originalId = section.dataset.originalId || section.id;
-                        if (originalId) {
-                            const sections = document.querySelectorAll(`${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container`);
-                            sections.forEach(s => {
-                                const sId = s.dataset.originalId || s.id;
-                                if (sId === originalId) {
-                                    applyStyle(s);
-                                }
-                            });
-                            showFeedback(`Applied ${result.style} to all similar sections`);
-                        }
-                    } else {
-                        applyStyle(section);
-                    }
+                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'no-border');
+                    section.classList.add(result.style);
                     
                     updateLayoutBounds();
                 }
@@ -4432,6 +4444,7 @@ function injectCompactStyles() {
     window.createControls = createControls;
     window.showFallbackModal = showFallbackModal;
     window.showInputModal = showInputModal;
+    window.showBorderPickerModal = showBorderPickerModal;
     window.handleManageClones = handleManageClones;
     window.captureSectionSnapshot = captureSectionSnapshot;
     window.renderClonedSection = renderClonedSection;
