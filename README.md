@@ -1,5 +1,8 @@
 
-https://github.com/user-attachments/assets/edb1b52f-1d54-414f-b9e8-c76cb0948dc5
+
+
+https://github.com/user-attachments/assets/1d596af8-59bf-476d-b100-920194e96072
+
 
 # Print Enhancer for D&D Beyond
 
@@ -10,8 +13,9 @@ Modernized and restored for D&D Beyond 2026 site changes. This extension helps y
 
 **This project is a work in progress. Feature requests, issue reports and pull requests are welcome.**
 
-## Try the Chrome Extension (v1.3.1)
-1. [Install here](https://chromewebstore.google.com/detail/beyond-print-enhancer/obmbfcnlmoegklgdlkcanlkiadhengbc)
+## Try the Chrome Extension
+1. v1.3.0: [Install here](https://chromewebstore.google.com/detail/beyond-print-enhancer/obmbfcnlmoegklgdlkcanlkiadhengbc)
+2. v1.3.1: Pending approval.
 
 ## Recent Updates (v1.3.1)
 - **Quick Info Decomposition**: AC, Initiative, Speed, and HP are now extracted into individual draggable sections.
