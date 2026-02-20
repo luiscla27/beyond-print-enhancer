@@ -1784,7 +1784,7 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.gif')}');
             --border-img-width: 208px;
             --border-img-slice: 311;
-            --border-img-outset: 88px;
+            --border-img-outset: 61px;
         }
         .goth_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
