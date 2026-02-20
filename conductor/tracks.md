@@ -10,7 +10,7 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [ ] **Track: Section Border Style Selection**
+- [x] **Track: Section Border Style Selection** (Completed: 2026-02-18)
 *Link: [./tracks/section_border_selection_20260218/](./tracks/section_border_selection_20260218/)*
 
 ## Archived Tracks
