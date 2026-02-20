@@ -2231,7 +2231,7 @@ function enforceFullHeight() {
         .be-border-options {
             display: flex;
             gap: 15px;
-            justify-content: center;
+            overflow: auto;
             margin: 20px 0;
         }
         .be-border-option {
@@ -2256,11 +2256,12 @@ function enforceFullHeight() {
             margin: 0 auto 5px;
             background: white;
             box-sizing: border-box;
-            border-width: 10px;
+            border-width: 0px;
             border-style: solid;
             border-color: transparent;
             border-image-source: var(--border-img);
             border-image-slice: var(--border-img-slice);
+            border-image-width: var(--border-img-width);
             border-image-repeat: round;
         }
     `;
