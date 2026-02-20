@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Border Asset Migration & Optimization**
+  *Link: [./tracks/border_asset_migration_20260219/](./tracks/border_asset_migration_20260219/)*
 
 ## Archived Tracks
 - [x] **Track: Section Border Style Selection** (Completed: 2026-02-18)
