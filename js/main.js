@@ -20,215 +20,235 @@ const DEFAULT_LAYOUTS = {
       "top": "160px",
       "width": "224px",
       "height": "144px",
-      "zIndex": "27",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "224px"
-      }
+      "innerWidths": {}
     },
     "section-Section-2": {
       "left": "16px",
       "top": "352px",
       "width": "224px",
       "height": "144px",
-      "zIndex": "28",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "224px"
-      }
+      "innerWidths": {}
     },
     "section-Section-3": {
       "left": "16px",
       "top": "544px",
       "width": "224px",
       "height": "176px",
-      "zIndex": "29",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "224px"
-      }
+      "innerWidths": {}
     },
     "section-Section-4": {
       "left": "288px",
       "top": "160px",
       "width": "176px",
       "height": "560px",
-      "zIndex": "26",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "176px"
-      }
+      "innerWidths": {}
     },
     "section-Section-5": {
       "left": "512px",
       "top": "160px",
       "width": "480px",
       "height": "144px",
-      "zIndex": "23",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "480px"
-      }
+      "innerWidths": {}
     },
     "section-Section-6": {
       "left": "1040px",
       "top": "160px",
       "width": "144px",
       "height": "144px",
-      "zIndex": "25",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "144px"
-      }
+      "innerWidths": {}
     },
     "section-Actions": {
       "left": "512px",
       "top": "352px",
       "width": "672px",
       "height": "1312px",
-      "zIndex": "30",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "672px"
-      }
+      "innerWidths": {}
     },
     "section-Spells": {
       "left": "512px",
       "top": "1712px",
       "width": "672px",
       "height": "832px",
-      "zIndex": "35",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "2-0": "672px",
-        "2-1": "672px",
-        "2-2": "672px",
-        "4-0": "672px",
-        "4-1": "672px",
-        "4-2": "672px",
-        "4-3": "672px",
-        "4-4": "672px",
-        "6-0": "672px",
-        "6-1": "672px",
-        "6-2": "672px",
-        "6-3": "672px",
-        "6-4": "672px",
-        "6-5": "672px"
-      }
+      "innerWidths": {}
     },
     "section-Inventory": {
       "left": "512px",
       "top": "3712px",
       "width": "672px",
       "height": "1920px",
-      "zIndex": "42",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "672px",
-        "1-0": "672px",
-        "2-0": "672px",
-        "3-0": "672px"
-      }
+      "innerWidths": {}
     },
     "section-Features_&_Traits": {
       "left": "16px",
       "top": "1712px",
       "width": "448px",
       "height": "1952px",
-      "zIndex": "33",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "448px",
-        "2-0": "448px"
-      }
+      "innerWidths": {}
     },
     "section-Background": {
       "left": "512px",
       "top": "2592px",
       "width": "672px",
       "height": "1072px",
-      "zIndex": "37",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "672px",
-        "3-0": "672px",
-        "3-1": "672px",
-        "4-0": "672px",
-        "4-1": "672px",
-        "5-0": "672px",
-        "5-1": "672px",
-        "6-0": "672px",
-        "6-1": "672px",
-        "8-0": "672px"
-      }
+      "innerWidths": {}
     },
     "section-Notes": {
       "left": "16px",
       "top": "768px",
       "width": "448px",
       "height": "896px",
-      "zIndex": "32",
+      "zIndex": "10",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {
-        "0-0": "448px"
-      }
+      "innerWidths": {}
     },
     "section-Extras": {
       "left": "16px",
       "top": "3712px",
       "width": "448px",
       "height": "1920px",
+      "zIndex": "10",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {}
+    },
+    "section-Quick-Info": {
+      "left": "672px",
+      "top": "16px",
+      "width": "528px",
+      "height": "112px",
+      "zIndex": "72",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "no-border",
+      "innerWidths": {
+        "0-0": "528px"
+      }
+    },
+    "section-Ability-Ability 1": {
+      "left": "16px",
+      "top": "16px",
+      "width": "80px",
+      "height": "96px",
+      "zIndex": "54",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "ability_border",
+      "innerWidths": {
+        "0-0": "80px"
+      }
+    },
+    "section-Ability-Ability 2": {
+      "left": "128px",
+      "top": "16px",
+      "width": "80px",
+      "height": "96px",
+      "zIndex": "56",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "ability_border",
+      "innerWidths": {
+        "0-0": "80px"
+      }
+    },
+    "section-Ability-Ability 3": {
+      "left": "240px",
+      "top": "16px",
+      "width": "80px",
+      "height": "96px",
+      "zIndex": "58",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "ability_border",
+      "innerWidths": {
+        "0-0": "80px"
+      }
+    },
+    "section-Ability-Ability 4": {
+      "left": "352px",
+      "top": "16px",
+      "width": "80px",
+      "height": "96px",
       "zIndex": "39",
       "minimized": false,
       "compact": false,
-      "borderStyle": null,
+      "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "448px"
+        "0-0": "80px"
       }
     },
-    "section-Quick-Info": {
-      "left": "16px",
+    "section-Ability-Ability 5": {
+      "left": "576px",
       "top": "16px",
-      "width": "1168px",
+      "width": "80px",
       "height": "96px",
-      "zIndex": "22",
+      "zIndex": "61",
       "minimized": false,
       "compact": false,
-      "borderStyle": null,
+      "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "1168px"
+        "0-0": "80px"
       }
     },
-    "section-Ability-STR": { "left": "16px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
-    "section-Ability-DEX": { "left": "132px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
-    "section-Ability-CON": { "left": "248px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
-    "section-Ability-INT": { "left": "364px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
-    "section-Ability-WIS": { "left": "480px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
-    "section-Ability-CHA": { "left": "596px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" }
+    "section-Ability-Ability 6": {
+      "left": "464px",
+      "top": "16px",
+      "width": "80px",
+      "height": "96px",
+      "zIndex": "59",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "ability_border",
+      "innerWidths": {
+        "0-0": "80px"
+      }
+    }
   };
 
 let db = null;
@@ -1814,9 +1834,9 @@ function enforceFullHeight() {
     style.textContent = `
         :root {
             --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
-            --border-img-width: 20px;
-            --border-img-outset: 18px;
-            --border-img-slice: 30;
+            --border-img-width: 28px;
+            --border-img-outset: 16px;
+            --border-img-slice: 33;
             --btn-color: #c53131;
             --btn-color-highlight: #f18383ff;
         }
@@ -1834,7 +1854,7 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_ability.gif')}');
             --border-img-width: 28px;
             --border-img-slice: 25;
-            --border-img-outset: 14px;
+            --border-img-outset: 8px;
         }
         .spikes_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_spikes.gif')}');
@@ -2153,7 +2173,7 @@ function enforceFullHeight() {
             background: white;
         }
         ${s.ABILITY.SUMMARY_LABEL} {
-            font-size: 14px !important;
+            font-size: 12px !important;
         }
         /* Custom Resize Handle */
         .print-section-resize-handle {
