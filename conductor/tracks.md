@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Individual Ability Score Sections**
+- [~] **Track: Individual Ability Score Sections**
   *Link: [./tracks/ability_separation_20260219/](./tracks/ability_separation_20260219/)*
 
 ## Archived Tracks

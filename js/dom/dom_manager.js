@@ -39,7 +39,9 @@ class DomManager {
                 SUBSECTION_HEADER: '.ct-subsection__header',
                 SECTION_HEADER: '.ct-section__header',
                 CHARACTER_TOOLS: '#character-tools-target',
-                SUBSECTIONS: '.ct-subsections' // Added
+                SUBSECTIONS: '.ct-subsections', // Added
+                ABILITY: '.ct-quick-info__ability',
+                ABILITY_NAME: '.ct-quick-info__ability-name'
             },
             SPELLS: {
                 CONTAINER: '.ct-spells',

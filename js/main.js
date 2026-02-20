@@ -222,7 +222,13 @@ const DEFAULT_LAYOUTS = {
       "innerWidths": {
         "0-0": "1168px"
       }
-    }
+    },
+    "section-Ability-STR": { "left": "16px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
+    "section-Ability-DEX": { "left": "132px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
+    "section-Ability-CON": { "left": "248px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
+    "section-Ability-INT": { "left": "364px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
+    "section-Ability-WIS": { "left": "480px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" },
+    "section-Ability-CHA": { "left": "596px", "top": "120px", "width": "100px", "height": "120px", "borderStyle": "ability_border" }
   };
 
 let db = null;
@@ -717,6 +723,10 @@ async function extractAndWrapSections() {
  * 2. All section > div > svg
  */
 function removeSpecificSvgs(container) {
+    if (window.__MOCK_REMOVE_SPECIFIC_SVGS__) {
+        window.__MOCK_REMOVE_SPECIFIC_SVGS__(container);
+        return;
+    }
     if (!container) return;
 
     const dom = window.DomManager.getInstance();
@@ -1638,6 +1648,58 @@ function moveQuickInfo() {
              quickInfo.style.margin = '0';
         }
     }
+}
+
+/**
+ * Separates ability scores into individual draggable sections.
+ * This function:
+ * 1. Identifies all ability score elements using DomManager selectors.
+ * 2. Wraps each ability in a new draggable 'print-section-container'.
+ * 3. Applies the 'ability_border' style by default.
+ * 4. Moves the elements to the print layout wrapper.
+ * 5. Performs specific SVG removal for each new container.
+ * 6. Destroys the original empty parent sections to clean up the UI.
+ */
+function separateAbilities() {
+    const dom = window.DomManager.getInstance();
+    const abilities = document.querySelectorAll(dom.selectors.CORE.ABILITY);
+    const layoutRoot = document.getElementById('print-layout-wrapper');
+
+    if (!abilities.length || !layoutRoot) return;
+
+    console.log(`[DDB Print] Separating ${abilities.length} abilities...`);
+
+    const parentsToRemove = new Set();
+
+    abilities.forEach((ability, index) => {
+        const parentSection = ability.closest('section');
+        if (parentSection) parentsToRemove.add(parentSection);
+
+        const nameEl = ability.querySelector(dom.selectors.CORE.ABILITY_NAME);
+        const name = nameEl ? nameEl.textContent.trim() : `Ability ${index + 1}`;
+        const id = `section-Ability-${name}`;
+
+        // Create container and MOVE the element
+        const container = createDraggableContainer(name, ability, id);
+        
+        // Default to ability border (if not overridden by saved layout later)
+        container.classList.add('ability_border');
+        
+        layoutRoot.appendChild(container);
+
+        // Targeted SVG Removal for the new section
+        removeSpecificSvgs(container);
+
+        // Reset internal styles to fit new container
+        ability.style.margin = '0';
+        ability.style.width = '100%';
+        ability.style.display = 'flex';
+        ability.style.flexDirection = 'column';
+        ability.style.alignItems = 'center';
+    });
+
+    // Destroy empty parents
+    parentsToRemove.forEach(p => p.remove());
 }
 
 /**
@@ -3477,7 +3539,12 @@ function applyDefaultLayout() {
             console.log(`[DDB Print] Applying defaults to ${id}`, styles);
             // Explicitly set properties to ensure they take effect
             for (const [prop, val] of Object.entries(styles)) {
-                section.style.setProperty(prop, val, 'important');
+                if (prop === 'borderStyle') {
+                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'no-border');
+                    if (val) section.classList.add(val);
+                } else {
+                    section.style.setProperty(prop, val, 'important');
+                }
             }
         } else {
             console.warn(`[DDB Print] Default layout target not found: ${id}`);
@@ -4655,6 +4722,7 @@ function injectCompactStyles() {
     window.removeSpecificSvgs = removeSpecificSvgs;
     window.drawPageSeparators = drawPageSeparators;
     window.moveQuickInfo = moveQuickInfo;
+    window.separateAbilities = separateAbilities;
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
     window.applyLayout = applyLayout;
@@ -4711,6 +4779,7 @@ function injectCompactStyles() {
     removeSearchBoxes();
     movePortrait(); // User Request: Move portrait at the end
     moveQuickInfo(); // User Request: Make Quick Info draggable
+    separateAbilities();
     injectCloneButtons();
     flagExtractableElements();
     initDragAndDrop();
