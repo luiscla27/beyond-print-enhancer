@@ -1559,6 +1559,7 @@ function enforceFullHeight() {
         :root {
             --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
             --border-img-width: 20px;
+            --border-img-outset: 18px;
             --border-img-slice: 30;
             --btn-color: #c53131;
             --btn-color-highlight: #f18383ff;
@@ -1571,31 +1572,37 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
             --border-img-width: 20px;
             --border-img-slice: 30;
+            --border-img-outset: 50px;
         }
         .ability_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_ability.gif')}');
-            --border-img-width: 34px;
-            --border-img-slice: 51;
+            --border-img-width: 28px;
+            --border-img-slice: 25;
+            --border-img-outset: 14px;
         }
         .spikes_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_spikes.gif')}');
             --border-img-width: 118px;
             --border-img-slice: 177;
+            --border-img-outset: 55px;
         }
         .barbarian_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.gif')}');
             --border-img-width: 208px;
             --border-img-slice: 311;
+            --border-img-outset: 88px;
         }
         .goth_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
             --border-img-width: 111px;
             --border-img-slice: 166;
+            --border-img-outset: 37px;
         }
         .plants_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_plants.gif')}');
-            --border-img-width: 148px;
-            --border-img-slice: 222;
+            --border-img-width: 145px;
+            --border-img-slice: 219;
+            --border-img-outset: 50px;
         }
 
         @media print {
@@ -1735,25 +1742,26 @@ function enforceFullHeight() {
         ${s.UI.PRINT_CONTAINER} { 
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
-            break-inside: avoid; 
-            position: absolute !important;
-            z-index: 10;
-            /* resize: both !important; Removed for custom handle */
-            overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
-            min-width: 50px !important;
-            min-height: 30px !important;
             background-color: rgba(255, 255, 255, 0.85);
-            box-sizing: border-box;
-            display: flex !important;
-            flex-direction: column !important;
-            border-width: var(--border-img-width);
-            border-style: solid;
             border-color: transparent;
-            border-image-source: var(--border-img);
-            border-image-slice: var(--border-img-slice);
+            border-image-outset: var(--border-img-outset);
             border-image-repeat: round;
+            border-image-slice: var(--border-img-slice);
+            border-image-source: var(--border-img);
+            border-image-width: var(--border-img-width);
+            border-style: solid;
+            border-width: 0;
             box-decoration-break: clone;
             -webkit-box-decoration-break: clone;
+            box-sizing: border-box;
+            break-inside: avoid; 
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 30px !important;
+            min-width: 50px !important;
+            overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
+            position: absolute !important;
+            z-index: 10;        
         }
         ${s.UI.PRINT_CONTAINER}:hover { 
             box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
