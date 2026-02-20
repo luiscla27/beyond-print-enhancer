@@ -70,4 +70,18 @@ describe('Border Assets and Variables', function() {
       assert.ok(css && css.includes('--border-img-slice: 311'), 'barbarian_border should have slice 311');
       assert.ok(css && css.includes('--border-img-width: 208px'), 'barbarian_border should have width 208px');
   });
+
+  it('should have correct variables for goth_border', function() {
+      const css = getCSSRule('.goth_border');
+      assert.ok(css && css.includes('chrome-extension://mock-id/assets/border_goth1.gif'), 'goth_border should use mock chrome-extension URL');
+      assert.ok(css && css.includes('--border-img-slice: 166'), 'goth_border should have slice 166');
+      assert.ok(css && css.includes('--border-img-width: 111px'), 'goth_border should have width 111px');
+  });
+
+  it('should have correct variables for plants_border', function() {
+      const css = getCSSRule('.plants_border');
+      assert.ok(css && css.includes('chrome-extension://mock-id/assets/border_plants.gif'), 'plants_border should use mock chrome-extension URL');
+      assert.ok(css && css.includes('--border-img-slice: 222'), 'plants_border should have slice 222');
+      assert.ok(css && css.includes('--border-img-width: 148px'), 'plants_border should have width 148px');
+  });
 });

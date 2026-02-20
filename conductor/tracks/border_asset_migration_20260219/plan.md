@@ -14,6 +14,6 @@
 - [x] Task: Conductor - User Manual Verification 'Manifest and CSS Refactoring' (Protocol in workflow.md)
 
 ## Phase 3: Final Verification
-- [ ] Task: Verify all border styles render correctly in unit tests.
-- [ ] Task: Ensure layout persistence and storage are unaffected by asset migration.
+- [x] Task: Verify all border styles render correctly in unit tests.
+- [x] Task: Ensure layout persistence and storage are unaffected by asset migration.
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
