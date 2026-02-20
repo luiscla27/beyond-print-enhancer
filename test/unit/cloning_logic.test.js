@@ -76,9 +76,30 @@ describe('Cloning Logic', function() {
         assert.strictEqual(temp.querySelector('menu'), null, 'Menu should still be removed');
         assert.ok(temp.querySelector('p'), 'Non-interactive content should be preserved');
     });
+
+    it('should capture border style', function() {
+        const section = document.getElementById('section-Actions');
+        section.classList.add('ability_border');
+        
+        const snapshot = window.captureSectionSnapshot('section-Actions');
+        assert.strictEqual(snapshot.borderStyle, 'ability_border');
+    });
   });
 
   describe('renderClonedSection', function() {
+    it('should apply border style from snapshot', function() {
+        const snapshot = {
+            id: 'clone-123',
+            originalId: 'section-Actions',
+            title: 'Action Clone',
+            html: '<p>Content</p>',
+            borderStyle: 'spikes_border'
+        };
+        
+        const clone = window.renderClonedSection(snapshot);
+        assert.ok(clone.classList.contains('spikes_border'));
+    });
+
     it('should create a new section container from snapshot data', function() {
         if (typeof window.renderClonedSection !== 'function') {
             assert.fail('window.renderClonedSection is not defined');
