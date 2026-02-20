@@ -15,21 +15,215 @@ const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.2.0';
 
 const DEFAULT_LAYOUTS = {
-    'section-Quick-Info': { left: '0px', top: '0px', width: '1200px', height: '144px' },
-    'section-Section-1': { left: '0px', top: '160px', width: '256px', height: '176px' },
-    'section-Section-2': { left: '0px', top: '352px', width: '256px', height: '176px' },
-    'section-Section-3': { left: '0px', top: '544px', width: '256px', height: '208px' },
-    'section-Section-4': { left: '272px', top: '160px', width: '208px', height: '592px' },
-    'section-Section-5': { left: '496px', top: '160px', width: '528px', height: '160px' },
-    'section-Section-6': { left: '1040px', top: '160px', width: '160px', height: '160px' },
-    'section-Actions':   { left: '496px', top: '336px', width: '704px', height: '1360px' },
-    'section-Notes':   { left: '0px', top: '768px', width: '480px', height: '928px' },
-    'section-Features_&_Traits':   { left: '0px', top: '1712px', width: '480px', height: '1984px' },
-    'section-Spells':   { left: '496px', top: '1712px', width: '704px', height: '816px' },
-    'section-Extras':   { left: '0px', top: '3712px', width: '480px', height: '1936px' },
-    'section-Background':   { left: '496px', top: '2544px', width: '704px', height: '1152px' },
-    'section-Inventory':   { left: '496px', top: '3712px', width: '704px', height: '1936px' }
-};
+    "section-Section-1": {
+      "left": "16px",
+      "top": "160px",
+      "width": "224px",
+      "height": "144px",
+      "zIndex": "27",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "224px"
+      }
+    },
+    "section-Section-2": {
+      "left": "16px",
+      "top": "352px",
+      "width": "224px",
+      "height": "144px",
+      "zIndex": "28",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "224px"
+      }
+    },
+    "section-Section-3": {
+      "left": "16px",
+      "top": "544px",
+      "width": "224px",
+      "height": "176px",
+      "zIndex": "29",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "224px"
+      }
+    },
+    "section-Section-4": {
+      "left": "288px",
+      "top": "160px",
+      "width": "176px",
+      "height": "560px",
+      "zIndex": "26",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "176px"
+      }
+    },
+    "section-Section-5": {
+      "left": "512px",
+      "top": "160px",
+      "width": "480px",
+      "height": "144px",
+      "zIndex": "23",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "480px"
+      }
+    },
+    "section-Section-6": {
+      "left": "1040px",
+      "top": "160px",
+      "width": "144px",
+      "height": "144px",
+      "zIndex": "25",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "144px"
+      }
+    },
+    "section-Actions": {
+      "left": "512px",
+      "top": "352px",
+      "width": "672px",
+      "height": "1312px",
+      "zIndex": "30",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "672px"
+      }
+    },
+    "section-Spells": {
+      "left": "512px",
+      "top": "1712px",
+      "width": "672px",
+      "height": "832px",
+      "zIndex": "35",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "2-0": "672px",
+        "2-1": "672px",
+        "2-2": "672px",
+        "4-0": "672px",
+        "4-1": "672px",
+        "4-2": "672px",
+        "4-3": "672px",
+        "4-4": "672px",
+        "6-0": "672px",
+        "6-1": "672px",
+        "6-2": "672px",
+        "6-3": "672px",
+        "6-4": "672px",
+        "6-5": "672px"
+      }
+    },
+    "section-Inventory": {
+      "left": "512px",
+      "top": "3712px",
+      "width": "672px",
+      "height": "1920px",
+      "zIndex": "42",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "672px",
+        "1-0": "672px",
+        "2-0": "672px",
+        "3-0": "672px"
+      }
+    },
+    "section-Features_&_Traits": {
+      "left": "16px",
+      "top": "1712px",
+      "width": "448px",
+      "height": "1952px",
+      "zIndex": "33",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "448px",
+        "2-0": "448px"
+      }
+    },
+    "section-Background": {
+      "left": "512px",
+      "top": "2592px",
+      "width": "672px",
+      "height": "1072px",
+      "zIndex": "37",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "672px",
+        "3-0": "672px",
+        "3-1": "672px",
+        "4-0": "672px",
+        "4-1": "672px",
+        "5-0": "672px",
+        "5-1": "672px",
+        "6-0": "672px",
+        "6-1": "672px",
+        "8-0": "672px"
+      }
+    },
+    "section-Notes": {
+      "left": "16px",
+      "top": "768px",
+      "width": "448px",
+      "height": "896px",
+      "zIndex": "32",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "448px"
+      }
+    },
+    "section-Extras": {
+      "left": "16px",
+      "top": "3712px",
+      "width": "448px",
+      "height": "1920px",
+      "zIndex": "39",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "448px"
+      }
+    },
+    "section-Quick-Info": {
+      "left": "16px",
+      "top": "16px",
+      "width": "1168px",
+      "height": "96px",
+      "zIndex": "22",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": null,
+      "innerWidths": {
+        "0-0": "1168px"
+      }
+    }
+  };
 
 let db = null;
 
