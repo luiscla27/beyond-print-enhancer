@@ -1,0 +1,8 @@
+{
+  "track_id": "merge_sections_20260214",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-14T18:57:00Z",
+  "updated_at": "2026-02-14T18:57:00Z",
+  "description": "Lets create a "merge section" funcionallity, it should be limited ONLY to sections marked as "be-extracted-section". They should be able to be appended at any other section AFTER any content marked as "be-extractable". Also, all spell description sections should also be marked as "be-extracted-section". When appended, the previous section should be destroyed as now its contents belong to the append target. To activate this, add an "Append after" button at the "be-extracted-section", when active. A modal showing all existing sections marked as "be-extracted" should be displayed for the user to select one. The names of the sections should be its section main header and its "extractable header" next to it."
+}

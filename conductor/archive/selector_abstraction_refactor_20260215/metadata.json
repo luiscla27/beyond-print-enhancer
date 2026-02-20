@@ -1,0 +1,8 @@
+{
+  "track_id": "selector_abstraction_refactor_20260215",
+  "type": "refactor",
+  "status": "new",
+  "created_at": "2026-02-15T00:00:00Z",
+  "updated_at": "2026-02-15T00:00:00Z",
+  "description": "Lets do a mayor step by step refactor! Currently, this tool depends COMPLETLY on dnd beyond NOT changing its css classes and selectors. I want to be prepared by making modularizing as much content as possible. Also, given that existings css selector are the CORE of this tool to work. I want to encapsulate them on a single file and also its results on single purpoose functions. That way, in case something changes. We know that for the most part we should just fix that layer. This MUST be a layer of abstraction. Create a step by step plan to handle this complex task and do it the least changes as poossible per task iteration. But dont hesitate on create as many tasks as needed. This is must be done with great care so we dont break anything"
+}
