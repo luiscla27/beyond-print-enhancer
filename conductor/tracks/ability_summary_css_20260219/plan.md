@@ -12,7 +12,7 @@
 - [x] Task: Conductor - User Manual Verification 'DomManager Enhancement' (Protocol in workflow.md)
 
 ## Phase 3: CSS Injection
-- [ ] Task: Update the CSS injection logic in `js/main.js` to include the new ability summary classes.
-- [ ] Task: Ensure the styles use `var(--btn-color)` for consistency.
-- [ ] Task: Verify the injected styles match the specification requirements.
+- [x] Task: Update the CSS injection logic in `js/main.js` to include the new ability summary classes. [ae6000f]
+- [x] Task: Ensure the styles use `var(--btn-color)` for consistency. [ae6000f]
+- [x] Task: Verify the injected styles match the specification requirements. [ae6000f]
 - [ ] Task: Conductor - User Manual Verification 'CSS Injection' (Protocol in workflow.md)
