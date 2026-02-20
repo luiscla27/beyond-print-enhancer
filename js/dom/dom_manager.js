@@ -151,7 +151,8 @@ class DomManager {
             },
             ABILITY: {
                 SUMMARY: '.ddbc-ability-summary',
-                SUMMARY_SECONDARY: '.ddbc-ability-summary__secondary'
+                SUMMARY_SECONDARY: '.ddbc-ability-summary__secondary',
+                SUMMARY_LABEL: '.ddbc-ability-summary__label'
             },
             // Extractables
             EXTRACTABLE: {

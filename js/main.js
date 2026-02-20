@@ -1861,19 +1861,6 @@ function enforceFullHeight() {
             --border-img-outset: 50px;
         }
 
-        ${s.ABILITY.SUMMARY} {
-            display: contents;
-        }
-        ${s.ABILITY.SUMMARY_SECONDARY} {
-            position: static;
-            border: 2px solid var(--btn-color);
-            border-radius: 150px;
-            padding: 8px 13px;
-            font-size: 16px !important;
-            width: fit-content;
-            background: white;
-        }
-
         @media print {
             @page {
                 margin: 0;
@@ -2152,6 +2139,22 @@ function enforceFullHeight() {
             opacity: 1;
         }
 
+        /* Ability Summary */
+        ${s.ABILITY.SUMMARY} {
+            display: contents;
+        }
+        ${s.ABILITY.SUMMARY_SECONDARY} {
+            position: static!important;
+            border: 2px solid var(--btn-color);
+            border-radius: 150px;
+            padding: 8px 13px;
+            font-size: 16px !important;
+            width: fit-content;
+            background: white;
+        }
+        ${s.ABILITY.SUMMARY_LABEL} {
+            font-size: 14px !important;
+        }
         /* Custom Resize Handle */
         .print-section-resize-handle {
             position: absolute;
