@@ -2,11 +2,9 @@
 
 This file tracks all major development tracks for the project.
 
-## Current Tracks
-- [x] **Track: Border Asset Migration & Optimization** (Completed: 2026-02-19)
-  *Link: [./tracks/border_asset_migration_20260219/](./tracks/border_asset_migration_20260219/)*
-
 ## Archived Tracks
+- [x] **Track: Border Asset Migration & Optimization** (Completed: 2026-02-19)
+  *Link: [./archive/border_asset_migration_20260219/](./archive/border_asset_migration_20260219/)*
 - [x] **Track: Section Border Style Selection** (Completed: 2026-02-18)
   *Link: [./archive/section_border_selection_20260218/](./archive/section_border_selection_20260218/)*
 - [x] **Track: Selector Abstraction Refactor** (Completed: 2026-02-18)

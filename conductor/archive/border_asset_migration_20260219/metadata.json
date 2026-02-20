@@ -1,0 +1,8 @@
+{
+  "track_id": "border_asset_migration_20260219",
+  "type": "refactor",
+  "status": "new",
+  "created_at": "2026-02-19T10:00:00Z",
+  "updated_at": "2026-02-19T10:00:00Z",
+  "description": "Replace base64 border values with local assets, add manifest permissions, and pre-calculate CSS variables for slicing/width."
+}
