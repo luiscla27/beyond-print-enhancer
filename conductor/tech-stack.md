@@ -3,7 +3,7 @@
 ## Core Platform
 - **Type:** Web Browser Extension
 - **Manifest Version:** 3 (Chrome Extension)
-- **Permissions:** `declarativeContent`, `activeTab`, `scripting`
+- **Permissions:** `declarativeContent`, `activeTab`, `scripting`, `contextMenus`, `web_accessible_resources` (for assets)
 
 ## Languages & Runtime
 - **JavaScript:** Vanilla ES6+ for content scripts and background service workers.
