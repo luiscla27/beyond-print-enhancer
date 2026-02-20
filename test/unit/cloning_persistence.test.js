@@ -129,9 +129,9 @@ describe('Cloning Persistence', function() {
     
     await window.handleLoadDefault();
     
-    // In main.js, section-Actions default is left: '496px', top: '336px'
-    // Clone should be at 496+32 = 528, 336+32 = 368
-    assert.strictEqual(clone.style.left, '528px');
-    assert.strictEqual(clone.style.top, '368px');
+    // In main.js, section-Actions default is left: '512px', top: '352px'
+    // Clone should be at 512+32 = 544, 352+32 = 384
+    assert.strictEqual(clone.style.left, '544px');
+    assert.strictEqual(clone.style.top, '384px');
   });
 });

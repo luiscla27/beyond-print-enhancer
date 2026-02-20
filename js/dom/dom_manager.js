@@ -6,6 +6,8 @@ class DomManager {
                 SIDEBAR: '.ct-sidebar',
                 NAVIGATION: 'nav', // Often the main navigation
                 QUICK_INFO: '.ct-quick-info',
+                QUICK_INFO_BOX: '.ct-quick-info__box',
+                QUICK_INFO_BOX_LABEL: '.ct-quick-info__box-label',
                 SITE_BAR: '.site-bar',
                 HEADER_MAIN: 'header.main',
                 MEGA_MENU_TARGET: '#mega-menu-target',

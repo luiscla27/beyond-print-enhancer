@@ -41,6 +41,12 @@ describe('Border Picker UI', function() {
     global.HTMLElement = window.HTMLElement;
     
     // Mock standard APIs
+    window.chrome = {
+        runtime: {
+            getURL: (path) => `chrome-extension://mock/${path}`
+        }
+    };
+
     global.ResizeObserver = class ResizeObserver {
         observe() {}
         unobserve() {}
@@ -68,7 +74,7 @@ describe('Border Picker UI', function() {
     assert.ok(modal, 'Modal not shown');
     
     const options = modal.querySelectorAll('.be-border-option');
-    assert.strictEqual(options.length, 4, 'Should have 4 style options');
+    assert.strictEqual(options.length, 8, 'Should have 8 style options');
     
     // Select ability_border
     const abilityOpt = Array.from(options).find(opt => opt.querySelector('.ability_border'));

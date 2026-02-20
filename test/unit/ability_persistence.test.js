@@ -101,9 +101,9 @@ describe('Ability Persistence', function() {
       
       window.applyDefaultLayout();
       
-      // Default for STR is left: 16px, top: 120px, border: ability_border
+      // Default for STR is left: 16px, top: 16px, border: ability_border
       assert.strictEqual(strSection.style.left, '16px');
-      assert.strictEqual(strSection.style.top, '120px');
+      assert.strictEqual(strSection.style.top, '16px');
       assert.ok(strSection.classList.contains('ability_border'), 'Default border should be applied');
   });
 });

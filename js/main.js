@@ -28,25 +28,29 @@ const DEFAULT_LAYOUTS = {
     },
     "section-Section-2": {
       "left": "16px",
-      "top": "352px",
+      "top": "576px",
       "width": "224px",
       "height": "144px",
-      "zIndex": "10",
+      "zIndex": "103",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {}
+      "innerWidths": {
+        "0-0": "224px"
+      }
     },
     "section-Section-3": {
       "left": "16px",
-      "top": "544px",
+      "top": "352px",
       "width": "224px",
       "height": "176px",
-      "zIndex": "10",
+      "zIndex": "95",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {}
+      "innerWidths": {
+        "0-0": "224px"
+      }
     },
     "section-Section-4": {
       "left": "288px",
@@ -60,33 +64,35 @@ const DEFAULT_LAYOUTS = {
       "innerWidths": {}
     },
     "section-Section-5": {
-      "left": "512px",
+      "left": "704px",
       "top": "160px",
       "width": "480px",
-      "height": "144px",
-      "zIndex": "10",
+      "height": "128px",
+      "zIndex": "126",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
-      "innerWidths": {}
+      "innerWidths": {
+        "0-0": "480px"
+      }
     },
     "section-Section-6": {
-      "left": "1040px",
-      "top": "160px",
-      "width": "144px",
-      "height": "144px",
-      "zIndex": "10",
+      "left": "496px",
+      "top": "144px",
+      "width": "160px",
+      "height": "160px",
+      "zIndex": "136",
       "minimized": false,
       "compact": false,
-      "borderStyle": null,
+      "borderStyle": "spikes_border",
       "innerWidths": {}
     },
     "section-Actions": {
       "left": "512px",
-      "top": "352px",
+      "top": "336px",
       "width": "672px",
       "height": "1312px",
-      "zIndex": "10",
+      "zIndex": "110",
       "minimized": false,
       "compact": false,
       "borderStyle": null,
@@ -159,59 +165,57 @@ const DEFAULT_LAYOUTS = {
       "innerWidths": {}
     },
     "section-Quick-Info": {
-      "left": "672px",
-      "top": "16px",
-      "width": "528px",
-      "height": "112px",
-      "zIndex": "72",
+      "left": "880px",
+      "top": "272px",
+      "width": "272px",
+      "height": "128px",
+      "zIndex": "76",
       "minimized": false,
       "compact": false,
       "borderStyle": "no-border",
-      "innerWidths": {
-        "0-0": "528px"
-      }
+      "innerWidths": {}
     },
     "section-Ability-Ability 1": {
       "left": "16px",
       "top": "16px",
       "width": "80px",
       "height": "96px",
-      "zIndex": "54",
+      "zIndex": "37",
       "minimized": false,
       "compact": false,
       "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "80px"
+        "0-0": "100%"
       }
     },
     "section-Ability-Ability 2": {
-      "left": "128px",
+      "left": "576px",
       "top": "16px",
       "width": "80px",
       "height": "96px",
-      "zIndex": "56",
+      "zIndex": "47",
       "minimized": false,
       "compact": false,
       "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "80px"
+        "0-0": "100%"
       }
     },
     "section-Ability-Ability 3": {
-      "left": "240px",
+      "left": "464px",
       "top": "16px",
       "width": "80px",
       "height": "96px",
-      "zIndex": "58",
+      "zIndex": "43",
       "minimized": false,
       "compact": false,
       "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "80px"
+        "0-0": "100%"
       }
     },
     "section-Ability-Ability 4": {
-      "left": "352px",
+      "left": "128px",
       "top": "16px",
       "width": "80px",
       "height": "96px",
@@ -220,36 +224,73 @@ const DEFAULT_LAYOUTS = {
       "compact": false,
       "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "80px"
+        "0-0": "100%"
       }
     },
     "section-Ability-Ability 5": {
-      "left": "576px",
+      "left": "240px",
       "top": "16px",
       "width": "80px",
       "height": "96px",
-      "zIndex": "61",
+      "zIndex": "41",
       "minimized": false,
       "compact": false,
       "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "80px"
+        "0-0": "100%"
       }
     },
     "section-Ability-Ability 6": {
-      "left": "464px",
+      "left": "352px",
       "top": "16px",
       "width": "80px",
       "height": "96px",
-      "zIndex": "59",
+      "zIndex": "42",
       "minimized": false,
       "compact": false,
       "borderStyle": "ability_border",
       "innerWidths": {
-        "0-0": "80px"
+        "0-0": "100%"
       }
+    },
+    "section-Box-Box-1": {
+      "left": "672px",
+      "top": "16px",
+      "width": "96px",
+      "height": "96px",
+      "zIndex": "120",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "box_border",
+      "innerWidths": {
+        "0-0": "96px"
+      }
+    },
+    "section-Box-Box-2": {
+      "left": "784px",
+      "top": "16px",
+      "width": "96px",
+      "height": "96px",
+      "zIndex": "135",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "box_border",
+      "innerWidths": {
+        "0-0": "96px"
+      }
+    },
+    "section-Quick-Info-Health": {
+      "left": "896px",
+      "top": "16px",
+      "width": "288px",
+      "height": "96px",
+      "zIndex": "134",
+      "minimized": false,
+      "compact": false,
+      "borderStyle": "box_border",
+      "innerWidths": {}
     }
-  };
+};
 
 let db = null;
 
@@ -1671,6 +1712,32 @@ function moveQuickInfo() {
 }
 
 /**
+ * Suppresses global resize events to stabilize custom layout.
+ */
+function suppressResizeEvents() {
+    console.log('[DDB Print] Suppressing global resize events...');
+    
+    // 1. Nullify window.onresize
+    window.onresize = null;
+
+    // 2. Stop propagation of resize events in the capture phase
+    // This targets listeners added BEFORE the extension was loaded
+    window.addEventListener('resize', (e) => {
+        e.stopImmediatePropagation();
+    }, true);
+
+    // 3. Intercept addEventListener for 'resize'
+    const originalAddEventListener = window.addEventListener;
+    window.addEventListener = function(type, listener, options) {
+        if (type === 'resize') {
+            console.log('[DDB Print] Blocking external resize listener.');
+            return;
+        }
+        return originalAddEventListener.apply(this, arguments);
+    };
+}
+
+/**
  * Separates ability scores into individual draggable sections.
  * This function:
  * 1. Identifies all ability score elements using DomManager selectors.
@@ -1719,6 +1786,79 @@ function separateAbilities() {
     });
 
     // Destroy empty parents
+    parentsToRemove.forEach(p => p.remove());
+}
+
+/**
+ * Separates individual Quick Info boxes (AC, Initiative, etc.) into draggable sections.
+ */
+function separateQuickInfoBoxes() {
+    const dom = window.DomManager.getInstance();
+    const boxes = document.querySelectorAll(dom.selectors.CORE.QUICK_INFO_BOX);
+    const layoutRoot = document.getElementById('print-layout-wrapper');
+
+    if (!boxes.length || !layoutRoot) return;
+
+    console.log(`[DDB Print] Separating ${boxes.length} quick-info boxes...`);
+
+    const parentsToRemove = new Set();
+
+    boxes.forEach((box, index) => {
+        // Collect parent for cleanup (usually .ct-quick-info)
+        const parentGroup = box.closest(dom.selectors.CORE.QUICK_INFO);
+        if (parentGroup) parentsToRemove.add(parentGroup);
+
+        const labelEl = box.querySelector(dom.selectors.CORE.QUICK_INFO_BOX_LABEL);
+        const label = labelEl ? labelEl.textContent.trim() : `Box ${index + 1}`;
+        const id = `section-Box-${label.replace(/\s+/g, '-')}`;
+
+        // Create container and MOVE the element
+        const container = createDraggableContainer(label, box, id);
+        
+        // Default to box border
+        container.classList.add('box_border');
+        
+        layoutRoot.appendChild(container);
+
+        // Targeted SVG Removal for the new section
+        removeSpecificSvgs(container);
+
+        // Reset internal styles
+        box.style.margin = '0';
+        box.style.width = '100%';
+        box.style.display = 'flex';
+        box.style.flexDirection = 'column';
+        box.style.alignItems = 'center';
+    });
+
+    // Extract Health if present (User Request)
+    const health = document.querySelector(dom.selectors.UI.QUICK_INFO_HEALTH);
+    if (health) {
+        // Only extract if it hasn't been extracted yet
+        if (!document.getElementById('section-Quick-Info-Health')) {
+            const container = createDraggableContainer('Health', health, 'section-Quick-Info-Health');
+            // Remove the header inside health if it exists to avoid duplication/weirdness
+            const healthHeader = health.querySelector('h1');
+            // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
+            
+            layoutRoot.appendChild(container);
+            
+            // Fix health display
+            health.style.display = 'block';
+            health.style.position = 'static';
+            health.style.width = '100%';
+            
+            removeSpecificSvgs(container);
+            
+            // Mark parent for removal if health was inside it
+            const parentGroup = health.parentElement; // usually .ct-quick-info
+             if (parentGroup && parentGroup.matches(dom.selectors.CORE.QUICK_INFO)) {
+                 parentsToRemove.add(parentGroup);
+             }
+        }
+    }
+
+    // Destroy empty groups
     parentsToRemove.forEach(p => p.remove());
 }
 
@@ -1846,9 +1986,9 @@ function enforceFullHeight() {
         }
         .default-border {
             --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
-            --border-img-width: 20px;
-            --border-img-slice: 30;
-            --border-img-outset: 50px;
+            --border-img-width: 28px;
+            --border-img-outset: 16px;
+            --border-img-slice: 33;
         }
         .ability_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_ability.gif')}');
@@ -1872,13 +2012,19 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
             --border-img-width: 111px;
             --border-img-slice: 166;
-            --border-img-outset: 37px;
+            --border-img-outset: 20px;
         }
         .plants_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_plants.gif')}');
             --border-img-width: 145px;
             --border-img-slice: 219;
             --border-img-outset: 50px;
+        }
+        .box_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_box.gif')}');
+            --border-img-width: 25px;
+            --border-img-slice: 22;
+            --border-img-outset: 7px;
         }
 
         @media print {
@@ -1906,6 +2052,7 @@ function enforceFullHeight() {
             padding: 0;
             height: auto !important;
         }
+        .ct-quick-info__box,
         section {
             height: 100% !important;
             padding: 0 !important;
@@ -2160,6 +2307,7 @@ function enforceFullHeight() {
         }
 
         /* Ability Summary */
+
         ${s.ABILITY.SUMMARY} {
             display: contents;
         }
@@ -2175,7 +2323,16 @@ function enforceFullHeight() {
         ${s.ABILITY.SUMMARY_LABEL} {
             font-size: 12px !important;
         }
+
+        /* PROFICIENCY & WALKING SPEED */
+        
+        .ct-quick-info__box * {
+            font-size: 14px !important;
+            line-height: 21px;
+        }
+
         /* Custom Resize Handle */
+
         .print-section-resize-handle {
             position: absolute;
             bottom: 0;
@@ -2482,6 +2639,7 @@ function captureSectionSnapshot(sectionId) {
         if (el.classList.contains('barbarian_border')) return 'barbarian_border';
         if (el.classList.contains('goth_border')) return 'goth_border';
         if (el.classList.contains('plants_border')) return 'plants_border';
+        if (el.classList.contains('box_border')) return 'box_border';
         if (el.classList.contains('default-border')) return 'default-border';
         return null;
     };
@@ -2954,7 +3112,8 @@ function showBorderPickerModal(currentStyle = 'default-border') {
             { id: 'spikes_border', label: 'Spikes' },
             { id: 'barbarian_border', label: 'Barbarian' },
             { id: 'goth_border', label: 'Goth' },
-            { id: 'plants_border', label: 'Plants' }
+            { id: 'plants_border', label: 'Plants' },
+            { id: 'box_border', label: 'Box' }
         ];
         
         let selectedStyle = currentStyle || 'default-border';
@@ -3576,11 +3735,18 @@ function applyDefaultLayout() {
             // Explicitly set properties to ensure they take effect
             for (const [prop, val] of Object.entries(styles)) {
                 if (prop === 'borderStyle') {
-                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'no-border');
+                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
                     if (val) section.classList.add(val);
-                } else {
-                    section.style.setProperty(prop, val, 'important');
+                } else if (['left', 'top', 'width', 'height', 'zIndex'].includes(prop)) {
+                    // Fix: setProperty requires kebab-case for z-index
+                    const cssProp = prop === 'zIndex' ? 'z-index' : prop;
+                    section.style.setProperty(cssProp, val, 'important');
+                } else if (prop === 'minimized') {
+                    section.classList.toggle('minimized', !!val);
+                } else if (prop === 'compact') {
+                    section.classList.toggle('be-compact-mode', !!val);
                 }
+                // innerWidths handled separately or ignored here
             }
         } else {
             console.warn(`[DDB Print] Default layout target not found: ${id}`);
@@ -3945,6 +4111,7 @@ async function scanLayout() {
             if (el.classList.contains('barbarian_border')) return 'barbarian_border';
             if (el.classList.contains('goth_border')) return 'goth_border';
             if (el.classList.contains('plants_border')) return 'plants_border';
+            if (el.classList.contains('box_border')) return 'box_border';
             if (el.classList.contains('default-border')) return 'default-border';
             return null;
         };
@@ -4222,7 +4389,7 @@ async function applyLayout(layout) {
         if (!section) continue;
 
         // Apply border style
-        section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'no-border');
+        section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
         if (styles.borderStyle) {
             section.classList.add(styles.borderStyle);
         }
@@ -4530,7 +4697,7 @@ function injectCloneButtons(context = document) {
                 const result = await showBorderPickerModal(currentStyle);
                 
                 if (result) {
-                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'no-border');
+                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
                     section.classList.add(result.style);
                     
                     updateLayoutBounds();
@@ -4758,7 +4925,9 @@ function injectCompactStyles() {
     window.removeSpecificSvgs = removeSpecificSvgs;
     window.drawPageSeparators = drawPageSeparators;
     window.moveQuickInfo = moveQuickInfo;
+    window.suppressResizeEvents = suppressResizeEvents;
     window.separateAbilities = separateAbilities;
+    window.separateQuickInfoBoxes = separateQuickInfoBoxes;
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
     window.applyLayout = applyLayout;
@@ -4795,6 +4964,9 @@ function injectCompactStyles() {
 (async () => {
     if (window.__DDB_TEST_MODE__) return;
     
+    // Stabilize layout by suppressing global resize events
+    suppressResizeEvents();
+    
     // Idempotency: cleanup previous run if exists
     const existingWrapper = document.getElementById('print-layout-wrapper');
     if (existingWrapper) {
@@ -4816,6 +4988,7 @@ function injectCompactStyles() {
     movePortrait(); // User Request: Move portrait at the end
     moveQuickInfo(); // User Request: Make Quick Info draggable
     separateAbilities();
+    separateQuickInfoBoxes();
     injectCloneButtons();
     flagExtractableElements();
     initDragAndDrop();

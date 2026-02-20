@@ -16,6 +16,13 @@ describe('Sidebar Styles Injection', function() {
     window = dom.window;
     document = window.document;
 
+    // Mock chrome
+    window.chrome = {
+        runtime: {
+            getURL: (path) => `chrome-extension://mock/${path}`
+        }
+    };
+
     // Inject main.js logic
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
     let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');

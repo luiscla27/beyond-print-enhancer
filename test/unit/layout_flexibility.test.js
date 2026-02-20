@@ -16,6 +16,13 @@ describe('Layout Flexibility Logic', function() {
     window = dom.window;
     document = window.document;
 
+    // Mock chrome
+    window.chrome = {
+        runtime: {
+            getURL: (path) => `chrome-extension://mock/${path}`
+        }
+    };
+
     // Inject main.js logic
     window.__DDB_TEST_MODE__ = true;
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');

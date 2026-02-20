@@ -53,8 +53,8 @@ describe('Border Assets and Variables', function() {
   it('should have correct variables for ability_border', function() {
       const css = getCSSRule('.ability_border');
       assert.ok(css && css.includes('chrome-extension://mock-id/assets/border_ability.gif'), 'ability_border should use mock chrome-extension URL');
-      assert.ok(css && css.includes('--border-img-slice: 51'), 'ability_border should have slice 51');
-      assert.ok(css && css.includes('--border-img-width: 34px'), 'ability_border should have width 34px');
+      assert.ok(css && css.includes('--border-img-slice: 25'), 'ability_border should have slice 25');
+      assert.ok(css && css.includes('--border-img-width: 28px'), 'ability_border should have width 28px');
   });
 
   it('should have correct variables for spikes_border', function() {
@@ -81,7 +81,14 @@ describe('Border Assets and Variables', function() {
   it('should have correct variables for plants_border', function() {
       const css = getCSSRule('.plants_border');
       assert.ok(css && css.includes('chrome-extension://mock-id/assets/border_plants.gif'), 'plants_border should use mock chrome-extension URL');
-      assert.ok(css && css.includes('--border-img-slice: 222'), 'plants_border should have slice 222');
-      assert.ok(css && css.includes('--border-img-width: 148px'), 'plants_border should have width 148px');
+      assert.ok(css && css.includes('--border-img-slice: 219'), 'plants_border should have slice 219');
+      assert.ok(css && css.includes('--border-img-width: 145px'), 'plants_border should have width 145px');
+  });
+
+  it('should have correct variables for box_border', function() {
+      const css = getCSSRule('.box_border');
+      assert.ok(css && css.includes('chrome-extension://mock-id/assets/border_box.gif'), 'box_border should use mock chrome-extension URL');
+      assert.ok(css && css.includes('--border-img-slice: 22'), 'box_border should have slice 22');
+      assert.ok(css && css.includes('--border-img-width: 25px'), 'box_border should have width 25px');
   });
 });
