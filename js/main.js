@@ -2028,9 +2028,15 @@ function enforceFullHeight() {
         }
         .dwarf_border {
             --border-img: url('${chrome.runtime.getURL('assets/dwarf.gif')}');
-            --border-img-width: 100px;
-            --border-img-slice: 150;
-            --border-img-outset: 30px;
+            --border-img-width: 205px;
+            --border-img-slice: 400;
+            --border-img-outset: 173px;
+        }
+        .dwarf_hollow_border {
+            --border-img: url('${chrome.runtime.getURL('assets/dwarf_hollow.gif')}');
+            --border-img-width: 205px;
+            --border-img-slice: 400;
+            --border-img-outset: 173px;
         }
         .sticks_border {
             --border-img: url('${chrome.runtime.getURL('assets/sticks.gif')}');
@@ -3097,7 +3103,7 @@ async function getCharacterSpells(charId) {
 const ALL_BORDER_STYLES = [
     'default-border', 'no-border', 'ability_border', 'spikes_border',
     'barbarian_border', 'goth_border', 'plants_border', 'box_border',
-    'dwarf_border', 'sticks_border', 'ornament_border', 'ornament2_border',
+    'dwarf_border', 'dwarf_hollow_border', 'sticks_border', 'ornament_border', 'ornament2_border',
     'ornament_bold_border', 'ornament_bold2_border', 'ornament_simple_border',
     'spike_hollow_border', 'spiky_border', 'spiky_bold_border', 'vine_border'
 ];
@@ -3203,6 +3209,7 @@ function showBorderPickerModal(currentStyle = 'default-border') {
             { id: 'plants_border', label: 'Plants' },
             { id: 'box_border', label: 'Box' },
             { id: 'dwarf_border', label: 'Dwarf' },
+            { id: 'dwarf_hollow_border', label: 'Dwarf Hollow' },
             { id: 'sticks_border', label: 'Sticks' },
             { id: 'ornament_border', label: 'Ornament 1' },
             { id: 'ornament2_border', label: 'Ornament 2' },

@@ -60,6 +60,7 @@ describe('Border Picker UI Expansion', function() {
 
   const expectedNewStyles = [
     { id: 'dwarf_border', label: 'Dwarf' },
+    { id: 'dwarf_hollow_border', label: 'Dwarf Hollow' },
     { id: 'sticks_border', label: 'Sticks' },
     { id: 'ornament_border', label: 'Ornament 1' },
     { id: 'ornament2_border', label: 'Ornament 2' },
@@ -80,8 +81,8 @@ describe('Border Picker UI Expansion', function() {
     assert.ok(modal, 'Modal not shown');
     
     const options = modal.querySelectorAll('.be-border-option');
-    // Existing 8 + new 11 = 19
-    assert.strictEqual(options.length, 19, 'Should have 19 style options');
+    // Existing 8 + new 12 = 20
+    assert.strictEqual(options.length, 20, 'Should have 20 style options');
     
     expectedNewStyles.forEach(style => {
         const opt = Array.from(options).find(opt => 

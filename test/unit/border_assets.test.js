@@ -36,6 +36,7 @@ describe('Border Asset Extension', function() {
 
   const newBorderClasses = [
     'dwarf_border', 
+    'dwarf_hollow_border',
     'sticks_border', 
     'ornament_border', 
     'ornament2_border', 
