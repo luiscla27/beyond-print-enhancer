@@ -2551,9 +2551,12 @@ function enforceFullHeight() {
         /* Border Picker Styles */
         .be-border-options {
             display: flex;
+            flex-wrap: wrap;
             gap: 15px;
-            overflow: auto;
+            overflow-y: auto;
+            max-height: 400px;
             margin: 20px 0;
+            justify-content: center;
         }
         .be-border-option {
             cursor: pointer;
