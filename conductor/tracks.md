@@ -3,10 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [x] **Track: Border Asset Expansion**
-*Link: [./tracks/border_asset_expansion_20260222/](./tracks/border_asset_expansion_20260222/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Border Asset Expansion** (Completed: 2026-02-22)
+  *Link: [./archive/border_asset_expansion_20260222/](./archive/border_asset_expansion_20260222/)*
 - [x] **Track: Quick Info Box Extraction & Stabilization** (Completed: 2026-02-20)
   *Link: [./archive/quick_info_stabilization_20260220/](./archive/quick_info_stabilization_20260220/)*
 - [x] **Track: Inject Ability Summary CSS & Update Workflow** (Completed: 2026-02-19)
