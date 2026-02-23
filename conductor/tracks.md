@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Border Asset Expansion**
+*Link: [./tracks/border_asset_expansion_20260222/](./tracks/border_asset_expansion_20260222/)*
 
 ## Archived Tracks
 - [x] **Track: Quick Info Box Extraction & Stabilization** (Completed: 2026-02-20)
