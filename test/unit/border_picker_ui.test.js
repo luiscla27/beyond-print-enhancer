@@ -74,7 +74,7 @@ describe('Border Picker UI', function() {
     assert.ok(modal, 'Modal not shown');
     
     const options = modal.querySelectorAll('.be-border-option');
-    assert.strictEqual(options.length, 8, 'Should have 8 style options');
+    assert.strictEqual(options.length, 19, 'Should have 19 style options');
     
     // Select ability_border
     const abilityOpt = Array.from(options).find(opt => opt.querySelector('.ability_border'));
