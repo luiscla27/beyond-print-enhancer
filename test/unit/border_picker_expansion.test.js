@@ -91,4 +91,31 @@ describe('Border Picker UI Expansion', function() {
         assert.ok(opt, `Option for ${style.label} (${style.id}) missing or incorrect`);
     });
   });
+
+  it('should apply a new border style when selected in the modal', async function() {
+    window.injectCloneButtons();
+    const section = document.getElementById('section-Actions');
+    const borderBtn = section.querySelector('.be-border-button');
+    
+    // Trigger click
+    borderBtn.click();
+    
+    const modal = document.querySelector('.be-modal-overlay');
+    assert.ok(modal, 'Modal not shown');
+    
+    // Select dwarf_border
+    const dwarfOpt = Array.from(modal.querySelectorAll('.be-border-option')).find(opt => 
+        opt.textContent.includes('Dwarf')
+    );
+    assert.ok(dwarfOpt, 'Dwarf option missing');
+    dwarfOpt.click();
+    
+    const okBtn = modal.querySelector('.be-modal-ok');
+    okBtn.click();
+    
+    // Wait for promise resolution
+    await new Promise(r => setTimeout(r, 50));
+    
+    assert.ok(section.classList.contains('dwarf_border'), 'Section should have dwarf_border class');
+  });
 });
