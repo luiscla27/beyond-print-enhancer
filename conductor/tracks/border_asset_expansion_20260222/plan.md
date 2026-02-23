@@ -1,4 +1,4 @@
-# Implementation Plan: Border Asset Expansion (Extension)
+# Implementation Plan: Border Asset Expansion (Extension) [checkpoint: be23537]
 
 ## Phase 1: CSS Style Definitions
 Add the new border styles to the existing CSS injection logic.
@@ -21,6 +21,6 @@ Expose the new styles in the border picker modal.
 ## Phase 3: Verification
 Ensure the extension works correctly within the existing framework.
 
-- [ ] **Task: Manual Verification of all new border styles.**
-    - [ ] Apply each border and verify visual correctness and persistence.
-- [ ] **Task: Conductor - User Manual Verification 'Border Asset Extension' (Protocol in workflow.md)**
+- [x] **Task: Manual Verification of all new border styles.** (be23537)
+    - [x] Apply each border and verify visual correctness and persistence.
+- [x] **Task: Conductor - User Manual Verification 'Border Asset Extension' (Protocol in workflow.md)** (be23537)
