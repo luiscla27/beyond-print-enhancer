@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [~] **Track: Border Asset Expansion**
+- [x] **Track: Border Asset Expansion**
 *Link: [./tracks/border_asset_expansion_20260222/](./tracks/border_asset_expansion_20260222/)*
 
 ## Archived Tracks
