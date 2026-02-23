@@ -2026,6 +2026,72 @@ function enforceFullHeight() {
             --border-img-slice: 22;
             --border-img-outset: 7px;
         }
+        .dwarf_border {
+            --border-img: url('${chrome.runtime.getURL('assets/dwarf.gif')}');
+            --border-img-width: 100px;
+            --border-img-slice: 150;
+            --border-img-outset: 30px;
+        }
+        .sticks_border {
+            --border-img: url('${chrome.runtime.getURL('assets/sticks.gif')}');
+            --border-img-width: 80px;
+            --border-img-slice: 120;
+            --border-img-outset: 20px;
+        }
+        .ornament_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament.gif')}');
+            --border-img-width: 60px;
+            --border-img-slice: 90;
+            --border-img-outset: 15px;
+        }
+        .ornament2_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament2.gif')}');
+            --border-img-width: 60px;
+            --border-img-slice: 90;
+            --border-img-outset: 15px;
+        }
+        .ornament_bold_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.gif')}');
+            --border-img-width: 80px;
+            --border-img-slice: 120;
+            --border-img-outset: 20px;
+        }
+        .ornament_bold2_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.gif')}');
+            --border-img-width: 80px;
+            --border-img-slice: 120;
+            --border-img-outset: 20px;
+        }
+        .ornament_simple_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_simple.gif')}');
+            --border-img-width: 50px;
+            --border-img-slice: 75;
+            --border-img-outset: 10px;
+        }
+        .spike_hollow_border {
+            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.gif')}');
+            --border-img-width: 80px;
+            --border-img-slice: 120;
+            --border-img-outset: 25px;
+        }
+        .spiky_border {
+            --border-img: url('${chrome.runtime.getURL('assets/spiky.gif')}');
+            --border-img-width: 100px;
+            --border-img-slice: 150;
+            --border-img-outset: 35px;
+        }
+        .spiky_bold_border {
+            --border-img: url('${chrome.runtime.getURL('assets/spiky_bold.gif')}');
+            --border-img-width: 120px;
+            --border-img-slice: 180;
+            --border-img-outset: 45px;
+        }
+        .vine_border {
+            --border-img: url('${chrome.runtime.getURL('assets/vine_holloow.gif')}');
+            --border-img-width: 90px;
+            --border-img-slice: 135;
+            --border-img-outset: 30px;
+        }
 
         @media print {
             @page {
