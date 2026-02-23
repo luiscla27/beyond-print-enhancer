@@ -7,7 +7,7 @@ Add the new border styles to the existing CSS injection logic.
     - [ ] Add the following classes to the `style.textContent` inside `enforceFullHeight`:
         - `dwarf_border`, `sticks_border`, `ornament_border`, `ornament2_border`, `ornament_bold_border`, `ornament_bold2_border`, `ornament_simple_border`, `spike_hollow_border`, `spiky_border`, `spiky_bold_border`, `vine_border`.
     - [ ] Assign appropriate `border-image-slice`, `border-image-width`, and `border-image-outset` values (using existing styles as templates).
-- [ ] **Task: Verify CSS injection.**
+- [x] **Task: Verify CSS injection.** (1c9cd65)
     - [ ] Run the extension and check if the new styles are present in the DOM.
 
 ## Phase 2: UI Integration
