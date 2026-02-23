@@ -1,0 +1,8 @@
+{
+  "track_id": "border_asset_expansion_20260222",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-22T21:35:00Z",
+  "updated_at": "2026-02-22T21:35:00Z",
+  "description": "add the newly added borders on ./assets to the border selector modal"
+}
