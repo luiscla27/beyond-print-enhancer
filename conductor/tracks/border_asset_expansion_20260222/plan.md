@@ -13,7 +13,7 @@ Add the new border styles to the existing CSS injection logic.
 ## Phase 2: UI Integration
 Expose the new styles in the border picker modal.
 
-- [ ] **Task: Update the `styles` array in `showBorderPickerModal` (`js/main.js`).**
+- [x] **Task: Update the `styles` array in `showBorderPickerModal` (`js/main.js`).** (f89c887)
     - [ ] Append the new style objects (id and label) to the existing list.
 - [ ] **Task: Verify Modal Scrollability.**
     - [ ] Ensure the modal can accommodate the increased number of options.
