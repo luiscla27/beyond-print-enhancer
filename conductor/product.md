@@ -18,7 +18,7 @@ The D&D Beyond Print Enhancer transforms the interactive, tabbed D&D Beyond char
 - **Dynamic Content Extraction:** Enables users to selectively extract specific blocks of content (e.g., individual action lists, traits, or snippets) into new floating sections via double-click, automatically hiding the original content to prevent redundancy.
 - **Quick Info Decomposition:** Automatically separates the character's core stat boxes (AC, Initiative, Speed, etc.) and ability scores into individual draggable sections for granular placement.
 - **Layout Stabilization:** Suppresses responsive site events (window resizing, React re-renders) that would otherwise disrupt custom layouts, ensuring a consistent print-ready state.
-- **Customizable Borders:** Allows users to choose between different border styles (e.g., Default, Ability, Spikes, or None) for individual sections to better define layout groups or add visual flair.
+- **Customizable Borders:** Allows users to choose between different border styles (e.g., Default, Ability, Spikes, Dwarf, or Ornament) for individual sections to better define layout groups or add visual flair.
 - **Section Merging & Nesting:** Allows users to merge floating sections into each other or append them back to specific locations on the sheet, facilitating complex custom layouts and group consolidations.
 - **Compact Mode:** Provides a toggleable condensed layout for complex sections (like Spells), reducing margins, padding, and font sizes to maximize information density on paper.
 - **Data Consolidation:** Relocates defense information (resistances, immunities) from hidden modals directly onto the combat tablet for immediate visibility.
