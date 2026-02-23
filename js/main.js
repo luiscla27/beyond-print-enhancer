@@ -2012,7 +2012,7 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
             --border-img-width: 111px;
             --border-img-slice: 166;
-            --border-img-outset: 20px;
+            --border-img-outset: 50px 35px;
         }
         .plants_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_plants.gif')}');
@@ -2024,7 +2024,7 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_box.gif')}');
             --border-img-width: 25px;
             --border-img-slice: 22;
-            --border-img-outset: 7px;
+            --border-img-outset: 7px 10px;
         }
         .dwarf_border {
             --border-img: url('${chrome.runtime.getURL('assets/dwarf.gif')}');
@@ -2034,63 +2034,63 @@ function enforceFullHeight() {
         }
         .sticks_border {
             --border-img: url('${chrome.runtime.getURL('assets/sticks.gif')}');
-            --border-img-width: 80px;
-            --border-img-slice: 120;
-            --border-img-outset: 20px;
+            --border-img-width: 90px;
+            --border-img-slice: 383;
+            --border-img-outset: 22px;
         }
         .ornament_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament.gif')}');
             --border-img-width: 60px;
-            --border-img-slice: 90;
-            --border-img-outset: 15px;
+            --border-img-slice: 255;
+            --border-img-outset: 25px;
         }
         .ornament2_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament2.gif')}');
             --border-img-width: 60px;
-            --border-img-slice: 90;
-            --border-img-outset: 15px;
+            --border-img-slice: 255;
+            --border-img-outset: 25px;
         }
         .ornament_bold_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.gif')}');
             --border-img-width: 80px;
-            --border-img-slice: 120;
-            --border-img-outset: 20px;
+            --border-img-slice: 335;
+            --border-img-outset: 25px;
         }
         .ornament_bold2_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.gif')}');
             --border-img-width: 80px;
-            --border-img-slice: 120;
-            --border-img-outset: 20px;
+            --border-img-slice: 333;
+            --border-img-outset: 24px;
         }
         .ornament_simple_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_simple.gif')}');
             --border-img-width: 50px;
-            --border-img-slice: 75;
-            --border-img-outset: 10px;
+            --border-img-slice: 255;
+            --border-img-outset: 20px;
         }
         .spike_hollow_border {
             --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.gif')}');
-            --border-img-width: 80px;
-            --border-img-slice: 120;
-            --border-img-outset: 25px;
+            --border-img-width: 100px;
+            --border-img-slice: 388;
+            --border-img-outset: 50px;
         }
         .spiky_border {
             --border-img: url('${chrome.runtime.getURL('assets/spiky.gif')}');
             --border-img-width: 100px;
-            --border-img-slice: 150;
-            --border-img-outset: 35px;
+            --border-img-slice: 388;
+            --border-img-outset: 60px;
         }
         .spiky_bold_border {
             --border-img: url('${chrome.runtime.getURL('assets/spiky_bold.gif')}');
             --border-img-width: 120px;
-            --border-img-slice: 180;
-            --border-img-outset: 45px;
+            --border-img-slice: 388;
+            --border-img-outset: 69px;
         }
         .vine_border {
             --border-img: url('${chrome.runtime.getURL('assets/vine_holloow.gif')}');
-            --border-img-width: 90px;
-            --border-img-slice: 135;
-            --border-img-outset: 30px;
+            --border-img-width: 130px;
+            --border-img-slice: 429;
+            --border-img-outset: 45px;
         }
 
         @media print {
