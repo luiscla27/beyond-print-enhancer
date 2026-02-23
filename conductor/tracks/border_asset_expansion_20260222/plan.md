@@ -15,7 +15,7 @@ Expose the new styles in the border picker modal.
 
 - [x] **Task: Update the `styles` array in `showBorderPickerModal` (`js/main.js`).** (f89c887)
     - [ ] Append the new style objects (id and label) to the existing list.
-- [ ] **Task: Verify Modal Scrollability.**
+- [x] **Task: Verify Modal Scrollability.** (6ad4679)
     - [ ] Ensure the modal can accommodate the increased number of options.
 
 ## Phase 3: Verification
