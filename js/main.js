@@ -3092,6 +3092,25 @@ async function getCharacterSpells(charId) {
     }
 }
 /**
+ * All available border style classes.
+ */
+const ALL_BORDER_STYLES = [
+    'default-border', 'no-border', 'ability_border', 'spikes_border',
+    'barbarian_border', 'goth_border', 'plants_border', 'box_border',
+    'dwarf_border', 'sticks_border', 'ornament_border', 'ornament2_border',
+    'ornament_bold_border', 'ornament_bold2_border', 'ornament_simple_border',
+    'spike_hollow_border', 'spiky_border', 'spiky_bold_border', 'vine_border'
+];
+
+/**
+ * Removes all border style classes from an element.
+ */
+function clearBorderStyles(el) {
+    if (!el) return;
+    el.classList.remove(...ALL_BORDER_STYLES);
+}
+
+/**
  * Shows a modal with an input field.
  * @returns {Promise<string|null>}
  */
@@ -4469,7 +4488,7 @@ async function applyLayout(layout) {
         if (!section) continue;
 
         // Apply border style
-        section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
+        clearBorderStyles(section);
         if (styles.borderStyle) {
             section.classList.add(styles.borderStyle);
         }
@@ -4769,15 +4788,12 @@ function injectCloneButtons(context = document) {
                 e.stopPropagation();
                 
                 // Determine current style
-                let currentStyle = 'default-border';
-                if (section.classList.contains('no-border')) currentStyle = 'no-border';
-                if (section.classList.contains('ability_border')) currentStyle = 'ability_border';
-                if (section.classList.contains('spikes_border')) currentStyle = 'spikes_border';
+                const currentStyle = ALL_BORDER_STYLES.find(s => section.classList.contains(s)) || 'default-border';
                 
                 const result = await showBorderPickerModal(currentStyle);
                 
                 if (result) {
-                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
+                    clearBorderStyles(section);
                     section.classList.add(result.style);
                     
                     updateLayoutBounds();
