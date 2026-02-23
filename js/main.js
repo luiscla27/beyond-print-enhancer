@@ -3179,7 +3179,18 @@ function showBorderPickerModal(currentStyle = 'default-border') {
             { id: 'barbarian_border', label: 'Barbarian' },
             { id: 'goth_border', label: 'Goth' },
             { id: 'plants_border', label: 'Plants' },
-            { id: 'box_border', label: 'Box' }
+            { id: 'box_border', label: 'Box' },
+            { id: 'dwarf_border', label: 'Dwarf' },
+            { id: 'sticks_border', label: 'Sticks' },
+            { id: 'ornament_border', label: 'Ornament 1' },
+            { id: 'ornament2_border', label: 'Ornament 2' },
+            { id: 'ornament_bold_border', label: 'Ornament Bold' },
+            { id: 'ornament_bold2_border', label: 'Ornament Bold 2' },
+            { id: 'ornament_simple_border', label: 'Ornament Simple' },
+            { id: 'spike_hollow_border', label: 'Spike Hollow' },
+            { id: 'spiky_border', label: 'Spiky' },
+            { id: 'spiky_bold_border', label: 'Spiky Bold' },
+            { id: 'vine_border', label: 'Vine' }
         ];
         
         let selectedStyle = currentStyle || 'default-border';
