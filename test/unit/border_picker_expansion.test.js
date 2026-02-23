@@ -11,7 +11,7 @@ const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
 const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
 const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
 
-describe('Border Picker UI', function() {
+describe('Border Picker UI Expansion', function() {
   let window, document;
 
   beforeEach(function() {
@@ -58,37 +58,42 @@ describe('Border Picker UI', function() {
     window.eval(mainJsContent);
   });
 
-  it('should inject a border button into each subsection', function() {
-    window.injectCloneButtons();
-    
-    const section = document.getElementById('section-Actions');
-    const borderBtn = section.querySelector('.be-border-button');
-    assert.ok(borderBtn, 'Border button missing');
-    assert.strictEqual(borderBtn.innerHTML, '🖼️');
-  });
+  const expectedNewStyles = [
+    { id: 'dwarf_border', label: 'Dwarf' },
+    { id: 'dwarf_hollow_border', label: 'Dwarf Hollow' },
+    { id: 'sticks_border', label: 'Sticks' },
+    { id: 'ornament_border', label: 'Ornament 1' },
+    { id: 'ornament2_border', label: 'Ornament 2' },
+    { id: 'ornament_bold_border', label: 'Ornament Bold' },
+    { id: 'ornament_bold2_border', label: 'Ornament Bold 2' },
+    { id: 'ornament_simple_border', label: 'Ornament Simple' },
+    { id: 'spike_hollow_border', label: 'Spike Hollow' },
+    { id: 'spiky_border', label: 'Spiky' },
+    { id: 'spiky_bold_border', label: 'Spiky Bold' },
+    { id: 'vine_border', label: 'Vine' }
+  ];
 
-  it('should show border picker modal and return selected style', async function() {
-    const promise = window.showBorderPickerModal('default-border');
+  it('should include all new border options in the modal', async function() {
+    // We don't need to await the promise if we just want to inspect the modal DOM
+    window.showBorderPickerModal('default-border');
     
     const modal = document.querySelector('.be-modal-overlay');
     assert.ok(modal, 'Modal not shown');
     
     const options = modal.querySelectorAll('.be-border-option');
+    // Existing 8 + new 12 = 20
     assert.strictEqual(options.length, 20, 'Should have 20 style options');
     
-    // Select ability_border
-    const abilityOpt = Array.from(options).find(opt => opt.querySelector('.ability_border'));
-    assert.ok(abilityOpt, 'Ability option missing');
-    abilityOpt.click();
-    
-    const okBtn = modal.querySelector('.be-modal-ok');
-    okBtn.click();
-    
-    const result = await promise;
-    assert.strictEqual(result.style, 'ability_border');
+    expectedNewStyles.forEach(style => {
+        const opt = Array.from(options).find(opt => 
+            opt.textContent.includes(style.label) && 
+            opt.querySelector(`.be-border-preview.${style.id}`)
+        );
+        assert.ok(opt, `Option for ${style.label} (${style.id}) missing or incorrect`);
+    });
   });
 
-  it('should apply style to section when button clicked', async function() {
+  it('should apply a new border style when selected in the modal', async function() {
     window.injectCloneButtons();
     const section = document.getElementById('section-Actions');
     const borderBtn = section.querySelector('.be-border-button');
@@ -97,18 +102,21 @@ describe('Border Picker UI', function() {
     borderBtn.click();
     
     const modal = document.querySelector('.be-modal-overlay');
-    assert.ok(modal, 'Modal not shown on button click');
+    assert.ok(modal, 'Modal not shown');
     
-    // Select spikes
-    const spikesOpt = Array.from(modal.querySelectorAll('.be-border-option')).find(opt => opt.querySelector('.spikes_border'));
-    spikesOpt.click();
+    // Select dwarf_border
+    const dwarfOpt = Array.from(modal.querySelectorAll('.be-border-option')).find(opt => 
+        opt.textContent.includes('Dwarf')
+    );
+    assert.ok(dwarfOpt, 'Dwarf option missing');
+    dwarfOpt.click();
     
     const okBtn = modal.querySelector('.be-modal-ok');
     okBtn.click();
     
-    // Wait for promise resolution in main.js
+    // Wait for promise resolution
     await new Promise(r => setTimeout(r, 50));
     
-    assert.ok(section.classList.contains('spikes_border'), 'Section should have spikes_border class');
+    assert.ok(section.classList.contains('dwarf_border'), 'Section should have dwarf_border class');
   });
 });

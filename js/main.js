@@ -2012,7 +2012,7 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
             --border-img-width: 111px;
             --border-img-slice: 166;
-            --border-img-outset: 20px;
+            --border-img-outset: 50px 35px;
         }
         .plants_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_plants.gif')}');
@@ -2024,7 +2024,79 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_box.gif')}');
             --border-img-width: 25px;
             --border-img-slice: 22;
-            --border-img-outset: 7px;
+            --border-img-outset: 7px 10px;
+        }
+        .dwarf_border {
+            --border-img: url('${chrome.runtime.getURL('assets/dwarf.gif')}');
+            --border-img-width: 205px;
+            --border-img-slice: 400;
+            --border-img-outset: 173px;
+        }
+        .dwarf_hollow_border {
+            --border-img: url('${chrome.runtime.getURL('assets/dwarf_hollow.gif')}');
+            --border-img-width: 205px;
+            --border-img-slice: 400;
+            --border-img-outset: 173px;
+        }
+        .sticks_border {
+            --border-img: url('${chrome.runtime.getURL('assets/sticks.gif')}');
+            --border-img-width: 90px;
+            --border-img-slice: 383;
+            --border-img-outset: 22px;
+        }
+        .ornament_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament.gif')}');
+            --border-img-width: 60px;
+            --border-img-slice: 255;
+            --border-img-outset: 25px;
+        }
+        .ornament2_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament2.gif')}');
+            --border-img-width: 60px;
+            --border-img-slice: 255;
+            --border-img-outset: 25px;
+        }
+        .ornament_bold_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.gif')}');
+            --border-img-width: 80px;
+            --border-img-slice: 335;
+            --border-img-outset: 25px;
+        }
+        .ornament_bold2_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.gif')}');
+            --border-img-width: 80px;
+            --border-img-slice: 333;
+            --border-img-outset: 24px;
+        }
+        .ornament_simple_border {
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_simple.gif')}');
+            --border-img-width: 50px;
+            --border-img-slice: 255;
+            --border-img-outset: 20px;
+        }
+        .spike_hollow_border {
+            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.gif')}');
+            --border-img-width: 100px;
+            --border-img-slice: 388;
+            --border-img-outset: 50px;
+        }
+        .spiky_border {
+            --border-img: url('${chrome.runtime.getURL('assets/spiky.gif')}');
+            --border-img-width: 100px;
+            --border-img-slice: 388;
+            --border-img-outset: 60px;
+        }
+        .spiky_bold_border {
+            --border-img: url('${chrome.runtime.getURL('assets/spiky_bold.gif')}');
+            --border-img-width: 120px;
+            --border-img-slice: 388;
+            --border-img-outset: 69px;
+        }
+        .vine_border {
+            --border-img: url('${chrome.runtime.getURL('assets/vine_holloow.gif')}');
+            --border-img-width: 130px;
+            --border-img-slice: 429;
+            --border-img-outset: 45px;
         }
 
         @media print {
@@ -2485,9 +2557,12 @@ function enforceFullHeight() {
         /* Border Picker Styles */
         .be-border-options {
             display: flex;
+            flex-wrap: wrap;
             gap: 15px;
-            overflow: auto;
+            overflow-y: auto;
+            max-height: 400px;
             margin: 20px 0;
+            justify-content: center;
         }
         .be-border-option {
             cursor: pointer;
@@ -3023,6 +3098,25 @@ async function getCharacterSpells(charId) {
     }
 }
 /**
+ * All available border style classes.
+ */
+const ALL_BORDER_STYLES = [
+    'default-border', 'no-border', 'ability_border', 'spikes_border',
+    'barbarian_border', 'goth_border', 'plants_border', 'box_border',
+    'dwarf_border', 'dwarf_hollow_border', 'sticks_border', 'ornament_border', 'ornament2_border',
+    'ornament_bold_border', 'ornament_bold2_border', 'ornament_simple_border',
+    'spike_hollow_border', 'spiky_border', 'spiky_bold_border', 'vine_border'
+];
+
+/**
+ * Removes all border style classes from an element.
+ */
+function clearBorderStyles(el) {
+    if (!el) return;
+    el.classList.remove(...ALL_BORDER_STYLES);
+}
+
+/**
  * Shows a modal with an input field.
  * @returns {Promise<string|null>}
  */
@@ -3113,7 +3207,19 @@ function showBorderPickerModal(currentStyle = 'default-border') {
             { id: 'barbarian_border', label: 'Barbarian' },
             { id: 'goth_border', label: 'Goth' },
             { id: 'plants_border', label: 'Plants' },
-            { id: 'box_border', label: 'Box' }
+            { id: 'box_border', label: 'Box' },
+            { id: 'dwarf_border', label: 'Dwarf' },
+            { id: 'dwarf_hollow_border', label: 'Dwarf Hollow' },
+            { id: 'sticks_border', label: 'Sticks' },
+            { id: 'ornament_border', label: 'Ornament 1' },
+            { id: 'ornament2_border', label: 'Ornament 2' },
+            { id: 'ornament_bold_border', label: 'Ornament Bold' },
+            { id: 'ornament_bold2_border', label: 'Ornament Bold 2' },
+            { id: 'ornament_simple_border', label: 'Ornament Simple' },
+            { id: 'spike_hollow_border', label: 'Spike Hollow' },
+            { id: 'spiky_border', label: 'Spiky' },
+            { id: 'spiky_bold_border', label: 'Spiky Bold' },
+            { id: 'vine_border', label: 'Vine' }
         ];
         
         let selectedStyle = currentStyle || 'default-border';
@@ -4389,7 +4495,7 @@ async function applyLayout(layout) {
         if (!section) continue;
 
         // Apply border style
-        section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
+        clearBorderStyles(section);
         if (styles.borderStyle) {
             section.classList.add(styles.borderStyle);
         }
@@ -4689,15 +4795,12 @@ function injectCloneButtons(context = document) {
                 e.stopPropagation();
                 
                 // Determine current style
-                let currentStyle = 'default-border';
-                if (section.classList.contains('no-border')) currentStyle = 'no-border';
-                if (section.classList.contains('ability_border')) currentStyle = 'ability_border';
-                if (section.classList.contains('spikes_border')) currentStyle = 'spikes_border';
+                const currentStyle = ALL_BORDER_STYLES.find(s => section.classList.contains(s)) || 'default-border';
                 
                 const result = await showBorderPickerModal(currentStyle);
                 
                 if (result) {
-                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
+                    clearBorderStyles(section);
                     section.classList.add(result.style);
                     
                     updateLayoutBounds();
