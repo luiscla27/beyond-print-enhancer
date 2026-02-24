@@ -2262,6 +2262,23 @@ function enforceFullHeight() {
             box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
 
+        .print-shape-container {
+            background-color: transparent !important;
+            border-width: 0;
+            border-style: solid;
+            pointer-events: auto;
+        }
+        .print-shape-container .print-section-content {
+            background-color: transparent !important;
+        }
+        .print-shape-container .print-section-header {
+            opacity: 0;
+            background-color: rgba(197, 49, 49, 0.5) !important;
+        }
+        .print-shape-container:hover .print-section-header {
+            opacity: 1;
+        }
+
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
             font-size: 8px !important;
@@ -2858,6 +2875,125 @@ function renderClonedSection(snapshot) {
     
     return container;
 }
+
+/**
+ * Creates a floating decorative shape.
+ */
+function createShape(assetPath, restoreData = null) {
+    const id = restoreData ? restoreData.id : `shape-${Date.now()}`;
+    const content = document.createElement('div');
+    content.className = 'be-shape-content';
+    
+    // Create container using the existing helper
+    const container = createDraggableContainer('', content, id);
+    container.classList.add('print-shape-container', 'be-shape');
+    
+    // Initial size
+    container.style.width = '200px';
+    container.style.height = '200px';
+    
+    // Removal logic (specific for shapes)
+    const actionContainer = getOrCreateActionContainer(container);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'be-shape-delete';
+    deleteBtn.innerHTML = '🗑️';
+    deleteBtn.title = 'Delete Shape';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm('Delete this shape?')) {
+            container.remove();
+            showFeedback('Shape deleted');
+            updateLayoutBounds();
+        }
+    };
+    actionContainer.appendChild(deleteBtn);
+
+    // Asset Application
+    container.dataset.assetPath = assetPath;
+    applyShapeAsset(container, assetPath);
+    
+    // Z-Index Management (at least 100 higher than sections)
+    let maxZ = 110;
+    document.querySelectorAll('.print-section-container').forEach(el => {
+        // Only count sections, not other shapes for the base 110 offset
+        if (!el.classList.contains('print-shape-container')) {
+            const z = parseInt(el.style.zIndex) || 10;
+            if (z > maxZ - 100) maxZ = z + 100;
+        } else {
+            // But shapes should also stack on top of each other
+            const z = parseInt(el.style.zIndex) || 110;
+            if (z > maxZ) maxZ = z;
+        }
+    });
+    container.style.zIndex = maxZ + 1;
+    
+    // Restore saved state
+    if (restoreData) {
+        if (restoreData.styles) {
+            Object.assign(container.style, restoreData.styles);
+        }
+        if (restoreData.width) container.style.width = restoreData.width;
+        if (restoreData.height) container.style.height = restoreData.height;
+        if (restoreData.left) container.style.left = restoreData.left;
+        if (restoreData.top) container.style.top = restoreData.top;
+        if (restoreData.zIndex) container.style.zIndex = restoreData.zIndex;
+    } else {
+        container.style.left = '50px';
+        container.style.top = '50px';
+    }
+    
+    const layoutRoot = document.getElementById('print-layout-wrapper');
+    if (layoutRoot) {
+        layoutRoot.appendChild(container);
+    }
+    
+    // Re-init resize logic
+    if (window.initResizeLogic) window.initResizeLogic();
+    
+    return container;
+}
+
+/**
+ * Helper to apply asset to a shape container via class or inline style.
+ */
+function applyShapeAsset(container, assetPath) {
+    // Map of assets to existing border classes
+    const assetToClassMap = {
+        'assets/border_ability.gif': 'ability_border',
+        'assets/border_spikes.gif': 'spikes_border',
+        'assets/border_barbarian.gif': 'barbarian_border',
+        'assets/border_goth1.gif': 'goth_border',
+        'assets/border_plants.gif': 'plants_border',
+        'assets/border_box.gif': 'box_border',
+        'assets/dwarf.gif': 'dwarf_border',
+        'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
+        'assets/sticks.gif': 'sticks_border',
+        'assets/ornament.gif': 'ornament_border',
+        'assets/ornament2.gif': 'ornament2_border',
+        'assets/ornament_bold.gif': 'ornament_bold_border',
+        'assets/ornament_bold2.gif': 'ornament_bold2_border',
+        'assets/ornament_simple.gif': 'ornament_simple_border',
+        'assets/spike_hollow.gif': 'spike_hollow_border',
+        'assets/spiky.gif': 'spiky_border',
+        'assets/spiky_bold.gif': 'spiky_bold_border',
+        'assets/vine_holloow.gif': 'vine_border',
+        'assets/border_default.png': 'default-border'
+    };
+
+    const className = assetToClassMap[assetPath];
+    if (className) {
+        container.classList.add(className);
+    } else {
+        // Generic handling for new assets in assets/shapes/
+        container.style.borderStyle = 'solid';
+        container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+        container.style.borderImageSlice = '33'; // Default slice
+        container.style.borderImageWidth = '28px'; // Default width
+        container.style.borderImageOutset = '16px'; // Default outset
+        container.style.borderImageRepeat = 'round';
+    }
+}
+
 /**
  * Creates and manages a floating spell detail section.
  */
@@ -3343,19 +3479,35 @@ function initZIndexManagement() {
     if (!container) return;
 
     container.addEventListener('mousedown', (e) => {
-        const section = e.target.closest('.print-section-container');
-        if (!section) return;
+        const clickedEl = e.target.closest('.print-section-container');
+        if (!clickedEl) return;
 
-        // Find max z-index
-        const allSections = document.querySelectorAll('.print-section-container');
-        let maxZ = 10;
-        allSections.forEach(el => {
+        const isShape = clickedEl.classList.contains('print-shape-container');
+        const allElements = document.querySelectorAll('.print-section-container');
+        
+        let maxSectionZ = 10;
+        let maxShapeZ = 110;
+
+        allElements.forEach(el => {
             const z = parseInt(window.getComputedStyle(el).zIndex) || 10;
-            if (z > maxZ) maxZ = z;
+            if (el.classList.contains('print-shape-container')) {
+                if (z > maxShapeZ) maxShapeZ = z;
+            } else {
+                if (z > maxSectionZ) maxSectionZ = z;
+            }
         });
 
-        // Set clicked section to max + 1
-        section.style.zIndex = maxZ + 1;
+        if (isShape) {
+            // Shapes always on top of sections and front of other shapes
+            clickedEl.style.zIndex = Math.max(maxShapeZ, maxSectionZ + 100) + 1;
+        } else {
+            // Sections stay below shapes (usually < 110)
+            clickedEl.style.zIndex = maxSectionZ + 1;
+            
+            // Defensive: if section z-index reaches the shape threshold (110)
+            // we might need to cap it or rebase, but for now we'll just keep it simple.
+            // Most characters won't have 100 sections.
+        }
     });
 }
 
@@ -5048,6 +5200,8 @@ function injectCompactStyles() {
     window.handleManageClones = handleManageClones;
     window.captureSectionSnapshot = captureSectionSnapshot;
     window.renderClonedSection = renderClonedSection;
+    window.createShape = createShape;
+    window.applyShapeAsset = applyShapeAsset;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
