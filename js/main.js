@@ -2273,10 +2273,27 @@ function enforceFullHeight() {
         }
         .print-shape-container .print-section-header {
             opacity: 0;
-            background-color: rgba(197, 49, 49, 0.5) !important;
+            background-color: rgba(40, 167, 69, 0.5) !important;
         }
         .print-shape-container:hover .print-section-header {
             opacity: 1;
+        }
+
+        /* Shapes Mode Active State */
+        body.be-shapes-mode-active .print-section-container:not(.be-shape) {
+            pointer-events: none !important;
+            opacity: 0.4 !important;
+        }
+        body.be-shapes-mode-active .print-shape-container {
+            /* Ensure shapes are fully visible and interactive */
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.3));
+        }
+        body.be-shapes-mode-active .be-shapes-mode-btn {
+            background-color: #28a745 !important;
+            border-color: #fff !important;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
         }
 
         ${s.UI.PRINT_CONTAINER}, 
@@ -2436,6 +2453,9 @@ function enforceFullHeight() {
             opacity: 1;
             background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
         }
+        .print-shape-container:hover .print-section-resize-handle {
+            background: linear-gradient(135deg, transparent 50%, rgba(40, 167, 69, 0.8) 50%) !important;
+        }
 
         /* Skills specific compact logic (already mostly covered by global above) */
         ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
@@ -2494,6 +2514,12 @@ function enforceFullHeight() {
         .be-section-actions button:hover {
             background-color: var(--btn-color-highlight);
         }
+        .be-shape .be-section-actions button {
+            background-color: #28a745 !important;
+        }
+        .be-shape .be-section-actions button:hover {
+            background-color: #218838 !important;
+        }
         .be-clone-button {
             font-size: 21px !important;
         }
@@ -2501,7 +2527,7 @@ function enforceFullHeight() {
             background: #cc0000 !important;
         }
         .be-shape-delete:hover {
-            background: #cc0000 !important;
+            background: #1e7e34 !important;
         }
         @media print {
             .be-section-actions {
