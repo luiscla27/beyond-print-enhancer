@@ -17,13 +17,13 @@
 - [x] Task: Add "Delete" icon functionality specifically for shapes. (85b0f46)
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Core Logic Implementation' (Protocol in workflow.md) (1d423f7)
 
-## Phase 3: UI & Interaction (TDD)
+## Phase 3: UI & Interaction (TDD) [checkpoint: 092de7c]
 - [x] Task: Create `showShapePickerModal()` function in `js/main.js` (modeled after `showBorderPickerModal`). (03b3484)
     - Should list assets from `assets/shapes/` and all existing borders.
 - [x] Task: Add "Add Shape" button to `print-enhance-controls` panel in `main.js`. (a03ff51)
     - Clicking it should open the `showShapePickerModal` and then call `createShape`.
 - [x] Task: Implement CSS styles for `.print-shape-container` and the delete icon. (63c86da)
-- [~] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md) (092de7c)
 
 ## Phase 4: Persistence & Stabilization
 - [ ] Task: Update `scanLayout()` to capture and return shape data (id, pos, size, asset).
