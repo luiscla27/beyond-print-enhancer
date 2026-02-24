@@ -128,6 +128,7 @@ class DomManager {
                 QUICK_INFO_HEALTH: '.ct-quick-info__health',
                 PORTRAIT: '.ddbc-character-avatar__portrait',
                 PRINT_CONTAINER: '.print-section-container',
+                SHAPE_CONTAINER: '.print-shape-container',
                 COMPACT_MODE: '.be-compact-mode',
                 SIDEBAR_INNER: '.ct-sidebar__inner',
                 CHARACTER_SHEET: '.ct-character-sheet',
