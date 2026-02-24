@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Shape Decoration Feature**
+  *Link: [./tracks/shape_decoration_20260223/](./tracks/shape_decoration_20260223/)*
 
 ## Archived Tracks
 - [x] **Track: Border Asset Expansion** (Completed: 2026-02-22)
