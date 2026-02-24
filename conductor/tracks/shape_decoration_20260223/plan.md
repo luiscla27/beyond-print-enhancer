@@ -1,6 +1,6 @@
 # Implementation Plan - Add "Shape" Decoration Feature
 
-## Phase 1: Infrastructure & Assets
+## Phase 1: Infrastructure & Assets [checkpoint: d2ff2c0]
 - [x] Task: Create `assets/shapes/` directory. (b9763b4)
 - [x] Task: Update `manifest.json` `web_accessible_resources` to include `assets/shapes/*`. (7ac4854)
 - [x] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include selectors for shapes. (54c636e)
