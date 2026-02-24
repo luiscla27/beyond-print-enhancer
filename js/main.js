@@ -3959,6 +3959,7 @@ function createControls() {
                 showFeedback('Shape added');
             }
         }},
+        { label: 'Shapes Mode', icon: '🔒', className: 'be-shapes-mode-btn', action: () => toggleShapesMode() },
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
@@ -3979,6 +3980,7 @@ function createControls() {
 
     buttons.forEach(btnInfo => {
         const btn = document.createElement('button');
+        if (btnInfo.className) btn.className = btnInfo.className;
         btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
         btn.style.backgroundColor = btnInfo.bgColor || '#333';
         btn.style.color = 'white';
