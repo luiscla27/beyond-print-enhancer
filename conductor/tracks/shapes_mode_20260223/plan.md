@@ -1,7 +1,7 @@
 # Implementation Plan - Add "Shapes Mode" Feature
 
 ## Phase 1: Infrastructure & CSS
-- [ ] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include `selectors.UI.SHAPES_MODE_BTN = '.be-shapes-mode-btn'`.
+- [x] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include `selectors.UI.SHAPES_MODE_BTN = '.be-shapes-mode-btn'`. (7d7c9ca)
 - [ ] Task: Implement global CSS for Shapes Mode in `js/main.js`.
     - Add `.be-shapes-mode-active` styles to the main style tag.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & CSS' (Protocol in workflow.md)
