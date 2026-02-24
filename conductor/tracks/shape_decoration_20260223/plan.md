@@ -7,7 +7,7 @@
     - Add `selectors.UI.SHAPE_CONTAINER = '.print-shape-container'`
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Assets' (Protocol in workflow.md) (d2ff2c0)
 
-## Phase 2: Core Logic Implementation (TDD)
+## Phase 2: Core Logic Implementation (TDD) [checkpoint: 1d423f7]
 - [x] Task: Implement `createShape(assetPath, restoreData)` in `js/main.js`. (63c86da)
     - Should return a resizable, draggable `DIV` with `.print-shape-container` and `.be-shape` classes.
     - Content should be empty.
@@ -15,7 +15,7 @@
 - [x] Task: Update `initZIndexManagement` to distinguish between sections and shapes. (63c86da)
     - Shapes must maintain a z-index at least 100 higher than the highest section.
 - [x] Task: Add "Delete" icon functionality specifically for shapes. (85b0f46)
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Core Logic Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Logic Implementation' (Protocol in workflow.md) (1d423f7)
 
 ## Phase 3: UI & Interaction (TDD)
 - [ ] Task: Create `showShapePickerModal()` function in `js/main.js` (modeled after `showBorderPickerModal`).
