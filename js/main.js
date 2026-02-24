@@ -3429,6 +3429,157 @@ function showBorderPickerModal(currentStyle = 'default-border') {
 }
 
 /**
+ * Shows a modal to pick a decorative shape or border asset.
+ * @returns {Promise<{assetPath: string}|null>}
+ */
+function showShapePickerModal(currentAsset = '') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        modal.style.width = '550px';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Select Decorative Shape';
+        modal.appendChild(h3);
+        
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'be-border-options';
+        optionsContainer.style.maxHeight = '400px';
+        optionsContainer.style.overflowY = 'auto';
+        
+        const assets = [
+            // Custom Shapes (Planned for assets/shapes/)
+            { path: 'assets/shapes/dwarf.gif', label: 'Dwarf (Shape)' },
+            { path: 'assets/shapes/ornament.gif', label: 'Ornament (Shape)' },
+            // Standard Borders
+            { path: 'assets/border_default.png', label: 'Default' },
+            { path: 'assets/border_ability.gif', label: 'Ability' },
+            { path: 'assets/border_spikes.gif', label: 'Spikes' },
+            { path: 'assets/border_barbarian.gif', label: 'Barbarian' },
+            { path: 'assets/border_goth1.gif', label: 'Goth' },
+            { path: 'assets/border_plants.gif', label: 'Plants' },
+            { path: 'assets/border_box.gif', label: 'Box' },
+            { path: 'assets/dwarf.gif', label: 'Dwarf' },
+            { path: 'assets/dwarf_hollow.gif', label: 'Dwarf Hollow' },
+            { path: 'assets/sticks.gif', label: 'Sticks' },
+            { path: 'assets/ornament.gif', label: 'Ornament 1' },
+            { path: 'assets/ornament2.gif', label: 'Ornament 2' },
+            { path: 'assets/ornament_bold.gif', label: 'Ornament Bold' },
+            { path: 'assets/ornament_bold2.gif', label: 'Ornament Bold 2' },
+            { path: 'assets/ornament_simple.gif', label: 'Ornament Simple' },
+            { path: 'assets/spike_hollow.gif', label: 'Spike Hollow' },
+            { path: 'assets/spiky.gif', label: 'Spiky' },
+            { path: 'assets/spiky_bold.gif', label: 'Spiky Bold' },
+            { path: 'assets/vine_holloow.gif', label: 'Vine' }
+        ];
+        
+        let selectedAsset = currentAsset || assets[0].path;
+        const optionEls = [];
+
+        assets.forEach(asset => {
+            const opt = document.createElement('div');
+            opt.className = 'be-border-option';
+            if (selectedAsset === asset.path) opt.classList.add('selected');
+            
+            const preview = document.createElement('div');
+            preview.className = `be-border-preview`;
+            // Manually apply border-image for preview since we don't have classes for all
+            // Note: Reuse existing classes if they map to the path
+            const assetToClassMap = {
+                'assets/border_ability.gif': 'ability_border',
+                'assets/border_spikes.gif': 'spikes_border',
+                'assets/border_barbarian.gif': 'barbarian_border',
+                'assets/border_goth1.gif': 'goth_border',
+                'assets/border_plants.gif': 'plants_border',
+                'assets/border_box.gif': 'box_border',
+                'assets/dwarf.gif': 'dwarf_border',
+                'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
+                'assets/sticks.gif': 'sticks_border',
+                'assets/ornament.gif': 'ornament_border',
+                'assets/ornament2.gif': 'ornament2_border',
+                'assets/ornament_bold.gif': 'ornament_bold_border',
+                'assets/ornament_bold2.gif': 'ornament_bold2_border',
+                'assets/ornament_simple.gif': 'ornament_simple_border',
+                'assets/spike_hollow.gif': 'spike_hollow_border',
+                'assets/spiky.gif': 'spiky_border',
+                'assets/spiky_bold.gif': 'spiky_bold_border',
+                'assets/vine_holloow.gif': 'vine_border',
+                'assets/border_default.png': 'default-border'
+            };
+            const className = assetToClassMap[asset.path];
+            if (className) {
+                preview.classList.add(className);
+            } else {
+                preview.style.borderStyle = 'solid';
+                preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                preview.style.borderImageSlice = '33';
+                preview.style.borderImageWidth = '20px';
+            }
+            
+            opt.appendChild(preview);
+            
+            const label = document.createElement('div');
+            label.textContent = asset.label;
+            label.style.fontSize = '12px';
+            opt.appendChild(label);
+            
+            opt.onclick = () => {
+                optionEls.forEach(el => el.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedAsset = asset.path;
+            };
+            
+            optionEls.push(opt);
+            optionsContainer.appendChild(opt);
+        });
+        
+        modal.appendChild(optionsContainer);
+        
+        const actions = document.createElement('div');
+        actions.className = 'be-modal-actions';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        actions.appendChild(cancelBtn);
+        
+        const okBtn = document.createElement('button');
+        okBtn.className = 'be-modal-ok';
+        okBtn.textContent = 'Add Shape';
+        okBtn.onclick = () => {
+            overlay.remove();
+            resolve({
+                assetPath: selectedAsset
+            });
+        };
+        actions.appendChild(okBtn);
+        
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Handle Esc
+        window.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                cancelBtn.click();
+                window.removeEventListener('keydown', escHandler);
+            }
+            if (e.key === 'Enter') {
+                okBtn.click();
+                window.removeEventListener('keydown', escHandler);
+            }
+        });
+    });
+}
+
+/**
  * Initializes ResizeObserver to scale content to fit its container.
  */
 function initResponsiveScaling() {
@@ -5197,6 +5348,7 @@ function injectCompactStyles() {
     window.showFallbackModal = showFallbackModal;
     window.showInputModal = showInputModal;
     window.showBorderPickerModal = showBorderPickerModal;
+    window.showShapePickerModal = showShapePickerModal;
     window.handleManageClones = handleManageClones;
     window.captureSectionSnapshot = captureSectionSnapshot;
     window.renderClonedSection = renderClonedSection;
