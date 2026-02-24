@@ -14,7 +14,7 @@
     - Style should include `border-image` properties matching the selected asset.
 - [x] Task: Update `initZIndexManagement` to distinguish between sections and shapes. (63c86da)
     - Shapes must maintain a z-index at least 100 higher than the highest section.
-- [ ] Task: Add "Delete" icon functionality specifically for shapes.
+- [x] Task: Add "Delete" icon functionality specifically for shapes. (85b0f46)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Logic Implementation' (Protocol in workflow.md)
 
 ## Phase 3: UI & Interaction (TDD)
