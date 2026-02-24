@@ -31,3 +31,6 @@
 - [x] Task: Update `SCHEMA_VERSION` in `js/main.js` to `1.4.0` (or appropriate increment). (e2c2395)
 - [x] Task: Ensure shapes are correctly handled during `autoArrangeSections` (they should probably be ignored or handled separately to stay floating). (e2c2395)
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Persistence & Stabilization' (Protocol in workflow.md) (1f7ed8d)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions (1a2f9be)
