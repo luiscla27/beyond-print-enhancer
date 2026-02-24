@@ -7,12 +7,12 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & CSS' (Protocol in workflow.md) (3c3a761)
 
 ## Phase 2: Logic & UI Implementation (TDD)
-- [ ] Task: Implement `toggleShapesMode(forceState)` in `js/main.js`.
+- [x] Task: Implement `toggleShapesMode(forceState)` in `js/main.js`. (ebf2393)
     - Should toggle `.be-shapes-mode-active` class on `document.body`.
     - Should update the toggle button's appearance.
-- [ ] Task: Add "Shapes Mode" button to `print-enhance-controls` panel in `main.js`.
+- [x] Task: Add "Shapes Mode" button to `print-enhance-controls` panel in `main.js`. (31b84d0)
     - Clicking it should call `toggleShapesMode()`.
-- [ ] Task: Initialize Shapes Mode to **ON** by default in the main execution IIFE.
+- [x] Task: Initialize Shapes Mode to **ON** by default in the main execution IIFE. (8e97dcd)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Logic & UI Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Verification & Polish
