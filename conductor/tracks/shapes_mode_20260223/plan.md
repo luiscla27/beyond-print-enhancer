@@ -13,7 +13,7 @@
 - [x] Task: Add "Shapes Mode" button to `print-enhance-controls` panel in `main.js`. (31b84d0)
     - Clicking it should call `toggleShapesMode()`.
 - [x] Task: Initialize Shapes Mode to **ON** by default in the main execution IIFE. (8e97dcd)
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Logic & UI Implementation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Logic & UI Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Verification & Polish
 - [ ] Task: Ensure Shapes Mode correctly interacts with existing features (cloning, extraction).
