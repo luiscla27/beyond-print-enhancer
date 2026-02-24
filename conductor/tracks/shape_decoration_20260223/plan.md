@@ -18,7 +18,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Core Logic Implementation' (Protocol in workflow.md) (1d423f7)
 
 ## Phase 3: UI & Interaction (TDD)
-- [ ] Task: Create `showShapePickerModal()` function in `js/main.js` (modeled after `showBorderPickerModal`).
+- [x] Task: Create `showShapePickerModal()` function in `js/main.js` (modeled after `showBorderPickerModal`). (03b3484)
     - Should list assets from `assets/shapes/` and all existing borders.
 - [ ] Task: Add "Add Shape" button to `print-enhance-controls` panel in `main.js`.
     - Clicking it should open the `showShapePickerModal` and then call `createShape`.
