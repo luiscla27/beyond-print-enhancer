@@ -5495,5 +5495,8 @@ function injectCompactStyles() {
     if (!layoutRestored) {
         applyDefaultLayout();
     }
+
+    // Default to Shapes Mode ON
+    toggleShapesMode(true);
 })();
 })();
