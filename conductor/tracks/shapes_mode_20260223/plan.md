@@ -16,6 +16,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Logic & UI Implementation' (Protocol in workflow.md) (265da37)
 
 ## Phase 3: Verification & Polish
-- [ ] Task: Ensure Shapes Mode correctly interacts with existing features (cloning, extraction).
+- [~] Task: Ensure Shapes Mode correctly interacts with existing features (cloning, extraction).
 - [ ] Task: Verify that shapes added while in mode are immediately interactive.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Verification & Polish' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Verification & Polish' (Protocol in workflow.md)
