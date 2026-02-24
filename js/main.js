@@ -3024,6 +3024,21 @@ function applyShapeAsset(container, assetPath) {
 }
 
 /**
+ * Toggles the interaction mode between "Full Edit" and "Shapes Only".
+ * @param {boolean} forceState Optional: Force ON (true) or OFF (false).
+ */
+function toggleShapesMode(forceState) {
+    const activeClass = 'be-shapes-mode-active';
+    const isActive = forceState !== undefined ? !forceState : document.body.classList.contains(activeClass);
+    
+    if (isActive) {
+        document.body.classList.remove(activeClass);
+    } else {
+        document.body.classList.add(activeClass);
+    }
+}
+
+/**
  * Creates and manages a floating spell detail section.
  */
 async function createSpellDetailSection(spellName, coords, restoreData = null) {
@@ -5393,6 +5408,7 @@ function injectCompactStyles() {
     window.removeSpecificSvgs = removeSpecificSvgs;
     window.drawPageSeparators = drawPageSeparators;
     window.moveQuickInfo = moveQuickInfo;
+    window.toggleShapesMode = toggleShapesMode;
     window.suppressResizeEvents = suppressResizeEvents;
     window.separateAbilities = separateAbilities;
     window.separateQuickInfoBoxes = separateQuickInfoBoxes;
