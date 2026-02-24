@@ -82,6 +82,8 @@ describe('Shape Logic', function() {
         
         const wrapper = document.getElementById('print-layout-wrapper');
         assert.strictEqual(shape.parentElement, wrapper, 'Shape should be child of layout wrapper');
+        assert.strictEqual(shape.style.left, '50px', 'Initial left should be 50px');
+        assert.strictEqual(shape.style.top, '160px', 'Initial top should be 160px');
     });
 
     it('should restore from data if provided', function() {
