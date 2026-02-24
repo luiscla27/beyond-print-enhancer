@@ -22,7 +22,7 @@
     - Should list assets from `assets/shapes/` and all existing borders.
 - [x] Task: Add "Add Shape" button to `print-enhance-controls` panel in `main.js`. (a03ff51)
     - Clicking it should open the `showShapePickerModal` and then call `createShape`.
-- [ ] Task: Implement CSS styles for `.print-shape-container` and the delete icon.
+- [x] Task: Implement CSS styles for `.print-shape-container` and the delete icon. (63c86da)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md)
 
 ## Phase 4: Persistence & Stabilization
