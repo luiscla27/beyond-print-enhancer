@@ -23,7 +23,7 @@
 - [x] Task: Add "Add Shape" button to `print-enhance-controls` panel in `main.js`. (a03ff51)
     - Clicking it should open the `showShapePickerModal` and then call `createShape`.
 - [x] Task: Implement CSS styles for `.print-shape-container` and the delete icon. (63c86da)
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md)
 
 ## Phase 4: Persistence & Stabilization
 - [ ] Task: Update `scanLayout()` to capture and return shape data (id, pos, size, asset).

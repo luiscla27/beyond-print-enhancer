@@ -2500,6 +2500,9 @@ function enforceFullHeight() {
         .be-clone-delete:hover {
             background: #cc0000 !important;
         }
+        .be-shape-delete:hover {
+            background: #cc0000 !important;
+        }
         @media print {
             .be-section-actions {
                 display: none !important;

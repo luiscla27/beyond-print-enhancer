@@ -171,4 +171,31 @@ describe('Shape Logic', function() {
         assert.ok(parseInt(shape1.style.zIndex) > parseInt(shape2.style.zIndex), 'Shape 1 should now be in front of Shape 2');
     });
   });
+
+  describe('showShapePickerModal', function() {
+    it('should open a modal and resolve with selected asset', async function() {
+        if (typeof window.showShapePickerModal !== 'function') {
+            assert.fail('window.showShapePickerModal is not defined');
+        }
+
+        const promise = window.showShapePickerModal();
+        
+        // Check if modal exists in DOM
+        const overlay = document.querySelector('.be-modal-overlay');
+        assert.ok(overlay, 'Modal overlay not found');
+        
+        const okBtn = overlay.querySelector('.be-modal-ok');
+        assert.ok(okBtn, 'OK button not found');
+        
+        // Select an option (first one)
+        const option = overlay.querySelector('.be-border-option');
+        assert.ok(option, 'Border options not found');
+        option.click();
+        
+        okBtn.click();
+        
+        const result = await promise;
+        assert.ok(result && result.assetPath, 'Result should contain assetPath');
+    });
+  });
 });
