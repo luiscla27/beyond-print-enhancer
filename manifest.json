@@ -31,7 +31,8 @@
     {
       "resources": [
         "assets/*.gif",
-        "assets/*.png"
+        "assets/*.png",
+        "assets/shapes/*"
       ],
       "matches": [
         "https://www.dndbeyond.com/*"
