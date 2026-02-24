@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Shapes Mode Feature**
+  *Link: [./tracks/shapes_mode_20260223/](./tracks/shapes_mode_20260223/)*
 
 ## Archived Tracks
 - [x] **Track: Shape Decoration Feature** (Completed: 2026-02-23)
