@@ -1,7 +1,7 @@
 # Implementation Plan - Add "Shape" Decoration Feature
 
 ## Phase 1: Infrastructure & Assets
-- [ ] Task: Create `assets/shapes/` directory.
+- [x] Task: Create `assets/shapes/` directory. (b9763b4)
 - [ ] Task: Update `manifest.json` `web_accessible_resources` to include `assets/shapes/*`.
 - [ ] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include selectors for shapes.
     - Add `selectors.UI.SHAPE_CONTAINER = '.print-shape-container'`
