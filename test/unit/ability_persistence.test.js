@@ -24,7 +24,7 @@ describe('Ability Persistence', function() {
           </div>
           <div class="ct-quick-info">
               <div class="ct-quick-info__ability ct-quick-info__ability--str">
-                  <div class="ct-quick-info__ability-name">STR</div>
+                  <div class="ct-quick-info__ability-name">Ability 1</div>
                   <div class="ct-quick-info__ability-value">18</div>
               </div>
           </div>
@@ -59,24 +59,24 @@ describe('Ability Persistence', function() {
 
   it('should separate abilities and include them in scanLayout', async function() {
     window.separateAbilities();
-    const strSection = document.getElementById('section-Ability-STR');
-    assert.ok(strSection, 'STR section should exist');
+    const strSection = document.getElementById('section-Ability-Ability 1');
+    assert.ok(strSection, 'Ability 1 section should exist');
     
     // Set custom position
     strSection.style.left = '500px';
     strSection.style.top = '500px';
     
     const layout = await window.scanLayout();
-    assert.ok(layout.sections['section-Ability-STR'], 'STR section missing in scanLayout');
-    assert.strictEqual(layout.sections['section-Ability-STR'].left, '500px');
-    assert.strictEqual(layout.sections['section-Ability-STR'].borderStyle, 'ability_border');
+    assert.ok(layout.sections['section-Ability-Ability 1'], 'Ability 1 section missing in scanLayout');
+    assert.strictEqual(layout.sections['section-Ability-Ability 1'].left, '500px');
+    assert.strictEqual(layout.sections['section-Ability-Ability 1'].borderStyle, 'ability_border');
   });
 
   it('should restore ability sections in applyLayout', async function() {
     const layout = {
-        version: '1.2.0',
+        version: '1.4.0',
         sections: {
-            'section-Ability-STR': { 
+            'section-Ability-Ability 1': { 
                 left: '123px', 
                 top: '456px',
                 borderStyle: 'spikes_border'
@@ -86,7 +86,7 @@ describe('Ability Persistence', function() {
     };
 
     await window.applyLayout(layout);
-    const strSection = document.getElementById('section-Ability-STR');
+    const strSection = document.getElementById('section-Ability-Ability 1');
     assert.strictEqual(strSection.style.left, '123px');
     assert.strictEqual(strSection.style.top, '456px');
     assert.ok(strSection.classList.contains('spikes_border'), 'Should have restored custom border style');
@@ -95,13 +95,13 @@ describe('Ability Persistence', function() {
 
   it('should apply defaults to ability sections in applyDefaultLayout', async function() {
       // Clear styles from previous test
-      const strSection = document.getElementById('section-Ability-STR');
+      const strSection = document.getElementById('section-Ability-Ability 1');
       strSection.style.left = '0px';
       strSection.classList.remove('spikes_border');
       
       window.applyDefaultLayout();
       
-      // Default for STR is left: 16px, top: 16px, border: ability_border
+      // Default for Ability 1 is left: 16px, top: 16px, border: ability_border
       assert.strictEqual(strSection.style.left, '16px');
       assert.strictEqual(strSection.style.top, '16px');
       assert.ok(strSection.classList.contains('ability_border'), 'Default border should be applied');

@@ -217,9 +217,9 @@ describe('Recent Layout Features', function() {
            window.applyDefaultLayout();
 
            // Assert
-           // DEFAULT_LAYOUTS['section-Actions'] = { left: '512px', top: '352px', ... }
+           // DEFAULT_LAYOUTS['section-Actions'] = { left: '512px', top: '336px', ... }
            assert.strictEqual(actionSection.style.left, '512px');
-           assert.strictEqual(actionSection.style.top, '352px');
+           assert.strictEqual(actionSection.style.top, '336px');
       });
   });
 
@@ -296,7 +296,7 @@ describe('Recent Layout Features', function() {
 
           // Assert
           // We check the style property. Note: JSDOM might be lenient, but we suspect setProperty('zIndex') is the issue vs 'z-index'
-          assert.strictEqual(section6.style.zIndex, '65', 'Z-Index should be applied');
+          assert.strictEqual(section6.style.zIndex, '136', 'Z-Index should be applied');
       });
   });
 

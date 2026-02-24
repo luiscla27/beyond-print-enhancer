@@ -20,6 +20,14 @@ describe('DOM Extraction Logic (Integration)', function() {
     window = dom.window;
     document = window.document;
     
+    // Mock chrome
+    window.chrome = {
+        runtime: {
+            getURL: (path) => `chrome-extension://id/${path}`
+        }
+    };
+    global.chrome = window.chrome;
+    
     // Inject main.js logic
     // We read the file and strip the IIFE wrapper so we can access functions, 
     // OR just modify it to expose them.
