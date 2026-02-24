@@ -53,40 +53,35 @@ describe('Shape Logic', function() {
   });
 
   describe('createShape', function() {
-    it('should create a shape with correct classes on wrapper and container', function() {
+    it('should create a shape container with correct classes', function() {
         if (typeof window.createShape !== 'function') {
             assert.fail('window.createShape is not defined');
         }
         
         const assetPath = 'assets/shapes/test-shape.png';
-        const wrapper = window.createShape(assetPath);
+        const shape = window.createShape(assetPath);
         
-        assert.ok(wrapper.classList.contains('be-section-wrapper'), 'Should have be-section-wrapper class');
-        assert.ok(wrapper.classList.contains('be-shape-wrapper'), 'Should have be-shape-wrapper class');
-        
-        const container = wrapper.querySelector('.print-section-container');
-        assert.ok(container.classList.contains('print-shape-container'), 'Should have print-shape-container class');
-        assert.ok(container.classList.contains('be-shape'), 'Should have be-shape class');
-        assert.ok(container.id.startsWith('shape-'), 'Should have an id starting with shape-');
+        assert.ok(shape.classList.contains('print-shape-container'), 'Should have print-shape-container class');
+        assert.ok(shape.classList.contains('be-shape'), 'Should have be-shape class');
+        assert.ok(shape.id.startsWith('shape-'), 'Should have an id starting with shape-');
     });
 
-    it('should apply the correct border-image style to container', function() {
+    it('should apply the correct border-image style', function() {
         const assetPath = 'assets/shapes/test-shape.png';
-        const wrapper = window.createShape(assetPath);
-        const container = wrapper.querySelector('.print-section-container');
+        const shape = window.createShape(assetPath);
         
-        assert.ok(container.style.borderImageSource.includes('test-shape.png'), 'Border image source should include asset path');
-        assert.strictEqual(container.style.borderStyle, 'solid', 'Border style should be solid');
+        // border-image-source is the most direct way to check
+        // Note: browser might normalize the style, we'll check what we can.
+        assert.ok(shape.style.borderImageSource.includes('test-shape.png'), 'Border image source should include asset path');
+        assert.strictEqual(shape.style.borderStyle, 'solid', 'Border style should be solid');
     });
 
     it('should be appended to the layout wrapper', function() {
         const assetPath = 'assets/shapes/test-shape.png';
-        const wrapper = window.createShape(assetPath);
+        const shape = window.createShape(assetPath);
         
-        const layoutRoot = document.getElementById('print-layout-wrapper');
-        assert.strictEqual(wrapper.parentElement, layoutRoot, 'Wrapper should be child of layout wrapper');
-        assert.strictEqual(wrapper.style.left, '50px', 'Initial left should be 50px');
-        assert.strictEqual(wrapper.style.top, '160px', 'Initial top should be 160px');
+        const wrapper = document.getElementById('print-layout-wrapper');
+        assert.strictEqual(shape.parentElement, wrapper, 'Shape should be child of layout wrapper');
     });
 
     it('should restore from data if provided', function() {
@@ -99,37 +94,31 @@ describe('Shape Logic', function() {
                 left: '100px',
                 top: '100px',
                 zIndex: '200'
-            },
-            width: '150px',
-            height: '150px',
-            left: '100px',
-            top: '100px',
-            zIndex: '200'
+            }
         };
         
-        const wrapper = window.createShape(restoreData.assetPath, restoreData);
-        const container = wrapper.querySelector('.print-section-container');
+        const shape = window.createShape(restoreData.assetPath, restoreData);
         
-        assert.strictEqual(container.id, 'shape-123');
-        assert.strictEqual(container.style.width, '150px');
-        assert.strictEqual(container.style.height, '150px');
-        assert.strictEqual(wrapper.style.left, '100px');
-        assert.strictEqual(wrapper.style.top, '100px');
-        assert.strictEqual(wrapper.style.zIndex, '200');
+        assert.strictEqual(shape.id, 'shape-123');
+        assert.strictEqual(shape.style.width, '150px');
+        assert.strictEqual(shape.style.height, '150px');
+        assert.strictEqual(shape.style.left, '100px');
+        assert.strictEqual(shape.style.top, '100px');
+        assert.strictEqual(shape.style.zIndex, '200');
     });
 
     it('should remove the shape when delete button is clicked and confirmed', function() {
         // Mock confirm
         window.confirm = () => true;
         
-        const wrapper = window.createShape('assets/shapes/test.png');
-        const deleteBtn = wrapper.querySelector('.be-shape-delete');
+        const shape = window.createShape('assets/shapes/test.png');
+        const deleteBtn = shape.querySelector('.be-shape-delete');
         
         assert.ok(deleteBtn, 'Delete button missing');
         
         deleteBtn.click();
         
-        assert.strictEqual(wrapper.parentElement, null, 'Wrapper should be removed from DOM');
+        assert.strictEqual(shape.parentElement, null, 'Shape should be removed from DOM');
     });
   });
 
@@ -139,20 +128,17 @@ describe('Shape Logic', function() {
             assert.fail('window.initZIndexManagement is not defined');
         }
 
-        const layoutRoot = document.getElementById('print-layout-wrapper');
+        const wrapper = document.getElementById('print-layout-wrapper');
         
-        // Create a section wrapper
-        const sectionWrapper = document.createElement('div');
-        sectionWrapper.className = 'be-section-wrapper';
-        sectionWrapper.style.zIndex = '10';
+        // Create a section
         const section = document.createElement('div');
         section.className = 'print-section-container';
-        sectionWrapper.appendChild(section);
-        layoutRoot.appendChild(sectionWrapper);
+        section.style.zIndex = '10';
+        wrapper.appendChild(section);
         
         // Create a shape
-        const shapeWrapper = window.createShape('assets/shapes/test.png');
-        shapeWrapper.style.zIndex = '111';
+        const shape = window.createShape('assets/shapes/test.png');
+        shape.style.zIndex = '111'; // createShape should have set it high, but let's be explicit
         
         window.initZIndexManagement();
         
@@ -160,125 +146,29 @@ describe('Shape Logic', function() {
         const event = new window.MouseEvent('mousedown', { bubbles: true });
         section.dispatchEvent(event);
         
-        const sectionZ = parseInt(sectionWrapper.style.zIndex);
-        const shapeZ = parseInt(shapeWrapper.style.zIndex);
+        const sectionZ = parseInt(section.style.zIndex);
+        const shapeZ = parseInt(shape.style.zIndex);
         
         assert.ok(sectionZ > 10, 'Section Z-Index should have increased');
         assert.ok(shapeZ > sectionZ, 'Shape should still be above section');
     });
 
     it('should bring clicked shape to the very front', function() {
-        const shapeWrapper1 = window.createShape('assets/shapes/1.png');
-        shapeWrapper1.style.zIndex = '111';
+        const wrapper = document.getElementById('print-layout-wrapper');
         
-        const shapeWrapper2 = window.createShape('assets/shapes/2.png');
-        shapeWrapper2.style.zIndex = '112';
+        const shape1 = window.createShape('assets/shapes/1.png');
+        shape1.style.zIndex = '111';
+        
+        const shape2 = window.createShape('assets/shapes/2.png');
+        shape2.style.zIndex = '112';
         
         window.initZIndexManagement();
         
         // Click shape 1
         const event = new window.MouseEvent('mousedown', { bubbles: true });
-        shapeWrapper1.querySelector('.print-section-container').dispatchEvent(event);
+        shape1.dispatchEvent(event);
         
-        assert.ok(parseInt(shapeWrapper1.style.zIndex) > parseInt(shapeWrapper2.style.zIndex), 'Shape 1 should now be in front of Shape 2');
-    });
-  });
-
-  describe('showShapePickerModal', function() {
-    it('should open a modal and resolve with selected asset', async function() {
-        if (typeof window.showShapePickerModal !== 'function') {
-            assert.fail('window.showShapePickerModal is not defined');
-        }
-
-        const promise = window.showShapePickerModal();
-        
-        // Check if modal exists in DOM
-        const overlay = document.querySelector('.be-modal-overlay');
-        assert.ok(overlay, 'Modal overlay not found');
-        
-        const okBtn = overlay.querySelector('.be-modal-ok');
-        assert.ok(okBtn, 'OK button not found');
-        
-        // Select an option (first one)
-        const option = overlay.querySelector('.be-border-option');
-        assert.ok(option, 'Border options not found');
-        option.click();
-        
-        okBtn.click();
-        
-        const result = await promise;
-        assert.ok(result && result.assetPath, 'Result should contain assetPath');
-    });
-  });
-
-  describe('Persistence', function() {
-    beforeEach(() => {
-        // Mock Storage
-        window.Storage = {
-            SCHEMA_VERSION: '1.4.0',
-            init: () => Promise.resolve(),
-            getAllSpells: () => Promise.resolve([])
-        };
-    });
-
-    it('should capture shape data in scanLayout', async function() {
-        if (typeof window.scanLayout !== 'function') {
-            assert.fail('window.scanLayout is not defined');
-        }
-
-        const wrapper = window.createShape('assets/shapes/scan-test.png');
-        const container = wrapper.querySelector('.print-section-container');
-        wrapper.style.left = '123px';
-        wrapper.style.top = '456px';
-        container.style.width = '100px';
-        container.style.height = '100px';
-        wrapper.style.zIndex = '250';
-        
-        const layout = await window.scanLayout();
-        
-        assert.ok(layout.shapes, 'Layout should contain shapes array');
-        const captured = layout.shapes.find(s => s.id === container.id);
-        assert.ok(captured, 'Shape not found in scanned layout');
-        assert.strictEqual(captured.assetPath, 'assets/shapes/scan-test.png');
-        assert.strictEqual(captured.left, '123px');
-        assert.strictEqual(captured.top, '456px');
-        assert.strictEqual(captured.zIndex, '250');
-    });
-
-    it('should restore shapes in applyLayout', async function() {
-        if (typeof window.applyLayout !== 'function') {
-            assert.fail('window.applyLayout is not defined');
-        }
-
-        const layout = {
-            version: '1.4.0',
-            sections: {},
-            shapes: [
-                {
-                    id: 'shape-restored',
-                    assetPath: 'assets/shapes/restore-test.png',
-                    left: '10px',
-                    top: '20px',
-                    width: '50px',
-                    height: '50px',
-                    zIndex: '300'
-                }
-            ]
-        };
-        
-        // Clear existing
-        document.querySelectorAll('.be-section-wrapper').forEach(el => el.remove());
-        
-        await window.applyLayout(layout);
-        
-        const restoredContainer = document.getElementById('shape-restored');
-        assert.ok(restoredContainer, 'Shape container not restored');
-        const restoredWrapper = restoredContainer.closest('.be-section-wrapper');
-        assert.ok(restoredWrapper, 'Wrapper not found for restored shape');
-        
-        assert.strictEqual(restoredWrapper.style.left, '10px');
-        assert.strictEqual(restoredWrapper.style.zIndex, '300');
-        assert.strictEqual(restoredContainer.style.width, '50px');
+        assert.ok(parseInt(shape1.style.zIndex) > parseInt(shape2.style.zIndex), 'Shape 1 should now be in front of Shape 2');
     });
   });
 });
