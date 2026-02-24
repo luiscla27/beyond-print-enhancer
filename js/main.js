@@ -2942,7 +2942,7 @@ function createShape(assetPath, restoreData = null) {
         if (restoreData.zIndex) container.style.zIndex = restoreData.zIndex;
     } else {
         container.style.left = '50px';
-        container.style.top = '50px';
+        container.style.top = '160px';
     }
     
     const layoutRoot = document.getElementById('print-layout-wrapper');
