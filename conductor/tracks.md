@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Shapes Mode Feature**
+- [x] **Track: Shapes Mode Feature**
   *Link: [./tracks/shapes_mode_20260223/](./tracks/shapes_mode_20260223/)*
 
 ## Archived Tracks
