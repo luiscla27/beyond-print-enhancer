@@ -12,7 +12,7 @@ const DB_NAME = 'DDBPrintEnhancerDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
-const SCHEMA_VERSION = '1.2.0';
+const SCHEMA_VERSION = '1.4.0';
 
 const DEFAULT_LAYOUTS = {
     "section-Section-1": {
@@ -3670,7 +3670,8 @@ function initZIndexManagement() {
  * Automatically arranges sections in a masonry-like grid
  */
 function autoArrangeSections() {
-    const sections = Array.from(document.querySelectorAll('.print-section-container'));
+    const sections = Array.from(document.querySelectorAll('.print-section-container'))
+                          .filter(el => !el.classList.contains('be-shape'));
     if (sections.length === 0) return;
 
     const viewportWidth = window.innerWidth || 1200; // Fallback
@@ -4501,6 +4502,7 @@ async function scanLayout() {
         sections: {},
         clones: [],
         extractions: [],
+        shapes: [],
         spell_details: [],
         merges: [],
         spell_cache: []
@@ -4564,6 +4566,20 @@ async function scanLayout() {
                 zIndex: section.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 borderStyle: getBorderStyle(section)
+            });
+            return;
+        }
+
+        if (section.classList.contains('be-shape')) {
+            layout.shapes.push({
+                id: id,
+                assetPath: section.dataset.assetPath,
+                left: section.style.left,
+                top: section.style.top,
+                width: section.style.width,
+                height: section.style.height,
+                zIndex: section.style.zIndex || '110',
+                minimized: section.dataset.minimized === 'true'
             });
             return;
         }
@@ -4800,6 +4816,16 @@ async function applyLayout(layout) {
             if (container && spellData.borderStyle) {
                 container.classList.add(spellData.borderStyle);
             }
+        });
+    }
+
+    // Remove existing shapes to avoid duplicates
+    document.querySelectorAll('.print-section-container.be-shape').forEach(el => el.remove());
+
+    // Restore shapes
+    if (layout.shapes && Array.isArray(layout.shapes)) {
+        layout.shapes.forEach(shapeData => {
+            createShape(shapeData.assetPath, shapeData);
         });
     }
 
