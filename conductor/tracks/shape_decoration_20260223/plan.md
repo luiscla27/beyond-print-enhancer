@@ -20,7 +20,7 @@
 ## Phase 3: UI & Interaction (TDD)
 - [x] Task: Create `showShapePickerModal()` function in `js/main.js` (modeled after `showBorderPickerModal`). (03b3484)
     - Should list assets from `assets/shapes/` and all existing borders.
-- [ ] Task: Add "Add Shape" button to `print-enhance-controls` panel in `main.js`.
+- [x] Task: Add "Add Shape" button to `print-enhance-controls` panel in `main.js`. (a03ff51)
     - Clicking it should open the `showShapePickerModal` and then call `createShape`.
 - [ ] Task: Implement CSS styles for `.print-shape-container` and the delete icon.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md)
