@@ -5,14 +5,14 @@
 - [x] Task: Update `manifest.json` `web_accessible_resources` to include `assets/shapes/*`. (7ac4854)
 - [x] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include selectors for shapes. (54c636e)
     - Add `selectors.UI.SHAPE_CONTAINER = '.print-shape-container'`
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Assets' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Assets' (Protocol in workflow.md) (d2ff2c0)
 
 ## Phase 2: Core Logic Implementation (TDD)
-- [ ] Task: Implement `createShape(assetPath, restoreData)` in `js/main.js`.
+- [x] Task: Implement `createShape(assetPath, restoreData)` in `js/main.js`. (63c86da)
     - Should return a resizable, draggable `DIV` with `.print-shape-container` and `.be-shape` classes.
     - Content should be empty.
     - Style should include `border-image` properties matching the selected asset.
-- [ ] Task: Update `initZIndexManagement` to distinguish between sections and shapes.
+- [x] Task: Update `initZIndexManagement` to distinguish between sections and shapes. (63c86da)
     - Shapes must maintain a z-index at least 100 higher than the highest section.
 - [ ] Task: Add "Delete" icon functionality specifically for shapes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Logic Implementation' (Protocol in workflow.md)
