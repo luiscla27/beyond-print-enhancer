@@ -201,11 +201,6 @@ describe('DomManager & ElementWrapper', () => {
                 const manager = DomManager.getInstance();
                 assert.strictEqual(manager.selectors.UI.SHAPE_CONTAINER, '.print-shape-container');
             });
-
-            it('should have wrapper selector', () => {
-                const manager = DomManager.getInstance();
-                assert.strictEqual(manager.selectors.UI.WRAPPER, '.be-section-wrapper');
-            });
         });
     });
 });

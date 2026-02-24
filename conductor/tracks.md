@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Shape Decoration Feature**
+- [~] **Track: Shape Decoration Feature**
   *Link: [./tracks/shape_decoration_20260223/](./tracks/shape_decoration_20260223/)*
 
 ## Archived Tracks
