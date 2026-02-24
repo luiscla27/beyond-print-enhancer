@@ -5,7 +5,7 @@
 - [x] Task: Update `manifest.json` `web_accessible_resources` to include `assets/shapes/*`. (7ac4854)
 - [x] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include selectors for shapes. (54c636e)
     - Add `selectors.UI.SHAPE_CONTAINER = '.print-shape-container'`
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Assets' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Assets' (Protocol in workflow.md)
 
 ## Phase 2: Core Logic Implementation (TDD)
 - [ ] Task: Implement `createShape(assetPath, restoreData)` in `js/main.js`.
