@@ -3907,6 +3907,13 @@ function createControls() {
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Add Shape', icon: '🎨', action: async () => {
+            const result = await showShapePickerModal();
+            if (result) {
+                createShape(result.assetPath);
+                showFeedback('Shape added');
+            }
+        }},
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
