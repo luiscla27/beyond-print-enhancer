@@ -26,8 +26,8 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: UI & Interaction' (Protocol in workflow.md) (092de7c)
 
 ## Phase 4: Persistence & Stabilization
-- [ ] Task: Update `scanLayout()` to capture and return shape data (id, pos, size, asset).
-- [ ] Task: Update `applyLayout()` to recreate shapes from the saved data.
-- [ ] Task: Update `SCHEMA_VERSION` in `js/main.js` to `1.4.0` (or appropriate increment).
-- [ ] Task: Ensure shapes are correctly handled during `autoArrangeSections` (they should probably be ignored or handled separately to stay floating).
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Persistence & Stabilization' (Protocol in workflow.md)
+- [x] Task: Update `scanLayout()` to capture and return shape data (id, pos, size, asset). (63c86da)
+- [x] Task: Update `applyLayout()` to recreate shapes from the saved data. (63c86da)
+- [x] Task: Update `SCHEMA_VERSION` in `js/main.js` to `1.4.0` (or appropriate increment). (63c86da)
+- [x] Task: Ensure shapes are correctly handled during `autoArrangeSections` (they should probably be ignored or handled separately to stay floating). (63c86da)
+- [~] Task: Conductor - User Manual Verification 'Phase 4: Persistence & Stabilization' (Protocol in workflow.md)

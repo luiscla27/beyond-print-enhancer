@@ -198,4 +198,71 @@ describe('Shape Logic', function() {
         assert.ok(result && result.assetPath, 'Result should contain assetPath');
     });
   });
+
+  describe('Persistence', function() {
+    beforeEach(() => {
+        // Mock Storage
+        window.Storage = {
+            SCHEMA_VERSION: '1.4.0',
+            init: () => Promise.resolve(),
+            getAllSpells: () => Promise.resolve([])
+        };
+    });
+
+    it('should capture shape data in scanLayout', async function() {
+        if (typeof window.scanLayout !== 'function') {
+            assert.fail('window.scanLayout is not defined');
+        }
+
+        const shape = window.createShape('assets/shapes/scan-test.png');
+        shape.style.left = '123px';
+        shape.style.top = '456px';
+        shape.style.width = '100px';
+        shape.style.height = '100px';
+        shape.style.zIndex = '250';
+        
+        const layout = await window.scanLayout();
+        
+        assert.ok(layout.shapes, 'Layout should contain shapes array');
+        const captured = layout.shapes.find(s => s.id === shape.id);
+        assert.ok(captured, 'Shape not found in scanned layout');
+        assert.strictEqual(captured.assetPath, 'assets/shapes/scan-test.png');
+        assert.strictEqual(captured.left, '123px');
+        assert.strictEqual(captured.top, '456px');
+        assert.strictEqual(captured.zIndex, '250');
+    });
+
+    it('should restore shapes in applyLayout', async function() {
+        if (typeof window.applyLayout !== 'function') {
+            assert.fail('window.applyLayout is not defined');
+        }
+
+        const layout = {
+            version: '1.4.0',
+            sections: {},
+            shapes: [
+                {
+                    id: 'shape-restored',
+                    assetPath: 'assets/shapes/restore-test.png',
+                    left: '10px',
+                    top: '20px',
+                    width: '50px',
+                    height: '50px',
+                    zIndex: '300'
+                }
+            ]
+        };
+        
+        // Clear existing
+        document.querySelectorAll('.print-shape-container').forEach(el => el.remove());
+        
+        await window.applyLayout(layout);
+        
+        const restored = document.getElementById('shape-restored');
+        assert.ok(restored, 'Shape not restored');
+        assert.ok(restored.classList.contains('print-shape-container'));
+        assert.strictEqual(restored.style.left, '10px');
+        assert.strictEqual(restored.style.zIndex, '300');
+    });
+  });
 });
