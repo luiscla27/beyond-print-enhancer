@@ -129,8 +129,6 @@ class DomManager {
                 PORTRAIT: '.ddbc-character-avatar__portrait',
                 PRINT_CONTAINER: '.print-section-container',
                 SHAPE_CONTAINER: '.print-shape-container',
-                SHAPES_MODE_BTN: '.be-shapes-mode-btn',
-                WRAPPER: '.be-section-wrapper',
                 COMPACT_MODE: '.be-compact-mode',
                 SIDEBAR_INNER: '.ct-sidebar__inner',
                 CHARACTER_SHEET: '.ct-character-sheet',
