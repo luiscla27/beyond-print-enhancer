@@ -2,7 +2,7 @@
 
 ## Phase 1: Infrastructure & CSS
 - [x] Task: Update `DomManager` (`js/dom/dom_manager.js`) to include `selectors.UI.WRAPPER = '.be-section-wrapper'`. (ece4e99)
-- [ ] Task: Implement CSS for `.be-section-wrapper` in `js/main.js`.
+- [x] Task: Implement CSS for `.be-section-wrapper` in `js/main.js`. (31cec15)
     - Wrapper should have `position: absolute`, `display: flex`, `flex-direction: column`, `min-width: max-content`.
     - Move `z-index` and `left/top` logic from `.print-section-container` to `.be-section-wrapper`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & CSS' (Protocol in workflow.md)
