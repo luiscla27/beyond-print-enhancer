@@ -3,10 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [x] **Track: Shapes Mode Feature**
-  *Link: [./tracks/shapes_mode_20260223/](./tracks/shapes_mode_20260223/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Shapes Mode Feature** (Completed: 2026-02-23)
+  *Link: [./archive/shapes_mode_20260223/](./archive/shapes_mode_20260223/)*
 - [x] **Track: Shape Decoration Feature** (Completed: 2026-02-23)
   *Link: [./archive/shape_decoration_20260223/](./archive/shape_decoration_20260223/)*
 - [x] **Track: Border Asset Expansion** (Completed: 2026-02-22)
