@@ -3,10 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Fix Asset Paths**
-  *Link: [./tracks/fix_asset_paths_20260224/](./tracks/fix_asset_paths_20260224/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Fix Asset Paths**
+  *Link: [./archive/fix_asset_paths_20260224/](./archive/fix_asset_paths_20260224/)*
 - [x] **Track: Layout Refinements**
   *Link: [./archive/finalize_refinements_20260224/](./archive/finalize_refinements_20260224/)*
 - [x] **Track: Outer UI Wrapper for Print Sections**
