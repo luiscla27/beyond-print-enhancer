@@ -18,7 +18,7 @@ function initDragAndDrop() {
 }
 
 function handleDragStart(e) {
-  const target = e.target.closest('.print-section-container');
+  const target = e.target.closest('.be-section-wrapper');
   if (!target) return;
 
   draggedItem = target;
@@ -38,14 +38,14 @@ function handleDragOver(e) {
 }
 
 function handleDragEnter(e) {
-  const target = e.target.closest('.print-section-container');
+  const target = e.target.closest('.be-section-wrapper');
   if (target && target !== draggedItem) {
     target.classList.add('drag-over');
   }
 }
 
 function handleDragLeave(e) {
-  const target = e.target.closest('.print-section-container');
+  const target = e.target.closest('.be-section-wrapper');
   if (target && target !== draggedItem) {
     target.classList.remove('drag-over');
   }
@@ -56,7 +56,7 @@ function handleDrop(e) {
     e.stopPropagation(); // Stops some browsers from redirecting.
   }
 
-  const target = e.target.closest('.print-section-container');
+  const target = e.target.closest('.be-section-wrapper');
   
   if (draggedItem !== target && target) {
     const container = document.getElementById('print-layout-wrapper');
@@ -75,13 +75,13 @@ function handleDrop(e) {
 }
 
 function handleDragEnd(e) {
-  const target = e.target.closest('.print-section-container');
+  const target = e.target.closest('.be-section-wrapper');
   if (target) {
     target.style.opacity = '1';
     target.classList.remove('dragging');
   }
   
-  document.querySelectorAll('.print-section-container').forEach(el => {
+  document.querySelectorAll('.be-section-wrapper').forEach(el => {
     el.classList.remove('drag-over');
   });
   
@@ -92,10 +92,10 @@ function handleDragEnd(e) {
 function injectDnDStyles() {
     const style = document.createElement('style');
     style.textContent = `
-        .print-section-container {
+        .be-section-wrapper {
             transition: transform 0.2s, opacity 0.2s;
         }
-        .print-section-container.drag-over {
+        .be-section-wrapper.drag-over {
             border: 2px dashed #000;
         }
         .print-section-header {
