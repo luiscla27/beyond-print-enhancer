@@ -2234,6 +2234,21 @@ function enforceFullHeight() {
             }
         }
         
+        .be-section-wrapper {
+            position: absolute !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 10;
+            min-width: max-content;
+            pointer-events: none; /* Allow clicks through to container/header */
+        }
+        .be-section-wrapper > * {
+            pointer-events: auto; /* Re-enable for children */
+        }
+        .be-section-wrapper:hover {
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
         ${s.UI.PRINT_CONTAINER} { 
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
@@ -2253,13 +2268,10 @@ function enforceFullHeight() {
             display: flex !important;
             flex-direction: column !important;
             min-height: 30px !important;
-            min-width: 50px !important;
+            min-width: 100% !important;
+            width: 100% !important;
             overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
-            position: absolute !important;
-            z-index: 10;        
-        }
-        ${s.UI.PRINT_CONTAINER}:hover { 
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            position: relative !important;
         }
 
         .print-shape-container {
@@ -2280,15 +2292,22 @@ function enforceFullHeight() {
         }
 
         /* Shapes Mode Active State */
-        body.be-shapes-mode-active .print-section-container:not(.be-shape) {
+        body.be-shapes-mode-active .be-section-wrapper:not(.be-shape-wrapper) {
             pointer-events: none !important;
             opacity: 0.4 !important;
         }
-        body.be-shapes-mode-active .print-shape-container {
+        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper {
             /* Ensure shapes are fully visible and interactive */
             opacity: 1 !important;
             pointer-events: auto !important;
+        }
+        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper .print-shape-container {
             filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.3));
+        }
+        body.be-shapes-mode-active .be-shapes-mode-btn {
+            background-color: #28a745 !important;
+            border-color: #fff !important;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
         }
         body.be-shapes-mode-active .be-shapes-mode-btn {
             background-color: #28a745 !important;
