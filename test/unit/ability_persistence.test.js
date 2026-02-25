@@ -61,10 +61,12 @@ describe('Ability Persistence', function() {
     window.separateAbilities();
     const strSection = document.getElementById('section-Ability-Ability 1');
     assert.ok(strSection, 'Ability 1 section should exist');
+    const wrapper = strSection.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper should exist');
     
     // Set custom position
-    strSection.style.left = '500px';
-    strSection.style.top = '500px';
+    wrapper.style.left = '500px';
+    wrapper.style.top = '500px';
     
     const layout = await window.scanLayout();
     assert.ok(layout.sections['section-Ability-Ability 1'], 'Ability 1 section missing in scanLayout');
@@ -87,8 +89,9 @@ describe('Ability Persistence', function() {
 
     await window.applyLayout(layout);
     const strSection = document.getElementById('section-Ability-Ability 1');
-    assert.strictEqual(strSection.style.left, '123px');
-    assert.strictEqual(strSection.style.top, '456px');
+    const wrapper = strSection.closest('.be-section-wrapper');
+    assert.strictEqual(wrapper.style.left, '123px');
+    assert.strictEqual(wrapper.style.top, '456px');
     assert.ok(strSection.classList.contains('spikes_border'), 'Should have restored custom border style');
     assert.ok(!strSection.classList.contains('ability_border'), 'Default border should have been removed');
   });
@@ -96,14 +99,15 @@ describe('Ability Persistence', function() {
   it('should apply defaults to ability sections in applyDefaultLayout', async function() {
       // Clear styles from previous test
       const strSection = document.getElementById('section-Ability-Ability 1');
-      strSection.style.left = '0px';
+      const wrapper = strSection.closest('.be-section-wrapper');
+      wrapper.style.left = '0px';
       strSection.classList.remove('spikes_border');
       
       window.applyDefaultLayout();
       
       // Default for Ability 1 is left: 16px, top: 16px, border: ability_border
-      assert.strictEqual(strSection.style.left, '16px');
-      assert.strictEqual(strSection.style.top, '16px');
+      assert.strictEqual(wrapper.style.left, '16px');
+      assert.strictEqual(wrapper.style.top, '16px');
       assert.ok(strSection.classList.contains('ability_border'), 'Default border should be applied');
   });
 });
