@@ -20,9 +20,11 @@ describe('Cloning Interactions', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-             <div class="print-section-container be-clone" id="clone-123">
+             <div class="be-section-wrapper" id="clone-123-wrapper">
                 <div class="print-section-header"><span>My Clone</span></div>
-                <div class="print-section-content"><p>Content</p></div>
+                <div class="print-section-container be-clone" id="clone-123">
+                    <div class="print-section-content"><p>Content</p></div>
+                </div>
              </div>
           </div>
         </body>
@@ -64,8 +66,8 @@ describe('Cloning Interactions', function() {
             html: '<p>Content</p>'
         };
 
-        const clone = window.renderClonedSection(snapshot);
-        const header = clone.querySelector('.print-section-header');
+        const wrapper = window.renderClonedSection(snapshot);
+        const header = wrapper.querySelector('.print-section-header');
         
         // Mock showInputModal to return new title
         const originalShowInputModal = window.showInputModal;
@@ -78,11 +80,11 @@ describe('Cloning Interactions', function() {
         // Wait for async handler
         await new Promise(resolve => setTimeout(resolve, 50));
         
-        const titleSpan = clone.querySelector('.print-section-header span');
+        const titleSpan = wrapper.querySelector('.print-section-header span');
         assert.ok(titleSpan, 'Title span not found in draggable header');
         assert.strictEqual(titleSpan.textContent, 'Updated Title');
 
-        const headerContent = clone.querySelector('.ct-content-group__header-content');
+        const headerContent = wrapper.querySelector('.ct-content-group__header-content');
         assert.ok(headerContent.textContent.includes('Updated Title'), 'Header content should contain title');
         
         window.showInputModal = originalShowInputModal;
@@ -98,8 +100,8 @@ describe('Cloning Interactions', function() {
             html: '<p>Content</p>'
         };
 
-        const clone = window.renderClonedSection(snapshot);
-        const deleteBtn = clone.querySelector('.be-clone-delete');
+        const wrapper = window.renderClonedSection(snapshot);
+        const deleteBtn = wrapper.querySelector('.be-clone-delete');
         assert.ok(deleteBtn, 'Delete button not found');
 
         // Mock confirm

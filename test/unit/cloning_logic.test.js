@@ -20,14 +20,16 @@ describe('Cloning Logic', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-             <div class="print-section-container" id="section-Actions" style="width: 100px; height: 100px;">
+             <div class="be-section-wrapper" id="section-Actions-wrapper">
                 <div class="print-section-header"><span>Actions</span></div>
-                <div class="print-section-content">
-                    <div class="content">
-                        <button class="interactive">Click Me</button>
-                        <menu>Menu</menu>
-                        <div class="ct-spell-manager__button">Manage</div>
-                        <p>Snapshot Content</p>
+                <div class="print-section-container" id="section-Actions" style="width: 100px; height: 100px;">
+                    <div class="print-section-content">
+                        <div class="content">
+                            <button class="interactive">Click Me</button>
+                            <menu>Menu</menu>
+                            <div class="ct-spell-manager__button">Manage</div>
+                            <p>Snapshot Content</p>
+                        </div>
                     </div>
                 </div>
              </div>
@@ -96,8 +98,9 @@ describe('Cloning Logic', function() {
             borderStyle: 'spikes_border'
         };
         
-        const clone = window.renderClonedSection(snapshot);
-        assert.ok(clone.classList.contains('spikes_border'));
+        const wrapper = window.renderClonedSection(snapshot);
+        const container = wrapper.querySelector('.print-section-container');
+        assert.ok(container.classList.contains('spikes_border'));
     });
 
     it('should create a new section container from snapshot data', function() {
@@ -113,27 +116,30 @@ describe('Cloning Logic', function() {
             styles: {
                 width: '200px',
                 height: '300px'
-            }
+            },
+            width: '200px',
+            height: '300px'
         };
         
-        const clone = window.renderClonedSection(snapshot);
+        const wrapper = window.renderClonedSection(snapshot);
+        const container = wrapper.querySelector('.print-section-container');
         
-        assert.strictEqual(clone.id, 'clone-123');
-        assert.ok(clone.classList.contains('print-section-container'), 'Should have container class');
-        assert.ok(clone.classList.contains('be-clone'), 'Should have clone class');
+        assert.strictEqual(container.id, 'clone-123');
+        assert.ok(container.classList.contains('print-section-container'), 'Should have container class');
+        assert.ok(container.classList.contains('be-clone'), 'Should have clone class');
         
-        const titleSpan = clone.querySelector('.print-section-header span');
+        const titleSpan = wrapper.querySelector('.print-section-header span');
         assert.strictEqual(titleSpan.textContent, 'Action Clone');
 
-        const staticTitle = clone.querySelector('.ct-content-group__header-content');
+        const staticTitle = container.querySelector('.ct-content-group__header-content');
         assert.ok(staticTitle, 'Static header content missing');
         assert.strictEqual(staticTitle.textContent, 'Action Clone');
         
-        const content = clone.querySelector('.print-section-content');
+        const content = container.querySelector('.print-section-content');
         assert.ok(content.innerHTML.includes('Snapshot Content'));
         
-        assert.strictEqual(clone.style.width, '200px');
-        assert.strictEqual(clone.style.height, '300px');
+        assert.strictEqual(container.style.width, '200px');
+        assert.strictEqual(container.style.height, '300px');
     });
   });
 });

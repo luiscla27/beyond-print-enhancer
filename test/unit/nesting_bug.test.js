@@ -64,18 +64,20 @@ describe('Bug Fix: Recursive DIV Nesting', function() {
     const targetInfo = { type: 'sheet', element: t1, id: 'target-1', name: 'Sheet' };
     window.handleMergeSections(s1, targetInfo);
     
-    const wrapper = document.querySelector('.be-merge-wrapper');
-    if (!wrapper) {
+    const mergeWrapper = document.querySelector('.be-merge-wrapper');
+    if (!mergeWrapper) {
         console.log('Body:', document.body.innerHTML);
     }
-    assert.ok(wrapper, 'Merge wrapper should exist on sheet');
-    assert.ok(wrapper.classList.contains('be-extractable'), 'Wrapper should be extractable');
+    assert.ok(mergeWrapper, 'Merge wrapper should exist on sheet');
+    assert.ok(mergeWrapper.classList.contains('be-extractable'), 'Wrapper should be extractable');
 
     // 3. Re-Extract the wrapper
-    wrapper.dispatchEvent(dblClickEvent);
+    mergeWrapper.dispatchEvent(dblClickEvent);
     
     const s2 = document.querySelector('.be-extracted-section');
     assert.ok(s2, 'Second section should exist');
+    const w2 = s2.closest('.be-section-wrapper');
+    assert.ok(w2, 'Second wrapper should exist');
     
     // Check structure of s2 content
     // Expected: .print-section-content -> [header, children of original wrapper]
@@ -113,12 +115,12 @@ describe('Bug Fix: Recursive DIV Nesting', function() {
     const t1 = document.getElementById('target-1');
     window.handleMergeSections(s1, { type: 'sheet', element: t1, id: 'target-1', name: 'Sheet' });
     
-    const wrapper = document.querySelector('.be-merge-wrapper');
-    assert.ok(wrapper, 'Spell wrapper should exist');
+    const mergeWrapper = document.querySelector('.be-merge-wrapper');
+    assert.ok(mergeWrapper, 'Spell wrapper should exist');
     
     // 3. Double click to re-extract
     const dblClickEvent = new window.MouseEvent('dblclick', { bubbles: true });
-    wrapper.dispatchEvent(dblClickEvent);
+    mergeWrapper.dispatchEvent(dblClickEvent);
     
     // 4. Verify original wrapper is DESTROYED (removed), not just hidden
     assert.strictEqual(document.querySelector('.be-merge-wrapper'), null, 'Source spell wrapper should be removed from DOM');

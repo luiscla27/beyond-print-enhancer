@@ -21,9 +21,11 @@ describe('Cloning Persistence', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-             <div class="print-section-container" id="section-Actions" style="left: 10px; top: 10px; width: 100px; height: 100px;">
+             <div class="be-section-wrapper" id="section-Actions-wrapper" style="left: 10px; top: 10px;">
                 <div class="print-section-header"><span>Actions</span></div>
-                <div class="print-section-content"><p>Actions Content</p></div>
+                <div class="print-section-container" id="section-Actions" style="width: 100px; height: 100px;">
+                    <div class="print-section-content"><p>Actions Content</p></div>
+                </div>
              </div>
           </div>
         </body>
@@ -91,7 +93,7 @@ describe('Cloning Persistence', function() {
 
     it('should restore clones in applyLayout', async function() {
       const layout = {
-          version: '1.0.0',
+          version: '1.4.0',
           sections: {
               'section-Actions': { left: '20px', top: '20px' }
           },
@@ -113,16 +115,19 @@ describe('Cloning Persistence', function() {
       const restoredClone = document.getElementById('clone-456');
     assert.ok(restoredClone, 'Clone 456 not restored in DOM');
     assert.ok(restoredClone.classList.contains('be-clone'), 'Missing be-clone class');
-    assert.strictEqual(restoredClone.querySelector('.print-section-header span').textContent, 'Restored Clone');
+    const wrapper = restoredClone.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper missing for restored clone');
+    assert.strictEqual(wrapper.querySelector('.print-section-header span').textContent, 'Restored Clone');
     assert.ok(restoredClone.querySelector('.print-section-content').innerHTML.includes('Restored Content'));
-    assert.strictEqual(restoredClone.style.left, '100px');
-    assert.strictEqual(restoredClone.style.top, '100px');
+    assert.strictEqual(wrapper.style.left, '100px');
+    assert.strictEqual(wrapper.style.top, '100px');
   });
 
   it('should reposition clones relative to parents during handleLoadDefault', async function() {
     // section-Actions is at 20,20 from previous test
     const clone = document.getElementById('clone-456');
     clone.dataset.originalId = 'section-Actions';
+    const cloneWrapper = clone.closest('.be-section-wrapper');
     
     // Mock DEFAULT_LAYOUTS for section-Actions (manually in the test context if needed, 
     // but main.js already has it)
@@ -131,7 +136,7 @@ describe('Cloning Persistence', function() {
     
     // In main.js, section-Actions default is left: '512px', top: '336px'
     // Clone should be at 512+32 = 544, 336+32 = 368
-    assert.strictEqual(clone.style.left, '544px');
-    assert.strictEqual(clone.style.top, '368px');
+    assert.strictEqual(cloneWrapper.style.left, '544px');
+    assert.strictEqual(cloneWrapper.style.top, '368px');
   });
 });

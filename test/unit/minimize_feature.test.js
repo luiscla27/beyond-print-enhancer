@@ -38,13 +38,13 @@ describe('Minimize/Restore Feature', function() {
     // Wait for script execution if necessary (though JSDOM with dangerously runs it sync)
   });
 
-  it('should create minimize and restore buttons in the container', function() {
+  it('should create minimize and restore buttons in the wrapper', function() {
     const content = document.createElement('div');
     content.textContent = 'Section Content';
-    const container = window.createDraggableContainer('Test Section', content, 'test-section');
+    const wrapper = window.createDraggableContainer('Test Section', content, 'test-section');
     
-    const minimizeBtn = container.querySelector('.print-section-minimize');
-    const restoreBtn = container.querySelector('.print-section-restore');
+    const minimizeBtn = wrapper.querySelector('.print-section-minimize');
+    const restoreBtn = wrapper.querySelector('.print-section-restore');
     
     assert.ok(minimizeBtn, 'Minimize button should exist');
     assert.ok(restoreBtn, 'Restore button should exist');
@@ -52,10 +52,11 @@ describe('Minimize/Restore Feature', function() {
     assert.strictEqual(restoreBtn.textContent, 'R');
   });
 
-  it('should add .minimized class when minimize button is clicked', function() {
+  it('should add .minimized class to container when minimize button is clicked', function() {
     const content = document.createElement('div');
-    const container = window.createDraggableContainer('Test Section', content, 'test-section');
-    const minimizeBtn = container.querySelector('.print-section-minimize');
+    const wrapper = window.createDraggableContainer('Test Section', content, 'test-section');
+    const container = wrapper.querySelector('.print-section-container');
+    const minimizeBtn = wrapper.querySelector('.print-section-minimize');
     
     assert.strictEqual(container.classList.contains('minimized'), false);
     
@@ -64,10 +65,11 @@ describe('Minimize/Restore Feature', function() {
     assert.strictEqual(container.classList.contains('minimized'), true);
   });
 
-  it('should remove .minimized class when restore button is clicked', function() {
+  it('should remove .minimized class from container when restore button is clicked', function() {
     const content = document.createElement('div');
-    const container = window.createDraggableContainer('Test Section', content, 'test-section');
-    const restoreBtn = container.querySelector('.print-section-restore');
+    const wrapper = window.createDraggableContainer('Test Section', content, 'test-section');
+    const container = wrapper.querySelector('.print-section-container');
+    const restoreBtn = wrapper.querySelector('.print-section-restore');
     
     container.classList.add('minimized');
     assert.strictEqual(container.classList.contains('minimized'), true);

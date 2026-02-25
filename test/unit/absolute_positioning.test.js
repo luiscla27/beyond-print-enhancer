@@ -24,13 +24,17 @@ describe('Absolute Positioning Engine', function() {
         <head></head>
         <body>
           <div id="print-layout-wrapper">
-            <div class="print-section-container" id="item-1" style="position: absolute; left: 0px; top: 0px;">
+            <div class="be-section-wrapper" id="item-1-wrapper" style="position: absolute; left: 0px; top: 0px;">
                 <div class="print-section-header">Header</div>
-                <div class="print-section-content">Content</div>
+                <div class="print-section-container" id="item-1">
+                    <div class="print-section-content">Content</div>
+                </div>
             </div>
-            <div class="print-section-container" id="item-2" style="position: absolute; left: 200px; top: 0px;">
+            <div class="be-section-wrapper" id="item-2-wrapper" style="position: absolute; left: 200px; top: 0px;">
                 <div class="print-section-header">Header 2</div>
-                <div class="print-section-content">Content 2</div>
+                <div class="print-section-container" id="item-2">
+                    <div class="print-section-content">Content 2</div>
+                </div>
             </div>
           </div>
         </body>
@@ -64,7 +68,8 @@ describe('Absolute Positioning Engine', function() {
 
   it('should update element coordinates on drop', function() {
     const item = document.getElementById('item-1');
-    const header = item.querySelector('.print-section-header');
+    const wrapper = item.closest('.be-section-wrapper');
+    const header = wrapper.querySelector('.print-section-header');
     
     // Simulate drag start
     const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 10, clientY: 10 });
@@ -84,12 +89,14 @@ describe('Absolute Positioning Engine', function() {
     
     document.getElementById('print-layout-wrapper').dispatchEvent(dropEvent);
     
-    assert.strictEqual(item.style.left, '96px');
-    assert.strictEqual(item.style.top, '144px');
+    const dropWrapper = item.closest('.be-section-wrapper');
+    assert.strictEqual(dropWrapper.style.left, '96px');
+    assert.strictEqual(dropWrapper.style.top, '144px');
   });
 
   it('should set custom drag image on dragstart', function(done) {
     const item = document.getElementById('item-1');
+    const wrapper = item.closest('.be-section-wrapper');
     let setDragImageCalled = false;
     const mockSetDragImage = (img, x, y) => {
         setDragImageCalled = true;
@@ -104,12 +111,12 @@ describe('Absolute Positioning Engine', function() {
     };
     
     // Dispatch
-    item.querySelector('.print-section-header').dispatchEvent(startEvent);
+    wrapper.querySelector('.print-section-header').dispatchEvent(startEvent);
     
     assert.ok(setDragImageCalled, 'setDragImage should be called');
     
     // Opacity should be set immediately because of our requestAnimationFrame mock
-    assert.strictEqual(item.style.opacity, '0.98');
+    assert.strictEqual(wrapper.style.opacity, '0.98');
     done();
   });
 
@@ -119,8 +126,9 @@ describe('Absolute Positioning Engine', function() {
         await window.Storage.init();
         
         const item = document.getElementById('item-1');
-        item.style.left = '123px';
-        item.style.top = '456px';
+        const wrapper = item.closest('.be-section-wrapper');
+        wrapper.style.left = '123px';
+        wrapper.style.top = '456px';
         
         // Mock global dependencies
         window.location.pathname = '/characters/12345';
@@ -134,15 +142,15 @@ describe('Absolute Positioning Engine', function() {
         assert.strictEqual(saved.sections['item-1'].left, '123px');
 
         // Reset positions
-        item.style.left = '0px';
-        item.style.top = '0px';
+        wrapper.style.left = '0px';
+        wrapper.style.top = '0px';
 
         // Act: Restore
         await window.restoreLayout();
         
         // Assert
-        assert.strictEqual(item.style.left, '123px');
-        assert.strictEqual(item.style.top, '456px');
+        assert.strictEqual(wrapper.style.left, '123px');
+        assert.strictEqual(wrapper.style.top, '456px');
     });
   });
 });
