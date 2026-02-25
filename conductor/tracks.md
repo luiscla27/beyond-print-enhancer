@@ -3,10 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Layout Refinements**
-  *Link: [./tracks/finalize_refinements_20260224/](./tracks/finalize_refinements_20260224/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Layout Refinements**
+  *Link: [./archive/finalize_refinements_20260224/](./archive/finalize_refinements_20260224/)*
 - [x] **Track: Outer UI Wrapper for Print Sections**
   *Link: [./archive/fix_clipping_bug_20260223/](./archive/fix_clipping_bug_20260223/)*
 - [x] **Track: Shapes Mode Feature** (Completed: 2026-02-23)
