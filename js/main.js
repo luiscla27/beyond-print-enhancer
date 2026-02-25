@@ -3898,15 +3898,13 @@ function updateLayoutBounds() {
     let maxBottom = 0;
     let maxRight = 0;
 
-    const sections = Array.from(document.querySelectorAll('.print-section-container'));
-    sections.forEach(section => {
-        // Use getBoundingClientRect for accurate visual position relative to viewport/page
-        // BUT stick to style parsing for relative-to-parent calculation if parent is 0,0
-        // Since sections are absolute in a relative container, style.top is relative to container top.
-        const top = parseInt(section.style.top) || 0;
-        const left = parseInt(section.style.left) || 0;
-        const width = section.offsetWidth || 0;
-        const height = section.offsetHeight || 0;
+    const wrappers = Array.from(document.querySelectorAll('.be-section-wrapper'));
+    wrappers.forEach(wrapper => {
+        // Since wrappers are absolute in a relative container, style.top is relative to container top.
+        const top = parseInt(wrapper.style.top) || 0;
+        const left = parseInt(wrapper.style.left) || 0;
+        const width = wrapper.offsetWidth || 0;
+        const height = wrapper.offsetHeight || 0;
 
         const bottom = top + height;
         const right = left + width;
@@ -5553,7 +5551,7 @@ function injectCompactStyles() {
         applyDefaultLayout();
     }
 
-    // Default to Shapes Mode ON
-    toggleShapesMode(true);
+    // Default to Shapes Mode OFF
+    toggleShapesMode(false);
 })();
 })();
