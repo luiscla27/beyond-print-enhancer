@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Layout Refinements**
+  *Link: [./tracks/finalize_refinements_20260224/](./tracks/finalize_refinements_20260224/)*
 
 ## Archived Tracks
 - [x] **Track: Outer UI Wrapper for Print Sections**
