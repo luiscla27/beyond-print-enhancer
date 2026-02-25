@@ -61,10 +61,12 @@ describe('Quick Info Persistence', function() {
     window.separateQuickInfoBoxes();
     const acSection = document.getElementById('section-Box-AC');
     assert.ok(acSection, 'AC section should exist');
+    const wrapper = acSection.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper should exist');
     
     // Set custom position
-    acSection.style.left = '600px';
-    acSection.style.top = '600px';
+    wrapper.style.left = '600px';
+    wrapper.style.top = '600px';
     
     const layout = await window.scanLayout();
     assert.ok(layout.sections['section-Box-AC'], 'AC section missing in scanLayout');
@@ -74,7 +76,7 @@ describe('Quick Info Persistence', function() {
 
   it('should restore quick-info boxes in applyLayout', async function() {
     const layout = {
-        version: '1.2.0',
+        version: '1.4.0',
         sections: {
             'section-Box-AC': { 
                 left: '200px', 
@@ -87,8 +89,9 @@ describe('Quick Info Persistence', function() {
 
     await window.applyLayout(layout);
     const acSection = document.getElementById('section-Box-AC');
-    assert.strictEqual(acSection.style.left, '200px');
-    assert.strictEqual(acSection.style.top, '200px');
+    const wrapper = acSection.closest('.be-section-wrapper');
+    assert.strictEqual(wrapper.style.left, '200px');
+    assert.strictEqual(wrapper.style.top, '200px');
     assert.ok(acSection.classList.contains('ability_border'), 'Should have restored custom border style');
     assert.ok(!acSection.classList.contains('box_border'), 'Default border should have been removed');
   });

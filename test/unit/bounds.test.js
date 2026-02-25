@@ -12,7 +12,9 @@ describe('Dynamic Layout Bounds', function() {
       <html>
         <body>
           <div id="print-layout-wrapper" style="min-height: 100vh; min-width: 100vw;">
-            <div class="print-section-container" id="s1" style="top: 0px; left: 0px; width: 100px; height: 100px;"></div>
+            <div class="be-section-wrapper" style="top: 0px; left: 0px;">
+                <div class="print-section-container" id="s1" style="width: 100px; height: 100px;"></div>
+            </div>
           </div>
         </body>
       </html>
@@ -45,17 +47,18 @@ describe('Dynamic Layout Bounds', function() {
   it('should expand layout bounds when section moves down/right', function() {
     const wrapper = document.getElementById('print-layout-wrapper');
     const s1 = document.getElementById('s1');
+    const s1Wrapper = s1.closest('.be-section-wrapper');
+
+    // Mock offsets on the wrapper
+    Object.defineProperty(s1Wrapper, 'offsetWidth', { value: 100 });
+    Object.defineProperty(s1Wrapper, 'offsetHeight', { value: 100 });
 
     // Initial check (should be viewport size presumably, or base size)
     window.updateLayoutBounds();
-    // 800x600 is min
-    // S1 at 0,0 100x100 -> Bottom 100, Right 100.
-    // +50 padding -> 150.
-    // Math.max(150, 600) -> 600.
     
-    // Move section WAY out
-    s1.style.top = '1000px';
-    s1.style.left = '1200px';
+    // Move section wrapper WAY out
+    s1Wrapper.style.top = '1000px';
+    s1Wrapper.style.left = '1200px';
     
     window.updateLayoutBounds();
     

@@ -60,12 +60,16 @@ describe('Spells Node Wrapping Logic', function() {
       assert.ok(spellsContainer, 'Should create a container with ID section-Spells');
       assert.ok(spellsContainer.classList.contains('print-section-container'), 'Should have print-section-container class');
       
+      const wrapper = spellsContainer.closest('.be-section-wrapper');
+      assert.ok(wrapper, 'Wrapper should exist');
+      assert.strictEqual(wrapper.id, 'section-Spells-wrapper');
+
       const spellsNode = spellsContainer.querySelector('.ct-primary-box');
       assert.ok(spellsNode, 'Spells node should be inside the container');
       assert.ok(spellsNode.innerHTML.includes('Manage Spells'), 'Spells content should be preserved');
       
-      const header = spellsContainer.querySelector('.print-section-header');
+      const header = wrapper.querySelector('.print-section-header');
       assert.strictEqual(header.getAttribute('draggable'), 'true', 'Header should be draggable');
-      assert.strictEqual(spellsContainer.getAttribute('draggable'), null, 'Container itself should not be draggable to avoid resize conflict');
+      assert.strictEqual(wrapper.getAttribute('draggable'), null, 'Wrapper itself should not be draggable to avoid resize conflict');
   });
 });

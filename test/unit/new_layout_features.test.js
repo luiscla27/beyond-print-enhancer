@@ -62,8 +62,12 @@ describe('Recent Layout Features', function() {
                 </div>
                 
                 <!-- Sections for Default Layouts -->
-                <div id="section-Section-1"></div>
-                <div id="section-Actions"></div>
+                <div class="be-section-wrapper" id="section-Section-1-wrapper">
+                    <div id="section-Section-1" class="print-section-container"></div>
+                </div>
+                <div class="be-section-wrapper" id="section-Actions-wrapper">
+                    <div id="section-Actions" class="print-section-container"></div>
+                </div>
              </div>
           </div>
           <div id="print-layout-wrapper"></div>
@@ -212,14 +216,15 @@ describe('Recent Layout Features', function() {
       it('should apply confirmed default coordinates', function() {
            // Arrange
            const actionSection = document.getElementById('section-Actions');
+           const wrapper = actionSection.closest('.be-section-wrapper');
            
            // Act
            window.applyDefaultLayout();
 
            // Assert
-           // DEFAULT_LAYOUTS['section-Actions'] = { left: '512px', top: '352px', ... }
-           assert.strictEqual(actionSection.style.left, '512px');
-           assert.strictEqual(actionSection.style.top, '352px');
+           // DEFAULT_LAYOUTS['section-Actions'] = { left: '512px', top: '336px', ... }
+           assert.strictEqual(wrapper.style.left, '512px');
+           assert.strictEqual(wrapper.style.top, '336px');
       });
   });
 
@@ -285,18 +290,21 @@ describe('Recent Layout Features', function() {
   describe('Z-Index Application', function() {
       it('should apply zIndex correctly from default layout', function() {
           // Setup a section that exists in DEFAULT_LAYOUTS with a known zIndex
-          // section-Section-6 has zIndex: "65"
+          // section-Section-6 has zIndex: "136"
+          const wrapper = document.createElement('div');
+          wrapper.className = 'be-section-wrapper';
           const section6 = document.createElement('div');
           section6.id = 'section-Section-6';
           section6.className = 'print-section-container';
-          document.body.appendChild(section6);
+          wrapper.appendChild(section6);
+          document.body.appendChild(wrapper);
 
           // Act
           window.applyDefaultLayout();
 
           // Assert
           // We check the style property. Note: JSDOM might be lenient, but we suspect setProperty('zIndex') is the issue vs 'z-index'
-          assert.strictEqual(section6.style.zIndex, '65', 'Z-Index should be applied');
+          assert.strictEqual(wrapper.style.zIndex, '136', 'Z-Index should be applied');
       });
   });
 
@@ -341,11 +349,14 @@ describe('Recent Layout Features', function() {
 
   describe('Layout Applier', function() {
       it('should apply coordinates, sizes and inner widths', async function() {
-          const wrapper = document.getElementById('print-layout-wrapper');
+          const layoutRoot = document.getElementById('print-layout-wrapper');
+          const wrapper = document.createElement('div');
+          wrapper.className = 'be-section-wrapper';
           const section = document.createElement('div');
           section.className = 'print-section-container';
           section.id = 'section-ApplyTest';
           wrapper.appendChild(section);
+          layoutRoot.appendChild(wrapper);
 
           const content = document.createElement('div');
           content.className = 'test-content';
@@ -354,7 +365,7 @@ describe('Recent Layout Features', function() {
           section.appendChild(content);
 
           const layout = {
-              version: "1.0.0",
+              version: "1.4.0",
               sections: {
                   "section-ApplyTest": {
                       left: "150px",
@@ -373,11 +384,11 @@ describe('Recent Layout Features', function() {
           await window.applyLayout(layout);
 
           // Assert
-          assert.strictEqual(section.style.left, '150px');
-          assert.strictEqual(section.style.top, '250px');
+          assert.strictEqual(wrapper.style.left, '150px');
+          assert.strictEqual(wrapper.style.top, '250px');
           assert.strictEqual(section.style.width, '350px');
           assert.strictEqual(section.style.height, '450px');
-          assert.strictEqual(section.style.zIndex, '20');
+          assert.strictEqual(wrapper.style.zIndex, '20');
           assert.strictEqual(innerDiv.style.width, '180px');
       });
   });

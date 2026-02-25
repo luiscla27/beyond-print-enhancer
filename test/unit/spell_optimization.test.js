@@ -79,7 +79,7 @@ describe('Spell Detail Optimization', function() {
     await window.Storage.saveSpells([spellData]);
 
     const layout = {
-        version: '1.2.0',
+        version: '1.4.0',
         sections: {},
         clones: [],
         extractions: [],
@@ -100,6 +100,8 @@ describe('Spell Detail Optimization', function() {
     assert.ok(section, 'Spell detail section should be restored');
     assert.ok(section.textContent.includes('Conjuration'), 'Should show school from cache');
     assert.ok(section.textContent.includes('silvery mist'), 'Should show description from cache');
-    assert.strictEqual(section.style.left, '150px');
+    const wrapper = section.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper missing for restored spell detail');
+    assert.strictEqual(wrapper.style.left, '150px');
   });
 });

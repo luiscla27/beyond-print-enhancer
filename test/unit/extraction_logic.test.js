@@ -58,7 +58,9 @@ describe('Extraction Core & Lifecycle', function() {
     assert.strictEqual(sections.length, 1, 'One extracted section should be created');
     
     const section = sections[0];
-    assert.ok(section.textContent.includes('My Actions'), 'Section should contain original title');
+    const wrapper = section.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper should exist');
+    assert.ok(wrapper.textContent.includes('My Actions'), 'Section should contain original title');
     assert.ok(section.textContent.includes('Some content'), 'Section should contain original content');
     
     // Link tracking
@@ -68,7 +70,8 @@ describe('Extraction Core & Lifecycle', function() {
     assert.ok(section.querySelector('.print-section-resize-handle'), 'Should have a resize handle');
 
     // Compact button
-    assert.ok(section.querySelector('.be-compact-button'), 'Should have a compact mode button');
+    const actionContainer = wrapper.querySelector('.be-section-actions');
+    assert.ok(actionContainer.querySelector('.be-compact-button'), 'Should have a compact mode button');
 
     // Original header inside clone should be hidden
     const clonedHeader = section.querySelector('.ct-actions-group h3.head');
@@ -82,12 +85,13 @@ describe('Extraction Core & Lifecycle', function() {
     target.dispatchEvent(dblClickEvent);
     
     const section = document.querySelector('.be-extracted-section');
-    const closeBtn = section.querySelector('.print-section-minimize'); // The 'X' button
+    const wrapper = section.closest('.be-section-wrapper');
+    const closeBtn = wrapper.querySelector('.print-section-minimize'); // The 'X' button
     
     closeBtn.click();
     
     // Section should be removed
-    assert.strictEqual(document.querySelector('.be-extracted-section'), null, 'Section should be removed');
+    assert.strictEqual(document.querySelector('.be-section-wrapper'), null, 'Wrapper should be removed');
     
     // Original should be visible
     assert.notStrictEqual(target.style.display, 'none', 'Original element should be restored');
@@ -98,8 +102,10 @@ describe('Extraction Core & Lifecycle', function() {
     const dblClickEvent = new window.MouseEvent('dblclick', { bubbles: true });
     target.dispatchEvent(dblClickEvent);
     
+    const section = document.querySelector('.be-extracted-section');
+    const wrapper = section.closest('.be-section-wrapper');
     assert.strictEqual(target.style.display, 'none', 'Should be hidden after extraction');
-    assert.ok(document.querySelector('.be-extracted-section'), 'Extracted section should exist');
+    assert.ok(wrapper, 'Extracted wrapper should exist');
 
     // Mock confirm for handleLoadDefault
     window.confirm = () => true;
@@ -107,7 +113,7 @@ describe('Extraction Core & Lifecycle', function() {
     // Trigger Load Default
     await window.handleLoadDefault();
     
-    assert.strictEqual(document.querySelector('.be-extracted-section'), null, 'Extracted section should be removed');
+    assert.strictEqual(document.querySelector('.be-section-wrapper'), null, 'Extracted wrapper should be removed');
     assert.notStrictEqual(target.style.display, 'none', 'Original should be restored');
   });
 });

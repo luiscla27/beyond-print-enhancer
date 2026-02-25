@@ -12,7 +12,7 @@ const DB_NAME = 'DDBPrintEnhancerDB';
 const DB_VERSION = 2;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
-const SCHEMA_VERSION = '1.2.0';
+const SCHEMA_VERSION = '1.4.0';
 
 const DEFAULT_LAYOUTS = {
     "section-Section-1": {
@@ -539,10 +539,15 @@ function getExtractionSelector(el, includeContainers = false) {
  * Creates a standard draggable container for extracted content.
  */
 function createDraggableContainer(title, content, id) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'be-section-wrapper';
+  wrapper.id = id ? `${id}-wrapper` : `wrapper-${Date.now()}`;
+
   const container = document.createElement('div');
   container.className = 'print-section-container';
   container.id = id;
-  // REMOVED: container.setAttribute('draggable', 'true');
+  container.style.left = '';
+  container.style.top = '';
   
   const header = document.createElement('div');
   header.className = 'print-section-header';
@@ -574,7 +579,7 @@ function createDraggableContainer(title, content, id) {
   };
   header.appendChild(minimizeBtn);
 
-  container.appendChild(header);
+  wrapper.appendChild(header);
   
   // Restore button (only visible when minimized)
   const restoreBtn = document.createElement('button');
@@ -591,14 +596,16 @@ function createDraggableContainer(title, content, id) {
       e.stopPropagation();
       container.classList.remove('minimized');
   };
-  container.appendChild(restoreBtn);
+  wrapper.appendChild(restoreBtn);
 
   const contentWrapper = document.createElement('div');
   contentWrapper.className = 'print-section-content';
   contentWrapper.appendChild(content);
   container.appendChild(contentWrapper);
   
-  return container;
+  wrapper.appendChild(container);
+
+  return wrapper;
 }
 
 /**
@@ -993,7 +1000,9 @@ async function handleElementExtraction(el) {
 
     // 4. Create floating section
     const sectionId = `extracted-section-${Date.now()}`;
-    const container = createDraggableContainer(title, fragment, sectionId);
+    const wrapper = createDraggableContainer(title, fragment, sectionId);
+    wrapper.classList.add('be-extracted-section-wrapper');
+    const container = wrapper.querySelector('.print-section-container');
     container.classList.add('be-extracted-section');
     container.dataset.originalId = el.id;
 
@@ -1009,7 +1018,7 @@ async function handleElementExtraction(el) {
     if (idClass) container.dataset.beExtClass = idClass;
 
     // 5. Customize Close Button for Rollback
-    const xBtn = container.querySelector('.print-section-minimize');
+    const xBtn = wrapper.querySelector('.print-section-minimize');
     if (xBtn) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
@@ -1023,14 +1032,16 @@ async function handleElementExtraction(el) {
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
     const rootRect = layoutRoot.getBoundingClientRect();
     
-    container.style.position = 'absolute';
-    container.style.left = `${rect.left - rootRect.left + rect.width + 20}px`; // To the right of original
-    container.style.top = `${rect.top - rootRect.top}px`;
-    container.style.width = `${rect.width}px`;
-    container.style.height = 'auto';
-    container.style.zIndex = '10000';
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = `${rect.left - rootRect.left + rect.width + 20}px`; // To the right of original
+    wrapper.style.top = `${rect.top - rootRect.top}px`;
+    wrapper.style.zIndex = '10000';
 
-    layoutRoot.appendChild(container);
+    const innerContainer = wrapper.querySelector('.print-section-container');
+    innerContainer.style.width = `${rect.width}px`;
+    innerContainer.style.height = 'auto';
+
+    layoutRoot.appendChild(wrapper);
     
     // In the case of spell sections, destroy original instead of hiding
     // (They are ephemeral and don't have a home on the sheet to rollback to)
@@ -1044,13 +1055,13 @@ async function handleElementExtraction(el) {
         el.style.setProperty('display', 'none', 'important');
     }
     
-    if (window.injectCloneButtons) window.injectCloneButtons(container);
-    if (window.injectAppendButton) window.injectAppendButton(container);
+    if (window.injectCloneButtons) window.injectCloneButtons(innerContainer);
+    if (window.injectAppendButton) window.injectAppendButton(innerContainer);
     if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
     showFeedback(`Extracted ${title}`);
 
-    return container;
+    return wrapper;
 }
 
 /**
@@ -1107,7 +1118,9 @@ function renderExtractedSection(snapshot) {
         fragment.appendChild(sourceElement);
     }
 
-    const container = createDraggableContainer(snapshot.title, fragment, snapshot.id);
+    const wrapper = createDraggableContainer(snapshot.title, fragment, snapshot.id);
+    wrapper.classList.add('be-extracted-section-wrapper');
+    const container = wrapper.querySelector('.print-section-container');
     container.classList.add('be-extracted-section');
     container.dataset.originalId = snapshot.originalId;
     if (snapshot.parentSectionId) {
@@ -1124,7 +1137,7 @@ function renderExtractedSection(snapshot) {
     }
 
     // 4. Link rollback logic
-    const xBtn = container.querySelector('.print-section-minimize');
+    const xBtn = wrapper.querySelector('.print-section-minimize');
     if (xBtn) {
         xBtn.title = 'Rollback Extraction';
         xBtn.onclick = (e) => {
@@ -1139,9 +1152,9 @@ function renderExtractedSection(snapshot) {
     // 6. Apply styles
     if (snapshot.width) container.style.setProperty('width', snapshot.width, 'important');
     if (snapshot.height) container.style.setProperty('height', snapshot.height, 'important');
-    if (snapshot.left) container.style.setProperty('left', snapshot.left, 'important');
-    if (snapshot.top) container.style.setProperty('top', snapshot.top, 'important');
-    if (snapshot.zIndex) container.style.setProperty('z-index', snapshot.zIndex, 'important');
+    if (snapshot.left) wrapper.style.setProperty('left', snapshot.left, 'important');
+    if (snapshot.top) wrapper.style.setProperty('top', snapshot.top, 'important');
+    if (snapshot.zIndex) wrapper.style.setProperty('z-index', snapshot.zIndex, 'important');
 
     if (snapshot.minimized) {
         container.dataset.minimized = 'true';
@@ -1153,13 +1166,13 @@ function renderExtractedSection(snapshot) {
     }
 
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
-    layoutRoot.appendChild(container);
+    layoutRoot.appendChild(wrapper);
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
     
-    return container;
+    return wrapper;
 }
 
 /**
@@ -1379,7 +1392,9 @@ function handleMergeSections(sourceContainer, targetInfo) {
         
         // Tag for persistence if it's a group extraction
         const sourceId = sourceContainer.dataset.originalId;
-        const isSpell = sourceContainer.classList.contains('be-spell-detail');
+        const isSpell = sourceContainer.classList.contains('be-spell-detail') || 
+                        sourceContainer.id?.startsWith('spell-detail-');
+        
         if (!isSpell) {
             wrapper.setAttribute('data-be-group-merge', sourceId);
         }
@@ -1403,7 +1418,9 @@ function handleMergeSections(sourceContainer, targetInfo) {
         };
 
         // If source is a spell detail, tag it for persistence
-        const spellName = isSpell ? (sourceContainer.querySelector('.print-section-header span')?.textContent.trim()) : null;
+        const sourceWrapper = sourceContainer.closest('.be-section-wrapper') || sourceContainer;
+        const titleSpan = sourceWrapper.querySelector('.print-section-header span');
+        const spellName = isSpell ? titleSpan?.textContent.trim() : null;
         let tagged = false;
 
         // Move all children of sourceContent to the wrapper
@@ -1451,6 +1468,7 @@ function handleMergeSections(sourceContainer, targetInfo) {
  * Rolls back a section, restoring all associated original elements.
  */
 function rollbackSection(container) {
+    const wrapper = container.closest('.be-section-wrapper') || container;
     const originalId = container.dataset.originalId;
     const associatedIds = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
     
@@ -1463,7 +1481,7 @@ function rollbackSection(container) {
         }
     });
 
-    container.remove();
+    wrapper.remove();
     updateLayoutBounds();
     showFeedback('Extraction rolled back');
 }
@@ -1569,8 +1587,8 @@ async function injectClonesIntoSpellsView() {
           removeSpecificSvgs(child);
           
           // Wrap it
-          const wrapped = createDraggableContainer(title, child, `section-${title.replace(/\s+/g, '-')}`);
-          layoutRoot.appendChild(wrapped); // This moves 'child' into 'wrapped'
+          const wrapper = createDraggableContainer(title, child, `section-${title.replace(/\s+/g, '-')}`);
+          layoutRoot.appendChild(wrapper); // This moves 'child' into 'wrapped'
       }
   });
 
@@ -1767,15 +1785,16 @@ function separateAbilities() {
         const id = `section-Ability-${name}`;
 
         // Create container and MOVE the element
-        const container = createDraggableContainer(name, ability, id);
+        const wrapper = createDraggableContainer(name, ability, id);
+        const innerContainer = wrapper.querySelector('.print-section-container');
         
         // Default to ability border (if not overridden by saved layout later)
-        container.classList.add('ability_border');
+        innerContainer.classList.add('ability_border');
         
-        layoutRoot.appendChild(container);
+        layoutRoot.appendChild(wrapper);
 
         // Targeted SVG Removal for the new section
-        removeSpecificSvgs(container);
+        removeSpecificSvgs(innerContainer);
 
         // Reset internal styles to fit new container
         ability.style.margin = '0';
@@ -1813,15 +1832,16 @@ function separateQuickInfoBoxes() {
         const id = `section-Box-${label.replace(/\s+/g, '-')}`;
 
         // Create container and MOVE the element
-        const container = createDraggableContainer(label, box, id);
+        const wrapper = createDraggableContainer(label, box, id);
+        const innerContainer = wrapper.querySelector('.print-section-container');
         
         // Default to box border
-        container.classList.add('box_border');
+        innerContainer.classList.add('box_border');
         
-        layoutRoot.appendChild(container);
+        layoutRoot.appendChild(wrapper);
 
         // Targeted SVG Removal for the new section
-        removeSpecificSvgs(container);
+        removeSpecificSvgs(innerContainer);
 
         // Reset internal styles
         box.style.margin = '0';
@@ -1836,19 +1856,20 @@ function separateQuickInfoBoxes() {
     if (health) {
         // Only extract if it hasn't been extracted yet
         if (!document.getElementById('section-Quick-Info-Health')) {
-            const container = createDraggableContainer('Health', health, 'section-Quick-Info-Health');
+            const wrapper = createDraggableContainer('Health', health, 'section-Quick-Info-Health');
+            const innerContainer = wrapper.querySelector('.print-section-container');
             // Remove the header inside health if it exists to avoid duplication/weirdness
             const healthHeader = health.querySelector('h1');
             // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
             
-            layoutRoot.appendChild(container);
+            layoutRoot.appendChild(wrapper);
             
             // Fix health display
             health.style.display = 'block';
             health.style.position = 'static';
             health.style.width = '100%';
             
-            removeSpecificSvgs(container);
+            removeSpecificSvgs(innerContainer);
             
             // Mark parent for removal if health was inside it
             const parentGroup = health.parentElement; // usually .ct-quick-info
@@ -1874,8 +1895,9 @@ function initDragAndDrop() {
   if (!container) return;
 
   container.addEventListener('dragstart', e => {
-    draggedItem = e.target.closest('.print-section-container');
-    if (draggedItem) {
+    const wrapper = e.target.closest('.be-section-wrapper');
+    if (wrapper) {
+        draggedItem = wrapper;
         e.dataTransfer.effectAllowed = 'move';
         
         const rect = draggedItem.getBoundingClientRect();
@@ -1883,16 +1905,13 @@ function initDragAndDrop() {
         offsetY = e.clientY - rect.top;
         
         // User Request: Show full content while dragging
-        // We set the drag image explicitly to the container.
         if (e.dataTransfer.setDragImage) {
              e.dataTransfer.setDragImage(draggedItem, offsetX, offsetY);
         }
 
-        // Delay opacity change so the browser captures the full opacity element as the image
         requestAnimationFrame(() => {
             draggedItem.style.opacity = '0.98';
         });
-
     }
   });
 
@@ -1917,8 +1936,8 @@ function initDragAndDrop() {
           x = Math.round(x / 16) * 16;
           y = Math.round(y / 16) * 16;
           
-          draggedItem.style.left = `${x}px`;
-          draggedItem.style.top = `${y}px`;
+          draggedItem.style.setProperty('left', `${x}px`, 'important');
+          draggedItem.style.setProperty('top', `${y}px`, 'important');
           draggedItem.style.margin = '0'; // Ensure no margin interference
       }
       return false;
@@ -2234,6 +2253,28 @@ function enforceFullHeight() {
             }
         }
         
+        .be-section-wrapper {
+            position: absolute !important;
+            display: flex !important;
+            flex-direction: column !important;
+            z-index: 10;
+            min-width: max-content;
+            pointer-events: none; /* Allow clicks through to container/header */
+        }
+        .be-section-wrapper > * {
+            pointer-events: auto; /* Re-enable for children */
+        }
+        .be-section-wrapper:hover {
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+        .be-section-wrapper:hover .print-section-header {
+            opacity: 1;
+        }
+        .be-section-wrapper:hover .be-section-actions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         ${s.UI.PRINT_CONTAINER} { 
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
@@ -2255,11 +2296,43 @@ function enforceFullHeight() {
             min-height: 30px !important;
             min-width: 50px !important;
             overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
-            position: absolute !important;
-            z-index: 10;        
+            position: relative !important;
         }
-        ${s.UI.PRINT_CONTAINER}:hover { 
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+
+        .print-shape-container {
+            background-color: transparent !important;
+            border-width: 0;
+            border-style: solid;
+            pointer-events: auto;
+        }
+        .print-shape-container .print-section-content {
+            background-color: transparent !important;
+        }
+        .print-shape-container .print-section-header {
+            opacity: 0;
+            background-color: rgba(40, 167, 69, 0.5) !important;
+        }
+        .print-shape-container:hover .print-section-header {
+            opacity: 1;
+        }
+
+        /* Shapes Mode Active State */
+        body.be-shapes-mode-active .be-section-wrapper:not(.be-shape-wrapper) {
+            pointer-events: none !important;
+            opacity: 0.4 !important;
+        }
+        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper {
+            /* Ensure shapes are fully visible and interactive */
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper .print-shape-container {
+            filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.3));
+        }
+        body.be-shapes-mode-active .be-shapes-mode-btn {
+            background-color: #28a745 !important;
+            border-color: #fff !important;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
         }
 
         ${s.UI.PRINT_CONTAINER}, 
@@ -2373,9 +2446,7 @@ function enforceFullHeight() {
             padding: 0 16px;
             filter: drop-shadow(2px 4px 6px black);
             min-width: max-content;
-        }
-        ${s.UI.PRINT_CONTAINER}:hover .print-section-header {
-            opacity: 1;
+            top: -16px; /* Offset to center vertically on the top border if needed, or stay within wrapper flow */
         }
 
         /* Ability Summary */
@@ -2415,9 +2486,12 @@ function enforceFullHeight() {
             z-index: 20;
             opacity: 0; /* Hidden by default */
         }
-        ${s.UI.PRINT_CONTAINER}:hover .print-section-resize-handle {
+        .be-section-wrapper:hover .print-section-resize-handle {
             opacity: 1;
             background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
+        }
+        .be-section-wrapper.be-shape-wrapper:hover .print-section-resize-handle {
+            background: linear-gradient(135deg, transparent 50%, rgba(40, 167, 69, 0.8) 50%) !important;
         }
 
         /* Skills specific compact logic (already mostly covered by global above) */
@@ -2442,7 +2516,7 @@ function enforceFullHeight() {
         /* Unified Section Action Buttons */
         .be-section-actions {
             position: absolute;
-            top: 46px;
+            top: 30px; /* Below the header */
             left: 32px;
             display: flex;
             gap: 8px;
@@ -2450,12 +2524,6 @@ function enforceFullHeight() {
             opacity: 0;
             transition: opacity 0.2s;
             pointer-events: none;
-        }
-        ${s.UI.SUBSECTION}:hover .be-section-actions,
-        ${s.UI.SECTION}:hover .be-section-actions,
-        .print-section-container:hover .be-section-actions {
-            opacity: 1;
-            pointer-events: auto;
         }
         .be-section-actions button {
             width: 39px;
@@ -2477,11 +2545,20 @@ function enforceFullHeight() {
         .be-section-actions button:hover {
             background-color: var(--btn-color-highlight);
         }
+        .be-shape .be-section-actions button {
+            background-color: #28a745 !important;
+        }
+        .be-shape .be-section-actions button:hover {
+            background-color: #218838 !important;
+        }
         .be-clone-button {
             font-size: 21px !important;
         }
         .be-clone-delete:hover {
             background: #cc0000 !important;
+        }
+        .be-shape-delete:hover {
+            background: #1e7e34 !important;
         }
         @media print {
             .be-section-actions {
@@ -2760,12 +2837,13 @@ function renderClonedSection(snapshot) {
         fragment.appendChild(sanitizedClone.firstChild);
     }
 
-    const container = createDraggableContainer(snapshot.title, fragment, snapshot.id);
+    const wrapper = createDraggableContainer(snapshot.title, fragment, snapshot.id);
+    const container = wrapper.querySelector('.print-section-container');
     container.classList.add('be-clone');
     container.dataset.originalId = snapshot.originalId;
 
     // Double-click to edit title
-    const header = container.querySelector('.print-section-header');
+    const header = wrapper.querySelector('.print-section-header');
     if (header) {
         header.addEventListener('dblclick', async (e) => {
             e.stopPropagation();
@@ -2791,7 +2869,7 @@ function renderClonedSection(snapshot) {
     deleteBtn.onclick = (e) => {
         e.stopPropagation();
         if (confirm('Delete this clone?')) {
-            container.remove();
+            wrapper.remove();
             showFeedback('Clone deleted');
             updateLayoutBounds();
         }
@@ -2807,29 +2885,30 @@ function renderClonedSection(snapshot) {
 
     if (width) container.style.width = width;
     if (height) container.style.height = height;
-    if (zIndex) container.style.zIndex = zIndex;
+    if (zIndex) wrapper.style.zIndex = zIndex;
 
     if (left && top) {
-        container.style.left = left;
-        container.style.top = top;
+        wrapper.style.left = left;
+        wrapper.style.top = top;
     } else {
         // Position it slightly offset from original or at top-left
         const original = document.getElementById(snapshot.originalId);
         if (original) {
-            container.style.left = (parseInt(original.style.left) || 0) + 32 + 'px';
-            container.style.top = (parseInt(original.style.top) || 0) + 32 + 'px';
+            const originalWrapper = original.closest('.be-section-wrapper') || original;
+            wrapper.style.left = (parseInt(originalWrapper.style.left) || 0) + 32 + 'px';
+            wrapper.style.top = (parseInt(originalWrapper.style.top) || 0) + 32 + 'px';
             
             // Ensure it's in front of the original
             // Find max z-index in the layout
             let maxZ = 10;
-            document.querySelectorAll('.print-section-container').forEach(el => {
+            document.querySelectorAll('.be-section-wrapper').forEach(el => {
                 const z = parseInt(el.style.zIndex) || 10;
                 if (z > maxZ) maxZ = z;
             });
-            container.style.zIndex = maxZ + 1;
+            wrapper.style.zIndex = maxZ + 1;
         } else {
-            container.style.left = '32px';
-            container.style.top = '32px';
+            wrapper.style.left = '32px';
+            wrapper.style.top = '32px';
         }
     }
 
@@ -2850,14 +2929,149 @@ function renderClonedSection(snapshot) {
 
     const layoutRoot = document.getElementById('print-layout-wrapper');
     if (layoutRoot) {
-        layoutRoot.appendChild(container);
+        layoutRoot.appendChild(wrapper);
     }
 
     // Re-init resize logic for the new container
     if (window.initResizeLogic) window.initResizeLogic();
     
-    return container;
+    return wrapper;
 }
+
+/**
+ * Creates a floating decorative shape.
+ */
+function createShape(assetPath, restoreData = null) {
+    const id = restoreData ? restoreData.id : `shape-${Date.now()}`;
+    const content = document.createElement('div');
+    content.className = 'be-shape-content';
+    
+    // Create container using the existing helper
+    const wrapper = createDraggableContainer('', content, id);
+    wrapper.classList.add('be-shape-wrapper');
+    
+    const container = wrapper.querySelector('.print-section-container');
+    container.classList.add('print-shape-container', 'be-shape');
+    
+    // Removal logic (specific for shapes)
+    const actionContainer = getOrCreateActionContainer(container);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'be-shape-delete';
+    deleteBtn.innerHTML = '🗑️';
+    deleteBtn.title = 'Delete Shape';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm('Delete this shape?')) {
+            wrapper.remove();
+            showFeedback('Shape deleted');
+            updateLayoutBounds();
+        }
+    };
+    actionContainer.appendChild(deleteBtn);
+
+    // Asset Application
+    container.dataset.assetPath = assetPath;
+    applyShapeAsset(container, assetPath);
+    
+    // Z-Index Management (at least 100 higher than sections)
+    let maxZ = 110;
+    document.querySelectorAll('.be-section-wrapper').forEach(el => {
+        // Only count sections, not other shapes for the base 110 offset
+        if (!el.classList.contains('be-shape-wrapper')) {
+            const z = parseInt(el.style.zIndex) || 10;
+            if (z > maxZ - 100) maxZ = z + 100;
+        } else {
+            // But shapes should also stack on top of each other
+            const z = parseInt(el.style.zIndex) || 110;
+            if (z > maxZ) maxZ = z;
+        }
+    });
+    wrapper.style.zIndex = maxZ + 1;
+    
+    // Restore saved state
+    if (restoreData) {
+        if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
+        if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
+        if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
+        if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
+        if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
+    } else {
+        wrapper.style.setProperty('left', '50px', 'important');
+        wrapper.style.setProperty('top', '160px', 'important');
+        container.style.setProperty('width', '200px', 'important');
+        container.style.setProperty('height', '200px', 'important');
+    }
+
+    container.style.left = '';
+    container.style.top = '';
+    
+    const layoutRoot = document.getElementById('print-layout-wrapper');
+    if (layoutRoot) {
+        layoutRoot.appendChild(wrapper);
+    }
+    
+    // Re-init resize logic
+    if (window.initResizeLogic) window.initResizeLogic();
+    
+    return wrapper;
+}
+
+/**
+ * Helper to apply asset to a shape container via class or inline style.
+ */
+function applyShapeAsset(container, assetPath) {
+    // Map of assets to existing border classes
+    const assetToClassMap = {
+        'assets/border_ability.gif': 'ability_border',
+        'assets/border_spikes.gif': 'spikes_border',
+        'assets/border_barbarian.gif': 'barbarian_border',
+        'assets/border_goth1.gif': 'goth_border',
+        'assets/border_plants.gif': 'plants_border',
+        'assets/border_box.gif': 'box_border',
+        'assets/dwarf.gif': 'dwarf_border',
+        'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
+        'assets/sticks.gif': 'sticks_border',
+        'assets/ornament.gif': 'ornament_border',
+        'assets/ornament2.gif': 'ornament2_border',
+        'assets/ornament_bold.gif': 'ornament_bold_border',
+        'assets/ornament_bold2.gif': 'ornament_bold2_border',
+        'assets/ornament_simple.gif': 'ornament_simple_border',
+        'assets/spike_hollow.gif': 'spike_hollow_border',
+        'assets/spiky.gif': 'spiky_border',
+        'assets/spiky_bold.gif': 'spiky_bold_border',
+        'assets/vine_holloow.gif': 'vine_border',
+        'assets/border_default.png': 'default-border'
+    };
+
+    const className = assetToClassMap[assetPath];
+    if (className) {
+        container.classList.add(className);
+    } else {
+        // Generic handling for new assets in assets/shapes/
+        container.style.borderStyle = 'solid';
+        container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+        container.style.borderImageSlice = '33'; // Default slice
+        container.style.borderImageWidth = '28px'; // Default width
+        container.style.borderImageOutset = '16px'; // Default outset
+        container.style.borderImageRepeat = 'round';
+    }
+}
+
+/**
+ * Toggles the interaction mode between "Full Edit" and "Shapes Only".
+ * @param {boolean} forceState Optional: Force ON (true) or OFF (false).
+ */
+function toggleShapesMode(forceState) {
+    const activeClass = 'be-shapes-mode-active';
+    const isActive = forceState !== undefined ? !forceState : document.body.classList.contains(activeClass);
+    
+    if (isActive) {
+        document.body.classList.remove(activeClass);
+    } else {
+        document.body.classList.add(activeClass);
+    }
+}
+
 /**
  * Creates and manages a floating spell detail section.
  */
@@ -2890,11 +3104,13 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
     content.className = 'print-section-content';
     content.innerHTML = '<div class="be-spinner"></div>';
     
-    const container = createDraggableContainer(spellName, content, id);
+    const wrapper = createDraggableContainer(spellName, content, id);
+    wrapper.classList.add('be-spell-detail-wrapper', 'be-extracted-section-wrapper');
+    const container = wrapper.querySelector('.print-section-container');
     container.classList.add('be-spell-detail', 'be-extracted-section');
     
     // Customize Header: Add Close Button (instead of/beside minimize)
-    const header = container.querySelector('.print-section-header');
+    const header = wrapper.querySelector('.print-section-header');
     if (header) {
         // Change existing X button to remove for spell details
             const xBtn = header.querySelector('.print-section-minimize');
@@ -2911,11 +3127,11 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
     const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
     
     if (restoreData) {
-        if (restoreData.left) container.style.setProperty('left', restoreData.left, 'important');
-        if (restoreData.top) container.style.setProperty('top', restoreData.top, 'important');
+        if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
+        if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
         if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
         if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
-        if (restoreData.zIndex) container.style.setProperty('z-index', restoreData.zIndex, 'important');
+        if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
         
         if (restoreData.minimized) {
             container.dataset.minimized = 'true';
@@ -2929,15 +3145,15 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
         const x = coords.x - rootRect.left;
         const y = coords.y - rootRect.top;
 
-        container.style.position = 'absolute'; 
-        container.style.left = `${x}px`;
-        container.style.top = `${y}px`;
+        wrapper.style.position = 'absolute'; 
+        wrapper.style.left = `${x}px`;
+        wrapper.style.top = `${y}px`;
         container.style.width = '300px';
         container.style.height = 'auto';
-        container.style.zIndex = '10000';
+        wrapper.style.zIndex = '10000';
     }
 
-    layoutRoot.appendChild(container);
+    layoutRoot.appendChild(wrapper);
 
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
@@ -3293,6 +3509,157 @@ function showBorderPickerModal(currentStyle = 'default-border') {
 }
 
 /**
+ * Shows a modal to pick a decorative shape or border asset.
+ * @returns {Promise<{assetPath: string}|null>}
+ */
+function showShapePickerModal(currentAsset = '') {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        modal.style.width = '550px';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = 'Select Decorative Shape';
+        modal.appendChild(h3);
+        
+        const optionsContainer = document.createElement('div');
+        optionsContainer.className = 'be-border-options';
+        optionsContainer.style.maxHeight = '400px';
+        optionsContainer.style.overflowY = 'auto';
+        
+        const assets = [
+            // Custom Shapes (Planned for assets/shapes/ - currently using existing assets)
+            { path: 'assets/dwarf.gif', label: 'Dwarf (Shape)' },
+            { path: 'assets/ornament.gif', label: 'Ornament (Shape)' },
+            // Standard Borders
+            { path: 'assets/border_default.png', label: 'Default' },
+            { path: 'assets/border_ability.gif', label: 'Ability' },
+            { path: 'assets/border_spikes.gif', label: 'Spikes' },
+            { path: 'assets/border_barbarian.gif', label: 'Barbarian' },
+            { path: 'assets/border_goth1.gif', label: 'Goth' },
+            { path: 'assets/border_plants.gif', label: 'Plants' },
+            { path: 'assets/border_box.gif', label: 'Box' },
+            { path: 'assets/dwarf.gif', label: 'Dwarf' },
+            { path: 'assets/dwarf_hollow.gif', label: 'Dwarf Hollow' },
+            { path: 'assets/sticks.gif', label: 'Sticks' },
+            { path: 'assets/ornament.gif', label: 'Ornament 1' },
+            { path: 'assets/ornament2.gif', label: 'Ornament 2' },
+            { path: 'assets/ornament_bold.gif', label: 'Ornament Bold' },
+            { path: 'assets/ornament_bold2.gif', label: 'Ornament Bold 2' },
+            { path: 'assets/ornament_simple.gif', label: 'Ornament Simple' },
+            { path: 'assets/spike_hollow.gif', label: 'Spike Hollow' },
+            { path: 'assets/spiky.gif', label: 'Spiky' },
+            { path: 'assets/spiky_bold.gif', label: 'Spiky Bold' },
+            { path: 'assets/vine_holloow.gif', label: 'Vine' }
+        ];
+        
+        let selectedAsset = currentAsset || assets[0].path;
+        const optionEls = [];
+
+        assets.forEach(asset => {
+            const opt = document.createElement('div');
+            opt.className = 'be-border-option';
+            if (selectedAsset === asset.path) opt.classList.add('selected');
+            
+            const preview = document.createElement('div');
+            preview.className = `be-border-preview`;
+            // Manually apply border-image for preview since we don't have classes for all
+            // Note: Reuse existing classes if they map to the path
+            const assetToClassMap = {
+                'assets/border_ability.gif': 'ability_border',
+                'assets/border_spikes.gif': 'spikes_border',
+                'assets/border_barbarian.gif': 'barbarian_border',
+                'assets/border_goth1.gif': 'goth_border',
+                'assets/border_plants.gif': 'plants_border',
+                'assets/border_box.gif': 'box_border',
+                'assets/dwarf.gif': 'dwarf_border',
+                'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
+                'assets/sticks.gif': 'sticks_border',
+                'assets/ornament.gif': 'ornament_border',
+                'assets/ornament2.gif': 'ornament2_border',
+                'assets/ornament_bold.gif': 'ornament_bold_border',
+                'assets/ornament_bold2.gif': 'ornament_bold2_border',
+                'assets/ornament_simple.gif': 'ornament_simple_border',
+                'assets/spike_hollow.gif': 'spike_hollow_border',
+                'assets/spiky.gif': 'spiky_border',
+                'assets/spiky_bold.gif': 'spiky_bold_border',
+                'assets/vine_holloow.gif': 'vine_border',
+                'assets/border_default.png': 'default-border'
+            };
+            const className = assetToClassMap[asset.path];
+            if (className) {
+                preview.classList.add(className);
+            } else {
+                preview.style.borderStyle = 'solid';
+                preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                preview.style.borderImageSlice = '33';
+                preview.style.borderImageWidth = '20px';
+            }
+            
+            opt.appendChild(preview);
+            
+            const label = document.createElement('div');
+            label.textContent = asset.label;
+            label.style.fontSize = '12px';
+            opt.appendChild(label);
+            
+            opt.onclick = () => {
+                optionEls.forEach(el => el.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedAsset = asset.path;
+            };
+            
+            optionEls.push(opt);
+            optionsContainer.appendChild(opt);
+        });
+        
+        modal.appendChild(optionsContainer);
+        
+        const actions = document.createElement('div');
+        actions.className = 'be-modal-actions';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        actions.appendChild(cancelBtn);
+        
+        const okBtn = document.createElement('button');
+        okBtn.className = 'be-modal-ok';
+        okBtn.textContent = 'Add Shape';
+        okBtn.onclick = () => {
+            overlay.remove();
+            resolve({
+                assetPath: selectedAsset
+            });
+        };
+        actions.appendChild(okBtn);
+        
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Handle Esc
+        window.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                cancelBtn.click();
+                window.removeEventListener('keydown', escHandler);
+            }
+            if (e.key === 'Enter') {
+                okBtn.click();
+                window.removeEventListener('keydown', escHandler);
+            }
+        });
+    });
+}
+
+/**
  * Initializes ResizeObserver to scale content to fit its container.
  */
 function initResponsiveScaling() {
@@ -3343,19 +3710,31 @@ function initZIndexManagement() {
     if (!container) return;
 
     container.addEventListener('mousedown', (e) => {
-        const section = e.target.closest('.print-section-container');
-        if (!section) return;
+        const clickedEl = e.target.closest('.be-section-wrapper');
+        if (!clickedEl) return;
 
-        // Find max z-index
-        const allSections = document.querySelectorAll('.print-section-container');
-        let maxZ = 10;
-        allSections.forEach(el => {
+        const isShape = clickedEl.classList.contains('be-shape-wrapper');
+        const allElements = document.querySelectorAll('.be-section-wrapper');
+        
+        let maxSectionZ = 10;
+        let maxShapeZ = 110;
+
+        allElements.forEach(el => {
             const z = parseInt(window.getComputedStyle(el).zIndex) || 10;
-            if (z > maxZ) maxZ = z;
+            if (el.classList.contains('be-shape-wrapper')) {
+                if (z > maxShapeZ) maxShapeZ = z;
+            } else {
+                if (z > maxSectionZ) maxSectionZ = z;
+            }
         });
 
-        // Set clicked section to max + 1
-        section.style.zIndex = maxZ + 1;
+        if (isShape) {
+            // Shapes always on top of sections and front of other shapes
+            clickedEl.style.zIndex = Math.max(maxShapeZ, maxSectionZ + 100) + 1;
+        } else {
+            // Sections stay below shapes (usually < 110)
+            clickedEl.style.zIndex = maxSectionZ + 1;
+        }
     });
 }
 
@@ -3364,8 +3743,9 @@ function initZIndexManagement() {
  * Automatically arranges sections in a masonry-like grid
  */
 function autoArrangeSections() {
-    const sections = Array.from(document.querySelectorAll('.print-section-container'));
-    if (sections.length === 0) return;
+    const containers = Array.from(document.querySelectorAll('.print-section-container'))
+                          .filter(el => !el.classList.contains('be-shape'));
+    if (containers.length === 0) return;
 
     const viewportWidth = window.innerWidth || 1200; // Fallback
     let currentX = 10;
@@ -3374,12 +3754,14 @@ function autoArrangeSections() {
     const gutter = 15;
     let columnsInRow = 0;
 
-    sections.forEach(section => {
-        section.style.left = '0px';
-        section.style.top = '0px'; 
+    containers.forEach(container => {
+        const wrapper = container.closest('.be-section-wrapper') || container;
+        
+        wrapper.style.left = '0px';
+        wrapper.style.top = '0px'; 
 
-        const width = section.offsetWidth || 300;
-        const height = section.offsetHeight || 150;
+        const width = container.offsetWidth || 300;
+        const height = container.offsetHeight || 150;
 
         // Check if we need a new row:
         // 1. If it doesn't fit horizontally
@@ -3396,8 +3778,8 @@ function autoArrangeSections() {
         const snapX = Math.round(currentX / 16) * 16;
         const snapY = Math.round(currentY / 16) * 16;
 
-        section.style.left = `${snapX}px`;
-        section.style.top = `${snapY}px`;
+        wrapper.style.left = `${snapX}px`;
+        wrapper.style.top = `${snapY}px`;
         
         currentX += width + gutter;
         if (height > rowHeight) rowHeight = height;
@@ -3516,15 +3898,13 @@ function updateLayoutBounds() {
     let maxBottom = 0;
     let maxRight = 0;
 
-    const sections = Array.from(document.querySelectorAll('.print-section-container'));
-    sections.forEach(section => {
-        // Use getBoundingClientRect for accurate visual position relative to viewport/page
-        // BUT stick to style parsing for relative-to-parent calculation if parent is 0,0
-        // Since sections are absolute in a relative container, style.top is relative to container top.
-        const top = parseInt(section.style.top) || 0;
-        const left = parseInt(section.style.left) || 0;
-        const width = section.offsetWidth || 0;
-        const height = section.offsetHeight || 0;
+    const wrappers = Array.from(document.querySelectorAll('.be-section-wrapper'));
+    wrappers.forEach(wrapper => {
+        // Since wrappers are absolute in a relative container, style.top is relative to container top.
+        const top = parseInt(wrapper.style.top) || 0;
+        const left = parseInt(wrapper.style.left) || 0;
+        const width = wrapper.offsetWidth || 0;
+        const height = wrapper.offsetHeight || 0;
 
         const bottom = top + height;
         const right = left + width;
@@ -3604,6 +3984,14 @@ function createControls() {
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
+        { label: 'Add Shape', icon: '🎨', action: async () => {
+            const result = await showShapePickerModal();
+            if (result) {
+                createShape(result.assetPath);
+                showFeedback('Shape added');
+            }
+        }},
+        { label: 'Shapes Mode', icon: '🔒', className: 'be-shapes-mode-btn', action: () => toggleShapesMode() },
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
@@ -3624,6 +4012,7 @@ function createControls() {
 
     buttons.forEach(btnInfo => {
         const btn = document.createElement('button');
+        if (btnInfo.className) btn.className = btnInfo.className;
         btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
         btn.style.backgroundColor = btnInfo.bgColor || '#333';
         btn.style.color = 'white';
@@ -3838,15 +4227,23 @@ function applyDefaultLayout() {
         const section = document.getElementById(id);
         if (section) {
             console.log(`[DDB Print] Applying defaults to ${id}`, styles);
+            const wrapper = section.closest('.be-section-wrapper') || section;
+            
             // Explicitly set properties to ensure they take effect
             for (const [prop, val] of Object.entries(styles)) {
                 if (prop === 'borderStyle') {
                     section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
                     if (val) section.classList.add(val);
-                } else if (['left', 'top', 'width', 'height', 'zIndex'].includes(prop)) {
-                    // Fix: setProperty requires kebab-case for z-index
-                    const cssProp = prop === 'zIndex' ? 'z-index' : prop;
-                    section.style.setProperty(cssProp, val, 'important');
+                } else if (['left', 'top', 'zIndex'].includes(prop)) {
+                    if (prop === 'zIndex') {
+                        wrapper.style.zIndex = val;
+                        section.style.zIndex = '';
+                    } else {
+                        wrapper.style[prop] = val;
+                        section.style[prop] = '';
+                    }
+                } else if (['width', 'height'].includes(prop)) {
+                    section.style[prop] = val;
                 } else if (prop === 'minimized') {
                     section.classList.toggle('minimized', !!val);
                 } else if (prop === 'compact') {
@@ -3881,19 +4278,20 @@ async function handleLoadDefault() {
         }
 
         // Reset styles in DOM
-        document.querySelectorAll('.print-section-container').forEach(section => {
-            section.style.left = '';
-            section.style.top = '';
-            section.style.width = '';
-            section.style.height = '';
-            section.style.zIndex = '10';
-            section.dataset.minimized = 'false';
+        document.querySelectorAll('.print-section-container').forEach(container => {
+            const wrapper = container.closest('.be-section-wrapper') || container;
+            container.style.width = '';
+            container.style.height = '';
+            wrapper.style.left = '';
+            wrapper.style.top = '';
+            wrapper.style.zIndex = '10';
+            container.dataset.minimized = 'false';
             
-            const content = section.querySelector('.print-section-content');
+            const content = container.querySelector('.print-section-content');
             if (content) content.style.display = 'flex';
 
             // Reset inner widths
-            const inners = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"] div');
+            const inners = container.querySelectorAll('div[class$="-row-header"], div[class$="-content"] div');
             inners.forEach(el => {
                 if (el.tagName === 'DIV') {
                     el.style.width = '';
@@ -3910,10 +4308,13 @@ async function handleLoadDefault() {
             const originalId = clone.dataset.originalId;
             const original = document.getElementById(originalId);
             if (original) {
-                const x = (parseInt(original.style.left) || 0) + 32;
-                const y = (parseInt(original.style.top) || 0) + 32;
-                clone.style.setProperty('left', `${x}px`, 'important');
-                clone.style.setProperty('top', `${y}px`, 'important');
+                const cloneWrapper = clone.closest('.be-section-wrapper') || clone;
+                const originalWrapper = original.closest('.be-section-wrapper') || original;
+
+                const x = (parseInt(originalWrapper.style.left) || 0) + 32;
+                const y = (parseInt(originalWrapper.style.top) || 0) + 32;
+                cloneWrapper.style.setProperty('left', `${x}px`, 'important');
+                cloneWrapper.style.setProperty('top', `${y}px`, 'important');
                 
                 // Maintain current dimensions if they exist, otherwise they might be reset by the global query
                 const currentWidth = clone.style.width;
@@ -3921,7 +4322,7 @@ async function handleLoadDefault() {
                 if (currentWidth) clone.style.setProperty('width', currentWidth, 'important');
                 if (currentHeight) clone.style.setProperty('height', currentHeight, 'important');
 
-                clone.style.zIndex = (parseInt(original.style.zIndex) || 10) + 1;
+                cloneWrapper.style.zIndex = (parseInt(originalWrapper.style.zIndex) || 10) + 1;
             }
         });
 
@@ -3945,7 +4346,8 @@ async function handleLoadDefault() {
 
         // Reposition all spell detail sections to the Y of their original spell label, at left: 1200px
         document.querySelectorAll('.print-section-container.be-spell-detail').forEach(detail => {
-            const titleSpan = detail.querySelector('.print-section-header span');
+            const detailWrapper = detail.closest('.be-section-wrapper') || detail;
+            const titleSpan = detailWrapper.querySelector('.print-section-header span');
             if (titleSpan) {
                 const spellName = titleSpan.textContent.trim();
                 // Find the original spell label in the DOM (searching for exact text match)
@@ -3959,24 +4361,24 @@ async function handleLoadDefault() {
                     
                     // Calculate Y relative to the layout wrapper
                     const y = labelRect.top - rootRect.top;
-                    detail.style.setProperty('left', `1200px`, 'important');
-                    detail.style.setProperty('top', `${y}px`, 'important');
-                    detail.style.setProperty('width', '300px', 'important');
-                    detail.style.setProperty('height', 'auto', 'important');
+                    detailWrapper.style.left = '1200px';
+                    detailWrapper.style.top = `${y}px`;
+                    detail.style.width = '300px';
+                    detail.style.height = 'auto';
                 } else {
                     // Fallback: move to the right edge
-                    detail.style.setProperty('left', `1200px`, 'important');
-                    detail.style.setProperty('width', '300px', 'important');
-                    detail.style.setProperty('height', 'auto', 'important');
+                    detailWrapper.style.left = '1200px';
+                    detail.style.width = '300px';
+                    detail.style.height = 'auto';
                 }
             }
         });
 
         // Rollback all OTHER extractions
-        document.querySelectorAll('.print-section-container.be-extracted-section:not(.be-spell-detail)').forEach(section => {
+        document.querySelectorAll('.print-section-container.be-extracted-section:not(.be-spell-detail)').forEach(container => {
             // Use rollbackSection logic but avoiding multiple feedbacks/bounds updates
-            const originalId = section.dataset.originalId;
-            const associatedIds = section.dataset.associatedIds ? JSON.parse(section.dataset.associatedIds) : [];
+            const originalId = container.dataset.originalId;
+            const associatedIds = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
             const allIds = [originalId, ...associatedIds].filter(id => id);
             
             allIds.forEach(id => {
@@ -3985,7 +4387,8 @@ async function handleLoadDefault() {
                     original.style.setProperty('display', '', 'important');
                 }
             });
-            section.remove();
+            const wrapper = container.closest('.be-section-wrapper') || container;
+            wrapper.remove();
         });
 
         updateLayoutBounds();
@@ -4188,6 +4591,7 @@ async function scanLayout() {
         sections: {},
         clones: [],
         extractions: [],
+        shapes: [],
         spell_details: [],
         merges: [],
         spell_cache: []
@@ -4207,7 +4611,8 @@ async function scanLayout() {
         const id = section.id;
         if (!id) return;
 
-        const header = section.querySelector('.print-section-header span');
+        const wrapper = section.closest('.be-section-wrapper') || section;
+        const header = wrapper.querySelector('.print-section-header span');
         const content = section.querySelector('.print-section-content');
 
         const getBorderStyle = (el) => {
@@ -4228,11 +4633,11 @@ async function scanLayout() {
                 id: id,
                 title: header ? header.textContent.trim() : 'Clone',
                 html: sanitizedHtml,
-                left: section.style.left,
-                top: section.style.top,
+                left: wrapper.style.left,
+                top: wrapper.style.top,
                 width: section.style.width,
                 height: section.style.height,
-                zIndex: section.style.zIndex || '10',
+                zIndex: wrapper.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode'),
                 borderStyle: getBorderStyle(section)
@@ -4244,13 +4649,27 @@ async function scanLayout() {
             layout.spell_details.push({
                 id: id,
                 spellName: header ? header.textContent.trim() : 'Spell',
-                left: section.style.left,
-                top: section.style.top,
+                left: wrapper.style.left,
+                top: wrapper.style.top,
                 width: section.style.width,
                 height: section.style.height,
-                zIndex: section.style.zIndex || '10',
+                zIndex: wrapper.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 borderStyle: getBorderStyle(section)
+            });
+            return;
+        }
+
+        if (section.classList.contains('be-shape')) {
+            layout.shapes.push({
+                id: id,
+                assetPath: section.dataset.assetPath,
+                left: wrapper.style.left,
+                top: wrapper.style.top,
+                width: section.style.width,
+                height: section.style.height,
+                zIndex: wrapper.style.zIndex || '110',
+                minimized: section.dataset.minimized === 'true'
             });
             return;
         }
@@ -4264,11 +4683,11 @@ async function scanLayout() {
                 originalId: originalId,
                 parentSectionId: section.dataset.parentSectionId,
                 title: header ? header.textContent.trim() : 'Extracted',
-                left: section.style.left,
-                top: section.style.top,
+                left: wrapper.style.left,
+                top: wrapper.style.top,
                 width: section.style.width,
                 height: section.style.height,
-                zIndex: section.style.zIndex || '10',
+                zIndex: wrapper.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode'),
                 borderStyle: getBorderStyle(section)
@@ -4287,11 +4706,11 @@ async function scanLayout() {
         }
 
         layout.sections[id] = {
-            left: section.style.left,
-            top: section.style.top,
+            left: wrapper.style.left,
+            top: wrapper.style.top,
             width: section.style.width,
             height: section.style.height,
-            zIndex: section.style.zIndex || '10',
+            zIndex: wrapper.style.zIndex || '10',
             minimized: section.dataset.minimized === 'true',
             compact: section.classList.contains('be-compact-mode'),
             borderStyle: getBorderStyle(section),
@@ -4482,17 +4901,29 @@ async function applyLayout(layout) {
 
     // Restore spell details
     if (layout.spell_details && Array.isArray(layout.spell_details)) {
-        layout.spell_details.forEach(spellData => {
-            const container = createSpellDetailSection(spellData.spellName, null, spellData);
+        for (const spellData of layout.spell_details) {
+            const container = await createSpellDetailSection(spellData.spellName, null, spellData);
             if (container && spellData.borderStyle) {
                 container.classList.add(spellData.borderStyle);
             }
+        }
+    }
+
+    // Remove existing shapes to avoid duplicates
+    document.querySelectorAll('.print-section-container.be-shape').forEach(el => el.remove());
+
+    // Restore shapes
+    if (layout.shapes && Array.isArray(layout.shapes)) {
+        layout.shapes.forEach(shapeData => {
+            createShape(shapeData.assetPath, shapeData);
         });
     }
 
     for (const [id, styles] of Object.entries(layout.sections)) {
         const section = document.getElementById(id);
         if (!section) continue;
+
+        const wrapper = section.closest('.be-section-wrapper') || section;
 
         // Apply border style
         clearBorderStyles(section);
@@ -4501,11 +4932,15 @@ async function applyLayout(layout) {
         }
 
         // Apply main styles
-        if (styles.left) section.style.left = styles.left;
-        if (styles.top) section.style.top = styles.top;
+        if (styles.left) wrapper.style.left = styles.left;
+        if (styles.top) wrapper.style.top = styles.top;
         if (styles.width) section.style.width = styles.width;
         if (styles.height) section.style.height = styles.height;
-        if (styles.zIndex) section.style.zIndex = styles.zIndex;
+        if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
+
+        // Ensure container doesn't have duplicate positioning
+        section.style.left = '';
+        section.style.top = '';
 
         // Handle minimization
         if (styles.minimized) {
@@ -4695,11 +5130,12 @@ function drawPageSeparators(totalHeight, totalWidth) {
  * @returns {HTMLElement} The container element.
  */
 function getOrCreateActionContainer(section) {
-    let container = section.querySelector('.be-section-actions');
+    const wrapper = section.closest('.be-section-wrapper') || section;
+    let container = wrapper.querySelector('.be-section-actions');
     if (!container) {
         container = document.createElement('div');
         container.className = 'be-section-actions';
-        section.appendChild(container);
+        wrapper.appendChild(container);
     }
     return container;
 }
@@ -5028,6 +5464,7 @@ function injectCompactStyles() {
     window.removeSpecificSvgs = removeSpecificSvgs;
     window.drawPageSeparators = drawPageSeparators;
     window.moveQuickInfo = moveQuickInfo;
+    window.toggleShapesMode = toggleShapesMode;
     window.suppressResizeEvents = suppressResizeEvents;
     window.separateAbilities = separateAbilities;
     window.separateQuickInfoBoxes = separateQuickInfoBoxes;
@@ -5045,9 +5482,13 @@ function injectCompactStyles() {
     window.showFallbackModal = showFallbackModal;
     window.showInputModal = showInputModal;
     window.showBorderPickerModal = showBorderPickerModal;
+    window.showShapePickerModal = showShapePickerModal;
     window.handleManageClones = handleManageClones;
+    window.getOrCreateActionContainer = getOrCreateActionContainer;
     window.captureSectionSnapshot = captureSectionSnapshot;
     window.renderClonedSection = renderClonedSection;
+    window.createShape = createShape;
+    window.applyShapeAsset = applyShapeAsset;
     window.Storage = Storage;
     window.injectCloneButtons = injectCloneButtons;
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
@@ -5109,5 +5550,8 @@ function injectCompactStyles() {
     if (!layoutRestored) {
         applyDefaultLayout();
     }
+
+    // Default to Shapes Mode OFF
+    toggleShapesMode(false);
 })();
 })();

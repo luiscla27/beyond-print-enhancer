@@ -20,6 +20,14 @@ describe('DOM Extraction Logic (Integration)', function() {
     window = dom.window;
     document = window.document;
     
+    // Mock chrome
+    window.chrome = {
+        runtime: {
+            getURL: (path) => `chrome-extension://id/${path}`
+        }
+    };
+    global.chrome = window.chrome;
+    
     // Inject main.js logic
     // We read the file and strip the IIFE wrapper so we can access functions, 
     // OR just modify it to expose them.
@@ -95,8 +103,13 @@ describe('DOM Extraction Logic (Integration)', function() {
     
     const spellsContainer = spellsNode.closest('.print-section-container');
     assert.ok(spellsContainer, 'Spells node should be inside a print container');
-    assert.strictEqual(actionsClone.parentElement, layoutRoot, 'Actions clone should be inside layout root');
-    assert.strictEqual(spellsContainer.parentElement, layoutRoot, 'Spells container should be inside layout root');
+    const actionsWrapper = actionsClone.closest('.be-section-wrapper');
+    const spellsWrapper = spellsContainer.closest('.be-section-wrapper');
+    assert.ok(actionsWrapper, 'Actions wrapper missing');
+    assert.ok(spellsWrapper, 'Spells wrapper missing');
+    
+    assert.strictEqual(actionsWrapper.parentElement, layoutRoot, 'Actions wrapper should be inside layout root');
+    assert.strictEqual(spellsWrapper.parentElement, layoutRoot, 'Spells wrapper should be inside layout root');
     
     // Check if Navigation is hidden
     const nav = document.querySelector('nav');

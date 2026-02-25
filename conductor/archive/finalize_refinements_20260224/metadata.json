@@ -1,0 +1,8 @@
+{
+  "track_id": "finalize_refinements_20260224",
+  "type": "refinement",
+  "status": "completed",
+  "created_at": "2026-02-24T22:51:00Z",
+  "updated_at": "2026-02-24T23:05:00Z",
+  "description": "Turn off Shapes Mode by default and fix layout height calculation to use wrapper positions."
+}

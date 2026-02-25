@@ -65,7 +65,7 @@ describe('Extraction Persistence', function() {
     liveOriginal.innerHTML = '<h3 class="head">Live Actions</h3><p>Live Updated Content</p>';
 
     const layout = {
-        version: '1.2.0',
+        version: '1.4.0',
         sections: {},
         clones: [],
         extractions: [{
@@ -84,7 +84,9 @@ describe('Extraction Persistence', function() {
     const extraction = document.getElementById('ext-123');
     assert.ok(extraction, 'Extraction should be rendered');
     assert.ok(extraction.textContent.includes('Live Updated Content'), 'Should show live content from DOM');
-    assert.strictEqual(extraction.style.left, '100px');
+    const wrapper = extraction.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper missing for restored extraction');
+    assert.strictEqual(wrapper.style.left, '100px');
     
     const original = document.getElementById('target-1');
     assert.strictEqual(original.style.display, 'none', 'Original element should be hidden on restore');

@@ -6,6 +6,16 @@ This file tracks all major development tracks for the project.
 *(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Fix Asset Paths**
+  *Link: [./archive/fix_asset_paths_20260224/](./archive/fix_asset_paths_20260224/)*
+- [x] **Track: Layout Refinements**
+  *Link: [./archive/finalize_refinements_20260224/](./archive/finalize_refinements_20260224/)*
+- [x] **Track: Outer UI Wrapper for Print Sections**
+  *Link: [./archive/fix_clipping_bug_20260223/](./archive/fix_clipping_bug_20260223/)*
+- [x] **Track: Shapes Mode Feature** (Completed: 2026-02-23)
+  *Link: [./archive/shapes_mode_20260223/](./archive/shapes_mode_20260223/)*
+- [x] **Track: Shape Decoration Feature** (Completed: 2026-02-23)
+  *Link: [./archive/shape_decoration_20260223/](./archive/shape_decoration_20260223/)*
 - [x] **Track: Border Asset Expansion** (Completed: 2026-02-22)
   *Link: [./archive/border_asset_expansion_20260222/](./archive/border_asset_expansion_20260222/)*
 - [x] **Track: Quick Info Box Extraction & Stabilization** (Completed: 2026-02-20)

@@ -195,5 +195,17 @@ describe('DomManager & ElementWrapper', () => {
                 assert.strictEqual(manager.selectors.ABILITY.SUMMARY_SECONDARY, '.ddbc-ability-summary__secondary');
             });
         });
+
+        describe('UI Selectors', () => {
+            it('should have shape container selector', () => {
+                const manager = DomManager.getInstance();
+                assert.strictEqual(manager.selectors.UI.SHAPE_CONTAINER, '.print-shape-container');
+            });
+
+            it('should have wrapper selector', () => {
+                const manager = DomManager.getInstance();
+                assert.strictEqual(manager.selectors.UI.WRAPPER, '.be-section-wrapper');
+            });
+        });
     });
 });

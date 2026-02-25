@@ -13,6 +13,7 @@ const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
 const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
 
 describe('UI - Spell Detail Section', function() {
+  this.timeout(10000);
   let window, document;
 
   before(async function() {
@@ -77,8 +78,10 @@ describe('UI - Spell Detail Section', function() {
     
     const section = document.querySelector('.print-section-container.be-spell-detail');
     assert.ok(section, 'Section should be created');
-    assert.strictEqual(section.style.left, '100px');
-    assert.strictEqual(section.style.top, '200px');
+    const wrapper = section.closest('.be-section-wrapper');
+    assert.ok(wrapper, 'Wrapper should be found');
+    assert.strictEqual(wrapper.style.left, '100px');
+    assert.strictEqual(wrapper.style.top, '200px');
     assert.ok(section.querySelector('.be-spinner'), 'Should show loading spinner initially');
   });
 
@@ -97,11 +100,11 @@ describe('UI - Spell Detail Section', function() {
 
     await window.createSpellDetailSection(spellName, { x: 0, y: 0 });
     
-    const section = Array.from(document.querySelectorAll('.print-section-container.be-spell-detail'))
-                         .find(s => s.textContent.includes('Shield'));
-    assert.ok(section.textContent.includes('Abjuration'), 'Should display school');
-    assert.ok(section.textContent.includes('An invisible barrier'), 'Should display description');
-    assert.strictEqual(section.querySelector('.be-spinner'), null, 'Spinner should be removed');
+    const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
+                         .find(w => w.textContent.includes('Shield'));
+    assert.ok(wrapper.textContent.includes('Abjuration'), 'Should display school');
+    assert.ok(wrapper.textContent.includes('An invisible barrier'), 'Should display description');
+    assert.strictEqual(wrapper.querySelector('.be-spinner'), null, 'Spinner should be removed');
   });
 
   it('should show error state on fetch failure', async function() {
@@ -111,12 +114,12 @@ describe('UI - Spell Detail Section', function() {
 
     await window.createSpellDetailSection(spellName, { x: 0, y: 0 });
     
-    const section = Array.from(document.querySelectorAll('.print-section-container.be-spell-detail'))
-                         .find(s => s.textContent.includes('NonExistent'));
+    const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
+                         .find(w => w.textContent.includes('NonExistent'));
     
-    assert.ok(section, 'Section for NonExistent should be found');
-    assert.ok(section.textContent.toLowerCase().includes('available'), 'Should show error message guidance');
-    assert.ok(section.querySelector('.be-retry-button'), 'Should have retry button');
+    assert.ok(wrapper, 'Section for NonExistent should be found');
+    assert.ok(wrapper.textContent.toLowerCase().includes('available'), 'Should show error message guidance');
+    assert.ok(wrapper.querySelector('.be-retry-button'), 'Should have retry button');
   });
 
   it('should reposition to left:0 and spell Y during handleLoadDefault', async function() {
@@ -149,20 +152,37 @@ describe('UI - Spell Detail Section', function() {
 
     // Create the detail section
     await window.createSpellDetailSection(spellName, { x: 400, y: 400 });
-    const detail = Array.from(document.querySelectorAll('.be-spell-detail'))
-                        .find(s => s.textContent.includes(spellName));
+    const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
+                         .find(w => {
+                             const span = w.querySelector('.print-section-header span');
+                             return span && span.textContent.trim() === spellName;
+                         });
+    assert.ok(wrapper, 'Wrapper not found');
+    const detail = wrapper.querySelector('.print-section-container');
+    assert.ok(detail, 'Detail container not found');
     
     // Initial position and size
-    detail.style.left = '400px';
+    wrapper.style.left = '400px';
     detail.style.width = '500px';
     
     // Trigger Load Default
+    const originalConfirm = window.confirm;
     window.confirm = () => true;
     await window.handleLoadDefault();
+    window.confirm = originalConfirm;
     
+    // RE-QUERY live elements after reset
+    const finalWrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
+                         .find(w => {
+                             const span = w.querySelector('.print-section-header span');
+                             return span && span.textContent.trim() === spellName;
+                         });
+    assert.ok(finalWrapper, 'Wrapper missing after reset');
+    const finalDetail = finalWrapper.querySelector('.print-section-container');
+
     // Should be at left: 1200, top: 500, and width: 300px
-    assert.strictEqual(detail.style.left, '1200px');
-    assert.strictEqual(detail.style.top, '500px');
-    assert.strictEqual(detail.style.width, '300px');
+    assert.strictEqual(finalWrapper.style.left, '1200px');
+    assert.strictEqual(finalWrapper.style.top, '500px');
+    assert.strictEqual(finalDetail.style.width, '300px');
   });
 });

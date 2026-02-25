@@ -59,6 +59,6 @@ describe('Layout Flexibility Logic', function() {
       assert.ok(css.includes('.print-section-header'), 'Should have header styling');
       assert.ok(css.includes('cursor: move'), 'Should have move cursor for drag signal');
       assert.ok(css.includes('opacity: 0'), 'Header should be hidden by default');
-      assert.ok(css.includes('.print-section-container:hover .print-section-header'), 'Header should show on hover');
+      assert.ok(css.includes('.be-section-wrapper:hover .print-section-header'), 'Header should show on hover');
   });
 });
