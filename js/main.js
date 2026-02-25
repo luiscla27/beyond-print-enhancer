@@ -3531,9 +3531,9 @@ function showShapePickerModal(currentAsset = '') {
         optionsContainer.style.overflowY = 'auto';
         
         const assets = [
-            // Custom Shapes (Planned for assets/shapes/)
-            { path: 'assets/shapes/dwarf.gif', label: 'Dwarf (Shape)' },
-            { path: 'assets/shapes/ornament.gif', label: 'Ornament (Shape)' },
+            // Custom Shapes (Planned for assets/shapes/ - currently using existing assets)
+            { path: 'assets/dwarf.gif', label: 'Dwarf (Shape)' },
+            { path: 'assets/ornament.gif', label: 'Ornament (Shape)' },
             // Standard Borders
             { path: 'assets/border_default.png', label: 'Default' },
             { path: 'assets/border_ability.gif', label: 'Ability' },

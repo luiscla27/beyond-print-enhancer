@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Fix Asset Paths**
+  *Link: [./tracks/fix_asset_paths_20260224/](./tracks/fix_asset_paths_20260224/)*
 
 ## Archived Tracks
 - [x] **Track: Layout Refinements**
