@@ -1,8 +1,0 @@
-{
-  "track_id": "fix_clipping_bug_20260223",
-  "type": "bug",
-  "status": "new",
-  "created_at": "2026-02-24T21:07:00Z",
-  "updated_at": "2026-02-24T21:07:00Z",
-  "description": "Introduce an outer UI wrapper for print sections to prevent header and actions from being clipped when the section is small."
-}
