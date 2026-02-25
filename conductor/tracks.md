@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Outer UI Wrapper for Print Sections**
+  *Link: [./tracks/fix_clipping_bug_20260223/](./tracks/fix_clipping_bug_20260223/)*
 
 ## Archived Tracks
 - [x] **Track: Shapes Mode Feature** (Completed: 2026-02-23)
