@@ -206,6 +206,26 @@ describe('DomManager & ElementWrapper', () => {
                 const manager = DomManager.getInstance();
                 assert.strictEqual(manager.selectors.UI.WRAPPER, '.be-section-wrapper');
             });
+
+            it('should correctly target dialog siblings while excluding site-main', () => {
+                const manager = DomManager.getInstance();
+                document.body.innerHTML = `
+                    <dialog></dialog>
+                    <div class="ct-notification__portal">Notification</div>
+                    <div class="ct-sidebar__portal">Sidebar</div>
+                    <iframe src="about:blank"></iframe>
+                    <div id="site-main">Main</div>
+                    <div class="some-other-div">Other</div>
+                `;
+                
+                const selector = manager.selectors.CSS.DIALOG_SIBLING;
+                const matches = Array.from(document.querySelectorAll(selector));
+                
+                assert.ok(matches.some(el => el.classList.contains('ct-notification__portal')), 'Should match notifications portal');
+                assert.ok(matches.some(el => el.classList.contains('ct-sidebar__portal')), 'Should match sidebar portal');
+                assert.ok(matches.some(el => el.classList.contains('some-other-div')), 'Should match other div');
+                assert.ok(!matches.some(el => el.id === 'site-main'), 'Should NOT match site-main');
+            });
         });
     });
 });
