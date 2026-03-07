@@ -12,6 +12,7 @@ const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper
 const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
 const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
 const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
+const dndContent = fs.readFileSync(path.resolve(__dirname, '../../js/dnd.js'), 'utf8');
 
 describe('Absolute Positioning Engine', function() {
   let window, document;
@@ -57,6 +58,7 @@ describe('Absolute Positioning Engine', function() {
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
+    window.eval(dndContent);
     window.eval(mainJsContent);
 
     // Mock requestAnimationFrame to execute callback immediately
@@ -116,7 +118,7 @@ describe('Absolute Positioning Engine', function() {
     assert.ok(setDragImageCalled, 'setDragImage should be called');
     
     // Opacity should be set immediately because of our requestAnimationFrame mock
-    assert.strictEqual(wrapper.style.opacity, '0.98');
+    assert.strictEqual(wrapper.style.opacity, '0.4');
     done();
   });
 

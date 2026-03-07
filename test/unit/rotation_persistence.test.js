@@ -17,7 +17,9 @@ describe('Rotation Persistence', function() {
         global.navigator = window.navigator;
         global.HTMLElement = window.HTMLElement;
         global.Node = window.Node;
-        global.indexedDB = require('fake-indexeddb');
+        global.CustomEvent = window.CustomEvent;
+        window.indexedDB = require('fake-indexeddb');
+        global.indexedDB = window.indexedDB;
 
         const elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
         const domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
@@ -70,6 +72,6 @@ describe('Rotation Persistence', function() {
         assert.ok(shapeContainer, 'Shape should be restored');
         const wrapper = shapeContainer.closest('.be-shape-wrapper');
         assert.strictEqual(wrapper.dataset.rotation, '90', 'Restored wrapper should have rotation dataset');
-        assert.ok(wrapper.style.transform.includes('rotate(90deg)'), 'Restored wrapper should have rotation transform');
+        assert.ok(shapeContainer.style.transform.includes('rotate(90deg)'), 'Restored container should have rotation transform');
     });
 });

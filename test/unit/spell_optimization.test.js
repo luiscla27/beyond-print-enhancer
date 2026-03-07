@@ -16,22 +16,23 @@ describe('Spell Detail Optimization', function() {
   let window, document;
 
   beforeEach(async function() {
-    const dom = new JSDOM(`
-      <!DOCTYPE html>
-      <html>
-        <body>
-          <div id="print-layout-wrapper"></div>
-        </body>
-      </html>
-    `, {
-      url: "http://localhost",
-      runScripts: "dangerously"
-    });
-    window = dom.window;
-    document = window.document;
-    window.indexedDB = global.indexedDB;
-    window.__DDB_TEST_MODE__ = true;
-    
+      const dom = new JSDOM(`
+        <!DOCTYPE html>
+        <html>
+          <body>
+            <div id="print-layout-wrapper"></div>
+          </body>
+        </html>
+      `, {
+        url: "http://localhost",
+        runScripts: "dangerously"
+      });
+      window = dom.window;
+      document = window.document;
+      const fakeIndexedDB = require('fake-indexeddb');
+      window.indexedDB = fakeIndexedDB;
+      global.indexedDB = fakeIndexedDB;
+      window.__DDB_TEST_MODE__ = true;    
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
         observe() {}

@@ -6,7 +6,7 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [ ] **Track: Shapes Mode Lockdown & Quick Switch**
+- [x] **Track: Shapes Mode Lockdown & Quick Switch**
 *Link: [./tracks/shape_lockdown_switch_20260307/](./tracks/shape_lockdown_switch_20260307/)*
 
 ## Archived Tracks

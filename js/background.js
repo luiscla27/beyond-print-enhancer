@@ -24,6 +24,7 @@ chrome.action.onClicked.addListener(function(tab) {
     files: [
       'js/dom/element_wrapper.js',
       'js/dom/dom_manager.js',
+      'js/dnd.js',
       'js/main.js'
     ]
   });

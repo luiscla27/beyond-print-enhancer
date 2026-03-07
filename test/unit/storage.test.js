@@ -20,14 +20,16 @@ describe('Storage Layer', function() {
     sections: { 'actions': {} }
   };
 
-  before(async function() {
-    const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
-      url: "http://localhost",
-      runScripts: "dangerously"
-    });
-    window = dom.window;
-    window.indexedDB = global.indexedDB; // From fake-indexeddb/auto
-    window.__DDB_TEST_MODE__ = true;
+    before(async function() {
+        const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+          url: "http://localhost",
+          runScripts: "dangerously"
+        });
+        window = dom.window;
+        const fakeIndexedDB = require('fake-indexeddb');
+        window.indexedDB = fakeIndexedDB;
+        global.indexedDB = fakeIndexedDB;
+        window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
     window.eval(mainJsContent);

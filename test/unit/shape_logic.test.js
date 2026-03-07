@@ -64,8 +64,8 @@ describe('Shape Logic', function() {
         assert.ok(wrapper.classList.contains('be-section-wrapper'), 'Should have be-section-wrapper class');
         assert.ok(wrapper.classList.contains('be-shape-wrapper'), 'Should have be-shape-wrapper class');
         
-        const container = wrapper.querySelector('.print-section-container');
-        assert.ok(container.classList.contains('print-shape-container'), 'Should have print-shape-container class');
+        const container = wrapper.querySelector('.be-shape-container');
+        assert.ok(container.classList.contains('be-shape-container'), 'Should have be-shape-container class');
         assert.ok(container.classList.contains('be-shape'), 'Should have be-shape class');
         assert.ok(container.id.startsWith('shape-'), 'Should have an id starting with shape-');
     });
@@ -73,7 +73,7 @@ describe('Shape Logic', function() {
     it('should apply the correct border-image style to container', function() {
         const assetPath = 'assets/shapes/test-shape.gif';
         const wrapper = window.createShape(assetPath);
-        const container = wrapper.querySelector('.print-section-container');
+        const container = wrapper.querySelector('.be-shape-container');
         
         assert.ok(container.style.borderImageSource.includes('test-shape.gif'), 'Border image source should include asset path');
         assert.strictEqual(container.style.borderStyle, 'solid', 'Border style should be solid');
@@ -108,7 +108,7 @@ describe('Shape Logic', function() {
         };
         
         const wrapper = window.createShape(restoreData.assetPath, restoreData);
-        const container = wrapper.querySelector('.print-section-container');
+        const container = wrapper.querySelector('.be-shape-container');
         
         assert.strictEqual(container.id, 'shape-123');
         assert.strictEqual(container.style.width, '150px');
