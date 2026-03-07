@@ -2657,6 +2657,32 @@ function enforceFullHeight() {
             border-color: var(--btn-color);
             background: #444;
         }
+        .be-rotation-handle {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 2px solid #f0f;
+            border-radius: 50%;
+            cursor: grab;
+            z-index: 1000;
+        }
+        .be-rotation-handle:active {
+            cursor: grabbing;
+        }
+        .be-rotation-handle::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 12px;
+            background: #f0f;
+        }
         .be-border-preview {
             width: 80px;
             height: 80px;
@@ -2951,8 +2977,10 @@ function createShape(assetPath, restoreData = null) {
     wrapper.classList.add('be-shape-wrapper');
     
     const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('print-shape-container', 'be-shape');
-    
+    container.classList.add('be-shape-container', 'be-shape');
+    // Ensure ID is set from restoreData or generated
+    container.id = id;
+
     // Removal logic (specific for shapes)
     const actionContainer = getOrCreateActionContainer(container);
     const deleteBtn = document.createElement('button');
@@ -3004,6 +3032,81 @@ function createShape(assetPath, restoreData = null) {
 
     container.style.left = '';
     container.style.top = '';
+
+    // Rotation Logic
+    let currentRotation = (restoreData && restoreData.rotation) ? parseInt(restoreData.rotation) : 0;
+
+    const applyRotation = (angle) => {
+        currentRotation = calculateSnappedAngle(angle);
+        wrapper.style.transform = `rotate(${currentRotation}deg)`;
+        wrapper.dataset.rotation = currentRotation;
+    };
+
+    if (currentRotation !== 0) {
+        applyRotation(currentRotation);
+    }
+
+    wrapper.addEventListener('click', (e) => {
+        if (!document.body.classList.contains('be-shapes-mode-active')) return;
+        
+        // Prevent handle click from re-triggering modal or logic
+        if (e.target.classList.contains('be-rotation-handle')) return;
+
+        // Deselect others and remove their handles
+        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
+            if (el !== wrapper) {
+                el.classList.remove('selected');
+                const h = el.querySelector('.be-rotation-handle');
+                if (h) h.remove();
+            }
+        });
+
+        if (wrapper.classList.contains('selected')) {
+            // Already selected, maybe toggle handle if missing
+            if (!wrapper.querySelector('.be-rotation-handle')) {
+                addRotationHandle();
+            }
+            return;
+        }
+
+        wrapper.classList.add('selected');
+        addRotationHandle();
+    });
+
+    function addRotationHandle() {
+        if (wrapper.querySelector('.be-rotation-handle')) return;
+        
+        const handle = document.createElement('div');
+        handle.className = 'be-rotation-handle';
+        handle.title = 'Drag to Rotate (15° snap)';
+        wrapper.appendChild(handle);
+
+        handle.addEventListener('mousedown', (mdE) => {
+            mdE.preventDefault();
+            mdE.stopPropagation();
+
+            const rect = wrapper.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+
+            const onMouseMove = (mmE) => {
+                // Calculate angle from center to mouse
+                let angle = getAngleFromPoint(cx, cy, mmE.clientX, mmE.clientY);
+                // Adjust by 90 because handle is at top (270 deg)
+                // and CSS 0 is Right (East). Top is -90 or 270.
+                applyRotation(angle + 90);
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                showFeedback(`Rotated to ${currentRotation}°`);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
     
     const layoutRoot = document.getElementById('print-layout-wrapper');
     if (layoutRoot) {
@@ -3020,40 +3123,54 @@ function createShape(assetPath, restoreData = null) {
  * Helper to apply asset to a shape container via class or inline style.
  */
 function applyShapeAsset(container, assetPath) {
-    // Map of assets to existing border classes
-    const assetToClassMap = {
-        'assets/border_ability.gif': 'ability_border',
-        'assets/border_spikes.gif': 'spikes_border',
-        'assets/border_barbarian.gif': 'barbarian_border',
-        'assets/border_goth1.gif': 'goth_border',
-        'assets/vine_plants.gif': 'plants_border',
-        'assets/border_box.gif': 'box_border',
-        'assets/dwarf.gif': 'dwarf_border',
-        'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
-        'assets/sticks.gif': 'sticks_border',
-        'assets/ornament.gif': 'ornament_border',
-        'assets/ornament2.gif': 'ornament2_border',
-        'assets/ornament_bold.gif': 'ornament_bold_border',
-        'assets/ornament_bold2.gif': 'ornament_bold2_border',
-        'assets/ornament_simple.gif': 'ornament_simple_border',
-        'assets/spike_hollow.gif': 'spike_hollow_border',
-        'assets/spike_hollow2.gif': 'spiky_border',
-        'assets/spike_bold.gif': 'spiky_bold_border',
-        'assets/vine_hollow.gif': 'vine_border',
-        'assets/border_default.gif': 'default-border'
-    };
+    // Remove existing classes from metadata
+    Object.values(ASSET_METADATA).forEach(meta => {
+        if (meta.className) container.classList.remove(meta.className);
+    });
 
-    const className = assetToClassMap[assetPath];
-    if (className) {
-        container.classList.add(className);
+    // Reset styles that might have been applied
+    container.style.borderStyle = '';
+    container.style.borderImageSource = '';
+    container.style.borderImageSlice = '';
+    container.style.borderImageWidth = '';
+    container.style.borderImageOutset = '';
+    container.style.borderImageRepeat = '';
+    container.style.backgroundImage = '';
+    container.style.backgroundSize = '';
+    container.style.backgroundRepeat = '';
+    container.style.backgroundPosition = '';
+    container.style.border = '';
+
+    const meta = ASSET_METADATA[assetPath];
+    if (meta) {
+        if (meta.isBackground) {
+            container.style.backgroundImage = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.backgroundSize = 'contain';
+            container.style.backgroundRepeat = 'no-repeat';
+            container.style.backgroundPosition = 'center';
+            container.style.border = 'none';
+        } else if (meta.className) {
+            container.classList.add(meta.className);
+        } else if (meta.slice !== undefined) {
+            container.style.borderStyle = 'solid';
+            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSlice = meta.slice.toString();
+            container.style.borderImageWidth = meta.width || '20px';
+            container.style.borderImageOutset = meta.outset || '0';
+            container.style.borderImageRepeat = 'round';
+        } else {
+            // Default border fallback if slice is missing
+            container.style.borderStyle = 'solid';
+            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSlice = '33';
+            container.style.borderImageWidth = '20px';
+        }
     } else {
-        // Generic handling for new assets in assets/shapes/
+        // Fallback for unknown assets
         container.style.borderStyle = 'solid';
         container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
-        container.style.borderImageSlice = '33'; // Default slice
-        container.style.borderImageWidth = '28px'; // Default width
-        container.style.borderImageOutset = '16px'; // Default outset
-        container.style.borderImageRepeat = 'round';
+        container.style.borderImageSlice = '33';
+        container.style.borderImageWidth = '20px';
     }
 }
 
@@ -3517,6 +3634,57 @@ const ASSET_LIST = [
 ];
 
 /**
+ * Metadata for assets including slice, width, and outset for border-image.
+ * Values are calculated based on image dimensions and file sizes.
+ */
+const ASSET_METADATA = {
+    'assets/border_ability.gif': { slice: 66, width: '28px', outset: '16px', className: 'ability_border' },
+    'assets/border_barbarian.gif': { slice: 212, width: '142px', outset: '55px', className: 'barbarian_border' },
+    'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
+    'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
+    'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
+    'assets/border_goth1.gif': { slice: 166, width: '111px', outset: '50px 35px', className: 'goth_border' },
+    'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
+    'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
+    'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
+    'assets/dwarf_hollow.gif': { slice: 215, width: '143px', outset: '38px', className: 'dwarf_hollow_border' },
+    'assets/dwarf_hollow_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'dwarf_hollow_hand_border' },
+    'assets/ornament.gif': { slice: 133, width: '88px', outset: '32px', className: 'ornament_border' },
+    'assets/ornament2.gif': { slice: 217, width: '144px', outset: '48px', className: 'ornament2_border' },
+    'assets/ornament_bold.gif': { slice: 333, width: '222px', outset: '100px', className: 'ornament_bold_border' },
+    'assets/ornament_bold2.gif': { slice: 212, width: '141px', outset: '50px', className: 'ornament_bold2_border' },
+    'assets/ornament_simple.gif': { slice: 166, width: '111px', outset: '45px', className: 'ornament_simple_border' },
+    'assets/spike_bold.gif': { slice: 166, width: '111px', outset: '55px', className: 'spiky_bold_border' },
+    'assets/spike_hollow.gif': { slice: 166, width: '111px', outset: '45px', className: 'spike_hollow_border' },
+    'assets/spike_hollow2.gif': { slice: 1050, width: '100px', outset: '45px', className: 'spiky_border' },
+    'assets/sticks.gif': { slice: 220, width: '146px', outset: '65px', className: 'sticks_border' },
+    'assets/vine_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'vine_hand_border' },
+    'assets/vine_hollow.gif': { slice: 429, width: '130px', outset: '45px', className: 'vine_border' },
+    'assets/vine_plants.gif': { slice: 200, width: '133px', outset: '55px', className: 'plants_border' },
+    // Shapes folder - Using background-image instead of border-image
+    'assets/shapes/border_spikes_hand.gif': { isBackground: true },
+    'assets/shapes/corner_barbarian.gif': { isBackground: true },
+    'assets/shapes/corner_border_barbarian_hand.gif': { isBackground: true },
+    'assets/shapes/corner_border_goth1.gif': { isBackground: true },
+    'assets/shapes/corner_border_plants_hand.gif': { isBackground: true },
+    'assets/shapes/corner_dwarf.gif': { isBackground: true },
+    'assets/shapes/corner_dwarf_hollow.gif': { isBackground: true },
+    'assets/shapes/corner_ornament.gif': { isBackground: true },
+    'assets/shapes/corner_ornament2.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold2.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold3.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_simple.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_simple2.gif': { isBackground: true },
+    'assets/shapes/corner_spikes.gif': { isBackground: true },
+    'assets/shapes/corner_spike_hollow.gif': { isBackground: true },
+    'assets/shapes/corner_spike_hollow2.gif': { isBackground: true },
+    'assets/shapes/corner_sticks.gif': { isBackground: true },
+    'assets/shapes/corner_sticks1.gif': { isBackground: true },
+    'assets/shapes/corner_vine_hollow.gif': { isBackground: true }
+};
+
+/**
  * Parses and categorizes assets for the shape picker.
  * @param {string[]} fileList 
  * @returns {{borders: Array, shapes: Array}}
@@ -3557,6 +3725,27 @@ function parseAssets(fileList) {
     });
 
     return categories;
+}
+
+/**
+ * Calculates a snapped angle based on the step size.
+ * @param {number} angle 
+ * @param {number} step Default 15
+ */
+function calculateSnappedAngle(angle, step = 15) {
+    return Math.round(angle / step) * step;
+}
+
+/**
+ * Calculates the angle in degrees between a center point and a pointer point.
+ */
+function getAngleFromPoint(cx, cy, px, py) {
+    const dy = py - cy;
+    const dx = px - cx;
+    let theta = Math.atan2(dy, dx);
+    theta *= 180 / Math.PI;
+    if (theta < 0) theta = 360 + theta;
+    return theta;
 }
 
 /**
@@ -3702,33 +3891,27 @@ function showShapePickerModal(currentAsset = '') {
                 const preview = document.createElement('div');
                 preview.className = `be-border-preview`;
                 
-                // Asset Application Logic
-                const assetToClassMap = {
-                    'assets/border_ability.gif': 'ability_border',
-                    'assets/border_spikes.gif': 'spikes_border',
-                    'assets/border_barbarian.gif': 'barbarian_border',
-                    'assets/border_goth1.gif': 'goth_border',
-                    'assets/vine_plants.gif': 'plants_border',
-                    'assets/border_box.gif': 'box_border',
-                    'assets/dwarf.gif': 'dwarf_border',
-                    'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
-                    'assets/sticks.gif': 'sticks_border',
-                    'assets/ornament.gif': 'ornament_border',
-                    'assets/ornament2.gif': 'ornament2_border',
-                    'assets/ornament_bold.gif': 'ornament_bold_border',
-                    'assets/ornament_bold2.gif': 'ornament_bold2_border',
-                    'assets/ornament_simple.gif': 'ornament_simple_border',
-                    'assets/spike_hollow.gif': 'spike_hollow_border',
-                    'assets/spike_hollow2.gif': 'spiky_border',
-                    'assets/spike_bold.gif': 'spiky_bold_border',
-                    'assets/vine_hollow.gif': 'vine_border',
-                    'assets/border_default.gif': 'default-border'
-                };
-                
-                const className = assetToClassMap[asset.path];
-                if (className) {
-                    preview.classList.add(className);
+                // Asset Application Logic using ASSET_METADATA
+                const meta = ASSET_METADATA[asset.path];
+                if (meta) {
+                    if (meta.isBackground) {
+                        preview.style.backgroundImage = `url('${chrome.runtime.getURL(asset.path)}')`;
+                        preview.style.backgroundSize = 'contain';
+                        preview.style.backgroundRepeat = 'no-repeat';
+                        preview.style.backgroundPosition = 'center';
+                        preview.style.border = 'none';
+                    } else if (meta.className) {
+                        preview.classList.add(meta.className);
+                    } else {
+                        preview.style.borderStyle = 'solid';
+                        preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                        preview.style.borderImageSlice = meta.slice.toString();
+                        preview.style.borderImageWidth = meta.width;
+                        preview.style.borderImageOutset = meta.outset || '0';
+                        preview.style.borderImageRepeat = 'round';
+                    }
                 } else {
+                    // Fallback for unknown assets
                     preview.style.borderStyle = 'solid';
                     preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
                     preview.style.borderImageSlice = '33';
@@ -4873,6 +5056,7 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '110',
+                rotation: wrapper.dataset.rotation || '0',
                 minimized: section.dataset.minimized === 'true'
             });
             return;
@@ -5746,5 +5930,10 @@ function injectCompactStyles() {
 
     // Default to Shapes Mode OFF
     toggleShapesMode(false);
+
+    // Export for testing
+    window.createShape = createShape;
+    window.toggleShapesMode = toggleShapesMode;
+    window.applyShapeAsset = applyShapeAsset;
 })();
 })();
