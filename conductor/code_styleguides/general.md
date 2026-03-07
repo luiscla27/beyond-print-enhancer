@@ -2,6 +2,10 @@
 
 This document outlines general coding principles that apply across all languages and frameworks used in this project.
 
+## Character Encoding
+- ONLY use standard ASCII/UTF-8 characters. 
+- DO NOT use Asian characters (e.g., Chinese, Japanese, Korean) in code, comments, documentation, or tool instructions.
+
 ## Readability
 - Code should be easy to read and understand by humans.
 - Avoid overly clever or obscure constructs.

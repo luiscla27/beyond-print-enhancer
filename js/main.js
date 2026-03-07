@@ -14,6 +14,140 @@ const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
 
+/**
+ * Full list of available assets for the shape picker.
+ */
+const ASSET_LIST = [
+    'assets/border_ability.gif', 'assets/border_barbarian.gif', 'assets/border_barbarian_hand.gif', 'assets/border_box.gif', 'assets/border_default.gif', 'assets/border_goth1.gif', 'assets/border_goth1_hand.gif', 'assets/border_spikes.gif', 'assets/dwarf.gif', 'assets/dwarf_hollow.gif', 'assets/dwarf_hollow_hand.gif', 'assets/ornament.gif', 'assets/ornament2.gif', 'assets/ornament_bold.gif', 'assets/ornament_bold2.gif', 'assets/ornament_simple.gif', 'assets/spike_bold.gif', 'assets/spike_hollow.gif', 'assets/spike_hollow2.gif', 'assets/sticks.gif', 'assets/vine_hand.gif', 'assets/vine_hollow.gif', 'assets/vine_plants.gif',
+    'assets/shapes/border_spikes_hand.gif', 'assets/shapes/corner_barbarian.gif', 'assets/shapes/corner_border_barbarian_hand.gif', 'assets/shapes/corner_border_goth1.gif', 'assets/shapes/corner_border_plants_hand.gif', 'assets/shapes/corner_dwarf.gif', 'assets/shapes/corner_dwarf_hollow.gif', 'assets/shapes/corner_ornament.gif', 'assets/shapes/corner_ornament2.gif', 'assets/shapes/corner_ornament_bold.gif', 'assets/shapes/corner_ornament_bold2.gif', 'assets/shapes/corner_ornament_bold3.gif', 'assets/shapes/corner_ornament_simple.gif', 'assets/shapes/corner_ornament_simple2.gif', 'assets/shapes/corner_spikes.gif', 'assets/shapes/corner_spike_hollow.gif', 'assets/shapes/corner_spike_hollow2.gif', 'assets/shapes/corner_sticks.gif', 'assets/shapes/corner_sticks1.gif', 'assets/shapes/corner_vine_hollow.gif'
+];
+
+/**
+ * Metadata for assets including slice, width, and outset for border-image.
+ * Values are calculated based on image dimensions and file sizes.
+ * If 'isBackground' is true, it will be applied as background-image instead of border-image.
+ */
+const ASSET_METADATA = {
+    'assets/border_ability.gif': { slice: 66, width: '28px', outset: '16px', className: 'ability_border' },
+    'assets/border_barbarian.gif': { slice: 212, width: '142px', outset: '55px', className: 'barbarian_border' },
+    'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
+    'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
+    'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
+    'assets/border_goth1.gif': { slice: 166, width: '111px', outset: '50px 35px', className: 'goth_border' },
+    'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
+    'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
+    'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
+    'assets/dwarf_hollow.gif': { slice: 215, width: '143px', outset: '38px', className: 'dwarf_hollow_border' },
+    'assets/dwarf_hollow_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'dwarf_hollow_hand_border' },
+    'assets/ornament.gif': { slice: 133, width: '88px', outset: '32px', className: 'ornament_border' },
+    'assets/ornament2.gif': { slice: 217, width: '144px', outset: '48px', className: 'ornament2_border' },
+    'assets/ornament_bold.gif': { slice: 333, width: '222px', outset: '100px', className: 'ornament_bold_border' },
+    'assets/ornament_bold2.gif': { slice: 212, width: '141px', outset: '50px', className: 'ornament_bold2_border' },
+    'assets/ornament_simple.gif': { slice: 166, width: '111px', outset: '45px', className: 'ornament_simple_border' },
+    'assets/spike_bold.gif': { slice: 166, width: '111px', outset: '55px', className: 'spiky_bold_border' },
+    'assets/spike_hollow.gif': { slice: 166, width: '111px', outset: '45px', className: 'spike_hollow_border' },
+    'assets/spike_hollow2.gif': { slice: 1050, width: '100px', outset: '45px', className: 'spiky_border' },
+    'assets/sticks.gif': { slice: 220, width: '146px', outset: '65px', className: 'sticks_border' },
+    'assets/vine_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'vine_hand_border' },
+    'assets/vine_hollow.gif': { slice: 429, width: '130px', outset: '45px', className: 'vine_border' },
+    'assets/vine_plants.gif': { slice: 200, width: '133px', outset: '55px', className: 'plants_border' },
+    // Shapes folder - Using background-image instead of border-image
+    'assets/shapes/border_spikes_hand.gif': { isBackground: true },
+    'assets/shapes/corner_barbarian.gif': { isBackground: true },
+    'assets/shapes/corner_border_barbarian_hand.gif': { isBackground: true },
+    'assets/shapes/corner_border_goth1.gif': { isBackground: true },
+    'assets/shapes/corner_border_plants_hand.gif': { isBackground: true },
+    'assets/shapes/corner_dwarf.gif': { isBackground: true },
+    'assets/shapes/corner_dwarf_hollow.gif': { isBackground: true },
+    'assets/shapes/corner_ornament.gif': { isBackground: true },
+    'assets/shapes/corner_ornament2.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold2.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold3.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_simple.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_simple2.gif': { isBackground: true },
+    'assets/shapes/corner_spikes.gif': { isBackground: true },
+    'assets/shapes/corner_spike_hollow.gif': { isBackground: true },
+    'assets/shapes/corner_spike_hollow2.gif': { isBackground: true },
+    'assets/shapes/corner_sticks.gif': { isBackground: true },
+    'assets/shapes/corner_sticks1.gif': { isBackground: true },
+    'assets/shapes/corner_vine_hollow.gif': { isBackground: true }
+};
+
+/**
+ * All available border style classes, derived from metadata.
+ */
+const ALL_BORDER_STYLES = [
+    'no-border',
+    ...Object.values(ASSET_METADATA)
+        .map(meta => meta.className)
+        .filter(name => name)
+];
+
+/**
+ * Parses and categorizes assets for the shape picker.
+ * @param {string[]} fileList 
+ * @returns {{borders: Array, shapes: Array}}
+ */
+function parseAssets(fileList) {
+    const categories = {
+        borders: [],
+        shapes: []
+    };
+
+    const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
+
+    fileList.forEach(filePath => {
+        if (!filePath.endsWith('.gif')) return;
+
+        const isShape = filePath.includes('assets/shapes/');
+        const fileName = filePath.split('/').pop().toLowerCase();
+        
+        // Extract tags
+        const tags = tagList.filter(tag => fileName.includes(tag.replace(' ', '_')));
+        
+        // Specialized logic for "hand drawn" which might be "hand" in filename
+        if (fileName.includes('hand') && !tags.includes('hand drawn')) {
+            tags.push('hand drawn');
+        }
+
+        const asset = {
+            path: filePath,
+            label: fileName.replace('.gif', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            tags: tags
+        };
+
+        if (isShape) {
+            categories.shapes.push(asset);
+        } else {
+            categories.borders.push(asset);
+        }
+    });
+
+    return categories;
+}
+
+/**
+ * Calculates a snapped angle based on the step size.
+ * @param {number} angle 
+ * @param {number} step Default 15
+ */
+function calculateSnappedAngle(angle, step = 15) {
+    return Math.round(angle / step) * step;
+}
+
+/**
+ * Calculates the angle in degrees between a center point and a pointer point.
+ */
+function getAngleFromPoint(cx, cy, px, py) {
+    const dy = py - cy;
+    const dx = px - cx;
+    let theta = Math.atan2(dy, dx);
+    theta *= 180 / Math.PI;
+    if (theta < 0) theta = 360 + theta;
+    return theta;
+}
+
 const DEFAULT_LAYOUTS = {
     "section-Section-1": {
       "left": "16px",
@@ -577,9 +711,7 @@ function createDraggableContainer(title, content, id) {
       e.stopPropagation();
       container.classList.add('minimized');
   };
-  header.appendChild(minimizeBtn);
-
-  wrapper.appendChild(header);
+  header.appendChild(minimizeBtn);  wrapper.appendChild(header);
   
   // Restore button (only visible when minimized)
   const restoreBtn = document.createElement('button');
@@ -2270,7 +2402,8 @@ function enforceFullHeight() {
         .be-section-wrapper:hover .print-section-header {
             opacity: 1;
         }
-        .be-section-wrapper:hover .be-section-actions {
+        .be-section-wrapper:hover .be-section-actions,
+        .be-shape-wrapper:hover .be-section-actions {
             opacity: 1;
             pointer-events: auto;
         }
@@ -2659,16 +2792,26 @@ function enforceFullHeight() {
         }
         .be-rotation-handle {
             position: absolute;
-            top: -30px;
+            top: -45px;
             left: 50%;
             transform: translateX(-50%);
-            width: 20px;
-            height: 20px;
+            width: 30px;
+            height: 30px;
             background: white;
-            border: 2px solid #f0f;
+            border: 3px solid #f0f;
             border-radius: 50%;
             cursor: grab;
             z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .be-rotation-handle::before {
+            content: '↻';
+            color: #f0f;
+            font-weight: bold;
         }
         .be-rotation-handle:active {
             cursor: grabbing;
@@ -2676,11 +2819,11 @@ function enforceFullHeight() {
         .be-rotation-handle::after {
             content: '';
             position: absolute;
-            top: 18px;
+            top: 28px;
             left: 50%;
             transform: translateX(-50%);
-            width: 2px;
-            height: 12px;
+            width: 3px;
+            height: 17px;
             background: #f0f;
         }
         .be-border-preview {
@@ -2981,10 +3124,17 @@ function createShape(assetPath, restoreData = null) {
     // Ensure ID is set from restoreData or generated
     container.id = id;
 
-    // Removal logic (specific for shapes)
+    // Show rotate button for shapes
+    const rotateBtn = wrapper.querySelector('.print-section-rotate');
+    if (rotateBtn) {
+        rotateBtn.style.display = 'block';
+    }
+
+    // Action Buttons logic (specific for shapes)
     const actionContainer = getOrCreateActionContainer(container);
+    
     const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'be-shape-delete';
+    deleteBtn.className = 'be-shape-delete be-robust-button';
     deleteBtn.innerHTML = '🗑️';
     deleteBtn.title = 'Delete Shape';
     deleteBtn.onclick = (e) => {
@@ -2995,6 +3145,38 @@ function createShape(assetPath, restoreData = null) {
             updateLayoutBounds();
         }
     };
+
+    const rotateToolBtn = document.createElement('button');
+    rotateToolBtn.className = 'be-shape-rotate be-robust-button';
+    rotateToolBtn.innerHTML = '↻';
+    rotateToolBtn.title = 'Toggle Rotation Tool';
+    rotateToolBtn.onclick = (e) => {
+        e.stopPropagation();
+        const event = new CustomEvent('be-rotate-click', { bubbles: true });
+        rotateToolBtn.dispatchEvent(event);
+    };
+
+    const cloneBtn = document.createElement('button');
+    cloneBtn.className = 'be-shape-clone be-robust-button';
+    cloneBtn.innerHTML = '📋';
+    cloneBtn.title = 'Clone Shape';
+    cloneBtn.onclick = (e) => {
+        e.stopPropagation();
+        // Parse current position and offset by 16px
+        const left = parseInt(wrapper.style.left) || 0;
+        const top = parseInt(wrapper.style.top) || 0;
+        createShape(assetPath, {
+            left: (left + 16) + 'px',
+            top: (top + 16) + 'px',
+            width: container.style.width,
+            height: container.style.height,
+            rotation: currentRotation
+        });
+        showFeedback('Shape cloned');
+    };
+
+    actionContainer.appendChild(rotateToolBtn);
+    actionContainer.appendChild(cloneBtn);
     actionContainer.appendChild(deleteBtn);
 
     // Asset Application
@@ -3037,40 +3219,48 @@ function createShape(assetPath, restoreData = null) {
     let currentRotation = (restoreData && restoreData.rotation) ? parseInt(restoreData.rotation) : 0;
 
     const applyRotation = (angle) => {
-        currentRotation = calculateSnappedAngle(angle);
-        wrapper.style.transform = `rotate(${currentRotation}deg)`;
+        currentRotation = calculateSnappedAngle(angle) % 360;
+        // Apply rotation to container, not wrapper
+        container.style.transform = `rotate(${currentRotation}deg)`;
         wrapper.dataset.rotation = currentRotation;
+        
+        // Clear wrapper transform to avoid conflict
+        wrapper.style.transform = '';
     };
 
     if (currentRotation !== 0) {
         applyRotation(currentRotation);
     }
 
+    // Listener for header rotate button - TOGGLE HANDLE
+    wrapper.addEventListener('be-rotate-click', (e) => {
+        const existingHandle = wrapper.querySelector('.be-rotation-handle');
+        if (existingHandle) {
+            existingHandle.remove();
+            showFeedback('Rotation tool hidden');
+        } else {
+            addRotationHandle();
+            showFeedback('Rotation tool shown');
+        }
+    });
+
     wrapper.addEventListener('click', (e) => {
         if (!document.body.classList.contains('be-shapes-mode-active')) return;
         
-        // Prevent handle click from re-triggering modal or logic
+        // Prevent handle click from re-triggering logic
         if (e.target.classList.contains('be-rotation-handle')) return;
 
-        // Deselect others and remove their handles
+        // Deselect others (auto-hide their handles if we want strict focus, 
+        // but user asked for button control. Let's keep button as the main toggle.)
         document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
             if (el !== wrapper) {
                 el.classList.remove('selected');
-                const h = el.querySelector('.be-rotation-handle');
-                if (h) h.remove();
             }
         });
 
-        if (wrapper.classList.contains('selected')) {
-            // Already selected, maybe toggle handle if missing
-            if (!wrapper.querySelector('.be-rotation-handle')) {
-                addRotationHandle();
-            }
-            return;
+        if (!wrapper.classList.contains('selected')) {
+            wrapper.classList.add('selected');
         }
-
-        wrapper.classList.add('selected');
-        addRotationHandle();
     });
 
     function addRotationHandle() {
@@ -3140,14 +3330,23 @@ function applyShapeAsset(container, assetPath) {
     container.style.backgroundRepeat = '';
     container.style.backgroundPosition = '';
     container.style.border = '';
+    container.style.backgroundColor = 'transparent';
+    container.innerHTML = ''; // Clear any existing img tags
 
     const meta = ASSET_METADATA[assetPath];
     if (meta) {
         if (meta.isBackground) {
-            container.style.backgroundImage = `url('${chrome.runtime.getURL(assetPath)}')`;
-            container.style.backgroundSize = 'contain';
-            container.style.backgroundRepeat = 'no-repeat';
-            container.style.backgroundPosition = 'center';
+            // Use <img> for print compatibility (background-graphics are often disabled)
+            const img = document.createElement('img');
+            img.src = chrome.runtime.getURL(assetPath);
+            Object.assign(img.style, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                pointerEvents: 'none',
+                display: 'block'
+            });
+            container.appendChild(img);
             container.style.border = 'none';
         } else if (meta.className) {
             container.classList.add(meta.className);
@@ -3180,15 +3379,36 @@ function applyShapeAsset(container, assetPath) {
  */
 function toggleShapesMode(forceState) {
     const activeClass = 'be-shapes-mode-active';
-    const isActive = forceState !== undefined ? !forceState : document.body.classList.contains(activeClass);
-    
+    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
+
     if (isActive) {
-        document.body.classList.remove(activeClass);
-    } else {
         document.body.classList.add(activeClass);
+        showFeedback('Shapes Mode: ON');
+    } else {
+        document.body.classList.remove(activeClass);
+        // Deselect all and remove handles
+        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
+            el.classList.remove('selected');
+            const h = el.querySelector('.be-rotation-handle');
+            if (h) h.remove();
+        });
+        showFeedback('Shapes Mode: OFF');
     }
 }
 
+// Global click listener for deselecting shapes
+document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('be-shapes-mode-active')) return;
+
+    // If we didn't click a shape wrapper or a rotation handle, deselect all
+    if (!e.target.closest('.be-shape-wrapper') && !e.target.classList.contains('be-rotation-handle')) {
+        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
+            el.classList.remove('selected');
+            const h = el.querySelector('.be-rotation-handle');
+            if (h) h.remove();
+        });
+    }
+}, true);
 /**
  * Creates and manages a floating spell detail section.
  */
@@ -3430,16 +3650,6 @@ async function getCharacterSpells(charId) {
         console.error("Error fetching spells:", err);
     }
 }
-/**
- * All available border style classes.
- */
-const ALL_BORDER_STYLES = [
-    'default-border', 'no-border', 'ability_border', 'spikes_border',
-    'barbarian_border', 'goth_border', 'plants_border', 'box_border',
-    'dwarf_border', 'dwarf_hollow_border', 'sticks_border', 'ornament_border', 'ornament2_border',
-    'ornament_bold_border', 'ornament_bold2_border', 'ornament_simple_border',
-    'spike_hollow_border', 'spiky_border', 'spiky_bold_border', 'vine_border'
-];
 
 /**
  * Removes all border style classes from an element.
@@ -3623,129 +3833,6 @@ function showBorderPickerModal(currentStyle = 'default-border') {
             }
         });
     });
-}
-
-/**
- * Full list of available assets for the shape picker.
- */
-const ASSET_LIST = [
-    'assets/border_ability.gif', 'assets/border_barbarian.gif', 'assets/border_barbarian_hand.gif', 'assets/border_box.gif', 'assets/border_default.gif', 'assets/border_goth1.gif', 'assets/border_goth1_hand.gif', 'assets/border_spikes.gif', 'assets/dwarf.gif', 'assets/dwarf_hollow.gif', 'assets/dwarf_hollow_hand.gif', 'assets/ornament.gif', 'assets/ornament2.gif', 'assets/ornament_bold.gif', 'assets/ornament_bold2.gif', 'assets/ornament_simple.gif', 'assets/spike_bold.gif', 'assets/spike_hollow.gif', 'assets/spike_hollow2.gif', 'assets/sticks.gif', 'assets/vine_hand.gif', 'assets/vine_hollow.gif', 'assets/vine_plants.gif',
-    'assets/shapes/border_spikes_hand.gif', 'assets/shapes/corner_barbarian.gif', 'assets/shapes/corner_border_barbarian_hand.gif', 'assets/shapes/corner_border_goth1.gif', 'assets/shapes/corner_border_plants_hand.gif', 'assets/shapes/corner_dwarf.gif', 'assets/shapes/corner_dwarf_hollow.gif', 'assets/shapes/corner_ornament.gif', 'assets/shapes/corner_ornament2.gif', 'assets/shapes/corner_ornament_bold.gif', 'assets/shapes/corner_ornament_bold2.gif', 'assets/shapes/corner_ornament_bold3.gif', 'assets/shapes/corner_ornament_simple.gif', 'assets/shapes/corner_ornament_simple2.gif', 'assets/shapes/corner_spikes.gif', 'assets/shapes/corner_spike_hollow.gif', 'assets/shapes/corner_spike_hollow2.gif', 'assets/shapes/corner_sticks.gif', 'assets/shapes/corner_sticks1.gif', 'assets/shapes/corner_vine_hollow.gif'
-];
-
-/**
- * Metadata for assets including slice, width, and outset for border-image.
- * Values are calculated based on image dimensions and file sizes.
- */
-const ASSET_METADATA = {
-    'assets/border_ability.gif': { slice: 66, width: '28px', outset: '16px', className: 'ability_border' },
-    'assets/border_barbarian.gif': { slice: 212, width: '142px', outset: '55px', className: 'barbarian_border' },
-    'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
-    'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
-    'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
-    'assets/border_goth1.gif': { slice: 166, width: '111px', outset: '50px 35px', className: 'goth_border' },
-    'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
-    'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
-    'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
-    'assets/dwarf_hollow.gif': { slice: 215, width: '143px', outset: '38px', className: 'dwarf_hollow_border' },
-    'assets/dwarf_hollow_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'dwarf_hollow_hand_border' },
-    'assets/ornament.gif': { slice: 133, width: '88px', outset: '32px', className: 'ornament_border' },
-    'assets/ornament2.gif': { slice: 217, width: '144px', outset: '48px', className: 'ornament2_border' },
-    'assets/ornament_bold.gif': { slice: 333, width: '222px', outset: '100px', className: 'ornament_bold_border' },
-    'assets/ornament_bold2.gif': { slice: 212, width: '141px', outset: '50px', className: 'ornament_bold2_border' },
-    'assets/ornament_simple.gif': { slice: 166, width: '111px', outset: '45px', className: 'ornament_simple_border' },
-    'assets/spike_bold.gif': { slice: 166, width: '111px', outset: '55px', className: 'spiky_bold_border' },
-    'assets/spike_hollow.gif': { slice: 166, width: '111px', outset: '45px', className: 'spike_hollow_border' },
-    'assets/spike_hollow2.gif': { slice: 1050, width: '100px', outset: '45px', className: 'spiky_border' },
-    'assets/sticks.gif': { slice: 220, width: '146px', outset: '65px', className: 'sticks_border' },
-    'assets/vine_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'vine_hand_border' },
-    'assets/vine_hollow.gif': { slice: 429, width: '130px', outset: '45px', className: 'vine_border' },
-    'assets/vine_plants.gif': { slice: 200, width: '133px', outset: '55px', className: 'plants_border' },
-    // Shapes folder - Using background-image instead of border-image
-    'assets/shapes/border_spikes_hand.gif': { isBackground: true },
-    'assets/shapes/corner_barbarian.gif': { isBackground: true },
-    'assets/shapes/corner_border_barbarian_hand.gif': { isBackground: true },
-    'assets/shapes/corner_border_goth1.gif': { isBackground: true },
-    'assets/shapes/corner_border_plants_hand.gif': { isBackground: true },
-    'assets/shapes/corner_dwarf.gif': { isBackground: true },
-    'assets/shapes/corner_dwarf_hollow.gif': { isBackground: true },
-    'assets/shapes/corner_ornament.gif': { isBackground: true },
-    'assets/shapes/corner_ornament2.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_bold.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_bold2.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_bold3.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_simple.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_simple2.gif': { isBackground: true },
-    'assets/shapes/corner_spikes.gif': { isBackground: true },
-    'assets/shapes/corner_spike_hollow.gif': { isBackground: true },
-    'assets/shapes/corner_spike_hollow2.gif': { isBackground: true },
-    'assets/shapes/corner_sticks.gif': { isBackground: true },
-    'assets/shapes/corner_sticks1.gif': { isBackground: true },
-    'assets/shapes/corner_vine_hollow.gif': { isBackground: true }
-};
-
-/**
- * Parses and categorizes assets for the shape picker.
- * @param {string[]} fileList 
- * @returns {{borders: Array, shapes: Array}}
- */
-function parseAssets(fileList) {
-    const categories = {
-        borders: [],
-        shapes: []
-    };
-
-    const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
-
-    fileList.forEach(filePath => {
-        if (!filePath.endsWith('.gif')) return;
-
-        const isShape = filePath.includes('assets/shapes/');
-        const fileName = filePath.split('/').pop().toLowerCase();
-        
-        // Extract tags
-        const tags = tagList.filter(tag => fileName.includes(tag.replace(' ', '_')));
-        
-        // Specialized logic for "hand drawn" which might be "hand" in filename
-        if (fileName.includes('hand') && !tags.includes('hand drawn')) {
-            tags.push('hand drawn');
-        }
-
-        const asset = {
-            path: filePath,
-            label: fileName.replace('.gif', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            tags: tags
-        };
-
-        if (isShape) {
-            categories.shapes.push(asset);
-        } else {
-            categories.borders.push(asset);
-        }
-    });
-
-    return categories;
-}
-
-/**
- * Calculates a snapped angle based on the step size.
- * @param {number} angle 
- * @param {number} step Default 15
- */
-function calculateSnappedAngle(angle, step = 15) {
-    return Math.round(angle / step) * step;
-}
-
-/**
- * Calculates the angle in degrees between a center point and a pointer point.
- */
-function getAngleFromPoint(cx, cy, px, py) {
-    const dy = py - cy;
-    const dx = px - cx;
-    let theta = Math.atan2(dy, dx);
-    theta *= 180 / Math.PI;
-    if (theta < 0) theta = 360 + theta;
-    return theta;
 }
 
 /**
@@ -5536,7 +5623,7 @@ function getOrCreateActionContainer(section) {
  */
 function injectCloneButtons(context = document) {
     const s = window.DomManager.getInstance().selectors;
-    const selector = `${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container`;
+    const selector = `${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container, .be-shape-container`;
     // If the context itself matches the selector, include it
     const elements = Array.from(context.querySelectorAll(selector));
     if (context instanceof HTMLElement && context.matches(selector)) {
@@ -5623,6 +5710,27 @@ function injectCloneButtons(context = document) {
                 updateLayoutBounds();
             }
         });
+
+        const isShape = section.classList.contains('be-shape-container');
+
+        // 4. Delete Button (Generic for all)
+        addRobustButton('be-clone-delete', '🗑️', isShape ? 'Delete Shape' : 'Delete Section', (e) => {
+            const wrapper = section.closest('.be-section-wrapper') || section.closest('.be-shape-wrapper');
+            if (wrapper) {
+                if (confirm(`Are you sure you want to delete this ${isShape ? 'shape' : 'section'}?`)) {
+                    wrapper.remove();
+                    updateLayoutBounds();
+                }
+            }
+        });
+
+        // 5. Rotate Tool Button (only for shapes)
+        if (isShape) {
+            addRobustButton('be-shape-rotate', '↻', 'Toggle Rotation Tool', (e) => {
+                const event = new CustomEvent('be-rotate-click', { bubbles: true });
+                e.target.dispatchEvent(event);
+            });
+        }
     });
 }
 /**
