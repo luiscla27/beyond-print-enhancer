@@ -1992,7 +1992,7 @@ function enforceFullHeight() {
     style.id = styleId;
     style.textContent = `
         :root {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
@@ -2004,7 +2004,7 @@ function enforceFullHeight() {
             border-style: none !important;
         }
         .default-border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
@@ -2034,7 +2034,7 @@ function enforceFullHeight() {
             --border-img-outset: 50px 35px;
         }
         .plants_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_plants.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/vine_plants.gif')}');
             --border-img-width: 145px;
             --border-img-slice: 219;
             --border-img-outset: 50px;
@@ -2100,19 +2100,19 @@ function enforceFullHeight() {
             --border-img-outset: 50px;
         }
         .spiky_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spiky.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow2.gif')}');
             --border-img-width: 100px;
             --border-img-slice: 388;
             --border-img-outset: 60px;
         }
         .spiky_bold_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spiky_bold.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_bold.gif')}');
             --border-img-width: 120px;
             --border-img-slice: 388;
             --border-img-outset: 69px;
         }
         .vine_border {
-            --border-img: url('${chrome.runtime.getURL('assets/vine_holloow.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/vine_hollow.gif')}');
             --border-img-width: 130px;
             --border-img-slice: 429;
             --border-img-outset: 45px;
@@ -3026,7 +3026,7 @@ function applyShapeAsset(container, assetPath) {
         'assets/border_spikes.gif': 'spikes_border',
         'assets/border_barbarian.gif': 'barbarian_border',
         'assets/border_goth1.gif': 'goth_border',
-        'assets/border_plants.gif': 'plants_border',
+        'assets/vine_plants.gif': 'plants_border',
         'assets/border_box.gif': 'box_border',
         'assets/dwarf.gif': 'dwarf_border',
         'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
@@ -3037,10 +3037,10 @@ function applyShapeAsset(container, assetPath) {
         'assets/ornament_bold2.gif': 'ornament_bold2_border',
         'assets/ornament_simple.gif': 'ornament_simple_border',
         'assets/spike_hollow.gif': 'spike_hollow_border',
-        'assets/spiky.gif': 'spiky_border',
-        'assets/spiky_bold.gif': 'spiky_bold_border',
-        'assets/vine_holloow.gif': 'vine_border',
-        'assets/border_default.png': 'default-border'
+        'assets/spike_hollow2.gif': 'spiky_border',
+        'assets/spike_bold.gif': 'spiky_bold_border',
+        'assets/vine_hollow.gif': 'vine_border',
+        'assets/border_default.gif': 'default-border'
     };
 
     const className = assetToClassMap[assetPath];
@@ -3535,12 +3535,12 @@ function showShapePickerModal(currentAsset = '') {
             { path: 'assets/dwarf.gif', label: 'Dwarf (Shape)' },
             { path: 'assets/ornament.gif', label: 'Ornament (Shape)' },
             // Standard Borders
-            { path: 'assets/border_default.png', label: 'Default' },
+            { path: 'assets/border_default.gif', label: 'Default' },
             { path: 'assets/border_ability.gif', label: 'Ability' },
             { path: 'assets/border_spikes.gif', label: 'Spikes' },
             { path: 'assets/border_barbarian.gif', label: 'Barbarian' },
             { path: 'assets/border_goth1.gif', label: 'Goth' },
-            { path: 'assets/border_plants.gif', label: 'Plants' },
+            { path: 'assets/vine_plants.gif', label: 'Plants' },
             { path: 'assets/border_box.gif', label: 'Box' },
             { path: 'assets/dwarf.gif', label: 'Dwarf' },
             { path: 'assets/dwarf_hollow.gif', label: 'Dwarf Hollow' },
@@ -3551,9 +3551,9 @@ function showShapePickerModal(currentAsset = '') {
             { path: 'assets/ornament_bold2.gif', label: 'Ornament Bold 2' },
             { path: 'assets/ornament_simple.gif', label: 'Ornament Simple' },
             { path: 'assets/spike_hollow.gif', label: 'Spike Hollow' },
-            { path: 'assets/spiky.gif', label: 'Spiky' },
-            { path: 'assets/spiky_bold.gif', label: 'Spiky Bold' },
-            { path: 'assets/vine_holloow.gif', label: 'Vine' }
+            { path: 'assets/spike_hollow2.gif', label: 'Spiky' },
+            { path: 'assets/spike_bold.gif', label: 'Spiky Bold' },
+            { path: 'assets/vine_hollow.gif', label: 'Vine' }
         ];
         
         let selectedAsset = currentAsset || assets[0].path;
@@ -3573,7 +3573,7 @@ function showShapePickerModal(currentAsset = '') {
                 'assets/border_spikes.gif': 'spikes_border',
                 'assets/border_barbarian.gif': 'barbarian_border',
                 'assets/border_goth1.gif': 'goth_border',
-                'assets/border_plants.gif': 'plants_border',
+                'assets/vine_plants.gif': 'plants_border',
                 'assets/border_box.gif': 'box_border',
                 'assets/dwarf.gif': 'dwarf_border',
                 'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
@@ -3584,10 +3584,10 @@ function showShapePickerModal(currentAsset = '') {
                 'assets/ornament_bold2.gif': 'ornament_bold2_border',
                 'assets/ornament_simple.gif': 'ornament_simple_border',
                 'assets/spike_hollow.gif': 'spike_hollow_border',
-                'assets/spiky.gif': 'spiky_border',
-                'assets/spiky_bold.gif': 'spiky_bold_border',
-                'assets/vine_holloow.gif': 'vine_border',
-                'assets/border_default.png': 'default-border'
+                'assets/spike_hollow2.gif': 'spiky_border',
+                'assets/spike_bold.gif': 'spiky_bold_border',
+                'assets/vine_hollow.gif': 'vine_border',
+                'assets/border_default.gif': 'default-border'
             };
             const className = assetToClassMap[asset.path];
             if (className) {
