@@ -188,7 +188,7 @@ class DomManager {
             },
             // CSS Generation extras
             CSS: {
-                DIALOG_SIBLING: 'dialog + div:not(#site-main)',
+                DIALOG_SIBLING: 'dialog ~ div:not(#site-main)',
                 SHEET_BEFORE: '.ct-character-sheet:before'
             }
         };
