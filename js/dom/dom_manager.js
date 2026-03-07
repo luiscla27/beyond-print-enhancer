@@ -4,7 +4,7 @@ class DomManager {
             CORE: {
                 SHEET_DESKTOP: '.ct-character-sheet-desktop',
                 SIDEBAR: '.ct-sidebar',
-                NAVIGATION: 'nav', // Often the main navigation
+                NAVIGATION: '[class*="ct-character-nav"]', // More robust than just 'nav'
                 QUICK_INFO: '.ct-quick-info',
                 QUICK_INFO_BOX: '.ct-quick-info__box',
                 QUICK_INFO_BOX_LABEL: '.ct-quick-info__box-label',
@@ -226,7 +226,9 @@ class DomManager {
      * @returns {ElementWrapper}
      */
     getCharacterSheet() {
-        return this._wrap(this.selectors.CORE.SHEET_DESKTOP);
+        // Preference for the desktop class as it's more stable for layout
+        const el = document.querySelector('.ct-character-sheet-desktop') || document.getElementById('site-main');
+        return new ElementWrapper(el);
     }
 
     /**
