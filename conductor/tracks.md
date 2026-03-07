@@ -3,13 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-
----
-
-- [x] **Track: Shapes Rotation, Migration & Asset Expansion**
-*Link: [./tracks/shape_rotation_20260307/](./tracks/shape_rotation_20260307/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Shapes Rotation, Migration & Asset Expansion** (Completed: 2026-03-07)
+  *Link: [./archive/shape_rotation_20260307/](./archive/shape_rotation_20260307/)*
 - [x] **Track: Fix Asset Paths**
   *Link: [./archive/fix_asset_paths_20260224/](./archive/fix_asset_paths_20260224/)*
 - [x] **Track: Layout Refinements**
