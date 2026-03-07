@@ -188,9 +188,10 @@ class DomManager {
             },
             // CSS Generation extras
             CSS: {
-                DIALOG_SIBLING: 'dialog ~ div:not(#site-main)',
+                // Exclude site-main and any extension-added UI (starting with be- or specific IDs)
+                DIALOG_SIBLING: 'dialog ~ div:not(#site-main):not([id^="print-enhance"]):not([class*="be-"])',
                 SHEET_BEFORE: '.ct-character-sheet:before'
-            }
+            },
         };
     }
 
@@ -272,6 +273,9 @@ class DomManager {
      * Hides core UI elements that are not needed for printing.
      */
     hideCoreInterface() {
+        const siteMain = document.getElementById('site-main');
+        const desktopSheet = document.querySelector('.ct-character-sheet-desktop');
+
         const selectors = [
             this.selectors.CORE.SITE_BAR,
             this.selectors.CORE.HEADER_MAIN,
@@ -280,12 +284,16 @@ class DomManager {
             this.selectors.CORE.SITE_ALERT,
             this.selectors.CORE.WATERMARK,
             this.selectors.CORE.NOTIFICATIONS,
-            this.selectors.CORE.NAVIGATION // Might be too broad if navigation is needed for extraction, but tweakStyles hides it.
+            this.selectors.CORE.NAVIGATION
         ];
         
         selectors.forEach(selector => {
+            if (!selector) return;
             const el = document.querySelector(selector);
-            if (el) el.style.display = 'none';
+            // Never hide the main containers
+            if (el && el !== siteMain && el !== desktopSheet) {
+                el.style.display = 'none';
+            }
         });
         
         // Handle sidebars
@@ -293,15 +301,22 @@ class DomManager {
         sidebars.forEach(el => {
             // User Request: Exclude the portal which contains modals
             if (el.classList.contains('ct-sidebar__portal') || el.closest('.ct-sidebar__portal')) return;
+            if (el === siteMain || el === desktopSheet) return;
             el.style.display = 'none';
         });
         
         // Handle navigation variations
         const navs = document.querySelectorAll('[class*="navigation"]');
-        navs.forEach(el => el.style.display = 'none');
+        navs.forEach(el => {
+            if (el === siteMain || el === desktopSheet) return;
+            el.style.display = 'none';
+        });
 
         const megaMenus = document.querySelectorAll('[class*="mega-menu"]');
-        megaMenus.forEach(el => el.style.display = 'none');
+        megaMenus.forEach(el => {
+            if (el === siteMain || el === desktopSheet) return;
+            el.style.display = 'none';
+        });
     }
 
     /**

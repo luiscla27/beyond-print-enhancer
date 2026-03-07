@@ -3956,6 +3956,7 @@ function updateLayoutBounds() {
  * Creates the floating control panel.
  */
 function createControls() {
+    console.log('[DDB Print] createControls: building container...');
     const container = document.createElement('div');
     container.id = 'print-enhance-controls';
     container.style.position = 'fixed';
@@ -4026,13 +4027,50 @@ function createControls() {
         
         btn.onmouseenter = () => btn.style.backgroundColor = btnInfo.bgLightColor || '#444';
         btn.onmouseleave = () => btn.style.backgroundColor = btnInfo.bgColor || '#333';
-        btn.onclick = btnInfo.action;
+        
+        const logEvent = (name, btnInfo) => {
+            console.log(`[DDB Print] Button ${name}: ${btnInfo.label}`);
+        };
+
+        btn.addEventListener('mousedown', () => logEvent('Mousedown', btnInfo));
+        btn.addEventListener('mouseup', () => logEvent('Mouseup', btnInfo));
+        
+        btn.addEventListener('click', async (e) => {
+            console.log(`[DDB Print] Button Clicked: ${btnInfo.label}`);
+            try {
+                if (typeof btnInfo.action === 'function') {
+                    const result = btnInfo.action(e);
+                    if (result instanceof Promise) {
+                        await result;
+                    }
+                } else {
+                    console.error(`[DDB Print] No valid action for ${btnInfo.label}`);
+                }
+            } catch (err) {
+                console.error(`[DDB Print] Error executing ${btnInfo.label}:`, err);
+            }
+        });
         
         container.appendChild(btn);
     });
 
+    console.log('[DDB Print] createControls: appending to body...');
     document.body.appendChild(container);
     
+    // Verify visibility after a tiny delay
+    setTimeout(() => {
+        const el = document.getElementById('print-enhance-controls');
+        if (el) {
+            const style = window.getComputedStyle(el);
+            console.log(`[DDB Print] Controls verified. Display: ${style.display}, Visibility: ${style.visibility}, Opacity: ${style.opacity}`);
+            if (style.display === 'none') {
+                console.error('[DDB Print] CRITICAL: Controls are HIDDEN by CSS!');
+            }
+        } else {
+            console.error('[DDB Print] CRITICAL: Controls container missing from DOM after append!');
+        }
+    }, 500);
+
     // Inject print-only styles to hide controls
     if (!document.getElementById('ddb-print-controls-style')) {
         const style = document.createElement('style');
@@ -4171,17 +4209,21 @@ function handleManageCompact() {
  * Handles saving the layout to IndexedDB.
  */
 async function handleSaveBrowser() {
+    console.log('[DDB Print] handleSaveBrowser: starting...');
     try {
         await Storage.init();
         const layout = await scanLayout();
+        console.log('[DDB Print] handleSaveBrowser: layout captured');
         await Storage.saveGlobalLayout(layout);
-        
+
         // Also save for specific character for the "revert to character" feature later
         const characterId = getCharacterId();
         if (characterId) {
+            console.log('[DDB Print] handleSaveBrowser: saving for character:', characterId);
             await Storage.saveLayout(characterId, layout);
         }
-        
+
+        console.log('[DDB Print] handleSaveBrowser: success');
         showFeedback('Saved to browser!');
     } catch (err) {
         console.error('[DDB Print] Save failed', err);
@@ -4193,31 +4235,33 @@ async function handleSaveBrowser() {
  * Handles saving to PC.
  */
 async function handleSavePC() {
+    console.log('[DDB Print] handleSavePC: capturing layout...');
     const layout = await scanLayout();
     const data = JSON.stringify(layout, null, 2);
     const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
 
     try {
+        console.log('[DDB Print] handleSavePC: generating file...');
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         document.body.appendChild(a);
+        console.log('[DDB Print] handleSavePC: clicking link...');
         a.click();
-        
+
         setTimeout(() => {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
         }, 0);
-        
+
         showFeedback('Download started!');
     } catch (err) {
         console.error('[DDB Print] Download failed, showing modal', err);
         showFallbackModal(data);
     }
 }
-
 /**
  * Applies the hardcoded default layout.
  */
@@ -4471,6 +4515,7 @@ async function restoreLayout() {
  */
 function showFeedback(msg) {
     const feedback = document.createElement('div');
+    feedback.className = 'be-feedback';
     feedback.textContent = msg;
     feedback.style.position = 'fixed';
     feedback.style.top = '20px';
@@ -4483,15 +4528,14 @@ function showFeedback(msg) {
     feedback.style.zIndex = '10001';
     feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
     feedback.style.transition = 'opacity 0.5s';
-    
+
     document.body.appendChild(feedback);
-    
+
     setTimeout(() => {
         feedback.style.opacity = '0';
         setTimeout(() => feedback.remove(), 500);
     }, 2000);
 }
-
 /**
  * Shows a modal with layout data for manual copying.
  * @param {string} jsonData 
@@ -5135,6 +5179,9 @@ function getOrCreateActionContainer(section) {
     if (!container) {
         container = document.createElement('div');
         container.className = 'be-section-actions';
+        // Ensure buttons are reachable
+        container.style.zIndex = '1000000';
+        container.style.pointerEvents = 'all';
         wrapper.appendChild(container);
     }
     return container;
@@ -5155,99 +5202,85 @@ function injectCloneButtons(context = document) {
     elements.forEach(section => {
         const actionContainer = getOrCreateActionContainer(section);
 
-        // 1. Clone Button
-        if (!actionContainer.querySelector('.be-clone-button')) {
+        // Helper to add robust button
+        const addRobustButton = (className, icon, title, action) => {
+            if (actionContainer.querySelector(`.${className}`)) return;
+
             const btn = document.createElement('button');
-            btn.className = 'be-clone-button';
-            btn.innerHTML = '📋'; // Clipboard icon
-            btn.title = 'Clone Section';
-            
-            btn.onclick = async (e) => {
+            btn.className = className;
+            btn.innerHTML = icon;
+            btn.title = title;
+
+            const log = (msg) => console.log(`[DDB Print] Section Button ${className} (${section.id}): ${msg}`);
+
+            btn.addEventListener('mousedown', () => log('Mousedown'));
+            btn.addEventListener('mouseup', () => log('Mouseup'));
+            btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const id = section.id || 'unknown';
-                
-                // Get section name for default title
-                const header = section.querySelector(`${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`);
-                const sectionName = header ? header.textContent.trim() : 'Section';
-                
-                const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
-                
-                if (title) {
-                    const snapshot = captureSectionSnapshot(id);
-                    if (snapshot) {
-                        snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-                        snapshot.title = title;
-                        
-                        const clone = renderClonedSection(snapshot);
-                        if (clone) {
-                            showFeedback(`Cloned: ${title}`);
-                            updateLayoutBounds();
-                            // Re-run injection to ensure new clone gets buttons
-                            injectCloneButtons(); 
-                            injectSpellDetailTriggers(clone);
-                        }
-                    } else {
-                        showFeedback('Failed to capture snapshot.');
-                    }
+                log('Clicked');
+                try {
+                    await action(e);
+                } catch (err) {
+                    console.error(`[DDB Print] Error in section button ${className}:`, err);
                 }
-            };
+            });
+
             actionContainer.appendChild(btn);
-        }
+        };
+
+        // 1. Clone Button
+        addRobustButton('be-clone-button', '📋', 'Clone Section', async (e) => {
+            const id = section.id || 'unknown';
+            const header = section.querySelector(`${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`);
+            const sectionName = header ? header.textContent.trim() : 'Section';
+
+            const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
+
+            if (title) {
+                const snapshot = captureSectionSnapshot(id);
+                if (snapshot) {
+                    snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                    snapshot.title = title;
+
+                    const clone = renderClonedSection(snapshot);
+                    if (clone) {
+                        showFeedback(`Cloned: ${title}`);
+                        updateLayoutBounds();
+                        injectCloneButtons();
+                        injectSpellDetailTriggers(clone);
+                    }
+                } else {
+                    showFeedback('Failed to capture snapshot.');
+                }
+            }
+        });
 
         // 2. Compact Mode Button
         const sourceId = section.dataset.originalId || section.id || '';
         const isNumbered = /^section-Section-\d+$/.test(sourceId);
-        
-        if (sourceId && !isNumbered && !actionContainer.querySelector('.be-compact-button')) {
-            const compactBtn = document.createElement('button');
-            compactBtn.className = 'be-compact-button';
-            compactBtn.innerHTML = '📏'; 
-            compactBtn.title = 'Toggle Compact Mode';
-            
-            compactBtn.onclick = (e) => {
-                e.stopPropagation();
-                const isCompact = section.classList.toggle('be-compact-mode');
-                
-                if (isCompact) {
-                    compactBtn.style.backgroundColor = 'var(--btn-color)';
-                } else {
-                    compactBtn.style.backgroundColor = 'var(--btn-color-highlight)';
-                }
-                
-                updateLayoutBounds();
-            };
 
-            actionContainer.appendChild(compactBtn);
+        if (sourceId && !isNumbered) {
+            addRobustButton('be-compact-button', '📏', 'Toggle Compact Mode', (e) => {
+                const btn = e.currentTarget;
+                const isCompact = section.classList.toggle('be-compact-mode');
+                btn.style.backgroundColor = isCompact ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
+                updateLayoutBounds();
+            });
         }
 
         // 3. Border Style Button
-        if (!actionContainer.querySelector('.be-border-button')) {
-            const borderBtn = document.createElement('button');
-            borderBtn.className = 'be-border-button';
-            borderBtn.innerHTML = '🖼️'; 
-            borderBtn.title = 'Select Border Style';
-            
-            borderBtn.onclick = async (e) => {
-                e.stopPropagation();
-                
-                // Determine current style
-                const currentStyle = ALL_BORDER_STYLES.find(s => section.classList.contains(s)) || 'default-border';
-                
-                const result = await showBorderPickerModal(currentStyle);
-                
-                if (result) {
-                    clearBorderStyles(section);
-                    section.classList.add(result.style);
-                    
-                    updateLayoutBounds();
-                }
-            };
+        addRobustButton('be-border-button', '🖼️', 'Select Border Style', async (e) => {
+            const currentStyle = ALL_BORDER_STYLES.find(style => section.classList.contains(style)) || 'default-border';
+            const result = await showBorderPickerModal(currentStyle);
 
-            actionContainer.appendChild(borderBtn);
-        }
+            if (result) {
+                clearBorderStyles(section);
+                section.classList.add(result.style);
+                updateLayoutBounds();
+            }
+        });
     });
 }
-
 /**
  * Injects CSS for Compact Mode.
  */
