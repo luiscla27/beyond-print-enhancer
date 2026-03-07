@@ -15,9 +15,9 @@ Modernized and restored for D&D Beyond 2026 site changes. This extension helps y
 
 ## Try the Chrome Extension
 1. v1.3.0: [Install here](https://chromewebstore.google.com/detail/beyond-print-enhancer/obmbfcnlmoegklgdlkcanlkiadhengbc)
-2. v1.3.1: Pending approval.
+2. v1.3.2: Pending approval.
 
-## Recent Updates (v1.3.1)
+## Recent Updates (v1.3.2)
 - **Quick Info Decomposition**: AC, Initiative, Speed, and HP are now extracted into individual draggable sections.
 - **Individual Ability Sections**: STR, DEX, CON, INT, WIS, and CHA are now separated for more granular layout control.
 - **Asset Migration**: Replaced all base64 border images with local assets, reducing extension size and improving performance.
