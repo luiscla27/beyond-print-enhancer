@@ -10,6 +10,11 @@
 6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
 7. **Selector Centralization:** All CSS selectors MUST be moved to DomManager and have corresponding unit tests.
 
+## Communication Protocols
+
+- **Interactive Feedback:** When using `ask_user` to gather feedback or confirm decisions, ALWAYS provide at least one option for "Detailed Alternative", "Other", or "Revise with Comments" instead of just binary "Yes/No" choices. This ensures the user can provide specific course corrections.
+- **Verification:** When a task involves a visual or behavioral change, provide a detailed manual verification plan as defined in the "Phase Completion Verification and Checkpointing Protocol".
+
 ## Task Workflow
 
 All tasks follow a strict lifecycle:

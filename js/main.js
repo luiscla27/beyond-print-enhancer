@@ -14,6 +14,140 @@ const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
 
+/**
+ * Full list of available assets for the shape picker.
+ */
+const ASSET_LIST = [
+    'assets/border_ability.gif', 'assets/border_barbarian.gif', 'assets/border_barbarian_hand.gif', 'assets/border_box.gif', 'assets/border_default.gif', 'assets/border_goth1.gif', 'assets/border_goth1_hand.gif', 'assets/border_spikes.gif', 'assets/dwarf.gif', 'assets/dwarf_hollow.gif', 'assets/dwarf_hollow_hand.gif', 'assets/ornament.gif', 'assets/ornament2.gif', 'assets/ornament_bold.gif', 'assets/ornament_bold2.gif', 'assets/ornament_simple.gif', 'assets/spike_bold.gif', 'assets/spike_hollow.gif', 'assets/spike_hollow2.gif', 'assets/sticks.gif', 'assets/vine_hand.gif', 'assets/vine_hollow.gif', 'assets/vine_plants.gif',
+    'assets/shapes/border_spikes_hand.gif', 'assets/shapes/corner_barbarian.gif', 'assets/shapes/corner_border_barbarian_hand.gif', 'assets/shapes/corner_border_goth1.gif', 'assets/shapes/corner_border_plants_hand.gif', 'assets/shapes/corner_dwarf.gif', 'assets/shapes/corner_dwarf_hollow.gif', 'assets/shapes/corner_ornament.gif', 'assets/shapes/corner_ornament2.gif', 'assets/shapes/corner_ornament_bold.gif', 'assets/shapes/corner_ornament_bold2.gif', 'assets/shapes/corner_ornament_bold3.gif', 'assets/shapes/corner_ornament_simple.gif', 'assets/shapes/corner_ornament_simple2.gif', 'assets/shapes/corner_spikes.gif', 'assets/shapes/corner_spike_hollow.gif', 'assets/shapes/corner_spike_hollow2.gif', 'assets/shapes/corner_sticks.gif', 'assets/shapes/corner_sticks1.gif', 'assets/shapes/corner_vine_hollow.gif'
+];
+
+/**
+ * Metadata for assets including slice, width, and outset for border-image.
+ * Values are calculated based on image dimensions and file sizes.
+ * If 'isBackground' is true, it will be applied as background-image instead of border-image.
+ */
+const ASSET_METADATA = {
+    'assets/border_ability.gif': { slice: 66, width: '28px', outset: '16px', className: 'ability_border' },
+    'assets/border_barbarian.gif': { slice: 212, width: '142px', outset: '55px', className: 'barbarian_border' },
+    'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
+    'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
+    'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
+    'assets/border_goth1.gif': { slice: 166, width: '111px', outset: '50px 35px', className: 'goth_border' },
+    'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
+    'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
+    'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
+    'assets/dwarf_hollow.gif': { slice: 215, width: '143px', outset: '38px', className: 'dwarf_hollow_border' },
+    'assets/dwarf_hollow_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'dwarf_hollow_hand_border' },
+    'assets/ornament.gif': { slice: 133, width: '88px', outset: '32px', className: 'ornament_border' },
+    'assets/ornament2.gif': { slice: 217, width: '144px', outset: '48px', className: 'ornament2_border' },
+    'assets/ornament_bold.gif': { slice: 333, width: '222px', outset: '100px', className: 'ornament_bold_border' },
+    'assets/ornament_bold2.gif': { slice: 212, width: '141px', outset: '50px', className: 'ornament_bold2_border' },
+    'assets/ornament_simple.gif': { slice: 166, width: '111px', outset: '45px', className: 'ornament_simple_border' },
+    'assets/spike_bold.gif': { slice: 166, width: '111px', outset: '55px', className: 'spiky_bold_border' },
+    'assets/spike_hollow.gif': { slice: 166, width: '111px', outset: '45px', className: 'spike_hollow_border' },
+    'assets/spike_hollow2.gif': { slice: 1050, width: '100px', outset: '45px', className: 'spiky_border' },
+    'assets/sticks.gif': { slice: 220, width: '146px', outset: '65px', className: 'sticks_border' },
+    'assets/vine_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'vine_hand_border' },
+    'assets/vine_hollow.gif': { slice: 429, width: '130px', outset: '45px', className: 'vine_border' },
+    'assets/vine_plants.gif': { slice: 200, width: '133px', outset: '55px', className: 'plants_border' },
+    // Shapes folder - Using background-image instead of border-image
+    'assets/shapes/border_spikes_hand.gif': { isBackground: true },
+    'assets/shapes/corner_barbarian.gif': { isBackground: true },
+    'assets/shapes/corner_border_barbarian_hand.gif': { isBackground: true },
+    'assets/shapes/corner_border_goth1.gif': { isBackground: true },
+    'assets/shapes/corner_border_plants_hand.gif': { isBackground: true },
+    'assets/shapes/corner_dwarf.gif': { isBackground: true },
+    'assets/shapes/corner_dwarf_hollow.gif': { isBackground: true },
+    'assets/shapes/corner_ornament.gif': { isBackground: true },
+    'assets/shapes/corner_ornament2.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold2.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_bold3.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_simple.gif': { isBackground: true },
+    'assets/shapes/corner_ornament_simple2.gif': { isBackground: true },
+    'assets/shapes/corner_spikes.gif': { isBackground: true },
+    'assets/shapes/corner_spike_hollow.gif': { isBackground: true },
+    'assets/shapes/corner_spike_hollow2.gif': { isBackground: true },
+    'assets/shapes/corner_sticks.gif': { isBackground: true },
+    'assets/shapes/corner_sticks1.gif': { isBackground: true },
+    'assets/shapes/corner_vine_hollow.gif': { isBackground: true }
+};
+
+/**
+ * All available border style classes, derived from metadata.
+ */
+const ALL_BORDER_STYLES = [
+    'no-border',
+    ...Object.values(ASSET_METADATA)
+        .map(meta => meta.className)
+        .filter(name => name)
+];
+
+/**
+ * Parses and categorizes assets for the shape picker.
+ * @param {string[]} fileList 
+ * @returns {{borders: Array, shapes: Array}}
+ */
+function parseAssets(fileList) {
+    const categories = {
+        borders: [],
+        shapes: []
+    };
+
+    const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
+
+    fileList.forEach(filePath => {
+        if (!filePath.endsWith('.gif')) return;
+
+        const isShape = filePath.includes('assets/shapes/');
+        const fileName = filePath.split('/').pop().toLowerCase();
+        
+        // Extract tags
+        const tags = tagList.filter(tag => fileName.includes(tag.replace(' ', '_')));
+        
+        // Specialized logic for "hand drawn" which might be "hand" in filename
+        if (fileName.includes('hand') && !tags.includes('hand drawn')) {
+            tags.push('hand drawn');
+        }
+
+        const asset = {
+            path: filePath,
+            label: fileName.replace('.gif', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            tags: tags
+        };
+
+        if (isShape) {
+            categories.shapes.push(asset);
+        } else {
+            categories.borders.push(asset);
+        }
+    });
+
+    return categories;
+}
+
+/**
+ * Calculates a snapped angle based on the step size.
+ * @param {number} angle 
+ * @param {number} step Default 15
+ */
+function calculateSnappedAngle(angle, step = 15) {
+    return Math.round(angle / step) * step;
+}
+
+/**
+ * Calculates the angle in degrees between a center point and a pointer point.
+ */
+function getAngleFromPoint(cx, cy, px, py) {
+    const dy = py - cy;
+    const dx = px - cx;
+    let theta = Math.atan2(dy, dx);
+    theta *= 180 / Math.PI;
+    if (theta < 0) theta = 360 + theta;
+    return theta;
+}
+
 const DEFAULT_LAYOUTS = {
     "section-Section-1": {
       "left": "16px",
@@ -577,9 +711,7 @@ function createDraggableContainer(title, content, id) {
       e.stopPropagation();
       container.classList.add('minimized');
   };
-  header.appendChild(minimizeBtn);
-
-  wrapper.appendChild(header);
+  header.appendChild(minimizeBtn);  wrapper.appendChild(header);
   
   // Restore button (only visible when minimized)
   const restoreBtn = document.createElement('button');
@@ -1992,7 +2124,7 @@ function enforceFullHeight() {
     style.id = styleId;
     style.textContent = `
         :root {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
@@ -2004,7 +2136,7 @@ function enforceFullHeight() {
             border-style: none !important;
         }
         .default-border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.png')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
@@ -2034,7 +2166,7 @@ function enforceFullHeight() {
             --border-img-outset: 50px 35px;
         }
         .plants_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_plants.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/vine_plants.gif')}');
             --border-img-width: 145px;
             --border-img-slice: 219;
             --border-img-outset: 50px;
@@ -2100,19 +2232,19 @@ function enforceFullHeight() {
             --border-img-outset: 50px;
         }
         .spiky_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spiky.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow2.gif')}');
             --border-img-width: 100px;
             --border-img-slice: 388;
             --border-img-outset: 60px;
         }
         .spiky_bold_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spiky_bold.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_bold.gif')}');
             --border-img-width: 120px;
             --border-img-slice: 388;
             --border-img-outset: 69px;
         }
         .vine_border {
-            --border-img: url('${chrome.runtime.getURL('assets/vine_holloow.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/vine_hollow.gif')}');
             --border-img-width: 130px;
             --border-img-slice: 429;
             --border-img-outset: 45px;
@@ -2270,7 +2402,8 @@ function enforceFullHeight() {
         .be-section-wrapper:hover .print-section-header {
             opacity: 1;
         }
-        .be-section-wrapper:hover .be-section-actions {
+        .be-section-wrapper:hover .be-section-actions,
+        .be-shape-wrapper:hover .be-section-actions {
             opacity: 1;
             pointer-events: auto;
         }
@@ -2657,6 +2790,42 @@ function enforceFullHeight() {
             border-color: var(--btn-color);
             background: #444;
         }
+        .be-rotation-handle {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 3px solid #f0f;
+            border-radius: 50%;
+            cursor: grab;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .be-rotation-handle::before {
+            content: '↻';
+            color: #f0f;
+            font-weight: bold;
+        }
+        .be-rotation-handle:active {
+            cursor: grabbing;
+        }
+        .be-rotation-handle::after {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 17px;
+            background: #f0f;
+        }
         .be-border-preview {
             width: 80px;
             height: 80px;
@@ -2951,12 +3120,21 @@ function createShape(assetPath, restoreData = null) {
     wrapper.classList.add('be-shape-wrapper');
     
     const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('print-shape-container', 'be-shape');
-    
-    // Removal logic (specific for shapes)
+    container.classList.add('be-shape-container', 'be-shape');
+    // Ensure ID is set from restoreData or generated
+    container.id = id;
+
+    // Show rotate button for shapes
+    const rotateBtn = wrapper.querySelector('.print-section-rotate');
+    if (rotateBtn) {
+        rotateBtn.style.display = 'block';
+    }
+
+    // Action Buttons logic (specific for shapes)
     const actionContainer = getOrCreateActionContainer(container);
+    
     const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'be-shape-delete';
+    deleteBtn.className = 'be-shape-delete be-robust-button';
     deleteBtn.innerHTML = '🗑️';
     deleteBtn.title = 'Delete Shape';
     deleteBtn.onclick = (e) => {
@@ -2967,6 +3145,38 @@ function createShape(assetPath, restoreData = null) {
             updateLayoutBounds();
         }
     };
+
+    const rotateToolBtn = document.createElement('button');
+    rotateToolBtn.className = 'be-shape-rotate be-robust-button';
+    rotateToolBtn.innerHTML = '↻';
+    rotateToolBtn.title = 'Toggle Rotation Tool';
+    rotateToolBtn.onclick = (e) => {
+        e.stopPropagation();
+        const event = new CustomEvent('be-rotate-click', { bubbles: true });
+        rotateToolBtn.dispatchEvent(event);
+    };
+
+    const cloneBtn = document.createElement('button');
+    cloneBtn.className = 'be-shape-clone be-robust-button';
+    cloneBtn.innerHTML = '📋';
+    cloneBtn.title = 'Clone Shape';
+    cloneBtn.onclick = (e) => {
+        e.stopPropagation();
+        // Parse current position and offset by 16px
+        const left = parseInt(wrapper.style.left) || 0;
+        const top = parseInt(wrapper.style.top) || 0;
+        createShape(assetPath, {
+            left: (left + 16) + 'px',
+            top: (top + 16) + 'px',
+            width: container.style.width,
+            height: container.style.height,
+            rotation: currentRotation
+        });
+        showFeedback('Shape cloned');
+    };
+
+    actionContainer.appendChild(rotateToolBtn);
+    actionContainer.appendChild(cloneBtn);
     actionContainer.appendChild(deleteBtn);
 
     // Asset Application
@@ -3004,6 +3214,89 @@ function createShape(assetPath, restoreData = null) {
 
     container.style.left = '';
     container.style.top = '';
+
+    // Rotation Logic
+    let currentRotation = (restoreData && restoreData.rotation) ? parseInt(restoreData.rotation) : 0;
+
+    const applyRotation = (angle) => {
+        currentRotation = calculateSnappedAngle(angle) % 360;
+        // Apply rotation to container, not wrapper
+        container.style.transform = `rotate(${currentRotation}deg)`;
+        wrapper.dataset.rotation = currentRotation;
+        
+        // Clear wrapper transform to avoid conflict
+        wrapper.style.transform = '';
+    };
+
+    if (currentRotation !== 0) {
+        applyRotation(currentRotation);
+    }
+
+    // Listener for header rotate button - TOGGLE HANDLE
+    wrapper.addEventListener('be-rotate-click', (e) => {
+        const existingHandle = wrapper.querySelector('.be-rotation-handle');
+        if (existingHandle) {
+            existingHandle.remove();
+            showFeedback('Rotation tool hidden');
+        } else {
+            addRotationHandle();
+            showFeedback('Rotation tool shown');
+        }
+    });
+
+    wrapper.addEventListener('click', (e) => {
+        if (!document.body.classList.contains('be-shapes-mode-active')) return;
+        
+        // Prevent handle click from re-triggering logic
+        if (e.target.classList.contains('be-rotation-handle')) return;
+
+        // Deselect others (auto-hide their handles if we want strict focus, 
+        // but user asked for button control. Let's keep button as the main toggle.)
+        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
+            if (el !== wrapper) {
+                el.classList.remove('selected');
+            }
+        });
+
+        if (!wrapper.classList.contains('selected')) {
+            wrapper.classList.add('selected');
+        }
+    });
+
+    function addRotationHandle() {
+        if (wrapper.querySelector('.be-rotation-handle')) return;
+        
+        const handle = document.createElement('div');
+        handle.className = 'be-rotation-handle';
+        handle.title = 'Drag to Rotate (15° snap)';
+        wrapper.appendChild(handle);
+
+        handle.addEventListener('mousedown', (mdE) => {
+            mdE.preventDefault();
+            mdE.stopPropagation();
+
+            const rect = wrapper.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+
+            const onMouseMove = (mmE) => {
+                // Calculate angle from center to mouse
+                let angle = getAngleFromPoint(cx, cy, mmE.clientX, mmE.clientY);
+                // Adjust by 90 because handle is at top (270 deg)
+                // and CSS 0 is Right (East). Top is -90 or 270.
+                applyRotation(angle + 90);
+            };
+
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                showFeedback(`Rotated to ${currentRotation}°`);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
     
     const layoutRoot = document.getElementById('print-layout-wrapper');
     if (layoutRoot) {
@@ -3020,40 +3313,63 @@ function createShape(assetPath, restoreData = null) {
  * Helper to apply asset to a shape container via class or inline style.
  */
 function applyShapeAsset(container, assetPath) {
-    // Map of assets to existing border classes
-    const assetToClassMap = {
-        'assets/border_ability.gif': 'ability_border',
-        'assets/border_spikes.gif': 'spikes_border',
-        'assets/border_barbarian.gif': 'barbarian_border',
-        'assets/border_goth1.gif': 'goth_border',
-        'assets/border_plants.gif': 'plants_border',
-        'assets/border_box.gif': 'box_border',
-        'assets/dwarf.gif': 'dwarf_border',
-        'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
-        'assets/sticks.gif': 'sticks_border',
-        'assets/ornament.gif': 'ornament_border',
-        'assets/ornament2.gif': 'ornament2_border',
-        'assets/ornament_bold.gif': 'ornament_bold_border',
-        'assets/ornament_bold2.gif': 'ornament_bold2_border',
-        'assets/ornament_simple.gif': 'ornament_simple_border',
-        'assets/spike_hollow.gif': 'spike_hollow_border',
-        'assets/spiky.gif': 'spiky_border',
-        'assets/spiky_bold.gif': 'spiky_bold_border',
-        'assets/vine_holloow.gif': 'vine_border',
-        'assets/border_default.png': 'default-border'
-    };
+    // Remove existing classes from metadata
+    Object.values(ASSET_METADATA).forEach(meta => {
+        if (meta.className) container.classList.remove(meta.className);
+    });
 
-    const className = assetToClassMap[assetPath];
-    if (className) {
-        container.classList.add(className);
+    // Reset styles that might have been applied
+    container.style.borderStyle = '';
+    container.style.borderImageSource = '';
+    container.style.borderImageSlice = '';
+    container.style.borderImageWidth = '';
+    container.style.borderImageOutset = '';
+    container.style.borderImageRepeat = '';
+    container.style.backgroundImage = '';
+    container.style.backgroundSize = '';
+    container.style.backgroundRepeat = '';
+    container.style.backgroundPosition = '';
+    container.style.border = '';
+    container.style.backgroundColor = 'transparent';
+    container.innerHTML = ''; // Clear any existing img tags
+
+    const meta = ASSET_METADATA[assetPath];
+    if (meta) {
+        if (meta.isBackground) {
+            // Use <img> for print compatibility (background-graphics are often disabled)
+            const img = document.createElement('img');
+            img.src = chrome.runtime.getURL(assetPath);
+            Object.assign(img.style, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                pointerEvents: 'none',
+                display: 'block'
+            });
+            container.appendChild(img);
+            container.style.border = 'none';
+        } else if (meta.className) {
+            container.classList.add(meta.className);
+        } else if (meta.slice !== undefined) {
+            container.style.borderStyle = 'solid';
+            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSlice = meta.slice.toString();
+            container.style.borderImageWidth = meta.width || '20px';
+            container.style.borderImageOutset = meta.outset || '0';
+            container.style.borderImageRepeat = 'round';
+        } else {
+            // Default border fallback if slice is missing
+            container.style.borderStyle = 'solid';
+            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSlice = '33';
+            container.style.borderImageWidth = '20px';
+        }
     } else {
-        // Generic handling for new assets in assets/shapes/
+        // Fallback for unknown assets
         container.style.borderStyle = 'solid';
         container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
-        container.style.borderImageSlice = '33'; // Default slice
-        container.style.borderImageWidth = '28px'; // Default width
-        container.style.borderImageOutset = '16px'; // Default outset
-        container.style.borderImageRepeat = 'round';
+        container.style.borderImageSlice = '33';
+        container.style.borderImageWidth = '20px';
     }
 }
 
@@ -3063,15 +3379,36 @@ function applyShapeAsset(container, assetPath) {
  */
 function toggleShapesMode(forceState) {
     const activeClass = 'be-shapes-mode-active';
-    const isActive = forceState !== undefined ? !forceState : document.body.classList.contains(activeClass);
-    
+    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
+
     if (isActive) {
-        document.body.classList.remove(activeClass);
-    } else {
         document.body.classList.add(activeClass);
+        showFeedback('Shapes Mode: ON');
+    } else {
+        document.body.classList.remove(activeClass);
+        // Deselect all and remove handles
+        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
+            el.classList.remove('selected');
+            const h = el.querySelector('.be-rotation-handle');
+            if (h) h.remove();
+        });
+        showFeedback('Shapes Mode: OFF');
     }
 }
 
+// Global click listener for deselecting shapes
+document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('be-shapes-mode-active')) return;
+
+    // If we didn't click a shape wrapper or a rotation handle, deselect all
+    if (!e.target.closest('.be-shape-wrapper') && !e.target.classList.contains('be-rotation-handle')) {
+        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
+            el.classList.remove('selected');
+            const h = el.querySelector('.be-rotation-handle');
+            if (h) h.remove();
+        });
+    }
+}, true);
 /**
  * Creates and manages a floating spell detail section.
  */
@@ -3313,16 +3650,6 @@ async function getCharacterSpells(charId) {
         console.error("Error fetching spells:", err);
     }
 }
-/**
- * All available border style classes.
- */
-const ALL_BORDER_STYLES = [
-    'default-border', 'no-border', 'ability_border', 'spikes_border',
-    'barbarian_border', 'goth_border', 'plants_border', 'box_border',
-    'dwarf_border', 'dwarf_hollow_border', 'sticks_border', 'ornament_border', 'ornament2_border',
-    'ornament_bold_border', 'ornament_bold2_border', 'ornament_simple_border',
-    'spike_hollow_border', 'spiky_border', 'spiky_bold_border', 'vine_border'
-];
 
 /**
  * Removes all border style classes from an element.
@@ -3514,108 +3841,211 @@ function showBorderPickerModal(currentStyle = 'default-border') {
  */
 function showShapePickerModal(currentAsset = '') {
     return new Promise((resolve) => {
+        const categories = parseAssets(ASSET_LIST);
         const overlay = document.createElement('div');
         overlay.className = 'be-modal-overlay';
         
         const modal = document.createElement('div');
         modal.className = 'be-modal';
-        modal.style.width = '550px';
+        modal.style.width = '600px'; // Increased width for better grid display
         
         const h3 = document.createElement('h3');
         h3.textContent = 'Select Decorative Shape';
         modal.appendChild(h3);
+
+        // Tab State
+        let activeTab = 'borders';
+        
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'be-modal-tabs';
+        tabsContainer.style.display = 'flex';
+        tabsContainer.style.gap = '10px';
+        tabsContainer.style.marginBottom = '15px';
+        tabsContainer.style.borderBottom = '1px solid #444';
+        
+        const borderTab = document.createElement('button');
+        borderTab.textContent = 'Borders';
+        borderTab.className = 'be-modal-tab active';
+        borderTab.style.padding = '8px 16px';
+        borderTab.style.background = '#444';
+        borderTab.style.color = 'white';
+        borderTab.style.border = 'none';
+        borderTab.style.cursor = 'pointer';
+        borderTab.style.borderTopLeftRadius = '4px';
+        borderTab.style.borderTopRightRadius = '4px';
+        
+        const shapeTab = document.createElement('button');
+        shapeTab.textContent = 'Shapes';
+        shapeTab.className = 'be-modal-tab';
+        shapeTab.style.padding = '8px 16px';
+        shapeTab.style.background = '#222';
+        shapeTab.style.color = '#ccc';
+        shapeTab.style.border = 'none';
+        shapeTab.style.cursor = 'pointer';
+        shapeTab.style.borderTopLeftRadius = '4px';
+        shapeTab.style.borderTopRightRadius = '4px';
+        
+        tabsContainer.appendChild(borderTab);
+        tabsContainer.appendChild(shapeTab);
+        modal.appendChild(tabsContainer);
+
+        // Tag Filters
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'be-modal-tags';
+        tagsContainer.style.display = 'flex';
+        tagsContainer.style.flexWrap = 'wrap';
+        tagsContainer.style.gap = '5px';
+        tagsContainer.style.marginBottom = '15px';
+        
+        const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
+        let activeTag = null;
+
+        const renderTags = () => {
+            tagsContainer.innerHTML = '';
+            // "All" tag
+            const allTag = document.createElement('button');
+            allTag.textContent = 'All';
+            allTag.style.fontSize = '10px';
+            allTag.style.padding = '2px 8px';
+            allTag.style.borderRadius = '10px';
+            allTag.style.border = '1px solid #666';
+            allTag.style.background = activeTag === null ? '#666' : '#222';
+            allTag.style.color = 'white';
+            allTag.style.cursor = 'pointer';
+            allTag.onclick = () => {
+                activeTag = null;
+                renderTags();
+                renderAssets(activeTab);
+            };
+            tagsContainer.appendChild(allTag);
+
+            tagList.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.textContent = tag;
+                btn.style.fontSize = '10px';
+                btn.style.padding = '2px 8px';
+                btn.style.borderRadius = '10px';
+                btn.style.border = '1px solid #666';
+                btn.style.background = activeTag === tag ? '#666' : '#222';
+                btn.style.color = 'white';
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => {
+                    activeTag = (activeTag === tag) ? null : tag;
+                    renderTags();
+                    renderAssets(activeTab);
+                };
+                tagsContainer.appendChild(btn);
+            });
+        };
+
+        renderTags();
+        modal.appendChild(tagsContainer);
         
         const optionsContainer = document.createElement('div');
         optionsContainer.className = 'be-border-options';
         optionsContainer.style.maxHeight = '400px';
         optionsContainer.style.overflowY = 'auto';
+        optionsContainer.style.display = 'flex';
+        optionsContainer.style.flexWrap = 'wrap';
+        optionsContainer.style.gap = '10px';
+        optionsContainer.style.padding = '10px';
         
-        const assets = [
-            // Custom Shapes (Planned for assets/shapes/ - currently using existing assets)
-            { path: 'assets/dwarf.gif', label: 'Dwarf (Shape)' },
-            { path: 'assets/ornament.gif', label: 'Ornament (Shape)' },
-            // Standard Borders
-            { path: 'assets/border_default.png', label: 'Default' },
-            { path: 'assets/border_ability.gif', label: 'Ability' },
-            { path: 'assets/border_spikes.gif', label: 'Spikes' },
-            { path: 'assets/border_barbarian.gif', label: 'Barbarian' },
-            { path: 'assets/border_goth1.gif', label: 'Goth' },
-            { path: 'assets/border_plants.gif', label: 'Plants' },
-            { path: 'assets/border_box.gif', label: 'Box' },
-            { path: 'assets/dwarf.gif', label: 'Dwarf' },
-            { path: 'assets/dwarf_hollow.gif', label: 'Dwarf Hollow' },
-            { path: 'assets/sticks.gif', label: 'Sticks' },
-            { path: 'assets/ornament.gif', label: 'Ornament 1' },
-            { path: 'assets/ornament2.gif', label: 'Ornament 2' },
-            { path: 'assets/ornament_bold.gif', label: 'Ornament Bold' },
-            { path: 'assets/ornament_bold2.gif', label: 'Ornament Bold 2' },
-            { path: 'assets/ornament_simple.gif', label: 'Ornament Simple' },
-            { path: 'assets/spike_hollow.gif', label: 'Spike Hollow' },
-            { path: 'assets/spiky.gif', label: 'Spiky' },
-            { path: 'assets/spiky_bold.gif', label: 'Spiky Bold' },
-            { path: 'assets/vine_holloow.gif', label: 'Vine' }
-        ];
-        
-        let selectedAsset = currentAsset || assets[0].path;
+        let selectedAsset = currentAsset || (categories.borders.length > 0 ? categories.borders[0].path : '');
         const optionEls = [];
 
-        assets.forEach(asset => {
-            const opt = document.createElement('div');
-            opt.className = 'be-border-option';
-            if (selectedAsset === asset.path) opt.classList.add('selected');
-            
-            const preview = document.createElement('div');
-            preview.className = `be-border-preview`;
-            // Manually apply border-image for preview since we don't have classes for all
-            // Note: Reuse existing classes if they map to the path
-            const assetToClassMap = {
-                'assets/border_ability.gif': 'ability_border',
-                'assets/border_spikes.gif': 'spikes_border',
-                'assets/border_barbarian.gif': 'barbarian_border',
-                'assets/border_goth1.gif': 'goth_border',
-                'assets/border_plants.gif': 'plants_border',
-                'assets/border_box.gif': 'box_border',
-                'assets/dwarf.gif': 'dwarf_border',
-                'assets/dwarf_hollow.gif': 'dwarf_hollow_border',
-                'assets/sticks.gif': 'sticks_border',
-                'assets/ornament.gif': 'ornament_border',
-                'assets/ornament2.gif': 'ornament2_border',
-                'assets/ornament_bold.gif': 'ornament_bold_border',
-                'assets/ornament_bold2.gif': 'ornament_bold2_border',
-                'assets/ornament_simple.gif': 'ornament_simple_border',
-                'assets/spike_hollow.gif': 'spike_hollow_border',
-                'assets/spiky.gif': 'spiky_border',
-                'assets/spiky_bold.gif': 'spiky_bold_border',
-                'assets/vine_holloow.gif': 'vine_border',
-                'assets/border_default.png': 'default-border'
-            };
-            const className = assetToClassMap[asset.path];
-            if (className) {
-                preview.classList.add(className);
-            } else {
-                preview.style.borderStyle = 'solid';
-                preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
-                preview.style.borderImageSlice = '33';
-                preview.style.borderImageWidth = '20px';
+        const renderAssets = (tabName) => {
+            optionsContainer.innerHTML = '';
+            let assets = categories[tabName];
+
+            if (activeTag) {
+                assets = assets.filter(a => a.tags.includes(activeTag));
             }
             
-            opt.appendChild(preview);
+            if (assets.length === 0) {
+                const empty = document.createElement('div');
+                empty.textContent = 'No shapes found for this filter.';
+                empty.style.color = '#888';
+                empty.style.padding = '20px';
+                optionsContainer.appendChild(empty);
+                return;
+            }
             
-            const label = document.createElement('div');
-            label.textContent = asset.label;
-            label.style.fontSize = '12px';
-            opt.appendChild(label);
-            
-            opt.onclick = () => {
-                optionEls.forEach(el => el.classList.remove('selected'));
-                opt.classList.add('selected');
-                selectedAsset = asset.path;
-            };
-            
-            optionEls.push(opt);
-            optionsContainer.appendChild(opt);
-        });
-        
+            assets.forEach(asset => {
+                const opt = document.createElement('div');
+                opt.className = 'be-border-option';
+                if (selectedAsset === asset.path) opt.classList.add('selected');
+                
+                const preview = document.createElement('div');
+                preview.className = `be-border-preview`;
+                
+                // Asset Application Logic using ASSET_METADATA
+                const meta = ASSET_METADATA[asset.path];
+                if (meta) {
+                    if (meta.isBackground) {
+                        preview.style.backgroundImage = `url('${chrome.runtime.getURL(asset.path)}')`;
+                        preview.style.backgroundSize = 'contain';
+                        preview.style.backgroundRepeat = 'no-repeat';
+                        preview.style.backgroundPosition = 'center';
+                        preview.style.border = 'none';
+                    } else if (meta.className) {
+                        preview.classList.add(meta.className);
+                    } else {
+                        preview.style.borderStyle = 'solid';
+                        preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                        preview.style.borderImageSlice = meta.slice.toString();
+                        preview.style.borderImageWidth = meta.width;
+                        preview.style.borderImageOutset = meta.outset || '0';
+                        preview.style.borderImageRepeat = 'round';
+                    }
+                } else {
+                    // Fallback for unknown assets
+                    preview.style.borderStyle = 'solid';
+                    preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                    preview.style.borderImageSlice = '33';
+                    preview.style.borderImageWidth = '20px';
+                }
+                
+                opt.appendChild(preview);
+                
+                const label = document.createElement('div');
+                label.textContent = asset.label;
+                label.style.fontSize = '10px';
+                label.style.marginTop = '5px';
+                opt.appendChild(label);
+                
+                opt.onclick = () => {
+                    optionsContainer.querySelectorAll('.be-border-option').forEach(el => el.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    selectedAsset = asset.path;
+                };
+                
+                optionsContainer.appendChild(opt);
+            });
+        };
+
+        borderTab.onclick = () => {
+            activeTab = 'borders';
+            borderTab.classList.add('active');
+            borderTab.style.background = '#444';
+            borderTab.style.color = 'white';
+            shapeTab.classList.remove('active');
+            shapeTab.style.background = '#222';
+            shapeTab.style.color = '#ccc';
+            renderAssets('borders');
+        };
+
+        shapeTab.onclick = () => {
+            activeTab = 'shapes';
+            shapeTab.classList.add('active');
+            shapeTab.style.background = '#444';
+            shapeTab.style.color = 'white';
+            borderTab.classList.remove('active');
+            borderTab.style.background = '#222';
+            borderTab.style.color = '#ccc';
+            renderAssets('shapes');
+        };
+
+        renderAssets('borders');
         modal.appendChild(optionsContainer);
         
         const actions = document.createElement('div');
@@ -4713,6 +5143,7 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '110',
+                rotation: wrapper.dataset.rotation || '0',
                 minimized: section.dataset.minimized === 'true'
             });
             return;
@@ -5192,7 +5623,7 @@ function getOrCreateActionContainer(section) {
  */
 function injectCloneButtons(context = document) {
     const s = window.DomManager.getInstance().selectors;
-    const selector = `${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container`;
+    const selector = `${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container, .be-shape-container`;
     // If the context itself matches the selector, include it
     const elements = Array.from(context.querySelectorAll(selector));
     if (context instanceof HTMLElement && context.matches(selector)) {
@@ -5279,6 +5710,27 @@ function injectCloneButtons(context = document) {
                 updateLayoutBounds();
             }
         });
+
+        const isShape = section.classList.contains('be-shape-container');
+
+        // 4. Delete Button (Generic for all)
+        addRobustButton('be-clone-delete', '🗑️', isShape ? 'Delete Shape' : 'Delete Section', (e) => {
+            const wrapper = section.closest('.be-section-wrapper') || section.closest('.be-shape-wrapper');
+            if (wrapper) {
+                if (confirm(`Are you sure you want to delete this ${isShape ? 'shape' : 'section'}?`)) {
+                    wrapper.remove();
+                    updateLayoutBounds();
+                }
+            }
+        });
+
+        // 5. Rotate Tool Button (only for shapes)
+        if (isShape) {
+            addRobustButton('be-shape-rotate', '↻', 'Toggle Rotation Tool', (e) => {
+                const event = new CustomEvent('be-rotate-click', { bubbles: true });
+                e.target.dispatchEvent(event);
+            });
+        }
     });
 }
 /**
@@ -5586,5 +6038,10 @@ function injectCompactStyles() {
 
     // Default to Shapes Mode OFF
     toggleShapesMode(false);
+
+    // Export for testing
+    window.createShape = createShape;
+    window.toggleShapesMode = toggleShapesMode;
+    window.applyShapeAsset = applyShapeAsset;
 })();
 })();

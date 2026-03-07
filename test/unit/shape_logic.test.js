@@ -58,7 +58,7 @@ describe('Shape Logic', function() {
             assert.fail('window.createShape is not defined');
         }
         
-        const assetPath = 'assets/shapes/test-shape.png';
+        const assetPath = 'assets/shapes/test-shape.gif';
         const wrapper = window.createShape(assetPath);
         
         assert.ok(wrapper.classList.contains('be-section-wrapper'), 'Should have be-section-wrapper class');
@@ -71,16 +71,16 @@ describe('Shape Logic', function() {
     });
 
     it('should apply the correct border-image style to container', function() {
-        const assetPath = 'assets/shapes/test-shape.png';
+        const assetPath = 'assets/shapes/test-shape.gif';
         const wrapper = window.createShape(assetPath);
         const container = wrapper.querySelector('.print-section-container');
         
-        assert.ok(container.style.borderImageSource.includes('test-shape.png'), 'Border image source should include asset path');
+        assert.ok(container.style.borderImageSource.includes('test-shape.gif'), 'Border image source should include asset path');
         assert.strictEqual(container.style.borderStyle, 'solid', 'Border style should be solid');
     });
 
     it('should be appended to the layout wrapper', function() {
-        const assetPath = 'assets/shapes/test-shape.png';
+        const assetPath = 'assets/shapes/test-shape.gif';
         const wrapper = window.createShape(assetPath);
         
         const layoutRoot = document.getElementById('print-layout-wrapper');
@@ -92,7 +92,7 @@ describe('Shape Logic', function() {
     it('should restore from data if provided', function() {
         const restoreData = {
             id: 'shape-123',
-            assetPath: 'assets/shapes/old-shape.png',
+            assetPath: 'assets/shapes/old-shape.gif',
             styles: {
                 width: '150px',
                 height: '150px',
@@ -122,7 +122,7 @@ describe('Shape Logic', function() {
         // Mock confirm
         window.confirm = () => true;
         
-        const wrapper = window.createShape('assets/shapes/test.png');
+        const wrapper = window.createShape('assets/shapes/test.gif');
         const deleteBtn = wrapper.querySelector('.be-shape-delete');
         
         assert.ok(deleteBtn, 'Delete button missing');
@@ -151,7 +151,7 @@ describe('Shape Logic', function() {
         layoutRoot.appendChild(sectionWrapper);
         
         // Create a shape
-        const shapeWrapper = window.createShape('assets/shapes/test.png');
+        const shapeWrapper = window.createShape('assets/shapes/test.gif');
         shapeWrapper.style.zIndex = '111';
         
         window.initZIndexManagement();
@@ -168,10 +168,10 @@ describe('Shape Logic', function() {
     });
 
     it('should bring clicked shape to the very front', function() {
-        const shapeWrapper1 = window.createShape('assets/shapes/1.png');
+        const shapeWrapper1 = window.createShape('assets/shapes/1.gif');
         shapeWrapper1.style.zIndex = '111';
         
-        const shapeWrapper2 = window.createShape('assets/shapes/2.png');
+        const shapeWrapper2 = window.createShape('assets/shapes/2.gif');
         shapeWrapper2.style.zIndex = '112';
         
         window.initZIndexManagement();
@@ -226,7 +226,7 @@ describe('Shape Logic', function() {
             assert.fail('window.scanLayout is not defined');
         }
 
-        const wrapper = window.createShape('assets/shapes/scan-test.png');
+        const wrapper = window.createShape('assets/shapes/scan-test.gif');
         const container = wrapper.querySelector('.print-section-container');
         wrapper.style.left = '123px';
         wrapper.style.top = '456px';
@@ -239,7 +239,7 @@ describe('Shape Logic', function() {
         assert.ok(layout.shapes, 'Layout should contain shapes array');
         const captured = layout.shapes.find(s => s.id === container.id);
         assert.ok(captured, 'Shape not found in scanned layout');
-        assert.strictEqual(captured.assetPath, 'assets/shapes/scan-test.png');
+        assert.strictEqual(captured.assetPath, 'assets/shapes/scan-test.gif');
         assert.strictEqual(captured.left, '123px');
         assert.strictEqual(captured.top, '456px');
         assert.strictEqual(captured.zIndex, '250');
@@ -256,7 +256,7 @@ describe('Shape Logic', function() {
             shapes: [
                 {
                     id: 'shape-restored',
-                    assetPath: 'assets/shapes/restore-test.png',
+                    assetPath: 'assets/shapes/restore-test.gif',
                     left: '10px',
                     top: '20px',
                     width: '50px',

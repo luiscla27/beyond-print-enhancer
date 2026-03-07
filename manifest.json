@@ -31,7 +31,6 @@
     {
       "resources": [
         "assets/*.gif",
-        "assets/*.png",
         "assets/shapes/*"
       ],
       "matches": [
