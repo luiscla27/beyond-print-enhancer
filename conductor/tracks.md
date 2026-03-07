@@ -6,7 +6,7 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [ ] **Track: Shapes Rotation, Migration & Asset Expansion**
+- [x] **Track: Shapes Rotation, Migration & Asset Expansion**
 *Link: [./tracks/shape_rotation_20260307/](./tracks/shape_rotation_20260307/)*
 
 ## Archived Tracks
