@@ -3,7 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+
+---
+
+- [ ] **Track: Shapes Mode Lockdown & Quick Switch**
+*Link: [./tracks/shape_lockdown_switch_20260307/](./tracks/shape_lockdown_switch_20260307/)*
 
 ## Archived Tracks
 - [x] **Track: Shapes Rotation, Migration & Asset Expansion** (Completed: 2026-03-07)
