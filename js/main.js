@@ -2201,6 +2201,44 @@ function enforceFullHeight() {
                 margin: 0 !important;
                 padding: 0 !important;
             }
+
+            body, ${s.CORE.SHEET_DESKTOP} {
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                transform: none !important;
+            }
+
+            /* Fix: Content Visibility and Opacity */
+            body.be-lock-sections .be-section-wrapper,
+            body.be-lock-shapes .be-shape-wrapper,
+            body .be-section-wrapper,
+            body .be-shape-wrapper {
+                opacity: 1 !important;
+                pointer-events: none !important;
+            }
+            body .be-section-wrapper *, 
+            body .be-shape-wrapper * {
+                opacity: 1 !important;
+            }
+
+            /* Fix: Strictly Hide UI Elements */
+            .print-section-header, 
+            .be-section-actions, 
+            .print-section-resize-handle,
+            .be-rotation-handle,
+            .be-shapes-mode-btn,
+            .print-page-separator,
+            #print-enhance-controls, 
+            #print-enhance-overlay {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+
+            ${s.SPELLS.FILTER} {
+                visibility: hidden;
+            }
         }
         .print-section-content {
             overflow: visible !important;
@@ -2354,20 +2392,6 @@ function enforceFullHeight() {
         .be-shape-wrapper:hover .be-section-actions {
             opacity: 1;
             pointer-events: auto;
-        }
-
-        @media print {
-            body.be-lock-sections .be-section-wrapper,
-            body.be-lock-shapes .be-shape-wrapper,
-            body .be-section-wrapper,
-            body .be-shape-wrapper {
-                opacity: 1 !important;
-                pointer-events: none !important;
-            }
-            body .be-section-wrapper *, 
-            body .be-shape-wrapper * {
-                opacity: 1 !important;
-            }
         }
 
         ${s.UI.PRINT_CONTAINER} {
