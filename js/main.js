@@ -33,7 +33,7 @@ const ASSET_METADATA = {
     'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
     'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
     'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
-    'assets/border_goth1.gif': { slice: 166, width: '111px', outset: '50px 35px', className: 'goth_border' },
+    'assets/border_goth1.gif': { slice: 790, width: '111px', outset: '54px 44px', className: 'goth_border' },
     'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
     'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
     'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
@@ -2360,6 +2360,9 @@ function enforceFullHeight() {
             .be-section-wrapper, .be-shape-wrapper {
                 opacity: 1 !important;
                 pointer-events: none !important;
+            }
+            .be-section-wrapper *, .be-shape-wrapper * {
+                opacity: 1 !important;
             }
         }
 
