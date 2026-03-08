@@ -37,8 +37,8 @@ describe('Print Opacity Verification', function() {
         assert.ok(styleTag, 'Style tag should exist');
         const css = styleTag.textContent;
         
-        // Check for shapes opacity in print (simplified search)
-        assert.ok(css.includes('body.be-lock-shapes .be-shape-wrapper'), 'CSS should explicitly override be-lock-shapes');
+        // Check for shapes opacity in print (high specificity)
+        assert.ok(css.includes('html body.be-lock-shapes .be-shape-wrapper'), 'CSS should explicitly override be-lock-shapes with high specificity');
         assert.ok(css.includes('opacity: 1 !important'), 'CSS should force opacity: 1');
     });
 
@@ -46,7 +46,7 @@ describe('Print Opacity Verification', function() {
         const styleTag = document.getElementById('ddb-print-enhance-style');
         const css = styleTag.textContent;
 
-        // Check for sections opacity in print
-        assert.ok(css.includes('body.be-lock-sections .be-section-wrapper'), 'CSS should explicitly override be-lock-sections');
+        // Check for sections opacity in print (high specificity)
+        assert.ok(css.includes('html body.be-lock-sections .be-section-wrapper'), 'CSS should explicitly override be-lock-sections with high specificity');
     });
 });

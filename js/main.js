@@ -2183,65 +2183,6 @@ function enforceFullHeight() {
             --border-img-outset: 45px;
         }
 
-        @media print {
-            @page {
-                margin: 0;
-                size: letter portrait;
-            }
-            body {
-                /* User Request: Manual margins assuming 0 hardware margin */
-                margin-top: 0in !important;
-                margin-bottom: 0.25in !important;
-                margin-left: 0.1in !important;
-                margin-right: 0.1in !important;
-                padding: 0 !important;
-            }
-            
-            html {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            body, ${s.CORE.SHEET_DESKTOP} {
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-                transform: none !important;
-            }
-
-            /* Fix: Content Visibility and Opacity */
-            body.be-lock-sections .be-section-wrapper,
-            body.be-lock-shapes .be-shape-wrapper,
-            body .be-section-wrapper,
-            body .be-shape-wrapper {
-                opacity: 1 !important;
-                pointer-events: none !important;
-            }
-            body.be-lock-sections .be-section-wrapper *, 
-            body.be-lock-shapes .be-shape-wrapper *,
-            body .be-section-wrapper *, 
-            body .be-shape-wrapper * {
-                opacity: 1 !important;
-            }
-
-            /* Fix: Strictly Hide UI Elements */
-            .print-section-header, 
-            .be-section-actions, 
-            .print-section-resize-handle,
-            .be-rotation-handle,
-            .be-shapes-mode-btn,
-            .print-page-separator,
-            #print-enhance-controls, 
-            #print-enhance-overlay {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-            }
-
-            ${s.SPELLS.FILTER} {
-                visibility: hidden;
-            }
-        }
         .print-section-content {
             overflow: visible !important;
             max-height: none !important;
@@ -2811,6 +2752,62 @@ function enforceFullHeight() {
             border-image-slice: var(--border-img-slice);
             border-image-width: var(--border-img-width);
             border-image-repeat: round;
+        }
+
+        /* Final Print Overrides - Highest Priority */
+        @media print {
+            @page {
+                margin: 0;
+                size: letter portrait;
+            }
+            body {
+                margin-top: 0in !important;
+                margin-bottom: 0.25in !important;
+                margin-left: 0.1in !important;
+                margin-right: 0.1in !important;
+                padding: 0 !important;
+            }
+            
+            html, body, ${s.CORE.SHEET_DESKTOP} {
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                transform: none !important;
+            }
+
+            /* Content Opacity Fix */
+            html body .be-section-wrapper,
+            html body .be-shape-wrapper,
+            html body.be-lock-sections .be-section-wrapper,
+            html body.be-lock-shapes .be-shape-wrapper {
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: none !important;
+            }
+            
+            html body .be-section-wrapper *, 
+            html body .be-shape-wrapper * {
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+
+            /* UI Cleanup */
+            .print-section-header, 
+            .be-section-actions, 
+            .print-section-resize-handle,
+            .be-rotation-handle,
+            .be-shapes-mode-btn,
+            .print-page-separator,
+            #print-enhance-controls, 
+            #print-enhance-overlay {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+
+            ${s.SPELLS.FILTER} {
+                visibility: hidden !important;
+            }
         }
     `;
     document.head.appendChild(style);
