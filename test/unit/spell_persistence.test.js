@@ -15,14 +15,16 @@ const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
 describe('Spell Persistence in JSON', function() {
   let window, Storage;
 
-  before(async function() {
-    const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
-      url: "http://localhost",
-      runScripts: "dangerously"
-    });
-    window = dom.window;
-    window.indexedDB = global.indexedDB;
-    window.__DDB_TEST_MODE__ = true;
+    before(async function() {
+        const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+          url: "http://localhost",
+          runScripts: "dangerously"
+        });
+        window = dom.window;
+        const fakeIndexedDB = require('fake-indexeddb');
+        window.indexedDB = fakeIndexedDB;
+        global.indexedDB = fakeIndexedDB;
+        window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
     window.eval(mainJsContent);

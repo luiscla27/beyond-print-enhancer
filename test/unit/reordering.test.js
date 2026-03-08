@@ -41,8 +41,9 @@ describe('Drag-and-Drop Reordering Logic', function() {
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
     let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
     let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
+    let dndJs = fs.readFileSync(path.resolve(__dirname, '../../js/dnd.js'), 'utf8');
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
+    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + dndJs + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     
     // Initialize DND

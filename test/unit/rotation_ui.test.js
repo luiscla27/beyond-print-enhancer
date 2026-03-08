@@ -17,6 +17,7 @@ describe('Rotation UI Injection', function() {
         global.navigator = window.navigator;
         global.HTMLElement = window.HTMLElement;
         global.Node = window.Node;
+        global.CustomEvent = window.CustomEvent;
 
         // Load dependencies
         const elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
@@ -45,13 +46,14 @@ describe('Rotation UI Injection', function() {
         let handle = shapeWrapper.querySelector('.be-rotation-handle');
         assert.strictEqual(handle, null, 'Handle should not exist initially');
 
-        // Click the shape to select it
-        const clickEvent = new window.MouseEvent('click', { bubbles: true });
-        shapeWrapper.dispatchEvent(clickEvent);
+        // Click the Rotate button to toggle the tool
+        const rotateBtn = shapeWrapper.querySelector('.be-shape-rotate');
+        assert.ok(rotateBtn, 'Rotate button should exist');
+        rotateBtn.click();
 
         // Handle should now exist
         handle = shapeWrapper.querySelector('.be-rotation-handle');
-        assert.ok(handle, 'Rotation handle should be injected after click in Shapes Mode');
+        assert.ok(handle, 'Rotation handle should be injected after toggle in Shapes Mode');
     });
 
     it('should NOT inject a rotation handle when NOT in Shapes Mode', function() {
