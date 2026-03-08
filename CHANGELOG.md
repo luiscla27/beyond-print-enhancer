@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-07
+
+### Added
+- **Shape Transformation:** Persistent 15-degree incremental rotation for all decorative shapes with visual handles.
+- **Enhanced Shapes Modal:** New tabbed navigation (Borders vs. Shapes) and tag-based filtering for the asset library.
+- **Quick Switch:** Dedicated 🔄 button on shapes to swap assets while perfectly preserving position, size, and rotation.
+- **Shape Interaction Lockdown:** Shapes are now non-interactive and dimmed (0.5 opacity) when "Shapes Mode" is inactive to prevent misclicks on standard sections.
+- **Improved Shape Actions:** Consolidated Delete, Clone, and Rotate buttons into a unified hover-based actions container.
+
+### Changed
+- **Drag-and-Drop Overhaul:** Complete rewrite of the DnD engine in `js/dnd.js`. Replaced native `setDragImage` with a custom "Manual Ghost" system for perfect rotation and scaling support.
+- **Print Optimization:** Migrated standalone shapes to `<img>` tags to ensure visibility when "Background Graphics" are disabled in browser print settings.
+- **Asset Migration:** All internal `.png` assets migrated to `.gif` for better compression and consistency.
+- **CSS Architecture:** Refined print specificity to ensure full content opacity regardless of interactive lockdown state.
+
+### Fixed
+- **Drag Ghost Offset:** Resolved the 16px vertical drift issue in the custom drag ghost.
+- **Double Rotation Bug:** Fixed a cumulative transform error where rotation was being applied to both wrapper and container.
+- **Layout Reset:** "Reset to Default" now correctly purges all non-default shapes and extractions.
+- **Initialization Scope:** Fixed `ReferenceError` issues related to `ASSET_METADATA` and `parseAssets` by re-organizing script initialization order.
+
 ## [1.3.2] - 2026-03-07
 
 ### Added
