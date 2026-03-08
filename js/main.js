@@ -4701,6 +4701,13 @@ async function handleSavePC() {
  */
 function applyDefaultLayout() {
     console.log('[DDB Print] Applying Default Layouts...');
+
+    // Remove all shapes and extractions that aren't part of defaults
+    // Since defaults only contain standard sections, we can safely remove all current shapes/extractions.
+    document.querySelectorAll('.be-shape-wrapper, .be-extracted-section').forEach(el => {
+        el.remove();
+    });
+
     for (const [id, styles] of Object.entries(DEFAULT_LAYOUTS)) {
         const section = document.getElementById(id);
         if (section) {
