@@ -2357,11 +2357,15 @@ function enforceFullHeight() {
         }
 
         @media print {
-            .be-section-wrapper, .be-shape-wrapper {
+            body.be-lock-sections .be-section-wrapper,
+            body.be-lock-shapes .be-shape-wrapper,
+            body .be-section-wrapper,
+            body .be-shape-wrapper {
                 opacity: 1 !important;
                 pointer-events: none !important;
             }
-            .be-section-wrapper *, .be-shape-wrapper * {
+            body .be-section-wrapper *, 
+            body .be-shape-wrapper * {
                 opacity: 1 !important;
             }
         }
