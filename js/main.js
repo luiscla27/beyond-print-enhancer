@@ -33,7 +33,7 @@ const ASSET_METADATA = {
     'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
     'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
     'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
-    'assets/border_goth1.gif': { slice: 790, width: '111px', outset: '54px 44px', className: 'goth_border' },
+    'assets/border_goth1.gif': { slice: 1014, width: '111px', outset: '54px 44px', className: 'goth_border' },
     'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
     'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
     'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
@@ -528,6 +528,25 @@ const Storage = {
    */
   loadGlobalLayout: () => {
     return Storage.loadLayout('GLOBAL');
+  },
+
+  /**
+   * Save global hue shift value.
+   * @param {number} deg 
+   */
+  saveHueShift: async (deg) => {
+    const globalData = await Storage.loadGlobalLayout() || { version: SCHEMA_VERSION, sections: {} };
+    globalData.hueShift = deg;
+    return Storage.saveGlobalLayout(globalData);
+  },
+
+  /**
+   * Get global hue shift value.
+   * @returns {Promise<number>}
+   */
+  getHueShift: async () => {
+    const globalData = await Storage.loadGlobalLayout();
+    return (globalData && globalData.hueShift !== undefined) ? globalData.hueShift : 0;
   },
 
   /**
@@ -2095,7 +2114,7 @@ function enforceFullHeight() {
         .goth_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
             --border-img-width: 111px;
-            --border-img-slice: 166;
+            --border-img-slice: 1014;
             --border-img-outset: 50px 35px;
         }
         .plants_border {
@@ -3362,6 +3381,52 @@ function applyShapeAsset(container, assetPath) {
 }
 
 /**
+ * Applies a global hue shift to all decorative elements.
+ * @param {number|string} deg 
+ */
+function applyGlobalHueShift(deg) {
+    let style = document.getElementById('be-hue-shift-style');
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'be-hue-shift-style';
+        document.head.appendChild(style);
+    }
+    
+    // We target common border classes and shape containers
+    const selectors = [
+        '[class*="_border"]',
+        '.print-section-container',
+        '.print-shape-container',
+        '.be-shape-container',
+        '.be-custom-section'
+    ];
+    
+    style.textContent = `
+        ${selectors.join(',\n')} {
+            filter: hue-rotate(${deg}deg) !important;
+        }
+        
+        /* Exclude text, fonts, icons, images by inverting the hue-rotate */
+        .print-section-content,
+        .print-section-header span,
+        .be-section-actions,
+        .print-section-content img,
+        .print-section-content [class*="icon"],
+        .ct-spell-damage-type__icon,
+        .ct-item-status__icon,
+        .ct-character-portrait__img,
+        .ddbc-character-avatar__portrait,
+        .ddbc-file-icon,
+        [class$="__attack-save-icon"],
+        [class$="__range-icon"],
+        [class$="__casting-time-icon"],
+        [class$="__damage-effect-icon"] {
+            filter: hue-rotate(-${deg}deg) !important;
+        }
+    `;
+}
+
+/**
  * Toggles the interaction mode between "Full Edit" and "Shapes Only".
  * @param {boolean} forceState Optional: Force ON (true) or OFF (false).
  */
@@ -4487,6 +4552,58 @@ function createControls() {
         
         container.appendChild(btn);
     });
+
+    // Hue Shift Slider
+    const hueContainer = document.createElement('div');
+    hueContainer.style.display = 'flex';
+    hueContainer.style.flexDirection = 'column';
+    hueContainer.style.gap = '4px';
+    hueContainer.style.padding = '4px 8px';
+    hueContainer.style.borderTop = '1px solid #444';
+    hueContainer.style.marginTop = '4px';
+
+    const hueLabel = document.createElement('label');
+    hueLabel.textContent = '🎨 Hue Shift: 0°';
+    hueLabel.style.color = 'white';
+    hueLabel.style.fontSize = '11px';
+    hueLabel.style.fontWeight = 'bold';
+    hueContainer.appendChild(hueLabel);
+
+    const hueSlider = document.createElement('input');
+    hueSlider.type = 'range';
+    hueSlider.min = '0';
+    hueSlider.max = '360';
+    hueSlider.value = '0';
+    hueSlider.style.width = '100%';
+    hueSlider.style.cursor = 'pointer';
+
+    hueSlider.oninput = (e) => {
+        const val = e.target.value;
+        hueLabel.textContent = `🎨 Hue Shift: ${val}°`;
+        if (typeof window.applyGlobalHueShift === 'function') {
+            window.applyGlobalHueShift(val);
+        }
+    };
+
+    hueSlider.onchange = async (e) => {
+        if (window.Storage) {
+            await window.Storage.saveHueShift(parseInt(e.target.value, 10));
+        }
+    };
+
+    // Load initial value
+    if (window.Storage && typeof window.Storage.getHueShift === 'function') {
+        window.Storage.getHueShift().then(val => {
+            hueSlider.value = val;
+            hueLabel.textContent = `🎨 Hue Shift: ${val}°`;
+            if (typeof window.applyGlobalHueShift === 'function') {
+                window.applyGlobalHueShift(val);
+            }
+        });
+    }
+
+    hueContainer.appendChild(hueSlider);
+    container.appendChild(hueContainer);
 
     console.log('[DDB Print] createControls: appending to body...');
     document.body.appendChild(container);
@@ -5936,6 +6053,11 @@ function injectCompactStyles() {
             pointer-events: none;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
+
+        /*Minumum sizes*/
+        .ddbc-armor-class-box {
+            min-height: 100px;
+        }
     `;
     document.head.appendChild(style);
 }
@@ -5989,6 +6111,7 @@ function injectCompactStyles() {
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
     window.flagExtractableElements = flagExtractableElements;
     window.findSectionTitle = findSectionTitle;
+    window.applyGlobalHueShift = applyGlobalHueShift;
     window.createSpellDetailSection = createSpellDetailSection;
     window.injectAppendButton = injectAppendButton;
     window.getMergeTargets = getMergeTargets;
