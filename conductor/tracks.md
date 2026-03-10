@@ -3,10 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [x] **Track: Color Picker (Global Hue Shift)**
-  *Link: [./tracks/color_picker_20260309/](./tracks/color_picker_20260309/)*
+*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Color Picker (Global Hue Shift)** (Completed: 2026-03-09)
+  *Link: [./archive/color_picker_20260309/](./archive/color_picker_20260309/)*
 - [x] **Track: Shapes Mode Lockdown & Quick Switch** (Completed: 2026-03-07)
   *Link: [./archive/shape_lockdown_switch_20260307/](./archive/shape_lockdown_switch_20260307/)*
 - [x] **Track: Shapes Rotation, Migration & Asset Expansion** (Completed: 2026-03-07)
