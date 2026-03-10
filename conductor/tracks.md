@@ -3,7 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
+- [ ] **Track: Image Filters Expansion (Contrast, Greyscale, Saturate, Sepia)**
+  *Link: [./tracks/image_filters_20260309/](./tracks/image_filters_20260309/)*
 
 ## Archived Tracks
 - [x] **Track: Color Picker (Global Hue Shift)** (Completed: 2026-03-09)
