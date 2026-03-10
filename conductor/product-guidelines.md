@@ -2,9 +2,10 @@
 
 ## Visual Identity
 - **Philosophy:** "Utility First." The design prioritization is purely functional, aiming to convert a screen-first UI into a paper-first layout.
-- **Color Palette:** Strictly High Contrast Black & White.
+- **Color Palette:** High Contrast for text with customizable decorative colors.
     - Text: Forced Black (#000000) for maximum legibility on printed paper.
     - Backgrounds: Forced White (#FFFFFF) to save ink and ensure clean printing.
+    - **Decorative Elements:** Globally customizable via a hue-shift slider to allow for personal aesthetic preference while maintaining the "Utility First" philosophy.
     - Borders: Adjustable styles (Solid, Decorative, or None) to clearly define sections or reduce visual noise.
 - **Typography:**
     - Font sizes for headings and data items are reduced (e.g., `12px`) to fit more density on the page.
