@@ -39,4 +39,13 @@ describe('Hue Filtering Logic', function() {
     assert.ok(style.textContent.includes(`hue-rotate(-${deg}deg)`), 'Style should contain the inverse hue-rotate value for exclusion');
     assert.ok(style.textContent.includes('.print-section-content'), 'Style should target .print-section-content with inverse filter');
   });
+
+  it('should NOT apply inverse hue-rotate to be-shape-asset images', function() {
+    const deg = 120;
+    window.applyGlobalHueShift(deg);
+    
+    const style = document.getElementById('be-hue-shift-style');
+    assert.ok(style.textContent.includes('img.be-shape-asset'), 'Style should target img.be-shape-asset for positive hue-rotate');
+    assert.ok(style.textContent.includes('img:not(.be-shape-asset)'), 'Style should target non-shape images for inverse filter');
+  });
 });

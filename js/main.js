@@ -3345,6 +3345,7 @@ function applyShapeAsset(container, assetPath) {
         if (meta.isBackground) {
             // Use <img> for print compatibility (background-graphics are often disabled)
             const img = document.createElement('img');
+            img.className = 'be-shape-asset';
             img.src = chrome.runtime.getURL(assetPath);
             Object.assign(img.style, {
                 width: '100%',
@@ -3398,19 +3399,21 @@ function applyGlobalHueShift(deg) {
         '.print-section-container',
         '.print-shape-container',
         '.be-shape-container',
-        '.be-custom-section'
+        '.be-custom-section',
+        'img.be-shape-asset'
     ];
-    
+
     style.textContent = `
         ${selectors.join(',\n')} {
             filter: hue-rotate(${deg}deg) !important;
         }
-        
+
         /* Exclude text, fonts, icons, images by inverting the hue-rotate */
         .print-section-content,
         .print-section-header span,
         .be-section-actions,
-        .print-section-content img,
+        .print-section-content img:not(.be-shape-asset),
+        img:not(.be-shape-asset),
         .print-section-content [class*="icon"],
         .ct-spell-damage-type__icon,
         .ct-item-status__icon,
@@ -3423,8 +3426,7 @@ function applyGlobalHueShift(deg) {
         [class$="__damage-effect-icon"] {
             filter: hue-rotate(-${deg}deg) !important;
         }
-    `;
-}
+    `;}
 
 /**
  * Toggles the interaction mode between "Full Edit" and "Shapes Only".
