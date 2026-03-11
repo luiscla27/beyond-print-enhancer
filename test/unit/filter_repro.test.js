@@ -36,18 +36,18 @@ describe('Filter Inversion Reproduction', function() {
     
     window.applyGlobalFilters(filters);
     
+    // Check CSS variables
+    const rootStyle = document.documentElement.style;
+    const invFilter = rootStyle.getPropertyValue('--be-inv-hue-filter');
+    
+    // Hue rotate should be in the variable
+    assert.ok(invFilter.includes('hue-rotate(-90deg)'), 'Inverse hue missing in variable');
+    
     const styleEl = document.getElementById('be-global-filters-style');
     const css = styleEl.textContent;
 
-    // Check if the inverse filter exists for img:not(.be-shape-asset)
-    // We look for the selector and its filter
+    // Check if the inverse filter variable is used for img:not(.be-shape-asset)
     assert.ok(css.includes('img:not(.be-shape-asset)'), 'Missing selector for non-shape images');
-    
-    // Check for invalid negative values which bork the filter
-    assert.ok(!css.includes('sepia(-'), 'Detected invalid negative sepia value in CSS');
-    assert.ok(!css.includes('grayscale(-'), 'Detected invalid negative grayscale value in CSS');
-    
-    // Hue rotate should still be there but correctly formatted
-    assert.ok(css.includes('hue-rotate(-90deg)'), 'Inverse hue missing or incorrect');
+    assert.ok(css.includes('var(--be-inv-hue-filter)'), 'Should use inverse hue variable');
   });
 });

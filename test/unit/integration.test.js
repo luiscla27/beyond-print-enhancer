@@ -57,13 +57,13 @@ describe('Full Integration - Image Filters', function() {
     assert.strictEqual(sliders[contrastIdx].value, '180', 'Contrast slider should match storage');
     assert.strictEqual(sliders[sepiaIdx].value, '40', 'Sepia slider should match storage');
     
-    // 4. Verify CSS filter is applied
-    const styleEl = document.getElementById('be-global-filters-style');
-    assert.ok(styleEl.textContent.includes('contrast(180%)'), 'CSS should match initial storage');
-    assert.ok(styleEl.textContent.includes('sepia(40%)'), 'CSS should match initial storage');
+    // 4. Verify CSS filter variables
+    const rootStyle = document.documentElement.style;
+    assert.ok(rootStyle.getPropertyValue('--be-full-filter').includes('contrast(180%)'), 'Variable should match initial storage');
+    assert.ok(rootStyle.getPropertyValue('--be-full-filter').includes('sepia(40%)'), 'Variable should match initial storage');
   });
 
-  it('should update filters in real-time when sliders move', async function() {
+  it('should update filter variables in real-time when sliders move', async function() {
     const controls = document.getElementById('print-enhance-controls');
     const sliders = controls.querySelectorAll('input[type="range"]');
     const labels = Array.from(controls.querySelectorAll('label')).map(l => l.textContent);
@@ -78,7 +78,7 @@ describe('Full Integration - Image Filters', function() {
     // Wait for async update
     await new Promise(r => setTimeout(r, 50));
     
-    const styleEl = document.getElementById('be-global-filters-style');
-    assert.ok(styleEl.textContent.includes('saturate(250%)'), 'CSS should update on slider input');
+    const rootStyle = document.documentElement.style;
+    assert.ok(rootStyle.getPropertyValue('--be-full-filter').includes('saturate(250%)'), 'Variable should update on slider input');
   });
 });

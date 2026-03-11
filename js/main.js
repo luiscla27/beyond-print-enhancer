@@ -2117,10 +2117,17 @@ function enforceFullHeight() {
             --border-img-slice: 33;
             --btn-color: #c53131;
             --btn-color-highlight: #f18383ff;
+            --be-full-filter: none;
+            --be-hue-filter: none;
+            --be-inv-hue-filter: none;
         }
         .no-border {
             border-image-source: none !important;
             border-style: none !important;
+        }
+        /* Hidden ::before when no-border */
+        .no-border::before {
+            display: none !important;
         }
         .default-border {
             --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
@@ -2395,14 +2402,6 @@ function enforceFullHeight() {
             --reduce-height-by: 0px;
             --reduce-width-by: 0px;
             background-color: rgba(255, 255, 255, 0.85);
-            border-color: transparent;
-            border-image-outset: var(--border-img-outset);
-            border-image-repeat: round;
-            border-image-slice: var(--border-img-slice);
-            border-image-source: var(--border-img);
-            border-image-width: var(--border-img-width);
-            border-style: solid;
-            border-width: 0;
             box-decoration-break: clone;
             -webkit-box-decoration-break: clone;
             box-sizing: border-box;
@@ -2413,6 +2412,25 @@ function enforceFullHeight() {
             min-width: 50px !important;
             overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
             position: relative !important;
+            filter: var(--be-hue-filter) !important;
+            z-index: 0;
+        }
+
+        ${s.UI.PRINT_CONTAINER}::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            border-color: transparent;
+            border-image-outset: var(--border-img-outset);
+            border-image-repeat: round;
+            border-image-slice: var(--border-img-slice);
+            border-image-source: var(--border-img);
+            border-image-width: var(--border-img-width);
+            border-style: solid;
+            border-width: 0;
+            filter: var(--be-full-filter) !important;
+            z-index: -1;
         }
 
         .print-shape-container {
@@ -3420,14 +3438,11 @@ function applyShapeAsset(container, assetPath) {
  * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
  * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
  */
+/**
+ * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
+ * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
+ */
 function applyGlobalFilters(filters) {
-    let style = document.getElementById('be-global-filters-style');
-    if (!style) {
-        style = document.createElement('style');
-        style.id = 'be-global-filters-style';
-        document.head.appendChild(style);
-    }
-
     const { hue, contrast, greyscale, saturate, sepia } = filters;
     
     // Full filter for decorative elements (borders, shapes)
@@ -3439,52 +3454,45 @@ function applyGlobalFilters(filters) {
         sepia(${sepia}%)
     `.replace(/\s+/g, ' ').trim();
 
-    // Reversible filter for main containers (protects content from destructive grayscale/sepia)
-    const reversibleFilterStr = `
+    // Reversible filter for main containers (protects content from destructive filters)
+    const containerFilterStr = `
         hue-rotate(${hue}deg)
-        contrast(${contrast}%)
-        saturate(${saturate}%)
     `.replace(/\s+/g, ' ').trim();
 
-    const eps = 0.001;
-    const inverseReversibleFilterStr = `
-        saturate(${10000 / (saturate + eps)}%)
-        contrast(${10000 / (contrast + eps)}%)
+    const inverseContainerFilterStr = `
         hue-rotate(-${hue}deg)
     `.replace(/\s+/g, ' ').trim();
 
-    // Decorative selectors get the FULL treatment
-    const decorativeSelectors = [
-        '[class*="_border"]',
-        '.print-shape-container',
-        '.be-shape-container',
-        'img.be-shape-asset'
-    ];
+    // Apply to document root for global CSS variable access
+    const root = document.documentElement;
+    root.style.setProperty('--be-full-filter', fullFilterStr);
+    root.style.setProperty('--be-hue-filter', containerFilterStr);
+    root.style.setProperty('--be-inv-hue-filter', inverseContainerFilterStr);
 
-    // Container selectors get only reversible filters
-    const containerSelectors = [
-        '.print-section-container',
-        '.be-custom-section'
-    ];
+    // Keep the dynamic style block for non-variable-aware elements or specific exclusions
+    let style = document.getElementById('be-global-filters-style');
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'be-global-filters-style';
+        document.head.appendChild(style);
+    }
 
     style.textContent = `
-        /* Main containers get only reversible filters to protect images from grayscale/sepia */
-        ${containerSelectors.join(',\n')} {
-            filter: ${reversibleFilterStr} !important;
+        /* Shape assets get full filters */
+        .print-shape-container,
+        .be-shape-container,
+        img.be-shape-asset {
+            filter: var(--be-full-filter) !important;
         }
 
-        /* Decorative elements get full filters (override container filters) */
-        ${decorativeSelectors.join(',\n')} {
-            filter: ${fullFilterStr} !important;
-        }
-
-        /* Exclude text, fonts, icons, images by inverting the reversible filters */
+        /* Exclude text, fonts, icons, images by inverting the hue filter */
         .print-section-content,
         .print-section-header span,
         .be-section-actions,
         .ct-spell-damage-type__icon,
         .ct-item-status__icon,
         .ct-character-portrait__img,
+        .ct-extra-row__img,
         .ddbc-character-avatar__portrait,
         .ddbc-file-icon,
         [class$="__attack-save-icon"],
@@ -3492,7 +3500,7 @@ function applyGlobalFilters(filters) {
         [class$="__casting-time-icon"],
         [class$="__damage-effect-icon"],
         img:not(.be-shape-asset):not(.print-section-content img) {
-            filter: ${inverseReversibleFilterStr} !important;
+            filter: var(--be-inv-hue-filter) !important;
         }
 
         /* Prevent double-inversion for elements already inside an inverted container */

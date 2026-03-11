@@ -21,31 +21,36 @@ describe('Hue Filtering Logic', function() {
     window.eval(mainJsContent);
   });
 
-  it('should inject a style tag with hue-rotate filter', function() {
+  it('should set CSS variables for hue-rotate filter', function() {
     const deg = 120;
     window.applyGlobalFilters({ hue: deg, contrast: 100, greyscale: 0, saturate: 100, sepia: 0 });
+    
+    const rootStyle = document.documentElement.style;
+    const hueFilter = rootStyle.getPropertyValue('--be-hue-filter');
+    assert.ok(hueFilter.includes(`hue-rotate(${deg}deg)`), 'Variable should contain the correct hue-rotate value');
     
     const style = document.getElementById('be-global-filters-style');
     assert.ok(style, 'Style tag should be created');
-    assert.ok(style.textContent.includes(`hue-rotate(${deg}deg)`), 'Style should contain the correct hue-rotate value');
-    assert.ok(style.textContent.includes('.print-section-container'), 'Style should target .print-section-container');
   });
 
-  it('should apply inverse hue-rotate to content to exclude it', function() {
+  it('should apply inverse hue-rotate variable to content', function() {
+    const deg = 120;
+    window.applyGlobalFilters({ hue: deg, contrast: 100, greyscale: 0, saturate: 100, sepia: 0 });
+    
+    const rootStyle = document.documentElement.style;
+    const invFilter = rootStyle.getPropertyValue('--be-inv-hue-filter');
+    assert.strictEqual(invFilter, `hue-rotate(-${deg}deg)`, 'Variable should contain the inverse hue-rotate value');
+    
+    const style = document.getElementById('be-global-filters-style');
+    assert.ok(style.textContent.includes('var(--be-inv-hue-filter)'), 'Style should reference the inverse variable');
+  });
+
+  it('should target shape assets and non-shape images correctly', function() {
     const deg = 120;
     window.applyGlobalFilters({ hue: deg, contrast: 100, greyscale: 0, saturate: 100, sepia: 0 });
     
     const style = document.getElementById('be-global-filters-style');
-    assert.ok(style.textContent.includes(`hue-rotate(-${deg}deg)`), 'Style should contain the inverse hue-rotate value for exclusion');
-    assert.ok(style.textContent.includes('.print-section-content'), 'Style should target .print-section-content with inverse filter');
-  });
-
-  it('should NOT apply inverse hue-rotate to be-shape-asset images', function() {
-    const deg = 120;
-    window.applyGlobalFilters({ hue: deg, contrast: 100, greyscale: 0, saturate: 100, sepia: 0 });
-    
-    const style = document.getElementById('be-global-filters-style');
-    assert.ok(style.textContent.includes('img.be-shape-asset'), 'Style should target img.be-shape-asset for positive hue-rotate');
-    assert.ok(style.textContent.includes('img:not(.be-shape-asset)'), 'Style should target non-shape images for inverse filter');
+    assert.ok(style.textContent.includes('img.be-shape-asset'), 'Style should target img.be-shape-asset');
+    assert.ok(style.textContent.includes('img:not(.be-shape-asset)'), 'Style should target non-shape images');
   });
 });

@@ -34,15 +34,15 @@ describe('Composite Filters Logic', function() {
     
     window.applyGlobalFilters(filters);
     
-    const styleEl = document.getElementById('be-global-filters-style');
-    assert.ok(styleEl, 'Style element should exist');
+    // Check CSS variables on root
+    const rootStyle = document.documentElement.style;
+    const fullFilter = rootStyle.getPropertyValue('--be-full-filter');
     
-    const css = styleEl.textContent;
-    assert.ok(css.includes('hue-rotate(90deg)'), 'Hue missing');
-    assert.ok(css.includes('contrast(150%)'), 'Contrast missing');
-    assert.ok(css.includes('grayscale(50%)'), 'Greyscale missing');
-    assert.ok(css.includes('saturate(120%)'), 'Saturate missing');
-    assert.ok(css.includes('sepia(30%)'), 'Sepia missing');
+    assert.ok(fullFilter.includes('hue-rotate(90deg)'), 'Hue missing from variable');
+    assert.ok(fullFilter.includes('contrast(150%)'), 'Contrast missing from variable');
+    assert.ok(fullFilter.includes('grayscale(50%)'), 'Greyscale missing from variable');
+    assert.ok(fullFilter.includes('saturate(120%)'), 'Saturate missing from variable');
+    assert.ok(fullFilter.includes('sepia(30%)'), 'Sepia missing from variable');
   });
 
   it('should apply inverse filters to excluded elements', function() {
@@ -56,19 +56,15 @@ describe('Composite Filters Logic', function() {
     
     window.applyGlobalFilters(filters);
     
+    // Check CSS variables on root
+    const rootStyle = document.documentElement.style;
+    const invHueFilter = rootStyle.getPropertyValue('--be-inv-hue-filter');
+    
+    assert.strictEqual(invHueFilter, 'hue-rotate(-100deg)', 'Inverse hue variable mismatch');
+    
+    // The CSS rule should now reference the variable
     const css = document.getElementById('be-global-filters-style').textContent;
-    
-    // Check for presence of the exclusion selector
-    assert.ok(css.includes('.print-section-content'), 'Content selector missing');
-    
-    // Check for inversion of hue
-    assert.ok(css.includes('hue-rotate(-100deg)'), 'Inverse hue missing');
-    
-    // Check that contrast is NOT inverted (it shouldn't be in any inverse filter)
-    // We check the inverse filter block specifically
-    const inverseBlock = css.split('!important;').find(b => b.includes('hue-rotate(-100deg)'));
-    assert.ok(inverseBlock, 'Inverse filter block not found');
-    assert.ok(!inverseBlock.includes('contrast('), 'Contrast should not be in the inverse filter string');
+    assert.ok(css.includes('var(--be-inv-hue-filter)'), 'Content rule should use variable');
   });
 
   it('should exclude control panel from all filters', function() {
