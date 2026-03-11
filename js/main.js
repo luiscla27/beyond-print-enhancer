@@ -3468,14 +3468,14 @@ function applyGlobalFilters(filters) {
     ];
 
     style.textContent = `
-        /* Decorative elements get full filters */
-        ${decorativeSelectors.join(',\n')} {
-            filter: ${fullFilterStr} !important;
-        }
-
         /* Main containers get only reversible filters to protect images from grayscale/sepia */
         ${containerSelectors.join(',\n')} {
             filter: ${reversibleFilterStr} !important;
+        }
+
+        /* Decorative elements get full filters (override container filters) */
+        ${decorativeSelectors.join(',\n')} {
+            filter: ${fullFilterStr} !important;
         }
 
         /* Exclude text, fonts, icons, images by inverting the reversible filters */
