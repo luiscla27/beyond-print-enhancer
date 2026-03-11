@@ -3,10 +3,10 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
-  *Link: [./tracks/hue_reset_fix_20260311/](./tracks/hue_reset_fix_20260311/)*
 
 ## Archived Tracks
+- [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
+  *Link: [./archive/hue_reset_fix_20260311/](./archive/hue_reset_fix_20260311/)*
 - [x] **Track: Image Filters Expansion (Contrast, Greyscale, Saturate, Sepia)** (Completed: 2026-03-11)
   *Link: [./archive/image_filters_20260309/](./archive/image_filters_20260309/)*
 - [x] **Track: Color Picker (Global Hue Shift)** (Completed: 2026-03-09)
