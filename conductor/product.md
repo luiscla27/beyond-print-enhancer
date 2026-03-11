@@ -28,4 +28,4 @@ The D&D Beyond Print Enhancer transforms the interactive, tabbed D&D Beyond char
 - **Compact Mode:** Provides a toggleable condensed layout for complex sections (like Spells), reducing margins, padding, and font sizes to maximize information density on paper.
 - **Data Consolidation:** Relocates defense information (resistances, immunities) from hidden modals directly onto the combat tablet for immediate visibility.
 - **Print Styling:** Adjusts text colors to black for better contrast and legibility on paper, and tightens margins/padding to fit more content per page.
-- **Global Color Customization:** Provides a hue-shift slider in the main control panel to globally change the color of all borders, shapes, and decorative elements while preserving the legibility of text and the original colors of icons and images.
+- **Global Visual Filters:** Provides a suite of sliders (Hue, Contrast, Saturate, Greyscale, and Sepia) in the main control panel to globally change the appearance of all borders, shapes, and decorative elements while preserving the legibility of text and the original colors of icons and images.
