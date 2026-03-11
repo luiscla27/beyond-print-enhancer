@@ -41,3 +41,6 @@
     - [x] Run the full suite of filter tests to ensure no regressions.
     - [x] Verify that real-time updates and persistence are working seamlessly.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Integration and Final Polish' (Protocol in workflow.md)
+- [x] Task: Implement Quick Hue Picker swatches.
+- [x] Task: Refactor `applyGlobalFilters` to isolate destructive filters (grayscale, sepia) from images.
+

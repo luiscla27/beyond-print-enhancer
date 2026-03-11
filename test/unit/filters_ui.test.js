@@ -153,4 +153,34 @@ describe('Filters UI', function() {
         }
     }
   });
+
+  it('should have a Quick Hue Picker with 10 swatches', async function() {
+    let controls = document.getElementById('print-enhance-controls');
+    if (!controls) {
+        window.createControls();
+        controls = document.getElementById('print-enhance-controls');
+    }
+    
+    // Find the hue picker container (it's a grid inside the hue slider row)
+    const hueRow = Array.from(controls.querySelectorAll('div')).find(div => div.querySelector('label')?.textContent.includes('Hue Shift'));
+    const swatches = hueRow.querySelectorAll('div[title^="Set Hue to"]');
+    
+    assert.strictEqual(swatches.length, 10, 'Should have 10 swatches');
+    
+    // Check if clicking a swatch updates the hue slider
+    const hueSlider = hueRow.querySelector('input[type="range"]');
+    const firstSwatch = swatches[0]; // 0 degrees
+    const middleSwatch = swatches[5]; // 180 degrees
+    
+    // Set to something else first
+    hueSlider.value = "90";
+    
+    // Click 180 swatch
+    middleSwatch.click();
+    assert.strictEqual(hueSlider.value, "180", "Hue slider should update to 180 degrees");
+    
+    // Click 0 swatch
+    firstSwatch.click();
+    assert.strictEqual(hueSlider.value, "0", "Hue slider should update to 0 degrees");
+  });
 });

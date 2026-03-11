@@ -430,18 +430,21 @@ let db = null;
 
 const Storage = {
   SCHEMA_VERSION,
+  initPromise: null,
 
   /**
    * Initialize the IndexedDB connection.
    */
   init: () => {
-    return new Promise((resolve, reject) => {
-      if (db) return resolve(db);
+    if (db) return Promise.resolve(db);
+    if (Storage.initPromise) return Storage.initPromise;
 
+    Storage.initPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = (event) => {
         console.error('[DDB Print Enhance] IndexedDB error:', event.target.error);
+        Storage.initPromise = null; // Allow retry
         reject(event.target.error);
       };
 
@@ -460,6 +463,8 @@ const Storage = {
         resolve(db);
       };
     });
+
+    return Storage.initPromise;
   },
 
   /**
@@ -3424,7 +3429,9 @@ function applyGlobalFilters(filters) {
     }
 
     const { hue, contrast, greyscale, saturate, sepia } = filters;
-    const filterStr = `
+    
+    // Full filter for decorative elements (borders, shapes)
+    const fullFilterStr = `
         hue-rotate(${hue}deg)
         contrast(${contrast}%)
         saturate(${saturate}%)
@@ -3432,34 +3439,49 @@ function applyGlobalFilters(filters) {
         sepia(${sepia}%)
     `.replace(/\s+/g, ' ').trim();
 
+    // Reversible filter for main containers (protects content from destructive grayscale/sepia)
+    const reversibleFilterStr = `
+        hue-rotate(${hue}deg)
+        contrast(${contrast}%)
+        saturate(${saturate}%)
+    `.replace(/\s+/g, ' ').trim();
+
     const eps = 0.001;
-    const inverseFilterStr = `
+    const inverseReversibleFilterStr = `
         saturate(${10000 / (saturate + eps)}%)
         contrast(${10000 / (contrast + eps)}%)
         hue-rotate(-${hue}deg)
     `.replace(/\s+/g, ' ').trim();
 
-    // We target common border classes and shape containers
-    const selectors = [
+    // Decorative selectors get the FULL treatment
+    const decorativeSelectors = [
         '[class*="_border"]',
-        '.print-section-container',
         '.print-shape-container',
         '.be-shape-container',
-        '.be-custom-section',
         'img.be-shape-asset'
     ];
 
+    // Container selectors get only reversible filters
+    const containerSelectors = [
+        '.print-section-container',
+        '.be-custom-section'
+    ];
+
     style.textContent = `
-        ${selectors.join(',\n')} {
-            filter: ${filterStr} !important;
+        /* Decorative elements get full filters */
+        ${decorativeSelectors.join(',\n')} {
+            filter: ${fullFilterStr} !important;
         }
 
-        /* Exclude text, fonts, icons, images by inverting the filters */
+        /* Main containers get only reversible filters to protect images from grayscale/sepia */
+        ${containerSelectors.join(',\n')} {
+            filter: ${reversibleFilterStr} !important;
+        }
+
+        /* Exclude text, fonts, icons, images by inverting the reversible filters */
         .print-section-content,
         .print-section-header span,
         .be-section-actions,
-        .print-section-content img:not(.be-shape-asset),
-        .print-section-content [class*="icon"],
         .ct-spell-damage-type__icon,
         .ct-item-status__icon,
         .ct-character-portrait__img,
@@ -3469,8 +3491,16 @@ function applyGlobalFilters(filters) {
         [class$="__range-icon"],
         [class$="__casting-time-icon"],
         [class$="__damage-effect-icon"],
-        img:not(.be-shape-asset) {
-            filter: ${inverseFilterStr} !important;
+        img:not(.be-shape-asset):not(.print-section-content img) {
+            filter: ${inverseReversibleFilterStr} !important;
+        }
+
+        /* Prevent double-inversion for elements already inside an inverted container */
+        .print-section-content img,
+        .print-section-content [class*="icon"],
+        .print-section-content *,
+        .be-section-actions * {
+            filter: none !important;
         }
 
         /* Ensure the control panel is NEVER affected */
@@ -4703,7 +4733,7 @@ function createControls() {
 
         row.appendChild(slider);
         filtersContainer.appendChild(row);
-        return { slider, label };
+        return { slider, label, row };
     };
 
     const sliders = {
@@ -4713,6 +4743,39 @@ function createControls() {
         greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
         sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
     };
+
+    // Quick Hue Picker
+    const huePicker = document.createElement('div');
+    huePicker.style.display = 'grid';
+    huePicker.style.gridTemplateColumns = 'repeat(5, 1fr)';
+    huePicker.style.gap = '4px';
+    huePicker.style.marginTop = '2px';
+    huePicker.style.padding = '0 2px';
+
+    for (let i = 0; i < 10; i++) {
+        const deg = i * 36;
+        const swatch = document.createElement('div');
+        swatch.style.height = '10px';
+        swatch.style.cursor = 'pointer';
+        swatch.style.borderRadius = '2px';
+        swatch.style.border = '1px solid #666';
+        swatch.style.backgroundColor = `hsl(${deg}, 80%, 50%)`;
+        swatch.title = `Set Hue to ${deg}°`;
+        
+        swatch.addEventListener('click', async () => {
+            sliders.hue.slider.value = deg.toString();
+            sliders.hue.label.textContent = `🎨 Hue Shift: ${deg}°`;
+            currentFilters.hue = deg;
+            if (typeof window.applyGlobalFilters === 'function') {
+                window.applyGlobalFilters(currentFilters);
+            }
+            if (window.Storage) {
+                await window.Storage.saveFilter('hue', deg);
+            }
+        });
+        huePicker.appendChild(swatch);
+    }
+    sliders.hue.row.appendChild(huePicker);
 
     // Global Reset Button (Excluding Hue)
     const resetAllBtn = document.createElement('button');
@@ -6302,6 +6365,13 @@ function injectCompactStyles() {
 (async () => {
     if (window.__DDB_TEST_MODE__) return;
     
+    // Initialize storage first
+    try {
+        await Storage.init();
+    } catch (err) {
+        console.error('[DDB Print] Failed to initialize storage:', err);
+    }
+
     // Stabilize layout by suppressing global resize events
     suppressResizeEvents();
     
