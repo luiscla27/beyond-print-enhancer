@@ -58,10 +58,17 @@ describe('Composite Filters Logic', function() {
     
     const css = document.getElementById('be-global-filters-style').textContent;
     
+    // Check for presence of the exclusion selector
+    assert.ok(css.includes('.print-section-content'), 'Content selector missing');
+    
     // Check for inversion of hue
     assert.ok(css.includes('hue-rotate(-100deg)'), 'Inverse hue missing');
-    // Check for inversion of contrast (10000 / (200 + 0.001) = 49.999...)
-    assert.ok(css.includes('contrast(49.999'), 'Inverse contrast missing');
+    
+    // Check that contrast is NOT inverted (it shouldn't be in any inverse filter)
+    // We check the inverse filter block specifically
+    const inverseBlock = css.split('!important;').find(b => b.includes('hue-rotate(-100deg)'));
+    assert.ok(inverseBlock, 'Inverse filter block not found');
+    assert.ok(!inverseBlock.includes('contrast('), 'Contrast should not be in the inverse filter string');
   });
 
   it('should exclude control panel from all filters', function() {
