@@ -550,6 +550,36 @@ const Storage = {
   },
 
   /**
+   * Save individual filter value.
+   * @param {string} key - contrast, greyscale, saturate, sepia
+   * @param {number} value 
+   */
+  saveFilter: async (key, value) => {
+    const globalData = await Storage.loadGlobalLayout() || { version: SCHEMA_VERSION, sections: {} };
+    if (!globalData.filters) globalData.filters = {};
+    globalData.filters[key] = value;
+    return Storage.saveGlobalLayout(globalData);
+  },
+
+  /**
+   * Get all global filters.
+   * @returns {Promise<object>}
+   */
+  getFilters: async () => {
+    const globalData = await Storage.loadGlobalLayout();
+    const hue = (globalData && globalData.hueShift !== undefined) ? globalData.hueShift : 0;
+    const defaults = {
+      hue: hue,
+      contrast: 100,
+      greyscale: 0,
+      saturate: 100,
+      sepia: 0
+    };
+    if (!globalData || !globalData.filters) return defaults;
+    return { ...defaults, ...globalData.filters };
+  },
+
+  /**
    * Save multiple spells to the cache.
    * @param {Array} spells 
    */
@@ -3382,17 +3412,35 @@ function applyShapeAsset(container, assetPath) {
 }
 
 /**
- * Applies a global hue shift to all decorative elements.
- * @param {number|string} deg 
+ * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
+ * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
  */
-function applyGlobalHueShift(deg) {
-    let style = document.getElementById('be-hue-shift-style');
+function applyGlobalFilters(filters) {
+    let style = document.getElementById('be-global-filters-style');
     if (!style) {
         style = document.createElement('style');
-        style.id = 'be-hue-shift-style';
+        style.id = 'be-global-filters-style';
         document.head.appendChild(style);
     }
-    
+
+    const { hue, contrast, greyscale, saturate, sepia } = filters;
+    const filterStr = `
+        hue-rotate(${hue}deg)
+        contrast(${contrast}%)
+        saturate(${saturate}%)
+        grayscale(${greyscale}%)
+        sepia(${sepia}%)
+    `.replace(/\s+/g, ' ').trim();
+
+    const eps = 0.001;
+    const inverseFilterStr = `
+        sepia(${-sepia}%)
+        grayscale(${-greyscale}%)
+        saturate(${10000 / (saturate + eps)}%)
+        contrast(${10000 / (contrast + eps)}%)
+        hue-rotate(-${hue}deg)
+    `.replace(/\s+/g, ' ').trim();
+
     // We target common border classes and shape containers
     const selectors = [
         '[class*="_border"]',
@@ -3405,10 +3453,10 @@ function applyGlobalHueShift(deg) {
 
     style.textContent = `
         ${selectors.join(',\n')} {
-            filter: hue-rotate(${deg}deg) !important;
+            filter: ${filterStr} !important;
         }
 
-        /* Exclude text, fonts, icons, images by inverting the hue-rotate */
+        /* Exclude text, fonts, icons, images by inverting the filters */
         .print-section-content,
         .print-section-header span,
         .be-section-actions,
@@ -3424,9 +3472,17 @@ function applyGlobalHueShift(deg) {
         [class$="__range-icon"],
         [class$="__casting-time-icon"],
         [class$="__damage-effect-icon"] {
-            filter: hue-rotate(-${deg}deg) !important;
+            filter: ${inverseFilterStr} !important;
         }
-    `;}
+
+        /* Ensure the control panel is NEVER affected */
+        #print-enhance-controls,
+        #print-enhance-controls * {
+            filter: none !important;
+        }
+    `;
+}
+
 
 /**
  * Toggles the interaction mode between "Full Edit" and "Shapes Only".
@@ -4555,57 +4611,101 @@ function createControls() {
         container.appendChild(btn);
     });
 
-    // Hue Shift Slider
-    const hueContainer = document.createElement('div');
-    hueContainer.style.display = 'flex';
-    hueContainer.style.flexDirection = 'column';
-    hueContainer.style.gap = '4px';
-    hueContainer.style.padding = '4px 8px';
-    hueContainer.style.borderTop = '1px solid #444';
-    hueContainer.style.marginTop = '4px';
+    // Filters Container
+    const filtersContainer = document.createElement('div');
+    filtersContainer.style.display = 'flex';
+    filtersContainer.style.flexDirection = 'column';
+    filtersContainer.style.gap = '4px';
+    filtersContainer.style.padding = '4px 8px';
+    filtersContainer.style.borderTop = '1px solid #444';
+    filtersContainer.style.marginTop = '4px';
 
-    const hueLabel = document.createElement('label');
-    hueLabel.textContent = '🎨 Hue Shift: 0°';
-    hueLabel.style.color = 'white';
-    hueLabel.style.fontSize = '11px';
-    hueLabel.style.fontWeight = 'bold';
-    hueContainer.appendChild(hueLabel);
-
-    const hueSlider = document.createElement('input');
-    hueSlider.type = 'range';
-    hueSlider.min = '0';
-    hueSlider.max = '360';
-    hueSlider.value = '0';
-    hueSlider.style.width = '100%';
-    hueSlider.style.cursor = 'pointer';
-
-    hueSlider.oninput = (e) => {
-        const val = e.target.value;
-        hueLabel.textContent = `🎨 Hue Shift: ${val}°`;
-        if (typeof window.applyGlobalHueShift === 'function') {
-            window.applyGlobalHueShift(val);
-        }
+    // Local state for filters to avoid async race conditions during slider movement
+    let currentFilters = {
+        hue: 0,
+        contrast: 100,
+        saturate: 100,
+        greyscale: 0,
+        sepia: 0
     };
 
-    hueSlider.onchange = async (e) => {
-        if (window.Storage) {
-            await window.Storage.saveHueShift(parseInt(e.target.value, 10));
-        }
+    /**
+     * Helper to create a filter slider.
+     */
+    const createFilterSlider = (labelStr, key, min, max, unit, defaultValue) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.flexDirection = 'column';
+        row.style.gap = '2px';
+        row.style.marginBottom = '4px';
+
+        const label = document.createElement('label');
+        label.textContent = `${labelStr}: ${defaultValue}${unit}`;
+        label.style.color = 'white';
+        label.style.fontSize = '11px';
+        label.style.fontWeight = 'bold';
+        row.appendChild(label);
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = min.toString();
+        slider.max = max.toString();
+        slider.value = defaultValue.toString();
+        slider.style.width = '100%';
+        slider.style.cursor = 'pointer';
+
+        slider.oninput = (e) => {
+            const val = parseInt(e.target.value, 10);
+            label.textContent = `${labelStr}: ${val}${unit}`;
+            
+            // Update local state synchronously
+            currentFilters[key] = val;
+            
+            // Apply filters immediately
+            if (typeof window.applyGlobalFilters === 'function') {
+                window.applyGlobalFilters(currentFilters);
+            }
+        };
+
+        slider.onchange = async (e) => {
+            if (window.Storage) {
+                await window.Storage.saveFilter(key, parseInt(e.target.value, 10));
+            }
+        };
+
+        row.appendChild(slider);
+        filtersContainer.appendChild(row);
+        return { slider, label };
     };
 
-    // Load initial value
-    if (window.Storage && typeof window.Storage.getHueShift === 'function') {
-        window.Storage.getHueShift().then(val => {
-            hueSlider.value = val;
-            hueLabel.textContent = `🎨 Hue Shift: ${val}°`;
-            if (typeof window.applyGlobalHueShift === 'function') {
-                window.applyGlobalHueShift(val);
+    const sliders = {
+        hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0),
+        contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 300, '%', 100),
+        saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 300, '%', 100),
+        greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
+        sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
+    };
+
+    // Load initial values
+    if (window.Storage && typeof window.Storage.getFilters === 'function') {
+        window.Storage.getFilters().then(filters => {
+            currentFilters = filters; // Initialize local state
+            Object.keys(sliders).forEach(key => {
+                const val = filters[key];
+                const unit = (key === 'hue') ? '°' : '%';
+                const labelBase = sliders[key].label.textContent.split(':')[0];
+                
+                sliders[key].slider.value = val;
+                sliders[key].label.textContent = `${labelBase}: ${val}${unit}`;
+            });
+            
+            if (typeof window.applyGlobalFilters === 'function') {
+                window.applyGlobalFilters(filters);
             }
         });
     }
 
-    hueContainer.appendChild(hueSlider);
-    container.appendChild(hueContainer);
+    container.appendChild(filtersContainer);
 
     console.log('[DDB Print] createControls: appending to body...');
     document.body.appendChild(container);
@@ -6113,7 +6213,7 @@ function injectCompactStyles() {
     window.injectSpellDetailTriggers = injectSpellDetailTriggers;
     window.flagExtractableElements = flagExtractableElements;
     window.findSectionTitle = findSectionTitle;
-    window.applyGlobalHueShift = applyGlobalHueShift;
+    window.applyGlobalFilters = applyGlobalFilters;
     window.createSpellDetailSection = createSpellDetailSection;
     window.injectAppendButton = injectAppendButton;
     window.getMergeTargets = getMergeTargets;

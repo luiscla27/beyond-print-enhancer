@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Image Filters Expansion (Contrast, Greyscale, Saturate, Sepia)**
+- [x] **Track: Image Filters Expansion (Contrast, Greyscale, Saturate, Sepia)** (Completed: 2026-03-11)
   *Link: [./tracks/image_filters_20260309/](./tracks/image_filters_20260309/)*
 
 ## Archived Tracks
