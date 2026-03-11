@@ -75,4 +75,82 @@ describe('Filters UI', function() {
     assert.strictEqual(greyscaleSlider.min, '0');
     assert.strictEqual(greyscaleSlider.max, '100');
   });
+
+  it('should have a reset button for each slider that restores default value', async function() {
+    let controls = document.getElementById('print-enhance-controls');
+    if (!controls) {
+        window.createControls();
+        controls = document.getElementById('print-enhance-controls');
+    }
+    
+    // Filter containers that contain a slider
+    const rows = Array.from(controls.querySelectorAll('div')).filter(div => div.querySelector('input[type="range"]'));
+    
+    // For each slider, find its reset button and test it
+    for (const row of rows) {
+        const slider = row.querySelector('input[type="range"]');
+        const label = row.querySelector('label');
+        const resetBtn = Array.from(row.querySelectorAll('button')).find(btn => btn.textContent === '↺');
+        
+        assert.ok(resetBtn, `Reset button missing for slider ${slider.min}-${slider.max}`);
+        
+        const labelText = label.textContent;
+        let defaultValue = "0";
+        if (labelText.includes('Contrast') || labelText.includes('Saturate')) {
+            defaultValue = "100";
+        }
+
+        // 1. Change value
+        slider.value = "50";
+        slider.dispatchEvent(new window.Event('input'));
+        
+        // 2. Click reset
+        resetBtn.click();
+        
+        // 3. Verify state
+        assert.strictEqual(slider.value, defaultValue, `Slider for ${labelText} should reset value to ${defaultValue}`);
+        assert.ok(label.textContent.includes(defaultValue), `Label for ${labelText} should reset text to ${defaultValue}`);
+    }
+  });
+
+  it('should have a global reset button that resets all filters except Hue', async function() {
+    let controls = document.getElementById('print-enhance-controls');
+    if (!controls) {
+        window.createControls();
+        controls = document.getElementById('print-enhance-controls');
+    }
+    
+    const sliders = Array.from(controls.querySelectorAll('input[type="range"]'));
+    const rows = Array.from(controls.querySelectorAll('div')).filter(div => div.querySelector('input[type="range"]'));
+    
+    // 1. Set all sliders to non-default values
+    sliders.forEach((s, i) => {
+        s.value = "50";
+        s.dispatchEvent(new window.Event('input'));
+        // console.log(`Slider ${i} set to ${s.value}`);
+    });
+    
+    // 2. Click global reset
+    const resetAllBtn = document.getElementById('be-reset-all-filters');
+    assert.ok(resetAllBtn, 'Global reset button missing');
+    resetAllBtn.click();
+    
+    // Wait for async effects
+    await new Promise(r => setTimeout(r, 100));
+    
+    // 3. Verify state
+    for (const row of rows) {
+        const slider = row.querySelector('input[type="range"]');
+        const labelText = row.querySelector('label').textContent;
+        // console.log(`Verifying: ${labelText}, value: ${slider.value}`);
+        
+        if (labelText.includes('Hue Shift')) {
+            assert.strictEqual(slider.value, "50", "Hue Shift should NOT be reset by global button");
+        } else if (labelText.includes('Contrast') || labelText.includes('Saturate')) {
+            assert.strictEqual(slider.value, "100", `Slider for ${labelText} should reset to 100, but got ${slider.value}`);
+        } else {
+            assert.strictEqual(slider.value, "0", `Slider for ${labelText} should reset to 0, but got ${slider.value}`);
+        }
+    }
+  });
 });

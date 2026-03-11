@@ -3434,8 +3434,6 @@ function applyGlobalFilters(filters) {
 
     const eps = 0.001;
     const inverseFilterStr = `
-        sepia(${-sepia}%)
-        grayscale(${-greyscale}%)
         saturate(${10000 / (saturate + eps)}%)
         contrast(${10000 / (contrast + eps)}%)
         hue-rotate(-${hue}deg)
@@ -3461,7 +3459,6 @@ function applyGlobalFilters(filters) {
         .print-section-header span,
         .be-section-actions,
         .print-section-content img:not(.be-shape-asset),
-        img:not(.be-shape-asset),
         .print-section-content [class*="icon"],
         .ct-spell-damage-type__icon,
         .ct-item-status__icon,
@@ -3471,7 +3468,8 @@ function applyGlobalFilters(filters) {
         [class$="__attack-save-icon"],
         [class$="__range-icon"],
         [class$="__casting-time-icon"],
-        [class$="__damage-effect-icon"] {
+        [class$="__damage-effect-icon"],
+        img:not(.be-shape-asset) {
             filter: ${inverseFilterStr} !important;
         }
 
@@ -4639,12 +4637,17 @@ function createControls() {
         row.style.gap = '2px';
         row.style.marginBottom = '4px';
 
+        const labelRow = document.createElement('div');
+        labelRow.style.display = 'flex';
+        labelRow.style.justifyContent = 'space-between';
+        labelRow.style.alignItems = 'center';
+
         const label = document.createElement('label');
         label.textContent = `${labelStr}: ${defaultValue}${unit}`;
         label.style.color = 'white';
         label.style.fontSize = '11px';
         label.style.fontWeight = 'bold';
-        row.appendChild(label);
+        labelRow.appendChild(label);
 
         const slider = document.createElement('input');
         slider.type = 'range';
@@ -4653,6 +4656,31 @@ function createControls() {
         slider.value = defaultValue.toString();
         slider.style.width = '100%';
         slider.style.cursor = 'pointer';
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↺';
+        resetBtn.style.background = 'none';
+        resetBtn.style.border = 'none';
+        resetBtn.style.color = '#aaa';
+        resetBtn.style.cursor = 'pointer';
+        resetBtn.style.fontSize = '12px';
+        resetBtn.style.padding = '0';
+        resetBtn.style.lineHeight = '1';
+        resetBtn.title = `Reset ${labelStr}`;
+        
+        resetBtn.addEventListener('click', async () => {
+            slider.value = defaultValue.toString();
+            label.textContent = `${labelStr}: ${defaultValue}${unit}`;
+            currentFilters[key] = defaultValue;
+            if (typeof window.applyGlobalFilters === 'function') {
+                window.applyGlobalFilters(currentFilters);
+            }
+            if (window.Storage) {
+                await window.Storage.saveFilter(key, defaultValue);
+            }
+        });
+        labelRow.appendChild(resetBtn);
+        row.appendChild(labelRow);
 
         slider.oninput = (e) => {
             const val = parseInt(e.target.value, 10);
@@ -4685,6 +4713,52 @@ function createControls() {
         greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
         sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
     };
+
+    // Global Reset Button (Excluding Hue)
+    const resetAllBtn = document.createElement('button');
+    resetAllBtn.textContent = 'Reset All Filters (excl. Hue)';
+    resetAllBtn.className = 'be-modal-ok'; // Reusing existing style
+    resetAllBtn.style.marginTop = '8px';
+    resetAllBtn.style.fontSize = '10px';
+    resetAllBtn.style.padding = '4px 8px';
+    resetAllBtn.style.width = '100%';
+    resetAllBtn.id = 'be-reset-all-filters';
+    
+    resetAllBtn.addEventListener('click', async () => {
+        try {
+            const defaults = {
+                contrast: 100,
+                saturate: 100,
+                greyscale: 0,
+                sepia: 0
+            };
+            
+            for (const [key, defVal] of Object.entries(defaults)) {
+                currentFilters[key] = defVal;
+                const s = sliders[key];
+                if (s) {
+                    s.slider.value = defVal.toString();
+                    const labelBase = s.label.textContent.split(':')[0];
+                    s.label.textContent = `${labelBase}: ${defVal}%`;
+                }
+            }
+            
+            if (typeof window.applyGlobalFilters === 'function') {
+                window.applyGlobalFilters(currentFilters);
+            }
+
+            // Save after UI update
+            if (window.Storage) {
+                for (const [key, defVal] of Object.entries(defaults)) {
+                    await window.Storage.saveFilter(key, defVal);
+                }
+            }
+        } catch (err) {
+            console.error(`[DDB Print] Global Reset Error:`, err);
+        }
+    });
+    
+    filtersContainer.appendChild(resetAllBtn);
 
     // Load initial values
     if (window.Storage && typeof window.Storage.getFilters === 'function') {

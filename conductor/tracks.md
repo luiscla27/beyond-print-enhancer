@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Image Filter Fix & Reset UI**
+- [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
   *Link: [./tracks/hue_reset_fix_20260311/](./tracks/hue_reset_fix_20260311/)*
 
 ## Archived Tracks
