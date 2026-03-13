@@ -9,7 +9,7 @@ Licensed under Blue Oak Model License 1.0.0
  * Uses IndexedDB to persist layout configurations and custom data.
  */
 const DB_NAME = 'DDBPrintEnhancerDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
@@ -440,28 +440,49 @@ const Storage = {
     if (Storage.initPromise) return Storage.initPromise;
 
     Storage.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      try {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onerror = (event) => {
-        console.error('[DDB Print Enhance] IndexedDB error:', event.target.error);
-        Storage.initPromise = null; // Allow retry
-        reject(event.target.error);
-      };
+        request.onblocked = () => {
+          alert('Please close other tabs of D&D Beyond to allow the database to update.');
+          console.warn('[DDB Print Enhance] IndexedDB open blocked. Other tabs might be holding a connection.');
+        };
 
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
-        }
-        if (!db.objectStoreNames.contains(SPELL_CACHE_STORE)) {
-          db.createObjectStore(SPELL_CACHE_STORE, { keyPath: 'name' });
-        }
-      };
+        request.onerror = (event) => {
+          const error = event.target.error;
+          console.error(`[DDB Print Enhance] IndexedDB error (${error?.name}): ${error?.message}`);
+          Storage.initPromise = null; // Allow retry
+          reject(error);
+        };
 
-      request.onsuccess = (event) => {
-        db = event.target.result;
-        resolve(db);
-      };
+        request.onupgradeneeded = (event) => {
+          const upgradeDb = event.target.result;
+          console.log(`[DDB Print Enhance] Upgrading IndexedDB to version ${DB_VERSION}...`);
+          if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
+            upgradeDb.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
+          }
+          if (!upgradeDb.objectStoreNames.contains(SPELL_CACHE_STORE)) {
+            upgradeDb.createObjectStore(SPELL_CACHE_STORE, { keyPath: 'name' });
+          }
+        };
+
+        request.onsuccess = (event) => {
+          db = event.target.result;
+          
+          db.onversionchange = () => {
+            db.close();
+            db = null;
+            Storage.initPromise = null;
+            console.warn('[DDB Print Enhance] Database version changed elsewhere. Connection closed.');
+          };
+
+          resolve(db);
+        };
+      } catch (err) {
+        console.error('[DDB Print Enhance] Critical error opening IndexedDB:', err);
+        Storage.initPromise = null;
+        reject(err);
+      }
     });
 
     return Storage.initPromise;
@@ -484,11 +505,10 @@ const Storage = {
    * @param {string} characterId 
    * @param {object} data - { characterId, sectionOrder, customSpells }
    */
-  saveLayout: (characterId, data) => {
+  saveLayout: async (characterId, data) => {
+    const database = await Storage.init();
     return new Promise((resolve, reject) => {
-      if (!db) return reject(new Error('Database not initialized'));
-
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const transaction = database.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       
       // Ensure characterId is present in the data object for the keyPath
@@ -506,11 +526,10 @@ const Storage = {
    * @param {string} characterId 
    * @returns {Promise<object|undefined>}
    */
-  loadLayout: (characterId) => {
+  loadLayout: async (characterId) => {
+    const database = await Storage.init();
     return new Promise((resolve, reject) => {
-      if (!db) return reject(new Error('Database not initialized'));
-
-      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const transaction = database.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(characterId);
 
@@ -588,11 +607,10 @@ const Storage = {
    * Save multiple spells to the cache.
    * @param {Array} spells 
    */
-  saveSpells: (spells) => {
+  saveSpells: async (spells) => {
+    const database = await Storage.init();
     return new Promise((resolve, reject) => {
-      if (!db) return reject(new Error('Database not initialized'));
-
-      const transaction = db.transaction([SPELL_CACHE_STORE], 'readwrite');
+      const transaction = database.transaction([SPELL_CACHE_STORE], 'readwrite');
       const store = transaction.objectStore(SPELL_CACHE_STORE);
       
       spells.forEach(spell => store.put(spell));
@@ -607,11 +625,10 @@ const Storage = {
    * @param {string} name 
    * @returns {Promise<object|undefined>}
    */
-  getSpell: (name) => {
+  getSpell: async (name) => {
+    const database = await Storage.init();
     return new Promise((resolve, reject) => {
-      if (!db) return reject(new Error('Database not initialized'));
-
-      const transaction = db.transaction([SPELL_CACHE_STORE], 'readonly');
+      const transaction = database.transaction([SPELL_CACHE_STORE], 'readonly');
       const store = transaction.objectStore(SPELL_CACHE_STORE);
       const request = store.get(name);
 
@@ -624,11 +641,10 @@ const Storage = {
    * Get all spells from the cache.
    * @returns {Promise<Array>}
    */
-  getAllSpells: () => {
+  getAllSpells: async () => {
+    const database = await Storage.init();
     return new Promise((resolve, reject) => {
-      if (!db) return reject(new Error('Database not initialized'));
-
-      const transaction = db.transaction([SPELL_CACHE_STORE], 'readonly');
+      const transaction = database.transaction([SPELL_CACHE_STORE], 'readonly');
       const store = transaction.objectStore(SPELL_CACHE_STORE);
       const request = store.getAll();
 
@@ -2244,12 +2260,6 @@ function enforceFullHeight() {
             --border-img-outset: 45px;
         }
 
-        .print-section-content {
-            overflow: visible !important;
-            max-height: none !important;
-            padding: 0;
-            height: auto !important;
-        }
         .ct-quick-info__box,
         section {
             height: 100% !important;
@@ -2410,13 +2420,13 @@ function enforceFullHeight() {
             flex-direction: column !important;
             min-height: 30px !important;
             min-width: 50px !important;
-            overflow: hidden !important; /* Changed from auto to hidden, we'll handle scroll/scale */
+            overflow: visible !important; /* Changed to visible so ::before border outsets are not clipped */
             position: relative !important;
             filter: var(--be-hue-filter) !important;
             z-index: 0;
         }
 
-        ${s.UI.PRINT_CONTAINER}::before {
+        ${s.UI.PRINT_CONTAINER}:not(.be-no-border)::before {
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -3392,6 +3402,9 @@ function applyShapeAsset(container, assetPath) {
     container.style.border = '';
     container.style.backgroundColor = 'transparent';
     container.innerHTML = ''; // Clear any existing img tags
+    
+    // Default to hiding the ::before border for shapes unless it's a "border" asset with a class
+    container.classList.add('be-no-border');
 
     const meta = ASSET_METADATA[assetPath];
     if (meta) {
@@ -3411,6 +3424,7 @@ function applyShapeAsset(container, assetPath) {
             container.style.border = 'none';
         } else if (meta.className) {
             container.classList.add(meta.className);
+            container.classList.remove('be-no-border'); // Show the ::before border
         } else if (meta.slice !== undefined) {
             container.style.borderStyle = 'solid';
             container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
@@ -4668,7 +4682,7 @@ function createControls() {
     /**
      * Helper to create a filter slider.
      */
-    const createFilterSlider = (labelStr, key, min, max, unit, defaultValue) => {
+    const createFilterSlider = (labelStr, key, min, max, unit, defaultValue, hideSlider = false) => {
         const row = document.createElement('div');
         row.style.display = 'flex';
         row.style.flexDirection = 'column';
@@ -4694,6 +4708,9 @@ function createControls() {
         slider.value = defaultValue.toString();
         slider.style.width = '100%';
         slider.style.cursor = 'pointer';
+        if (hideSlider) {
+            slider.style.display = 'none';
+        }
 
         const resetBtn = document.createElement('button');
         resetBtn.textContent = '↺';
@@ -4745,45 +4762,150 @@ function createControls() {
     };
 
     const sliders = {
-        hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0),
+        hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0, true),
         contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 300, '%', 100),
         saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 300, '%', 100),
         greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
         sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
     };
 
-    // Quick Hue Picker
-    const huePicker = document.createElement('div');
-    huePicker.style.display = 'grid';
-    huePicker.style.gridTemplateColumns = 'repeat(5, 1fr)';
-    huePicker.style.gap = '4px';
-    huePicker.style.marginTop = '2px';
-    huePicker.style.padding = '0 2px';
+    // Color Picker Button & Floating Hue Picker
+    const colorPickerBtn = document.createElement('button');
+    colorPickerBtn.textContent = '🎨 Color Picker';
+    colorPickerBtn.style.marginTop = '4px';
+    colorPickerBtn.style.fontSize = '10px';
+    colorPickerBtn.style.padding = '4px 8px';
+    colorPickerBtn.style.width = '100%';
+    colorPickerBtn.className = 'be-modal-ok'; // Use consistent style
+    sliders.hue.row.appendChild(colorPickerBtn);
 
-    for (let i = 0; i < 10; i++) {
-        const deg = i * 36;
-        const swatch = document.createElement('div');
-        swatch.style.height = '10px';
-        swatch.style.cursor = 'pointer';
-        swatch.style.borderRadius = '2px';
-        swatch.style.border = '1px solid #666';
-        swatch.style.backgroundColor = `hsl(${deg}, 80%, 50%)`;
-        swatch.title = `Set Hue to ${deg}°`;
+    const huePicker = document.createElement('div');
+    huePicker.style.position = 'fixed';
+    huePicker.style.zIndex = '20000';
+    huePicker.style.setProperty('display', 'none', 'important'); // Hidden by default
+    huePicker.style.flexDirection = 'column';
+    huePicker.style.gap = '8px';
+    huePicker.style.padding = '8px';
+    huePicker.style.backgroundColor = '#1a1a1a';
+    huePicker.style.border = '1px solid #444';
+    huePicker.style.borderRadius = '4px';
+    huePicker.style.boxShadow = '0 4px 20px rgba(0,0,0,0.6)';
+    huePicker.style.width = '140px'; // 60 columns * 2px + padding
+    document.body.appendChild(huePicker);
+
+    const gridContainer = document.createElement('div');
+    gridContainer.style.display = 'grid';
+    gridContainer.style.gridTemplateColumns = 'repeat(60, 2px)';
+    gridContainer.style.gap = '0';
+    gridContainer.style.cursor = 'crosshair';
+    gridContainer.style.border = '1px solid #333';
+    huePicker.appendChild(gridContainer);
+
+    let tempInitialHue = currentFilters.hue || 0;
+    let tempInitialSaturate = currentFilters.saturate || 100;
+
+    const revertPickerChanges = () => {
+        currentFilters.hue = tempInitialHue;
+        currentFilters.saturate = tempInitialSaturate;
         
-        swatch.addEventListener('click', async () => {
-            sliders.hue.slider.value = deg.toString();
-            sliders.hue.label.textContent = `🎨 Hue Shift: ${deg}°`;
-            currentFilters.hue = deg;
-            if (typeof window.applyGlobalFilters === 'function') {
-                window.applyGlobalFilters(currentFilters);
-            }
-            if (window.Storage) {
-                await window.Storage.saveFilter('hue', deg);
-            }
-        });
-        huePicker.appendChild(swatch);
-    }
-    sliders.hue.row.appendChild(huePicker);
+        // Update UI
+        sliders.hue.slider.value = tempInitialHue.toString();
+        sliders.hue.label.textContent = `🎨 Hue Shift: ${tempInitialHue}°`;
+        sliders.saturate.slider.value = tempInitialSaturate.toString();
+        sliders.saturate.label.textContent = `🌈 Saturate: ${tempInitialSaturate}%`;
+
+        if (typeof window.applyGlobalFilters === 'function') {
+            window.applyGlobalFilters(currentFilters);
+        }
+    };
+
+    colorPickerBtn.onclick = (e) => {
+        e.stopPropagation();
+        const rect = colorPickerBtn.getBoundingClientRect();
+        huePicker.style.top = `${rect.top - 120}px`; 
+        huePicker.style.left = `${rect.left}px`;
+        
+        const isHidden = huePicker.style.display === 'none' || huePicker.style.getPropertyValue('display') === 'none';
+        if (isHidden) {
+            // Capture initial state before previewing
+            tempInitialHue = currentFilters.hue || 0;
+            tempInitialSaturate = currentFilters.saturate || 100;
+            huePicker.style.setProperty('display', 'flex', 'important');
+        } else {
+            revertPickerChanges();
+            huePicker.style.setProperty('display', 'none', 'important');
+        }
+    };
+
+    // Close picker when clicking outside
+    document.addEventListener('click', (e) => {
+        const isVisible = huePicker.style.display === 'flex' || huePicker.style.getPropertyValue('display') === 'flex';
+        if (isVisible && !huePicker.contains(e.target) && e.target !== colorPickerBtn) {
+            revertPickerChanges();
+            huePicker.style.setProperty('display', 'none', 'important');
+        }
+    });
+
+    let selectedHue = currentFilters.hue || 0;
+    let selectedSaturate = currentFilters.saturate || 100;
+
+    // 600 swatches for a perfect 2D map (60 hues x 10 saturations)
+    // Rows = Saturation (0% to 250%), Columns = Hue (0 to 360)
+    const saturations = [0, 25, 50, 75, 100, 125, 150, 175, 200, 250];
+    
+    saturations.forEach(sat => {
+        for (let i = 0; i < 60; i++) {
+            const deg = i * 6;
+            const swatch = document.createElement('div');
+            swatch.style.height = '8px';
+            swatch.style.width = '2px';
+            swatch.style.backgroundColor = '#e61919'; // Base red
+            // Show both Hue and Saturation in the preview
+            swatch.style.filter = `hue-rotate(${deg}deg) saturate(${sat}%)`;
+            swatch.title = `Hue: ${deg}°, Sat: ${sat}%`;
+            
+            swatch.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedHue = deg;
+                selectedSaturate = sat;
+                
+                // Preview Hue immediately
+                sliders.hue.slider.value = deg.toString();
+                sliders.hue.label.textContent = `🎨 Hue Shift: ${deg}°`;
+                currentFilters.hue = deg;
+
+                // Preview Saturation immediately
+                sliders.saturate.slider.value = sat.toString();
+                sliders.saturate.label.textContent = `🌈 Saturate: ${sat}%`;
+                currentFilters.saturate = sat;
+
+                if (typeof window.applyGlobalFilters === 'function') {
+                    window.applyGlobalFilters(currentFilters);
+                }
+            });
+            gridContainer.appendChild(swatch);
+        }
+    });
+
+    const acceptBtn = document.createElement('button');
+    acceptBtn.textContent = 'Accept';
+    acceptBtn.className = 'be-modal-ok';
+    acceptBtn.style.fontSize = '10px';
+    acceptBtn.style.padding = '4px';
+    acceptBtn.style.width = '100%';
+    
+    acceptBtn.onclick = async (e) => {
+        e.stopPropagation();
+        if (window.Storage) {
+            await window.Storage.saveFilter('hue', selectedHue);
+            await window.Storage.saveFilter('saturate', selectedSaturate);
+        }
+        // Update the "initial" state to the newly accepted values
+        tempInitialHue = selectedHue;
+        tempInitialSaturate = selectedSaturate;
+        huePicker.style.setProperty('display', 'none', 'important');
+    };
+    huePicker.appendChild(acceptBtn);
 
     // Global Reset Button (Excluding Hue)
     const resetAllBtn = document.createElement('button');
@@ -5114,10 +5236,10 @@ async function handleLoadDefault() {
     if (!confirm('This will reset your layout to defaults. Are you sure?')) return;
 
     try {
-        await Storage.init();
+        const database = await Storage.init();
         
         // Remove from IndexedDB
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const transaction = database.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         store.delete('GLOBAL');
         
