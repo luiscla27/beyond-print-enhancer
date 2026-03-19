@@ -16,6 +16,12 @@ describe('Filters UI', function() {
     });
     window = dom.window;
     document = window.document;
+
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     
     // Mock Storage
     window.Storage = {
@@ -69,7 +75,7 @@ describe('Filters UI', function() {
 
     const contrastSlider = sliders.find((s, i) => labels[i].includes('Contrast'));
     assert.strictEqual(contrastSlider.min, '0');
-    assert.strictEqual(contrastSlider.max, '300');
+    assert.strictEqual(contrastSlider.max, '200');
 
     const greyscaleSlider = sliders.find((s, i) => labels[i].includes('Greyscale'));
     assert.strictEqual(greyscaleSlider.min, '0');
@@ -185,13 +191,12 @@ describe('Filters UI', function() {
     const saturateRow = Array.from(controls.querySelectorAll('div')).find(div => div.querySelector('label')?.textContent.includes('Saturate'));
     const saturateSlider = saturateRow.querySelector('input[type="range"]');
     
-    // Find a swatch for 180 degrees, 150% saturation (i=30, sat index=6)
-    // gridContainer is the first child of huePicker
-    const targetSwatch = Array.from(swatches).find(s => s.title === 'Hue: 180°, Sat: 150%');
+    // Find a swatch for 180 degrees, 120% saturation (i=30, sat index=5)
+    const targetSwatch = Array.from(swatches).find(s => s.title === 'Hue: 180°, Sat: 120%');
     assert.ok(targetSwatch, 'Should find the target swatch');
     
     targetSwatch.click();
     assert.strictEqual(hueSlider.value, "180", "Hue slider should update to 180");
-    assert.strictEqual(saturateSlider.value, "150", "Saturate slider should update to 150");
+    assert.strictEqual(saturateSlider.value, "120", "Saturate slider should update to 120");
   });
 });

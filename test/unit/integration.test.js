@@ -72,13 +72,13 @@ describe('Full Integration - Image Filters', function() {
     const saturateSlider = sliders[saturateIdx];
     
     // Simulate user input
-    saturateSlider.value = '250';
+    saturateSlider.value = '150';
     saturateSlider.dispatchEvent(new window.Event('input'));
     
     // Wait for async update
     await new Promise(r => setTimeout(r, 50));
     
     const rootStyle = document.documentElement.style;
-    assert.ok(rootStyle.getPropertyValue('--be-full-filter').includes('saturate(250%)'), 'Variable should update on slider input');
+    assert.ok(rootStyle.getPropertyValue('--be-full-filter').includes('saturate(150%)'), 'Variable should update on slider input');
   });
 });

@@ -4788,8 +4788,8 @@ function createControls() {
 
     const sliders = {
         hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0, true),
-        contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 300, '%', 100),
-        saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 300, '%', 100),
+        contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 200, '%', 100),
+        saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 200, '%', 100),
         greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
         sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
     };
@@ -4875,8 +4875,8 @@ function createControls() {
     let selectedSaturate = currentFilters.saturate || 100;
 
     // 600 swatches for a perfect 2D map (60 hues x 10 saturations)
-    // Rows = Saturation (0% to 250%), Columns = Hue (0 to 360)
-    const saturations = [0, 25, 50, 75, 100, 125, 150, 175, 200, 250];
+    // Rows = Saturation (0% to 200%), Columns = Hue (0 to 360)
+    const saturations = [0, 25, 50, 75, 100, 120, 140, 160, 180, 200];
     
     saturations.forEach(sat => {
         for (let i = 0; i < 60; i++) {
