@@ -45,7 +45,7 @@ describe('Rotation UI Injection', function() {
         }
 
         // Create a shape
-        const shapeWrapper = window.createShape('assets/shapes/corner_spikes.gif');
+        const shapeWrapper = window.createShape('assets/shapes/corner_spikes.webp');
         assert.ok(shapeWrapper, 'Shape should be created');
 
         // Initially no handle
@@ -71,7 +71,7 @@ describe('Rotation UI Injection', function() {
         }
 
         // Create another shape
-        const shapeWrapper = window.createShape('assets/border_default.gif');
+        const shapeWrapper = window.createShape('assets/border_default.webp');
         
         // Click it
         const clickEvent = new window.MouseEvent('click', { bubbles: true });

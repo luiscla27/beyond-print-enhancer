@@ -29,8 +29,49 @@ window.safeLog = safeLog;
  * Full list of available assets for the shape picker.
  */
 const ASSET_LIST = [
-    'assets/border_ability.gif', 'assets/border_barbarian.gif', 'assets/border_barbarian_hand.gif', 'assets/border_box.gif', 'assets/border_default.gif', 'assets/border_goth1.gif', 'assets/border_goth1_hand.gif', 'assets/border_spikes.gif', 'assets/dwarf.gif', 'assets/dwarf_hollow.gif', 'assets/dwarf_hollow_hand.gif', 'assets/ornament.gif', 'assets/ornament2.gif', 'assets/ornament_bold.gif', 'assets/ornament_bold2.gif', 'assets/ornament_simple.gif', 'assets/spike_bold.gif', 'assets/spike_hollow.gif', 'assets/spike_hollow2.gif', 'assets/sticks.gif', 'assets/vine_hand.gif', 'assets/vine_hollow.gif', 'assets/vine_plants.gif',
-    'assets/shapes/border_spikes_hand.gif', 'assets/shapes/corner_barbarian.gif', 'assets/shapes/corner_border_barbarian_hand.gif', 'assets/shapes/corner_border_goth1.gif', 'assets/shapes/corner_border_plants_hand.gif', 'assets/shapes/corner_dwarf.gif', 'assets/shapes/corner_dwarf_hollow.gif', 'assets/shapes/corner_ornament.gif', 'assets/shapes/corner_ornament2.gif', 'assets/shapes/corner_ornament_bold.gif', 'assets/shapes/corner_ornament_bold2.gif', 'assets/shapes/corner_ornament_bold3.gif', 'assets/shapes/corner_ornament_simple.gif', 'assets/shapes/corner_ornament_simple2.gif', 'assets/shapes/corner_spikes.gif', 'assets/shapes/corner_spike_hollow.gif', 'assets/shapes/corner_spike_hollow2.gif', 'assets/shapes/corner_sticks.gif', 'assets/shapes/corner_sticks1.gif', 'assets/shapes/corner_vine_hollow.gif'
+    "assets/border_ability.webp",
+    "assets/border_barbarian.webp",
+    "assets/border_barbarian_hand.webp",
+    "assets/border_box.webp",
+    "assets/border_default.webp",
+    "assets/border_goth1.webp",
+    "assets/border_goth1_hand.webp",
+    "assets/border_spikes.webp",
+    "assets/dwarf.webp",
+    "assets/dwarf_hollow.webp",
+    "assets/dwarf_hollow_hand.webp",
+    "assets/ornament.webp",
+    "assets/ornament2.webp",
+    "assets/ornament_bold.webp",
+    "assets/ornament_bold2.webp",
+    "assets/ornament_simple.webp",
+    "assets/shapes/border_spikes_hand.webp",
+    "assets/shapes/corner_barbarian.webp",
+    "assets/shapes/corner_border_barbarian_hand.webp",
+    "assets/shapes/corner_border_goth1.webp",
+    "assets/shapes/corner_border_plants_hand.webp",
+    "assets/shapes/corner_dwarf.webp",
+    "assets/shapes/corner_dwarf_hollow.webp",
+    "assets/shapes/corner_ornament.webp",
+    "assets/shapes/corner_ornament2.webp",
+    "assets/shapes/corner_ornament_bold.webp",
+    "assets/shapes/corner_ornament_bold2.webp",
+    "assets/shapes/corner_ornament_bold3.webp",
+    "assets/shapes/corner_ornament_simple.webp",
+    "assets/shapes/corner_ornament_simple2.webp",
+    "assets/shapes/corner_spikes.webp",
+    "assets/shapes/corner_spike_hollow.webp",
+    "assets/shapes/corner_spike_hollow2.webp",
+    "assets/shapes/corner_sticks.webp",
+    "assets/shapes/corner_sticks1.webp",
+    "assets/shapes/corner_vine_hollow.webp",
+    "assets/spike_bold.webp",
+    "assets/spike_hollow.webp",
+    "assets/spike_hollow2.webp",
+    "assets/sticks.webp",
+    "assets/vine_hand.webp",
+    "assets/vine_hollow.webp",
+    "assets/vine_plants.webp"
 ];
 
 /**
@@ -39,50 +80,204 @@ const ASSET_LIST = [
  * If 'isBackground' is true, it will be applied as background-image instead of border-image.
  */
 const ASSET_METADATA = {
-    'assets/border_ability.gif': { slice: 66, width: '28px', outset: '16px', className: 'ability_border' },
-    'assets/border_barbarian.gif': { slice: 212, width: '142px', outset: '55px', className: 'barbarian_border' },
-    'assets/border_barbarian_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'barbarian_hand_border' },
-    'assets/border_box.gif': { slice: 45, width: '20px', outset: '7px 10px', className: 'box_border' },
-    'assets/border_default.gif': { slice: 22, width: '24px', outset: '7px 10px', className: 'default-border' },
-    'assets/border_goth1.gif': { slice: 1014, width: '111px', outset: '54px 44px', className: 'goth_border' },
-    'assets/border_goth1_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'goth_hand_border' },
-    'assets/border_spikes.gif': { slice: 177, width: '118px', outset: '55px', className: 'spikes_border' },
-    'assets/dwarf.gif': { slice: 308, width: '205px', outset: '55px', className: 'dwarf_border' },
-    'assets/dwarf_hollow.gif': { slice: 215, width: '143px', outset: '38px', className: 'dwarf_hollow_border' },
-    'assets/dwarf_hollow_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'dwarf_hollow_hand_border' },
-    'assets/ornament.gif': { slice: 133, width: '88px', outset: '32px', className: 'ornament_border' },
-    'assets/ornament2.gif': { slice: 217, width: '144px', outset: '48px', className: 'ornament2_border' },
-    'assets/ornament_bold.gif': { slice: 333, width: '222px', outset: '100px', className: 'ornament_bold_border' },
-    'assets/ornament_bold2.gif': { slice: 212, width: '141px', outset: '50px', className: 'ornament_bold2_border' },
-    'assets/ornament_simple.gif': { slice: 166, width: '111px', outset: '45px', className: 'ornament_simple_border' },
-    'assets/spike_bold.gif': { slice: 166, width: '111px', outset: '55px', className: 'spiky_bold_border' },
-    'assets/spike_hollow.gif': { slice: 166, width: '111px', outset: '45px', className: 'spike_hollow_border' },
-    'assets/spike_hollow2.gif': { slice: 1050, width: '100px', outset: '45px', className: 'spiky_border' },
-    'assets/sticks.gif': { slice: 220, width: '146px', outset: '65px', className: 'sticks_border' },
-    'assets/vine_hand.gif': { slice: 1050, width: '100px', outset: '30px', className: 'vine_hand_border' },
-    'assets/vine_hollow.gif': { slice: 429, width: '130px', outset: '45px', className: 'vine_border' },
-    'assets/vine_plants.gif': { slice: 200, width: '133px', outset: '55px', className: 'plants_border' },
-    // Shapes folder - Using background-image instead of border-image
-    'assets/shapes/border_spikes_hand.gif': { isBackground: true },
-    'assets/shapes/corner_barbarian.gif': { isBackground: true },
-    'assets/shapes/corner_border_barbarian_hand.gif': { isBackground: true },
-    'assets/shapes/corner_border_goth1.gif': { isBackground: true },
-    'assets/shapes/corner_border_plants_hand.gif': { isBackground: true },
-    'assets/shapes/corner_dwarf.gif': { isBackground: true },
-    'assets/shapes/corner_dwarf_hollow.gif': { isBackground: true },
-    'assets/shapes/corner_ornament.gif': { isBackground: true },
-    'assets/shapes/corner_ornament2.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_bold.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_bold2.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_bold3.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_simple.gif': { isBackground: true },
-    'assets/shapes/corner_ornament_simple2.gif': { isBackground: true },
-    'assets/shapes/corner_spikes.gif': { isBackground: true },
-    'assets/shapes/corner_spike_hollow.gif': { isBackground: true },
-    'assets/shapes/corner_spike_hollow2.gif': { isBackground: true },
-    'assets/shapes/corner_sticks.gif': { isBackground: true },
-    'assets/shapes/corner_sticks1.gif': { isBackground: true },
-    'assets/shapes/corner_vine_hollow.gif': { isBackground: true }
+    "assets/border_ability.webp": {
+        "slice": 66,
+        "width": "28px",
+        "outset": "16px",
+        "className": "ability_border"
+    },
+    "assets/border_barbarian.webp": {
+        "slice": 153,
+        "width": "142px",
+        "outset": "55px",
+        "className": "barbarian_border"
+    },
+    "assets/border_barbarian_hand.webp": {
+        "slice": 261,
+        "width": "100px",
+        "outset": "30px",
+        "className": "barbarian_hand_border"
+    },
+    "assets/border_box.webp": {
+        "slice": 45,
+        "width": "20px",
+        "outset": "7px 10px",
+        "className": "box_border"
+    },
+    "assets/border_default.webp": {
+        "slice": 22,
+        "width": "24px",
+        "outset": "7px 10px",
+        "className": "default-border"
+    },
+    "assets/border_goth1.webp": {
+        "slice": 252,
+        "width": "111px",
+        "outset": "54px 44px",
+        "className": "goth_border"
+    },
+    "assets/border_goth1_hand.webp": {
+        "slice": 261,
+        "width": "100px",
+        "outset": "30px",
+        "className": "goth_hand_border"
+    },
+    "assets/border_spikes.webp": {
+        "slice": 177,
+        "width": "118px",
+        "outset": "55px",
+        "className": "spikes_border"
+    },
+    "assets/dwarf.webp": {
+        "slice": 155,
+        "width": "205px",
+        "outset": "55px",
+        "className": "dwarf_border"
+    },
+    "assets/dwarf_hollow.webp": {
+        "slice": 108,
+        "width": "143px",
+        "outset": "38px",
+        "className": "dwarf_hollow_border"
+    },
+    "assets/dwarf_hollow_hand.webp": {
+        "slice": 259,
+        "width": "100px",
+        "outset": "30px",
+        "className": "dwarf_hollow_hand_border"
+    },
+    "assets/ornament.webp": {
+        "slice": 67,
+        "width": "88px",
+        "outset": "32px",
+        "className": "ornament_border"
+    },
+    "assets/ornament2.webp": {
+        "slice": 109,
+        "width": "144px",
+        "outset": "48px",
+        "className": "ornament2_border"
+    },
+    "assets/ornament_bold.webp": {
+        "slice": 167,
+        "width": "222px",
+        "outset": "100px",
+        "className": "ornament_bold_border"
+    },
+    "assets/ornament_bold2.webp": {
+        "slice": 106,
+        "width": "141px",
+        "outset": "50px",
+        "className": "ornament_bold2_border"
+    },
+    "assets/ornament_simple.webp": {
+        "slice": 83,
+        "width": "111px",
+        "outset": "45px",
+        "className": "ornament_simple_border"
+    },
+    "assets/shapes/border_spikes_hand.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_barbarian.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_border_barbarian_hand.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_border_goth1.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_border_plants_hand.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_dwarf.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_dwarf_hollow.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament2.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament_bold.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament_bold2.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament_bold3.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament_simple.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_ornament_simple2.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_spikes.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_spike_hollow.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_spike_hollow2.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_sticks.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_sticks1.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/corner_vine_hollow.webp": {
+        "isBackground": true
+    },
+    "assets/spike_bold.webp": {
+        "slice": 83,
+        "width": "111px",
+        "outset": "55px",
+        "className": "spiky_bold_border"
+    },
+    "assets/spike_hollow.webp": {
+        "slice": 83,
+        "width": "111px",
+        "outset": "45px",
+        "className": "spike_hollow_border"
+    },
+    "assets/spike_hollow2.webp": {
+        "slice": 525,
+        "width": "100px",
+        "outset": "45px",
+        "className": "spiky_border"
+    },
+    "assets/sticks.webp": {
+        "slice": 110,
+        "width": "146px",
+        "outset": "65px",
+        "className": "sticks_border"
+    },
+    "assets/vine_hand.webp": {
+        "slice": 261,
+        "width": "100px",
+        "outset": "30px",
+        "className": "vine_hand_border"
+    },
+    "assets/vine_hollow.webp": {
+        "slice": 215,
+        "width": "130px",
+        "outset": "45px",
+        "className": "vine_border"
+    },
+    "assets/vine_plants.webp": {
+        "slice": 200,
+        "width": "133px",
+        "outset": "55px",
+        "className": "plants_border"
+    }
 };
 
 /**
@@ -109,7 +304,7 @@ function parseAssets(fileList) {
     const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
 
     fileList.forEach(filePath => {
-        if (!filePath.endsWith('.gif')) return;
+        if (!filePath.endsWith('.webp')) return;
 
         const isShape = filePath.includes('assets/shapes/');
         const fileName = filePath.split('/').pop().toLowerCase();
@@ -124,7 +319,7 @@ function parseAssets(fileList) {
 
         const asset = {
             path: filePath,
-            label: fileName.replace('.gif', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            label: fileName.replace('.webp', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             tags: tags
         };
 
@@ -2144,7 +2339,7 @@ function enforceFullHeight() {
     style.id = styleId;
     style.textContent = `
         :root {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_default.webp')}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
@@ -2164,115 +2359,115 @@ function enforceFullHeight() {
             display: none !important;
         }
         .default-border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_default.webp')}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
         }
         .ability_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_ability.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_ability.webp')}');
             --border-img-width: 28px;
             --border-img-slice: 25;
             --border-img-outset: 8px;
         }
         .spikes_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_spikes.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_spikes.webp')}');
             --border-img-width: 118px;
             --border-img-slice: 177;
             --border-img-outset: 55px;
         }
         .barbarian_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.webp')}');
             --border-img-width: 208px;
             --border-img-slice: 311;
             --border-img-outset: 61px;
         }
         .goth_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_goth1.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_goth1.webp')}');
             --border-img-width: 111px;
             --border-img-slice: 1014;
             --border-img-outset: 50px 35px;
         }
         .plants_border {
-            --border-img: url('${chrome.runtime.getURL('assets/vine_plants.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/vine_plants.webp')}');
             --border-img-width: 145px;
             --border-img-slice: 219;
             --border-img-outset: 50px;
         }
         .box_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_box.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/border_box.webp')}');
             --border-img-width: 25px;
             --border-img-slice: 22;
             --border-img-outset: 7px 10px;
         }
         .dwarf_border {
-            --border-img: url('${chrome.runtime.getURL('assets/dwarf.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/dwarf.webp')}');
             --border-img-width: 205px;
             --border-img-slice: 400;
             --border-img-outset: 173px;
         }
         .dwarf_hollow_border {
-            --border-img: url('${chrome.runtime.getURL('assets/dwarf_hollow.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/dwarf_hollow.webp')}');
             --border-img-width: 205px;
             --border-img-slice: 400;
             --border-img-outset: 173px;
         }
         .sticks_border {
-            --border-img: url('${chrome.runtime.getURL('assets/sticks.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/sticks.webp')}');
             --border-img-width: 90px;
             --border-img-slice: 383;
             --border-img-outset: 22px;
         }
         .ornament_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/ornament.webp')}');
             --border-img-width: 60px;
             --border-img-slice: 255;
             --border-img-outset: 25px;
         }
         .ornament2_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament2.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/ornament2.webp')}');
             --border-img-width: 60px;
             --border-img-slice: 255;
             --border-img-outset: 25px;
         }
         .ornament_bold_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.webp')}');
             --border-img-width: 80px;
             --border-img-slice: 335;
             --border-img-outset: 25px;
         }
         .ornament_bold2_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.webp')}');
             --border-img-width: 80px;
             --border-img-slice: 333;
             --border-img-outset: 24px;
         }
         .ornament_simple_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament_simple.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/ornament_simple.webp')}');
             --border-img-width: 50px;
             --border-img-slice: 255;
             --border-img-outset: 20px;
         }
         .spike_hollow_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.webp')}');
             --border-img-width: 100px;
             --border-img-slice: 388;
             --border-img-outset: 50px;
         }
         .spiky_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow2.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow2.webp')}');
             --border-img-width: 100px;
             --border-img-slice: 388;
             --border-img-outset: 60px;
         }
         .spiky_bold_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spike_bold.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/spike_bold.webp')}');
             --border-img-width: 120px;
             --border-img-slice: 388;
             --border-img-outset: 69px;
         }
         .vine_border {
-            --border-img: url('${chrome.runtime.getURL('assets/vine_hollow.gif')}');
+            --border-img: url('${chrome.runtime.getURL('assets/vine_hollow.webp')}');
             --border-img-width: 130px;
             --border-img-slice: 429;
             --border-img-outset: 45px;

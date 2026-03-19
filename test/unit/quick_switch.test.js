@@ -37,7 +37,7 @@ describe('Quick Switch Feature', function() {
 
     it('should switch shape asset while preserving transforms', function() {
         // 1. Create a shape with specific transforms
-        const initialAsset = 'assets/shapes/corner_spikes.gif';
+        const initialAsset = 'assets/shapes/corner_spikes.webp';
         const shapeWrapper = window.createShape(initialAsset, {
             left: '123px',
             top: '456px',
@@ -56,7 +56,7 @@ describe('Quick Switch Feature', function() {
         assert.strictEqual(shapeWrapper.dataset.rotation, '45');
 
         // 2. Switch to a new asset
-        const newAsset = 'assets/shapes/corner_dwarf.gif';
+        const newAsset = 'assets/shapes/corner_dwarf.webp';
         window.applyShapeAsset(container, newAsset);
         
         // 3. Verify transforms are preserved

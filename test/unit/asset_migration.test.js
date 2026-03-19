@@ -4,7 +4,7 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 require("fake-indexeddb/auto");
 
-describe('Asset Migration (.png to .gif)', function() {
+describe('Asset Migration (GIF to WebP)', function() {
     it('manifest.json should not have .png in web_accessible_resources for assets/', function() {
         const manifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../manifest.json'), 'utf8'));
         const resources = manifest.web_accessible_resources[0].resources;
@@ -20,7 +20,7 @@ describe('Asset Migration (.png to .gif)', function() {
         assert.strictEqual(matches, null, 'Found .png asset references in js/main.js: ' + (matches ? matches.join(', ') : ''));
     });
 
-    it('injected CSS should use .gif for default-border', async function() {
+    it('injected CSS should use .webp for default-border', async function() {
         const htmlContent = '<!DOCTYPE html><html><head></head><body></body></html>';
         const dom = new JSDOM(htmlContent, {
             url: "https://www.dndbeyond.com/characters/12345",
@@ -66,6 +66,6 @@ describe('Asset Migration (.png to .gif)', function() {
         const css = styleTag.textContent;
 
         assert.ok(!css.includes('assets/') || !css.match(/assets\/.*\.png/), 'CSS should not contain internal .png references');
-        assert.ok(css.includes('border_default.gif'), 'CSS should contain border_default.gif');
+        assert.ok(css.includes('border_default.webp'), 'CSS should contain border_default.webp');
     });
 });

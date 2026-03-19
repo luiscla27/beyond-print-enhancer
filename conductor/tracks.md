@@ -3,6 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
+- [ ] **Track: Asset Compression & WebP Migration**
+  *Link: [./tracks/asset_compression_20260318/](./tracks/asset_compression_20260318/)*
 
 ## Archived Tracks
 - [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
