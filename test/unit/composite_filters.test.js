@@ -43,6 +43,10 @@ describe('Composite Filters Logic', function() {
     assert.ok(fullFilter.includes('grayscale(50%)'), 'Greyscale missing from variable');
     assert.ok(fullFilter.includes('saturate(120%)'), 'Saturate missing from variable');
     assert.ok(fullFilter.includes('sepia(30%)'), 'Sepia missing from variable');
+
+    const decFilter = rootStyle.getPropertyValue('--be-decoration-filter');
+    assert.ok(!decFilter.includes('hue-rotate'), 'Decoration filter should NOT contain hue-rotate');
+    assert.ok(decFilter.includes('contrast(150%)'), 'Decoration filter missing contrast');
   });
 
   it('should apply inverse filters to excluded elements', function() {

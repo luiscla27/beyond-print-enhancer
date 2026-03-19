@@ -2134,6 +2134,7 @@ function enforceFullHeight() {
             --btn-color: #c53131;
             --btn-color-highlight: #f18383ff;
             --be-full-filter: none;
+            --be-decoration-filter: none;
             --be-hue-filter: none;
             --be-inv-hue-filter: none;
         }
@@ -2439,7 +2440,7 @@ function enforceFullHeight() {
             border-image-width: var(--border-img-width);
             border-style: solid;
             border-width: 0;
-            filter: var(--be-full-filter) !important;
+            filter: var(--be-decoration-filter) !important;
             z-index: -1;
         }
 
@@ -3459,9 +3460,17 @@ function applyShapeAsset(container, assetPath) {
 function applyGlobalFilters(filters) {
     const { hue, contrast, greyscale, saturate, sepia } = filters;
     
-    // Full filter for decorative elements (borders, shapes)
+    // Full composite filter (for isolated elements)
     const fullFilterStr = `
         hue-rotate(${hue}deg)
+        contrast(${contrast}%)
+        saturate(${saturate}%)
+        grayscale(${greyscale}%)
+        sepia(${sepia}%)
+    `.replace(/\s+/g, ' ').trim();
+
+    // Decoration-only filters (excludes hue-rotate to prevent double-application when parent is hue-rotated)
+    const decorationFilterStr = `
         contrast(${contrast}%)
         saturate(${saturate}%)
         grayscale(${greyscale}%)
@@ -3480,6 +3489,7 @@ function applyGlobalFilters(filters) {
     // Apply to document root for global CSS variable access
     const root = document.documentElement;
     root.style.setProperty('--be-full-filter', fullFilterStr);
+    root.style.setProperty('--be-decoration-filter', decorationFilterStr);
     root.style.setProperty('--be-hue-filter', containerFilterStr);
     root.style.setProperty('--be-inv-hue-filter', inverseContainerFilterStr);
 
@@ -3492,11 +3502,12 @@ function applyGlobalFilters(filters) {
     }
 
     style.textContent = `
-        /* Shape assets get full filters */
+        /* Shape assets and borders get decoration filters. 
+           Hue is inherited from the .print-section-container parent. */
         .print-shape-container,
         .be-shape-container,
         img.be-shape-asset {
-            filter: var(--be-full-filter) !important;
+            filter: var(--be-decoration-filter) !important;
         }
 
         /* Exclude text, fonts, icons, images by inverting the hue filter */
