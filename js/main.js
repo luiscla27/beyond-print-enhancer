@@ -3502,11 +3502,25 @@ function applyGlobalFilters(filters) {
     }
 
     style.textContent = `
-        /* Shape assets and borders get decoration filters. 
-           Hue is inherited from the .print-section-container parent. */
-        .print-shape-container,
+        /* Shape assets and borders get decoration filters when they are INSIDE a hue-rotated container.
+           Otherwise they need the full filter (including hue-rotate). */
+        
+        /* Default for standalone shapes (like those added with "Add Shape") */
         .be-shape-container,
         img.be-shape-asset {
+            filter: var(--be-full-filter) !important;
+        }
+
+        /* If nested inside a container that already has hue-rotate, only apply decoration filters */
+        .print-section-container .be-shape-container,
+        .print-section-container img.be-shape-asset,
+        .print-shape-container {
+            filter: var(--be-decoration-filter) !important;
+        }
+
+        /* Border pseudo-elements (the ::before of .print-section-container)
+           already inherit from the container, so they always use decoration-only. */
+        .print-section-container::before {
             filter: var(--be-decoration-filter) !important;
         }
 

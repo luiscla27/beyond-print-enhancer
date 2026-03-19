@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Hue Filter Color Mismatch:** Resolved a double-hue-rotation bug where borders and shapes were receiving cumulative hue filters (e.g., 114deg + 114deg = 228deg), causing colors to look different from the color picker preview.
-- **Global Filters Architecture:** Refactored `applyGlobalFilters` to separate hue rotation from other visual enhancements (contrast, saturate, etc.) using a new `--be-decoration-filter` CSS variable.
+- **Standalone Shapes Saturation:** Fixed an issue where shapes added via "Add Shape" (not nested in a character section) were missing saturation and hue filters.
+- **Global Filters Architecture:** Refactored `applyGlobalFilters` to separate hue rotation from other visual enhancements using a new `--be-decoration-filter` CSS variable, while correctly identifying nested vs. standalone assets.
 
 ## [1.4.0] - 2026-03-07
 

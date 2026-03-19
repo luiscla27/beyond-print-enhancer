@@ -77,4 +77,19 @@ describe('Hue Filtering Logic', function() {
     assert.ok(allStyles.includes('filter: var(--be-decoration-filter) !important'), 'Border/Shape rule should use decoration filter');
     assert.ok(!allStyles.includes('.print-section-container::before { filter: var(--be-full-filter)'), 'Border should NOT use full filter');
   });
+
+  it('should differentiate between standalone and nested shapes', function() {
+    window.applyGlobalFilters({ hue: 90, contrast: 100, greyscale: 0, saturate: 200, sepia: 0 });
+    
+    const style = document.getElementById('be-global-filters-style');
+    const css = style.textContent;
+    
+    // Standalone shapes should use full filter
+    assert.ok(css.includes('.be-shape-container,'), 'Should target be-shape-container');
+    assert.ok(css.includes('filter: var(--be-full-filter) !important'), 'Standalone shapes should use full filter');
+    
+    // Nested shapes should use decoration filter
+    assert.ok(css.includes('.print-section-container .be-shape-container'), 'Should target nested shapes');
+    assert.ok(css.includes('filter: var(--be-decoration-filter) !important'), 'Nested shapes should use decoration filter');
+  });
 });
