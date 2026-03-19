@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.**
+- [x] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.**
   *Link: [./tracks/archer_template_replication_20260318/](./tracks/archer_template_replication_20260318/)*
 
 
