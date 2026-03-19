@@ -16,13 +16,6 @@ describe('Filters UI', function() {
     });
     window = dom.window;
     document = window.document;
-
-    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
-    window.indexedDB = indexedDB;
-    window.IDBKeyRange = IDBKeyRange;
-    global.indexedDB = indexedDB;
-    global.IDBKeyRange = IDBKeyRange;
-    
     // Mock Storage
     window.Storage = {
         getFilters: () => Promise.resolve({
@@ -36,14 +29,19 @@ describe('Filters UI', function() {
         saveHueShift: () => Promise.resolve(),
         init: () => Promise.resolve()
     };
-    
-    window.__DDB_TEST_MODE__ = true;
     window.chrome = {
         runtime: {
             getURL: (path) => path
         }
     };
     
+
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
+    window.__DDB_TEST_MODE__ = true;
     window.eval(mainJsContent);
   });
 

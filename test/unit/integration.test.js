@@ -20,16 +20,15 @@ describe('Full Integration - Image Filters', function() {
     });
     window = dom.window;
     document = window.document;
+    window.chrome = { runtime: { getURL: (path) => path } };
     
+
     const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
     window.indexedDB = indexedDB;
     window.IDBKeyRange = IDBKeyRange;
     global.indexedDB = indexedDB;
     global.IDBKeyRange = IDBKeyRange;
-    
     window.__DDB_TEST_MODE__ = true;
-    window.chrome = { runtime: { getURL: (path) => path } };
-    
     window.eval(mainJsContent);
     Storage = window.Storage;
     await Storage.init();

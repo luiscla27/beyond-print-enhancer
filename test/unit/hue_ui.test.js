@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
@@ -15,6 +16,7 @@ describe('Hue UI', function() {
       runScripts: "dangerously"
     });
     window = dom.window;
+
     document = window.document;
     
     // Mock Storage since createControls might call it
@@ -25,8 +27,13 @@ describe('Hue UI', function() {
     };
     
     // Mock other things needed by main.js if any
+
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
-    
     window.eval(mainJsContent);
   });
 

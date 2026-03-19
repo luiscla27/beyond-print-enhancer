@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
@@ -15,8 +16,14 @@ describe('Hue Filtering Logic', function() {
       runScripts: "dangerously"
     });
     window = dom.window;
+
     document = window.document;
-    
+
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
     window.eval(mainJsContent);
   });

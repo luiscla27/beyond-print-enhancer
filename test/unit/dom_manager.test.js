@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
+require("fake-indexeddb/auto");
 // Since we are testing files that might not exist yet or are being created, 
 // we will assume their paths for now.
 // For now, I'll define the test and then create the files.
@@ -22,6 +23,11 @@ describe('DomManager & ElementWrapper', () => {
             <div id="hidden" style="display: none;">Hidden</div>
         </div>`);
         window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
         document = window.document;
         global.document = document;
         global.window = window;

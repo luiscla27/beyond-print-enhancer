@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 describe('Quick Info Box Extraction', () => {
     let window, document, domManager;
@@ -28,6 +29,11 @@ describe('Quick Info Box Extraction', () => {
             resources: "usable"
         });
         window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
         document = window.document;
         
         // Mock chrome

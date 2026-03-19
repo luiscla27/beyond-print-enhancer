@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
+require("fake-indexeddb/auto");
 
 describe('Scrollbar Removal Logic', function() {
   let window, document;
@@ -18,6 +19,11 @@ describe('Scrollbar Removal Logic', function() {
       </html>
     `);
     window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     document = window.document;
     global.window = window; // Expose for getComputedStyle
     global.document = document;

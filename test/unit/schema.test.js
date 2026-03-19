@@ -20,6 +20,7 @@ describe('Data Schema & Versioning', function() {
       runScripts: "dangerously"
     });
     window = dom.window;
+
     const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
     window.indexedDB = indexedDB;
     window.IDBKeyRange = IDBKeyRange;

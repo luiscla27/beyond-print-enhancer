@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
+require("fake-indexeddb/auto");
 // Mock Storage
 global.Storage = {
     init: async () => {},
@@ -27,6 +28,11 @@ describe('End-to-End Simulation', function() {
       </html>
     `, { url: "http://localhost/characters/12345" });
     window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     document = window.document;
     global.window = window;
     global.document = document;

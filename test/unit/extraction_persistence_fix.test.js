@@ -33,6 +33,7 @@ describe('Extraction Persistence Regression', function() {
     });
     window = dom.window;
     document = window.document;
+
     const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
     window.indexedDB = indexedDB;
     window.IDBKeyRange = IDBKeyRange;

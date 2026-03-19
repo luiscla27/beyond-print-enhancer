@@ -29,12 +29,6 @@ describe('Spell Detail Optimization', function() {
       });
       window = dom.window;
       document = window.document;
-      const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
-      window.indexedDB = indexedDB;
-      window.IDBKeyRange = IDBKeyRange;
-      global.indexedDB = indexedDB;
-      global.IDBKeyRange = IDBKeyRange;
-      window.__DDB_TEST_MODE__ = true;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
         observe() {}
@@ -42,6 +36,12 @@ describe('Spell Detail Optimization', function() {
         disconnect() {}
     };
 
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
+    window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
     window.eval(mainJsContent);

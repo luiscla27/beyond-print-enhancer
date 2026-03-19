@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 describe('Dynamic Layout Bounds', function() {
   let window, document;
@@ -24,6 +25,11 @@ describe('Dynamic Layout Bounds', function() {
       resources: "usable"
     });
     window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     document = window.document;
     
     // Mock window dimensions

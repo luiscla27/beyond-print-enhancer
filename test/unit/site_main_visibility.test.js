@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 describe('Site-Main Visibility Regression', function() {
     let dom, document, DomManager;
@@ -14,6 +15,11 @@ describe('Site-Main Visibility Regression', function() {
         document = dom.window.document;
         global.document = document;
         global.window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
         global.HTMLElement = dom.window.HTMLElement;
 
         // Load dependencies in correct order
