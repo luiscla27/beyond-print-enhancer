@@ -111,7 +111,7 @@ const ASSET_METADATA = {
         "className": "default-border"
     },
     "assets/border_goth1.webp": {
-        "slice": 252,
+        "slice": 250,
         "width": "111px",
         "outset": "54px 44px",
         "className": "goth_border"
@@ -129,13 +129,13 @@ const ASSET_METADATA = {
         "className": "spikes_border"
     },
     "assets/dwarf.webp": {
-        "slice": 155,
+        "slice": 206,
         "width": "205px",
         "outset": "55px",
         "className": "dwarf_border"
     },
     "assets/dwarf_hollow.webp": {
-        "slice": 108,
+        "slice": 206,
         "width": "143px",
         "outset": "38px",
         "className": "dwarf_hollow_border"
@@ -147,25 +147,25 @@ const ASSET_METADATA = {
         "className": "dwarf_hollow_hand_border"
     },
     "assets/ornament.webp": {
-        "slice": 67,
+        "slice": 105,
         "width": "88px",
         "outset": "32px",
         "className": "ornament_border"
     },
     "assets/ornament2.webp": {
-        "slice": 109,
+        "slice": 105,
         "width": "144px",
         "outset": "48px",
         "className": "ornament2_border"
     },
     "assets/ornament_bold.webp": {
-        "slice": 167,
+        "slice": 205,
         "width": "222px",
         "outset": "100px",
         "className": "ornament_bold_border"
     },
     "assets/ornament_bold2.webp": {
-        "slice": 106,
+        "slice": 205,
         "width": "141px",
         "outset": "50px",
         "className": "ornament_bold2_border"
@@ -243,19 +243,19 @@ const ASSET_METADATA = {
         "className": "spiky_bold_border"
     },
     "assets/spike_hollow.webp": {
-        "slice": 83,
+        "slice": 205,
         "width": "111px",
         "outset": "45px",
         "className": "spike_hollow_border"
     },
     "assets/spike_hollow2.webp": {
-        "slice": 525,
+        "slice": 205,
         "width": "100px",
         "outset": "45px",
         "className": "spiky_border"
     },
     "assets/sticks.webp": {
-        "slice": 110,
+        "slice": 245,
         "width": "146px",
         "outset": "65px",
         "className": "sticks_border"
@@ -267,7 +267,7 @@ const ASSET_METADATA = {
         "className": "vine_hand_border"
     },
     "assets/vine_hollow.webp": {
-        "slice": 215,
+        "slice": 205,
         "width": "130px",
         "outset": "45px",
         "className": "vine_border"
@@ -2385,7 +2385,7 @@ function enforceFullHeight() {
         .goth_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.webp')}');
             --border-img-width: 111px;
-            --border-img-slice: 1014;
+            --border-img-slice: 250;
             --border-img-outset: 50px 35px;
         }
         .plants_border {
@@ -2403,43 +2403,43 @@ function enforceFullHeight() {
         .dwarf_border {
             --border-img: url('${chrome.runtime.getURL('assets/dwarf.webp')}');
             --border-img-width: 205px;
-            --border-img-slice: 400;
+            --border-img-slice: 206;
             --border-img-outset: 173px;
         }
         .dwarf_hollow_border {
             --border-img: url('${chrome.runtime.getURL('assets/dwarf_hollow.webp')}');
             --border-img-width: 205px;
-            --border-img-slice: 400;
+            --border-img-slice: 206;
             --border-img-outset: 173px;
         }
         .sticks_border {
             --border-img: url('${chrome.runtime.getURL('assets/sticks.webp')}');
             --border-img-width: 90px;
-            --border-img-slice: 383;
+            --border-img-slice: 245;
             --border-img-outset: 22px;
         }
         .ornament_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament.webp')}');
             --border-img-width: 60px;
-            --border-img-slice: 255;
+            --border-img-slice: 105;
             --border-img-outset: 25px;
         }
         .ornament2_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament2.webp')}');
             --border-img-width: 60px;
-            --border-img-slice: 255;
+            --border-img-slice: 105;
             --border-img-outset: 25px;
         }
         .ornament_bold_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.webp')}');
             --border-img-width: 80px;
-            --border-img-slice: 335;
+            --border-img-slice: 205;
             --border-img-outset: 25px;
         }
         .ornament_bold2_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.webp')}');
             --border-img-width: 80px;
-            --border-img-slice: 333;
+            --border-img-slice: 205;
             --border-img-outset: 24px;
         }
         .ornament_simple_border {
@@ -2451,25 +2451,25 @@ function enforceFullHeight() {
         .spike_hollow_border {
             --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.webp')}');
             --border-img-width: 100px;
-            --border-img-slice: 388;
+            --border-img-slice: 205;
             --border-img-outset: 50px;
         }
         .spiky_border {
             --border-img: url('${chrome.runtime.getURL('assets/spike_hollow2.webp')}');
             --border-img-width: 100px;
-            --border-img-slice: 388;
+            --border-img-slice: 205;
             --border-img-outset: 60px;
         }
         .spiky_bold_border {
             --border-img: url('${chrome.runtime.getURL('assets/spike_bold.webp')}');
             --border-img-width: 120px;
-            --border-img-slice: 388;
+            --border-img-slice: 205;
             --border-img-outset: 69px;
         }
         .vine_border {
             --border-img: url('${chrome.runtime.getURL('assets/vine_hollow.webp')}');
             --border-img-width: 130px;
-            --border-img-slice: 429;
+            --border-img-slice: 205;
             --border-img-outset: 45px;
         }
 
