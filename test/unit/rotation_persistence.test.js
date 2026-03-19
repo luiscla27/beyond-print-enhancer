@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 describe('Rotation Persistence', function() {
     let window, document;
@@ -18,8 +19,11 @@ describe('Rotation Persistence', function() {
         global.HTMLElement = window.HTMLElement;
         global.Node = window.Node;
         global.CustomEvent = window.CustomEvent;
-        window.indexedDB = require('fake-indexeddb');
-        global.indexedDB = window.indexedDB;
+        const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+        window.indexedDB = indexedDB;
+        window.IDBKeyRange = IDBKeyRange;
+        global.indexedDB = indexedDB;
+        global.IDBKeyRange = IDBKeyRange;
 
         const elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
         const domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');

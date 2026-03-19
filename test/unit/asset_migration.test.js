@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
+require("fake-indexeddb/auto");
 
 describe('Asset Migration (.png to .gif)', function() {
     it('manifest.json should not have .png in web_accessible_resources for assets/', function() {
@@ -27,6 +28,11 @@ describe('Asset Migration (.png to .gif)', function() {
             resources: "usable"
         });
         const { window } = dom;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
         const { document } = window;
 
         // Mock chrome.runtime.getURL

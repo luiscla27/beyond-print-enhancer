@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-03-18
+
+### Fixed
+- **Hue Filter Color Mismatch:** Resolved a double-hue-rotation bug where borders and shapes were receiving cumulative hue filters (e.g., 114deg + 114deg = 228deg), causing colors to look different from the color picker preview.
+- **Standalone Shapes Saturation:** Fixed an issue where shapes added via \"Add Shape\" (not nested in a character section) were missing saturation and hue filters.
+- **Saturation Cap:** Reduced the maximum saturation from 250% (or 300% in sliders) to 200% for better visual consistency.
+- **Global Filters Architecture:** Refactored `applyGlobalFilters` to separate hue rotation from other visual enhancements using a new `--be-decoration-filter` CSS variable, while correctly identifying nested vs. standalone assets.
+
 ## [1.4.0] - 2026-03-07
 
 ### Added

@@ -20,6 +20,13 @@ describe('DOM Extraction Logic (Integration)', function() {
     window = dom.window;
     document = window.document;
     
+    // Fix IndexedDB initialization
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
+    
     // Mock chrome
     window.chrome = {
         runtime: {

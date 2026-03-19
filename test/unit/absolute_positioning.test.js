@@ -47,7 +47,6 @@ describe('Absolute Positioning Engine', function() {
     });
     
     window = dom.window;
-    window.indexedDB = global.indexedDB;
     document = window.document;
     global.window = window;
     global.document = document;
@@ -55,6 +54,12 @@ describe('Absolute Positioning Engine', function() {
     global.NodeList = window.NodeList;
     
     // We need to evaluate the scripts. 
+
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);

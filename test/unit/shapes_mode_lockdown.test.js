@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 describe('Shapes Mode Lockdown', function() {
     let window, document;
@@ -10,6 +11,11 @@ describe('Shapes Mode Lockdown', function() {
         const html = '<!DOCTYPE html><html><body class="some-page"><div id="print-layout-wrapper"></div></body></html>';
         const dom = new JSDOM(html, { url: 'https://www.dndbeyond.com/characters/1' });
         window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
         document = window.document;
         global.window = window;
         global.document = document;

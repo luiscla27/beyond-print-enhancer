@@ -3,6 +3,8 @@
  * Handles absolute positioning with grid snapping and custom ghost mirroring.
  */
 
+const safeLog = window.safeLog || ((method, ...args) => console[method](...args));
+
 let draggedItem = null;
 let customGhost = null;
 let dragOffsetX = 0;
@@ -14,7 +16,7 @@ let dragOffsetY = 0;
 function initDragAndDrop() {
   const container = document.getElementById('print-layout-wrapper');
   if (!container) {
-      console.log('[DDB Print] DnD Init Failed: container not found');
+      safeLog('log', '[DDB Print] DnD Init Failed: container not found');
       return;
   }
 
@@ -28,17 +30,17 @@ function initDragAndDrop() {
   container.addEventListener('drop', handleDrop);
   container.addEventListener('dragend', handleDragEnd);
   
-  console.log('[DDB Print] Drag and Drop Engine Initialized on:', container.id);
+  safeLog('log', '[DDB Print] Drag and Drop Engine Initialized on:', container.id);
 }
 
 function handleDragStart(e) {
   const target = e.target.closest('.be-section-wrapper');
   if (!target) {
-      console.log('[DDB Print] Drag Start ignored: no .be-section-wrapper found for target:', e.target);
+      safeLog('log', '[DDB Print] Drag Start ignored: no .be-section-wrapper found for target:', e.target);
       return;
   }
 
-  console.log('[DDB Print] Drag Start on:', target.id);
+  safeLog('log', '[DDB Print] Drag Start on:', target.id);
 
   draggedItem = target;
   e.dataTransfer.effectAllowed = 'move';
@@ -54,7 +56,7 @@ function handleDragStart(e) {
   dragOffsetX = e.clientX - rect.left;
   dragOffsetY = e.clientY - rect.top;
   
-  console.log('[DDB Print] Drag Offsets:', dragOffsetX, dragOffsetY);
+  safeLog('log', '[DDB Print] Drag Offsets:', dragOffsetX, dragOffsetY);
 
   // Create custom ghost that perfectly mirrors the source
   customGhost = target.cloneNode(true);
@@ -127,7 +129,7 @@ function handleDragLeave(e) {
 }
 
 function handleDrop(e) {
-  console.log('[DDB Print] Drop Event triggered');
+  safeLog('log', '[DDB Print] Drop Event triggered');
   if (e.preventDefault) {
     e.preventDefault();
   }
@@ -155,7 +157,7 @@ function handleDrop(e) {
     x = Math.round(x / 16) * 16;
     y = Math.round(y / 16) * 16;
 
-    console.log(`[DDB Print] Dropping at: ${x}, ${y} (scale: ${scale})`);
+    safeLog('log', `[DDB Print] Dropping at: ${x}, ${y} (scale: ${scale})`);
 
     draggedItem.style.setProperty('left', x + 'px', 'important');
     draggedItem.style.setProperty('top', y + 'px', 'important');
@@ -165,14 +167,14 @@ function handleDrop(e) {
         window.updateLayoutBounds();
     }
   } else {
-      console.log('[DDB Print] Drop failed: no draggedItem');
+      safeLog('log', '[DDB Print] Drop failed: no draggedItem');
   }
   
   return false;
 }
 
 function handleDragEnd(e) {
-  console.log('[DDB Print] Drag End');
+  safeLog('log', '[DDB Print] Drag End');
   if (draggedItem) {
     draggedItem.style.opacity = '1';
     draggedItem.classList.remove('dragging');

@@ -2,6 +2,7 @@ const assert = require('assert');
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
 const path = require('path');
+require("fake-indexeddb/auto");
 
 describe('Layout Stabilization', () => {
     let window, document;
@@ -13,6 +14,11 @@ describe('Layout Stabilization', () => {
             resources: "usable"
         });
         window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
         document = window.document;
         global.window = window;
         global.document = document;

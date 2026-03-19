@@ -3,9 +3,14 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-*(No active tracks)*
 
 ## Archived Tracks
+- [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
+  *Link: [./archive/hue_reset_fix_20260311/](./archive/hue_reset_fix_20260311/)*
+- [x] **Track: Image Filters Expansion (Contrast, Greyscale, Saturate, Sepia)** (Completed: 2026-03-11)
+  *Link: [./archive/image_filters_20260309/](./archive/image_filters_20260309/)*
+- [x] **Track: Color Picker (Global Hue Shift)** (Completed: 2026-03-09)
+  *Link: [./archive/color_picker_20260309/](./archive/color_picker_20260309/)*
 - [x] **Track: Shapes Mode Lockdown & Quick Switch** (Completed: 2026-03-07)
   *Link: [./archive/shape_lockdown_switch_20260307/](./archive/shape_lockdown_switch_20260307/)*
 - [x] **Track: Shapes Rotation, Migration & Asset Expansion** (Completed: 2026-03-07)

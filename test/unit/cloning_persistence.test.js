@@ -41,7 +41,6 @@ describe('Cloning Persistence', function() {
     global.window = window;
     global.document = document;
     global.HTMLElement = window.HTMLElement;
-    window.indexedDB = global.indexedDB;
     window.confirm = () => true;
     
     global.ResizeObserver = class ResizeObserver {
@@ -49,7 +48,12 @@ describe('Cloning Persistence', function() {
         unobserve() {}
         disconnect() {}
     };
-    
+
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);

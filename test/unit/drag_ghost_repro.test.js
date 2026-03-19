@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
+require("fake-indexeddb/auto");
 
 describe('Drag Ghost Reproduction', function() {
   let window, document;
@@ -18,6 +19,11 @@ describe('Drag Ghost Reproduction', function() {
       url: "http://localhost",
     });
     window = dom.window;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     document = window.document;
     global.window = window;
     global.document = document;
