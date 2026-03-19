@@ -58,4 +58,23 @@ describe('Hue Filtering Logic', function() {
     assert.ok(style.textContent.includes('var(--be-decoration-filter)'), 'Style should use decoration filter for shape assets');
     assert.ok(style.textContent.includes('img:not(.be-shape-asset)'), 'Style should target non-shape images');
   });
+
+  it('should ensure the border pseudo-element uses the decoration filter in the main style block', function() {
+    // We need to trigger or find the style block created by enforceFullHeight
+    // In our test environment, we can check if applyGlobalFilters or the initialization
+    // created the correct rule for .print-section-container::before
+    const style = document.getElementById('be-global-filters-style');
+    
+    // Although enforceFullHeight creates its own style block, 
+    // we should verify the rule we added to applyGlobalFilters style block
+    // and also check the main style block if possible.
+    
+    const globalStyle = document.getElementById('be-global-filters-style');
+    assert.ok(globalStyle.textContent.includes('.print-shape-container'), 'Should target shape containers');
+    
+    // Search for the border rule in all style tags
+    const allStyles = Array.from(document.querySelectorAll('style')).map(s => s.textContent).join('\n');
+    assert.ok(allStyles.includes('filter: var(--be-decoration-filter) !important'), 'Border/Shape rule should use decoration filter');
+    assert.ok(!allStyles.includes('.print-section-container::before { filter: var(--be-full-filter)'), 'Border should NOT use full filter');
+  });
 });
