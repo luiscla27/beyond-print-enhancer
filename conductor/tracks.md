@@ -3,6 +3,9 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
+- [ ] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.**
+  *Link: [./tracks/archer_template_replication_20260318/](./tracks/archer_template_replication_20260318/)*
+
 
 ## Archived Tracks
 - [x] **Track: Asset Compression & WebP Migration** (Completed: 2026-03-18)
