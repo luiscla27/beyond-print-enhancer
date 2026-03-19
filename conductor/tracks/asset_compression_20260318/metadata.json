@@ -1,0 +1,8 @@
+{
+  "id": "asset_compression_20260318",
+  "name": "Asset Compression & WebP Migration",
+  "description": "Resize high-resolution GIF assets and convert them to WebP to reduce package size from 14MB to <3MB.",
+  "status": "completed",
+  "created_at": "2026-03-18",
+  "updated_at": "2026-03-18"
+}

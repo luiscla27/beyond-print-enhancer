@@ -1,6 +1,6 @@
 {
   "name": "dndbeyond-print",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.3.0",
     "jsdom": "^28.0.0",
-    "mocha": "^11.7.5"
+    "mocha": "^11.7.5",
+    "sharp": "^0.34.5"
   }
 }

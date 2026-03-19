@@ -38,7 +38,7 @@ describe('Rotation Persistence', function() {
         // Ensure layoutRoot exists
         const layoutRoot = document.getElementById('print-layout-wrapper');
         
-        const shapeWrapper = window.createShape('assets/shapes/corner_spikes.gif');
+        const shapeWrapper = window.createShape('assets/shapes/corner_spikes.webp');
         shapeWrapper.dataset.rotation = '45';
         
         const layout = await window.scanLayout();
@@ -58,7 +58,7 @@ describe('Rotation Persistence', function() {
             shapes: [
                 {
                     id: 'restored-shape-id',
-                    assetPath: 'assets/shapes/corner_spikes.gif',
+                    assetPath: 'assets/shapes/corner_spikes.webp',
                     left: '100px',
                     top: '100px',
                     width: '50px',
