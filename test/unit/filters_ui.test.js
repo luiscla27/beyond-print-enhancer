@@ -154,33 +154,44 @@ describe('Filters UI', function() {
     }
   });
 
-  it('should have a Quick Hue Picker with 10 swatches', async function() {
+  it('should have a Color Picker button and a hidden 2D grid modal', async function() {
     let controls = document.getElementById('print-enhance-controls');
     if (!controls) {
         window.createControls();
         controls = document.getElementById('print-enhance-controls');
     }
     
-    // Find the hue picker container (it's a grid inside the hue slider row)
+    // Find the hue picker row
     const hueRow = Array.from(controls.querySelectorAll('div')).find(div => div.querySelector('label')?.textContent.includes('Hue Shift'));
-    const swatches = hueRow.querySelectorAll('div[title^="Set Hue to"]');
+    const colorPickerBtn = Array.from(hueRow.querySelectorAll('button')).find(btn => btn.textContent.includes('Color Picker'));
     
-    assert.strictEqual(swatches.length, 10, 'Should have 10 swatches');
+    assert.ok(colorPickerBtn, 'Should have a Color Picker button');
     
-    // Check if clicking a swatch updates the hue slider
+    // Check if the modal exists in the body
+    const huePicker = document.querySelector('div[style*="z-index: 20000"]');
+    assert.ok(huePicker, 'Hue picker modal should exist in the body');
+    assert.strictEqual(huePicker.style.display, 'none', 'Modal should be hidden by default');
+    
+    // Open picker
+    colorPickerBtn.click();
+    assert.strictEqual(huePicker.style.display, 'flex', 'Modal should be visible after click');
+    
+    // Should have 600 swatches (60 hues x 10 saturations)
+    const swatches = huePicker.querySelectorAll('div[title^="Hue:"]');
+    assert.strictEqual(swatches.length, 600, 'Should have 600 swatches in the 2D grid');
+    
+    // Clicking a swatch should update sliders
     const hueSlider = hueRow.querySelector('input[type="range"]');
-    const firstSwatch = swatches[0]; // 0 degrees
-    const middleSwatch = swatches[5]; // 180 degrees
+    const saturateRow = Array.from(controls.querySelectorAll('div')).find(div => div.querySelector('label')?.textContent.includes('Saturate'));
+    const saturateSlider = saturateRow.querySelector('input[type="range"]');
     
-    // Set to something else first
-    hueSlider.value = "90";
+    // Find a swatch for 180 degrees, 150% saturation (i=30, sat index=6)
+    // gridContainer is the first child of huePicker
+    const targetSwatch = Array.from(swatches).find(s => s.title === 'Hue: 180°, Sat: 150%');
+    assert.ok(targetSwatch, 'Should find the target swatch');
     
-    // Click 180 swatch
-    middleSwatch.click();
-    assert.strictEqual(hueSlider.value, "180", "Hue slider should update to 180 degrees");
-    
-    // Click 0 swatch
-    firstSwatch.click();
-    assert.strictEqual(hueSlider.value, "0", "Hue slider should update to 0 degrees");
+    targetSwatch.click();
+    assert.strictEqual(hueSlider.value, "180", "Hue slider should update to 180");
+    assert.strictEqual(saturateSlider.value, "150", "Saturate slider should update to 150");
   });
 });
