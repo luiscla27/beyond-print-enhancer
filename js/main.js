@@ -15,6 +15,17 @@ const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
 
 /**
+ * Helper for logging that can be silenced in tests.
+ */
+function safeLog(method, ...args) {
+    if (window.__DDB_TEST_MODE__) return;
+    if (console[method]) {
+        console[method](...args);
+    }
+}
+window.safeLog = safeLog;
+
+/**
  * Full list of available assets for the shape picker.
  */
 const ASSET_LIST = [
@@ -445,19 +456,19 @@ const Storage = {
 
         request.onblocked = () => {
           alert('Please close other tabs of D&D Beyond to allow the database to update.');
-          console.warn('[DDB Print Enhance] IndexedDB open blocked. Other tabs might be holding a connection.');
+          safeLog('warn', '[DDB Print Enhance] IndexedDB open blocked. Other tabs might be holding a connection.');
         };
 
         request.onerror = (event) => {
           const error = event.target.error;
-          console.error(`[DDB Print Enhance] IndexedDB error (${error?.name}): ${error?.message}`);
+          safeLog('error', `[DDB Print Enhance] IndexedDB error (${error?.name}): ${error?.message}`);
           Storage.initPromise = null; // Allow retry
           reject(error);
         };
 
         request.onupgradeneeded = (event) => {
           const upgradeDb = event.target.result;
-          console.log(`[DDB Print Enhance] Upgrading IndexedDB to version ${DB_VERSION}...`);
+          safeLog('log', `[DDB Print Enhance] Upgrading IndexedDB to version ${DB_VERSION}...`);
           if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
             upgradeDb.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
           }
@@ -473,13 +484,13 @@ const Storage = {
             db.close();
             db = null;
             Storage.initPromise = null;
-            console.warn('[DDB Print Enhance] Database version changed elsewhere. Connection closed.');
+            safeLog('warn', '[DDB Print Enhance] Database version changed elsewhere. Connection closed.');
           };
 
           resolve(db);
         };
       } catch (err) {
-        console.error('[DDB Print Enhance] Critical error opening IndexedDB:', err);
+        safeLog('error', '[DDB Print Enhance] Critical error opening IndexedDB:', err);
         Storage.initPromise = null;
         reject(err);
       }
@@ -669,12 +680,12 @@ function navToSection(name) {
   // For now, strict DomManager usage as per plan.
   
   if (target) {
-      console.log(`[DDB Print Enhance] Navigating to: ${name}`);
+      safeLog('log', `[DDB Print Enhance] Navigating to: ${name}`);
       target.click();
       return target;
   }
   
-  console.error(`[DDB Print Enhance] Could not find tab for section: ${name}`);
+  safeLog('error', `[DDB Print Enhance] Could not find tab for section: ${name}`);
   return null;
 }
 
@@ -835,7 +846,7 @@ async function extractAndWrapSections() {
     
     // If no tabs found, we can't extract dynamic sections.
     if (tabs.length === 0) {
-        console.warn('[DDB Print] No tabs found using DomManager selectors. Extraction aborted.');
+        safeLog('warn', '[DDB Print] No tabs found using DomManager selectors. Extraction aborted.');
         return [];
     }
 
@@ -892,7 +903,7 @@ async function extractAndWrapSections() {
                 // Fix: Skip Spells in the loop to avoid breaking iteration.
                 // Strict Check: Use data-testid="SPELLS" if available, or name fallback
                 if (section.name.includes('Spells') || section.title.includes('Spells') || section.testId === 'SPELLS') {
-                    console.log('[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
+                    safeLog('log', '[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
                     continue;
                 }
 
@@ -978,7 +989,7 @@ async function extractAndWrapSections() {
                     `section-${section.name.replace(/\s+/g, '_')}`
                 ));
             } else {
-                    console.warn(`[DDB Print] Content content not found for section: ${section.name}`);
+                    safeLog('warn', `[DDB Print] Content content not found for section: ${section.name}`);
             }
         }
     }
@@ -1087,7 +1098,7 @@ function injectSpellDetailTriggers(context = document) {
             if (window.createSpellDetailSection) {
                 window.createSpellDetailSection(spellName, coords);
             } else {
-                console.log(`[DDB Print] Details clicked for ${spellName} at`, coords);
+                safeLog('log', `[DDB Print] Details clicked for ${spellName} at`, coords);
             }
         };
 
@@ -1284,7 +1295,7 @@ function renderExtractedSection(snapshot) {
     }
 
     if (!original) {
-        console.warn(`[DDB Print] Could not resolve original for extraction: ${snapshot.title}`);
+        safeLog('warn', `[DDB Print] Could not resolve original for extraction: ${snapshot.title}`);
         return null;
     }
 
@@ -1716,7 +1727,9 @@ async function injectClonesIntoSpellsView() {
   }
 
   if (!spellsNode) {
-      console.error('[DDB Print] Could not find Live Spells Node! Aborting injection.');
+      if (!window.__DDB_TEST_MODE__) {
+          safeLog('error', '[DDB Print] Could not find Live Spells Node! Aborting injection.');
+      }
       return;
   }
 
@@ -1767,7 +1780,9 @@ async function injectClonesIntoSpellsView() {
   // We want to move everything to .ct-subsections
   const layoutRoot = document.querySelector(dom.selectors.CORE.SUBSECTIONS);
   if (!layoutRoot) {
-      console.warn('[DDB Print] Could not find .ct-subsections! Falling back to original parent.');
+      if (!window.__DDB_TEST_MODE__) {
+          safeLog('warn', '[DDB Print] Could not find .ct-subsections! Falling back to original parent.');
+      }
       return;
   }
   layoutRoot.id = 'print-layout-wrapper';
@@ -1898,9 +1913,11 @@ function movePortrait() {
         portrait.style.height = 'auto'; // Maintain aspect ratio
         
         target.appendChild(portrait);
-        console.log('[DDB Print] Moved character portrait.');
+        safeLog('log', '[DDB Print] Moved character portrait.');
     } else {
-        console.warn('[DDB Print] Could not find portrait or target to move.');
+        if (!window.__DDB_TEST_MODE__) {
+            safeLog('warn', '[DDB Print] Could not find portrait or target to move.');
+        }
     }
 }
 
@@ -1935,7 +1952,7 @@ function moveQuickInfo() {
  * Suppresses global resize events to stabilize custom layout.
  */
 function suppressResizeEvents() {
-    console.log('[DDB Print] Suppressing global resize events...');
+    safeLog('log', '[DDB Print] Suppressing global resize events...');
     
     // 1. Nullify window.onresize
     window.onresize = null;
@@ -1950,7 +1967,7 @@ function suppressResizeEvents() {
     const originalAddEventListener = window.addEventListener;
     window.addEventListener = function(type, listener, options) {
         if (type === 'resize') {
-            console.log('[DDB Print] Blocking external resize listener.');
+            safeLog('log', '[DDB Print] Blocking external resize listener.');
             return;
         }
         return originalAddEventListener.apply(this, arguments);
@@ -1974,7 +1991,7 @@ function separateAbilities() {
 
     if (!abilities.length || !layoutRoot) return;
 
-    console.log(`[DDB Print] Separating ${abilities.length} abilities...`);
+    safeLog('log', `[DDB Print] Separating ${abilities.length} abilities...`);
 
     const parentsToRemove = new Set();
 
@@ -2020,7 +2037,7 @@ function separateQuickInfoBoxes() {
 
     if (!boxes.length || !layoutRoot) return;
 
-    console.log(`[DDB Print] Separating ${boxes.length} quick-info boxes...`);
+    safeLog('log', `[DDB Print] Separating ${boxes.length} quick-info boxes...`);
 
     const parentsToRemove = new Set();
 
@@ -3762,16 +3779,16 @@ async function fetchSpellWithCache(spellName) {
         // 1. Check Cache
         const cached = await Storage.getSpell(spellName);
         if (cached) {
-            console.log(`[DDB Print] Cache Hit: ${spellName}`);
+            safeLog('log', `[DDB Print] Cache Hit: ${spellName}`);
             return cached;
         }
 
-        console.log(`[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`);
+        safeLog('log', `[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`);
 
         // 2. Fetch API on miss
         const charId = getCharacterId();
         if (!charId || charId === 'characters') {
-            console.error('[DDB Print] Could not determine character ID for spell fetch');
+            safeLog('error', '[DDB Print] Could not determine character ID for spell fetch');
             return null;
         }
 
@@ -3784,7 +3801,7 @@ async function fetchSpellWithCache(spellName) {
             return spells.find(s => s.name === spellName) || null;
         }
     } catch (err) {
-        console.error('[DDB Print] Error in fetchSpellWithCache', err);
+        safeLog('error', '[DDB Print] Error in fetchSpellWithCache', err);
     }
     return null;
 }
@@ -3841,7 +3858,7 @@ async function getCharacterSpells(charId) {
         }));
 
     } catch (err) {
-        console.error("Error fetching spells:", err);
+        safeLog('error', "Error fetching spells:", err);
     }
 }
 
@@ -4588,7 +4605,7 @@ function updateLayoutBounds() {
  * Creates the floating control panel.
  */
 function createControls() {
-    console.log('[DDB Print] createControls: building container...');
+    safeLog('log', '[DDB Print] createControls: building container...');
     const container = document.createElement('div');
     container.id = 'print-enhance-controls';
     container.style.position = 'fixed';
@@ -4661,14 +4678,14 @@ function createControls() {
         btn.onmouseleave = () => btn.style.backgroundColor = btnInfo.bgColor || '#333';
         
         const logEvent = (name, btnInfo) => {
-            console.log(`[DDB Print] Button ${name}: ${btnInfo.label}`);
+            safeLog('log', `[DDB Print] Button ${name}: ${btnInfo.label}`);
         };
 
         btn.addEventListener('mousedown', () => logEvent('Mousedown', btnInfo));
         btn.addEventListener('mouseup', () => logEvent('Mouseup', btnInfo));
         
         btn.addEventListener('click', async (e) => {
-            console.log(`[DDB Print] Button Clicked: ${btnInfo.label}`);
+            safeLog('log', `[DDB Print] Button Clicked: ${btnInfo.label}`);
             try {
                 if (typeof btnInfo.action === 'function') {
                     const result = btnInfo.action(e);
@@ -4676,10 +4693,10 @@ function createControls() {
                         await result;
                     }
                 } else {
-                    console.error(`[DDB Print] No valid action for ${btnInfo.label}`);
+                    safeLog('error', `[DDB Print] No valid action for ${btnInfo.label}`);
                 }
             } catch (err) {
-                console.error(`[DDB Print] Error executing ${btnInfo.label}:`, err);
+                safeLog('error', `[DDB Print] Error executing ${btnInfo.label}:`, err);
             }
         });
         
@@ -4972,7 +4989,7 @@ function createControls() {
                 }
             }
         } catch (err) {
-            console.error(`[DDB Print] Global Reset Error:`, err);
+            safeLog('error', `[DDB Print] Global Reset Error:`, err);
         }
     });
     
@@ -4999,7 +5016,7 @@ function createControls() {
 
     container.appendChild(filtersContainer);
 
-    console.log('[DDB Print] createControls: appending to body...');
+    safeLog('log', '[DDB Print] createControls: appending to body...');
     document.body.appendChild(container);
     
     // Verify visibility after a tiny delay
@@ -5007,12 +5024,12 @@ function createControls() {
         const el = document.getElementById('print-enhance-controls');
         if (el) {
             const style = window.getComputedStyle(el);
-            console.log(`[DDB Print] Controls verified. Display: ${style.display}, Visibility: ${style.visibility}, Opacity: ${style.opacity}`);
+            safeLog('log', `[DDB Print] Controls verified. Display: ${style.display}, Visibility: ${style.visibility}, Opacity: ${style.opacity}`);
             if (style.display === 'none') {
-                console.error('[DDB Print] CRITICAL: Controls are HIDDEN by CSS!');
+                safeLog('error', '[DDB Print] CRITICAL: Controls are HIDDEN by CSS!');
             }
         } else {
-            console.error('[DDB Print] CRITICAL: Controls container missing from DOM after append!');
+            safeLog('error', '[DDB Print] CRITICAL: Controls container missing from DOM after append!');
         }
     }, 500);
 
@@ -5154,24 +5171,24 @@ function handleManageCompact() {
  * Handles saving the layout to IndexedDB.
  */
 async function handleSaveBrowser() {
-    console.log('[DDB Print] handleSaveBrowser: starting...');
+    safeLog('log', '[DDB Print] handleSaveBrowser: starting...');
     try {
         await Storage.init();
         const layout = await scanLayout();
-        console.log('[DDB Print] handleSaveBrowser: layout captured');
+        safeLog('log', '[DDB Print] handleSaveBrowser: layout captured');
         await Storage.saveGlobalLayout(layout);
 
         // Also save for specific character for the "revert to character" feature later
         const characterId = getCharacterId();
         if (characterId) {
-            console.log('[DDB Print] handleSaveBrowser: saving for character:', characterId);
+            safeLog('log', '[DDB Print] handleSaveBrowser: saving for character:', characterId);
             await Storage.saveLayout(characterId, layout);
         }
 
-        console.log('[DDB Print] handleSaveBrowser: success');
+        safeLog('log', '[DDB Print] handleSaveBrowser: success');
         showFeedback('Saved to browser!');
     } catch (err) {
-        console.error('[DDB Print] Save failed', err);
+        safeLog('error', '[DDB Print] Save failed', err);
         alert('Failed to save layout to browser.');
     }
 }
@@ -5180,20 +5197,20 @@ async function handleSaveBrowser() {
  * Handles saving to PC.
  */
 async function handleSavePC() {
-    console.log('[DDB Print] handleSavePC: capturing layout...');
+    safeLog('log', '[DDB Print] handleSavePC: capturing layout...');
     const layout = await scanLayout();
     const data = JSON.stringify(layout, null, 2);
     const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
 
     try {
-        console.log('[DDB Print] handleSavePC: generating file...');
+        safeLog('log', '[DDB Print] handleSavePC: generating file...');
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         document.body.appendChild(a);
-        console.log('[DDB Print] handleSavePC: clicking link...');
+        safeLog('log', '[DDB Print] handleSavePC: clicking link...');
         a.click();
 
         setTimeout(() => {
@@ -5203,7 +5220,7 @@ async function handleSavePC() {
 
         showFeedback('Download started!');
     } catch (err) {
-        console.error('[DDB Print] Download failed, showing modal', err);
+        safeLog('error', '[DDB Print] Download failed, showing modal', err);
         showFallbackModal(data);
     }
 }
@@ -5211,7 +5228,7 @@ async function handleSavePC() {
  * Applies the hardcoded default layout.
  */
 function applyDefaultLayout() {
-    console.log('[DDB Print] Applying Default Layouts...');
+    safeLog('log', '[DDB Print] Applying Default Layouts...');
 
     // Remove all shapes that aren't part of defaults
     // Since defaults only contain standard sections, we can safely remove all current shapes.
@@ -5224,7 +5241,7 @@ function applyDefaultLayout() {
     for (const [id, styles] of Object.entries(DEFAULT_LAYOUTS)) {
         const section = document.getElementById(id);
         if (section) {
-            console.log(`[DDB Print] Applying defaults to ${id}`, styles);
+            safeLog('log', `[DDB Print] Applying defaults to ${id}`, styles);
             const wrapper = section.closest('.be-section-wrapper') || section;
             
             // Explicitly set properties to ensure they take effect
@@ -5250,7 +5267,9 @@ function applyDefaultLayout() {
                 // innerWidths handled separately or ignored here
             }
         } else {
-            console.warn(`[DDB Print] Default layout target not found: ${id}`);
+            if (!window.__DDB_TEST_MODE__) {
+                safeLog('warn', `[DDB Print] Default layout target not found: ${id}`);
+            }
         }
     }
     updateLayoutBounds();
@@ -5392,7 +5411,7 @@ async function handleLoadDefault() {
         updateLayoutBounds();
         showFeedback('Layout reset to defaults!');
     } catch (err) {
-        console.error('[DDB Print] Reset failed', err);
+        safeLog('error', '[DDB Print] Reset failed', err);
         alert('Failed to reset layout.');
     }
 }
@@ -5424,7 +5443,7 @@ function handleLoadFile() {
                     alert('Invalid layout file format.');
                 }
             } catch (err) {
-                console.error('[DDB Print] Load failed', err);
+                safeLog('error', '[DDB Print] Load failed', err);
                 alert('Failed to parse layout file.');
             }
         };
@@ -5454,12 +5473,12 @@ async function restoreLayout() {
         }
 
         if (layout && Storage.validateLayout(layout)) {
-            console.log('[DDB Print] Restoring saved layout...');
+            safeLog('log', '[DDB Print] Restoring saved layout...');
             await applyLayout(layout);
             return true;
         }
     } catch (err) {
-        console.error('[DDB Print] Restore failed', err);
+        safeLog('error', '[DDB Print] Restore failed', err);
     }
     return false;
 }
@@ -5600,7 +5619,7 @@ async function scanLayout() {
         await Storage.init();
         layout.spell_cache = await Storage.getAllSpells();
     } catch (err) {
-        console.error('[DDB Print] Could not scan spell cache', err);
+        safeLog('error', '[DDB Print] Could not scan spell cache', err);
     }
 
     // 1. Scan for standard sections and floating containers
@@ -5857,7 +5876,7 @@ async function applyLayout(layout) {
             await Storage.init();
             await Storage.saveSpells(layout.spell_cache);
         } catch (err) {
-            console.error('[DDB Print] Could not restore spell cache', err);
+            safeLog('error', '[DDB Print] Could not restore spell cache', err);
         }
     }
 
@@ -6034,13 +6053,13 @@ async function applyLayout(layout) {
 
                 // 5.3 Execute Merge
                 if (targetInfo && sourceContainer) {
-                    // console.log(`[DDB Print] Restoring merge: ${sourceContainer.id} -> ${targetInfo.name || targetInfo.id}`);
+                    // safeLog('log', `[DDB Print] Restoring merge: ${sourceContainer.id} -> ${targetInfo.name || targetInfo.id}`);
                     handleMergeSections(sourceContainer, targetInfo);
                 } else {
-                    console.warn('[DDB Print] Could not resolve merge target or source', merge.target, !!sourceContainer);
+                    safeLog('warn', '[DDB Print] Could not resolve merge target or source', merge.target, !!sourceContainer);
                 }
             } catch (err) {
-                console.error('[DDB Print] Failed to process merge', merge, err);
+                safeLog('error', '[DDB Print] Failed to process merge', merge, err);
             }
         }
     }
@@ -6085,7 +6104,7 @@ function drawPageSeparators(totalHeight, totalWidth) {
         scaleLabel = `${Math.round(scale * 100)}%`;
     }
 
-    console.log(`[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`);
+    safeLog('log', `[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`);
 
     let currentY = effectivePageHeight;
     let pageNum = 1;
@@ -6166,7 +6185,7 @@ function injectCloneButtons(context = document) {
             btn.innerHTML = icon;
             btn.title = title;
 
-            const log = (msg) => console.log(`[DDB Print] Section Button ${className} (${section.id}): ${msg}`);
+            const log = (msg) => safeLog('log', `[DDB Print] Section Button ${className} (${section.id}): ${msg}`);
 
             btn.addEventListener('mousedown', () => log('Mousedown'));
             btn.addEventListener('mouseup', () => log('Mouseup'));
@@ -6176,7 +6195,7 @@ function injectCloneButtons(context = document) {
                 try {
                     await action(e);
                 } catch (err) {
-                    console.error(`[DDB Print] Error in section button ${className}:`, err);
+                    safeLog('error', `[DDB Print] Error in section button ${className}:`, err);
                 }
             });
 
@@ -6526,7 +6545,7 @@ function injectCompactStyles() {
     try {
         await Storage.init();
     } catch (err) {
-        console.error('[DDB Print] Failed to initialize storage:', err);
+        safeLog('error', '[DDB Print] Failed to initialize storage:', err);
     }
 
     // Stabilize layout by suppressing global resize events
@@ -6559,7 +6578,7 @@ function injectCompactStyles() {
     initDragAndDrop();
     if (window.injectDnDStyles) {
         window.injectDnDStyles();
-        console.log('[DDB Print] DnD Styles Injected');
+        safeLog('log', '[DDB Print] DnD Styles Injected');
     }
     initResponsiveScaling();
     initZIndexManagement();
