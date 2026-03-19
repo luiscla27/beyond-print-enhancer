@@ -5213,9 +5213,11 @@ async function handleSavePC() {
 function applyDefaultLayout() {
     console.log('[DDB Print] Applying Default Layouts...');
 
-    // Remove all shapes and extractions that aren't part of defaults
-    // Since defaults only contain standard sections, we can safely remove all current shapes/extractions.
-    document.querySelectorAll('.be-shape-wrapper, .be-extracted-section').forEach(el => {
+    // Remove all shapes that aren't part of defaults
+    // Since defaults only contain standard sections, we can safely remove all current shapes.
+    // Extracted sections and spell details are handled by handleLoadDefault's rollback logic
+    // to ensure original elements are correctly restored in the DOM.
+    document.querySelectorAll('.be-shape-wrapper').forEach(el => {
         el.remove();
     });
 
