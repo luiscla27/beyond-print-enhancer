@@ -33,7 +33,11 @@ describe('Extraction Core & Lifecycle', function() {
     });
     window = dom.window;
     document = window.document;
-    window.indexedDB = global.indexedDB;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);

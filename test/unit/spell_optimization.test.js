@@ -29,10 +29,12 @@ describe('Spell Detail Optimization', function() {
       });
       window = dom.window;
       document = window.document;
-      const fakeIndexedDB = require('fake-indexeddb');
-      window.indexedDB = fakeIndexedDB;
-      global.indexedDB = fakeIndexedDB;
-      window.__DDB_TEST_MODE__ = true;    
+      const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+      window.indexedDB = indexedDB;
+      window.IDBKeyRange = IDBKeyRange;
+      global.indexedDB = indexedDB;
+      global.IDBKeyRange = IDBKeyRange;
+      window.__DDB_TEST_MODE__ = true;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
         observe() {}

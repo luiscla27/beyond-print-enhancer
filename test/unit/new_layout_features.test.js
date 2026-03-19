@@ -99,7 +99,12 @@ describe('Recent Layout Features', function() {
     window.scrollBy = () => {};
     HTMLElement.prototype.scrollIntoView = () => {};
     
-    window.indexedDB = global.indexedDB;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
+
     // We need to evaluate the script. 
     // Since main.js wraps itself in an IIFE, we can just execute it.
     // However, we want to test specific functions.

@@ -30,7 +30,11 @@ describe('UI - Spell Detail Section', function() {
     });
     window = dom.window;
     document = window.document;
-    window.indexedDB = global.indexedDB;
+    const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+    window.indexedDB = indexedDB;
+    window.IDBKeyRange = IDBKeyRange;
+    global.indexedDB = indexedDB;
+    global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
     
     // Mock chrome.runtime.sendMessage for MV3 background fetch

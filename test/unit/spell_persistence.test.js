@@ -21,9 +21,11 @@ describe('Spell Persistence in JSON', function() {
           runScripts: "dangerously"
         });
         window = dom.window;
-        const fakeIndexedDB = require('fake-indexeddb');
-        window.indexedDB = fakeIndexedDB;
-        global.indexedDB = fakeIndexedDB;
+        const { indexedDB, IDBKeyRange } = require('fake-indexeddb');
+        window.indexedDB = indexedDB;
+        window.IDBKeyRange = IDBKeyRange;
+        global.indexedDB = indexedDB;
+        global.IDBKeyRange = IDBKeyRange;
         window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
