@@ -159,6 +159,14 @@ class DomManager {
                 SUMMARY_SECONDARY: '.ddbc-ability-summary__secondary',
                 SUMMARY_LABEL: '.ddbc-ability-summary__label'
             },
+            TEMPLATE: {
+                MODAL: '.be-modal',
+                ITEM: '.be-catalog-item',
+                GRID: '.be-catalog-grid',
+                THUMBNAIL: '.be-catalog-thumbnail',
+                TITLE: '.be-catalog-title',
+                DESCRIPTION: '.be-catalog-description'
+            },
             // Extractables
             EXTRACTABLE: {
                 GROUP: '[class*="-group"]',

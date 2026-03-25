@@ -202,6 +202,15 @@ describe('DomManager & ElementWrapper', () => {
             });
         });
 
+        describe('Template Selectors', () => {
+            it('should have template catalog selectors', () => {
+                const manager = DomManager.getInstance();
+                assert.strictEqual(manager.selectors.TEMPLATE.MODAL, '.be-modal');
+                assert.strictEqual(manager.selectors.TEMPLATE.ITEM, '.be-catalog-item');
+                assert.strictEqual(manager.selectors.TEMPLATE.GRID, '.be-catalog-grid');
+            });
+        });
+
         describe('UI Selectors', () => {
             it('should have shape container selector', () => {
                 const manager = DomManager.getInstance();
