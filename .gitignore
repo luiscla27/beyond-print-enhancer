@@ -94,3 +94,4 @@ lerna-debug.log
 .DS_Store
 Thumbs.db
 /demo/ignored
+/nanobanana-output
