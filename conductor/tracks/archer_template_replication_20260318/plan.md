@@ -103,7 +103,7 @@
 - [x] Task: Implement logic to apply a template JSON to the current sheet state.
 - [x] Task: Add TDD tests for template application logic (mocking DOM state).
 - [x] Task: Update `DomManager` to support "Template" as a new state category. (8c1d3f5)
-- [ ] Task: Ensure template application doesn't conflict with existing manual edits.
+- [x] Task: Ensure template application doesn't conflict with existing manual edits. (60e7f12)
 - [ ] Task: Implement a "Preview" mode for templates if feasible.
 - [ ] Task: Add error handling for malformed template JSON files.
 - [x] Task: Conductor - User Manual Verification 'PREMADE Catalog Backend & JSON Infrastructure' (Protocol in workflow.md)

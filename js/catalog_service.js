@@ -32,6 +32,12 @@ const CatalogService = {
         const template = await this.loadTemplate(entry.path);
         if (!template) return false;
 
+        // Conflict check & confirmation
+        const hasExistingShapes = document.querySelectorAll('.be-shape').length > 0;
+        const msg = `Apply template "${template.name}"?\n\nThis will update border styles for several sections and add decorative shapes. Existing shapes may be replaced.`;
+        
+        if (!confirm(msg)) return false;
+
         console.log(`[DDB Print] Applying template: ${template.name}`);
 
         // 1. Apply Borders
@@ -42,13 +48,12 @@ const CatalogService = {
                 
                 if (section) {
                     const wrapper = section.closest('.be-section-wrapper') || section;
-                    if (config.left) wrapper.style.left = config.left;
-                    if (config.top) wrapper.style.top = config.top;
-                    if (config.width) section.style.width = config.width;
-                    if (config.height) section.style.height = config.height;
+                    if (config.left) wrapper.style.setProperty('left', config.left, 'important');
+                    if (config.top) wrapper.style.setProperty('top', config.top, 'important');
+                    if (config.width) section.style.setProperty('width', config.width, 'important');
+                    if (config.height) section.style.setProperty('height', config.height, 'important');
                     
                     if (config.borderStyle) {
-                        // Ensure the class name is correct
                         if (typeof clearBorderStyles === 'function') {
                             clearBorderStyles(section);
                         }
@@ -61,8 +66,18 @@ const CatalogService = {
         // 2. Apply Shapes
         if (template.data.shapes) {
             template.data.shapes.forEach(shape => {
+                // Prevent duplicates by checking ID
+                if (shape.id) {
+                    const existing = document.getElementById(shape.id);
+                    if (existing) {
+                        const wrapper = existing.closest('.be-section-wrapper') || existing;
+                        wrapper.remove();
+                    }
+                }
+
                 if (typeof createShape === 'function') {
                     createShape(shape.assetPath, {
+                        id: shape.id,
                         left: shape.left,
                         top: shape.top,
                         width: shape.width,
