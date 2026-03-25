@@ -1,0 +1,85 @@
+{
+  "id": "archer",
+  "name": "Archer Template",
+  "description": "A high-fidelity thematic template inspired by rangers and archers. Features hand-drawn red braided rope borders (#e40712) and ornate etched ink flourishes.",
+  "thumbnail": "assets/thumbnails/archer.webp",
+  "data": {
+    "version": "1.4.0",
+    "sections": {
+      "section-Section-1": {
+        "borderStyle": "archer_header_border"
+      },
+      "section-Ability-STR": {
+        "borderStyle": "archer_ability_border"
+      },
+      "section-Ability-DEX": {
+        "borderStyle": "archer_ability_border"
+      },
+      "section-Ability-CON": {
+        "borderStyle": "archer_ability_border"
+      },
+      "section-Ability-INT": {
+        "borderStyle": "archer_ability_border"
+      },
+      "section-Ability-WIS": {
+        "borderStyle": "archer_ability_border"
+      },
+      "section-Ability-CHA": {
+        "borderStyle": "archer_ability_border"
+      },
+      "section-Box-Armor-Class": {
+        "borderStyle": "archer_stats_border"
+      },
+      "section-Box-Initiative": {
+        "borderStyle": "archer_stats_border"
+      },
+      "section-Box-Speed": {
+        "borderStyle": "archer_stats_border"
+      },
+      "section-Inventory": {
+        "borderStyle": "archer_footer_border"
+      },
+      "section-Skills": {
+        "borderStyle": "archer_sidebar_border"
+      }
+    },
+    "shapes": [
+      {
+        "id": "shape-archer-icon",
+        "assetPath": "assets/shapes/archer_main.webp",
+        "left": "20px",
+        "top": "20px",
+        "width": "150px",
+        "height": "150px",
+        "rotation": 0
+      },
+      {
+        "id": "shape-corner-1",
+        "assetPath": "assets/shapes/archer_corner.webp",
+        "left": "0px",
+        "top": "0px",
+        "width": "100px",
+        "height": "100px",
+        "rotation": 0
+      },
+      {
+        "id": "shape-divider-1",
+        "assetPath": "assets/shapes/archer_divider.webp",
+        "left": "400px",
+        "top": "350px",
+        "width": "300px",
+        "height": "30px",
+        "rotation": 0
+      },
+      {
+        "id": "shape-accent-a",
+        "assetPath": "assets/shapes/archer_accent_a.webp",
+        "left": "500px",
+        "top": "150px",
+        "width": "60px",
+        "height": "60px",
+        "rotation": 0
+      }
+    ]
+  }
+}

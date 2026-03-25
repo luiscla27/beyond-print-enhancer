@@ -1,0 +1,11 @@
+{
+  "templates": [
+    {
+      "id": "archer",
+      "name": "Archer Template",
+      "description": "A thematic template inspired by rangers and archers, featuring braided ropes, leather accents, and ornate flourishes.",
+      "thumbnail": "assets/thumbnails/archer.webp",
+      "path": "assets/templates/archer_template.json"
+    }
+  ]
+}

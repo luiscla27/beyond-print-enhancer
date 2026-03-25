@@ -3,6 +3,11 @@ Licensed under Blue Oak Model License 1.0.0
 */
 
 (function () {
+    if (window.__DDB_PRINT_ENHANCE_INITIALIZED__) {
+        safeLog('log', '[DDB Print Enhance] Already initialized.');
+        return;
+    }
+    window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
 
 /**
  * Storage management for D&D Beyond Print Enhancer.
@@ -30,6 +35,11 @@ window.safeLog = safeLog;
  */
 const ASSET_LIST = [
     "assets/border_ability.webp",
+    "assets/border_archer_ability.webp",
+    "assets/border_archer_footer.webp",
+    "assets/border_archer_header.webp",
+    "assets/border_archer_sidebar.webp",
+    "assets/border_archer_stats.webp",
     "assets/border_barbarian.webp",
     "assets/border_barbarian_hand.webp",
     "assets/border_box.webp",
@@ -45,6 +55,11 @@ const ASSET_LIST = [
     "assets/ornament_bold.webp",
     "assets/ornament_bold2.webp",
     "assets/ornament_simple.webp",
+    "assets/shapes/archer_accent_a.webp",
+    "assets/shapes/archer_accent_b.webp",
+    "assets/shapes/archer_corner.webp",
+    "assets/shapes/archer_divider.webp",
+    "assets/shapes/archer_main.webp",
     "assets/shapes/border_spikes_hand.webp",
     "assets/shapes/corner_barbarian.webp",
     "assets/shapes/corner_border_barbarian_hand.webp",
@@ -865,25 +880,41 @@ const Storage = {
  */
 function navToSection(name) {
   const dom = window.DomManager.getInstance();
-  const tabs = dom.selectors.CORE.TAB_BUTTON ? 
+  const tabs = dom.selectors.CORE.TAB_BUTTON ?
                Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON)) : [];
-  
-  let target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
-  
-  // Minimal fallback: if not found in specific class, look in all buttons if allowed by user rules (removing brittle logic implies usage of DomManager primarily)
-  // But to be safe if 'tabButton' class changes, we might want to check generic buttons? 
-  // For now, strict DomManager usage as per plan.
-  
+
+  // Try matching by data-testid first (very reliable)
+  const testIdMap = {
+      'Actions': 'ACTIONS',
+      'Spells': 'SPELLS',
+      'Inventory': 'EQUIPMENT',
+      'Equipment': 'EQUIPMENT',
+      'Features & Traits': 'FEATURES_TRAITS',
+      'Background': 'DESCRIPTION',
+      'Notes': 'NOTES',
+      'Extras': 'EXTRAS'
+  };
+
+  let target = null;
+  const testId = testIdMap[name];
+  if (testId) {
+      target = tabs.find(tab => tab.getAttribute('data-testid') === testId);
+  }
+
+  // Fallback to text content
+  if (!target) {
+      target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
+  }
+
   if (target) {
       safeLog('log', `[DDB Print Enhance] Navigating to: ${name}`);
       target.click();
       return target;
   }
-  
+
   safeLog('error', `[DDB Print Enhance] Could not find tab for section: ${name}`);
   return null;
 }
-
 /**
  * Helper to identify the base selector for an element
  */
@@ -2471,6 +2502,36 @@ function enforceFullHeight() {
             --border-img-width: 130px;
             --border-img-slice: 205;
             --border-img-outset: 45px;
+        }
+        .archer_header_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_header.webp')}');
+            --border-img-width: 40px;
+            --border-img-slice: 50;
+            --border-img-outset: 10px;
+        }
+        .archer_ability_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_ability.webp')}');
+            --border-img-width: 40px;
+            --border-img-slice: 50;
+            --border-img-outset: 10px;
+        }
+        .archer_stats_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_stats.webp')}');
+            --border-img-width: 40px;
+            --border-img-slice: 50;
+            --border-img-outset: 10px;
+        }
+        .archer_footer_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_footer.webp')}');
+            --border-img-width: 40px;
+            --border-img-slice: 50;
+            --border-img-outset: 10px;
+        }
+        .archer_sidebar_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_sidebar.webp')}');
+            --border-img-width: 40px;
+            --border-img-slice: 50;
+            --border-img-outset: 10px;
         }
 
         .ct-quick-info__box,
@@ -4826,6 +4887,7 @@ function createControls() {
     });
 
     const buttons = [
+        { label: 'PREMADE', icon: '🌟', action: () => showPremadeCatalogModal() },
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
@@ -6793,9 +6855,11 @@ function injectCompactStyles() {
     // Default to Shapes Mode OFF
     toggleShapesMode(false);
 
-    // Export for testing
+    // Export for testing and cross-script access
     window.createShape = createShape;
     window.toggleShapesMode = toggleShapesMode;
     window.applyShapeAsset = applyShapeAsset;
+    window.clearBorderStyles = clearBorderStyles;
+    window.showFeedback = showFeedback;
 })();
 })();

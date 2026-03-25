@@ -12,7 +12,8 @@ global.chrome = {
 
 // Mock fetch
 global.fetch = async (url) => {
-    if (url === 'catalog.json') {
+    // catalog_service.js uses chrome.runtime.getURL which we mocked to return the path as is
+    if (url === 'catalog.json' || url.endsWith('/catalog.json')) {
         return {
             ok: true,
             json: async () => ({
@@ -22,7 +23,7 @@ global.fetch = async (url) => {
             })
         };
     }
-    if (url === 'assets/templates/archer_template.json') {
+    if (url === 'assets/templates/archer_template.json' || url.endsWith('/archer_template.json')) {
         return {
             ok: true,
             json: async () => ({
@@ -38,6 +39,12 @@ global.fetch = async (url) => {
             })
         };
     }
+    if (url === 'malformed.json' || url.endsWith('/malformed.json')) {
+        return { ok: true, json: async () => ({ name: 'Bad' }) };
+    }
+    if (url === 'empty.json' || url.endsWith('/empty.json')) {
+        return { ok: true, json: async () => ({ name: 'Empty', data: {} }) };
+    }
     return { ok: false };
 };
 
@@ -45,8 +52,12 @@ describe('Catalog Service', function() {
     let CatalogService;
 
     before(function() {
-        // Load the service. Since it's a content script with 'const', 
-        // we might need to eval it or wrap it to test in Node.
+        const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+        global.document = dom.window.document;
+        global.window = dom.window;
+        global.HTMLElement = dom.window.HTMLElement;
+
+        // Load the service.
         const code = fs.readFileSync(path.join(__dirname, '../../js/catalog_service.js'), 'utf8');
         // Simple way to get the object out for testing
         const wrappedCode = code + '\nmodule.exports = { CatalogService };';
@@ -81,6 +92,7 @@ describe('Catalog Service', function() {
             global.clearBorderStyles = (el) => { el.className = ''; };
             global.createShape = () => {};
             global.updateLayoutBounds = () => {};
+            global.alert = () => {};
         });
 
         it('should apply border styles to matching sections', async function() {

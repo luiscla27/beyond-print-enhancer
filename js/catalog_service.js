@@ -244,12 +244,24 @@ async function showPremadeCatalogModal() {
                 applyBtn.style.backgroundColor = '#e40712';
                 applyBtn.style.color = 'white';
                 applyBtn.onclick = async () => {
-                    const success = await CatalogService.applyTemplate(template.id);
-                    if (success) {
-                        if (typeof showFeedback === 'function') showFeedback(`Template applied: ${template.name}`);
-                        previewOverlay.remove();
-                        overlay.remove();
-                        resolve(true);
+                    const originalText = applyBtn.textContent;
+                    applyBtn.textContent = 'Applying...';
+                    applyBtn.disabled = true;
+                    
+                    try {
+                        const success = await CatalogService.applyTemplate(template.id);
+                        if (success) {
+                            if (typeof showFeedback === 'function') showFeedback(`Template applied: ${template.name}`);
+                            previewOverlay.remove();
+                            overlay.remove();
+                            resolve(true);
+                        }
+                    } catch (err) {
+                        console.error('[DDB Print] Error applying template:', err);
+                        alert('An error occurred while applying the template.');
+                    } finally {
+                        applyBtn.textContent = originalText;
+                        applyBtn.disabled = false;
                     }
                 };
                 btnGroup.appendChild(applyBtn);
@@ -284,3 +296,7 @@ async function showPremadeCatalogModal() {
         document.body.appendChild(overlay);
     });
 }
+
+// Export to window for access from main.js
+window.CatalogService = CatalogService;
+window.showPremadeCatalogModal = showPremadeCatalogModal;

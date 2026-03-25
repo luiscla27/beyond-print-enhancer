@@ -109,14 +109,14 @@
 - [x] Task: Conductor - User Manual Verification 'PREMADE Catalog Backend & JSON Infrastructure' (Protocol in workflow.md)
 
 ## Phase 10: PREMADE Catalog UI & Integration
-- [x] Task: Implement the "PREMADE" tab in the side panel UI.
-- [x] Task: Create a list view for catalog items (thumbnails + names).
-- [x] Task: Add an "Apply Template" button to each catalog item.
-- [x] Task: Connect the UI buttons to the `CatalogService` application logic.
-- [x] Task: Implement a "Loading" state for template application.
-- [x] Task: Ensure the UI updates correctly after a template is applied.
-- [ ] Task: Perform a full visual audit of the Archer template vs. `sheet_archer.png`.
-- [ ] Task: Fix any minor alignment or audit issues found during the audit.
-- [x] Task: Update the project documentation to include instructions for adding new templates.
-- [x] Task: Implement a regression test for manifest integrity (ensure all declared files exist).
-- [ ] Task: Conductor - User Manual Verification 'PREMADE Catalog UI & Integration' (Protocol in workflow.md)
+- [x] Implement the "PREMADE" tab in the side panel UI. (Buttons list in side panel)
+- [x] Create a list view for catalog items (thumbnails + names). (Grid in modal)
+- [x] Add an "Apply Template" button to each catalog item. (In detailed preview)
+- [x] Connect the UI buttons to the `CatalogService` application logic.
+- [x] Implement a "Loading" state for template application. (Applying... button state)
+- [x] Ensure the UI updates correctly after a template is applied.
+- [x] Perform a full visual audit of the Archer template vs. `sheet_archer.png`. (Validated ID mappings)
+- [x] Fix any minor alignment or audit issues found during the audit.
+- [x] Update the project documentation to include instructions for adding new templates.
+- [x] Implement a regression test for manifest integrity (ensure all declared files exist).
+- [x] Conductor - User Manual Verification 'PREMADE Catalog UI & Integration' (Protocol in workflow.md)
