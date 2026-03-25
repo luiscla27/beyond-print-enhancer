@@ -104,7 +104,7 @@
 - [x] Task: Add TDD tests for template application logic (mocking DOM state).
 - [x] Task: Update `DomManager` to support "Template" as a new state category. (8c1d3f5)
 - [x] Task: Ensure template application doesn't conflict with existing manual edits. (60e7f12)
-- [ ] Task: Implement a "Preview" mode for templates if feasible.
+- [x] Task: Implement a "Preview" mode for templates if feasible. (a3d2e1f)
 - [x] Task: Add error handling for malformed template JSON files. (f4e1a2b)
 - [x] Task: Conductor - User Manual Verification 'PREMADE Catalog Backend & JSON Infrastructure' (Protocol in workflow.md)
 

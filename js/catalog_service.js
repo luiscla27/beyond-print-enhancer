@@ -196,15 +196,73 @@ async function showPremadeCatalogModal() {
             };
 
             item.onclick = async () => {
-                item.style.borderColor = '#e40712';
-                const success = await CatalogService.applyTemplate(template.id);
-                if (success) {
-                    if (typeof showFeedback === 'function') showFeedback(`Template applied: ${template.name}`);
-                    overlay.remove();
-                    resolve(true);
-                } else {
-                    alert('Failed to apply template.');
-                }
+                const details = await CatalogService.loadTemplate(template.path);
+                if (!details) return;
+
+                // Show detailed preview modal
+                const previewOverlay = document.createElement('div');
+                previewOverlay.className = 'be-modal-overlay';
+                previewOverlay.style.zIndex = '31000';
+                
+                const previewModal = document.createElement('div');
+                previewModal.className = cls(selectors.MODAL);
+                previewModal.style.width = '400px';
+
+                const pTitle = document.createElement('h3');
+                pTitle.textContent = template.name;
+                previewModal.appendChild(pTitle);
+
+                const pImg = document.createElement('img');
+                pImg.src = chrome.runtime.getURL(template.thumbnail);
+                pImg.style.width = '100%';
+                pImg.style.borderRadius = '4px';
+                pImg.style.marginBottom = '10px';
+                previewModal.appendChild(pImg);
+
+                const pDesc = document.createElement('p');
+                pDesc.textContent = template.description || '';
+                pDesc.style.fontSize = '13px';
+                previewModal.appendChild(pDesc);
+
+                const stats = document.createElement('div');
+                stats.style.fontSize = '12px';
+                stats.style.color = '#aaa';
+                stats.style.marginBottom = '20px';
+                const sectionCount = Object.keys(details.data.sections || {}).length;
+                const shapeCount = (details.data.shapes || []).length;
+                stats.innerHTML = `Includes: <b>${sectionCount}</b> Borders, <b>${shapeCount}</b> Shapes`;
+                previewModal.appendChild(stats);
+
+                const btnGroup = document.createElement('div');
+                btnGroup.style.display = 'flex';
+                btnGroup.style.gap = '10px';
+                btnGroup.style.justifyContent = 'flex-end';
+
+                const applyBtn = document.createElement('button');
+                applyBtn.textContent = 'Apply Template';
+                applyBtn.className = 'be-robust-button'; // Assuming this exists or using standard be-modal-cancel style
+                applyBtn.style.backgroundColor = '#e40712';
+                applyBtn.style.color = 'white';
+                applyBtn.onclick = async () => {
+                    const success = await CatalogService.applyTemplate(template.id);
+                    if (success) {
+                        if (typeof showFeedback === 'function') showFeedback(`Template applied: ${template.name}`);
+                        previewOverlay.remove();
+                        overlay.remove();
+                        resolve(true);
+                    }
+                };
+                btnGroup.appendChild(applyBtn);
+
+                const closePBtn = document.createElement('button');
+                closePBtn.textContent = 'Back';
+                closePBtn.className = 'be-modal-cancel';
+                closePBtn.onclick = () => previewOverlay.remove();
+                btnGroup.appendChild(closePBtn);
+
+                previewModal.appendChild(btnGroup);
+                previewOverlay.appendChild(previewModal);
+                document.body.appendChild(previewOverlay);
             };
 
             grid.appendChild(item);
