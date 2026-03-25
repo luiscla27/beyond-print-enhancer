@@ -7,9 +7,9 @@ This file tracks all major development tracks for the project.
 
 ## Archived Tracks
 - [x] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.** (Completed: 2026-03-24)
-  *Link: [./tracks/archer_template_replication_20260318/](./tracks/archer_template_replication_20260318/)*
+  *Link: [./archive/archer_template_replication_20260318/](./archive/archer_template_replication_20260318/)*
 - [x] **Track: Asset Compression & WebP Migration** (Completed: 2026-03-18)
-  *Link: [./tracks/asset_compression_20260318/](./tracks/asset_compression_20260318/)*
+  *Link: [./archive/asset_compression_20260318/](./archive/asset_compression_20260318/)*
 - [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
   *Link: [./archive/hue_reset_fix_20260311/](./archive/hue_reset_fix_20260311/)*
 - [x] **Track: Image Filters Expansion (Contrast, Greyscale, Saturate, Sepia)** (Completed: 2026-03-11)
