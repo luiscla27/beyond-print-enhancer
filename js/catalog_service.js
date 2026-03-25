@@ -17,7 +17,13 @@ const CatalogService = {
         try {
             const response = await fetch(chrome.runtime.getURL(path));
             if (!response.ok) throw new Error(`Failed to load template: ${path}`);
-            return await response.json();
+            const template = await response.json();
+            
+            // Basic validation
+            if (!template || !template.data) {
+                throw new Error('Invalid template format: missing data property');
+            }
+            return template;
         } catch (err) {
             console.error(`[DDB Print] Error loading template at ${path}:`, err);
             return null;
@@ -27,10 +33,22 @@ const CatalogService = {
     async applyTemplate(templateId) {
         const catalog = await this.loadCatalog();
         const entry = catalog.templates.find(t => t.id === templateId);
-        if (!entry) return false;
+        if (!entry) {
+            console.error(`[DDB Print] Template ${templateId} not found in catalog.`);
+            return false;
+        }
 
         const template = await this.loadTemplate(entry.path);
-        if (!template) return false;
+        if (!template) {
+            alert('Failed to load template data. It may be malformed.');
+            return false;
+        }
+
+        // Deep validation
+        if (!template.data.sections && !template.data.shapes) {
+            console.error('[DDB Print] Template has no sections or shapes to apply.');
+            return false;
+        }
 
         // Conflict check & confirmation
         const hasExistingShapes = document.querySelectorAll('.be-shape').length > 0;

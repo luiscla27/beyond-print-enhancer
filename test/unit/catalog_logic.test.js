@@ -121,5 +121,42 @@ describe('Catalog Service', function() {
             const success = await CatalogService.applyTemplate('unknown');
             assert.strictEqual(success, false);
         });
+
+        it('should handle malformed template JSON (missing data)', async function() {
+            // Mock fetch to return malformed JSON
+            const oldFetch = global.fetch;
+            global.fetch = async (url) => {
+                if (url === 'malformed.json') {
+                    return { ok: true, json: async () => ({ name: 'Bad' }) }; // Missing 'data'
+                }
+                return oldFetch(url);
+            };
+
+            const template = await CatalogService.loadTemplate('malformed.json');
+            assert.strictEqual(template, null);
+            global.fetch = oldFetch;
+        });
+
+        it('should handle template with no sections or shapes', async function() {
+            const oldFetch = global.fetch;
+            global.fetch = async (url) => {
+                if (url === 'empty.json') {
+                    return { ok: true, json: async () => ({ name: 'Empty', data: {} }) };
+                }
+                return oldFetch(url);
+            };
+            
+            // We need to add 'empty' to the catalog first
+            const oldLoadCatalog = CatalogService.loadCatalog;
+            CatalogService.loadCatalog = async () => ({
+                templates: [{ id: 'empty', path: 'empty.json' }]
+            });
+
+            const success = await CatalogService.applyTemplate('empty');
+            assert.strictEqual(success, false);
+
+            CatalogService.loadCatalog = oldLoadCatalog;
+            global.fetch = oldFetch;
+        });
     });
 });
