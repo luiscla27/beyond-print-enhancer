@@ -12,7 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Performance Optimization:** Downscaled high-resolution decorative assets to a maximum of 512px for better loading performance without sacrificing visual quality.
 - **Metadata Update:** Recalculated all `border-image-slice` values to maintain pixel-perfect borders after image resizing.
 
-## [1.4.1] - 2026-03-18
+- **Asset Management:** Synchronized `ASSET_METADATA` with the `assets/shapes/` directory, adding missing Archer-themed assets (`archer_accent_a`, `archer_accent_b`, `archer_corner`, `archer_divider`, `archer_main`).
+- **Scanning Workflow:** Updated `compress-large-images.md` and `GEMINI.md` with explicit instructions to maintain `ASSET_METADATA` synchronization for shape assets during scanning operations.
+
+## [1.4.1] - 2026-03-24
 
 ### Fixed
 - **Hue Filter Color Mismatch:** Resolved a double-hue-rotation bug where borders and shapes were receiving cumulative hue filters (e.g., 114deg + 114deg = 228deg), causing colors to look different from the color picker preview.

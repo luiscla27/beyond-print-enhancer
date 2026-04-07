@@ -9,3 +9,7 @@
 - Follow the guidelines in `conductor/workflow.md`.
 - Keep the implementation plan (`plan.md`) updated.
 - Maintain tests for all new features and bug fixes.
+
+## Asset Management
+- **Shapes Synchronization:** When scanning or adding new assets to the `assets/shapes/` directory, ensure they are added to the `ASSET_METADATA` constant in `js/main.js` with `"isBackground": true`.
+- **Large Assets:** Follow the instructions in `compress-large-images.md` for any asset larger than 150KB.

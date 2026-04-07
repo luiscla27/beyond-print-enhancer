@@ -107,6 +107,30 @@ const ASSET_METADATA = {
         "outset": "55px",
         "className": "barbarian_border"
     },
+    "assets/border_archer_header.webp": {
+        "slice": "481 470 202 475",
+        "width": "172px 208px 81px 194px",
+        "outset": "10px",
+        "className": "archer_header_border"
+    },
+    "assets/border_archer_ability.webp": {
+        "slice": "167 174 79 178",
+        "width": "201px 245px 116px 242px",
+        "outset": "10px",
+        "className": "archer_ability_border"
+    },
+    "assets/border_archer_footer.webp": {
+        "slice": "61 60 61 83",
+        "width": "35px 32px 36px 44px",
+        "outset": "10px",
+        "className": "archer_border_archer_footer"
+    },
+    "assets/border_archer_sidebar.webp": {
+        "slice": "61 60 61 83",
+        "width": "35px 32px 36px 44px",
+        "outset": "10px",
+        "className": "archer_border_archer_sidebar"
+    },
     "assets/border_barbarian_hand.webp": {
         "slice": 261,
         "width": "100px",
@@ -142,6 +166,12 @@ const ASSET_METADATA = {
         "width": "118px",
         "outset": "55px",
         "className": "spikes_border"
+    },
+    "assets/border_archer_stats.webp": {
+        "slice": 206,
+        "width": "205px",
+        "outset": "55px",
+        "className": "archer_stats_border"
     },
     "assets/dwarf.webp": {
         "slice": 206,
@@ -190,6 +220,21 @@ const ASSET_METADATA = {
         "width": "111px",
         "outset": "45px",
         "className": "ornament_simple_border"
+    },
+    "assets/shapes/archer_accent_a.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_accent_b.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_corner.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_divider.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_main.webp": {
+        "isBackground": true
     },
     "assets/shapes/border_spikes_hand.webp": {
         "isBackground": true
@@ -2409,9 +2454,9 @@ function enforceFullHeight() {
         }
         .barbarian_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.webp')}');
-            --border-img-width: 208px;
-            --border-img-slice: 311;
-            --border-img-outset: 61px;
+            --border-img-width: 88px;
+            --border-img-slice: 146;
+            --border-img-outset: 71px;
         }
         .goth_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.webp')}');
@@ -2505,32 +2550,32 @@ function enforceFullHeight() {
         }
         .archer_header_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_archer_header.webp')}');
-            --border-img-width: 40px;
-            --border-img-slice: 50;
+            --border-img-width: 172px 208px 81px 194px;
+            --border-img-slice: 481 470 202 475;
             --border-img-outset: 10px;
         }
         .archer_ability_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_archer_ability.webp')}');
-            --border-img-width: 40px;
-            --border-img-slice: 50;
+            --border-img-width: 201px 245px 116px 242px;
+            --border-img-slice: 167 174 79 178;
             --border-img-outset: 10px;
         }
         .archer_stats_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_archer_stats.webp')}');
-            --border-img-width: 40px;
-            --border-img-slice: 50;
+            --border-img-width: 255px;
+            --border-img-slice: 55;
             --border-img-outset: 10px;
         }
-        .archer_footer_border {
+        .archer_border_archer_footer {
             --border-img: url('${chrome.runtime.getURL('assets/border_archer_footer.webp')}');
-            --border-img-width: 40px;
-            --border-img-slice: 50;
+            --border-img-width: 35px 32px 36px 44px;
+            --border-img-slice: 61 60 61 83;
             --border-img-outset: 10px;
         }
         .archer_sidebar_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_archer_sidebar.webp')}');
-            --border-img-width: 40px;
-            --border-img-slice: 50;
+            --border-img-width: 35px 32px 36px 44px;
+            --border-img-slice: 61 60 61 83;
             --border-img-outset: 10px;
         }
 
