@@ -20,6 +20,11 @@ const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
 
 /**
+ * Feature Flags
+ */
+const ENABLE_PREMADE_TEMPLATES = false; // Set to true to show 'PREMADE' button
+
+/**
  * Helper for logging that can be silenced in tests.
  */
 function safeLog(method, ...args) {
@@ -4932,7 +4937,7 @@ function createControls() {
     });
 
     const buttons = [
-        { label: 'PREMADE', icon: '🌟', action: () => showPremadeCatalogModal() },
+        ...(ENABLE_PREMADE_TEMPLATES ? [{ label: 'PREMADE', icon: '🌟', action: () => showPremadeCatalogModal() }] : []),
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },

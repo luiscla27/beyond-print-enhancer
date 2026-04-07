@@ -9,6 +9,7 @@
 - Follow the guidelines in `conductor/workflow.md`.
 - Keep the implementation plan (`plan.md`) updated.
 - Maintain tests for all new features and bug fixes.
+- **Commit Safety:** ALWAYS run all `mocha` tests and ensure they pass before performing any `git commit`. Never commit broken code.
 
 ## Asset Management
 - **Shapes Synchronization:** When scanning or adding new assets to the `assets/shapes/` directory, ensure they are added to the `ASSET_METADATA` constant in `js/main.js` with `"isBackground": true`.
