@@ -19,10 +19,21 @@ const CatalogService = {
             if (!response.ok) throw new Error(`Failed to load template: ${path}`);
             const template = await response.json();
             
-            // Basic validation
-            if (!template || !template.data) {
-                throw new Error('Invalid template format: missing data property');
+            if (!template) return null;
+
+            // Compatibility: If template is a flat layout (no .data), wrap it
+            if (!template.data) {
+                // If it's already a layout (has sections or shapes), wrap it
+                if (template.sections || template.shapes) {
+                    return {
+                        name: template.name || 'Custom Template',
+                        version: template.version || '1.0.0',
+                        data: template
+                    };
+                }
+                throw new Error('Invalid template format: missing sections or shapes');
             }
+
             return template;
         } catch (err) {
             console.error(`[DDB Print] Error loading template at ${path}:`, err);
