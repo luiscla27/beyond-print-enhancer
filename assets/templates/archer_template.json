@@ -1,484 +1,409 @@
 {
   "version": "1.4.0",
-  "sections": {
-    "section-Section-1": {
-      "left": "16px",
-      "top": "160px",
-      "width": "224px",
-      "height": "144px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Section-2": {
-      "left": "16px",
-      "top": "576px",
-      "width": "224px",
-      "height": "192px",
-      "zIndex": "103",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Section-3": {
-      "left": "16px",
-      "top": "352px",
-      "width": "224px",
-      "height": "176px",
-      "zIndex": "95",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Section-4": {
-      "left": "272px",
-      "top": "208px",
-      "width": "176px",
-      "height": "560px",
-      "zIndex": "190",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "no-border",
-      "innerWidths": {}
-    },
-    "section-Section-5": {
-      "left": "576px",
-      "top": "384px",
-      "width": "592px",
-      "height": "96px",
-      "zIndex": "180",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "no-border",
-      "innerWidths": {
-        "0-0": "592px"
+  "name": "Archer Template",
+  "data": {
+    "sections": {
+      "section-Section-1": {
+        "left": "16px",
+        "top": "160px",
+        "width": "224px",
+        "height": "144px",
+        "zIndex": "10",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Section-2": {
+        "left": "16px",
+        "top": "576px",
+        "width": "224px",
+        "height": "192px",
+        "zIndex": "103",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Section-3": {
+        "left": "16px",
+        "top": "352px",
+        "width": "224px",
+        "height": "176px",
+        "zIndex": "95",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Section-4": {
+        "left": "272px",
+        "top": "208px",
+        "width": "176px",
+        "height": "560px",
+        "zIndex": "190",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "no-border",
+        "innerWidths": {}
+      },
+      "section-Section-5": {
+        "left": "576px",
+        "top": "384px",
+        "width": "592px",
+        "height": "96px",
+        "zIndex": "180",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "no-border",
+        "innerWidths": {
+          "0-0": "592px"
+        }
+      },
+      "section-Section-6": {
+        "left": "512px",
+        "top": "144px",
+        "width": "160px",
+        "height": "192px",
+        "zIndex": "183",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "spikes_border",
+        "innerWidths": {}
+      },
+      "section-Actions": {
+        "left": "528px",
+        "top": "496px",
+        "width": "640px",
+        "height": "1376px",
+        "zIndex": "176",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "no-border",
+        "innerWidths": {
+          "0-0": "640px"
+        }
+      },
+      "section-Spells": {
+        "left": "512px",
+        "top": "1904px",
+        "width": "672px",
+        "height": "832px",
+        "zIndex": "181",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Inventory": {
+        "left": "512px",
+        "top": "3712px",
+        "width": "672px",
+        "height": "1920px",
+        "zIndex": "10",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Features_&_Traits": {
+        "left": "16px",
+        "top": "1712px",
+        "width": "448px",
+        "height": "1952px",
+        "zIndex": "10",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Background": {
+        "left": "512px",
+        "top": "2592px",
+        "width": "672px",
+        "height": "1072px",
+        "zIndex": "10",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Notes": {
+        "left": "16px",
+        "top": "816px",
+        "width": "448px",
+        "height": "896px",
+        "zIndex": "188",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Extras": {
+        "left": "16px",
+        "top": "3712px",
+        "width": "448px",
+        "height": "1920px",
+        "zIndex": "10",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": null,
+        "innerWidths": {}
+      },
+      "section-Quick-Info": {
+        "left": "880px",
+        "top": "272px",
+        "width": "272px",
+        "height": "128px",
+        "zIndex": "76",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "no-border",
+        "innerWidths": {}
+      },
+      "section-Ability-Ability 1": {
+        "left": "1024px",
+        "top": "32px",
+        "width": "80px",
+        "height": "96px",
+        "zIndex": "149",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "ability_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Ability-Ability 2": {
+        "left": "832px",
+        "top": "32px",
+        "width": "80px",
+        "height": "96px",
+        "zIndex": "153",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "ability_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Ability-Ability 3": {
+        "left": "928px",
+        "top": "32px",
+        "width": "80px",
+        "height": "96px",
+        "zIndex": "154",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "ability_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Ability-Ability 4": {
+        "left": "112px",
+        "top": "32px",
+        "width": "80px",
+        "height": "96px",
+        "zIndex": "139",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "ability_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Ability-Ability 5": {
+        "left": "208px",
+        "top": "32px",
+        "width": "80px",
+        "height": "96px",
+        "zIndex": "140",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "ability_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Ability-Ability 6": {
+        "left": "304px",
+        "top": "32px",
+        "width": "80px",
+        "height": "96px",
+        "zIndex": "141",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "ability_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Box-Box-1": {
+        "left": "704px",
+        "top": "32px",
+        "width": "96px",
+        "height": "96px",
+        "zIndex": "155",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "box_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Box-Box-2": {
+        "left": "400px",
+        "top": "32px",
+        "width": "96px",
+        "height": "96px",
+        "zIndex": "159",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "box_border",
+        "innerWidths": {
+          "0-0": "100%"
+        }
+      },
+      "section-Quick-Info-Health": {
+        "left": "816px",
+        "top": "176px",
+        "width": "368px",
+        "height": "96px",
+        "zIndex": "169",
+        "minimized": false,
+        "compact": false,
+        "borderStyle": "box_border",
+        "innerWidths": {}
       }
     },
-    "section-Section-6": {
-      "left": "512px",
-      "top": "144px",
-      "width": "160px",
-      "height": "192px",
-      "zIndex": "183",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "spikes_border",
-      "innerWidths": {}
-    },
-    "section-Actions": {
-      "left": "528px",
-      "top": "496px",
-      "width": "640px",
-      "height": "1376px",
-      "zIndex": "176",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "no-border",
-      "innerWidths": {
-        "0-0": "640px"
+    "clones": [],
+    "extractions": [],
+    "shapes": [
+      {
+        "id": "shape-1775534681132",
+        "assetPath": "assets/shapes/archer_main.webp",
+        "left": "160px",
+        "top": "32px",
+        "width": "544px",
+        "height": "144px",
+        "zIndex": "251",
+        "rotation": "45",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775534998043",
+        "assetPath": "assets/shapes/shield_stats.webp",
+        "left": "416px",
+        "top": "16px",
+        "width": "368px",
+        "height": "432px",
+        "zIndex": "303",
+        "rotation": "0",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775537500001",
+        "assetPath": "assets/shapes/archer_main.webp",
+        "left": "176px",
+        "top": "160px",
+        "width": "544px",
+        "height": "144px",
+        "zIndex": "254",
+        "rotation": "45",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775537500002",
+        "assetPath": "assets/shapes/archer_main.webp",
+        "left": "480px",
+        "top": "16px",
+        "width": "544px",
+        "height": "144px",
+        "zIndex": "258",
+        "rotation": "315",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775537500003",
+        "assetPath": "assets/shapes/archer_main.webp",
+        "left": "496px",
+        "top": "144px",
+        "width": "544px",
+        "height": "144px",
+        "zIndex": "264",
+        "rotation": "315",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775535051726",
+        "assetPath": "assets/border_archer_ability.webp",
+        "left": "256px",
+        "top": "160px",
+        "width": "240px",
+        "height": "624px",
+        "zIndex": "301",
+        "rotation": "0",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775535101067",
+        "assetPath": "assets/border_archer_header.webp",
+        "left": "0px",
+        "top": "0px",
+        "width": "1200px",
+        "height": "160px",
+        "zIndex": "276",
+        "rotation": "0",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775535128227",
+        "assetPath": "assets/border_archer_footer.webp",
+        "left": "480px",
+        "top": "352px",
+        "width": "720px",
+        "height": "1552px",
+        "zIndex": "294",
+        "rotation": "0",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775535162371",
+        "assetPath": "assets/shapes/archer_accent_a.webp",
+        "left": "128px",
+        "top": "272px",
+        "width": "200px",
+        "height": "200px",
+        "zIndex": "289",
+        "rotation": "0",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775535172878",
+        "assetPath": "assets/shapes/archer_accent_b.webp",
+        "left": "784px",
+        "top": "224px",
+        "width": "200px",
+        "height": "200px",
+        "zIndex": "296",
+        "rotation": "0",
+        "minimized": false
+      },
+      {
+        "id": "shape-1775537500004",
+        "assetPath": "assets/shapes/archer_accent_b.webp",
+        "left": "896px",
+        "top": "224px",
+        "width": "200px",
+        "height": "200px",
+        "zIndex": "297",
+        "rotation": "0",
+        "minimized": false
       }
-    },
-    "section-Spells": {
-      "left": "512px",
-      "top": "1904px",
-      "width": "672px",
-      "height": "832px",
-      "zIndex": "181",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Inventory": {
-      "left": "512px",
-      "top": "3712px",
-      "width": "672px",
-      "height": "1920px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Features_&_Traits": {
-      "left": "16px",
-      "top": "1712px",
-      "width": "448px",
-      "height": "1952px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Background": {
-      "left": "512px",
-      "top": "2592px",
-      "width": "672px",
-      "height": "1072px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Notes": {
-      "left": "16px",
-      "top": "816px",
-      "width": "448px",
-      "height": "896px",
-      "zIndex": "188",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Extras": {
-      "left": "16px",
-      "top": "3712px",
-      "width": "448px",
-      "height": "1920px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Quick-Info": {
-      "left": "880px",
-      "top": "272px",
-      "width": "272px",
-      "height": "128px",
-      "zIndex": "76",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "no-border",
-      "innerWidths": {}
-    },
-    "section-Ability-Ability 1": {
-      "left": "1024px",
-      "top": "32px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "149",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 2": {
-      "left": "832px",
-      "top": "32px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "153",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 3": {
-      "left": "928px",
-      "top": "32px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "154",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 4": {
-      "left": "112px",
-      "top": "32px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "139",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 5": {
-      "left": "208px",
-      "top": "32px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "140",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 6": {
-      "left": "304px",
-      "top": "32px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "141",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Box-Box-1": {
-      "left": "704px",
-      "top": "32px",
-      "width": "96px",
-      "height": "96px",
-      "zIndex": "155",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "box_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Box-Box-2": {
-      "left": "400px",
-      "top": "32px",
-      "width": "96px",
-      "height": "96px",
-      "zIndex": "159",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "box_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Quick-Info-Health": {
-      "left": "816px",
-      "top": "176px",
-      "width": "368px",
-      "height": "96px",
-      "zIndex": "169",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "box_border",
-      "innerWidths": {}
-    }
-  },
-  "clones": [],
-  "extractions": [],
-  "shapes": [
-    {
-      "id": "shape-1775534681132",
-      "assetPath": "assets/shapes/archer_main.webp",
-      "left": "160px",
-      "top": "32px",
-      "width": "544px",
-      "height": "144px",
-      "zIndex": "251",
-      "rotation": "45",
-      "minimized": false
-    },
-    {
-      "id": "shape-1775534998043",
-      "assetPath": "assets/shapes/shield_stats.webp",
-      "left": "416px",
-      "top": "16px",
-      "width": "368px",
-      "height": "432px",
-      "zIndex": "303",
-      "rotation": "0",
-      "minimized": false
-    },
-    {
-      "id": "undefined",
-      "assetPath": "assets/shapes/archer_main.webp",
-      "left": "176px",
-      "top": "160px",
-      "width": "544px",
-      "height": "144px",
-      "zIndex": "254",
-      "rotation": "45",
-      "minimized": false
-    },
-    {
-      "id": "undefined",
-      "assetPath": "assets/shapes/archer_main.webp",
-      "left": "480px",
-      "top": "16px",
-      "width": "544px",
-      "height": "144px",
-      "zIndex": "258",
-      "rotation": "315",
-      "minimized": false
-    },
-    {
-      "id": "undefined",
-      "assetPath": "assets/shapes/archer_main.webp",
-      "left": "496px",
-      "top": "144px",
-      "width": "544px",
-      "height": "144px",
-      "zIndex": "264",
-      "rotation": "315",
-      "minimized": false
-    },
-    {
-      "id": "shape-1775535051726",
-      "assetPath": "assets/border_archer_ability.webp",
-      "left": "256px",
-      "top": "160px",
-      "width": "240px",
-      "height": "624px",
-      "zIndex": "301",
-      "rotation": "0",
-      "minimized": false
-    },
-    {
-      "id": "shape-1775535101067",
-      "assetPath": "assets/border_archer_header.webp",
-      "left": "0px",
-      "top": "0px",
-      "width": "1200px",
-      "height": "160px",
-      "zIndex": "276",
-      "rotation": "0",
-      "minimized": false
-    },
-    {
-      "id": "shape-1775535128227",
-      "assetPath": "assets/border_archer_footer.webp",
-      "left": "480px",
-      "top": "352px",
-      "width": "720px",
-      "height": "1552px",
-      "zIndex": "294",
-      "rotation": "0",
-      "minimized": false
-    },
-    {
-      "id": "shape-1775535162371",
-      "assetPath": "assets/shapes/archer_accent_a.webp",
-      "left": "128px",
-      "top": "272px",
-      "width": "200px",
-      "height": "200px",
-      "zIndex": "289",
-      "rotation": "0",
-      "minimized": false
-    },
-    {
-      "id": "shape-1775535172878",
-      "assetPath": "assets/shapes/archer_accent_b.webp",
-      "left": "784px",
-      "top": "224px",
-      "width": "200px",
-      "height": "200px",
-      "zIndex": "296",
-      "rotation": "0",
-      "minimized": false
-    },
-    {
-      "id": "undefined",
-      "assetPath": "assets/shapes/archer_accent_b.webp",
-      "left": "896px",
-      "top": "224px",
-      "width": "200px",
-      "height": "200px",
-      "zIndex": "297",
-      "rotation": "0",
-      "minimized": false
-    }
-  ],
-  "spell_details": [],
-  "merges": [],
-  "spell_cache": [
-    {
-      "name": "Augury",
-      "level": 2,
-      "description": "By casting gem-inlaid sticks, rolling dragon bones, laying out ornate cards, or employing some other divining tool, you receive an omen from an otherworldly entity about the results of a specific course of action that you plan to take within the next 30 minutes. The DM chooses from the following possible omens:\r\n\r\nWeal, for good results\r\nWoe, for bad results\r\nWeal and woe, for both good and bad results\r\nNothing, for results that aren't especially good or bad\r\n\r\nThe spell doesn't take into account any possible circumstances that might change the outcome, such as the casting of additional spells or the loss or gain of a companion.\r\nIf you cast the spell two or more times before completing your next long rest, there is a cumulative 25 percent chance for each casting after the first that you get a random reading. The DM makes this roll in secret.",
-      "range": " Self",
-      "school": "Divination"
-    },
-    {
-      "name": "Call Lightning",
-      "level": 3,
-      "description": "A storm cloud appears at a point within range that you can see above yourself. It takes the shape of a Cylinder that is 10 feet tall with a 60-foot radius.\r\nWhen you cast the spell, choose a point you can see under the cloud. A lightning bolt shoots from the cloud to that point. Each creature within 5 feet of that point makes a Dexterity saving throw, taking 3d10 Lightning damage on a failed save or half as much damage on a successful one.\r\nUntil the spell ends, you can take a Magic action to call down lightning in that way again, targeting the same point or a different one.\r\nIf you’re outdoors in a storm when you cast this spell, the spell gives you control over that storm instead of creating a new one. Under such conditions, the spell’s damage increases by 1d10.\r\nUsing a Higher-Level Spell Slot. The damage increases by 1d10 for each spell slot level above 3.",
-      "range": "120 Ranged",
-      "school": "Conjuration"
-    },
-    {
-      "name": "Concealed Shot",
-      "level": 0,
-      "description": "A Ranged weapon you touch is made supernaturally subtle. For the duration, when you make a ranged attack using the weapon, the weapon or ammunition you’re using becomes invisible while in flight and the weapon becomes silent. If the weapon produces smoke or light, the spell suppresses these effects. The weapon or projectile you’re using becomes visible again after the attack hits or misses. If you are hidden and the target is 80 feet or further from you, the attack doesn’t reveal your location.",
-      "range": " Touch",
-      "school": "Illusion"
-    },
-    {
-      "name": "Detect Magic",
-      "level": 1,
-      "description": "For the duration, you sense the presence of magic within 30 feet of you. If you sense magic in this way, you can use your action to see a faint aura around any visible creature or object in the area that bears magic, and you learn its school of magic, if any.\r\nThe spell can penetrate most barriers, but it is blocked by 1 foot of stone, 1 inch of common metal, a thin sheet of lead, or 3 feet of wood or dirt.",
-      "range": " Self",
-      "school": "Divination"
-    },
-    {
-      "name": "Fog Cloud",
-      "level": 1,
-      "description": "You create a 20-foot-radius sphere of fog centered on a point within range. The sphere spreads around corners, and its area is heavily obscured. It lasts for the duration or until a wind of moderate or greater speed (at least 10 miles per hour) disperses it.\r\nAt Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, the radius of the fog increases by 20 feet for each slot level above 1st.",
-      "range": "120 Ranged",
-      "school": "Conjuration"
-    },
-    {
-      "name": "Guidance",
-      "level": 0,
-      "description": "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one ability check of its choice. It can roll the die before or after making the ability check. The spell then ends.",
-      "range": " Touch",
-      "school": "Divination"
-    },
-    {
-      "name": "Guiding Bolt",
-      "level": 1,
-      "description": "A flash of light streaks toward a creature of your choice within range. Make a ranged spell attack against the target. On a hit, the target takes 4d6 radiant damage, and the next attack roll made against this target before the end of your next turn has advantage, thanks to the mystical dim light glittering on the target until then.\r\nAt Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st.",
-      "range": "120 Ranged",
-      "school": "Evocation"
-    },
-    {
-      "name": "Heat Metal",
-      "level": 2,
-      "description": "Choose a manufactured metal object, such as a metal weapon or a suit of heavy or medium metal armor, that you can see within range. You cause the object to glow red-hot. Any creature in physical contact with the object takes 2d8 fire damage when you cast the spell. Until the spell ends, you can use a bonus action on each of your subsequent turns to cause this damage again.\r\nIf a creature is holding or wearing the object and takes the damage from it, the creature must succeed on a Constitution saving throw or drop the object if it can. If it doesn’t drop the object, it has disadvantage on attack rolls and ability checks until the start of your next turn.\r\nAt Higher Levels. When you cast this spell using a spell slot of 3rd level or higher, the damage increases by 1d8 for each slot level above 2nd.",
-      "range": "60 Ranged",
-      "school": "Transmutation"
-    },
-    {
-      "name": "Locate Object",
-      "level": 2,
-      "description": "Describe or name an object that is familiar to you. You sense the direction to the object's location, as long as that object is within 1,000 feet of you. If the object is in motion, you know the direction of its movement.\r\nThe spell can locate a specific object known to you, as long as you have seen it up close--within 30 feet--at least once. Alternatively, the spell can locate the nearest object of a particular kind, such as a certain kind of apparel, jewelry, furniture, tool, or weapon.\r\nThis spell can't locate an object if any thickness of lead, even a thin sheet, blocks a direct path between you and the object.",
-      "range": " Self",
-      "school": "Divination"
-    },
-    {
-      "name": "Longstrider",
-      "level": 1,
-      "description": "You touch a creature. The target’s speed increases by 10 feet until the spell ends.\r\nAt Higher Levels. When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st.",
-      "range": " Touch",
-      "school": "Transmutation"
-    },
-    {
-      "name": "Mold Earth",
-      "level": 0,
-      "description": "You choose a portion of dirt or stone that you can see within range and that fits within a 5-foot cube. You manipulate it in one of the following ways:\r\n\r\n\r\nIf you target an area of loose earth, you can instantaneously excavate it, move it along the ground, and deposit it up to 5 feet away. This movement doesn’t have enough force to cause damage.\r\n\r\n\r\nYou cause shapes, colors, or both to appear on the dirt or stone, spelling out words, creating images, or shaping patterns. The changes last for 1 hour.\r\n\r\n\r\nIf the dirt or stone you target is on the ground, you cause it to become difficult terrain. Alternatively, you can cause the ground to become normal terrain if it is already difficult terrain. This change lasts for 1 hour.\r\n\r\n\r\nIf you cast this spell multiple times, you can have no more than two of its non-instantaneous effects active at a time, and you can dismiss such an effect as an action.",
-      "range": "30 Ranged",
-      "school": "Transmutation"
-    }
-  ]
+    ],
+    "spell_details": [],
+    "merges": [],
+    "spell_cache": []
+  }
 }
