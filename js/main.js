@@ -5846,7 +5846,53 @@ async function scanLayout() {
  */
 function migrateLayout(data) {
     if (!data || typeof data !== 'object') return data;
+
+    // 1. Handle wrapped templates (Catalog/PREMADE format)
+    if (data.data && typeof data.data === 'object' && !data.sections) {
+        const templateData = data.data;
+        // Merge template data into the main object
+        for (const key in templateData) {
+            if (Object.prototype.hasOwnProperty.call(templateData, key)) {
+                data[key] = templateData[key];
+            }
+        }
+        delete data.data;
+    }
     
+    // 2. Version-based Migrations
+    const version = data.version || '1.0.0';
+    
+    // Legacy to 1.4.0 (GIF to WebP migration)
+    if (version < '1.4.0') {
+        safeLog('log', `[DDB Print] Migrating layout from ${version} to 1.4.0...`);
+        
+        const migratePath = (path) => {
+            if (typeof path === 'string' && path.endsWith('.gif')) {
+                return path.replace('.gif', '.webp');
+            }
+            return path;
+        };
+
+        // Migrate Shapes
+        if (data.shapes && Array.isArray(data.shapes)) {
+            data.shapes.forEach(shape => {
+                shape.assetPath = migratePath(shape.assetPath);
+            });
+        }
+
+        // Migrate Borders in standard sections
+        if (data.sections) {
+            Object.values(data.sections).forEach(sect => {
+                if (sect.borderStyle && typeof sect.borderStyle === 'string') {
+                    // Border styles are classes, but some might have embedded paths in newer versions
+                    // (Though currently they are just class names like 'spikes_border')
+                }
+            });
+        }
+
+        data.version = '1.4.0';
+    }
+
     // Initialize merges array if missing
     if (!data.merges) data.merges = [];
 
@@ -6547,6 +6593,7 @@ function injectCompactStyles() {
     window.separateQuickInfoBoxes = separateQuickInfoBoxes;
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
+    window.migrateLayout = migrateLayout;
     window.applyLayout = applyLayout;
     window.applyDefaultLayout = applyDefaultLayout;
     window.handleSaveBrowser = handleSaveBrowser;
