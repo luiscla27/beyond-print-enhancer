@@ -30,7 +30,7 @@ const CatalogService = {
         }
     },
 
-    async applyTemplate(templateId) {
+    async applyTemplate(templateId, skipConfirm = false) {
         const catalog = await this.loadCatalog();
         const entry = catalog.templates.find(t => t.id === templateId);
         if (!entry) {
@@ -40,7 +40,7 @@ const CatalogService = {
 
         const template = await this.loadTemplate(entry.path);
         if (!template) {
-            alert('Failed to load template data. It may be malformed.');
+            if (!skipConfirm) alert('Failed to load template data. It may be malformed.');
             return false;
         }
 
@@ -51,10 +51,12 @@ const CatalogService = {
         }
 
         // Conflict check & confirmation
-        const hasExistingShapes = document.querySelectorAll('.be-shape').length > 0;
-        const msg = `Apply template "${template.name}"?\n\nThis will update border styles for several sections and add decorative shapes. Existing shapes may be replaced.`;
-        
-        if (!confirm(msg)) return false;
+        if (!skipConfirm) {
+            const hasExistingShapes = document.querySelectorAll('.be-shape').length > 0;
+            const msg = `Apply template "${template.name}"?\n\nThis will update border styles for several sections and add decorative shapes. Existing shapes may be replaced.`;
+            
+            if (!confirm(msg)) return false;
+        }
 
         console.log(`[DDB Print] Applying template: ${template.name}`);
 

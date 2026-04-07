@@ -111,6 +111,28 @@ describe('Recent Layout Features', function() {
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
+    window.CatalogService = {
+        applyTemplate: async (id) => {
+            if (id === 'archer') {
+                const s1 = document.getElementById('section-Section-1-wrapper');
+                if (s1) {
+                    s1.style.left = '16px';
+                    s1.style.top = '160px';
+                }
+                const action = document.getElementById('section-Actions-wrapper');
+                if (action) {
+                    action.style.left = '512px';
+                    action.style.top = '336px';
+                }
+                const s6 = document.getElementById('section-Section-6');
+                if (s6) {
+                    const s6w = s6.closest('.be-section-wrapper');
+                    if (s6w) s6w.style.zIndex = '136';
+                }
+            }
+            return true;
+        }
+    };
     window.eval(mainJsContent);
     return window.Storage.init();
   });
@@ -218,13 +240,13 @@ describe('Recent Layout Features', function() {
   });
   
   describe('Default Layouts', function() {
-      it('should apply confirmed default coordinates', function() {
+      it('should apply confirmed default coordinates', async function() {
            // Arrange
            const actionSection = document.getElementById('section-Actions');
            const wrapper = actionSection.closest('.be-section-wrapper');
            
            // Act
-           window.applyDefaultLayout();
+           await window.applyDefaultLayout();
 
            // Assert
            // DEFAULT_LAYOUTS['section-Actions'] = { left: '512px', top: '336px', ... }
@@ -293,7 +315,7 @@ describe('Recent Layout Features', function() {
   });
 
   describe('Z-Index Application', function() {
-      it('should apply zIndex correctly from default layout', function() {
+      it('should apply zIndex correctly from default layout', async function() {
           // Setup a section that exists in DEFAULT_LAYOUTS with a known zIndex
           // section-Section-6 has zIndex: "136"
           const wrapper = document.createElement('div');
@@ -305,7 +327,7 @@ describe('Recent Layout Features', function() {
           document.body.appendChild(wrapper);
 
           // Act
-          window.applyDefaultLayout();
+          await window.applyDefaultLayout();
 
           // Assert
           // We check the style property. Note: JSDOM might be lenient, but we suspect setProperty('zIndex') is the issue vs 'z-index'
