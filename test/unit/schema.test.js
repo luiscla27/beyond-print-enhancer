@@ -96,4 +96,49 @@ describe('Data Schema & Versioning', function() {
     const invalidLayout = { version: "1.0.0" }; // Missing sections
     assert.strictEqual(window.Storage.validateLayout(invalidLayout), false, 'Should fail validation if sections are missing');
   });
+
+  describe('migrateLayout', function() {
+    it('should unwrap data property from PREMADE templates', function() {
+        const wrapped = {
+            version: '1.4.0',
+            name: 'Test Template',
+            data: {
+                sections: { "s1": { left: '10px' } },
+                shapes: [{ id: 'sh1', assetPath: 'a.webp' }]
+            }
+        };
+        const migrated = window.migrateLayout(wrapped);
+        assert.ok(migrated.sections, 'Sections should be promoted to top level');
+        assert.ok(migrated.shapes, 'Shapes should be promoted to top level');
+        assert.strictEqual(migrated.sections.s1.left, '10px');
+        assert.strictEqual(migrated.data, undefined, 'data property should be removed');
+    });
+
+    it('should migrate .gif to .webp for versions older than 1.4.0', function() {
+        const old = {
+            version: '1.3.0',
+            sections: { "s1": { borderStyle: 'spikes_border' } },
+            shapes: [
+                { id: 'sh1', assetPath: 'assets/shapes/corner.gif' },
+                { id: 'sh2', assetPath: 'assets/ornament.webp' } // already webp
+            ]
+        };
+        const migrated = window.migrateLayout(old);
+        assert.strictEqual(migrated.version, '1.4.0');
+        assert.strictEqual(migrated.shapes[0].assetPath, 'assets/shapes/corner.webp', 'gif should be webp');
+        assert.strictEqual(migrated.shapes[1].assetPath, 'assets/ornament.webp', 'webp should remain webp');
+    });
+
+    it('should initialize merges array if missing', function() {
+        const data = { version: '1.4.0', sections: {} };
+        const migrated = window.migrateLayout(data);
+        assert.ok(Array.isArray(migrated.merges), 'merges should be initialized');
+    });
+
+    it('should handle non-object input gracefully', function() {
+        assert.strictEqual(window.migrateLayout(null), null);
+        assert.strictEqual(window.migrateLayout(undefined), undefined);
+        assert.strictEqual(window.migrateLayout("string"), "string");
+    });
+  });
 });

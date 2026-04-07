@@ -57,6 +57,22 @@ describe('Ability Persistence', function() {
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
+    window.CatalogService = {
+        applyTemplate: async (id) => {
+            if (id === 'archer') {
+                const s1 = document.getElementById('section-Ability-Ability 1');
+                if (s1) {
+                    const w1 = s1.closest('.be-section-wrapper');
+                    if (w1) {
+                        w1.style.left = '16px';
+                        w1.style.top = '16px';
+                    }
+                    s1.classList.add('ability_border');
+                }
+            }
+            return true;
+        }
+    };
     window.eval(mainJsContent);
     await window.Storage.init();
   });
@@ -107,7 +123,7 @@ describe('Ability Persistence', function() {
       wrapper.style.left = '0px';
       strSection.classList.remove('spikes_border');
       
-      window.applyDefaultLayout();
+      await window.applyDefaultLayout();
       
       // Default for Ability 1 is left: 16px, top: 16px, border: ability_border
       assert.strictEqual(wrapper.style.left, '16px');

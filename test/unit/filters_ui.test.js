@@ -22,7 +22,7 @@ describe('Filters UI', function() {
             hue: 0,
             contrast: 100,
             saturate: 100,
-            greyscale: 0,
+            greyscale: 100,
             sepia: 0
         }),
         saveFilter: () => Promise.resolve(),
@@ -100,7 +100,7 @@ describe('Filters UI', function() {
         
         const labelText = label.textContent;
         let defaultValue = "0";
-        if (labelText.includes('Contrast') || labelText.includes('Saturate')) {
+        if (labelText.includes('Contrast') || labelText.includes('Saturate') || labelText.includes('Greyscale')) {
             defaultValue = "100";
         }
 
@@ -131,7 +131,6 @@ describe('Filters UI', function() {
     sliders.forEach((s, i) => {
         s.value = "50";
         s.dispatchEvent(new window.Event('input'));
-        // console.log(`Slider ${i} set to ${s.value}`);
     });
     
     // 2. Click global reset
@@ -146,11 +145,10 @@ describe('Filters UI', function() {
     for (const row of rows) {
         const slider = row.querySelector('input[type="range"]');
         const labelText = row.querySelector('label').textContent;
-        // console.log(`Verifying: ${labelText}, value: ${slider.value}`);
         
         if (labelText.includes('Hue Shift')) {
             assert.strictEqual(slider.value, "50", "Hue Shift should NOT be reset by global button");
-        } else if (labelText.includes('Contrast') || labelText.includes('Saturate')) {
+        } else if (labelText.includes('Contrast') || labelText.includes('Saturate') || labelText.includes('Greyscale')) {
             assert.strictEqual(slider.value, "100", `Slider for ${labelText} should reset to 100, but got ${slider.value}`);
         } else {
             assert.strictEqual(slider.value, "0", `Slider for ${labelText} should reset to 0, but got ${slider.value}`);

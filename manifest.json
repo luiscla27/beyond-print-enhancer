@@ -20,7 +20,6 @@
   "background": {
     "service_worker": "js/background.js"
   },
-  "content_scripts": [],
   "action": {
     "default_icon": {
       "128": "icons/icon128.png"
@@ -31,7 +30,10 @@
     {
       "resources": [
         "assets/*.webp",
-        "assets/shapes/*"
+        "assets/shapes/*",
+        "catalog.json",
+        "assets/templates/*.json",
+        "assets/thumbnails/*.webp"
       ],
       "matches": [
         "https://www.dndbeyond.com/*"

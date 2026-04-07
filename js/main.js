@@ -3,6 +3,11 @@ Licensed under Blue Oak Model License 1.0.0
 */
 
 (function () {
+    if (window.__DDB_PRINT_ENHANCE_INITIALIZED__) {
+        safeLog('log', '[DDB Print Enhance] Already initialized.');
+        return;
+    }
+    window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
 
 /**
  * Storage management for D&D Beyond Print Enhancer.
@@ -13,6 +18,11 @@ const DB_VERSION = 3;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
+
+/**
+ * Feature Flags
+ */
+const ENABLE_PREMADE_TEMPLATES = false; // Set to true to show 'PREMADE' button
 
 /**
  * Helper for logging that can be silenced in tests.
@@ -30,6 +40,10 @@ window.safeLog = safeLog;
  */
 const ASSET_LIST = [
     "assets/border_ability.webp",
+    "assets/border_archer_ability.webp",
+    "assets/border_archer_footer.webp",
+    "assets/border_archer_header.webp",
+    "assets/border_archer_sidebar.webp",
     "assets/border_barbarian.webp",
     "assets/border_barbarian_hand.webp",
     "assets/border_box.webp",
@@ -45,6 +59,13 @@ const ASSET_LIST = [
     "assets/ornament_bold.webp",
     "assets/ornament_bold2.webp",
     "assets/ornament_simple.webp",
+    "assets/shapes/archer_accent_a.webp",
+    "assets/shapes/archer_accent_b.webp",
+    "assets/shapes/dwarf.webp",
+    "assets/shapes/dwarf_hollow_hand.webp",
+    "assets/shapes/shield_stats.webp",
+    "assets/shapes/archer_divider.webp",
+    "assets/shapes/archer_main.webp",
     "assets/shapes/border_spikes_hand.webp",
     "assets/shapes/corner_barbarian.webp",
     "assets/shapes/corner_border_barbarian_hand.webp",
@@ -91,6 +112,30 @@ const ASSET_METADATA = {
         "width": "142px",
         "outset": "55px",
         "className": "barbarian_border"
+    },
+    "assets/border_archer_header.webp": {
+        "slice": "481 470 202 475",
+        "width": "172px 208px 81px 194px",
+        "outset": "10px",
+        "className": "archer_header_border"
+    },
+    "assets/border_archer_ability.webp": {
+        "slice": "167 174 79 178",
+        "width": "201px 245px 116px 242px",
+        "outset": "10px",
+        "className": "archer_ability_border"
+    },
+    "assets/border_archer_footer.webp": {
+        "slice": "61 60 61 83",
+        "width": "35px 32px 36px 44px",
+        "outset": "10px",
+        "className": "archer_border_archer_footer"
+    },
+    "assets/border_archer_sidebar.webp": {
+        "slice": "61 60 61 83",
+        "width": "35px 32px 36px 44px",
+        "outset": "10px",
+        "className": "archer_border_archer_sidebar"
     },
     "assets/border_barbarian_hand.webp": {
         "slice": 261,
@@ -175,6 +220,27 @@ const ASSET_METADATA = {
         "width": "111px",
         "outset": "45px",
         "className": "ornament_simple_border"
+    },
+    "assets/shapes/archer_accent_a.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_accent_b.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/dwarf.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/dwarf_hollow_hand.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/shield_stats.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_divider.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/archer_main.webp": {
+        "isBackground": true
     },
     "assets/shapes/border_spikes_hand.webp": {
         "isBackground": true
@@ -354,283 +420,8 @@ function getAngleFromPoint(cx, cy, px, py) {
     return theta;
 }
 
-const DEFAULT_LAYOUTS = {
-    "section-Section-1": {
-      "left": "16px",
-      "top": "160px",
-      "width": "224px",
-      "height": "144px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Section-2": {
-      "left": "16px",
-      "top": "576px",
-      "width": "224px",
-      "height": "144px",
-      "zIndex": "103",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {
-        "0-0": "224px"
-      }
-    },
-    "section-Section-3": {
-      "left": "16px",
-      "top": "352px",
-      "width": "224px",
-      "height": "176px",
-      "zIndex": "95",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {
-        "0-0": "224px"
-      }
-    },
-    "section-Section-4": {
-      "left": "288px",
-      "top": "160px",
-      "width": "176px",
-      "height": "560px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Section-5": {
-      "left": "704px",
-      "top": "160px",
-      "width": "480px",
-      "height": "128px",
-      "zIndex": "126",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {
-        "0-0": "480px"
-      }
-    },
-    "section-Section-6": {
-      "left": "496px",
-      "top": "144px",
-      "width": "160px",
-      "height": "160px",
-      "zIndex": "136",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "spikes_border",
-      "innerWidths": {}
-    },
-    "section-Actions": {
-      "left": "512px",
-      "top": "336px",
-      "width": "672px",
-      "height": "1312px",
-      "zIndex": "110",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Spells": {
-      "left": "512px",
-      "top": "1712px",
-      "width": "672px",
-      "height": "832px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Inventory": {
-      "left": "512px",
-      "top": "3712px",
-      "width": "672px",
-      "height": "1920px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Features_&_Traits": {
-      "left": "16px",
-      "top": "1712px",
-      "width": "448px",
-      "height": "1952px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Background": {
-      "left": "512px",
-      "top": "2592px",
-      "width": "672px",
-      "height": "1072px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Notes": {
-      "left": "16px",
-      "top": "768px",
-      "width": "448px",
-      "height": "896px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Extras": {
-      "left": "16px",
-      "top": "3712px",
-      "width": "448px",
-      "height": "1920px",
-      "zIndex": "10",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": null,
-      "innerWidths": {}
-    },
-    "section-Quick-Info": {
-      "left": "880px",
-      "top": "272px",
-      "width": "272px",
-      "height": "128px",
-      "zIndex": "76",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "no-border",
-      "innerWidths": {}
-    },
-    "section-Ability-Ability 1": {
-      "left": "16px",
-      "top": "16px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "37",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 2": {
-      "left": "576px",
-      "top": "16px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "47",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 3": {
-      "left": "464px",
-      "top": "16px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "43",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 4": {
-      "left": "128px",
-      "top": "16px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "39",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 5": {
-      "left": "240px",
-      "top": "16px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "41",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Ability-Ability 6": {
-      "left": "352px",
-      "top": "16px",
-      "width": "80px",
-      "height": "96px",
-      "zIndex": "42",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "ability_border",
-      "innerWidths": {
-        "0-0": "100%"
-      }
-    },
-    "section-Box-Box-1": {
-      "left": "672px",
-      "top": "16px",
-      "width": "96px",
-      "height": "96px",
-      "zIndex": "120",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "box_border",
-      "innerWidths": {
-        "0-0": "96px"
-      }
-    },
-    "section-Box-Box-2": {
-      "left": "784px",
-      "top": "16px",
-      "width": "96px",
-      "height": "96px",
-      "zIndex": "135",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "box_border",
-      "innerWidths": {
-        "0-0": "96px"
-      }
-    },
-    "section-Quick-Info-Health": {
-      "left": "896px",
-      "top": "16px",
-      "width": "288px",
-      "height": "96px",
-      "zIndex": "134",
-      "minimized": false,
-      "compact": false,
-      "borderStyle": "box_border",
-      "innerWidths": {}
-    }
-};
+// Default layouts are now loaded from premade templates (catalog.json)
+
 
 let db = null;
 
@@ -801,11 +592,10 @@ const Storage = {
     const defaults = {
       hue: hue,
       contrast: 100,
-      greyscale: 0,
+      greyscale: 100,
       saturate: 100,
       sepia: 0
-    };
-    if (!globalData || !globalData.filters) return defaults;
+      };    if (!globalData || !globalData.filters) return defaults;
     return { ...defaults, ...globalData.filters };
   },
 
@@ -865,25 +655,41 @@ const Storage = {
  */
 function navToSection(name) {
   const dom = window.DomManager.getInstance();
-  const tabs = dom.selectors.CORE.TAB_BUTTON ? 
+  const tabs = dom.selectors.CORE.TAB_BUTTON ?
                Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON)) : [];
-  
-  let target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
-  
-  // Minimal fallback: if not found in specific class, look in all buttons if allowed by user rules (removing brittle logic implies usage of DomManager primarily)
-  // But to be safe if 'tabButton' class changes, we might want to check generic buttons? 
-  // For now, strict DomManager usage as per plan.
-  
+
+  // Try matching by data-testid first (very reliable)
+  const testIdMap = {
+      'Actions': 'ACTIONS',
+      'Spells': 'SPELLS',
+      'Inventory': 'EQUIPMENT',
+      'Equipment': 'EQUIPMENT',
+      'Features & Traits': 'FEATURES_TRAITS',
+      'Background': 'DESCRIPTION',
+      'Notes': 'NOTES',
+      'Extras': 'EXTRAS'
+  };
+
+  let target = null;
+  const testId = testIdMap[name];
+  if (testId) {
+      target = tabs.find(tab => tab.getAttribute('data-testid') === testId);
+  }
+
+  // Fallback to text content
+  if (!target) {
+      target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
+  }
+
   if (target) {
       safeLog('log', `[DDB Print Enhance] Navigating to: ${name}`);
       target.click();
       return target;
   }
-  
+
   safeLog('error', `[DDB Print Enhance] Could not find tab for section: ${name}`);
   return null;
 }
-
 /**
  * Helper to identify the base selector for an element
  */
@@ -2378,9 +2184,9 @@ function enforceFullHeight() {
         }
         .barbarian_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.webp')}');
-            --border-img-width: 208px;
-            --border-img-slice: 311;
-            --border-img-outset: 61px;
+            --border-img-width: 88px;
+            --border-img-slice: 146;
+            --border-img-outset: 71px;
         }
         .goth_border {
             --border-img: url('${chrome.runtime.getURL('assets/border_goth1.webp')}');
@@ -2471,6 +2277,30 @@ function enforceFullHeight() {
             --border-img-width: 130px;
             --border-img-slice: 205;
             --border-img-outset: 45px;
+        }
+        .archer_header_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_header.webp')}');
+            --border-img-width: 172px 208px 81px 194px;
+            --border-img-slice: 481 470 202 475;
+            --border-img-outset: 10px;
+        }
+        .archer_ability_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_ability.webp')}');
+            --border-img-width: 201px 245px 116px 242px;
+            --border-img-slice: 167 174 79 178;
+            --border-img-outset: 10px;
+        }
+        .archer_border_archer_footer {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_footer.webp')}');
+            --border-img-width: 35px 32px 36px 44px;
+            --border-img-slice: 61 60 61 83;
+            --border-img-outset: 10px;
+        }
+        .archer_sidebar_border {
+            --border-img: url('${chrome.runtime.getURL('assets/border_archer_sidebar.webp')}');
+            --border-img-width: 35px 32px 36px 44px;
+            --border-img-slice: 61 60 61 83;
+            --border-img-outset: 10px;
         }
 
         .ct-quick-info__box,
@@ -3218,15 +3048,7 @@ function captureSectionSnapshot(sectionId) {
     const sanitizedClone = getSanitizedContent(content);
 
     const getBorderStyle = (el) => {
-        if (el.classList.contains('no-border')) return 'no-border';
-        if (el.classList.contains('ability_border')) return 'ability_border';
-        if (el.classList.contains('spikes_border')) return 'spikes_border';
-        if (el.classList.contains('barbarian_border')) return 'barbarian_border';
-        if (el.classList.contains('goth_border')) return 'goth_border';
-        if (el.classList.contains('plants_border')) return 'plants_border';
-        if (el.classList.contains('box_border')) return 'box_border';
-        if (el.classList.contains('default-border')) return 'default-border';
-        return null;
+        return ALL_BORDER_STYLES.find(style => el.classList.contains(style)) || null;
     };
 
     return {
@@ -4826,6 +4648,7 @@ function createControls() {
     });
 
     const buttons = [
+        ...(ENABLE_PREMADE_TEMPLATES ? [{ label: 'PREMADE', icon: '🌟', action: () => showPremadeCatalogModal() }] : []),
         { label: 'Load', icon: '📂', action: handleLoadFile },
         { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
         { label: 'Manage Clones', icon: '📋', action: handleManageClones },
@@ -5002,7 +4825,7 @@ function createControls() {
         hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0, true),
         contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 200, '%', 100),
         saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 200, '%', 100),
-        greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
+        greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 100),
         sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
     };
 
@@ -5040,16 +4863,20 @@ function createControls() {
 
     let tempInitialHue = currentFilters.hue || 0;
     let tempInitialSaturate = currentFilters.saturate || 100;
+    let tempInitialGreyscale = currentFilters.greyscale || 100;
 
     const revertPickerChanges = () => {
         currentFilters.hue = tempInitialHue;
         currentFilters.saturate = tempInitialSaturate;
+        currentFilters.greyscale = tempInitialGreyscale;
         
         // Update UI
         sliders.hue.slider.value = tempInitialHue.toString();
         sliders.hue.label.textContent = `🎨 Hue Shift: ${tempInitialHue}°`;
         sliders.saturate.slider.value = tempInitialSaturate.toString();
         sliders.saturate.label.textContent = `🌈 Saturate: ${tempInitialSaturate}%`;
+        sliders.greyscale.slider.value = tempInitialGreyscale.toString();
+        sliders.greyscale.label.textContent = `🌑 Greyscale: ${tempInitialGreyscale}%`;
 
         if (typeof window.applyGlobalFilters === 'function') {
             window.applyGlobalFilters(currentFilters);
@@ -5059,7 +4886,7 @@ function createControls() {
     colorPickerBtn.onclick = (e) => {
         e.stopPropagation();
         const rect = colorPickerBtn.getBoundingClientRect();
-        huePicker.style.top = `${rect.top - 120}px`; 
+        huePicker.style.top = `${rect.top - 160}px`; // Increased offset for new slider
         huePicker.style.left = `${rect.left}px`;
         
         const isHidden = huePicker.style.display === 'none' || huePicker.style.getPropertyValue('display') === 'none';
@@ -5067,6 +4894,7 @@ function createControls() {
             // Capture initial state before previewing
             tempInitialHue = currentFilters.hue || 0;
             tempInitialSaturate = currentFilters.saturate || 100;
+            tempInitialGreyscale = currentFilters.greyscale || 100;
             huePicker.style.setProperty('display', 'flex', 'important');
         } else {
             revertPickerChanges();
@@ -5085,6 +4913,45 @@ function createControls() {
 
     let selectedHue = currentFilters.hue || 0;
     let selectedSaturate = currentFilters.saturate || 100;
+    let selectedGreyscale = currentFilters.greyscale || 100;
+
+    // Grayscale Slider inside picker
+    const pickerGreyscaleContainer = document.createElement('div');
+    pickerGreyscaleContainer.style.display = 'flex';
+    pickerGreyscaleContainer.style.flexDirection = 'column';
+    pickerGreyscaleContainer.style.gap = '2px';
+    pickerGreyscaleContainer.style.marginBottom = '4px';
+
+    const pickerGreyscaleLabel = document.createElement('label');
+    pickerGreyscaleLabel.style.fontSize = '9px';
+    pickerGreyscaleLabel.style.color = '#ccc';
+    pickerGreyscaleLabel.textContent = `Greyscale: ${currentFilters.greyscale}%`;
+    pickerGreyscaleContainer.appendChild(pickerGreyscaleLabel);
+
+    const pickerGreyscaleSlider = document.createElement('input');
+    pickerGreyscaleSlider.type = 'range';
+    pickerGreyscaleSlider.min = '0';
+    pickerGreyscaleSlider.max = '100';
+    pickerGreyscaleSlider.value = (currentFilters.greyscale || 100).toString();
+    pickerGreyscaleSlider.style.width = '100%';
+    pickerGreyscaleSlider.style.height = '12px';
+    
+    pickerGreyscaleSlider.oninput = (e) => {
+        const val = parseInt(e.target.value, 10);
+        selectedGreyscale = val;
+        pickerGreyscaleLabel.textContent = `Greyscale: ${val}%`;
+        
+        // Preview immediately
+        currentFilters.greyscale = val;
+        sliders.greyscale.slider.value = val.toString();
+        sliders.greyscale.label.textContent = `🌑 Greyscale: ${val}%`;
+        
+        if (typeof window.applyGlobalFilters === 'function') {
+            window.applyGlobalFilters(currentFilters);
+        }
+    };
+    pickerGreyscaleContainer.appendChild(pickerGreyscaleSlider);
+    huePicker.insertBefore(pickerGreyscaleContainer, gridContainer);
 
     // 600 swatches for a perfect 2D map (60 hues x 10 saturations)
     // Rows = Saturation (0% to 200%), Columns = Hue (0 to 360)
@@ -5097,8 +4964,8 @@ function createControls() {
             swatch.style.height = '8px';
             swatch.style.width = '2px';
             swatch.style.backgroundColor = '#e61919'; // Base red
-            // Show both Hue and Saturation in the preview
-            swatch.style.filter = `hue-rotate(${deg}deg) saturate(${sat}%)`;
+            // Show Hue, Saturation and current Greyscale in the preview
+            swatch.style.filter = `hue-rotate(${deg}deg) saturate(${sat}%) grayscale(${currentFilters.greyscale || 0}%)`;
             swatch.title = `Hue: ${deg}°, Sat: ${sat}%`;
             
             swatch.addEventListener('click', (e) => {
@@ -5136,10 +5003,12 @@ function createControls() {
         if (window.Storage) {
             await window.Storage.saveFilter('hue', selectedHue);
             await window.Storage.saveFilter('saturate', selectedSaturate);
+            await window.Storage.saveFilter('greyscale', selectedGreyscale);
         }
         // Update the "initial" state to the newly accepted values
         tempInitialHue = selectedHue;
         tempInitialSaturate = selectedSaturate;
+        tempInitialGreyscale = selectedGreyscale;
         huePicker.style.setProperty('display', 'none', 'important');
     };
     huePicker.appendChild(acceptBtn);
@@ -5159,7 +5028,7 @@ function createControls() {
             const defaults = {
                 contrast: 100,
                 saturate: 100,
-                greyscale: 0,
+                greyscale: 100,
                 sepia: 0
             };
             
@@ -5420,56 +5289,29 @@ async function handleSavePC() {
     }
 }
 /**
- * Applies the hardcoded default layout.
+ * Applies the default layout using the Archer template.
  */
-function applyDefaultLayout() {
-    safeLog('log', '[DDB Print] Applying Default Layouts...');
+async function applyDefaultLayout() {
+    safeLog('log', '[DDB Print] Applying Default Layouts (Archer Template)...');
 
-    // Remove all shapes that aren't part of defaults
-    // Since defaults only contain standard sections, we can safely remove all current shapes.
-    // Extracted sections and spell details are handled by handleLoadDefault's rollback logic
-    // to ensure original elements are correctly restored in the DOM.
+    // Remove all shapes before applying the template
     document.querySelectorAll('.be-shape-wrapper').forEach(el => {
         el.remove();
     });
 
-    for (const [id, styles] of Object.entries(DEFAULT_LAYOUTS)) {
-        const section = document.getElementById(id);
-        if (section) {
-            safeLog('log', `[DDB Print] Applying defaults to ${id}`, styles);
-            const wrapper = section.closest('.be-section-wrapper') || section;
-            
-            // Explicitly set properties to ensure they take effect
-            for (const [prop, val] of Object.entries(styles)) {
-                if (prop === 'borderStyle') {
-                    section.classList.remove('default-border', 'ability_border', 'spikes_border', 'barbarian_border', 'goth_border', 'plants_border', 'box_border', 'no-border');
-                    if (val) section.classList.add(val);
-                } else if (['left', 'top', 'zIndex'].includes(prop)) {
-                    if (prop === 'zIndex') {
-                        wrapper.style.zIndex = val;
-                        section.style.zIndex = '';
-                    } else {
-                        wrapper.style[prop] = val;
-                        section.style[prop] = '';
-                    }
-                } else if (['width', 'height'].includes(prop)) {
-                    section.style[prop] = val;
-                } else if (prop === 'minimized') {
-                    section.classList.toggle('minimized', !!val);
-                } else if (prop === 'compact') {
-                    section.classList.toggle('be-compact-mode', !!val);
-                }
-                // innerWidths handled separately or ignored here
-            }
-        } else {
-            if (!window.__DDB_TEST_MODE__) {
-                safeLog('warn', `[DDB Print] Default layout target not found: ${id}`);
-            }
+    if (typeof CatalogService !== 'undefined' && typeof CatalogService.applyTemplate === 'function') {
+        try {
+            await CatalogService.applyTemplate('archer', true);
+            safeLog('log', '[DDB Print] Default Archer template applied successfully.');
+        } catch (err) {
+            safeLog('error', '[DDB Print] Failed to apply default Archer template:', err);
         }
+    } else {
+        safeLog('error', '[DDB Print] CatalogService not found. Cannot apply default layout.');
     }
-    updateLayoutBounds();
-}
 
+    if (typeof updateLayoutBounds === 'function') updateLayoutBounds();
+}
 /**
  * Handles loading default layout.
  */
@@ -5513,7 +5355,7 @@ async function handleLoadDefault() {
         });
 
         // Trigger default layout
-        applyDefaultLayout();
+        await applyDefaultLayout();
 
         // Reposition clones in front of their parents
         document.querySelectorAll('.print-section-container.be-clone').forEach(clone => {
@@ -5828,15 +5670,7 @@ async function scanLayout() {
         const content = section.querySelector('.print-section-content');
 
         const getBorderStyle = (el) => {
-            if (el.classList.contains('no-border')) return 'no-border';
-            if (el.classList.contains('ability_border')) return 'ability_border';
-            if (el.classList.contains('spikes_border')) return 'spikes_border';
-            if (el.classList.contains('barbarian_border')) return 'barbarian_border';
-            if (el.classList.contains('goth_border')) return 'goth_border';
-            if (el.classList.contains('plants_border')) return 'plants_border';
-            if (el.classList.contains('box_border')) return 'box_border';
-            if (el.classList.contains('default-border')) return 'default-border';
-            return null;
+            return ALL_BORDER_STYLES.find(style => el.classList.contains(style)) || null;
         };
 
         if (section.classList.contains('be-clone')) {
@@ -5996,7 +5830,53 @@ async function scanLayout() {
  */
 function migrateLayout(data) {
     if (!data || typeof data !== 'object') return data;
+
+    // 1. Handle wrapped templates (Catalog/PREMADE format)
+    if (data.data && typeof data.data === 'object' && !data.sections) {
+        const templateData = data.data;
+        // Merge template data into the main object
+        for (const key in templateData) {
+            if (Object.prototype.hasOwnProperty.call(templateData, key)) {
+                data[key] = templateData[key];
+            }
+        }
+        delete data.data;
+    }
     
+    // 2. Version-based Migrations
+    const version = data.version || '1.0.0';
+    
+    // Legacy to 1.4.0 (GIF to WebP migration)
+    if (version < '1.4.0') {
+        safeLog('log', `[DDB Print] Migrating layout from ${version} to 1.4.0...`);
+        
+        const migratePath = (path) => {
+            if (typeof path === 'string' && path.endsWith('.gif')) {
+                return path.replace('.gif', '.webp');
+            }
+            return path;
+        };
+
+        // Migrate Shapes
+        if (data.shapes && Array.isArray(data.shapes)) {
+            data.shapes.forEach(shape => {
+                shape.assetPath = migratePath(shape.assetPath);
+            });
+        }
+
+        // Migrate Borders in standard sections
+        if (data.sections) {
+            Object.values(data.sections).forEach(sect => {
+                if (sect.borderStyle && typeof sect.borderStyle === 'string') {
+                    // Border styles are classes, but some might have embedded paths in newer versions
+                    // (Though currently they are just class names like 'spikes_border')
+                }
+            });
+        }
+
+        data.version = '1.4.0';
+    }
+
     // Initialize merges array if missing
     if (!data.merges) data.merges = [];
 
@@ -6697,6 +6577,7 @@ function injectCompactStyles() {
     window.separateQuickInfoBoxes = separateQuickInfoBoxes;
     window.adjustInnerContentWidth = adjustInnerContentWidth;
     window.scanLayout = scanLayout;
+    window.migrateLayout = migrateLayout;
     window.applyLayout = applyLayout;
     window.applyDefaultLayout = applyDefaultLayout;
     window.handleSaveBrowser = handleSaveBrowser;
@@ -6787,15 +6668,17 @@ function injectCompactStyles() {
     if (layoutRestored) updateLayoutBounds();
     
     if (!layoutRestored) {
-        applyDefaultLayout();
+        await applyDefaultLayout();
     }
 
     // Default to Shapes Mode OFF
     toggleShapesMode(false);
 
-    // Export for testing
+    // Export for testing and cross-script access
     window.createShape = createShape;
     window.toggleShapesMode = toggleShapesMode;
     window.applyShapeAsset = applyShapeAsset;
+    window.clearBorderStyles = clearBorderStyles;
+    window.showFeedback = showFeedback;
 })();
 })();

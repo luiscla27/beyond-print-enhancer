@@ -5,14 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.2] - 2026-03-18
+## [1.4.2] - 2026-03-24
+
+### Added
+- **Premade Templates:** Introduced a new "PREMADE" templates system allowing users to apply professional character sheet layouts instantly.
+- **Archer Template:** Full replication of the classic Archer-themed sheet, including custom borders, accents, and dividers.
+- **Catalog Service:** Centralized management for template definitions and application logic.
+- **New Shape Assets:** Expanded the asset library with `dwarf.webp`, `dwarf_hollow_hand.webp`, and `shield_stats.webp`.
+- **Feature Flagging:** Added `ENABLE_PREMADE_TEMPLATES` flag to toggle the template menu (currently disabled for final polish).
+- **Color Picker Expansion:** Integrated the **Grayscale** attribute into the 2D Color Picker, allowing simultaneous selection of Hue, Saturation, and Grayscale.
 
 ### Changed
 - **Asset Compression:** Migrated all image assets from GIF to WebP, reducing the package size from 14.5MB to ~2.1MB (85% reduction).
-- **Performance Optimization:** Downscaled high-resolution decorative assets to a maximum of 512px for better loading performance without sacrificing visual quality.
-- **Metadata Update:** Recalculated all `border-image-slice` values to maintain pixel-perfect borders after image resizing.
+- **Performance Optimization:** Downscaled high-resolution decorative assets to a maximum of 512px for better loading performance.
+- **Metadata Synchronization:** Synchronized `ASSET_METADATA` and `ASSET_LIST` with the `assets/shapes/` directory to ensure all new graphical elements are available in the UI.
+- **Workflow Security:** Mandated that all `mocha` tests must pass before any `git commit` is allowed.
+- **Grayscale Default:** Changed the default `greyscale` filter value from 0% to **100%** for better out-of-the-box print compatibility.
+- **Template Compatibility:** Enabled support for "flat" template formats in `CatalogService`, allowing JSON files from "Save to PC" to be used directly as official templates.
+- **Automatic Migration:** Implemented a version-based migration engine that automatically converts legacy GIF paths to WebP and normalizes old layout schemas.
 
-## [1.4.1] - 2026-03-18
+### Fixed
+- **Asset Path Integrity:** Resolved missing metadata for several Archer-themed shapes and borders.
+- **Template Application:** Fixed a bug where applying a template would sometimes conflict with existing manual element placements.
+- **Border Saving Bug:** Fixed a critical issue in `scanLayout` where newer border styles (like "Ornament 1") were not being captured during saving due to a hardcoded check.
+- **Shape ID Duplication:** Fixed "undefined" ID issues in the Archer template to ensure correct shape management.
+
+## [1.4.1] - 2026-03-11
 
 ### Fixed
 - **Hue Filter Color Mismatch:** Resolved a double-hue-rotation bug where borders and shapes were receiving cumulative hue filters (e.g., 114deg + 114deg = 228deg), causing colors to look different from the color picker preview.

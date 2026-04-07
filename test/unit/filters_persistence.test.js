@@ -42,7 +42,7 @@ describe('Filters Persistence', function() {
     const filters = await Storage.getFilters();
     assert.strictEqual(filters.hue, 0, 'Default hue should be 0');
     assert.strictEqual(filters.contrast, 100, 'Default contrast should be 100');
-    assert.strictEqual(filters.greyscale, 0, 'Default greyscale should be 0');
+    assert.strictEqual(filters.greyscale, 100, 'Default greyscale should be 100');
     assert.strictEqual(filters.saturate, 100, 'Default saturate should be 100');
     assert.strictEqual(filters.sepia, 0, 'Default sepia should be 0');
   });

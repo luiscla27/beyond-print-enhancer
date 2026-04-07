@@ -57,6 +57,18 @@ describe('Cloning Persistence', function() {
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
+    window.CatalogService = {
+        applyTemplate: async (id) => {
+            if (id === 'archer') {
+                const action = document.getElementById('section-Actions-wrapper');
+                if (action) {
+                    action.style.left = '512px';
+                    action.style.top = '336px';
+                }
+            }
+            return true;
+        }
+    };
     window.eval(mainJsContent);
     Storage = window.Storage;
     await Storage.init();

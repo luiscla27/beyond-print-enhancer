@@ -22,6 +22,8 @@ chrome.action.onClicked.addListener(function(tab) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     files: [
+      'js/catalog_service.js',
+      'js/spells.js',
       'js/dom/element_wrapper.js',
       'js/dom/dom_manager.js',
       'js/dnd.js',
