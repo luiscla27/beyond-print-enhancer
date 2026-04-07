@@ -3048,15 +3048,7 @@ function captureSectionSnapshot(sectionId) {
     const sanitizedClone = getSanitizedContent(content);
 
     const getBorderStyle = (el) => {
-        if (el.classList.contains('no-border')) return 'no-border';
-        if (el.classList.contains('ability_border')) return 'ability_border';
-        if (el.classList.contains('spikes_border')) return 'spikes_border';
-        if (el.classList.contains('barbarian_border')) return 'barbarian_border';
-        if (el.classList.contains('goth_border')) return 'goth_border';
-        if (el.classList.contains('plants_border')) return 'plants_border';
-        if (el.classList.contains('box_border')) return 'box_border';
-        if (el.classList.contains('default-border')) return 'default-border';
-        return null;
+        return ALL_BORDER_STYLES.find(style => el.classList.contains(style)) || null;
     };
 
     return {
@@ -5678,15 +5670,7 @@ async function scanLayout() {
         const content = section.querySelector('.print-section-content');
 
         const getBorderStyle = (el) => {
-            if (el.classList.contains('no-border')) return 'no-border';
-            if (el.classList.contains('ability_border')) return 'ability_border';
-            if (el.classList.contains('spikes_border')) return 'spikes_border';
-            if (el.classList.contains('barbarian_border')) return 'barbarian_border';
-            if (el.classList.contains('goth_border')) return 'goth_border';
-            if (el.classList.contains('plants_border')) return 'plants_border';
-            if (el.classList.contains('box_border')) return 'box_border';
-            if (el.classList.contains('default-border')) return 'default-border';
-            return null;
+            return ALL_BORDER_STYLES.find(style => el.classList.contains(style)) || null;
         };
 
         if (section.classList.contains('be-clone')) {
