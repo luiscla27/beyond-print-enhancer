@@ -13,16 +13,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Catalog Service:** Centralized management for template definitions and application logic.
 - **New Shape Assets:** Expanded the asset library with `dwarf.webp`, `dwarf_hollow_hand.webp`, and `shield_stats.webp`.
 - **Feature Flagging:** Added `ENABLE_PREMADE_TEMPLATES` flag to toggle the template menu (currently disabled for final polish).
+- **Color Picker Expansion:** Integrated the **Grayscale** attribute into the 2D Color Picker, allowing simultaneous selection of Hue, Saturation, and Grayscale.
 
 ### Changed
 - **Asset Compression:** Migrated all image assets from GIF to WebP, reducing the package size from 14.5MB to ~2.1MB (85% reduction).
 - **Performance Optimization:** Downscaled high-resolution decorative assets to a maximum of 512px for better loading performance.
 - **Metadata Synchronization:** Synchronized `ASSET_METADATA` and `ASSET_LIST` with the `assets/shapes/` directory to ensure all new graphical elements are available in the UI.
 - **Workflow Security:** Mandated that all `mocha` tests must pass before any `git commit` is allowed.
+- **Grayscale Default:** Changed the default `greyscale` filter value from 0% to **100%** for better out-of-the-box print compatibility.
+- **Template Compatibility:** Enabled support for "flat" template formats in `CatalogService`, allowing JSON files from "Save to PC" to be used directly as official templates.
+- **Automatic Migration:** Implemented a version-based migration engine that automatically converts legacy GIF paths to WebP and normalizes old layout schemas.
 
 ### Fixed
 - **Asset Path Integrity:** Resolved missing metadata for several Archer-themed shapes and borders.
 - **Template Application:** Fixed a bug where applying a template would sometimes conflict with existing manual element placements.
+- **Border Saving Bug:** Fixed a critical issue in `scanLayout` where newer border styles (like "Ornament 1") were not being captured during saving due to a hardcoded check.
+- **Shape ID Duplication:** Fixed "undefined" ID issues in the Archer template to ensure correct shape management.
 
 ## [1.4.1] - 2026-03-11
 
