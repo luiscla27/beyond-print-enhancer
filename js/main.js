@@ -867,11 +867,10 @@ const Storage = {
     const defaults = {
       hue: hue,
       contrast: 100,
-      greyscale: 0,
+      greyscale: 100,
       saturate: 100,
       sepia: 0
-    };
-    if (!globalData || !globalData.filters) return defaults;
+      };    if (!globalData || !globalData.filters) return defaults;
     return { ...defaults, ...globalData.filters };
   },
 
@@ -5109,7 +5108,7 @@ function createControls() {
         hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0, true),
         contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 200, '%', 100),
         saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 200, '%', 100),
-        greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 0),
+        greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 100),
         sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
     };
 
@@ -5266,7 +5265,7 @@ function createControls() {
             const defaults = {
                 contrast: 100,
                 saturate: 100,
-                greyscale: 0,
+                greyscale: 100,
                 sepia: 0
             };
             
