@@ -51,7 +51,7 @@ async function run() {
     { in: 'nanobanana-output/sidebar_cleaned.png', out: 'assets/border_archer_sidebar.webp' },
     { in: 'nanobanana-output/shape_main.png', out: 'assets/shapes/archer_main.webp' },
     { in: 'nanobanana-output/shape_divider.png', out: 'assets/shapes/archer_divider.webp' },
-    { in: 'nanobanana-output/shape_corner.png', out: 'assets/shapes/archer_corner.webp' },
+    { in: 'nanobanana-output/shape_corner.png', out: 'assets/shapes/shield_stats.webp' },
     { in: 'nanobanana-output/shape_accent_a.png', out: 'assets/shapes/archer_accent_a.webp' },
     { in: 'nanobanana-output/shape_accent_b.png', out: 'assets/shapes/archer_accent_b.webp' }
   ];

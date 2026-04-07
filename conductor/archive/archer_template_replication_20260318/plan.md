@@ -69,7 +69,7 @@
 - [x] Task: Validate Divider output and save to `assets/shapes/archer_divider.webp`.
 - [x] Task: Start a NEW nano banana session for the "Corner Flourish" shape.
 - [x] Task: Instruction: Remove background and ensure transparency for Flourish.
-- [x] Task: Validate Flourish output and save to `assets/shapes/archer_corner.webp`.
+- [x] Task: Validate Flourish output and save to `assets/shapes/shield_stats.webp`.
 - [x] Task: Conductor - User Manual Verification 'Nano Banana Session: Shape Cleaning (Part 1)' (Protocol in workflow.md)
 
 ## Phase 7: Nano Banana Session: Shape Cleaning (Part 2)

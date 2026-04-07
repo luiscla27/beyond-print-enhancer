@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Performance Optimization:** Downscaled high-resolution decorative assets to a maximum of 512px for better loading performance without sacrificing visual quality.
 - **Metadata Update:** Recalculated all `border-image-slice` values to maintain pixel-perfect borders after image resizing.
 
-- **Asset Management:** Synchronized `ASSET_METADATA` with the `assets/shapes/` directory, adding missing Archer-themed assets (`archer_accent_a`, `archer_accent_b`, `archer_corner`, `archer_divider`, `archer_main`).
+- **Asset Management:** Synchronized `ASSET_METADATA` with the `assets/shapes/` directory, adding missing Archer-themed assets (`archer_accent_a`, `archer_accent_b`, `shield_stats`, `archer_divider`, `archer_main`).
 - **Scanning Workflow:** Updated `compress-large-images.md` and `GEMINI.md` with explicit instructions to maintain `ASSET_METADATA` synchronization for shape assets during scanning operations.
 
 ## [1.4.1] - 2026-03-24

@@ -10,8 +10,7 @@ const TARGET_FILES = [
     'assets/border_archer_ability.webp',
     'assets/border_archer_footer.webp',
     'assets/border_archer_sidebar.webp',
-    'assets/border_archer_stats.webp',
-    'assets/shapes/archer_corner.webp'
+    'assets/shapes/shield_stats.webp'
 ];
 
 const INPUT_METADATA = {

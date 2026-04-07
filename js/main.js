@@ -44,7 +44,6 @@ const ASSET_LIST = [
     "assets/border_archer_footer.webp",
     "assets/border_archer_header.webp",
     "assets/border_archer_sidebar.webp",
-    "assets/border_archer_stats.webp",
     "assets/border_barbarian.webp",
     "assets/border_barbarian_hand.webp",
     "assets/border_box.webp",
@@ -62,7 +61,9 @@ const ASSET_LIST = [
     "assets/ornament_simple.webp",
     "assets/shapes/archer_accent_a.webp",
     "assets/shapes/archer_accent_b.webp",
-    "assets/shapes/archer_corner.webp",
+    "assets/shapes/dwarf.webp",
+    "assets/shapes/dwarf_hollow_hand.webp",
+    "assets/shapes/shield_stats.webp",
     "assets/shapes/archer_divider.webp",
     "assets/shapes/archer_main.webp",
     "assets/shapes/border_spikes_hand.webp",
@@ -172,12 +173,6 @@ const ASSET_METADATA = {
         "outset": "55px",
         "className": "spikes_border"
     },
-    "assets/border_archer_stats.webp": {
-        "slice": 206,
-        "width": "205px",
-        "outset": "55px",
-        "className": "archer_stats_border"
-    },
     "assets/dwarf.webp": {
         "slice": 206,
         "width": "205px",
@@ -232,7 +227,13 @@ const ASSET_METADATA = {
     "assets/shapes/archer_accent_b.webp": {
         "isBackground": true
     },
-    "assets/shapes/archer_corner.webp": {
+    "assets/shapes/dwarf.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/dwarf_hollow_hand.webp": {
+        "isBackground": true
+    },
+    "assets/shapes/shield_stats.webp": {
         "isBackground": true
     },
     "assets/shapes/archer_divider.webp": {
@@ -2563,12 +2564,6 @@ function enforceFullHeight() {
             --border-img: url('${chrome.runtime.getURL('assets/border_archer_ability.webp')}');
             --border-img-width: 201px 245px 116px 242px;
             --border-img-slice: 167 174 79 178;
-            --border-img-outset: 10px;
-        }
-        .archer_stats_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_archer_stats.webp')}');
-            --border-img-width: 255px;
-            --border-img-slice: 55;
             --border-img-outset: 10px;
         }
         .archer_border_archer_footer {
