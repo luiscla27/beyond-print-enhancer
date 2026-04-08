@@ -4,6 +4,8 @@ This file tracks all major development tracks for the project.
 
 ## Current Tracks
 
+- [ ] **Track: Layer Management Panel and Refactor**
+*Link: [./tracks/layer_management_20260407/](./tracks/layer_management_20260407/)*
 
 ## Archived Tracks
 - [x] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.** (Completed: 2026-03-24)
