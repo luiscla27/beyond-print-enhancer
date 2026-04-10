@@ -105,8 +105,8 @@ describe('DOM Extraction Logic (Integration)', function() {
     // Verify Layout: Actions should be BEFORE Spells
     // Spells should be BEFORE Inventory (if strictly ordered by append)
     // Verify Layout: Actions and Spells should be siblings in the unified root
-    const layoutRoot = document.querySelector('.ct-subsections');
-    assert.ok(layoutRoot, 'Unified layout root .ct-subsections should exist');
+    const sectionsLayer = document.getElementById('pe-sections-layer');
+    assert.ok(sectionsLayer, 'Sections layer should exist');
     
     const spellsContainer = spellsNode.closest('.print-section-container');
     assert.ok(spellsContainer, 'Spells node should be inside a print container');
@@ -115,8 +115,8 @@ describe('DOM Extraction Logic (Integration)', function() {
     assert.ok(actionsWrapper, 'Actions wrapper missing');
     assert.ok(spellsWrapper, 'Spells wrapper missing');
     
-    assert.strictEqual(actionsWrapper.parentElement, layoutRoot, 'Actions wrapper should be inside layout root');
-    assert.strictEqual(spellsWrapper.parentElement, layoutRoot, 'Spells wrapper should be inside layout root');
+    assert.strictEqual(actionsWrapper.parentElement, sectionsLayer, 'Actions wrapper should be inside sections layer');
+    assert.strictEqual(spellsWrapper.parentElement, sectionsLayer, 'Spells wrapper should be inside sections layer');
     
     // Check if Navigation is hidden
     const nav = document.querySelector('nav');

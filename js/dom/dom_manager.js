@@ -1,5 +1,7 @@
 class DomManager {
     constructor() {
+        this._elementWrapper = null;
+        this._layerManager = null;
         this.selectors = {
             CORE: {
                 SHEET_DESKTOP: '.ct-character-sheet-desktop',
@@ -166,6 +168,11 @@ class DomManager {
                 THUMBNAIL: '.be-catalog-thumbnail',
                 TITLE: '.be-catalog-title',
                 DESCRIPTION: '.be-catalog-description'
+            },
+            LAYERS: {
+                SECTIONS: '#pe-sections-layer',
+                SHAPES: '#pe-shapes-layer',
+                LAYOUT_ROOT: '#print-layout-wrapper'
             },
             // Extractables
             EXTRACTABLE: {
@@ -368,6 +375,69 @@ class DomManager {
      */
     getExtrasContainer() {
         return this._wrap(this.selectors.EXTRAS.CONTAINER);
+    }
+
+    /**
+     * Gets or creates the LayerManager instance.
+     * @returns {LayerManager}
+     */
+    getLayerManager() {
+        if (!this._layerManager && typeof window.LayerManager !== 'undefined') {
+            this._layerManager = new window.LayerManager();
+            this._layerManager.createPanel();
+        }
+        return this._layerManager;
+    }
+
+    /**
+     * Gets or creates the layout root.
+     * @returns {ElementWrapper}
+     */
+    getLayoutRoot() {
+        let root = document.querySelector(this.selectors.LAYERS.LAYOUT_ROOT);
+        if (!root) {
+            // If it doesn't exist, we might need to find where it should be.
+            // In main.js it's often .ct-subsections.
+            root = document.querySelector(this.selectors.CORE.SUBSECTIONS);
+            if (root) root.id = 'print-layout-wrapper';
+        }
+        return new ElementWrapper(root);
+    }
+
+    /**
+     * Gets or creates the sections layer.
+     * @returns {ElementWrapper}
+     */
+    getSectionsLayer() {
+        let layer = document.querySelector(this.selectors.LAYERS.SECTIONS);
+        if (!layer) {
+            const root = this.getLayoutRoot();
+            if (root.element) {
+                layer = document.createElement('div');
+                layer.id = 'pe-sections-layer';
+                layer.className = 'pe-layer';
+                root.element.appendChild(layer);
+            }
+        }
+        return new ElementWrapper(layer);
+    }
+
+    /**
+     * Gets or creates the shapes layer.
+     * @returns {ElementWrapper}
+     */
+    getShapesLayer() {
+        let layer = document.querySelector(this.selectors.LAYERS.SHAPES);
+        if (!layer) {
+            const root = this.getLayoutRoot();
+            if (root.element) {
+                layer = document.createElement('div');
+                layer.id = 'pe-shapes-layer';
+                layer.className = 'pe-layer';
+                root.element.appendChild(layer);
+            }
+        }
+        return new ElementWrapper(layer);
     }
 }
 

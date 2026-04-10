@@ -18,6 +18,7 @@ const DB_VERSION = 3;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
+const PeDom = () => window.DomManager.getInstance();
 
 /**
  * Feature Flags
@@ -1243,7 +1244,7 @@ async function handleElementExtraction(el) {
 
     // 6. Position and Hide Original
     const rect = el.getBoundingClientRect();
-    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    const layoutRoot = PeDom().getLayoutRoot().element;
     const rootRect = layoutRoot.getBoundingClientRect();
     
     wrapper.style.position = 'absolute';
@@ -1255,10 +1256,9 @@ async function handleElementExtraction(el) {
     innerContainer.style.width = `${rect.width}px`;
     innerContainer.style.height = 'auto';
 
-    layoutRoot.appendChild(wrapper);
-    
-    // In the case of spell sections, destroy original instead of hiding
-    // (They are ephemeral and don't have a home on the sheet to rollback to)
+    PeDom().getSectionsLayer().element.appendChild(wrapper);
+
+    // In the case of spell sections, destroy original instead of hiding    // (They are ephemeral and don't have a home on the sheet to rollback to)
     const isSpell = el.classList.contains('be-spell-detail') || 
                     el.id.startsWith('spell-detail-') || 
                     el.querySelector('[data-be-spell-merge]');
@@ -1379,8 +1379,8 @@ function renderExtractedSection(snapshot) {
         container.classList.add('be-compact-mode');
     }
 
-    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
-    layoutRoot.appendChild(wrapper);
+    const layoutRoot = PeDom().getLayoutRoot().element;
+    PeDom().getSectionsLayer().element.appendChild(wrapper);
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
@@ -1806,7 +1806,7 @@ async function injectClonesIntoSpellsView() {
           
           // Wrap it
           const wrapper = createDraggableContainer(title, child, `section-${title.replace(/\s+/g, '-')}`);
-          layoutRoot.appendChild(wrapper); // This moves 'child' into 'wrapped'
+          PeDom().getSectionsLayer().element.appendChild(wrapper); // This moves 'child' into 'wrapped'
       }
   });
 
@@ -1826,9 +1826,9 @@ async function injectClonesIntoSpellsView() {
       }
   });
 
-  // Inject everything into the layout root
+  // Inject everything into the sections layer
   allSectionsOrdered.forEach(container => {
-      layoutRoot.appendChild(container); // Append moves them to the end or maintains order if prepended
+      PeDom().getSectionsLayer().element.appendChild(container); // Append moves them to the end or maintains order if prepended
   });
 
   // 8. Hide Navigation UI (Using DomManager)
@@ -1933,12 +1933,12 @@ function moveQuickInfo() {
     quickInfo = wrapper ? wrapper.element : null;
 
     if (quickInfo) {
-        const layoutRoot = document.getElementById('print-layout-wrapper');
+        const layoutRoot = PeDom().getLayoutRoot().element;
         if (layoutRoot) {
              // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
              // Let's move it to preserve functionality.
              const container = createDraggableContainer('Quick Info', quickInfo, 'section-Quick-Info');
-             layoutRoot.appendChild(container);
+             PeDom().getSectionsLayer().element.appendChild(container);
              
              // Ensure it's visible if parent was hidden
              quickInfo.style.display = 'flex'; 
@@ -2011,7 +2011,7 @@ function separateAbilities() {
         // Default to ability border (if not overridden by saved layout later)
         innerContainer.classList.add('ability_border');
         
-        layoutRoot.appendChild(wrapper);
+        PeDom().getSectionsLayer().element.appendChild(wrapper);
 
         // Targeted SVG Removal for the new section
         removeSpecificSvgs(innerContainer);
@@ -2058,7 +2058,7 @@ function separateQuickInfoBoxes() {
         // Default to box border
         innerContainer.classList.add('box_border');
         
-        layoutRoot.appendChild(wrapper);
+        PeDom().getSectionsLayer().element.appendChild(wrapper);
 
         // Targeted SVG Removal for the new section
         removeSpecificSvgs(innerContainer);
@@ -2082,7 +2082,7 @@ function separateQuickInfoBoxes() {
             const healthHeader = health.querySelector('h1');
             // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
             
-            layoutRoot.appendChild(wrapper);
+            PeDom().getSectionsLayer().element.appendChild(wrapper);
             
             // Fix health display
             health.style.display = 'block';
@@ -2413,6 +2413,21 @@ function enforceFullHeight() {
             }
         }
         
+        .pe-layer {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            pointer-events: none !important;
+            z-index: 1000;
+            overflow: visible !important;
+        }
+        
+        #pe-shapes-layer {
+            z-index: 1001; /* Above sections */
+        }
+        
         .be-section-wrapper {
             position: absolute !important;
             display: flex !important;
@@ -2420,22 +2435,22 @@ function enforceFullHeight() {
             z-index: 10;
             min-width: max-content;
             transition: opacity 0.2s;
-            pointer-events: auto; /* Interactive by default */
+            pointer-events: auto !important; /* Interactive by default */
         }
         
         /* Interaction Locking via Body Classes */
-        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
+        body.be-lock-sections #pe-sections-layer {
             pointer-events: none !important;
             opacity: 0.4 !important;
         }
-        body.be-lock-shapes .be-shape-wrapper {
+        body.be-lock-shapes #pe-shapes-layer {
             pointer-events: none !important;
             opacity: 0.5 !important;
         }
         
         /* Lock children when parent is locked */
-        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) *,
-        body.be-lock-shapes .be-shape-wrapper * {
+        body.be-lock-sections #pe-sections-layer *,
+        body.be-lock-shapes #pe-shapes-layer * {
             pointer-events: none !important;
         }
 
@@ -2448,7 +2463,7 @@ function enforceFullHeight() {
         .be-section-wrapper:hover .be-section-actions,
         .be-shape-wrapper:hover .be-section-actions {
             opacity: 1;
-            pointer-events: auto;
+            pointer-events: auto !important;
         }
 
         ${s.UI.PRINT_CONTAINER} {
@@ -3182,9 +3197,9 @@ function renderClonedSection(snapshot) {
         container.classList.add(snapshot.borderStyle);
     }
 
-    const layoutRoot = document.getElementById('print-layout-wrapper');
+    const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-        layoutRoot.appendChild(wrapper);
+        PeDom().getShapesLayer().element.appendChild(wrapper);
     }
 
     // Re-init resize logic for the new container
@@ -3403,9 +3418,9 @@ function createShape(assetPath, restoreData = null) {
         });
     }
     
-    const layoutRoot = document.getElementById('print-layout-wrapper');
+    const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-        layoutRoot.appendChild(wrapper);
+        PeDom().getShapesLayer().element.appendChild(wrapper);
     }
     
     // Re-init resize logic
@@ -3622,6 +3637,30 @@ function toggleShapesMode(forceState) {
         });
         showFeedback('Shapes Mode: OFF');
     }
+
+    // Sync with LayerManager if available
+    const lm = PeDom().getLayerManager();
+    if (lm) {
+        const layerEl = document.getElementById('pe-shapes-layer');
+        if (layerEl) {
+            // Shapes Mode ON means Layer is Visible
+            layerEl.style.display = isActive ? 'block' : 'none';
+            
+            // Sync button opacity in the panel
+            const panel = document.getElementById('print-enhance-layer-manager');
+            if (panel) {
+                // Find the toggle button for Shapes Mode
+                const rows = Array.from(panel.querySelectorAll('div'));
+                const shapesRow = rows.find(r => r.textContent.includes('Shapes Mode'));
+                if (shapesRow) {
+                    const btn = shapesRow.querySelector('button');
+                    if (btn) {
+                        btn.style.opacity = isActive ? '1' : '0.4';
+                    }
+                }
+            }
+        }
+    }
 }
 
 // Global click listener for deselecting shapes
@@ -3689,7 +3728,7 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
         
     }
 
-    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    const layoutRoot = PeDom().getLayoutRoot().element;
     
     if (restoreData) {
         if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
@@ -3718,8 +3757,7 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
         wrapper.style.zIndex = '10000';
     }
 
-    layoutRoot.appendChild(wrapper);
-
+    PeDom().getSectionsLayer().element.appendChild(wrapper);
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
     
@@ -4659,7 +4697,6 @@ function createControls() {
                 showFeedback('Shape added');
             }
         }},
-        { label: 'Shapes Mode', icon: '🔒', className: 'be-shapes-mode-btn', action: () => toggleShapesMode() },
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
@@ -5104,6 +5141,9 @@ function createControls() {
         style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
         document.head.appendChild(style);
     }
+
+    // Initialize Layer Management Panel
+    PeDom().getLayerManager();
 }
 
 /**

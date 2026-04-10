@@ -49,7 +49,7 @@ describe('Shapes Mode Lockdown', function() {
         const css = styleTag.textContent;
         
         // We expect rules that lock shapes by default or via class
-        assert.ok(css.includes('body.be-lock-shapes .be-shape-wrapper'), 'CSS should have shape lock rules');
+        assert.ok(css.includes('body.be-lock-shapes #pe-shapes-layer'), 'CSS should have shape lock rules');
     });
 
     it('should verify that sections remain interactive even when Shapes Mode is OFF', function() {
@@ -58,6 +58,6 @@ describe('Shapes Mode Lockdown', function() {
         
         // Sections should be interactive by default (pointer-events: auto on wrapper)
         assert.ok(css.includes('.be-section-wrapper'), 'CSS should have wrapper rules');
-        assert.ok(css.includes('pointer-events: auto; /* Interactive by default */'), 'Should be interactive by default');
+        assert.ok(css.includes('pointer-events: auto !important; /* Interactive by default */'), 'Should be interactive by default');
     });
 });

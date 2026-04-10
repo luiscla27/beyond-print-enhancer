@@ -89,6 +89,7 @@ When the project is ready for a new version:
 - **Linting:** We use ESLint to ensure code consistency.
 - **Testing:** We aim for high test coverage for core logic and UI components.
 - **Documentation:** We keep the product definition and technical documentation in sync with the code.
+- [ ] **UI Isolation & Deep Clean:** All new floating UI elements MUST be explicitly excluded from the "Deep Clean" rules in `js/main.js`. Use the `print-enhance-` prefix for IDs and `be-` for classes.
 - [ ] **JSON Schema Versioning:** If the JSON structure for exported layouts has changed, the `SCHEMA_VERSION` in `js/main.js` should be incremented.
 
 ## Coding Style
