@@ -37,8 +37,10 @@ class LayerManager {
             color: 'white',
             fontSize: '12px',
             minWidth: '140px',
+            maxWidth: '280px',
             maxHeight: '80vh',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            overflowX: 'hidden'
         });
 
         const title = document.createElement('div');
@@ -128,10 +130,17 @@ class LayerManager {
                 shapeList.innerHTML = '<span style="color: #666; font-style: italic; font-size: 10px;">Empty</span>';
             }
             shapes.forEach(shape => {
-                const img = shape.querySelector('img');
-                if (img) {
+                const container = shape.querySelector('.print-section-container');
+                const assetPath = container ? container.dataset.assetPath : null;
+                
+                if (assetPath) {
                     const thumb = document.createElement('img');
-                    thumb.src = img.src;
+                    // Ensure we use chrome.runtime.getURL if available, otherwise raw path
+                    const url = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
+                                ? chrome.runtime.getURL(assetPath) 
+                                : assetPath;
+                    
+                    thumb.src = url;
                     thumb.className = 'be-layer-item-thumb';
                     Object.assign(thumb.style, {
                         width: '28px',
@@ -145,7 +154,7 @@ class LayerManager {
                     });
                     thumb.onmouseenter = () => thumb.style.transform = 'scale(1.2)';
                     thumb.onmouseleave = () => thumb.style.transform = 'scale(1)';
-                    thumb.title = img.src.split('/').pop();
+                    thumb.title = assetPath.split('/').pop();
                     shapeList.appendChild(thumb);
                 }
             });

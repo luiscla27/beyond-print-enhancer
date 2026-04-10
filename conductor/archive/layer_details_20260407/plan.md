@@ -27,3 +27,9 @@
 - [x] Task: Verify list updates correctly when adding/removing various elements.
 - [x] Task: Verify UI remains compact and performant.
 - [x] Task: Conductor - User Manual Verification 'Final Validation' (Protocol in workflow.md)
+
+## Phase 6: UI Refinements & Fixes
+- [x] Task: Resolve panel width ballooning issue by adding `maxWidth` and `overflowX` constraints.
+- [x] Task: Fix shape thumbnail discovery logic to handle both `<img>` and `border-image` assets using `dataset.assetPath`.
+- [x] Task: Verify fixes in the live environment.
+
