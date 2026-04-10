@@ -93,7 +93,7 @@ describe('Shape Logic', function() {
         const wrapper = window.createShape(assetPath);
         
         const layoutRoot = document.getElementById('print-layout-wrapper');
-        const shapesLayer = document.getElementById('pe-shapes-layer');
+        const shapesLayer = document.getElementById('print-enhance-shapes-layer');
         assert.ok(shapesLayer, 'Shapes layer should exist');
         assert.strictEqual(wrapper.parentElement, shapesLayer, 'Wrapper should be child of shapes layer');
         assert.strictEqual(wrapper.style.left, '50px', 'Initial left should be 50px');

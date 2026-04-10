@@ -170,8 +170,8 @@ class DomManager {
                 DESCRIPTION: '.be-catalog-description'
             },
             LAYERS: {
-                SECTIONS: '#pe-sections-layer',
-                SHAPES: '#pe-shapes-layer',
+                SECTIONS: '#print-enhance-sections-layer',
+                SHAPES: '#print-enhance-shapes-layer',
                 LAYOUT_ROOT: '#print-layout-wrapper'
             },
             // Extractables
@@ -414,7 +414,7 @@ class DomManager {
             const root = this.getLayoutRoot();
             if (root.element) {
                 layer = document.createElement('div');
-                layer.id = 'pe-sections-layer';
+                layer.id = 'print-enhance-sections-layer';
                 layer.className = 'pe-layer';
                 root.element.appendChild(layer);
             }
@@ -432,7 +432,7 @@ class DomManager {
             const root = this.getLayoutRoot();
             if (root.element) {
                 layer = document.createElement('div');
-                layer.id = 'pe-shapes-layer';
+                layer.id = 'print-enhance-shapes-layer';
                 layer.className = 'pe-layer';
                 root.element.appendChild(layer);
             }

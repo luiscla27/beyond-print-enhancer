@@ -4,10 +4,10 @@ This file tracks all major development tracks for the project.
 
 ## Current Tracks
 
-- [ ] **Track: Layer Content Visualization**
-*Link: [./tracks/layer_details_20260407/](./tracks/layer_details_20260407/)*
 
 ## Archived Tracks
+- [x] **Track: Layer Content Visualization** (Completed: 2026-04-10)
+  *Link: [./archive/layer_details_20260407/](./archive/layer_details_20260407/)*
 - [x] **Track: Layer Management Panel and Refactor** (Completed: 2026-04-07)
   *Link: [./archive/layer_management_20260407/](./archive/layer_management_20260407/)*
 - [x] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.** (Completed: 2026-03-24)

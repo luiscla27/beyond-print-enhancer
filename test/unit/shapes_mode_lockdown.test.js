@@ -49,7 +49,7 @@ describe('Shapes Mode Lockdown', function() {
         const css = styleTag.textContent;
         
         // We expect rules that lock shapes by default or via class
-        assert.ok(css.includes('body.be-lock-shapes #pe-shapes-layer'), 'CSS should have shape lock rules');
+        assert.ok(css.includes('body.be-lock-shapes #print-enhance-shapes-layer'), 'CSS should have shape lock rules');
     });
 
     it('should verify that sections remain interactive even when Shapes Mode is OFF', function() {

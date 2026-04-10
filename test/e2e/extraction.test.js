@@ -105,7 +105,7 @@ describe('DOM Extraction Logic (Integration)', function() {
     // Verify Layout: Actions should be BEFORE Spells
     // Spells should be BEFORE Inventory (if strictly ordered by append)
     // Verify Layout: Actions and Spells should be siblings in the unified root
-    const sectionsLayer = document.getElementById('pe-sections-layer');
+    const sectionsLayer = document.getElementById('print-enhance-sections-layer');
     assert.ok(sectionsLayer, 'Sections layer should exist');
     
     const spellsContainer = spellsNode.closest('.print-section-container');

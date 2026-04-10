@@ -21,6 +21,18 @@ const SCHEMA_VERSION = '1.4.0';
 const PeDom = () => window.DomManager.getInstance();
 
 /**
+ * Helper to refresh Layer Manager content lists.
+ */
+function refreshLayers() {
+    try {
+        const lm = PeDom().getLayerManager();
+        if (lm) lm.refreshLayerContents();
+    } catch (e) {
+        // Silently fail if UI not ready
+    }
+}
+
+/**
  * Feature Flags
  */
 const ENABLE_PREMADE_TEMPLATES = false; // Set to true to show 'PREMADE' button
@@ -1273,6 +1285,7 @@ async function handleElementExtraction(el) {
     if (window.injectAppendButton) window.injectAppendButton(innerContainer);
     if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
+    refreshLayers();
     showFeedback(`Extracted ${title}`);
 
     return wrapper;
@@ -1697,6 +1710,7 @@ function rollbackSection(container) {
 
     wrapper.remove();
     updateLayoutBounds();
+    refreshLayers();
     showFeedback('Extraction rolled back');
 }
 
@@ -2424,7 +2438,7 @@ function enforceFullHeight() {
             overflow: visible !important;
         }
         
-        #pe-shapes-layer {
+        #print-enhance-shapes-layer {
             z-index: 1001; /* Above sections */
         }
         
@@ -2439,18 +2453,18 @@ function enforceFullHeight() {
         }
         
         /* Interaction Locking via Body Classes */
-        body.be-lock-sections #pe-sections-layer {
+        body.be-lock-sections #print-enhance-sections-layer {
             pointer-events: none !important;
             opacity: 0.4 !important;
         }
-        body.be-lock-shapes #pe-shapes-layer {
+        body.be-lock-shapes #print-enhance-shapes-layer {
             pointer-events: none !important;
             opacity: 0.5 !important;
         }
         
         /* Lock children when parent is locked */
-        body.be-lock-sections #pe-sections-layer *,
-        body.be-lock-shapes #pe-shapes-layer * {
+        body.be-lock-sections #print-enhance-sections-layer *,
+        body.be-lock-shapes #print-enhance-shapes-layer * {
             pointer-events: none !important;
         }
 
@@ -3205,6 +3219,8 @@ function renderClonedSection(snapshot) {
     // Re-init resize logic for the new container
     if (window.initResizeLogic) window.initResizeLogic();
     
+    refreshLayers();
+    
     return wrapper;
 }
 
@@ -3422,6 +3438,8 @@ function createShape(assetPath, restoreData = null) {
     if (layoutRoot) {
         PeDom().getShapesLayer().element.appendChild(wrapper);
     }
+    
+    refreshLayers();
     
     // Re-init resize logic
     if (window.initResizeLogic) window.initResizeLogic();
@@ -3641,7 +3659,7 @@ function toggleShapesMode(forceState) {
     // Sync with LayerManager if available
     const lm = PeDom().getLayerManager();
     if (lm) {
-        const layerEl = document.getElementById('pe-shapes-layer');
+        const layerEl = document.getElementById('print-enhance-shapes-layer');
         if (layerEl) {
             // Shapes Mode ON means Layer is Visible
             layerEl.style.display = isActive ? 'block' : 'none';
@@ -6180,6 +6198,7 @@ async function applyLayout(layout) {
     }
 
     updateLayoutBounds();
+    refreshLayers();
 }
 
 /**
@@ -6378,6 +6397,7 @@ function injectCloneButtons(context = document) {
                 if (confirm(`Are you sure you want to delete this ${isShape ? 'shape' : 'section'}?`)) {
                     wrapper.remove();
                     updateLayoutBounds();
+                    refreshLayers();
                 }
             }
         });
