@@ -1,0 +1,8 @@
+{
+  "track_id": "layer_details_20260407",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-10T14:55:00Z",
+  "updated_at": "2026-04-10T14:55:00Z",
+  "description": "Add little panels to each layer so the user can see whats he's hiding/showing (nested lists with thumbnails/previews)."
+}
