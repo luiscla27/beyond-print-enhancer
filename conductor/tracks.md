@@ -3,6 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
+- [ ] **Track: Now that the 'shapes mode' is no longer available, theres no way to edit the 'shapes' layer; add a new track to fix it, the desired behaviour is to add a a CHECK per each whole layer (pe-sections-layer). The check will enable/disable the 'edit mode' allowing the elements on the layer to be draggable and editable.**
+  *Link: [./tracks/layer_edit_mode_20260419/](./tracks/layer_edit_mode_20260419/)*
 
 
 ## Archived Tracks
