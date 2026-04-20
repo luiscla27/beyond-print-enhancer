@@ -22,11 +22,11 @@
 - [x] Task: Conductor - User Manual Verification 'Integration & Refactoring (main.js)' (Protocol in workflow.md)
 
 ## Phase 4: Visual & Interaction Refinement
-- [ ] Task: Verify that the "fade" (opacity 0.4) is correctly applied to both layers when locked.
-- [ ] Task: Verify that dragging, resizing, and double-clicking are disabled for elements in locked layers.
-- [ ] Task: Ensure that visibility toggles (eye icon) still work independently of the lock toggles.
-- [ ] Task: Verify that "Shapes Mode" handles (rotation) are hidden when the shapes layer is locked.
-- [ ] Task: Conductor - User Manual Verification 'Visual & Interaction Refinement' (Protocol in workflow.md)
+- [x] Task: Verify that the "fade" (opacity 0.4) is correctly applied to both layers when locked.
+- [x] Task: Verify that dragging, resizing, and double-clicking are disabled for elements in locked layers.
+- [x] Task: Ensure that visibility toggles (eye icon) still work independently of the lock toggles.
+- [x] Task: Verify that "Shapes Mode" handles (rotation) are hidden when the shapes layer is locked.
+- [x] Task: Conductor - User Manual Verification 'Visual & Interaction Refinement' (Protocol in workflow.md)
 
 ## Phase 5: Final Validation
 - [ ] Task: Run all existing tests to ensure no regressions in layout saving/loading.
