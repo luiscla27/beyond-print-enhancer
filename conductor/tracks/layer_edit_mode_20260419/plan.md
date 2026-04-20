@@ -1,9 +1,9 @@
 # Implementation Plan: Layer Edit Mode (Interaction Toggling)
 
 ## Phase 1: Research & UI Design
-- [ ] Task: Review `LayerManager.js` to determine the best icon/character for the "Lock" toggle (e.g., 🔒/🔓 or ✏️).
-- [ ] Task: Identify all legacy "Shapes Mode" logic in `main.js` that needs to be refactored or removed to allow independent layer locking.
-- [ ] Task: Conductor - User Manual Verification 'Research & UI Design' (Protocol in workflow.md)
+- [x] Task: Review `LayerManager.js` to determine the best icon/character for the "Lock" toggle (e.g., 🔒/🔓 or ✏️).
+- [x] Task: Identify all legacy "Shapes Mode" logic in `main.js` that needs to be refactored or removed to allow independent layer locking.
+- [x] Task: Conductor - User Manual Verification 'Research & UI Design' (Protocol in workflow.md)
 
 ## Phase 2: Core Logic Implementation (LayerManager)
 - [ ] Task: Update `LayerManager` constructor to include `isLocked: false` for all layers.
