@@ -6,13 +6,13 @@
 - [x] Task: Conductor - User Manual Verification 'Research & UI Design' (Protocol in workflow.md)
 
 ## Phase 2: Core Logic Implementation (LayerManager)
-- [ ] Task: Update `LayerManager` constructor to include `isLocked: false` for all layers.
-- [ ] Task: Implement `toggleLayerLock(layer, btn)` in `LayerManager`.
+- [x] Task: Update `LayerManager` constructor to include `isLocked: false` for all layers.
+- [x] Task: Implement `toggleLayerLock(layer, btn)` in `LayerManager`.
     - This method should toggle the corresponding body class (`be-lock-sections` or `be-lock-shapes`).
     - It should update the button icon/style to reflect the locked state.
-- [ ] Task: Update `LayerManager.createPanel()` to inject the lock toggle button next to the visibility toggle.
-- [ ] Task: Write unit tests in `test/unit/layer_manager.test.js` to verify that toggling the lock button correctly adds/removes the body classes.
-- [ ] Task: Conductor - User Manual Verification 'Core Logic Implementation (LayerManager)' (Protocol in workflow.md)
+- [x] Task: Update `LayerManager.createPanel()` to inject the lock toggle button next to the visibility toggle.
+- [x] Task: Write unit tests in `test/unit/layer_manager.test.js` to verify that toggling the lock button correctly adds/removes the body classes.
+- [x] Task: Conductor - User Manual Verification 'Core Logic Implementation (LayerManager)' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Refactoring (main.js)
 - [ ] Task: Refactor `toggleShapesMode` in `main.js` to be compatible with independent layer locking (or remove it if redundant).

@@ -5,8 +5,8 @@ class LayerManager {
     constructor() {
         this.dom = window.DomManager.getInstance();
         this.layers = [
-            { id: 'shapes', label: 'Shapes Mode', layerId: 'print-enhance-shapes-layer' },
-            { id: 'sections', label: 'Sections', layerId: 'print-enhance-sections-layer' }
+            { id: 'shapes', label: 'Shapes Mode', layerId: 'print-enhance-shapes-layer', isLocked: false },
+            { id: 'sections', label: 'Sections', layerId: 'print-enhance-sections-layer', isLocked: false }
         ];
         this.panel = null;
         this.contentLists = {}; // layerId -> div
@@ -70,10 +70,29 @@ class LayerManager {
             label.style.fontWeight = '600';
             row.appendChild(label);
 
-            const toggle = document.createElement('button');
-            toggle.innerHTML = '👁️';
-            toggle.title = 'Toggle Visibility';
-            Object.assign(toggle.style, {
+            const controls = document.createElement('div');
+            controls.style.display = 'flex';
+            controls.style.gap = '8px';
+
+            const lockToggle = document.createElement('button');
+            lockToggle.innerHTML = layer.isLocked ? '🔒' : '🔓';
+            lockToggle.title = 'Toggle Edit Mode';
+            Object.assign(lockToggle.style, {
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                padding: '0',
+                opacity: layer.isLocked ? '0.6' : '1',
+                transition: 'opacity 0.2s'
+            });
+            lockToggle.onclick = () => this.toggleLayerLock(layer, lockToggle);
+            controls.appendChild(lockToggle);
+
+            const visibilityToggle = document.createElement('button');
+            visibilityToggle.innerHTML = '👁️';
+            visibilityToggle.title = 'Toggle Visibility';
+            Object.assign(visibilityToggle.style, {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -83,9 +102,10 @@ class LayerManager {
                 transition: 'opacity 0.2s'
             });
 
-            toggle.onclick = () => this.toggleLayer(layer, toggle);
+            visibilityToggle.onclick = () => this.toggleLayer(layer, visibilityToggle);
+            controls.appendChild(visibilityToggle);
 
-            row.appendChild(toggle);
+            row.appendChild(controls);
             layerGroup.appendChild(row);
 
             // Nested List Container
@@ -191,6 +211,30 @@ class LayerManager {
                 card.title = title;
                 sectionList.appendChild(card);
             });
+        }
+    }
+
+    /**
+     * Toggles the interaction lock (edit mode) of a layer.
+     * @param {object} layer The layer metadata.
+     * @param {HTMLElement} btn The toggle button element.
+     */
+    toggleLayerLock(layer, btn) {
+        layer.isLocked = !layer.isLocked;
+        const lockClass = `be-lock-${layer.id}`;
+        
+        if (layer.isLocked) {
+            document.body.classList.add(lockClass);
+            btn.innerHTML = '🔒';
+            btn.style.opacity = '0.6';
+        } else {
+            document.body.classList.remove(lockClass);
+            btn.innerHTML = '🔓';
+            btn.style.opacity = '1';
+        }
+
+        if (window.showFeedback) {
+            window.showFeedback(`${layer.label} ${layer.isLocked ? 'Locked' : 'Unlocked'}`);
         }
     }
 
