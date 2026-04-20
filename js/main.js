@@ -21,6 +21,54 @@ const SCHEMA_VERSION = '1.4.0';
 const PeDom = () => window.DomManager.getInstance();
 
 /**
+ * Toggles the interaction mode for the shapes layer.
+ * Compatibility shim for legacy code and tests.
+ */
+function toggleShapesMode(forceState) {
+    const activeClass = 'be-shapes-mode-active';
+    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+
+    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
+
+    if (isActive) {
+        document.body.classList.add(activeClass);
+    } else {
+        document.body.classList.remove(activeClass);
+    }
+
+    if (lm) {
+        const shapesLayer = lm.layers.find(l => l.id === 'shapes');
+        if (shapesLayer) {
+            // In the old system, "Shapes Mode ON" meant Locked: false
+            const shouldBeLocked = !isActive;
+
+            // If the state is already what we want, do nothing to avoid feedback loops
+            if (shapesLayer.isLocked === shouldBeLocked) return;
+
+            // Find the button in the panel to keep UI in sync
+            const panel = document.getElementById('print-enhance-layer-manager');
+            let btn = null;
+            if (panel) {
+                const rows = Array.from(panel.querySelectorAll('div'));
+                const shapesRow = rows.find(r => r.textContent.includes('Shapes Mode'));
+                if (shapesRow) btn = shapesRow.querySelector('button');
+            }
+
+            // Call the new locking logic
+            lm.toggleLayerLock(shapesLayer, btn);
+            return;
+        }
+    }
+
+    // Fallback if LayerManager is not initialized
+    const lockClass = 'be-lock-shapes';
+    if (isActive) {
+        document.body.classList.remove(lockClass);
+    } else {
+        document.body.classList.add(lockClass);
+    }
+}
+/**
  * Helper to refresh Layer Manager content lists.
  */
 function refreshLayers() {
@@ -3627,9 +3675,12 @@ function applyGlobalFilters(filters) {
     window.applyShapeAsset = applyShapeAsset;
     window.clearBorderStyles = clearBorderStyles;
     window.showFeedback = showFeedback;
-})();
-})();
-    // 0. Check for existing section for this spell
+
+    /**
+     * Creates and manages a floating spell detail section.
+     */
+    async function createSpellDetailSection(spellName, coords, restoreData = null) {
+        // 0. Check for existing section for this spell
     const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
                           .find(el => {
                               const title = el.querySelector('.print-section-header span');

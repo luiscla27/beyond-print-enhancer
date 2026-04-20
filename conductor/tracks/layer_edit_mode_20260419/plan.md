@@ -29,6 +29,6 @@
 - [x] Task: Conductor - User Manual Verification 'Visual & Interaction Refinement' (Protocol in workflow.md)
 
 ## Phase 5: Final Validation
-- [ ] Task: Run all existing tests to ensure no regressions in layout saving/loading.
-- [ ] Task: Verify the new functionality in the live character sheet environment.
-- [ ] Task: Conductor - User Manual Verification 'Final Validation' (Protocol in workflow.md)
+- [x] Task: Run all existing tests to ensure no regressions in layout saving/loading.
+- [x] Task: Verify the new functionality in the live character sheet environment.
+- [x] Task: Conductor - User Manual Verification 'Final Validation' (Protocol in workflow.md)
