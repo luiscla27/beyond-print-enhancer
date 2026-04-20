@@ -5,13 +5,18 @@ const path = require('path');
 require("fake-indexeddb/auto");
 
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
+const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
+const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
+const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
 
 describe('Full Integration - Image Filters', function() {
   let window, document, Storage;
 
   before(async function() {
     const dom = new JSDOM(`<!DOCTYPE html><html><head></head><body>
+        <div id="print-layout-wrapper"></div>
         <div id="print-enhance-controls-container"></div>
         <div class="print-section-container _border-test">Border</div>
     </body></html>`, {
@@ -29,6 +34,8 @@ describe('Full Integration - Image Filters', function() {
     global.indexedDB = indexedDB;
     global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
+    window.eval(elementWrapperContent);
+    window.eval(domManagerContent);
     window.eval(mainJsContent);
     Storage = window.Storage;
     await Storage.init();

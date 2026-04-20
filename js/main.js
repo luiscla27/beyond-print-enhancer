@@ -18,6 +18,67 @@ const DB_VERSION = 3;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
 const SCHEMA_VERSION = '1.4.0';
+const PeDom = () => window.DomManager.getInstance();
+
+/**
+ * Toggles the interaction mode for the shapes layer.
+ * Compatibility shim for legacy code and tests.
+ */
+function toggleShapesMode(forceState) {
+    const activeClass = 'be-shapes-mode-active';
+    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+
+    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
+
+    if (isActive) {
+        document.body.classList.add(activeClass);
+    } else {
+        document.body.classList.remove(activeClass);
+    }
+
+    if (lm) {
+        const shapesLayer = lm.layers.find(l => l.id === 'shapes');
+        if (shapesLayer) {
+            // In the old system, "Shapes Mode ON" meant Locked: false
+            const shouldBeLocked = !isActive;
+
+            // If the state is already what we want, do nothing to avoid feedback loops
+            if (shapesLayer.isLocked === shouldBeLocked) return;
+
+            // Find the button in the panel to keep UI in sync
+            const panel = document.getElementById('print-enhance-layer-manager');
+            let btn = null;
+            if (panel) {
+                const rows = Array.from(panel.querySelectorAll('div'));
+                const shapesRow = rows.find(r => r.textContent.includes('Shapes Mode'));
+                if (shapesRow) btn = shapesRow.querySelector('button');
+            }
+
+            // Call the new locking logic
+            lm.toggleLayerLock(shapesLayer, btn);
+            return;
+        }
+    }
+
+    // Fallback if LayerManager is not initialized
+    const lockClass = 'be-lock-shapes';
+    if (isActive) {
+        document.body.classList.remove(lockClass);
+    } else {
+        document.body.classList.add(lockClass);
+    }
+}
+/**
+ * Helper to refresh Layer Manager content lists.
+ */
+function refreshLayers() {
+    try {
+        const lm = PeDom().getLayerManager();
+        if (lm) lm.refreshLayerContents();
+    } catch (e) {
+        // Silently fail if UI not ready
+    }
+}
 
 /**
  * Feature Flags
@@ -1243,7 +1304,7 @@ async function handleElementExtraction(el) {
 
     // 6. Position and Hide Original
     const rect = el.getBoundingClientRect();
-    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    const layoutRoot = PeDom().getLayoutRoot().element;
     const rootRect = layoutRoot.getBoundingClientRect();
     
     wrapper.style.position = 'absolute';
@@ -1255,10 +1316,9 @@ async function handleElementExtraction(el) {
     innerContainer.style.width = `${rect.width}px`;
     innerContainer.style.height = 'auto';
 
-    layoutRoot.appendChild(wrapper);
-    
-    // In the case of spell sections, destroy original instead of hiding
-    // (They are ephemeral and don't have a home on the sheet to rollback to)
+    PeDom().getSectionsLayer().element.appendChild(wrapper);
+
+    // In the case of spell sections, destroy original instead of hiding    // (They are ephemeral and don't have a home on the sheet to rollback to)
     const isSpell = el.classList.contains('be-spell-detail') || 
                     el.id.startsWith('spell-detail-') || 
                     el.querySelector('[data-be-spell-merge]');
@@ -1273,6 +1333,7 @@ async function handleElementExtraction(el) {
     if (window.injectAppendButton) window.injectAppendButton(innerContainer);
     if (window.initResizeLogic) window.initResizeLogic();
     updateLayoutBounds();
+    refreshLayers();
     showFeedback(`Extracted ${title}`);
 
     return wrapper;
@@ -1379,8 +1440,8 @@ function renderExtractedSection(snapshot) {
         container.classList.add('be-compact-mode');
     }
 
-    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
-    layoutRoot.appendChild(wrapper);
+    const layoutRoot = PeDom().getLayoutRoot().element;
+    PeDom().getSectionsLayer().element.appendChild(wrapper);
     
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
@@ -1697,6 +1758,7 @@ function rollbackSection(container) {
 
     wrapper.remove();
     updateLayoutBounds();
+    refreshLayers();
     showFeedback('Extraction rolled back');
 }
 
@@ -1806,7 +1868,7 @@ async function injectClonesIntoSpellsView() {
           
           // Wrap it
           const wrapper = createDraggableContainer(title, child, `section-${title.replace(/\s+/g, '-')}`);
-          layoutRoot.appendChild(wrapper); // This moves 'child' into 'wrapped'
+          PeDom().getSectionsLayer().element.appendChild(wrapper); // This moves 'child' into 'wrapped'
       }
   });
 
@@ -1826,9 +1888,9 @@ async function injectClonesIntoSpellsView() {
       }
   });
 
-  // Inject everything into the layout root
+  // Inject everything into the sections layer
   allSectionsOrdered.forEach(container => {
-      layoutRoot.appendChild(container); // Append moves them to the end or maintains order if prepended
+      PeDom().getSectionsLayer().element.appendChild(container); // Append moves them to the end or maintains order if prepended
   });
 
   // 8. Hide Navigation UI (Using DomManager)
@@ -1933,12 +1995,12 @@ function moveQuickInfo() {
     quickInfo = wrapper ? wrapper.element : null;
 
     if (quickInfo) {
-        const layoutRoot = document.getElementById('print-layout-wrapper');
+        const layoutRoot = PeDom().getLayoutRoot().element;
         if (layoutRoot) {
              // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
              // Let's move it to preserve functionality.
              const container = createDraggableContainer('Quick Info', quickInfo, 'section-Quick-Info');
-             layoutRoot.appendChild(container);
+             PeDom().getSectionsLayer().element.appendChild(container);
              
              // Ensure it's visible if parent was hidden
              quickInfo.style.display = 'flex'; 
@@ -2011,7 +2073,7 @@ function separateAbilities() {
         // Default to ability border (if not overridden by saved layout later)
         innerContainer.classList.add('ability_border');
         
-        layoutRoot.appendChild(wrapper);
+        PeDom().getSectionsLayer().element.appendChild(wrapper);
 
         // Targeted SVG Removal for the new section
         removeSpecificSvgs(innerContainer);
@@ -2058,7 +2120,7 @@ function separateQuickInfoBoxes() {
         // Default to box border
         innerContainer.classList.add('box_border');
         
-        layoutRoot.appendChild(wrapper);
+        PeDom().getSectionsLayer().element.appendChild(wrapper);
 
         // Targeted SVG Removal for the new section
         removeSpecificSvgs(innerContainer);
@@ -2082,7 +2144,7 @@ function separateQuickInfoBoxes() {
             const healthHeader = health.querySelector('h1');
             // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
             
-            layoutRoot.appendChild(wrapper);
+            PeDom().getSectionsLayer().element.appendChild(wrapper);
             
             // Fix health display
             health.style.display = 'block';
@@ -2413,6 +2475,21 @@ function enforceFullHeight() {
             }
         }
         
+        .pe-layer {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            pointer-events: none !important;
+            z-index: 1000;
+            overflow: visible !important;
+        }
+        
+        #print-enhance-shapes-layer {
+            z-index: 1001; /* Above sections */
+        }
+        
         .be-section-wrapper {
             position: absolute !important;
             display: flex !important;
@@ -2420,22 +2497,22 @@ function enforceFullHeight() {
             z-index: 10;
             min-width: max-content;
             transition: opacity 0.2s;
-            pointer-events: auto; /* Interactive by default */
+            pointer-events: auto !important; /* Interactive by default */
         }
         
         /* Interaction Locking via Body Classes */
-        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
+        body.be-lock-sections #print-enhance-sections-layer {
             pointer-events: none !important;
             opacity: 0.4 !important;
         }
-        body.be-lock-shapes .be-shape-wrapper {
+        body.be-lock-shapes #print-enhance-shapes-layer {
             pointer-events: none !important;
             opacity: 0.5 !important;
         }
         
         /* Lock children when parent is locked */
-        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) *,
-        body.be-lock-shapes .be-shape-wrapper * {
+        body.be-lock-sections #print-enhance-sections-layer *,
+        body.be-lock-shapes #print-enhance-shapes-layer * {
             pointer-events: none !important;
         }
 
@@ -2448,7 +2525,7 @@ function enforceFullHeight() {
         .be-section-wrapper:hover .be-section-actions,
         .be-shape-wrapper:hover .be-section-actions {
             opacity: 1;
-            pointer-events: auto;
+            pointer-events: auto !important;
         }
 
         ${s.UI.PRINT_CONTAINER} {
@@ -2503,22 +2580,18 @@ function enforceFullHeight() {
             opacity: 1;
         }
 
-        /* Shapes Mode Active State */
-        body.be-shapes-mode-active .be-section-wrapper:not(.be-shape-wrapper) {
-            /* Dim sections when focusing on shapes */
+        /* Layer Lock States */
+        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
             opacity: 0.4 !important;
+            pointer-events: none !important;
         }
-        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper {
-            /* Ensure shapes are fully visible */
-            opacity: 1 !important;
+        body.be-lock-shapes .be-shape-wrapper {
+            opacity: 0.4 !important;
+            pointer-events: none !important;
         }
-        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper .print-shape-container {
-            filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.3));
-        }
-        body.be-shapes-mode-active .be-shapes-mode-btn {
-            background-color: #28a745 !important;
-            border-color: #fff !important;
-            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        /* Rotation handles should be hidden for locked shapes */
+        body.be-lock-shapes .be-rotation-handle {
+            display: none !important;
         }
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
@@ -3182,13 +3255,15 @@ function renderClonedSection(snapshot) {
         container.classList.add(snapshot.borderStyle);
     }
 
-    const layoutRoot = document.getElementById('print-layout-wrapper');
+    const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-        layoutRoot.appendChild(wrapper);
+        PeDom().getShapesLayer().element.appendChild(wrapper);
     }
 
     // Re-init resize logic for the new container
     if (window.initResizeLogic) window.initResizeLogic();
+    
+    refreshLayers();
     
     return wrapper;
 }
@@ -3350,7 +3425,7 @@ function createShape(assetPath, restoreData = null) {
     });
 
     wrapper.addEventListener('click', (e) => {
-        if (!document.body.classList.contains('be-shapes-mode-active')) return;
+        if (document.body.classList.contains('be-lock-shapes')) return;
         
         // Prevent handle click from re-triggering logic
         if (e.target.classList.contains('be-rotation-handle')) return;
@@ -3403,10 +3478,12 @@ function createShape(assetPath, restoreData = null) {
         });
     }
     
-    const layoutRoot = document.getElementById('print-layout-wrapper');
+    const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-        layoutRoot.appendChild(wrapper);
+        PeDom().getShapesLayer().element.appendChild(wrapper);
     }
+    
+    refreshLayers();
     
     // Re-init resize logic
     if (window.initResizeLogic) window.initResizeLogic();
@@ -3593,55 +3670,17 @@ function applyGlobalFilters(filters) {
 }
 
 
-/**
- * Toggles the interaction mode between "Full Edit" and "Shapes Only".
- * @param {boolean} forceState Optional: Force ON (true) or OFF (false).
- */
-function toggleShapesMode(forceState) {
-    const activeClass = 'be-shapes-mode-active';
-    const lockShapesClass = 'be-lock-shapes';
-    const lockSectionsClass = 'be-lock-sections';
-    
-    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
+// Export for testing and cross-script access
+    window.createShape = createShape;
+    window.applyShapeAsset = applyShapeAsset;
+    window.clearBorderStyles = clearBorderStyles;
+    window.showFeedback = showFeedback;
 
-    if (isActive) {
-        document.body.classList.add(activeClass);
-        document.body.classList.remove(lockShapesClass);
-        document.body.classList.add(lockSectionsClass);
-        showFeedback('Shapes Mode: ON');
-    } else {
-        document.body.classList.remove(activeClass);
-        document.body.classList.add(lockShapesClass);
-        document.body.classList.remove(lockSectionsClass);
-        
-        // Deselect all and remove handles
-        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
-            el.classList.remove('selected');
-            const h = el.querySelector('.be-rotation-handle');
-            if (h) h.remove();
-        });
-        showFeedback('Shapes Mode: OFF');
-    }
-}
-
-// Global click listener for deselecting shapes
-document.addEventListener('click', (e) => {
-    if (!document.body.classList.contains('be-shapes-mode-active')) return;
-
-    // If we didn't click a shape wrapper or a rotation handle, deselect all
-    if (!e.target.closest('.be-shape-wrapper') && !e.target.classList.contains('be-rotation-handle')) {
-        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
-            el.classList.remove('selected');
-            const h = el.querySelector('.be-rotation-handle');
-            if (h) h.remove();
-        });
-    }
-}, true);
-/**
- * Creates and manages a floating spell detail section.
- */
-async function createSpellDetailSection(spellName, coords, restoreData = null) {
-    // 0. Check for existing section for this spell
+    /**
+     * Creates and manages a floating spell detail section.
+     */
+    async function createSpellDetailSection(spellName, coords, restoreData = null) {
+        // 0. Check for existing section for this spell
     const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
                           .find(el => {
                               const title = el.querySelector('.print-section-header span');
@@ -3689,7 +3728,7 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
         
     }
 
-    const layoutRoot = document.getElementById('print-layout-wrapper') || document.body;
+    const layoutRoot = PeDom().getLayoutRoot().element;
     
     if (restoreData) {
         if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
@@ -3718,8 +3757,7 @@ async function createSpellDetailSection(spellName, coords, restoreData = null) {
         wrapper.style.zIndex = '10000';
     }
 
-    layoutRoot.appendChild(wrapper);
-
+    PeDom().getSectionsLayer().element.appendChild(wrapper);
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
     
@@ -4659,7 +4697,6 @@ function createControls() {
                 showFeedback('Shape added');
             }
         }},
-        { label: 'Shapes Mode', icon: '🔒', className: 'be-shapes-mode-btn', action: () => toggleShapesMode() },
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
@@ -5104,6 +5141,9 @@ function createControls() {
         style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
         document.head.appendChild(style);
     }
+
+    // Initialize Layer Management Panel
+    PeDom().getLayerManager();
 }
 
 /**
@@ -6140,6 +6180,7 @@ async function applyLayout(layout) {
     }
 
     updateLayoutBounds();
+    refreshLayers();
 }
 
 /**
@@ -6338,6 +6379,7 @@ function injectCloneButtons(context = document) {
                 if (confirm(`Are you sure you want to delete this ${isShape ? 'shape' : 'section'}?`)) {
                     wrapper.remove();
                     updateLayoutBounds();
+                    refreshLayers();
                 }
             }
         });

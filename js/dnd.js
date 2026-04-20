@@ -14,7 +14,7 @@ let dragOffsetY = 0;
  * Initializes Drag and Drop listeners on the layout wrapper.
  */
 function initDragAndDrop() {
-  const container = document.getElementById('print-layout-wrapper');
+  const container = window.DomManager.getInstance().getLayoutRoot().element;
   if (!container) {
       safeLog('log', '[DDB Print] DnD Init Failed: container not found');
       return;
@@ -138,7 +138,7 @@ function handleDrop(e) {
   }
 
   if (draggedItem) {
-    const container = document.getElementById('print-layout-wrapper');
+    const container = window.DomManager.getInstance().getLayoutRoot().element;
     const containerRect = container.getBoundingClientRect();
     
     // Detect scale from transform (e.g. "scale(0.68)")

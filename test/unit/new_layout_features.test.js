@@ -111,6 +111,7 @@ describe('Recent Layout Features', function() {
     window.__DDB_TEST_MODE__ = true;
     window.eval(elementWrapperContent);
     window.eval(domManagerContent);
+    window.eval(mainJsContent);
     window.CatalogService = {
         applyTemplate: async (id) => {
             if (id === 'archer') {

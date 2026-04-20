@@ -4,7 +4,11 @@ const fs = require('fs');
 const path = require('path');
 
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
+const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
+const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
+const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
+const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
 
 describe('Filters UI', function() {
   let window, document;
@@ -16,6 +20,7 @@ describe('Filters UI', function() {
     });
     window = dom.window;
     document = window.document;
+    
     // Mock Storage
     window.Storage = {
         getFilters: () => Promise.resolve({
@@ -42,6 +47,8 @@ describe('Filters UI', function() {
     global.indexedDB = indexedDB;
     global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
+    window.eval(elementWrapperContent);
+    window.eval(domManagerContent);
     window.eval(mainJsContent);
   });
 

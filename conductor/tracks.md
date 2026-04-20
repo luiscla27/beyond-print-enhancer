@@ -6,6 +6,12 @@ This file tracks all major development tracks for the project.
 
 
 ## Archived Tracks
+- [x] **Track: Now that the 'shapes mode' is no longer available, theres no way to edit the 'shapes' layer; add a new track to fix it, the desired behaviour is to add a a CHECK per each whole layer (pe-sections-layer). The check will enable/disable the 'edit mode' allowing the elements on the layer to be draggable and editable.** (Completed: 2026-04-19)
+  *Link: [./archive/layer_edit_mode_20260419/](./archive/layer_edit_mode_20260419/)*
+- [x] **Track: Layer Content Visualization** (Completed: 2026-04-10)
+  *Link: [./archive/layer_details_20260407/](./archive/layer_details_20260407/)*
+- [x] **Track: Layer Management Panel and Refactor** (Completed: 2026-04-07)
+  *Link: [./archive/layer_management_20260407/](./archive/layer_management_20260407/)*
 - [x] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.** (Completed: 2026-03-24)
   *Link: [./archive/archer_template_replication_20260318/](./archive/archer_template_replication_20260318/)*
 - [x] **Track: Asset Compression & WebP Migration** (Completed: 2026-03-18)
