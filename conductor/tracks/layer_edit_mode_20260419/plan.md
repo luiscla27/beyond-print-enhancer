@@ -15,11 +15,11 @@
 - [x] Task: Conductor - User Manual Verification 'Core Logic Implementation (LayerManager)' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Refactoring (main.js)
-- [ ] Task: Refactor `toggleShapesMode` in `main.js` to be compatible with independent layer locking (or remove it if redundant).
-- [ ] Task: Ensure that on initialization, both layers are "Unlocked" (body classes removed).
-- [ ] Task: Update any global click listeners that depend on `be-shapes-mode-active` to instead check the specific layer lock state if necessary.
-- [ ] Task: Verify that deselecting shapes still works when the shapes layer is locked.
-- [ ] Task: Conductor - User Manual Verification 'Integration & Refactoring (main.js)' (Protocol in workflow.md)
+- [x] Task: Refactor `toggleShapesMode` in `main.js` to be compatible with independent layer locking (or remove it if redundant).
+- [x] Task: Ensure that on initialization, both layers are "Unlocked" (body classes removed).
+- [x] Task: Update any global click listeners that depend on `be-shapes-mode-active` to instead check the specific layer lock state if necessary.
+- [x] Task: Verify that deselecting shapes still works when the shapes layer is locked.
+- [x] Task: Conductor - User Manual Verification 'Integration & Refactoring (main.js)' (Protocol in workflow.md)
 
 ## Phase 4: Visual & Interaction Refinement
 - [ ] Task: Verify that the "fade" (opacity 0.4) is correctly applied to both layers when locked.

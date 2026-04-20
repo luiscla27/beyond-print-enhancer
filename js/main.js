@@ -2532,22 +2532,18 @@ function enforceFullHeight() {
             opacity: 1;
         }
 
-        /* Shapes Mode Active State */
-        body.be-shapes-mode-active .be-section-wrapper:not(.be-shape-wrapper) {
-            /* Dim sections when focusing on shapes */
+        /* Layer Lock States */
+        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
             opacity: 0.4 !important;
+            pointer-events: none !important;
         }
-        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper {
-            /* Ensure shapes are fully visible */
-            opacity: 1 !important;
+        body.be-lock-shapes .be-shape-wrapper {
+            opacity: 0.4 !important;
+            pointer-events: none !important;
         }
-        body.be-shapes-mode-active .be-section-wrapper.be-shape-wrapper .print-shape-container {
-            filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.3));
-        }
-        body.be-shapes-mode-active .be-shapes-mode-btn {
-            background-color: #28a745 !important;
-            border-color: #fff !important;
-            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        /* Rotation handles should be hidden for locked shapes */
+        body.be-lock-shapes .be-rotation-handle {
+            display: none !important;
         }
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
@@ -3381,7 +3377,7 @@ function createShape(assetPath, restoreData = null) {
     });
 
     wrapper.addEventListener('click', (e) => {
-        if (!document.body.classList.contains('be-shapes-mode-active')) return;
+        if (document.body.classList.contains('be-lock-shapes')) return;
         
         // Prevent handle click from re-triggering logic
         if (e.target.classList.contains('be-rotation-handle')) return;
@@ -3626,78 +3622,13 @@ function applyGlobalFilters(filters) {
 }
 
 
-/**
- * Toggles the interaction mode between "Full Edit" and "Shapes Only".
- * @param {boolean} forceState Optional: Force ON (true) or OFF (false).
- */
-function toggleShapesMode(forceState) {
-    const activeClass = 'be-shapes-mode-active';
-    const lockShapesClass = 'be-lock-shapes';
-    const lockSectionsClass = 'be-lock-sections';
-    
-    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
-
-    if (isActive) {
-        document.body.classList.add(activeClass);
-        document.body.classList.remove(lockShapesClass);
-        document.body.classList.add(lockSectionsClass);
-        showFeedback('Shapes Mode: ON');
-    } else {
-        document.body.classList.remove(activeClass);
-        document.body.classList.add(lockShapesClass);
-        document.body.classList.remove(lockSectionsClass);
-        
-        // Deselect all and remove handles
-        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
-            el.classList.remove('selected');
-            const h = el.querySelector('.be-rotation-handle');
-            if (h) h.remove();
-        });
-        showFeedback('Shapes Mode: OFF');
-    }
-
-    // Sync with LayerManager if available
-    const lm = PeDom().getLayerManager();
-    if (lm) {
-        const layerEl = document.getElementById('print-enhance-shapes-layer');
-        if (layerEl) {
-            // Shapes Mode ON means Layer is Visible
-            layerEl.style.display = isActive ? 'block' : 'none';
-            
-            // Sync button opacity in the panel
-            const panel = document.getElementById('print-enhance-layer-manager');
-            if (panel) {
-                // Find the toggle button for Shapes Mode
-                const rows = Array.from(panel.querySelectorAll('div'));
-                const shapesRow = rows.find(r => r.textContent.includes('Shapes Mode'));
-                if (shapesRow) {
-                    const btn = shapesRow.querySelector('button');
-                    if (btn) {
-                        btn.style.opacity = isActive ? '1' : '0.4';
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Global click listener for deselecting shapes
-document.addEventListener('click', (e) => {
-    if (!document.body.classList.contains('be-shapes-mode-active')) return;
-
-    // If we didn't click a shape wrapper or a rotation handle, deselect all
-    if (!e.target.closest('.be-shape-wrapper') && !e.target.classList.contains('be-rotation-handle')) {
-        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
-            el.classList.remove('selected');
-            const h = el.querySelector('.be-rotation-handle');
-            if (h) h.remove();
-        });
-    }
-}, true);
-/**
- * Creates and manages a floating spell detail section.
- */
-async function createSpellDetailSection(spellName, coords, restoreData = null) {
+// Export for testing and cross-script access
+    window.createShape = createShape;
+    window.applyShapeAsset = applyShapeAsset;
+    window.clearBorderStyles = clearBorderStyles;
+    window.showFeedback = showFeedback;
+})();
+})();
     // 0. Check for existing section for this spell
     const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
                           .find(el => {
