@@ -4,7 +4,7 @@ This file tracks all major development tracks for the project.
 
 ## Current Tracks
 
-- [ ] **Track: Layer List Focus & Print Z-Index Management**
+- [x] **Track: Layer List Focus & Print Z-Index Management** (Completed: 2026-04-20)
 *Link: [./tracks/layer_focus_print_z_20260420/](./tracks/layer_focus_print_z_20260420/)*
 
 ## Archived Tracks
