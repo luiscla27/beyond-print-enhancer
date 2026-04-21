@@ -1,0 +1,8 @@
+{
+  "track_id": "layer_focus_print_z_20260420",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-20T10:00:00Z",
+  "updated_at": "2026-04-20T10:00:00Z",
+  "description": "Trigger focus on layer item click (scroll+highlight) and manage printable z-index via drag & drop in the layer list, persisted in JSON and applied via injected CSS."
+}

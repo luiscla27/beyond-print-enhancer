@@ -81,6 +81,41 @@ function refreshLayers() {
 }
 
 /**
+ * Updates the injected CSS block for print z-index based on data attributes.
+ */
+function updatePrintStyles() {
+    let style = document.getElementById('be-print-z-style');
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'be-print-z-style';
+        if (document.head) document.head.appendChild(style);
+        else document.body.appendChild(style);
+    }
+
+    const elements = document.querySelectorAll('.be-section-wrapper[data-print-z]');
+    if (elements.length === 0) {
+        style.textContent = '';
+        return;
+    }
+
+    let css = '@media print {\n';
+    elements.forEach(el => {
+        const z = el.dataset.printZ;
+        if (el && el.id) {
+            // Use ID for maximum specificity to override inline styles during print
+            css += `  #${el.id} { z-index: ${z} !important; }\n`;
+        } else {
+            // Fallback to data attribute if ID is missing
+            css += `  .be-section-wrapper[data-print-z="${z}"] { z-index: ${z} !important; }\n`;
+        }
+    });
+    css += '}';
+    style.textContent = css;
+}
+
+window.updatePrintStyles = updatePrintStyles;
+
+/**
  * Feature Flags
  */
 const ENABLE_PREMADE_TEMPLATES = false; // Set to true to show 'PREMADE' button
@@ -1430,6 +1465,7 @@ function renderExtractedSection(snapshot) {
     if (snapshot.left) wrapper.style.setProperty('left', snapshot.left, 'important');
     if (snapshot.top) wrapper.style.setProperty('top', snapshot.top, 'important');
     if (snapshot.zIndex) wrapper.style.setProperty('z-index', snapshot.zIndex, 'important');
+    if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
 
     if (snapshot.minimized) {
         container.dataset.minimized = 'true';
@@ -3214,6 +3250,7 @@ function renderClonedSection(snapshot) {
     if (width) container.style.width = width;
     if (height) container.style.height = height;
     if (zIndex) wrapper.style.zIndex = zIndex;
+    if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
 
     if (left && top) {
         wrapper.style.left = left;
@@ -3385,6 +3422,7 @@ function createShape(assetPath, restoreData = null) {
         if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
         if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
         if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
+        if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
     } else {
         wrapper.style.setProperty('left', '50px', 'important');
         wrapper.style.setProperty('top', '160px', 'important');
@@ -3635,6 +3673,13 @@ function applyGlobalFilters(filters) {
             filter: var(--be-decoration-filter) !important;
         }
 
+        /* Focus Highlight for Layer Management */
+        .be-focus-highlight {
+            filter: drop-shadow(0 0 15px gold) !important;
+            transition: filter 0.3s ease-in-out;
+            z-index: 100003 !important;
+        }
+
         /* Exclude text, fonts, icons, images by inverting the hue filter */
         .print-section-content,
         .print-section-header span,
@@ -3736,6 +3781,7 @@ function applyGlobalFilters(filters) {
         if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
         if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
         if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
+        if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
         
         if (restoreData.minimized) {
             container.dataset.minimized = 'true';
@@ -5724,6 +5770,7 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '10',
+                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode'),
                 borderStyle: getBorderStyle(section)
@@ -5740,6 +5787,7 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '10',
+                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 borderStyle: getBorderStyle(section)
             });
@@ -5755,6 +5803,7 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '110',
+                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '110',
                 rotation: wrapper.dataset.rotation || '0',
                 minimized: section.dataset.minimized === 'true'
             });
@@ -5775,6 +5824,7 @@ async function scanLayout() {
                 width: section.style.width,
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '10',
+                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode'),
                 borderStyle: getBorderStyle(section)
@@ -5798,8 +5848,8 @@ async function scanLayout() {
             width: section.style.width,
             height: section.style.height,
             zIndex: wrapper.style.zIndex || '10',
-            minimized: section.dataset.minimized === 'true',
-            compact: section.classList.contains('be-compact-mode'),
+            printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
+            minimized: section.dataset.minimized === 'true',            compact: section.classList.contains('be-compact-mode'),
             borderStyle: getBorderStyle(section),
             innerWidths: {}
         };
@@ -6070,6 +6120,7 @@ async function applyLayout(layout) {
         if (styles.width) section.style.width = styles.width;
         if (styles.height) section.style.height = styles.height;
         if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
+        if (styles.printZIndex) wrapper.dataset.printZ = styles.printZIndex;
 
         // Ensure container doesn't have duplicate positioning
         section.style.left = '';
@@ -6181,6 +6232,9 @@ async function applyLayout(layout) {
 
     updateLayoutBounds();
     refreshLayers();
+    if (typeof updatePrintStyles === 'function') {
+        updatePrintStyles();
+    }
 }
 
 /**
