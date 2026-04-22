@@ -93,12 +93,24 @@ function updatePrintStyles() {
     }
 
     const elements = document.querySelectorAll('.be-section-wrapper[data-print-z]');
-    if (elements.length === 0) {
-        style.textContent = '';
-        return;
-    }
+    const disabledLayers = document.querySelectorAll('[data-print-disabled="true"]');
 
     let css = '@media print {\n';
+    
+    // Hide the layer management panel on print
+    css += '  #print-enhance-layer-manager { display: none !important; }\n';
+    
+    // Force all sections to be fully opaque on print (ignores edit-mode/lock opacity)
+    css += '  .be-section-wrapper { opacity: 1 !important; }\n';
+
+    // Hide layers that are explicitly disabled for print
+    disabledLayers.forEach(layer => {
+        if (layer.id) {
+            css += `  #${layer.id} { display: none !important; }\n`;
+        }
+    });
+
+    // Handle z-index overrides
     elements.forEach(el => {
         const z = el.dataset.printZ;
         if (el && el.id) {
