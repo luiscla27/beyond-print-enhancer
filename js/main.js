@@ -102,6 +102,10 @@ function updatePrintStyles() {
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
     css += '  #print-enhance-shapes-layer, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; }\n';
+    
+    // Explicitly target the body lock classes to override them on print
+    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; }\n';
+    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes #print-enhance-shapes-layer { opacity: 1 !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {

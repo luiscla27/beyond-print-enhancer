@@ -3,11 +3,11 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [x] **Track: Layer Visibility and Print Fixes**
-  *Link: [./tracks/layer_print_visibility_20260421/](./tracks/layer_print_visibility_20260421/)*
 
 
 ## Archived Tracks
+- [x] **Track: Layer Visibility and Print Fixes** (Completed: 2026-04-21)
+  *Link: [./archive/layer_print_visibility_20260421/](./archive/layer_print_visibility_20260421/)*
 - [x] **Track: Layer List Focus & Print Z-Index Management** (Completed: 2026-04-20)
 *Link: [./archive/layer_focus_print_z_20260420/](./archive/layer_focus_print_z_20260420/)*
 - [x] **Track: Now that the 'shapes mode' is no longer available, theres no way to edit the 'shapes' layer; add a new track to fix it, the desired behaviour is to add a a CHECK per each whole layer (pe-sections-layer). The check will enable/disable the 'edit mode' allowing the elements on the layer to be draggable and editable.** (Completed: 2026-04-19)
