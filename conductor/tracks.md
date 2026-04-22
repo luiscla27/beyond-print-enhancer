@@ -3,7 +3,7 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
-- [ ] **Track: Layer Visibility and Print Fixes**
+- [x] **Track: Layer Visibility and Print Fixes**
   *Link: [./tracks/layer_print_visibility_20260421/](./tracks/layer_print_visibility_20260421/)*
 
 

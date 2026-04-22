@@ -3,10 +3,10 @@
 ## Phase 1: Infrastructure & Print Overrides
 **Goal:** Ensure the layer panel is hidden and layers are opaque on print.
 - [x] Task: Create Track Directory and Metadata (`layer_print_visibility_20260421`).
-- [ ] Task: Update `updatePrintStyles()` in `js/main.js` to:
-    - [ ] Add `@media print` rule to hide `#print-enhance-layer-manager`.
-    - [ ] Add `@media print` rule to force `opacity: 1 !important` on all `.be-section-wrapper` elements.
-    - [ ] Add `@media print` logic to hide layers based on `data-print-disabled="true"` attribute.
+- [x] Task: Update `updatePrintStyles()` in `js/main.js` to:
+    - [x] Add `@media print` rule to hide `#print-enhance-layer-manager`.
+    - [x] Add `@media print` rule to force `opacity: 1 !important` on all `.be-section-wrapper` elements.
+    - [x] Add `@media print` logic to hide layers based on `data-print-disabled="true"` attribute.
 - [x] Task: Write Unit Tests in `test/unit/print_styles.test.js` to verify generated CSS rules.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Infrastructure & Print Overrides' (Protocol in workflow.md)
 
