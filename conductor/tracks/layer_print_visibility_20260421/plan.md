@@ -12,12 +12,12 @@
 
 ## Phase 2: LayerManager UI Enhancements
 **Goal:** Add the "Disable on Print" toggle to the UI.
-- [ ] Task: Update `LayerManager` in `js/dom/layer_manager.js`:
-    - [ ] Add `isDisabledOnPrint` property to default layers in `constructor`.
-    - [ ] Update `createPanel()` to inject a printer toggle button alongside lock/visibility toggles.
-    - [ ] Implement `toggleLayerPrint(layer, btn)` to switch `isDisabledOnPrint` state and update `data-print-disabled` on the corresponding layer element.
-    - [ ] Implement `refreshUI()` to update all toggle icons based on the current state (useful for restoration).
-- [ ] Task: Write Unit Tests in `test/unit/layer_manager_ui.test.js` for the new toggle functionality.
+- [x] Task: Update `LayerManager` in `js/dom/layer_manager.js`:
+    - [x] Add `isDisabledOnPrint` property to default layers in `constructor`.
+    - [x] Update `createPanel()` to inject a printer toggle button alongside lock/visibility toggles.
+    - [x] Implement `toggleLayerPrint(layer, btn)` to switch `isDisabledOnPrint` state and update `data-print-disabled` on the corresponding layer element.
+    - [x] Implement `refreshUI()` to update all toggle icons based on the current state (useful for restoration).
+- [x] Task: Write Unit Tests in `test/unit/layer_manager_ui.test.js` for the new toggle functionality.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: LayerManager UI Enhancements' (Protocol in workflow.md)
 
 ## Phase 3: Persistence and Integration
