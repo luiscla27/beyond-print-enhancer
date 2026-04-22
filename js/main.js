@@ -2682,11 +2682,11 @@ function enforceFullHeight() {
 
         /* Layer Lock States */
         body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
-            opacity: 0.4 !important;
+            opacity: 0.4;
             pointer-events: none !important;
         }
         body.be-lock-shapes .be-shape-wrapper {
-            opacity: 0.4 !important;
+            opacity: 0.4;
             pointer-events: none !important;
         }
         /* Rotation handles should be hidden for locked shapes */
