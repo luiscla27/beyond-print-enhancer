@@ -110,8 +110,8 @@ class LayerManager {
 
         this.panel = panel;
         
-        // Initial refresh
-        this.refreshLayerContents();
+        // Initial sync of state to DOM and contents
+        this.refreshUI();
         
         return panel;
     }
