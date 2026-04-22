@@ -22,8 +22,8 @@
 
 ## Phase 3: Persistence and Integration
 **Goal:** Save and restore the "Disable on Print" state in JSON layouts.
-- [ ] Task: Update `scanLayout()` in `js/main.js` to capture `isDisabledOnPrint` for all layers.
-- [ ] Task: Update `applyLayout()` in `js/main.js` to restore `isDisabledOnPrint` states to the `LayerManager` and refresh the UI.
-- [ ] Task: Update `migrateLayout()` (if necessary) to ensure legacy JSON without this field is handled gracefully.
-- [ ] Task: Write Integration Tests in `test/unit/layout_persistence_layers.test.js` to verify save/load of the print-disabled state.
+- [x] Task: Update `scanLayout()` in `js/main.js` to capture `isDisabledOnPrint` for all layers.
+- [x] Task: Update `applyLayout()` in `js/main.js` to restore `isDisabledOnPrint` states to the `LayerManager` and refresh the UI.
+- [x] Task: Update `migrateLayout()` (if necessary) to ensure legacy JSON without this field is handled gracefully.
+- [x] Task: Write Integration Tests in `test/unit/layout_persistence_layers.test.js` to verify save/load of the print-disabled state.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Persistence and Integration' (Protocol in workflow.md)

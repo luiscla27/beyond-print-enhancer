@@ -77,18 +77,18 @@ class LayerManager {
      * Refreshes the UI icons based on the current layer state.
      */
     refreshUI() {
-        if (!this.panel) return;
-
         this.layers.forEach(layer => {
-            const row = this.panel.querySelector(`[data-layer-id="${layer.id}"]`);
-            if (row) {
-                const printBtn = row.querySelector('button[title="Toggle Print Visibility"]');
-                const viewBtn = row.querySelector('button[title="Toggle Layer Visibility"]');
-                const lockBtn = row.querySelector('button[title="Toggle Edit Mode"]');
+            if (this.panel) {
+                const row = this.panel.querySelector(`[data-layer-id="${layer.id}"]`);
+                if (row) {
+                    const printBtn = row.querySelector('button[title="Toggle Print Visibility"]');
+                    const viewBtn = row.querySelector('button[title="Toggle Layer Visibility"]');
+                    const lockBtn = row.querySelector('button[title="Toggle Edit Mode"]');
 
-                if (printBtn) printBtn.innerHTML = layer.isDisabledOnPrint ? '🖨️❌' : '🖨️';
-                if (viewBtn) viewBtn.innerHTML = layer.isHidden ? '🙈' : '👁️';
-                if (lockBtn) lockBtn.innerHTML = layer.isLocked ? '🔒' : '🔓';
+                    if (printBtn) printBtn.innerHTML = layer.isDisabledOnPrint ? '🖨️❌' : '🖨️';
+                    if (viewBtn) viewBtn.innerHTML = layer.isHidden ? '🙈' : '👁️';
+                    if (lockBtn) lockBtn.innerHTML = layer.isLocked ? '🔒' : '🔓';
+                }
             }
 
             // Sync with actual DOM elements

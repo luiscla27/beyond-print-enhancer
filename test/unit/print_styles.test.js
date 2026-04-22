@@ -1,12 +1,23 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
+require("fake-indexeddb/auto");
 
 describe('Print Styles Injection', function() {
     let dom, window, document;
 
+    before(function() {
+        // Set test mode globally to prevent main.js from auto-initializing
+        global.window = { __DDB_TEST_MODE__: true };
+    });
+
+    after(function() {
+        delete global.window;
+    });
+
     beforeEach(function() {
         dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>');
         window = dom.window;
+        window.__DDB_TEST_MODE__ = true;
         document = window.document;
         global.document = document;
         global.window = window;

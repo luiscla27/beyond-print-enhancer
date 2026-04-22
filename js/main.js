@@ -5825,7 +5825,7 @@ async function scanLayout() {
         if (section.classList.contains('be-extracted-section')) {
             const originalId = section.dataset.originalId;
             const original = document.getElementById(originalId);
-            
+
             const extractionData = {
                 id: id,
                 originalId: originalId,
@@ -5861,7 +5861,8 @@ async function scanLayout() {
             height: section.style.height,
             zIndex: wrapper.style.zIndex || '10',
             printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
-            minimized: section.dataset.minimized === 'true',            compact: section.classList.contains('be-compact-mode'),
+            minimized: section.dataset.minimized === 'true',
+            compact: section.classList.contains('be-compact-mode'),
             borderStyle: getBorderStyle(section),
             innerWidths: {}
         };
@@ -5921,8 +5922,21 @@ async function scanLayout() {
         layout.merges.push(mergeEntry);
     });
 
+    // 3. Scan for Layer States
+    const layerManager = PeDom().getLayerManager();
+    const layerStates = {};
+    layerManager.layers.forEach(l => {
+        layerStates[l.id] = {
+            isLocked: l.isLocked,
+            isHidden: l.isHidden,
+            isDisabledOnPrint: l.isDisabledOnPrint
+        };
+    });
+    layout.layers = layerStates;
+
     return layout;
 }
+
 
 
 /**
@@ -6043,6 +6057,20 @@ function migrateLayout(data) {
 async function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
+
+    if (layout.layers) {
+        const layerManager = PeDom().getLayerManager();
+        Object.keys(layout.layers).forEach(layerId => {
+            const layer = layerManager.layers.find(l => l.id === layerId);
+            if (layer) {
+                const saved = layout.layers[layerId];
+                layer.isLocked = saved.isLocked || false;
+                layer.isHidden = saved.isHidden || false;
+                layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
+            }
+        });
+        layerManager.refreshUI();
+    }
 
     // 0. Ensure elements are flagged (crucial for selector-based restoration)
     flagExtractableElements();
