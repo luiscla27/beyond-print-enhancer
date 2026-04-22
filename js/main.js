@@ -100,8 +100,8 @@ function updatePrintStyles() {
     // Hide the layer management panel on print
     css += '  #print-enhance-layer-manager { display: none !important; }\n';
     
-    // Force all sections to be fully opaque on print (ignores edit-mode/lock opacity)
-    css += '  .be-section-wrapper { opacity: 1 !important; }\n';
+    // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
+    css += '  #print-enhance-shapes-layer, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {
@@ -3076,6 +3076,8 @@ function enforceFullHeight() {
             /* Content Opacity Fix */
             html body .be-section-wrapper,
             html body .be-shape-wrapper,
+            html body #print-enhance-sections-layer,
+            html body #print-enhance-shapes-layer,
             html body.be-lock-sections .be-section-wrapper,
             html body.be-lock-shapes .be-shape-wrapper {
                 opacity: 1 !important;
@@ -5254,6 +5256,11 @@ function createControls() {
 
     // Initialize Layer Management Panel
     PeDom().getLayerManager();
+
+    // Ensure print styles (opacity overrides, manager hiding) are generated on initialization
+    if (typeof window.updatePrintStyles === 'function') {
+        window.updatePrintStyles();
+    }
 }
 
 /**
