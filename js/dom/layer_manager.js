@@ -386,6 +386,10 @@ class LayerManager {
             document.body.classList.remove(lockClass);
         }
 
+        if (window.updatePrintStyles) {
+            window.updatePrintStyles();
+        }
+
         if (window.showFeedback) {
             window.showFeedback(`${layer.label} ${layer.isLocked ? 'Locked' : 'Unlocked'}`);
         }
