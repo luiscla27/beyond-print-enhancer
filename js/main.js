@@ -5468,6 +5468,11 @@ async function applyDefaultLayout() {
     }
 
     if (typeof updateLayoutBounds === 'function') updateLayoutBounds();
+    
+    // Refresh print styles after applying default template
+    if (typeof updatePrintStyles === 'function') {
+        updatePrintStyles();
+    }
 }
 /**
  * Handles loading default layout.
@@ -6177,6 +6182,9 @@ async function applyLayout(layout) {
                 deferredExtractions.forEach(exData => {
                     renderExtractedSection(exData);
                 });
+                if (typeof window.updatePrintStyles === 'function') {
+                    window.updatePrintStyles();
+                }
             }, 1000);
         }
     }
