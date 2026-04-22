@@ -93,12 +93,28 @@ function updatePrintStyles() {
     }
 
     const elements = document.querySelectorAll('.be-section-wrapper[data-print-z]');
-    if (elements.length === 0) {
-        style.textContent = '';
-        return;
-    }
+    const disabledLayers = document.querySelectorAll('[data-print-disabled="true"]');
 
     let css = '@media print {\n';
+    
+    // Hide the layer management panel on print
+    css += '  #print-enhance-layer-manager { display: none !important; }\n';
+    
+    // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
+    css += '  #print-enhance-shapes-layer, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; }\n';
+    
+    // Explicitly target the body lock classes to override them on print
+    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; }\n';
+    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes #print-enhance-shapes-layer { opacity: 1 !important; }\n';
+
+    // Hide layers that are explicitly disabled for print
+    disabledLayers.forEach(layer => {
+        if (layer.id) {
+            css += `  #${layer.id} { display: none !important; }\n`;
+        }
+    });
+
+    // Handle z-index overrides
     elements.forEach(el => {
         const z = el.dataset.printZ;
         if (el && el.id) {
@@ -2340,6 +2356,58 @@ function enforceFullHeight() {
             --border-img-slice: 205;
             --border-img-outset: 25px;
         }
+
+        /* Layer Management Panel Styles */
+        .be-layer-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 250px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 8px;
+            z-index: 31000; /* Above modals and other extensions */
+            font-family: sans-serif;
+            font-size: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .be-layer-panel-header {
+            border-bottom: 1px solid #444;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            text-align: center;
+        }
+        .be-layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .be-layer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .be-layer-controls {
+            display: flex;
+            gap: 4px;
+        }
+        .be-layer-controls button {
+            background: #444;
+            border: 1px solid #555;
+            color: white;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .be-layer-controls button:hover {
+            background: #555;
+        }
+
         .ornament_bold2_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.webp')}');
             --border-img-width: 80px;
@@ -2618,11 +2686,11 @@ function enforceFullHeight() {
 
         /* Layer Lock States */
         body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
-            opacity: 0.4 !important;
+            opacity: 0.4;
             pointer-events: none !important;
         }
         body.be-lock-shapes .be-shape-wrapper {
-            opacity: 0.4 !important;
+            opacity: 0.4;
             pointer-events: none !important;
         }
         /* Rotation handles should be hidden for locked shapes */
@@ -3012,6 +3080,8 @@ function enforceFullHeight() {
             /* Content Opacity Fix */
             html body .be-section-wrapper,
             html body .be-shape-wrapper,
+            html body #print-enhance-sections-layer,
+            html body #print-enhance-shapes-layer,
             html body.be-lock-sections .be-section-wrapper,
             html body.be-lock-shapes .be-shape-wrapper {
                 opacity: 1 !important;
@@ -5190,6 +5260,11 @@ function createControls() {
 
     // Initialize Layer Management Panel
     PeDom().getLayerManager();
+
+    // Ensure print styles (opacity overrides, manager hiding) are generated on initialization
+    if (typeof window.updatePrintStyles === 'function') {
+        window.updatePrintStyles();
+    }
 }
 
 /**
@@ -5397,6 +5472,11 @@ async function applyDefaultLayout() {
     }
 
     if (typeof updateLayoutBounds === 'function') updateLayoutBounds();
+    
+    // Refresh print styles after applying default template
+    if (typeof updatePrintStyles === 'function') {
+        updatePrintStyles();
+    }
 }
 /**
  * Handles loading default layout.
@@ -5813,7 +5893,7 @@ async function scanLayout() {
         if (section.classList.contains('be-extracted-section')) {
             const originalId = section.dataset.originalId;
             const original = document.getElementById(originalId);
-            
+
             const extractionData = {
                 id: id,
                 originalId: originalId,
@@ -5849,7 +5929,8 @@ async function scanLayout() {
             height: section.style.height,
             zIndex: wrapper.style.zIndex || '10',
             printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
-            minimized: section.dataset.minimized === 'true',            compact: section.classList.contains('be-compact-mode'),
+            minimized: section.dataset.minimized === 'true',
+            compact: section.classList.contains('be-compact-mode'),
             borderStyle: getBorderStyle(section),
             innerWidths: {}
         };
@@ -5909,8 +5990,21 @@ async function scanLayout() {
         layout.merges.push(mergeEntry);
     });
 
+    // 3. Scan for Layer States
+    const layerManager = PeDom().getLayerManager();
+    const layerStates = {};
+    layerManager.layers.forEach(l => {
+        layerStates[l.id] = {
+            isLocked: l.isLocked,
+            isHidden: l.isHidden,
+            isDisabledOnPrint: l.isDisabledOnPrint
+        };
+    });
+    layout.layers = layerStates;
+
     return layout;
 }
+
 
 
 /**
@@ -6032,6 +6126,20 @@ async function applyLayout(layout) {
     layout = migrateLayout(layout);
     if (!layout || !layout.sections) return;
 
+    if (layout.layers) {
+        const layerManager = PeDom().getLayerManager();
+        Object.keys(layout.layers).forEach(layerId => {
+            const layer = layerManager.layers.find(l => l.id === layerId);
+            if (layer) {
+                const saved = layout.layers[layerId];
+                layer.isLocked = saved.isLocked || false;
+                layer.isHidden = saved.isHidden || false;
+                layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
+            }
+        });
+        layerManager.refreshUI();
+    }
+
     // 0. Ensure elements are flagged (crucial for selector-based restoration)
     flagExtractableElements();
 
@@ -6078,6 +6186,9 @@ async function applyLayout(layout) {
                 deferredExtractions.forEach(exData => {
                     renderExtractedSection(exData);
                 });
+                if (typeof window.updatePrintStyles === 'function') {
+                    window.updatePrintStyles();
+                }
             }, 1000);
         }
     }

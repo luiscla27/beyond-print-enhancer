@@ -120,6 +120,7 @@ const CatalogService = {
         }
 
         if (typeof updateLayoutBounds === 'function') updateLayoutBounds();
+        if (typeof updatePrintStyles === 'function') updatePrintStyles();
         return true;
     }
 };

@@ -1,0 +1,8 @@
+{
+  "track_id": "layer_print_visibility_20260421",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-21T10:00:00Z",
+  "updated_at": "2026-04-21T10:00:00Z",
+  "description": "Fix the following: the layer management panel, MUST NOT be shown on print. Add an extra optionalong with the \"lock\" and \"eye\" icons on the layer management panel to \"disable\" the whole layer; this is needed to differentiate them on printing. When \"disabled\" the layer shuld be completly invisible on print. And, when visible (regardless of edit mode) the layer should be completly visible with no opactity."
+}

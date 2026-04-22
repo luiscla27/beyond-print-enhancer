@@ -28,6 +28,8 @@ The D&D Beyond Print Enhancer transforms the interactive, tabbed D&D Beyond char
 - **Print Z-Order & Focus:** Enhances the layer management list with interactivity:
     - **Click-to-Focus:** Clicking an item in the layer list automatically scrolls the character sheet to that element and applies a temporary highlight effect.
     - **Custom Print Order:** Supports drag-and-drop reordering of items in the layer list to define a persistent Z-index specifically for the print view, managed via injected CSS to ensure no interference with interactive edit modes.
+    - **Selective Print Visibility:** Adds a "Disable on Print" toggle to each layer, allowing users to keep elements visible in the browser for reference while hiding them from the final printed page.
+    - **Print Opacity Normalization:** Automatically forces all visible layers to 100% opacity during print, ensuring that locked or decorative elements are fully legible on paper.
 - **Section Merging & Nesting:** Allows users to merge floating sections into each other or append them back to specific locations on the sheet, facilitating complex custom layouts and group consolidations.
 - **Compact Mode:** Provides a toggleable condensed layout for complex sections (like Spells), reducing margins, padding, and font sizes to maximize information density on paper.
 - **PREMADE Template Catalog:** Provides a library of professional, themed layouts (e.g., 'Archer Template') that can be applied with a single click, automatically configuring borders and adding decorative shapes.

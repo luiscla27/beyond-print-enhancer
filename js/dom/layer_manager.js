@@ -5,8 +5,8 @@ class LayerManager {
     constructor() {
         this.dom = window.DomManager.getInstance();
         this.layers = [
-            { id: 'shapes', label: 'Shapes Mode', layerId: 'print-enhance-shapes-layer', isLocked: false },
-            { id: 'sections', label: 'Sections', layerId: 'print-enhance-sections-layer', isLocked: false }
+            { id: 'shapes', label: 'Shapes Mode', layerId: 'print-enhance-shapes-layer', isLocked: false, isHidden: false, isDisabledOnPrint: false },
+            { id: 'sections', label: 'Sections', layerId: 'print-enhance-sections-layer', isLocked: false, isHidden: false, isDisabledOnPrint: false }
         ];
         this.panel = null;
         this.contentLists = {}; // layerId -> div
@@ -20,90 +20,50 @@ class LayerManager {
 
         const panel = document.createElement('div');
         panel.id = 'print-enhance-layer-manager';
-        panel.className = 'be-layer-panel';
-        Object.assign(panel.style, {
-            position: 'fixed',
-            top: '10px',
-            right: '10px',
-            zIndex: '100002', // Clear site modals (30000+)
-            backgroundColor: '#222',
-            border: '1px solid #444',
-            borderRadius: '8px',
-            padding: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-            color: 'white',
-            fontSize: '12px',
-            minWidth: '140px',
-            maxWidth: '280px',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            overflowX: 'hidden'
-        });
-
-        const title = document.createElement('div');
-        title.textContent = 'Layer Management';
-        title.style.fontWeight = 'bold';
-        title.style.borderBottom = '1px solid #444';
-        title.style.paddingBottom = '4px';
-        title.style.marginBottom = '4px';
-        panel.appendChild(title);
+        panel.className = 'be-layer-panel be-floating-ui';
+        
+        // Header
+        const header = document.createElement('div');
+        header.className = 'be-layer-panel-header';
+        header.innerHTML = '<strong>Layer Management</strong>';
+        panel.appendChild(header);
 
         this.layers.forEach(layer => {
             const layerGroup = document.createElement('div');
-            layerGroup.style.display = 'flex';
-            layerGroup.style.flexDirection = 'column';
-            layerGroup.style.gap = '2px';
+            layerGroup.className = 'be-layer-group';
             layerGroup.style.marginBottom = '8px';
 
             const row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.justifyContent = 'space-between';
-            row.style.alignItems = 'center';
-            row.style.gap = '10px';
-            row.style.padding = '2px 4px';
+            row.className = 'be-layer-row';
+            row.dataset.layerId = layer.id;
 
             const label = document.createElement('span');
             label.textContent = layer.label;
-            label.style.fontWeight = '600';
             row.appendChild(label);
 
             const controls = document.createElement('div');
-            controls.style.display = 'flex';
-            controls.style.gap = '8px';
+            controls.className = 'be-layer-controls';
 
-            const lockToggle = document.createElement('button');
-            lockToggle.innerHTML = layer.isLocked ? '🔒' : '🔓';
-            lockToggle.title = 'Toggle Edit Mode';
-            Object.assign(lockToggle.style, {
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                padding: '0',
-                opacity: layer.isLocked ? '0.6' : '1',
-                transition: 'opacity 0.2s'
-            });
-            lockToggle.onclick = () => this.toggleLayerLock(layer, lockToggle);
-            controls.appendChild(lockToggle);
+            // Print Visibility Toggle
+            const printBtn = document.createElement('button');
+            printBtn.innerHTML = layer.isDisabledOnPrint ? '🖨️❌' : '🖨️';
+            printBtn.title = 'Toggle Print Visibility';
+            printBtn.onclick = () => this.toggleLayerPrint(layer, printBtn);
+            controls.appendChild(printBtn);
 
-            const visibilityToggle = document.createElement('button');
-            visibilityToggle.innerHTML = '👁️';
-            visibilityToggle.title = 'Toggle Visibility';
-            Object.assign(visibilityToggle.style, {
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                padding: '0',
-                opacity: '1',
-                transition: 'opacity 0.2s'
-            });
+            // Visibility Toggle
+            const viewBtn = document.createElement('button');
+            viewBtn.innerHTML = layer.isHidden ? '🙈' : '👁️';
+            viewBtn.title = 'Toggle Layer Visibility';
+            viewBtn.onclick = () => this.toggleLayerVisibility(layer, viewBtn);
+            controls.appendChild(viewBtn);
 
-            visibilityToggle.onclick = () => this.toggleLayer(layer, visibilityToggle);
-            controls.appendChild(visibilityToggle);
+            // Lock Toggle (Edit Mode)
+            const lockBtn = document.createElement('button');
+            lockBtn.innerHTML = layer.isLocked ? '🔒' : '🔓';
+            lockBtn.title = 'Toggle Edit Mode';
+            lockBtn.onclick = () => this.toggleLayerLock(layer, lockBtn);
+            controls.appendChild(lockBtn);
 
             row.appendChild(controls);
             layerGroup.appendChild(row);
@@ -128,7 +88,7 @@ class LayerManager {
                 e.preventDefault();
                 const draggingEl = list.querySelector('.dragging');
                 if (!draggingEl) return;
-                
+
                 const afterElement = this.getDragAfterElement(list, e.clientX, e.clientY);
                 if (afterElement == null) {
                     list.appendChild(draggingEl);
@@ -136,18 +96,22 @@ class LayerManager {
                     list.insertBefore(draggingEl, afterElement);
                 }
             };
-            
+
             this.contentLists[layer.id] = list;
             layerGroup.appendChild(list);
-            
+
             panel.appendChild(layerGroup);
         });
 
-        document.body.appendChild(panel);
+        // Append to body if not already there
+        if (!document.getElementById(panel.id)) {
+            document.body.appendChild(panel);
+        }
+
         this.panel = panel;
         
-        // Initial refresh
-        this.refreshLayerContents();
+        // Initial sync of state to DOM and contents
+        this.refreshUI();
         
         return panel;
     }
@@ -167,14 +131,14 @@ class LayerManager {
             shapes.forEach(shape => {
                 const container = shape.querySelector('.print-section-container');
                 const assetPath = container ? container.dataset.assetPath : null;
-                
+
                 if (assetPath) {
                     const thumb = document.createElement('img');
                     // Ensure we use chrome.runtime.getURL if available, otherwise raw path
-                    const url = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
-                                ? chrome.runtime.getURL(assetPath) 
+                    const url = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
+                                ? chrome.runtime.getURL(assetPath)
                                 : assetPath;
-                    
+
                     thumb.src = url;
                     thumb.className = 'be-layer-item-thumb';
                     thumb.dataset.targetId = shape.id;
@@ -195,7 +159,7 @@ class LayerManager {
                         e.stopPropagation();
                         this.focusElement(shape.id);
                     };
-                    
+
                     thumb.ondragstart = () => thumb.classList.add('dragging');
                     thumb.ondragend = () => {
                         thumb.classList.remove('dragging');
@@ -219,7 +183,7 @@ class LayerManager {
             sections.forEach(section => {
                 const header = section.querySelector('.print-section-header span');
                 const title = header ? header.textContent.trim() : 'Unnamed';
-                
+
                 const card = document.createElement('div');
                 card.className = 'be-layer-item-card';
                 card.textContent = title;
@@ -266,7 +230,7 @@ class LayerManager {
             // Heuristic for flex-wrap: priority to Y (lines), then X (position in line)
             const offset = y - box.top - box.height / 2;
             const xOffset = x - box.left - box.width / 2;
-            
+
             if (offset < 0 && offset > closest.offset) {
                 return { offset: offset, element: child };
             } else if (Math.abs(offset) < box.height / 2 && xOffset < 0 && xOffset > closest.xOffset) {
@@ -285,11 +249,11 @@ class LayerManager {
         // Top item in list = Highest Print Z-Index
         // We reverse because we want the first item to have the highest index
         const reversedItems = [...items].reverse();
-        
+
         reversedItems.forEach((item, index) => {
             const targetId = item.dataset.targetId;
             if (!targetId) return;
-            
+
             const el = document.getElementById(targetId);
             if (el) {
                 const wrapper = el.classList.contains('be-section-wrapper') ? el : el.closest('.be-section-wrapper');
@@ -326,7 +290,7 @@ class LayerManager {
 
         // 2. Highlighting
         wrapper.classList.add('be-focus-highlight');
-        
+
         // 3. Bring to front (Existing behavior maintained)
         // Find max z-index in both layers to ensure it's truly on top
         let maxZ = 1000;
@@ -349,22 +313,81 @@ class LayerManager {
     }
 
     /**
-     * Toggles the interaction lock (edit mode) of a layer.
-     * @param {object} layer The layer metadata.
-     * @param {HTMLElement} btn The toggle button element.
+     * Refreshes the UI icons based on the current layer state.
      */
+    refreshUI() {
+        this.layers.forEach(layer => {
+            if (this.panel) {
+                const row = this.panel.querySelector(`[data-layer-id="${layer.id}"]`);
+                if (row) {
+                    const printBtn = row.querySelector('button[title="Toggle Print Visibility"]');
+                    const viewBtn = row.querySelector('button[title="Toggle Layer Visibility"]');
+                    const lockBtn = row.querySelector('button[title="Toggle Edit Mode"]');
+
+                    if (printBtn) printBtn.innerHTML = layer.isDisabledOnPrint ? '🖨️❌' : '🖨️';
+                    if (viewBtn) viewBtn.innerHTML = layer.isHidden ? '🙈' : '👁️';
+                    if (lockBtn) lockBtn.innerHTML = layer.isLocked ? '🔒' : '🔓';
+                }
+            }
+
+            // Sync with actual DOM elements
+            const layerEl = document.getElementById(`print-enhance-${layer.id}-layer`);
+            if (layerEl) {
+                layerEl.dataset.printDisabled = layer.isDisabledOnPrint;
+                if (layer.isHidden) {
+                    layerEl.style.display = 'none';
+                } else {
+                    layerEl.style.display = '';
+                }
+            }
+            
+            // Sync body classes for locking
+            const lockClass = `be-lock-${layer.id}`;
+            if (layer.isLocked) {
+                document.body.classList.add(lockClass);
+            } else {
+                document.body.classList.remove(lockClass);
+            }
+        });
+
+        this.refreshLayerContents();
+
+        if (window.updatePrintStyles) {
+            window.updatePrintStyles();
+        }
+    }
+
+    toggleLayerPrint(layer, btn) {
+        layer.isDisabledOnPrint = !layer.isDisabledOnPrint;
+        btn.innerHTML = layer.isDisabledOnPrint ? '🖨️❌' : '🖨️';
+        
+        const layerEl = document.getElementById(`print-enhance-${layer.id}-layer`);
+        if (layerEl) {
+            layerEl.dataset.printDisabled = layer.isDisabledOnPrint;
+        }
+
+        if (window.updatePrintStyles) {
+            window.updatePrintStyles();
+        }
+
+        if (window.showFeedback) {
+            window.showFeedback(`${layer.label} Print ${layer.isDisabledOnPrint ? 'Disabled' : 'Enabled'}`);
+        }
+    }
+
     toggleLayerLock(layer, btn) {
         layer.isLocked = !layer.isLocked;
-        const lockClass = `be-lock-${layer.id}`;
+        btn.innerHTML = layer.isLocked ? '🔒' : '🔓';
         
+        const lockClass = `be-lock-${layer.id}`;
         if (layer.isLocked) {
             document.body.classList.add(lockClass);
-            btn.innerHTML = '🔒';
-            btn.style.opacity = '0.6';
         } else {
             document.body.classList.remove(lockClass);
-            btn.innerHTML = '🔓';
-            btn.style.opacity = '1';
+        }
+
+        if (window.updatePrintStyles) {
+            window.updatePrintStyles();
         }
 
         if (window.showFeedback) {
@@ -372,28 +395,17 @@ class LayerManager {
         }
     }
 
-    /**
-     * Toggles the visibility of a layer.
-     * @param {object} layer The layer metadata.
-     * @param {HTMLElement} btn The toggle button element.
-     */
-    toggleLayer(layer, btn) {
-        const layerEl = document.getElementById(layer.layerId);
-        if (!layerEl) return;
-
-        const isHidden = layerEl.style.display === 'none';
-        if (isHidden) {
-            layerEl.style.display = 'block';
-            btn.style.opacity = '1';
-            btn.innerHTML = '👁️';
-        } else {
-            layerEl.style.display = 'none';
-            btn.style.opacity = '0.4';
-            btn.innerHTML = '👁️'; // Keep same icon but dim it
-        }
+    toggleLayerVisibility(layer, btn) {
+        layer.isHidden = !layer.isHidden;
+        btn.innerHTML = layer.isHidden ? '🙈' : '👁️';
         
+        const layerEl = document.getElementById(`print-enhance-${layer.id}-layer`);
+        if (layerEl) {
+            layerEl.style.display = layer.isHidden ? 'none' : '';
+        }
+
         if (window.showFeedback) {
-            window.showFeedback(`${layer.label} ${isHidden ? 'Visible' : 'Hidden'}`);
+            window.showFeedback(`${layer.label} ${layer.isHidden ? 'Hidden' : 'Visible'}`);
         }
     }
 }
