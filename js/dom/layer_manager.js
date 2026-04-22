@@ -69,6 +69,12 @@ class LayerManager {
         });
 
         panel.appendChild(list);
+        
+        // Append to body if not already there
+        if (!document.getElementById(panel.id)) {
+            document.body.appendChild(panel);
+        }
+
         this.panel = panel;
         return panel;
     }

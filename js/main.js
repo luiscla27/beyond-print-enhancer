@@ -2352,6 +2352,58 @@ function enforceFullHeight() {
             --border-img-slice: 205;
             --border-img-outset: 25px;
         }
+
+        /* Layer Management Panel Styles */
+        .be-layer-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 250px;
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 8px;
+            z-index: 31000; /* Above modals and other extensions */
+            font-family: sans-serif;
+            font-size: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .be-layer-panel-header {
+            border-bottom: 1px solid #444;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            text-align: center;
+        }
+        .be-layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .be-layer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .be-layer-controls {
+            display: flex;
+            gap: 4px;
+        }
+        .be-layer-controls button {
+            background: #444;
+            border: 1px solid #555;
+            color: white;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .be-layer-controls button:hover {
+            background: #555;
+        }
+
         .ornament_bold2_border {
             --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.webp')}');
             --border-img-width: 80px;
