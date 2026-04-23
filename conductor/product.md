@@ -24,7 +24,7 @@ The D&D Beyond Print Enhancer transforms the interactive, tabbed D&D Beyond char
 - **Shape Interaction Lockdown:** Automatically locks decorative shapes (making them semi-transparent and non-interactive) when not in 'Shapes Mode' to prevent accidental misclicks.
 - **Quick Switch:** Provides a dedicated button on shapes to rapidly swap assets while preserving their existing position, size, and rotation.
 - **Interaction Isolation (Shapes Mode):** Provides a toggleable mode that isolates interaction to only decorative shapes, making all other character sheet sections unclickable and faded to facilitate precise placement of decorations.
-- **Layer Management:** Introduces a dedicated panel to toggle the visibility of 'Shapes Mode' and 'Sections' layers independently. Includes nested visual lists with thumbnails and previews to help users identify layer contents.
+- **Shape Layer Management:** Advanced multi-layer system for decorative shapes, allowing users to create, reorder, and group assets into unlimited layers (with a 100-element limit per layer for optimized print z-index management). Includes nested visual lists with thumbnails and previews to help users identify layer contents.
 - **Print Z-Order & Focus:** Enhances the layer management list with interactivity:
     - **Click-to-Focus:** Clicking an item in the layer list automatically scrolls the character sheet to that element and applies a temporary highlight effect.
     - **Custom Print Order:** Supports drag-and-drop reordering of items in the layer list to define a persistent Z-index specifically for the print view, managed via injected CSS to ensure no interference with interactive edit modes.

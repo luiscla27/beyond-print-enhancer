@@ -17,7 +17,7 @@ const DB_NAME = 'DDBPrintEnhancerDB';
 const DB_VERSION = 3;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
-const SCHEMA_VERSION = '1.4.0';
+const SCHEMA_VERSION = '1.5.0';
 const PeDom = () => window.DomManager.getInstance();
 
 /**
@@ -37,7 +37,8 @@ function toggleShapesMode(forceState) {
     }
 
     if (lm) {
-        const shapesLayer = lm.layers.find(l => l.id === 'shapes');
+        // In the new system, we toggle the default shape layer or all shape layers
+        const shapesLayer = lm.getLayerById('shapes-default') || (lm.shapeLayers && lm.shapeLayers[0]);
         if (shapesLayer) {
             // In the old system, "Shapes Mode ON" meant Locked: false
             const shouldBeLocked = !isActive;
@@ -49,9 +50,9 @@ function toggleShapesMode(forceState) {
             const panel = document.getElementById('print-enhance-layer-manager');
             let btn = null;
             if (panel) {
-                const rows = Array.from(panel.querySelectorAll('div'));
-                const shapesRow = rows.find(r => r.textContent.includes('Shapes Mode'));
-                if (shapesRow) btn = shapesRow.querySelector('button');
+                const rows = Array.from(panel.querySelectorAll('.be-layer-row'));
+                const shapesRow = rows.find(r => r.dataset.layerId === shapesLayer.id);
+                if (shapesRow) btn = shapesRow.querySelector('button[title="Toggle Edit Mode"]');
             }
 
             // Call the new locking logic
@@ -101,11 +102,11 @@ function updatePrintStyles() {
     css += '  #print-enhance-layer-manager { display: none !important; }\n';
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
-    css += '  #print-enhance-shapes-layer, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; }\n';
+    css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
     
     // Explicitly target the body lock classes to override them on print
-    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; }\n';
-    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes #print-enhance-shapes-layer { opacity: 1 !important; }\n';
+    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
+    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes .be-shape-layer-container { opacity: 1 !important; visibility: visible !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {
@@ -598,6 +599,43 @@ const Storage = {
   },
 
   /**
+   * Migrates layout data to the latest SCHEMA_VERSION.
+   * @param {object} data
+   * @returns {object}
+   */
+  migrateLayout: (data) => {
+      if (!data) return data;
+      
+      const migrated = { ...data };
+
+      // Ensure shapeLayers exists
+      if (!migrated.shapeLayers) {
+          migrated.shapeLayers = [];
+      }
+
+      // If shapeLayers is empty and it's a legacy version, migrate legacy data
+      if (migrated.shapeLayers.length === 0 && data.version !== SCHEMA_VERSION) {
+          const legacyShapes = data.shapes || [];
+          const legacyShapeLayerState = data.layers?.shapes || { isLocked: false, isHidden: false };
+
+          migrated.shapeLayers.push({
+              id: 'shapes-default',
+              name: 'Default Shapes Layer',
+              layerId: 'print-enhance-shapes-layer',
+              isLocked: legacyShapeLayerState.isLocked || false,
+              isHidden: legacyShapeLayerState.isHidden || false,
+              isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
+              elements: legacyShapes
+          });
+      }
+
+      // Final version update
+      migrated.version = SCHEMA_VERSION;
+
+      return migrated;
+  },
+
+  /**
    * Validates if the object matches the expected layout schema.
    * @param {object} data 
    * @returns {boolean}
@@ -642,7 +680,7 @@ const Storage = {
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(characterId);
 
-      request.onsuccess = (event) => resolve(event.target.result);
+      request.onsuccess = (event) => resolve(Storage.migrateLayout(event.target.result));
       request.onerror = (event) => reject(event.target.error);
     });
   },
@@ -1231,6 +1269,8 @@ function injectSpellDetailTriggers(context = document) {
 function flagExtractableElements() {
     const dom = window.DomManager.getInstance();
     const s = dom.selectors.EXTRACTABLE;
+    if (!s || !s.GROUP) return;
+
     const selectors = [
         s.GROUP,
         s.SNIPPET_CLASS,
@@ -3378,7 +3418,7 @@ function renderClonedSection(snapshot) {
 /**
  * Creates a floating decorative shape.
  */
-function createShape(assetPath, restoreData = null) {
+function createShape(assetPath, restoreData = null, targetLayerId = null) {
     const id = restoreData ? restoreData.id : `shape-${Date.now()}`;
     const content = document.createElement('div');
     content.className = 'be-shape-content';
@@ -3586,9 +3626,19 @@ function createShape(assetPath, restoreData = null) {
         });
     }
     
-    const layoutRoot = PeDom().getLayoutRoot().element;
-    if (layoutRoot) {
-        PeDom().getShapesLayer().element.appendChild(wrapper);
+    // TARGET LAYER APPENDING
+    let layerContainer = null;
+    if (targetLayerId) {
+        layerContainer = document.getElementById(targetLayerId);
+    }
+    
+    if (!layerContainer) {
+        // Fallback to default shapes layer
+        layerContainer = PeDom().getShapesLayer().element;
+    }
+
+    if (layerContainer) {
+        layerContainer.appendChild(wrapper);
     }
     
     refreshLayers();
@@ -5806,16 +5856,75 @@ function showFallbackModal(jsonData) {
  * @returns {object} Layout data following the schema.
  */
 async function scanLayout() {
+    const peDom = typeof PeDom !== 'undefined' ? PeDom() : null;
+    const layerManager = peDom ? peDom.getLayerManager() : null;
+    
     const layout = {
         version: Storage.SCHEMA_VERSION,
         sections: {},
         clones: [],
         extractions: [],
-        shapes: [],
+        shapes: [], // Legacy shapes array
+        shapeLayers: [], // New multi-layer format
         spell_details: [],
         merges: [],
         spell_cache: []
     };
+
+    // Capture shape layers state
+    const layerStates = {};
+    if (layerManager) {
+        layerManager.shapeLayers.forEach(layer => {
+            const layerData = {
+                id: layer.id,
+                name: layer.label,
+                isLocked: layer.isLocked,
+                isHidden: layer.isHidden,
+                isDisabledOnPrint: layer.isDisabledOnPrint,
+                elements: []
+            };
+
+            const layerEl = document.getElementById(layer.layerId);
+            if (layerEl) {
+                const shapes = layerEl.querySelectorAll('.be-shape-wrapper');
+                shapes.forEach(wrapper => {
+                    const container = wrapper.querySelector('.be-shape-container');
+                    if (!container) return;
+
+                    layerData.elements.push({
+                        id: container.id,
+                        assetPath: container.dataset.assetPath,
+                        left: wrapper.style.left,
+                        top: wrapper.style.top,
+                        width: container.style.width,
+                        height: container.style.height,
+                        zIndex: wrapper.style.zIndex,
+                        printZIndex: wrapper.dataset.printZ,
+                        rotation: wrapper.dataset.rotation || '0'
+                    });
+                });
+            }
+            layout.shapeLayers.push(layerData);
+
+            layerStates[layer.id] = {
+                isLocked: layer.isLocked,
+                isHidden: layer.isHidden,
+                isDisabledOnPrint: layer.isDisabledOnPrint
+            };
+        });
+
+        // Capture sections layer state
+        const secLayer = layerManager.sectionsLayer;
+        if (secLayer) {
+            layerStates[secLayer.id] = {
+                isLocked: secLayer.isLocked,
+                isHidden: secLayer.isHidden,
+                isDisabledOnPrint: secLayer.isDisabledOnPrint
+            };
+        }
+    }
+    
+    layout.layers = layerStates;
 
     // Include cached spells
     try {
@@ -5990,18 +6099,6 @@ async function scanLayout() {
         layout.merges.push(mergeEntry);
     });
 
-    // 3. Scan for Layer States
-    const layerManager = PeDom().getLayerManager();
-    const layerStates = {};
-    layerManager.layers.forEach(l => {
-        layerStates[l.id] = {
-            isLocked: l.isLocked,
-            isHidden: l.isHidden,
-            isDisabledOnPrint: l.isDisabledOnPrint
-        };
-    });
-    layout.layers = layerStates;
-
     return layout;
 }
 
@@ -6123,20 +6220,32 @@ function migrateLayout(data) {
  * @param {object} layout 
  */
 async function applyLayout(layout) {
-    layout = migrateLayout(layout);
-    if (!layout || !layout.sections) return;
+    layout = Storage.migrateLayout(layout);
+    if (!layout) return;
 
-    if (layout.layers) {
-        const layerManager = PeDom().getLayerManager();
-        Object.keys(layout.layers).forEach(layerId => {
-            const layer = layerManager.layers.find(l => l.id === layerId);
-            if (layer) {
-                const saved = layout.layers[layerId];
-                layer.isLocked = saved.isLocked || false;
-                layer.isHidden = saved.isHidden || false;
-                layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
-            }
+    const peDom = typeof PeDom !== 'undefined' ? PeDom() : null;
+    const layerManager = peDom ? peDom.getLayerManager() : null;
+
+    // Restore shape layers state
+    if (layerManager && layout.shapeLayers) {
+        // Reset shapeLayers in LayerManager
+        layerManager.shapeLayers = [];
+        layout.shapeLayers.forEach(savedLayer => {
+            const layer = layerManager.addShapeLayer(savedLayer.name, savedLayer);
+            layer.id = savedLayer.id; // Preserve ID
+            layer.layerId = savedLayer.layerId || `print-enhance-layer-${layer.id}`;
         });
+        layerManager.refreshUI();
+    }
+
+    if (layerManager && layout.layers?.sections) {
+        const layer = layerManager.sectionsLayer;
+        const saved = layout.layers.sections;
+        if (layer) {
+            layer.isLocked = saved.isLocked || false;
+            layer.isHidden = saved.isHidden || false;
+            layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
+        }
         layerManager.refreshUI();
     }
 
@@ -6203,11 +6312,33 @@ async function applyLayout(layout) {
         }
     }
 
-    // Remove existing shapes to avoid duplicates
-    document.querySelectorAll('.print-section-container.be-shape').forEach(el => el.remove());
+    // Restore shapes from multi-layer format
+    if (layerManager && layout.shapeLayers && Array.isArray(layout.shapeLayers)) {
+        // Remove existing shape wrappers to avoid duplicates and ID conflicts
+        document.querySelectorAll('.be-shape-wrapper').forEach(el => el.remove());
 
-    // Restore shapes
-    if (layout.shapes && Array.isArray(layout.shapes)) {
+        // Restore each layer and its elements
+        layout.shapeLayers.forEach(layerData => {
+            const layer = layerManager.getLayerById(layerData.id) || layerManager.addShapeLayer(layerData.name, layerData);
+            if (layer) {
+                // Ensure correct state
+                layer.id = layerData.id;
+                layer.isLocked = layerData.isLocked;
+                layer.isHidden = layerData.isHidden;
+                layer.isDisabledOnPrint = layerData.isDisabledOnPrint;
+
+                if (Array.isArray(layerData.elements)) {
+                    layerData.elements.forEach(elementData => {
+                        createShape(elementData.assetPath, elementData, layer.layerId);
+                    });
+                }
+            }
+        });
+        layerManager.refreshUI();
+    } else if (layout.shapes && Array.isArray(layout.shapes)) {
+        // Fallback to legacy single layer shapes if shapeLayers not present
+        // Remove existing shapes to avoid duplicates
+        document.querySelectorAll('.print-section-container.be-shape').forEach(el => el.remove());
         layout.shapes.forEach(shapeData => {
             createShape(shapeData.assetPath, shapeData);
         });
