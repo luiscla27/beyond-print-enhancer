@@ -606,41 +606,31 @@ const Storage = {
   migrateLayout: (data) => {
       if (!data) return data;
       
-      // If data is already at the latest version, return it
-      if (data.version === SCHEMA_VERSION) {
-          // Ensure shapeLayers exists even in current version
-          if (!data.shapeLayers) {
-              data.shapeLayers = [];
-          }
-          return data;
-      }
-
       const migrated = { ...data };
 
-      // Migrate from versions < 1.5.0
-      if (data.version < '1.5.0') {
-          // Initialize shapeLayers if it doesn't exist
-          if (!migrated.shapeLayers) {
-              migrated.shapeLayers = [];
-
-              // If legacy shapes exist, migrate them to a default layer
-              const legacyShapes = data.shapes || [];
-              const legacyShapeLayerState = data.layers?.shapes || { isLocked: false, isHidden: false };
-
-              migrated.shapeLayers.push({
-                  id: 'shapes-default',
-                  name: 'Default Shapes Layer',
-                  layerId: 'print-enhance-shapes-layer', // KEEP LEGACY ID
-                  isLocked: legacyShapeLayerState.isLocked || false,
-                  isHidden: legacyShapeLayerState.isHidden || false,
-                  isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
-                  elements: legacyShapes
-              });
-          }
-
-          // Version is now current
-          migrated.version = SCHEMA_VERSION;
+      // Ensure shapeLayers exists
+      if (!migrated.shapeLayers) {
+          migrated.shapeLayers = [];
       }
+
+      // If shapeLayers is empty and it's a legacy version, migrate legacy data
+      if (migrated.shapeLayers.length === 0 && data.version !== SCHEMA_VERSION) {
+          const legacyShapes = data.shapes || [];
+          const legacyShapeLayerState = data.layers?.shapes || { isLocked: false, isHidden: false };
+
+          migrated.shapeLayers.push({
+              id: 'shapes-default',
+              name: 'Default Shapes Layer',
+              layerId: 'print-enhance-shapes-layer',
+              isLocked: legacyShapeLayerState.isLocked || false,
+              isHidden: legacyShapeLayerState.isHidden || false,
+              isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
+              elements: legacyShapes
+          });
+      }
+
+      // Final version update
+      migrated.version = SCHEMA_VERSION;
 
       return migrated;
   },
@@ -1279,6 +1269,8 @@ function injectSpellDetailTriggers(context = document) {
 function flagExtractableElements() {
     const dom = window.DomManager.getInstance();
     const s = dom.selectors.EXTRACTABLE;
+    if (!s || !s.GROUP) return;
+
     const selectors = [
         s.GROUP,
         s.SNIPPET_CLASS,
@@ -6322,8 +6314,8 @@ async function applyLayout(layout) {
 
     // Restore shapes from multi-layer format
     if (layerManager && layout.shapeLayers && Array.isArray(layout.shapeLayers)) {
-        // Remove existing shapes to avoid duplicates
-        document.querySelectorAll('.print-section-container.be-shape').forEach(el => el.remove());
+        // Remove existing shape wrappers to avoid duplicates and ID conflicts
+        document.querySelectorAll('.be-shape-wrapper').forEach(el => el.remove());
 
         // Restore each layer and its elements
         layout.shapeLayers.forEach(layerData => {

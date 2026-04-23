@@ -7,7 +7,7 @@ describe('Shape Layers Persistence', function() {
     let window, document, Storage, scanLayout, applyLayout, migrateLayout;
 
     before(function() {
-        const html = '<!DOCTYPE html><html><head></head><body><div id="print-layout-wrapper"></div></body></html>';
+        const html = '<!DOCTYPE html><html><head></head><body><div id="print-layout-wrapper"><div id="print-enhance-shapes-layer"></div></div></body></html>';
         const dom = new JSDOM(html, { url: 'https://www.dndbeyond.com/characters/123' });
         window = dom.window;
         document = window.document;
@@ -28,10 +28,19 @@ describe('Shape Layers Persistence', function() {
         // Mock LayerManager
         class MockLayerManager {
             constructor() {
-                this.layers = [
-                    { id: 'shapes', label: 'Shapes Mode', isLocked: false, isHidden: false, isDisabledOnPrint: false },
-                    { id: 'sections', label: 'Sections', isLocked: false, isHidden: false, isDisabledOnPrint: false }
+                this.sectionsLayer = { id: 'sections', label: 'Sections', layerId: 'print-enhance-sections-layer' };
+                this.shapeLayers = [
+                    { id: 'shapes-default', label: 'Shapes (Default)', layerId: 'print-enhance-shapes-layer', isLocked: false, isHidden: false, isDisabledOnPrint: false }
                 ];
+            }
+            getLayerById(id) {
+                if (id === 'sections') return this.sectionsLayer;
+                return this.shapeLayers.find(l => l.id === id);
+            }
+            addShapeLayer(name, state) {
+                const layer = { id: state.id || 'new-layer', label: name, layerId: state.layerId || 'new-layer-id' };
+                this.shapeLayers.push(layer);
+                return layer;
             }
             refreshUI() {}
         }
@@ -42,6 +51,12 @@ describe('Shape Layers Persistence', function() {
                 getLayoutRoot: () => ({ element: document.getElementById('print-layout-wrapper') }),
                 getSectionsLayer: () => ({ element: document.getElementById('print-enhance-sections-layer') }),
                 getShapesLayer: () => ({ element: document.getElementById('print-enhance-shapes-layer') }),
+                getShapesContainer: () => ({ element: document.body }),
+                getCharacterSheet: () => ({ element: { style: {} } }),
+                getSheetInner: () => ({ element: { style: {} } }),
+                getCharacterName: () => 'Test Character',
+                getSidebar: () => ({ element: { querySelector: () => null } }),
+                getCombatTablet: () => ({ element: { querySelector: () => null } }),
                 selectors: {
                     EXTRACTABLE: {},
                     UI: {},
@@ -52,7 +67,10 @@ describe('Shape Layers Persistence', function() {
                     EQUIPMENT: {},
                     EXTRAS: {},
                     TRAITS: {},
-                    CSS: {}
+                    CSS: {},
+                    LAYERS: {
+                        SHAPES: '#print-enhance-shapes-layer'
+                    }
                 }
             })
         };
@@ -62,16 +80,20 @@ describe('Shape Layers Persistence', function() {
         const scriptContent = fs.readFileSync(scriptPath, 'utf8');
         
         // Execute script in global context
-        const wrappedScript = `
-            (function() {
-                ${scriptContent}
-            })();
-        `;
         try {
-            eval(wrappedScript);
+            eval(scriptContent);
         } catch (e) {
             console.error('Error evaling main.js:', e);
         }
+
+        window.flagExtractableElements = () => {};
+        window.updatePrintStyles = () => {};
+        window.updateLayoutBounds = () => {};
+        window.PeDom = window.PeDom || (() => window.DomManager.getInstance());
+        
+        global.updatePrintStyles = window.updatePrintStyles;
+        global.updateLayoutBounds = window.updateLayoutBounds;
+        global.flagExtractableElements = window.flagExtractableElements;
 
         Storage = window.Storage;
         scanLayout = window.scanLayout;
@@ -125,5 +147,35 @@ describe('Shape Layers Persistence', function() {
         const migrated = migrateLayout(JSON.parse(JSON.stringify(multiLayerData)));
         assert.strictEqual(migrated.shapeLayers.length, 2);
         assert.strictEqual(migrated.shapeLayers[0].name, 'Background');
+    });
+
+    it('should restore shapes correctly from legacy layout', async function() {
+        const legacyData = {
+            version: '1.4.0',
+            sections: {},
+            shapes: [
+                { id: 'shape-1', assetPath: 'path/to/asset.webp', left: '10px', top: '20px' }
+            ]
+        };
+
+        // Mock dependencies globally
+        global.flagExtractableElements = () => {};
+        global.updatePrintStyles = () => {};
+        global.showFeedback = () => {};
+        
+        // Mock createShape
+        global.createShape = (path, data, layerId) => {
+            const el = document.createElement('div');
+            el.id = data.id;
+            el.className = 'be-shape-wrapper';
+            const container = document.getElementById(layerId) || document.body;
+            container.appendChild(el);
+        };
+
+        await applyLayout(legacyData);
+
+        const shape = document.getElementById('shape-1');
+        assert.ok(shape, 'Shape should be created in the DOM');
+        assert.ok(shape.closest('#print-enhance-shapes-layer'), 'Shape should be inside the default shapes layer');
     });
 });
