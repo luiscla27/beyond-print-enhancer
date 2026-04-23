@@ -37,7 +37,8 @@ function toggleShapesMode(forceState) {
     }
 
     if (lm) {
-        const shapesLayer = lm.layers.find(l => l.id === 'shapes');
+        // In the new system, we toggle the default shape layer or all shape layers
+        const shapesLayer = lm.getLayerById('shapes-default') || (lm.shapeLayers && lm.shapeLayers[0]);
         if (shapesLayer) {
             // In the old system, "Shapes Mode ON" meant Locked: false
             const shouldBeLocked = !isActive;
@@ -49,9 +50,9 @@ function toggleShapesMode(forceState) {
             const panel = document.getElementById('print-enhance-layer-manager');
             let btn = null;
             if (panel) {
-                const rows = Array.from(panel.querySelectorAll('div'));
-                const shapesRow = rows.find(r => r.textContent.includes('Shapes Mode'));
-                if (shapesRow) btn = shapesRow.querySelector('button');
+                const rows = Array.from(panel.querySelectorAll('.be-layer-row'));
+                const shapesRow = rows.find(r => r.dataset.layerId === shapesLayer.id);
+                if (shapesRow) btn = shapesRow.querySelector('button[title="Toggle Edit Mode"]');
             }
 
             // Call the new locking logic
@@ -101,11 +102,11 @@ function updatePrintStyles() {
     css += '  #print-enhance-layer-manager { display: none !important; }\n';
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
-    css += '  #print-enhance-shapes-layer, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; }\n';
+    css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
     
     // Explicitly target the body lock classes to override them on print
-    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; }\n';
-    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes #print-enhance-shapes-layer { opacity: 1 !important; }\n';
+    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
+    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes .be-shape-layer-container { opacity: 1 !important; visibility: visible !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {
@@ -629,8 +630,10 @@ const Storage = {
               migrated.shapeLayers.push({
                   id: 'shapes-default',
                   name: 'Default Shapes Layer',
+                  layerId: 'print-enhance-shapes-layer', // KEEP LEGACY ID
                   isLocked: legacyShapeLayerState.isLocked || false,
                   isHidden: legacyShapeLayerState.isHidden || false,
+                  isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
                   elements: legacyShapes
               });
           }

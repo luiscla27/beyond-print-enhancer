@@ -38,11 +38,11 @@ class LayerManager {
      * @returns {object} The new layer object
      */
     addShapeLayer(label = 'New Layer', initialState = {}) {
-        const id = `shapes-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const id = initialState.id || `shapes-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const newLayer = {
             id: id,
             label: label,
-            layerId: `print-enhance-layer-${id}`,
+            layerId: initialState.layerId || `print-enhance-layer-${id}`,
             isLocked: initialState.isLocked || false,
             isHidden: initialState.isHidden || false,
             isDisabledOnPrint: initialState.isDisabledOnPrint || false
