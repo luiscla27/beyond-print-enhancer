@@ -423,21 +423,39 @@ class DomManager {
     }
 
     /**
-     * Gets or creates the shapes layer.
+     * Gets or creates the shapes layer (legacy support).
      * @returns {ElementWrapper}
      */
     getShapesLayer() {
         let layer = document.querySelector(this.selectors.LAYERS.SHAPES);
         if (!layer) {
-            const root = this.getLayoutRoot();
-            if (root.element) {
+            const container = this.getShapesContainer();
+            if (container.element) {
                 layer = document.createElement('div');
                 layer.id = 'print-enhance-shapes-layer';
-                layer.className = 'pe-layer';
-                root.element.appendChild(layer);
+                layer.className = 'be-shape-layer-container pe-layer';
+                container.element.appendChild(layer);
             }
         }
         return new ElementWrapper(layer);
+    }
+
+    /**
+     * Gets or creates the main shapes container for multiple layers.
+     * @returns {ElementWrapper}
+     */
+    getShapesContainer() {
+        let container = document.getElementById('print-enhance-shapes-container');
+        if (!container) {
+            const root = this.getLayoutRoot();
+            if (root.element) {
+                container = document.createElement('div');
+                container.id = 'print-enhance-shapes-container';
+                container.className = 'pe-shapes-root';
+                root.element.appendChild(container);
+            }
+        }
+        return new ElementWrapper(container);
     }
 }
 
