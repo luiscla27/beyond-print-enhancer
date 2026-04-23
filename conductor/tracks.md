@@ -3,6 +3,8 @@
 This file tracks all major development tracks for the project.
 
 ## Current Tracks
+- [ ] **Track: Shape Layer Management**
+*Link: [./tracks/shape_layer_management_20260422/](./tracks/shape_layer_management_20260422/)*
 
 
 ## Archived Tracks
