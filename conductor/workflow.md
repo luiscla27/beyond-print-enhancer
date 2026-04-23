@@ -14,6 +14,7 @@
 
 - **Interactive Feedback:** When using `ask_user` to gather feedback or confirm decisions, we always provide at least one option for "Detailed Alternative", "Other", or "Revise with Comments" instead of just binary "Yes/No" choices. This ensures the user can provide specific course corrections.
 - **Verification:** When a task involves a visual or behavioral change, we provide a manual verification plan.
+- **Track Finalization:** When a track is completed, archived, or deleted, ALWAYS stage all pending changes (including directory removals or moves) and commit them immediately to maintain a clean repository state.
 
 ## Task Workflow
 
