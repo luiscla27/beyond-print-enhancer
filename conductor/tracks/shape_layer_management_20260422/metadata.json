@@ -1,8 +1,0 @@
-{
-  "track_id": "shape_layer_management_20260422",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-04-22T00:00:00Z",
-  "updated_at": "2026-04-22T00:00:00Z",
-  "description": "Lets add the ability to split layers! currently we have only TWO layers, the new layer management should be managed ONLY ON MEMORY, it shouldnt moodify the DOM, each layer MUST have up to 100 elements inside. This restriction is meant t facilitate Z-INDEX management, as it will hanlde the zPrint CSS value per layer by easily increase by 100 accordingly to the layer order. All layers MUST be draggable and its order MUST be used for Z-INDEX values on PRINT. EDIT MODE will ONLY be affected by the NEW separated controls (the layer buttons) of \"print visible\", \"eye\" and \"lock\". Elements inside layers MUST be draggable between each other layer panels. A global \"Add new Layer\" button MUST be added at the layer panel management s the user can add it directly and then drag its elements."
-}
