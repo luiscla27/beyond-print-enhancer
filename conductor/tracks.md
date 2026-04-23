@@ -6,7 +6,7 @@ This file tracks all major development tracks for the project.
 
 ## Archived Tracks
 - [x] **Track: Shape Layer Management** (Completed: 2026-04-22)
-  *Link: [./tracks/shape_layer_management_20260422/](./tracks/shape_layer_management_20260422/)*
+  *Link: [./archive/shape_layer_management_20260422/](./archive/shape_layer_management_20260422/)*
 - [x] **Track: Layer Visibility and Print Fixes** (Completed: 2026-04-21)
 
   *Link: [./archive/layer_print_visibility_20260421/](./archive/layer_print_visibility_20260421/)*
