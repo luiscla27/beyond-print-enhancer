@@ -7,7 +7,7 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [ ] **Track: add a new option at the "Add layer modal" named "Upload from disk" this new ption should prompt the user t select an image file from his folders, once selected it should convert it to base64 and store in both IndexDB (so its available in the future). And also MUST be stored inside the JSON object saved. So its also available when the user shares his template. The new shape(s) must appear n a new tab at the "Select Decorative Shape" panel named "Custom Shapes", also the custom SHAPES MUST be availabe at the "Select Decorative Shape" shown when the "Switch Shape Asset" button its used**
+- [x] **Track: add a new option at the "Add layer modal" named "Upload from disk" this new ption should prompt the user t select an image file from his folders, once selected it should convert it to base64 and store in both IndexDB (so its available in the future). And also MUST be stored inside the JSON object saved. So its also available when the user shares his template. The new shape(s) must appear n a new tab at the "Select Decorative Shape" panel named "Custom Shapes", also the custom SHAPES MUST be availabe at the "Select Decorative Shape" shown when the "Switch Shape Asset" button its used**
 *Link: [./tracks/custom_shapes_upload_20260423/](./tracks/custom_shapes_upload_20260423/)*
 
 - [x] **Track: Shape Layer Management** (Completed: 2026-04-22)
