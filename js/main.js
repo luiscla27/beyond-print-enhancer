@@ -938,11 +938,12 @@ async function handleUploadFromDisk() {
       await Storage.saveCustomShape(customShape);
       
       // Add to current layout customShapes if not already there
-      const layout = await Storage.loadLayout(window.characterId);
+      const characterId = getCharacterId() || 'GLOBAL';
+      const layout = await Storage.loadLayout(characterId);
       if (layout) {
         if (!layout.customShapes) layout.customShapes = [];
         layout.customShapes.push(customShape);
-        await Storage.saveLayout(window.characterId, layout);
+        await Storage.saveLayout(characterId, layout);
       }
 
       // Automatically create a new shape with this asset

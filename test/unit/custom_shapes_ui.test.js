@@ -45,6 +45,9 @@ describe('Custom Shapes UI', function() {
             getLayerManager: () => ({ refreshUI: () => {} })
         });
         window.SCHEMA_VERSION = '1.5.0';
+        window.getCharacterId = () => '12345';
+        window.Storage.loadLayout = async () => ({ version: '1.5.0', sections: {} });
+        window.Storage.saveLayout = async () => {};
 
         // Load main.js
         window.eval(mainJsContent);
