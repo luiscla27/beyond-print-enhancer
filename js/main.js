@@ -913,7 +913,7 @@ const ImageProcessor = {
 /**
  * Handles the "Upload from disk" flow.
  */
-async function handleUploadFromDisk() {
+async function handleUploadFromDisk(onSuccess) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/png, image/jpeg, image/webp, image/svg+xml';
@@ -947,7 +947,7 @@ async function handleUploadFromDisk() {
       }
 
       // Automatically create a new shape with this asset
-      await createShape(shapeName, { 
+      await createShape(base64, { 
         customAssetId: shapeId,
         isCustom: true 
       });
@@ -955,8 +955,10 @@ async function handleUploadFromDisk() {
       showFeedback(`Custom shape "${shapeName}" uploaded and added.`);
       
       // Refresh layer manager UI if open
-      const lm = window.LayerManager.getInstance();
+      const lm = window.PeDom ? window.PeDom().getLayerManager() : null;
       if (lm) lm.refreshUI();
+
+      if (onSuccess) onSuccess();
 
     } catch (err) {
       if (err.message !== 'User cancelled compression') {
@@ -3857,13 +3859,21 @@ function applyShapeAsset(container, assetPath) {
     // Default to hiding the ::before border for shapes unless it's a "border" asset with a class
     container.classList.add('be-no-border');
 
+    const isBase64 = assetPath && assetPath.startsWith('data:');
+    const getUrl = (path) => {
+        if (isBase64) return path;
+        return (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
+            ? chrome.runtime.getURL(path) 
+            : path;
+    };
+
     const meta = ASSET_METADATA[assetPath];
-    if (meta) {
-        if (meta.isBackground) {
+    if (isBase64 || meta) {
+        if (isBase64 || meta.isBackground) {
             // Use <img> for print compatibility (background-graphics are often disabled)
             const img = document.createElement('img');
             img.className = 'be-shape-asset';
-            img.src = chrome.runtime.getURL(assetPath);
+            img.src = getUrl(assetPath);
             Object.assign(img.style, {
                 width: '100%',
                 height: '100%',
@@ -3878,7 +3888,7 @@ function applyShapeAsset(container, assetPath) {
             container.classList.remove('be-no-border'); // Show the ::before border
         } else if (meta.slice !== undefined) {
             container.style.borderStyle = 'solid';
-            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
             container.style.borderImageSlice = meta.slice.toString();
             container.style.borderImageWidth = meta.width || '20px';
             container.style.borderImageOutset = meta.outset || '0';
@@ -3886,14 +3896,14 @@ function applyShapeAsset(container, assetPath) {
         } else {
             // Default border fallback if slice is missing
             container.style.borderStyle = 'solid';
-            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
             container.style.borderImageSlice = '33';
             container.style.borderImageWidth = '20px';
         }
     } else {
         // Fallback for unknown assets
         container.style.borderStyle = 'solid';
-        container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+        container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
         container.style.borderImageSlice = '33';
         container.style.borderImageWidth = '20px';
     }
