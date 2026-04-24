@@ -2739,7 +2739,7 @@ function enforceFullHeight() {
         }
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
-            font-size: 8px !important;
+            font-size: 10px !important;
             white-space: normal !important;
             overflow-wrap: break-word !important;
         }
@@ -2884,14 +2884,26 @@ function enforceFullHeight() {
 
         /* Skills specific compact logic (already mostly covered by global above) */
         ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
-            font-size: 8px !important;
+            font-size: 10px !important;
         }
 
         ${s.SKILLS.BOX} {
             overflow: hidden !important;
             border: 1px solid black !important;
         }
-
+        ${s.SKILLS.CONTAINER} > div > div,
+        ${s.SKILLS.CONTAINER} > div > div > * {
+            height: 26px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 10px !important;
+            line-height: 10px !important;
+            display: flex;
+            align-items: center;
+        }
+        .ct-notes__note {
+            white-space: pre-wrap !important;
+        }
         .print-section-container.minimized .print-section-header,
         .print-section-container.minimized .print-section-content {
             display: none !important;

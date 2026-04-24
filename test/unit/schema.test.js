@@ -34,7 +34,7 @@ describe('Data Schema & Versioning', function() {
 
   it('should have a current version constant', function() {
     assert.ok(window.Storage.SCHEMA_VERSION, 'SCHEMA_VERSION should be defined');
-    assert.strictEqual(window.Storage.SCHEMA_VERSION, '1.4.0', 'SCHEMA_VERSION should be 1.4.0');
+    assert.strictEqual(window.Storage.SCHEMA_VERSION, '1.5.0', 'SCHEMA_VERSION should be 1.5.0');
   });
 
   it('should handle version mismatch in handleLoadFile', async function() {

@@ -55,7 +55,7 @@ describe('Layout Flexibility Logic', function() {
       assert.ok(css.includes('overflow: hidden !important'), 'Should have overflow hidden');
       
       // Check for global font and wrapping
-      assert.ok(css.includes('font-size: 8px !important'), 'Should have global 8px font size');
+      assert.ok(css.includes('font-size: 10px !important'), 'Should have global 10px font size');
       assert.ok(css.includes('white-space: normal !important'), 'Should have text wrapping');
   });
   

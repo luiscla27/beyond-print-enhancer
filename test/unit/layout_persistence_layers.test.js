@@ -75,23 +75,26 @@ describe('Layer Persistence', function() {
     });
 
     it('should include layer states in scanLayout', async function() {
-        lm.layers.find(l => l.id === 'shapes').isDisabledOnPrint = true;
-        lm.layers.find(l => l.id === 'sections').isLocked = true;
+        lm.shapeLayers.find(l => l.id === 'shapes-default').isDisabledOnPrint = true;
+        lm.sectionsLayer.isLocked = true;
         
         const layout = await window.scanLayout();
         // console.log('DEBUG layout.layers:', JSON.stringify(layout.layers, null, 2));
         
         assert.ok(layout.layers, 'Layers should be included in layout');
-        assert.strictEqual(layout.layers.shapes.isDisabledOnPrint, true, 'shapes should be disabled on print');
+        assert.strictEqual(layout.layers['shapes-default'].isDisabledOnPrint, true, 'shapes-default should be disabled on print');
         assert.strictEqual(layout.layers.sections.isLocked, true, 'sections should be locked');
     });
 
     it('should restore layer states in applyLayout', async function() {
         const testLayout = {
-            version: '1.4.0',
+            version: '1.5.0',
             sections: {}, // Needed to pass the guard clause
+            shapeLayers: [
+                { id: 'shapes-default', name: 'Shapes (Default)', isDisabledOnPrint: false, isLocked: true, isHidden: true }
+            ],
             layers: {
-                shapes: { isDisabledOnPrint: false, isLocked: true, isHidden: true },
+                'shapes-default': { isDisabledOnPrint: false, isLocked: true, isHidden: true },
                 sections: { isDisabledOnPrint: true, isLocked: false, isHidden: false }
             }
         };
@@ -101,8 +104,8 @@ describe('Layer Persistence', function() {
         // Re-fetch lm as it might have been re-instantiated during applyLayout
         lm = window.PeDom().getLayerManager();
 
-        const shapes = lm.layers.find(l => l.id === 'shapes');
-        const sections = lm.layers.find(l => l.id === 'sections');
+        const shapes = lm.shapeLayers.find(l => l.id === 'shapes-default');
+        const sections = lm.sectionsLayer;
 
         assert.strictEqual(shapes.isLocked, true);
         assert.strictEqual(shapes.isHidden, true);
@@ -114,6 +117,6 @@ describe('Layer Persistence', function() {
         
         // Verify DOM sync
         assert.strictEqual(document.getElementById('print-enhance-sections-layer').dataset.printDisabled, 'true');
-        assert.ok(document.body.classList.contains('be-lock-shapes'));
+        assert.ok(document.body.classList.contains('be-lock-shapes-default'));
     });
 });

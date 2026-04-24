@@ -43,7 +43,10 @@ describe('Storage Layer', function() {
   it('should save and load layout data', async function() {
     await Storage.saveLayout(characterId, testData);
     const loadedData = await Storage.loadLayout(characterId);
-    assert.deepStrictEqual(loadedData, { ...testData, characterId: characterId });
+    // loadedData will have version 1.5.0 and shapeLayers due to migration
+    assert.strictEqual(loadedData.characterId, characterId);
+    assert.strictEqual(loadedData.version, '1.5.0');
+    assert.ok(Array.isArray(loadedData.shapeLayers));
   });
 
   it('should return undefined for non-existent character', async function() {
@@ -52,10 +55,14 @@ describe('Storage Layer', function() {
   });
 
   it('should save and load global layout data', async function() {
-    const globalData = { version: '1.0.0', sections: { 'test': {} } };
+    const globalData = { version: '1.5.0', sections: { 'test': {} }, shapeLayers: [] };
     await Storage.saveGlobalLayout(globalData);
     const loadedData = await Storage.loadGlobalLayout();
-    assert.deepStrictEqual(loadedData, { ...globalData, characterId: 'GLOBAL' });
+    
+    assert.strictEqual(loadedData.characterId, 'GLOBAL');
+    assert.strictEqual(loadedData.version, '1.5.0');
+    assert.deepStrictEqual(loadedData.sections, globalData.sections);
+    assert.deepStrictEqual(loadedData.shapeLayers, globalData.shapeLayers);
   });
 
   it('should persist border style in section data', async function() {

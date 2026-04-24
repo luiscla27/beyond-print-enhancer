@@ -33,9 +33,14 @@ describe('Print Z-Index Persistence', function() {
         window.DomManager = {
             getInstance: () => ({
                 getLayoutRoot: () => ({ element: document.body }),
+                getShapesContainer: () => ({ element: document.body }),
                 getLayerManager: () => ({
                     refreshLayerContents: () => {},
-                    layers: [{ id: 'shapes', layerId: 'print-enhance-shapes-layer' }, { id: 'sections', layerId: 'print-enhance-sections-layer' }]
+                    refreshUI: () => {},
+                    addShapeLayer: (name, data) => ({ id: data.id || 'shapes', ...data }),
+                    getLayerById: (id) => (id === 'sections' ? { id: 'sections' } : { id: 'shapes' }),
+                    shapeLayers: [{ id: 'shapes', layerId: 'print-enhance-shapes-layer' }],
+                    sectionsLayer: { id: 'sections', layerId: 'print-enhance-sections-layer' }
                 }),
                 selectors: {
                     EXTRACTABLE: {
