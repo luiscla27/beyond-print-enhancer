@@ -48,11 +48,11 @@ class LayerManager {
             isDisabledOnPrint: initialState.isDisabledOnPrint || false
         };
         this.shapeLayers.push(newLayer);
-        
+
         if (this.panel) {
             this.rebuildPanel();
         }
-        
+
         return newLayer;
     }
 
