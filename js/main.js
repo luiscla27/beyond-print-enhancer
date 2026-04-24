@@ -946,19 +946,13 @@ async function handleUploadFromDisk(onSuccess) {
         await Storage.saveLayout(characterId, layout);
       }
 
-      // Automatically create a new shape with this asset
-      await createShape(base64, { 
-        customAssetId: shapeId,
-        isCustom: true 
-      });
-
       showFeedback(`Custom shape "${shapeName}" uploaded and added.`);
       
       // Refresh layer manager UI if open
       const lm = window.PeDom ? window.PeDom().getLayerManager() : null;
       if (lm) lm.refreshUI();
 
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(base64);
 
     } catch (err) {
       if (err.message !== 'User cancelled compression') {
@@ -4628,7 +4622,10 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
                 uploadBtn.textContent = 'Upload from disk';
                 uploadBtn.className = 'be-modal-button';
                 uploadBtn.style.cssText = 'background: #0056b3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;';
-                uploadBtn.onclick = () => handleUploadFromDisk();
+                uploadBtn.onclick = () => handleUploadFromDisk((base64) => {
+                    overlay.remove();
+                    resolve({ assetPath: base64 });
+                });
                 uploadContainer.appendChild(uploadBtn);
 
                 const helpText = document.createElement('div');

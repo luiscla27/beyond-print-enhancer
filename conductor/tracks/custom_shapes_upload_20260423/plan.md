@@ -10,7 +10,7 @@
 - [x] Task: Write Tests: Add tests for image compression logic in `test/unit/image_processing.test.js`.
 - [x] Task: Implement: Create `ImageProcessor` helper to handle file reading, Base64 conversion, and compression.
 - [x] Task: Implement: Add "Upload from disk" option to the Layer Manager's "Add layer" modal.
-- [x] Task: Implement: Connect file selection to `ImageProcessor` and storage.
+- [~] Task: Implement: Connect file selection to `ImageProcessor` and storage.
 - [x] Task: Implement: Add the compression warning prompt before processing large files.
 - [x] Task: Conductor - User Manual Verification 'Upload Logic & Image Processing' (Protocol in workflow.md)
 
