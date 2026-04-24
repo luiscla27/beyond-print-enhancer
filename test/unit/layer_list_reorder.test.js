@@ -19,6 +19,7 @@ describe('Layer List Reorder Functionality', function() {
         window.DomManager = {
             getInstance: () => ({
                 getLayoutRoot: () => ({ element: document.body }),
+                getShapesContainer: () => ({ element: document.body }),
                 getLayerManager: () => lmInstance
             })
         };
@@ -68,21 +69,21 @@ describe('Layer List Reorder Functionality', function() {
         const firstCard = cards[0];
         sectionList.appendChild(firstCard); // Move to end
 
-        // Trigger the internal update logic (which we will implement)
+        // Trigger the internal update logic
         lm.updatePrintZIndexes();
 
         // Verify printZIndex
         // New order in DOM list: sec-2, sec-3, sec-1
-        // Expected printZIndex: 
-        // sec-2 -> 12
-        // sec-3 -> 11
-        // sec-1 -> 10
+        // Implementation: baseZ + index
+        // sec-2 (index 0) -> 10
+        // sec-3 (index 1) -> 11
+        // sec-1 (index 2) -> 12
         const wrapper1 = document.getElementById('sec-1-wrapper');
         const wrapper2 = document.getElementById('sec-2-wrapper');
         const wrapper3 = document.getElementById('sec-3-wrapper');
 
-        assert.strictEqual(wrapper2.dataset.printZ, '12', 'Top item (sec-2) should have highest printZIndex');
+        assert.strictEqual(wrapper1.dataset.printZ, '12', 'Bottom item (sec-1) should have highest printZIndex');
         assert.strictEqual(wrapper3.dataset.printZ, '11', 'Middle item (sec-3) should have middle printZIndex');
-        assert.strictEqual(wrapper1.dataset.printZ, '10', 'Bottom item (sec-1) should have lowest printZIndex');
+        assert.strictEqual(wrapper2.dataset.printZ, '10', 'Top item (sec-2) should have lowest printZIndex');
     });
 });

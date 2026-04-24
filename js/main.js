@@ -7,6 +7,7 @@ Licensed under Blue Oak Model License 1.0.0
         safeLog('log', '[DDB Print Enhance] Already initialized.');
         return;
     }
+
     window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
 
 /**
@@ -14,9 +15,10 @@ Licensed under Blue Oak Model License 1.0.0
  * Uses IndexedDB to persist layout configurations and custom data.
  */
 const DB_NAME = 'DDBPrintEnhancerDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const STORE_NAME = 'layouts';
 const SPELL_CACHE_STORE = 'spell_cache';
+const CUSTOM_SHAPES_STORE = 'custom_shapes';
 const SCHEMA_VERSION = '1.5.0';
 const PeDom = () => window.DomManager.getInstance();
 
@@ -574,6 +576,9 @@ const Storage = {
           if (!upgradeDb.objectStoreNames.contains(SPELL_CACHE_STORE)) {
             upgradeDb.createObjectStore(SPELL_CACHE_STORE, { keyPath: 'name' });
           }
+          if (!upgradeDb.objectStoreNames.contains(CUSTOM_SHAPES_STORE)) {
+            upgradeDb.createObjectStore(CUSTOM_SHAPES_STORE, { keyPath: 'id' });
+          }
         };
 
         request.onsuccess = (event) => {
@@ -750,6 +755,36 @@ const Storage = {
   },
 
   /**
+   * Save a custom shape globally.
+   * @param {object} shape {id, name, data}
+   */
+  saveCustomShape: async (shape) => {
+    const database = await Storage.init();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction([CUSTOM_SHAPES_STORE], 'readwrite');
+      const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
+      const request = store.put(shape);
+      request.onsuccess = () => resolve();
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
+   * Get all globally saved custom shapes.
+   * @returns {Promise<Array>}
+   */
+  getCustomShapes: async () => {
+    const database = await Storage.init();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction([CUSTOM_SHAPES_STORE], 'readonly');
+      const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
+      const request = store.getAll();
+      request.onsuccess = (event) => resolve(event.target.result || []);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  },
+
+  /**
    * Save multiple spells to the cache.
    * @param {Array} spells 
    */
@@ -799,6 +834,136 @@ const Storage = {
     });
   }
 };
+
+const ImageProcessor = {
+  MAX_SIZE_BYTES: 750 * 1024, // 750KB threshold
+  TARGET_WIDTH: 1200, // Reasonable max width for shapes
+
+  /**
+   * Processes a file: reads as base64 and compresses if needed.
+   * @param {File} file 
+   * @returns {Promise<string>} Base64 string
+   */
+  processImage: async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result;
+        
+        if (file.size <= ImageProcessor.MAX_SIZE_BYTES) {
+          resolve(base64);
+        } else {
+          // Large file, needs compression
+          const confirmed = await window.confirm(
+            `The image "${file.name}" is large (${(file.size / 1024).toFixed(1)}KB). \n\nIt will be resized and compressed to ensure the layout remains fast and sharable. Quality may decrease slightly. \n\nDo you want to proceed?`
+          );
+          
+          if (!confirmed) {
+            reject(new Error('User cancelled compression'));
+            return;
+          }
+
+          try {
+            const compressed = await ImageProcessor.compress(base64);
+            resolve(compressed);
+          } catch (err) {
+            reject(err);
+          }
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  },
+
+  /**
+   * Compresses a base64 image using Canvas.
+   * @param {string} base64 
+   * @returns {Promise<string>}
+   */
+  compress: async (base64) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Scale down if too wide
+        if (width > ImageProcessor.TARGET_WIDTH) {
+          const ratio = ImageProcessor.TARGET_WIDTH / width;
+          width = ImageProcessor.TARGET_WIDTH;
+          height = height * ratio;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Export as WebP with 0.8 quality
+        resolve(canvas.toDataURL('image/webp', 0.8));
+      };
+      img.onerror = reject;
+      img.src = base64;
+    });
+  }
+};
+
+/**
+ * Handles the "Upload from disk" flow.
+ */
+async function handleUploadFromDisk(onSuccess) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/png, image/jpeg, image/webp, image/svg+xml';
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const base64 = await ImageProcessor.processImage(file);
+      
+      const shapeId = `custom-${Date.now()}`;
+      const shapeName = file.name.split('.')[0];
+      
+      const customShape = {
+        id: shapeId,
+        name: shapeName,
+        data: base64
+      };
+
+      // Save globally
+      await Storage.saveCustomShape(customShape);
+      
+      // Add to current layout customShapes if not already there
+      const characterId = getCharacterId() || 'GLOBAL';
+      const layout = await Storage.loadLayout(characterId);
+      if (layout) {
+        if (!layout.customShapes) layout.customShapes = [];
+        layout.customShapes.push(customShape);
+        await Storage.saveLayout(characterId, layout);
+      }
+
+      showFeedback(`Custom shape "${shapeName}" uploaded and added.`);
+      
+      // Refresh layer manager UI if open
+      const lm = window.PeDom ? window.PeDom().getLayerManager() : null;
+      if (lm) lm.refreshUI();
+
+      if (onSuccess) onSuccess(base64);
+
+    } catch (err) {
+      if (err.message !== 'User cancelled compression') {
+        safeLog('error', '[DDB Print Enhance] Upload failed:', err);
+        alert('Failed to process image. Please try a different file.');
+      }
+    }
+  };
+
+  input.click();
+}
 
 /**
  * Navigate to a specific character sheet section (tab).
@@ -2739,7 +2904,7 @@ function enforceFullHeight() {
         }
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
-            font-size: 8px !important;
+            font-size: 10px !important;
             white-space: normal !important;
             overflow-wrap: break-word !important;
         }
@@ -2884,14 +3049,26 @@ function enforceFullHeight() {
 
         /* Skills specific compact logic (already mostly covered by global above) */
         ${s.SKILLS.CONTAINER}, ${s.SKILLS.CONTAINER} * {
-            font-size: 8px !important;
+            font-size: 10px !important;
         }
 
         ${s.SKILLS.BOX} {
             overflow: hidden !important;
             border: 1px solid black !important;
         }
-
+        ${s.SKILLS.CONTAINER} > div > div,
+        ${s.SKILLS.CONTAINER} > div > div > * {
+            height: 26px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 10px !important;
+            line-height: 10px !important;
+            display: flex;
+            align-items: center;
+        }
+        .ct-notes__note {
+            white-space: pre-wrap !important;
+        }
         .print-section-container.minimized .print-section-header,
         .print-section-container.minimized .print-section-content {
             display: none !important;
@@ -3676,13 +3853,21 @@ function applyShapeAsset(container, assetPath) {
     // Default to hiding the ::before border for shapes unless it's a "border" asset with a class
     container.classList.add('be-no-border');
 
+    const isBase64 = assetPath && assetPath.startsWith('data:');
+    const getUrl = (path) => {
+        if (isBase64) return path;
+        return (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
+            ? chrome.runtime.getURL(path) 
+            : path;
+    };
+
     const meta = ASSET_METADATA[assetPath];
-    if (meta) {
-        if (meta.isBackground) {
+    if (isBase64 || meta) {
+        if (isBase64 || meta.isBackground) {
             // Use <img> for print compatibility (background-graphics are often disabled)
             const img = document.createElement('img');
             img.className = 'be-shape-asset';
-            img.src = chrome.runtime.getURL(assetPath);
+            img.src = getUrl(assetPath);
             Object.assign(img.style, {
                 width: '100%',
                 height: '100%',
@@ -3697,7 +3882,7 @@ function applyShapeAsset(container, assetPath) {
             container.classList.remove('be-no-border'); // Show the ::before border
         } else if (meta.slice !== undefined) {
             container.style.borderStyle = 'solid';
-            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
             container.style.borderImageSlice = meta.slice.toString();
             container.style.borderImageWidth = meta.width || '20px';
             container.style.borderImageOutset = meta.outset || '0';
@@ -3705,14 +3890,14 @@ function applyShapeAsset(container, assetPath) {
         } else {
             // Default border fallback if slice is missing
             container.style.borderStyle = 'solid';
-            container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+            container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
             container.style.borderImageSlice = '33';
             container.style.borderImageWidth = '20px';
         }
     } else {
         // Fallback for unknown assets
         container.style.borderStyle = 'solid';
-        container.style.borderImageSource = `url('${chrome.runtime.getURL(assetPath)}')`;
+        container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
         container.style.borderImageSlice = '33';
         container.style.borderImageWidth = '20px';
     }
@@ -4326,14 +4511,26 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
         shapeTab.style.borderTopLeftRadius = '4px';
         shapeTab.style.borderTopRightRadius = '4px';
 
+        const customTab = document.createElement('button');
+        customTab.textContent = 'Custom';
+        customTab.className = 'be-modal-tab' + (activeTab === 'custom' ? ' active' : '');
+        customTab.style.padding = '8px 16px';
+        customTab.style.background = (activeTab === 'custom' ? '#444' : '#222');
+        customTab.style.color = (activeTab === 'custom' ? 'white' : '#ccc');
+        customTab.style.border = 'none';
+        customTab.style.cursor = 'pointer';
+        customTab.style.borderTopLeftRadius = '4px';
+        customTab.style.borderTopRightRadius = '4px';
+
         tabsContainer.appendChild(borderTab);
         tabsContainer.appendChild(shapeTab);
+        tabsContainer.appendChild(customTab);
         modal.appendChild(tabsContainer);
 
         // Tag Filters
         const tagsContainer = document.createElement('div');
         tagsContainer.className = 'be-modal-tags';
-        tagsContainer.style.display = 'flex';
+        tagsContainer.style.display = (activeTab === 'custom' ? 'none' : 'flex');
         tagsContainer.style.flexWrap = 'wrap';
         tagsContainer.style.gap = '5px';
         tagsContainer.style.marginBottom = '15px';
@@ -4391,17 +4588,24 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
         optionsContainer.style.gap = '10px';
         optionsContainer.style.padding = '10px';
 
-        let selectedAsset = currentAsset || (categories[activeTab].length > 0 ? categories[activeTab][0].path : '');
+        let selectedAsset = currentAsset || (categories[activeTab] && categories[activeTab].length > 0 ? categories[activeTab][0].path : '');
 
-        const renderAssets = (tabName) => {
-            optionsContainer.innerHTML = '';
-            let assets = categories[tabName];
+        const renderAssets = async (tabName) => {
+            try {
+                optionsContainer.innerHTML = '';
+            let assets = [];
+            
+            if (tabName === 'custom') {
+                assets = await Storage.getCustomShapes();
+            } else {
+                assets = categories[tabName] || [];
+            }
 
-            if (activeTag) {
+            if (activeTag && tabName !== 'custom') {
                 assets = assets.filter(a => a.tags.includes(activeTag));
             }
 
-            if (assets.length === 0) {
+            if (assets.length === 0 && tabName !== 'custom') {
                 const empty = document.createElement('div');
                 empty.textContent = 'No shapes found for this filter.';
                 empty.style.color = '#888';
@@ -4410,19 +4614,53 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
                 return;
             }
 
+            if (tabName === 'custom') {
+                const uploadContainer = document.createElement('div');
+                uploadContainer.style.cssText = 'grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; padding: 20px; border: 2px dashed #444; border-radius: 8px; margin-bottom: 10px;';
+                
+                const uploadBtn = document.createElement('button');
+                uploadBtn.textContent = 'Upload from disk';
+                uploadBtn.className = 'be-modal-button';
+                uploadBtn.style.cssText = 'background: #0056b3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;';
+                uploadBtn.onclick = () => handleUploadFromDisk((base64) => {
+                    overlay.remove();
+                    resolve({ assetPath: base64 });
+                });
+                uploadContainer.appendChild(uploadBtn);
+
+                const helpText = document.createElement('div');
+                helpText.textContent = 'PNG, JPEG, WebP, or SVG. Large files will be compressed.';
+                helpText.style.cssText = 'font-size: 11px; color: #777; margin-top: 8px;';
+                uploadContainer.appendChild(helpText);
+
+                optionsContainer.appendChild(uploadContainer);
+
+                if (assets.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.textContent = 'No custom shapes uploaded yet.';
+                    empty.style.color = '#555';
+                    empty.style.padding = '20px';
+                    empty.style.gridColumn = '1 / -1';
+                    empty.style.textAlign = 'center';
+                    optionsContainer.appendChild(empty);
+                }
+            }
+
             assets.forEach(asset => {
                 const opt = document.createElement('div');
                 opt.className = 'be-border-option';
-                if (selectedAsset === asset.path) opt.classList.add('selected');
+                const assetPath = asset.path || asset.data; // Use data (base64) for custom
+                if (selectedAsset === assetPath) opt.classList.add('selected');
 
                 const preview = document.createElement('div');
                 preview.className = `be-border-preview`;
 
                 // Asset Application Logic using ASSET_METADATA
-                const meta = ASSET_METADATA[asset.path];
+                const meta = ASSET_METADATA[asset.path] || (tabName === 'custom' ? { isBackground: true } : null);
                 if (meta) {
+                    const url = tabName === 'custom' ? asset.data : chrome.runtime.getURL(asset.path);
                     if (meta.isBackground) {
-                        preview.style.backgroundImage = `url('${chrome.runtime.getURL(asset.path)}')`;
+                        preview.style.backgroundImage = `url('${url}')`;
                         preview.style.backgroundSize = 'contain';
                         preview.style.backgroundRepeat = 'no-repeat';
                         preview.style.backgroundPosition = 'center';
@@ -4431,7 +4669,7 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
                         preview.classList.add(meta.className);
                     } else {
                         preview.style.borderStyle = 'solid';
-                        preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                        preview.style.borderImageSource = `url('${url}')`;
                         preview.style.borderImageSlice = (meta.slice ? meta.slice.toString() : '33');
                         preview.style.borderImageWidth = meta.width || '20px';
                         preview.style.borderImageOutset = meta.outset || '0';
@@ -4439,8 +4677,9 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
                     }
                 } else {
                     // Fallback for unknown assets
+                    const url = tabName === 'custom' ? asset.data : chrome.runtime.getURL(asset.path);
                     preview.style.borderStyle = 'solid';
-                    preview.style.borderImageSource = `url('${chrome.runtime.getURL(asset.path)}')`;
+                    preview.style.borderImageSource = `url('${url}')`;
                     preview.style.borderImageSlice = '33';
                     preview.style.borderImageWidth = '20px';
                 }
@@ -4448,7 +4687,7 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
                 opt.appendChild(preview);
 
                 const label = document.createElement('div');
-                label.textContent = asset.label;
+                label.textContent = asset.label || asset.name;
                 label.style.fontSize = '10px';
                 label.style.marginTop = '5px';
                 opt.appendChild(label);
@@ -4456,33 +4695,53 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
                 opt.onclick = () => {
                     optionsContainer.querySelectorAll('.be-border-option').forEach(el => el.classList.remove('selected'));
                     opt.classList.add('selected');
-                    selectedAsset = asset.path;
+                    selectedAsset = assetPath;
                 };
 
                 optionsContainer.appendChild(opt);
             });
-        };
+        } catch (err) {
+            console.warn('DEBUG ERROR in renderAssets:', err);
+        }
+    };
 
         borderTab.onclick = () => {
             activeTab = 'borders';
+            [borderTab, shapeTab, customTab].forEach(t => t.classList.remove('active'));
+            [borderTab, shapeTab, customTab].forEach(t => t.style.background = '#222');
+            [borderTab, shapeTab, customTab].forEach(t => t.style.color = '#ccc');
+            
             borderTab.classList.add('active');
             borderTab.style.background = '#444';
             borderTab.style.color = 'white';
-            shapeTab.classList.remove('active');
-            shapeTab.style.background = '#222';
-            shapeTab.style.color = '#ccc';
+            tagsContainer.style.display = 'flex';
             renderAssets('borders');
         };
 
         shapeTab.onclick = () => {
             activeTab = 'shapes';
+            [borderTab, shapeTab, customTab].forEach(t => t.classList.remove('active'));
+            [borderTab, shapeTab, customTab].forEach(t => t.style.background = '#222');
+            [borderTab, shapeTab, customTab].forEach(t => t.style.color = '#ccc');
+
             shapeTab.classList.add('active');
             shapeTab.style.background = '#444';
             shapeTab.style.color = 'white';
-            borderTab.classList.remove('active');
-            borderTab.style.background = '#222';
-            borderTab.style.color = '#ccc';
+            tagsContainer.style.display = 'flex';
             renderAssets('shapes');
+        };
+
+        customTab.onclick = () => {
+            activeTab = 'custom';
+            [borderTab, shapeTab, customTab].forEach(t => t.classList.remove('active'));
+            [borderTab, shapeTab, customTab].forEach(t => t.style.background = '#222');
+            [borderTab, shapeTab, customTab].forEach(t => t.style.color = '#ccc');
+
+            customTab.classList.add('active');
+            customTab.style.background = '#444';
+            customTab.style.color = 'white';
+            tagsContainer.style.display = 'none';
+            renderAssets('custom');
         };
 
         renderAssets(activeTab);

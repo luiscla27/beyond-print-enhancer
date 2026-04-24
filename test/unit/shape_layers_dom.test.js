@@ -7,7 +7,7 @@ const vm = require('vm');
 describe('Shape Layers DOM Management', function() {
     let window, document, LayerManager;
 
-    before(function() {
+    beforeEach(function() {
         const html = '<!DOCTYPE html><html><head></head><body><div id="print-layout-wrapper"><div id="print-enhance-sections-layer"></div><div id="print-enhance-shapes-container"></div></div></body></html>';
         const dom = new JSDOM(html, { url: 'https://www.dndbeyond.com/characters/123' });
         window = dom.window;
@@ -39,7 +39,7 @@ describe('Shape Layers DOM Management', function() {
         LayerManager = window.LayerManager;
     });
 
-    after(function() {
+    afterEach(function() {
         delete global.window;
         delete global.document;
         delete global.HTMLElement;

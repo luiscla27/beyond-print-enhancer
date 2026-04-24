@@ -74,7 +74,17 @@ describe('Shape Layers UI Management', function() {
         const initialGroups = panel.querySelectorAll('.be-layer-group').length;
         
         const addBtn = panel.querySelector('#print-enhance-add-layer');
-        addBtn.click();
+        
+        // Mock prompt to return a layer name
+        window.prompt = () => 'Test Layer';
+        
+        addBtn.click(); // Opens modal
+        
+        // Find and click the "Create Standard Layer" button in the modal
+        const standardBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent === 'Create Standard Layer');
+        if (standardBtn) {
+            standardBtn.click();
+        }
         
         // After click, rebuildPanel should have replaced the panel in the DOM
         panel = document.getElementById('print-enhance-layer-manager');

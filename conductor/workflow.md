@@ -32,7 +32,9 @@ For each task in `plan.md`, we follow this sequence:
 5.  **Verify Implementation (Refactor Phase):**
     - Run the tests again to ensure they pass.
     - Refactor the code for clarity, efficiency, and maintainability while keeping the tests passing.
-6.  **Update Plan:** Update the task's status from `[~]` to `[x]` in `plan.md`.
+6.  **Verify and Update Plan:**
+    - Execute `mocha` tests after every task to ensure nothing is broken.
+    - Update the task's status from `[~]` to `[x]` in `plan.md`.
 7.  **Commit Changes:**
     - **CRITICAL:** ALWAYS run all `mocha` tests and ensure they pass before performing any `git commit`. Never commit broken code.
     - Stage the changed files and `plan.md`.

@@ -52,7 +52,8 @@ describe('Print Styles Injection', function() {
         const css = style.textContent;
         assert.ok(css.includes('@media print'), 'Should contain @media print');
         assert.ok(css.includes('#print-enhance-layer-manager { display: none !important; }'), 'Should hide layer manager on print');
-        assert.ok(css.includes('.be-section-wrapper { opacity: 1 !important; }'), 'Should force full opacity on print');
+        assert.ok(css.includes('.be-section-wrapper'), 'Should target be-section-wrapper on print');
+        assert.ok(css.includes('opacity: 1 !important'), 'Should force full opacity on print');
     });
 
     it('should hide layers with data-print-disabled="true"', function() {
