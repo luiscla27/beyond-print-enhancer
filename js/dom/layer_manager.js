@@ -254,7 +254,8 @@ class LayerManager {
                 if (!assetPath) return;
 
                 item = document.createElement('img');
-                const url = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
+                const isBase64 = assetPath && assetPath.startsWith('data:');
+                const url = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL && !isBase64)
                             ? chrome.runtime.getURL(assetPath)
                             : assetPath;
 
