@@ -499,12 +499,26 @@ class LayerManager {
                     if (printBtn) printBtn.innerHTML = layer.isDisabledOnPrint ? '🖨️❌' : '🖨️';
                     if (viewBtn) viewBtn.innerHTML = layer.isHidden ? '🙈' : '👁️';
                     if (lockBtn) lockBtn.innerHTML = layer.isLocked ? '🔒' : '🔓';
+
+                    // Sync active class on panel row
+                    if (this.activeLayerId === layer.id) {
+                        row.classList.add('be-active-layer');
+                    } else {
+                        row.classList.remove('be-active-layer');
+                    }
                 }
             }
 
             if (layerEl) {
                 layerEl.dataset.printDisabled = layer.isDisabledOnPrint;
                 layerEl.style.display = layer.isHidden ? 'none' : '';
+                
+                // Sync active class on DOM container
+                if (this.activeLayerId === layer.id) {
+                    layerEl.classList.add('be-active-layer');
+                } else {
+                    layerEl.classList.remove('be-active-layer');
+                }
             }
             
             const lockClass = `be-lock-${layer.id}`;
