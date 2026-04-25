@@ -29,6 +29,18 @@ This track introduces improvements to the layer management system by allowing us
 - The Layer Management panel must visually indicate which layer is currently "active" (unlocked/editable).
 - This indicator helps users understand which layer new shapes will be added to.
 
+### 6. Automatic Layer Activation
+- A layer must be automatically marked as "active" if it is the ONLY shape layer available.
+- Every newly created layer must be automatically marked as the "active" layer.
+- Clicking on a layer's name in the Layer Manager list must set it as the "active" layer.
+
+### 7. Layer Renaming
+- Double-clicking a layer's name in the Layer Manager list must open a modal to rename the layer.
+- The new name must be persisted and correctly updated across the UI.
+
+### 8. Persistence
+- All layer settings (names, visibility, lock status, isDisabledOnPrint, active status) must be persistable in the layout JSON object and correctly restored.
+
 ## Non-Functional Requirements
 - Ensure no native right-click context menu appears when right-clicking the shape items in the Layer Manager.
 - All new UI elements must follow the `be-` class prefix and `print-enhance-` ID prefix guidelines to avoid deep clean hiding.

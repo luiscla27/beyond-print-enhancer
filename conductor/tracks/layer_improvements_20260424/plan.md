@@ -31,5 +31,18 @@
 
 ## Phase 5: Active Layer UI Indicators
 - [ ] Task: Design and implement a visual indicator for the active layer in `LayerManager.js`.
-- [ ] Task: Add CSS for the active layer indicator in `js/main.js`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Active Layer UI Indicators' (Protocol in workflow.md)
+- [x] Task: Add CSS for the active layer indicator in `js/main.js`.
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Active Layer UI Indicators' (Protocol in workflow.md)
+
+## Phase 6: Refined Activation & Renaming
+- [ ] Task: Update `LayerManager` to auto-activate the only available shape layer.
+- [ ] Task: Implement click-to-activate logic on layer names.
+- [ ] Task: Implement double-click to rename logic for layers with a modal.
+- [ ] Task: Write tests for refined activation and renaming.
+- [ ] Task: Conductor - User Manual Verification 'Phase 6: Refined Activation & Renaming' (Protocol in workflow.md)
+
+## Phase 7: Enhanced Persistence
+- [ ] Task: Update `scanLayout` to include `activeLayerId` and refined layer metadata.
+- [ ] Task: Update `applyLayout` to restore `activeLayerId` and trigger `updateControlsState`.
+- [ ] Task: Verify persistence across browser reload.
+- [ ] Task: Conductor - User Manual Verification 'Phase 7: Enhanced Persistence' (Protocol in workflow.md)

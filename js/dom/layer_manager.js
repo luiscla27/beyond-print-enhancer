@@ -31,6 +31,12 @@ class LayerManager {
         this.contentLists = {}; // layerId -> div
         this.activeLayerId = null; // Currently editing layer
         this.contextMenu = null;
+
+        // Auto-activate if only one shape layer
+        if (this.shapeLayers.length === 1 && this.sectionsLayer.isLocked) {
+            this.shapeLayers[0].isLocked = false;
+            this.activeLayerId = this.shapeLayers[0].id;
+        }
     }
 
     /**
@@ -211,6 +217,17 @@ class LayerManager {
 
         const label = document.createElement('span');
         label.textContent = layer.label;
+        label.style.cursor = 'pointer';
+        label.style.flex = '1';
+        label.onclick = () => {
+            if (layer.isLocked) {
+                this.toggleLayerLock(layer);
+            }
+        };
+        label.ondblclick = (e) => {
+            e.stopPropagation();
+            this.showRenameModal(layer);
+        };
         row.appendChild(label);
 
         const controls = document.createElement('div');
@@ -617,6 +634,21 @@ class LayerManager {
         if (this.contextMenu) {
             this.contextMenu.remove();
             this.contextMenu = null;
+        }
+    }
+
+    /**
+     * Shows a modal to rename a layer.
+     * @param {object} layer 
+     */
+    showRenameModal(layer) {
+        if (layer.id === 'sections') return; // Cannot rename sections layer
+
+        const newName = prompt(`Rename layer "${layer.label}" to:`, layer.label);
+        if (newName && newName.trim() !== '' && newName !== layer.label) {
+            layer.label = newName.trim();
+            this.rebuildPanel();
+            if (window.showFeedback) window.showFeedback(`Layer renamed to "${layer.label}"`);
         }
     }
 }

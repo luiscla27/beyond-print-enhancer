@@ -6283,7 +6283,10 @@ async function scanLayout() {
         }
     }
     
-    layout.layers = layerStates;
+    layout.layers = {
+        ...layerStates,
+        activeLayerId: layerManager?.activeLayerId || null
+    };
 
     // Include cached spells
     try {
@@ -6585,17 +6588,27 @@ async function applyLayout(layout) {
     const peDom = typeof PeDom !== 'undefined' ? PeDom() : null;
     const layerManager = peDom ? peDom.getLayerManager() : null;
 
-    // Restore shape layers state
-    if (layerManager && layout.shapeLayers) {
-        // Reset shapeLayers in LayerManager
-        layerManager.shapeLayers = [];
-        layout.shapeLayers.forEach(savedLayer => {
-            const layer = layerManager.addShapeLayer(savedLayer.name, savedLayer);
-            layer.id = savedLayer.id; // Preserve ID
-            layer.layerId = savedLayer.layerId || `print-enhance-layer-${layer.id}`;
-        });
-        layerManager.refreshUI();
-    }
+        // Restore shape layers state
+        if (layerManager && layout.shapeLayers) {
+            // Reset shapeLayers in LayerManager
+            layerManager.shapeLayers = [];
+            layout.shapeLayers.forEach(savedLayer => {
+                const layer = layerManager.addShapeLayer(savedLayer.name, savedLayer);
+                layer.id = savedLayer.id; // Preserve ID
+                layer.layerId = savedLayer.layerId || `print-enhance-layer-${layer.id}`;
+            });
+            
+            // Restore active layer ID if present
+            if (layout.layers && layout.layers.activeLayerId) {
+                layerManager.activeLayerId = layout.layers.activeLayerId;
+                // Sync lock state of the active layer
+                const active = layerManager.getLayerById(layerManager.activeLayerId);
+                if (active) active.isLocked = false;
+            }
+
+            layerManager.refreshUI();
+            if (window.updateControlsState) window.updateControlsState();
+        }
 
     if (layerManager && layout.layers?.sections) {
         const layer = layerManager.sectionsLayer;
