@@ -140,6 +140,22 @@ class LayerManager {
     }
 
     /**
+     * Gets the layer that contains a specific element by its ID.
+     * @param {string} targetId 
+     */
+    getLayerForElement(targetId) {
+        const el = document.getElementById(targetId);
+        if (!el) return null;
+
+        const layerEl = el.closest('.pe-layer');
+        if (!layerEl) return null;
+
+        if (layerEl.id === 'print-enhance-sections-layer') return this.sectionsLayer;
+        
+        return this.shapeLayers.find(l => l.layerId === layerEl.id);
+    }
+
+    /**
      * Rebuilds the panel when layers change.
      */
     rebuildPanel() {
