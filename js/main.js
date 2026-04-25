@@ -2864,9 +2864,9 @@ function enforceFullHeight() {
 
         .be-hover-highlight,
         .be-focus-highlight-hover {
-            outline: 2px solid #28a745 !important;
-            outline-offset: -2px;
-            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5) !important;
+            filter: drop-shadow(0 0 15px #28a745) !important;
+            transition: filter 0.3s ease-in-out;
+            z-index: 100003 !important;
         }
 
         .be-delete-layer-btn {
