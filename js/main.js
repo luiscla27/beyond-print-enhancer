@@ -4547,6 +4547,12 @@ function showBorderPickerModal(currentStyle = 'default-border') {
  * @returns {Promise<{assetPath: string} | null>}
  */
 function showShapePickerModal(currentAsset = '', filterFolder = '') {
+    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+    if (!lm || !lm.activeLayerId) {
+        showFeedback('Please select/unlock a layer in Layer Management first.', 'error');
+        return Promise.resolve(null);
+    }
+
     return new Promise((resolve) => {
         const categories = parseAssets(ASSET_LIST);
         const overlay = document.createElement('div');
