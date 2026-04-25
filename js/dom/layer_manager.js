@@ -28,6 +28,7 @@ class LayerManager {
         ];
 
         this.panel = null;
+        this.isMinimized = false;
         this.contentLists = {}; // layerId -> div
         this.activeLayerId = null; // Currently editing layer
         this.contextMenu = null;
@@ -177,11 +178,25 @@ class LayerManager {
         const panel = document.createElement('div');
         panel.id = 'print-enhance-layer-manager';
         panel.className = 'be-layer-panel be-floating-ui';
+        if (this.isMinimized) panel.classList.add('minimized');
         
         // Header
         const header = document.createElement('div');
         header.className = 'be-layer-panel-header';
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
         header.innerHTML = '<strong>Layer Management</strong>';
+
+        const minBtn = document.createElement('button');
+        minBtn.innerHTML = this.isMinimized ? '□' : '_';
+        minBtn.title = this.isMinimized ? 'Restore' : 'Minimize';
+        minBtn.style.cssText = 'background: none; border: none; color: #aaa; cursor: pointer; padding: 0 4px; font-weight: bold; font-size: 14px;';
+        minBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.toggleMinimize();
+        };
+        header.appendChild(minBtn);
         panel.appendChild(header);
 
         // 1. Sections Section (Hardcoded)
@@ -368,8 +383,7 @@ class LayerManager {
                 });
                 item.title = assetPath.split('/').pop();
             } else {
-                const header = el.querySelector('.print-section-header span');
-                const title = header ? header.textContent.trim() : 'Unnamed';
+                const title = el.dataset.title || (el.querySelector('.print-section-header span') ? el.querySelector('.print-section-header span').textContent.trim() : 'Unnamed');
 
                 item = document.createElement('div');
                 item.className = 'be-layer-item-card';
@@ -664,6 +678,17 @@ class LayerManager {
         if (this.contextMenu) {
             this.contextMenu.remove();
             this.contextMenu = null;
+        }
+    }
+
+    /**
+     * Toggles the minimized state of the panel.
+     */
+    toggleMinimize() {
+        this.isMinimized = !this.isMinimized;
+        if (this.panel) {
+            this.panel.classList.toggle('minimized', this.isMinimized);
+            this.rebuildPanel(); // Rebuild to update button text/icon
         }
     }
 
