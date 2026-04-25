@@ -29,6 +29,8 @@ class LayerManager {
 
         this.panel = null;
         this.contentLists = {}; // layerId -> div
+        this.activeLayerId = null; // Currently editing layer
+        this.contextMenu = null;
     }
 
     /**
@@ -73,6 +75,44 @@ class LayerManager {
             return newLayer;
         }
         return null;
+    }
+
+    /**
+     * Deletes a shape layer and all its contents.
+     * @param {string} id
+     */
+    deleteShapeLayer(id) {
+        if (id === 'sections') return; // Cannot delete sections layer
+
+        const index = this.shapeLayers.findIndex(l => l.id === id);
+        if (index === -1) return;
+
+        const layer = this.shapeLayers[index];
+        const container = document.getElementById(layer.layerId);
+        if (container) {
+            container.remove();
+        }
+
+        this.shapeLayers.splice(index, 1);
+        
+        if (this.panel) {
+            this.rebuildPanel();
+        }
+
+        if (window.showFeedback) window.showFeedback(`Layer "${layer.label}" deleted.`);
+    }
+
+    /**
+     * Deletes a specific shape.
+     * @param {string} targetId
+     */
+    deleteShape(targetId) {
+        const el = document.getElementById(targetId);
+        if (el) {
+            el.remove();
+            this.refreshLayerContents();
+            if (window.showFeedback) window.showFeedback('Shape deleted.');
+        }
     }
 
     /**
@@ -184,6 +224,20 @@ class LayerManager {
         lockBtn.onclick = () => this.toggleLayerLock(layer, lockBtn);
         controls.appendChild(lockBtn);
 
+        // Delete Layer Button
+        if (layer.id !== 'sections') {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '🗑️';
+            deleteBtn.title = 'Delete Layer';
+            deleteBtn.className = 'be-delete-layer-btn';
+            deleteBtn.onclick = () => {
+                if (confirm(`Are you sure you want to delete the layer "${layer.label}" and all its contents?`)) {
+                    this.deleteShapeLayer(layer.id);
+                }
+            };
+            controls.appendChild(deleteBtn);
+        }
+
         row.appendChild(controls);
         layerGroup.appendChild(row);
 
@@ -286,6 +340,11 @@ class LayerManager {
             item.dataset.targetId = el.id;
             item.draggable = true;
             item.onclick = (e) => { e.stopPropagation(); this.focusElement(el.id); };
+            item.oncontextmenu = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.createContextMenu(e.clientX, e.clientY, el.id);
+            };
             item.ondragstart = () => item.classList.add('dragging');
             item.ondragend = () => {
                 item.classList.remove('dragging');
@@ -437,15 +496,115 @@ class LayerManager {
     }
 
     toggleLayerLock(layer, btn) {
-        layer.isLocked = !layer.isLocked;
+        const wasLocked = layer.isLocked;
+        
+        // If we are unlocking this layer, lock ALL others
+        if (wasLocked) {
+            const allLayers = [this.sectionsLayer, ...this.shapeLayers];
+            allLayers.forEach(l => {
+                l.isLocked = true;
+            });
+            layer.isLocked = false;
+            this.activeLayerId = layer.id;
+        } else {
+            // If we are locking this layer
+            layer.isLocked = true;
+            if (this.activeLayerId === layer.id) {
+                this.activeLayerId = null;
+            }
+        }
+
         this.refreshUI();
+        if (window.updateControlsState) window.updateControlsState();
         if (window.showFeedback) window.showFeedback(`${layer.label} ${layer.isLocked ? 'Locked' : 'Unlocked'}`);
+    }
+
+    /**
+     * Gets the DOM container of the currently active layer.
+     * Falls back to the default shapes container if no layer is active.
+     */
+    getActiveLayerContainer() {
+        if (this.activeLayerId) {
+            const layer = [this.sectionsLayer, ...this.shapeLayers].find(l => l.id === this.activeLayerId);
+            if (layer) {
+                const container = document.getElementById(layer.layerId);
+                if (container) return container;
+            }
+        }
+        // Fallback to default shapes layer if possible
+        const defaultLayer = this.shapeLayers[0];
+        if (defaultLayer) {
+            return document.getElementById(defaultLayer.layerId);
+        }
+        return null;
     }
 
     toggleLayerVisibility(layer, btn) {
         layer.isHidden = !layer.isHidden;
         this.refreshUI();
         if (window.showFeedback) window.showFeedback(`${layer.label} ${layer.isHidden ? 'Hidden' : 'Visible'}`);
+    }
+
+    /**
+     * Creates and displays a custom context menu.
+     */
+    createContextMenu(x, y, targetId) {
+        this.hideContextMenu();
+
+        const menu = document.createElement('div');
+        menu.id = 'print-enhance-context-menu';
+        menu.className = 'be-context-menu be-floating-ui';
+        Object.assign(menu.style, {
+            position: 'fixed',
+            left: `${x}px`,
+            top: `${y}px`,
+            zIndex: '100000',
+            backgroundColor: '#222',
+            border: '1px solid #444',
+            borderRadius: '4px',
+            padding: '4px 0',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+            minWidth: '120px'
+        });
+
+        const deleteItem = document.createElement('div');
+        deleteItem.className = 'be-context-menu-item';
+        deleteItem.innerHTML = '🗑️ Delete';
+        Object.assign(deleteItem.style, {
+            padding: '6px 12px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            color: '#ff4444',
+            transition: 'background 0.2s'
+        });
+        deleteItem.onmouseover = () => { deleteItem.style.backgroundColor = '#333'; };
+        deleteItem.onmouseout = () => { deleteItem.style.backgroundColor = 'transparent'; };
+        deleteItem.onclick = () => {
+            if (confirm('Delete this item?')) {
+                this.deleteShape(targetId);
+            }
+            this.hideContextMenu();
+        };
+
+        menu.appendChild(deleteItem);
+        document.body.appendChild(menu);
+        this.contextMenu = menu;
+
+        // Auto-hide on click outside
+        const hideHandler = (e) => {
+            if (!menu.contains(e.target)) {
+                this.hideContextMenu();
+                document.removeEventListener('mousedown', hideHandler);
+            }
+        };
+        document.addEventListener('mousedown', hideHandler);
+    }
+
+    hideContextMenu() {
+        if (this.contextMenu) {
+            this.contextMenu.remove();
+            this.contextMenu = null;
+        }
     }
 }
 

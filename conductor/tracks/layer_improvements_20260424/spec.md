@@ -20,6 +20,11 @@ This track introduces improvements to the layer management system by allowing us
 - When hovering over elements (specifically `be-section-wrapper` elements) belonging to the currently active layer, apply the `be-focus-highlight` CSS class.
 - Elements not in the active layer should not receive this highlight.
 
+### 4. Shape Addition Constraints
+- The "Add Shape" button must be disabled if no layer is currently active (unlocked).
+- When adding a new shape, it must be automatically added to the currently active layer's DOM container.
+- New shapes must also be correctly registered in the `LayerManager`'s tracking of that layer's content.
+
 ## Non-Functional Requirements
 - Ensure no native right-click context menu appears when right-clicking the shape items in the Layer Manager.
 - All new UI elements must follow the `be-` class prefix and `print-enhance-` ID prefix guidelines to avoid deep clean hiding.

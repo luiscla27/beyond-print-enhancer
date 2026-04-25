@@ -23,8 +23,35 @@ const SCHEMA_VERSION = '1.5.0';
 const PeDom = () => window.DomManager.getInstance();
 
 /**
+ * Initializes global hover highlights for the active layer.
+ */
+function initHoverHighlights() {
+    const container = document.getElementById('print-layout-wrapper') || document.body;
+
+    container.addEventListener('mouseover', (e) => {
+        const wrapper = e.target.closest('.be-section-wrapper');
+        if (!wrapper) return;
+
+        const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+        if (!lm || !lm.activeLayerId) return;
+
+        // Check if the wrapper belongs to the active layer
+        const layer = lm.getLayerForElement(wrapper.id);
+        if (layer && layer.id === lm.activeLayerId) {
+            wrapper.classList.add('be-hover-highlight');
+        }
+    });
+
+    container.addEventListener('mouseout', (e) => {
+        const wrapper = e.target.closest('.be-section-wrapper');
+        if (wrapper) {
+            wrapper.classList.remove('be-hover-highlight');
+        }
+    });
+}
+
+/**
  * Toggles the interaction mode for the shapes layer.
- * Compatibility shim for legacy code and tests.
  */
 function toggleShapesMode(forceState) {
     const activeClass = 'be-shapes-mode-active';
@@ -2834,6 +2861,35 @@ function enforceFullHeight() {
         .be-section-wrapper:hover {
             box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
         }
+
+        .be-hover-highlight,
+        .be-focus-highlight-hover {
+            outline: 2px solid #28a745 !important;
+            outline-offset: -2px;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5) !important;
+        }
+
+        .be-delete-layer-btn {
+            color: #ff4444 !important;
+        }
+        .be-delete-layer-btn:hover {
+            background-color: #552222 !important;
+        }
+
+        .be-context-menu {
+            user-select: none;
+            overflow: hidden;
+            animation: be-fade-in 0.1s ease-out;
+        }
+        @keyframes be-fade-in {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .be-context-menu-item:hover {
+            background-color: #333 !important;
+        }
+
         .be-section-wrapper:hover .print-section-header {
             opacity: 1;
         }
@@ -3599,6 +3655,25 @@ function renderClonedSection(snapshot) {
 }
 
 /**
+ * Updates the state of control buttons (e.g., disabling Add Shape if no active layer).
+ */
+function updateControlsState() {
+    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+    if (!lm) return;
+
+    const addShapeBtn = document.getElementById('be-btn-add-shape');
+    if (addShapeBtn) {
+        const hasActiveLayer = lm.activeLayerId !== null;
+        addShapeBtn.disabled = !hasActiveLayer;
+        addShapeBtn.style.opacity = !hasActiveLayer ? '0.5' : '1';
+        addShapeBtn.style.cursor = !hasActiveLayer ? 'not-allowed' : 'pointer';
+        addShapeBtn.title = !hasActiveLayer ? 'Select a layer in Layer Management to enable' : 'Add a decorative shape';
+    }
+}
+
+window.updateControlsState = updateControlsState;
+
+/**
  * Creates a floating decorative shape.
  */
 function createShape(assetPath, restoreData = null, targetLayerId = null) {
@@ -3661,7 +3736,7 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
             top: (top + 16) + 'px',
             width: container.style.width,
             height: container.style.height,
-            rotation: currentRotation
+            rotation: wrapper.dataset.rotation
         });
         showFeedback('Shape cloned');
     };
@@ -3808,29 +3883,36 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
             document.addEventListener('mouseup', onMouseUp);
         });
     }
-    
-    // TARGET LAYER APPENDING
-    let layerContainer = null;
-    if (targetLayerId) {
-        layerContainer = document.getElementById(targetLayerId);
-    }
-    
-    if (!layerContainer) {
-        // Fallback to default shapes layer
-        layerContainer = PeDom().getShapesLayer().element;
+
+    const layoutRoot = PeDom().getLayoutRoot().element;
+    if (layoutRoot) {
+        // TARGET LAYER APPENDING
+        let layerContainer = null;
+        if (targetLayerId) {
+            layerContainer = document.getElementById(targetLayerId);
+        }
+        
+        if (!layerContainer) {
+            // Fallback to active shapes layer
+            layerContainer = PeDom().getActiveShapesLayer().element;
+        }
+
+        if (layerContainer) {
+            layerContainer.appendChild(wrapper);
+        } else {
+            // Final fallback
+            PeDom().getShapesLayer().element.appendChild(wrapper);
+        }
     }
 
-    if (layerContainer) {
-        layerContainer.appendChild(wrapper);
-    }
+    // Re-init resize logic for the new container
+    if (window.initResizeLogic) window.initResizeLogic();
     
     refreshLayers();
     
-    // Re-init resize logic
-    if (window.initResizeLogic) window.initResizeLogic();
-    
     return wrapper;
 }
+
 
 /**
  * Helper to apply asset to a shape container via class or inline style.
@@ -5127,7 +5209,7 @@ function createControls() {
                 createShape(result.assetPath);
                 showFeedback('Shape added');
             }
-        }},
+        }, id: 'be-btn-add-shape' },
         { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
         { label: 'Print', icon: '🖨️', action: () => window.print() },
         { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
@@ -7255,6 +7337,7 @@ function injectCompactStyles() {
     injectCloneButtons();
     flagExtractableElements();
     initDragAndDrop();
+    initHoverHighlights();
     if (window.injectDnDStyles) {
         window.injectDnDStyles();
         safeLog('log', '[DDB Print] DnD Styles Injected');

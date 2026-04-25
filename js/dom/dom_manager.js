@@ -441,6 +441,21 @@ class DomManager {
     }
 
     /**
+     * Gets the currently active shapes layer container.
+     * @returns {ElementWrapper}
+     */
+    getActiveShapesLayer() {
+        const lm = this.getLayerManager();
+        if (lm) {
+            const activeContainer = lm.getActiveLayerContainer();
+            if (activeContainer) {
+                return new ElementWrapper(activeContainer);
+            }
+        }
+        return this.getShapesLayer();
+    }
+
+    /**
      * Gets or creates the main shapes container for multiple layers.
      * @returns {ElementWrapper}
      */
