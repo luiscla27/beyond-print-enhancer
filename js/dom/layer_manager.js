@@ -51,9 +51,19 @@ class LayerManager {
         };
         this.shapeLayers.push(newLayer);
 
+        // Mark new layer as active and unlock it
+        const allLayers = [this.sectionsLayer, ...this.shapeLayers];
+        allLayers.forEach(l => {
+            l.isLocked = true;
+        });
+        newLayer.isLocked = false;
+        this.activeLayerId = newLayer.id;
+
         if (this.panel) {
             this.rebuildPanel();
         }
+        
+        if (window.updateControlsState) window.updateControlsState();
 
         return newLayer;
     }
