@@ -2809,6 +2809,12 @@ function enforceFullHeight() {
             pointer-events: auto !important; /* Interactive by default */
         }
         
+        .be-section-wrapper img {
+            background-color: transparent;
+            border: none;
+            object-fit: contain;
+        }
+        
         /* Interaction Locking via Body Classes */
         body.be-lock-sections #print-enhance-sections-layer {
             pointer-events: none !important;
