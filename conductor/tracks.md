@@ -9,7 +9,7 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [ ] **Track: 1. Agrega un boton para eliminar 1 layer entero 2. Agrega un menu contextual en las layers para eliminar "shapes" directamente desde el layer management 3. Al hacer hover sobre cualquier elemento tipo `be-section-wrapper` este se debe activar con los mismos estilos `be-focus-highlight`**
+- [x] **Track: 1. Agrega un boton para eliminar 1 layer entero 2. Agrega un menu contextual en las layers para eliminar "shapes" directamente desde el layer management 3. Al hacer hover sobre cualquier elemento tipo `be-section-wrapper` este se debe activar con los mismos estilos `be-focus-highlight`** (Completed: 2026-04-24)
 *Link: [./tracks/layer_improvements_20260424/](./tracks/layer_improvements_20260424/)*
 
 
