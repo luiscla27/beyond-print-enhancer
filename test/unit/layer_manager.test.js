@@ -57,19 +57,24 @@ describe('LayerManager Edit Mode', function() {
         assert.strictEqual(shapesLayer.isLocked, true);
         assert.strictEqual(lockBtn.innerHTML, '🔒');
 
-        // Unlock Shapes
+        // Unlock Shapes -> This should automatically LOCK Sections
         lm.toggleLayerLock(shapesLayer, lockBtn);
         assert.ok(!document.body.classList.contains('be-lock-shapes-default'), 'Body should NOT have be-lock-shapes-default class');
         assert.strictEqual(shapesLayer.isLocked, false);
         assert.strictEqual(lockBtn.innerHTML, '🔓');
+        
+        // Verify Sections was automatically locked
+        assert.strictEqual(sectionsLayer.isLocked, true, 'Sections should be automatically locked when shapes are unlocked');
+        assert.ok(document.body.classList.contains('be-lock-sections'), 'Body should have be-lock-sections class');
 
-        // Lock Sections
+        // Now toggle Sections (which is currently locked) -> This should UNLOCK it and LOCK shapes
         const secRow = lm.panel.querySelector('[data-layer-id="sections"]');
         const secLockBtn = secRow.querySelector('button[title="Toggle Edit Mode"]');
         lm.toggleLayerLock(sectionsLayer, secLockBtn);
-        assert.ok(document.body.classList.contains('be-lock-sections'), 'Body should have be-lock-sections class');
-        assert.strictEqual(sectionsLayer.isLocked, true);
-        assert.strictEqual(secLockBtn.innerHTML, '🔒');
+        
+        assert.strictEqual(sectionsLayer.isLocked, false, 'Sections should now be unlocked');
+        assert.ok(!document.body.classList.contains('be-lock-sections'), 'Body should NOT have be-lock-sections class');
+        assert.strictEqual(shapesLayer.isLocked, true, 'Shapes should be automatically locked when sections are unlocked');
     });
 
     it('should inject lock buttons in the panel', function() {

@@ -9,8 +9,10 @@ const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
 const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
 const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
+const layerManagerPath = path.resolve(__dirname, '../../js/dom/layer_manager.js');
 const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
 const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
+const layerManagerContent = fs.readFileSync(layerManagerPath, 'utf8');
 
 describe('Shape Logic', function() {
   let window, document;
@@ -20,7 +22,9 @@ describe('Shape Logic', function() {
       <!DOCTYPE html>
       <html>
         <body>
-          <div id="print-layout-wrapper"></div>
+          <div id="print-layout-wrapper">
+            <div id="print-enhance-shapes-layer"></div>
+          </div>
         </body>
       </html>
     `, {
@@ -56,8 +60,12 @@ describe('Shape Logic', function() {
     global.indexedDB = indexedDB;
     global.IDBKeyRange = IDBKeyRange;
     window.__DDB_TEST_MODE__ = true;
-    window.eval(elementWrapperContent);
-    window.eval(domManagerContent);
+    
+    // Explicitly set on window because eval might not do it due to module.exports check
+    window.ElementWrapper = require('../../js/dom/element_wrapper.js');
+    window.DomManager = require('../../js/dom/dom_manager.js');
+    window.LayerManager = require('../../js/dom/layer_manager.js');
+    
     window.eval(mainJsContent);
   });
 
@@ -200,6 +208,10 @@ describe('Shape Logic', function() {
         if (typeof window.showShapePickerModal !== 'function') {
             assert.fail('window.showShapePickerModal is not defined');
         }
+
+        // Must activate a layer first
+        const lm = window.DomManager.getInstance().getLayerManager();
+        lm.activeLayerId = 'shapes-default';
 
         const promise = window.showShapePickerModal();
         
