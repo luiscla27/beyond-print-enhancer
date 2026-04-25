@@ -2891,9 +2891,14 @@ function enforceFullHeight() {
         }
 
         .be-active-layer {
-            background-color: #28a74533 !important;
-            border-left: 3px solid #28a745 !important;
+            background-color: #28a74533;
+            border-left: 3px solid #28a745;
             margin-left: -3px;
+        }
+        #print-enhance-shapes-layer.be-active-layer {
+            background-color: transparent;
+            border-left: 0;
+            margin-left: 0;
         }
 
         .be-section-wrapper:hover .print-section-header {
