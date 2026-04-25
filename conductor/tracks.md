@@ -4,6 +4,9 @@ This file tracks all major development tracks for the project.
 
 ## Current Tracks
 
+- [ ] **Track: Elimina los elementos de nombre "print-section-header", actualmente sirven para arrastrar las secciones y shapes. Modifica el comportamiento para que se pueda arrastrar directamente desde el elemento con clase be-section-wrapper, el objetivo es eliminar de-saturar la cantidad de elementos en pantalla**
+*Link: [./tracks/refactor_drag_handles_20260425/](./tracks/refactor_drag_handles_20260425/)*
+
 
 ---
 
