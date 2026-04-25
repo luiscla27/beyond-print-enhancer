@@ -1,0 +1,8 @@
+{
+  "track_id": "layer_improvements_20260424",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-04-24T10:00:00Z",
+  "updated_at": "2026-04-24T10:00:00Z",
+  "description": "1. Agrega un boton para eliminar 1 layer entero 2. Agrega un menu contextual en las layers para eliminar \"shapes\" directamente desde el layer management 3. Al hacer hover sobre cualquier elemento tipo be-section-wrapper este se debe activar con los mismos estilos be-focus-highlight"
+}

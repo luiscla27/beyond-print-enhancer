@@ -7,6 +7,12 @@ This file tracks all major development tracks for the project.
 
 ---
 
+---
+
+- [ ] **Track: 1. Agrega un boton para eliminar 1 layer entero 2. Agrega un menu contextual en las layers para eliminar "shapes" directamente desde el layer management 3. Al hacer hover sobre cualquier elemento tipo `be-section-wrapper` este se debe activar con los mismos estilos `be-focus-highlight`**
+*Link: [./tracks/layer_improvements_20260424/](./tracks/layer_improvements_20260424/)*
+
+
 - [x] **Track: add a new option at the "Add layer modal" named "Upload from disk" this new ption should prompt the user t select an image file from his folders, once selected it should convert it to base64 and store in both IndexDB (so its available in the future). And also MUST be stored inside the JSON object saved. So its also available when the user shares his template. The new shape(s) must appear n a new tab at the "Select Decorative Shape" panel named "Custom Shapes", also the custom SHAPES MUST be availabe at the "Select Decorative Shape" shown when the "Switch Shape Asset" button its used** (Completed: 2026-04-23)
 *Link: [./tracks/custom_shapes_upload_20260423/](./tracks/custom_shapes_upload_20260423/)*
 
