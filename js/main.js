@@ -2890,6 +2890,12 @@ function enforceFullHeight() {
             background-color: #333 !important;
         }
 
+        .be-active-layer {
+            background-color: #28a74533 !important;
+            border-left: 3px solid #28a745 !important;
+            margin-left: -3px;
+        }
+
         .be-section-wrapper:hover .print-section-header {
             opacity: 1;
         }

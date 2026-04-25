@@ -25,6 +25,10 @@ This track introduces improvements to the layer management system by allowing us
 - When adding a new shape, it must be automatically added to the currently active layer's DOM container.
 - New shapes must also be correctly registered in the `LayerManager`'s tracking of that layer's content.
 
+### 5. Active Layer UI Indicator
+- The Layer Management panel must visually indicate which layer is currently "active" (unlocked/editable).
+- This indicator helps users understand which layer new shapes will be added to.
+
 ## Non-Functional Requirements
 - Ensure no native right-click context menu appears when right-clicking the shape items in the Layer Manager.
 - All new UI elements must follow the `be-` class prefix and `print-enhance-` ID prefix guidelines to avoid deep clean hiding.

@@ -194,6 +194,9 @@ class LayerManager {
 
         const row = document.createElement('div');
         row.className = 'be-layer-row';
+        if (this.activeLayerId === layer.id) {
+            row.classList.add('be-active-layer');
+        }
         row.dataset.layerId = layer.id;
 
         const label = document.createElement('span');

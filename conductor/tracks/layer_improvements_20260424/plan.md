@@ -28,3 +28,8 @@
 - [x] Task: Implement "Add Shape" button disabling/enabling based on `activeLayerId`.
 - [x] Task: Modify shape creation logic to target the active layer's DOM container.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Shape Addition Constraints' (Protocol in workflow.md)
+
+## Phase 5: Active Layer UI Indicators
+- [ ] Task: Design and implement a visual indicator for the active layer in `LayerManager.js`.
+- [ ] Task: Add CSS for the active layer indicator in `js/main.js`.
+- [ ] Task: Conductor - User Manual Verification 'Phase 5: Active Layer UI Indicators' (Protocol in workflow.md)
