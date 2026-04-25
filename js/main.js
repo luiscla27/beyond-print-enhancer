@@ -4749,6 +4749,7 @@ function showShapePickerModal(currentAsset = '', filterFolder = '') {
             assets.forEach(asset => {
                 const opt = document.createElement('div');
                 opt.className = 'be-border-option';
+                opt.title = asset.label || asset.name || asset.id;
                 const assetPath = asset.path || asset.data; // Use data (base64) for custom
                 if (selectedAsset === assetPath) opt.classList.add('selected');
 
@@ -4949,7 +4950,7 @@ function initZIndexManagement() {
         let maxShapeZ = 110;
 
         allElements.forEach(el => {
-            const z = parseInt(window.getComputedStyle(el).zIndex) || 10;
+            const z = parseInt(el.style.zIndex) || parseInt(window.getComputedStyle(el).zIndex) || 10;
             if (el.classList.contains('be-shape-wrapper')) {
                 if (z > maxShapeZ) maxShapeZ = z;
             } else {

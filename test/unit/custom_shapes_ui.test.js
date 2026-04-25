@@ -42,7 +42,10 @@ describe('Custom Shapes UI', function() {
             }
         };
         window.PeDom = () => ({
-            getLayerManager: () => ({ refreshUI: () => {} })
+            getLayerManager: () => ({ 
+                refreshUI: () => {},
+                activeLayerId: 'shapes-default' 
+            })
         });
         window.SCHEMA_VERSION = '1.5.0';
         window.getCharacterId = () => '12345';
@@ -99,7 +102,7 @@ describe('Custom Shapes UI', function() {
 
         // In our implementation, we expect a thumb with specific data-id or title
         // We'll wait a bit for async Storage.getCustomShapes to resolve and render
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 500));
 
         const thumbs = document.querySelectorAll('.be-border-option');
         const customThumb = Array.from(thumbs).find(t => t.title === 'Test Shape');
