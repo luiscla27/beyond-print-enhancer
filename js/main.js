@@ -3913,14 +3913,14 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
         }
         
         if (!layerContainer) {
-            // Fallback to active shapes layer
+            // Fallback to active shapes layer (guaranteed to be a shape layer now)
             layerContainer = PeDom().getActiveShapesLayer().element;
         }
 
         if (layerContainer) {
             layerContainer.appendChild(wrapper);
         } else {
-            // Final fallback
+            // Final fallback to the hardcoded default shapes layer
             PeDom().getShapesLayer().element.appendChild(wrapper);
         }
     }

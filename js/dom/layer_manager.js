@@ -588,23 +588,30 @@ class LayerManager {
     }
 
     /**
-     * Gets the DOM container of the currently active layer.
-     * Falls back to the default shapes container if no layer is active.
+     * Gets the DOM container of the currently active SHAPE layer.
+     * Falls back to the default shapes container if the active layer is "sections" or none.
      */
     getActiveLayerContainer() {
-        if (this.activeLayerId) {
-            const layer = [this.sectionsLayer, ...this.shapeLayers].find(l => l.id === this.activeLayerId);
+        if (this.activeLayerId && this.activeLayerId !== 'sections') {
+            const layer = this.shapeLayers.find(l => l.id === this.activeLayerId);
             if (layer) {
                 const container = document.getElementById(layer.layerId);
                 if (container) return container;
             }
         }
-        // Fallback to default shapes layer if possible
+        // Fallback to default shapes layer if sections is active or no layer active
         const defaultLayer = this.shapeLayers[0];
         if (defaultLayer) {
             return document.getElementById(defaultLayer.layerId);
         }
         return null;
+    }
+
+    /**
+     * Gets the DOM container for the sections layer.
+     */
+    getSectionsContainer() {
+        return document.getElementById(this.sectionsLayer.layerId);
     }
 
     toggleLayerVisibility(layer, btn) {
