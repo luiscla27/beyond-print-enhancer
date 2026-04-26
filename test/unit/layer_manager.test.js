@@ -33,12 +33,10 @@ describe('LayerManager Edit Mode', function() {
         delete require.cache[require.resolve('../../js/dom/layer_manager.js')];
     });
 
-    it('should initialize layers with isLocked: false', function() {
+    it('should initialize with sections unlocked and shapes locked', function() {
         const lm = new LayerManager();
-        const allLayers = [lm.sectionsLayer, ...lm.shapeLayers];
-        allLayers.forEach(layer => {
-            assert.strictEqual(layer.isLocked, false, `Layer ${layer.id} should be unlocked by default`);
-        });
+        assert.strictEqual(lm.sectionsLayer.isLocked, false, 'Sections should be unlocked by default');
+        assert.strictEqual(lm.shapeLayers[0].isLocked, true, 'Shapes should be locked by default');
     });
 
     it('should toggle body classes when toggleLayerLock is called', function() {
@@ -51,11 +49,9 @@ describe('LayerManager Edit Mode', function() {
         const row = lm.panel.querySelector('[data-layer-id="shapes-default"]');
         const lockBtn = row.querySelector('button[title="Toggle Edit Mode"]');
 
-        // Lock Shapes
-        lm.toggleLayerLock(shapesLayer, lockBtn);
-        assert.ok(document.body.classList.contains('be-lock-shapes-default'), 'Body should have be-lock-shapes-default class');
-        assert.strictEqual(shapesLayer.isLocked, true);
-        assert.strictEqual(lockBtn.innerHTML, '🔒');
+        // Initially: sections unlocked, shapes locked
+        assert.ok(document.body.classList.contains('be-lock-shapes-default'), 'Body should have be-lock-shapes-default class initially');
+        assert.ok(!document.body.classList.contains('be-lock-sections'), 'Body should NOT have be-lock-sections class initially');
 
         // Unlock Shapes -> This should automatically LOCK Sections
         lm.toggleLayerLock(shapesLayer, lockBtn);
@@ -77,14 +73,16 @@ describe('LayerManager Edit Mode', function() {
         assert.strictEqual(shapesLayer.isLocked, true, 'Shapes should be automatically locked when sections are unlocked');
     });
 
-    it('should inject lock buttons in the panel', function() {
+    it('should inject lock buttons in the panel with correct initial states', function() {
         const lm = new LayerManager();
         const panel = lm.createPanel();
-        const lockButtons = panel.querySelectorAll('button[title="Toggle Edit Mode"]');
-        assert.strictEqual(lockButtons.length, 2, 'Should have 2 lock buttons (one for each layer)');
         
-        lockButtons.forEach(btn => {
-            assert.strictEqual(btn.innerHTML, '🔓', 'Initial state should be unlocked icon');
-        });
+        const secRow = panel.querySelector('[data-layer-id="sections"]');
+        const secLockBtn = secRow.querySelector('button[title="Toggle Edit Mode"]');
+        assert.strictEqual(secLockBtn.innerHTML, '🔓', 'Sections should have unlocked icon initially');
+
+        const shapeRow = panel.querySelector('[data-layer-id="shapes-default"]');
+        const shapeLockBtn = shapeRow.querySelector('button[title="Toggle Edit Mode"]');
+        assert.strictEqual(shapeLockBtn.innerHTML, '🔒', 'Shapes should have locked icon initially');
     });
 });

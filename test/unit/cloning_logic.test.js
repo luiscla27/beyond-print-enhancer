@@ -20,8 +20,7 @@ describe('Cloning Logic', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-             <div class="be-section-wrapper" id="section-Actions-wrapper">
-                <div class="print-section-header"><span>Actions</span></div>
+             <div class="be-section-wrapper" id="section-Actions-wrapper" data-title="Actions">
                 <div class="print-section-container" id="section-Actions" style="width: 100px; height: 100px;">
                     <div class="print-section-content">
                         <div class="content">
@@ -135,8 +134,7 @@ describe('Cloning Logic', function() {
         assert.ok(container.classList.contains('print-section-container'), 'Should have container class');
         assert.ok(container.classList.contains('be-clone'), 'Should have clone class');
         
-        const titleSpan = wrapper.querySelector('.print-section-header span');
-        assert.strictEqual(titleSpan.textContent, 'Action Clone');
+        assert.strictEqual(wrapper.dataset.title, 'Action Clone');
 
         const staticTitle = container.querySelector('.ct-content-group__header-content');
         assert.ok(staticTitle, 'Static header content missing');

@@ -99,4 +99,28 @@ describe('LayerManager UI Enhancements', function() {
         assert.strictEqual(viewBtn.innerHTML, '🙈', 'View button should reflect hidden state');
         assert.strictEqual(lockBtn.innerHTML, '🔒', 'Lock button should reflect locked state');
     });
+
+    it('should toggle minimized state when toggleMinimize is called', function() {
+        const lm = new LayerManager();
+        lm.createPanel();
+        
+        assert.strictEqual(lm.isMinimized, false, 'Initial state should not be minimized');
+        assert.ok(!lm.panel.classList.contains('minimized'), 'Panel should not have minimized class');
+
+        const minBtn = lm.panel.querySelector('button[title="Minimize"]');
+        assert.ok(minBtn, 'Minimize button should exist');
+        assert.strictEqual(minBtn.innerHTML, '_', 'Minimize button icon should be _');
+
+        // Minimize
+        lm.toggleMinimize();
+        assert.strictEqual(lm.isMinimized, true, 'State should be minimized');
+        assert.ok(lm.panel.classList.contains('minimized'), 'Panel should have minimized class');
+        assert.strictEqual(lm.panel.querySelector('button').innerHTML, '□', 'Button should show restore icon');
+        
+        // Restore
+        lm.toggleMinimize();
+        assert.strictEqual(lm.isMinimized, false, 'State should be restored');
+        assert.ok(!lm.panel.classList.contains('minimized'), 'Panel should not have minimized class');
+        assert.strictEqual(lm.panel.querySelector('button').innerHTML, '_', 'Button should show minimize icon');
+    });
 });

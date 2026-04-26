@@ -11,6 +11,24 @@ let dragOffsetX = 0;
 let dragOffsetY = 0;
 
 /**
+ * Checks if the layer containing the given element is currently locked.
+ * @param {HTMLElement} el 
+ * @returns {boolean}
+ */
+function isElementLocked(el) {
+    if (!el) return true;
+    
+    const lm = window.DomManager ? window.DomManager.getInstance().getLayerManager() : null;
+    if (!lm) return false; // Default to editable if no LayerManager
+
+    const wrapper = el.closest('.be-section-wrapper');
+    if (!wrapper) return true;
+
+    const layer = lm.getLayerForElement(wrapper.id);
+    return layer ? layer.isLocked : false;
+}
+
+/**
  * Initializes Drag and Drop listeners on the layout wrapper.
  */
 function initDragAndDrop() {
@@ -20,8 +38,30 @@ function initDragAndDrop() {
       return;
   }
 
-  // Clear any existing listeners by cloning the node (if needed, but usually we just want to avoid double init)
-  // For this extension, we'll just attach once.
+  // Ensure all existing wrappers are draggable (will be refined by mousedown)
+  document.querySelectorAll('.be-section-wrapper').forEach(w => w.draggable = true);
+
+  // Use mousedown to precisely control when the wrapper is allowed to be a drag source
+  container.addEventListener('mousedown', (e) => {
+    const wrapper = e.target.closest('.be-section-wrapper');
+    if (!wrapper) return;
+
+    // Check if layer is locked
+    const isLocked = isElementLocked(wrapper);
+
+    // If clicking an interactive element, the actions bar, OR if the layer is locked
+    if (isLocked || 
+        e.target.closest('.be-section-actions') || 
+        e.target.closest('button') || 
+        e.target.closest('input') || 
+        e.target.closest('select') || 
+        e.target.closest('textarea') ||
+        e.target.closest('a')) {
+        wrapper.draggable = false;
+    } else {
+        wrapper.draggable = true;
+    }
+  });
   
   container.addEventListener('dragstart', handleDragStart);
   container.addEventListener('dragover', handleDragOver);
@@ -35,8 +75,21 @@ function initDragAndDrop() {
 
 function handleDragStart(e) {
   const target = e.target.closest('.be-section-wrapper');
-  if (!target) {
-      safeLog('log', '[DDB Print] Drag Start ignored: no .be-section-wrapper found for target:', e.target);
+  if (!target) return;
+
+  // Prevent dragging if the layer is locked
+  if (isElementLocked(target)) {
+      safeLog('log', '[DDB Print] Drag Start ignored: layer is locked for target:', target.id);
+      return;
+  }
+
+  // Prevent dragging if clicking on interactive elements or the actions bar
+  if (e.target.closest('.be-section-actions') || 
+      e.target.closest('button') || 
+      e.target.closest('input') || 
+      e.target.closest('select') || 
+      e.target.closest('textarea') ||
+      e.target.closest('a')) {
       return;
   }
 

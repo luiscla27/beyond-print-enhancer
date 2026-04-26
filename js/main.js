@@ -24,29 +24,55 @@ const PeDom = () => window.DomManager.getInstance();
 
 /**
  * Initializes global hover highlights for the active layer.
+ * Uses a single listener and z-index prioritization to prevent flickering on overlaps.
  */
 function initHoverHighlights() {
     const container = document.getElementById('print-layout-wrapper') || document.body;
 
-    container.addEventListener('mouseover', (e) => {
-        const wrapper = e.target.closest('.be-section-wrapper');
-        if (!wrapper) return;
-
+    container.addEventListener('mousemove', (e) => {
         const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
-        if (!lm || !lm.activeLayerId) return;
-
-        // Check if the wrapper belongs to the active layer
-        const layer = lm.getLayerForElement(wrapper.id);
-        if (layer && layer.id === lm.activeLayerId) {
-            wrapper.classList.add('be-hover-highlight');
+        if (!lm || !lm.activeLayerId) {
+            document.querySelectorAll('.be-hover-highlight').forEach(el => el.classList.remove('be-hover-highlight'));
+            return;
         }
+
+        // Find all elements at current mouse position
+        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+        
+        // Filter for wrappers that belong to the active layer
+        const validWrappers = elements
+            .map(el => el.closest('.be-section-wrapper'))
+            .filter(wrapper => {
+                if (!wrapper) return false;
+                const layer = lm.getLayerForElement(wrapper.id);
+                return layer && layer.id === lm.activeLayerId;
+            });
+
+        // Unique set to handle parent/child overlap if any
+        const uniqueWrappers = Array.from(new Set(validWrappers));
+
+        if (uniqueWrappers.length === 0) {
+            document.querySelectorAll('.be-hover-highlight').forEach(el => el.classList.remove('be-hover-highlight'));
+            return;
+        }
+
+        // Prioritize by Z-Index
+        const bestWrapper = uniqueWrappers.reduce((prev, current) => {
+            const prevZ = parseInt(window.getComputedStyle(prev).zIndex) || 0;
+            const currentZ = parseInt(window.getComputedStyle(current).zIndex) || 0;
+            return (currentZ >= prevZ) ? current : prev;
+        });
+
+        // Update classes
+        document.querySelectorAll('.be-hover-highlight').forEach(el => {
+            if (el !== bestWrapper) el.classList.remove('be-hover-highlight');
+        });
+        bestWrapper.classList.add('be-hover-highlight');
     });
 
-    container.addEventListener('mouseout', (e) => {
-        const wrapper = e.target.closest('.be-section-wrapper');
-        if (wrapper) {
-            wrapper.classList.remove('be-hover-highlight');
-        }
+    // Clear highlights when leaving the container entirely
+    container.addEventListener('mouseleave', () => {
+        document.querySelectorAll('.be-hover-highlight').forEach(el => el.classList.remove('be-hover-highlight'));
     });
 }
 
@@ -132,10 +158,6 @@ function updatePrintStyles() {
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
     css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
-    
-    // Explicitly target the body lock classes to override them on print
-    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
-    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes .be-shape-layer-container { opacity: 1 !important; visibility: visible !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {
@@ -1099,60 +1121,24 @@ function getExtractionSelector(el, includeContainers = false) {
 function createDraggableContainer(title, content, id) {
   const wrapper = document.createElement('div');
   wrapper.className = 'be-section-wrapper';
+  
+  // Extract and apply a specific class based on content for CSS targeting
+  const slug = getSectionSlug(content);
+  if (slug) {
+      wrapper.classList.add(`be-section-${slug}`);
+  } else {
+      wrapper.classList.add('be-section-unknown');
+  }
+
   wrapper.id = id ? `${id}-wrapper` : `wrapper-${Date.now()}`;
+  wrapper.dataset.title = title; // Store title for identification
+  wrapper.draggable = true; // Enable native dragging on the wrapper
 
   const container = document.createElement('div');
   container.className = 'print-section-container';
   container.id = id;
   container.style.left = '';
   container.style.top = '';
-  
-  const header = document.createElement('div');
-  header.className = 'print-section-header';
-  
-  const titleSpan = document.createElement('span');
-  titleSpan.textContent = title;
-  header.appendChild(titleSpan);
-
-  header.setAttribute('draggable', 'true');
-  
-  header.style.fontWeight = 'bold';
-  header.style.fontSize = '18px';
-  header.style.display = 'flex';
-  header.style.justifyContent = 'space-between';
-  header.style.alignItems = 'center';
-
-  // Minimize button
-  const minimizeBtn = document.createElement('button');
-  minimizeBtn.textContent = 'X';
-  minimizeBtn.className = 'print-section-minimize';
-  minimizeBtn.style.cursor = 'pointer';
-  minimizeBtn.style.background = 'none';
-  minimizeBtn.style.border = 'none';
-  minimizeBtn.style.padding = '0 5px';
-  minimizeBtn.style.fontWeight = 'bold';
-  minimizeBtn.onclick = (e) => {
-      e.stopPropagation();
-      container.classList.add('minimized');
-  };
-  header.appendChild(minimizeBtn);  wrapper.appendChild(header);
-  
-  // Restore button (only visible when minimized)
-  const restoreBtn = document.createElement('button');
-  restoreBtn.textContent = 'R';
-  restoreBtn.className = 'print-section-restore';
-  restoreBtn.style.display = 'none';
-  restoreBtn.style.width = '100%';
-  restoreBtn.style.height = '100%';
-  restoreBtn.style.cursor = 'pointer';
-  restoreBtn.style.padding = '0';
-  restoreBtn.style.fontSize = '12px';
-  restoreBtn.style.fontWeight = 'bold';
-  restoreBtn.onclick = (e) => {
-      e.stopPropagation();
-      container.classList.remove('minimized');
-  };
-  wrapper.appendChild(restoreBtn);
 
   const contentWrapper = document.createElement('div');
   contentWrapper.className = 'print-section-content';
@@ -1575,11 +1561,12 @@ async function handleElementExtraction(el) {
     const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
     if (idClass) container.dataset.beExtClass = idClass;
 
-    // 5. Customize Close Button for Rollback
-    const xBtn = wrapper.querySelector('.print-section-minimize');
-    if (xBtn) {
-        xBtn.title = 'Rollback Extraction';
-        xBtn.onclick = (e) => {
+    // 5. Use delete button for rollback
+    const deleteBtn = wrapper.querySelector('.be-delete-button');
+    if (deleteBtn) {
+        deleteBtn.title = 'Rollback Extraction';
+        const originalOnClick = deleteBtn.onclick;
+        deleteBtn.onclick = (e) => {
             e.stopPropagation();
             rollbackSection(container);
         };
@@ -1744,6 +1731,32 @@ function findSectionTitle(el) {
 }
 
 /**
+ * Extracts a section name/slug from inner classes to be used as a CSS class on the wrapper.
+ * Searches for ct-subsection--{name} or ct-content-group--{name}
+ */
+function getSectionSlug(content) {
+    if (!content) return null;
+    
+    // Check the content node itself first
+    const classes = Array.from(content.classList || []);
+    const matchingClass = classes.find(c => c.startsWith('ct-subsection--') || c.startsWith('ct-content-group--'));
+    if (matchingClass) {
+        return matchingClass.split('--')[1];
+    }
+
+    // Then check children
+    const childWithClass = content.querySelector('[class*="ct-subsection--"], [class*="ct-content-group--"]');
+    if (childWithClass) {
+        const matchingChildClass = Array.from(childWithClass.classList).find(c => c.startsWith('ct-subsection--') || c.startsWith('ct-content-group--'));
+        if (matchingChildClass) {
+            return matchingChildClass.split('--')[1];
+        }
+    }
+
+    return null;
+}
+
+/**
  * Sanitizes a content node by removing extension UI elements and preventing header duplication.
  * @param {HTMLElement} node The node to sanitize.
  * @returns {HTMLElement} A sanitized clone of the node.
@@ -1756,6 +1769,7 @@ function getSanitizedContent(node) {
         '.be-compact-button',
         '.be-append-button',
         '.be-section-actions',
+        '.print-section-header',
         '.print-section-minimize',
         '.print-section-restore',
         '.print-section-resize-handle',
@@ -1792,8 +1806,8 @@ function getMergeTargets() {
         const parentSection = el.closest('.print-section-container');
         let sectionName = 'Sheet';
         if (parentSection) {
-            const header = parentSection.querySelector('.print-section-header span');
-            sectionName = header ? header.textContent.trim() : 'Section';
+            const wrapper = parentSection.closest('.be-section-wrapper') || parentSection;
+            sectionName = wrapper.dataset.title || (wrapper.querySelector('.print-section-header span') ? wrapper.querySelector('.print-section-header span').textContent.trim() : 'Section');
         }
 
         const itemName = findSectionTitle(el) || el.textContent.trim().substring(0, 20);
@@ -1807,8 +1821,8 @@ function getMergeTargets() {
 
     // 2. Floating Targets (be-extracted-section)
     document.querySelectorAll('.print-section-container.be-extracted-section').forEach(el => {
-        const header = el.querySelector('.print-section-header span');
-        const itemName = header ? header.textContent.trim() : 'Extracted Section';
+        const wrapper = el.closest('.be-section-wrapper') || el;
+        const itemName = wrapper.dataset.title || (wrapper.querySelector('.print-section-header span') ? wrapper.querySelector('.print-section-header span').textContent.trim() : 'Extracted Section');
         
         // Find the inner standardized header if it exists for extra detail
         const subHeader = el.querySelector('.ct-content-group__header-content');
@@ -1978,8 +1992,7 @@ function handleMergeSections(sourceContainer, targetInfo) {
 
         // If source is a spell detail, tag it for persistence
         const sourceWrapper = sourceContainer.closest('.be-section-wrapper') || sourceContainer;
-        const titleSpan = sourceWrapper.querySelector('.print-section-header span');
-        const spellName = isSpell ? titleSpan?.textContent.trim() : null;
+        const spellName = isSpell ? (sourceWrapper.dataset.title || sourceWrapper.querySelector('.print-section-header span')?.textContent.trim()) : null;
         let tagged = false;
 
         // Move all children of sourceContent to the wrapper
@@ -2603,6 +2616,18 @@ function enforceFullHeight() {
             font-family: sans-serif;
             font-size: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+        .be-layer-panel.minimized {
+            width: 180px;
+            height: 32px;
+            padding: 4px 8px;
+            overflow: hidden;
+        }
+        .be-layer-panel.minimized .be-layer-panel-header {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
         .be-layer-panel-header {
             border-bottom: 1px solid #444;
@@ -2842,20 +2867,13 @@ function enforceFullHeight() {
             object-fit: contain;
         }
         
-        /* Interaction Locking via Body Classes */
-        body.be-lock-sections #print-enhance-sections-layer {
-            pointer-events: none !important;
-            opacity: 0.4 !important;
-        }
-        body.be-lock-shapes #print-enhance-shapes-layer {
+        /* Layer Lock Interactions */
+        .be-layer-locked .be-section-wrapper {
             pointer-events: none !important;
             opacity: 0.5 !important;
         }
-        
-        /* Lock children when parent is locked */
-        body.be-lock-sections #print-enhance-sections-layer *,
-        body.be-lock-shapes #print-enhance-shapes-layer * {
-            pointer-events: none !important;
+        .be-layer-locked .be-rotation-handle {
+            display: none !important;
         }
 
         .be-section-wrapper:hover {
@@ -2864,9 +2882,9 @@ function enforceFullHeight() {
 
         .be-hover-highlight,
         .be-focus-highlight-hover {
-            outline: 2px solid #28a745 !important;
-            outline-offset: -2px;
-            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5) !important;
+            filter: drop-shadow(0 0 15px #28a745) drop-shadow(0 0 15px #28a745) !important;
+            transition: filter 0.3s ease-in-out;
+            z-index: 100003 !important;
         }
 
         .be-delete-layer-btn {
@@ -2895,14 +2913,31 @@ function enforceFullHeight() {
             border-left: 3px solid #28a745;
             margin-left: -3px;
         }
-        #print-enhance-shapes-layer.be-active-layer {
+        #print-enhance-shapes-layer.be-active-layer,
+        #print-enhance-sections-layer.be-active-layer
+         {
             background-color: transparent;
             border-left: 0;
             margin-left: 0;
         }
 
-        .be-section-wrapper:hover .print-section-header {
-            opacity: 1;
+        .be-section-wrapper {
+            cursor: grab;
+            transition: opacity 0.3s ease;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            box-sizing: border-box;
+            break-inside: avoid;
+            display: flex !important;
+            flex-direction: column !important;
+            min-height: 30px !important;
+            min-width: 50px !important;
+        }
+        .be-section-wrapper.dragging {
+            cursor: grabbing;
+        }
+        .be-section-wrapper * {
+            cursor: auto;
         }
         .be-section-wrapper:hover .be-section-actions,
         .be-shape-wrapper:hover .be-section-actions {
@@ -2954,27 +2989,12 @@ function enforceFullHeight() {
         .print-shape-container .print-section-content {
             background-color: transparent !important;
         }
-        .print-shape-container .print-section-header {
-            opacity: 0;
-            background-color: rgba(40, 167, 69, 0.5) !important;
-        }
-        .print-shape-container:hover .print-section-header {
-            opacity: 1;
-        }
 
-        /* Layer Lock States */
-        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
-            opacity: 0.4;
-            pointer-events: none !important;
-        }
-        body.be-lock-shapes .be-shape-wrapper {
-            opacity: 0.4;
-            pointer-events: none !important;
-        }
         /* Rotation handles should be hidden for locked shapes */
-        body.be-lock-shapes .be-rotation-handle {
+        .be-layer-locked .be-rotation-handle {
             display: none !important;
         }
+
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
             font-size: 10px !important;
@@ -3051,30 +3071,6 @@ function enforceFullHeight() {
             width: 100%;
         }
         
-        .print-section-header span {
-            font-size: 16px !important;
-        }
-        .print-section-header {
-            cursor: move;
-            user-select: none;
-            font-size: 18px !important;
-            opacity: 0;
-            position: absolute;
-            transition: opacity 0.2s;
-            margin-top: 0px;
-            z-index: 999999999;
-            width: calc(100% - 64px);
-            height: 32px;
-            background-color: var(--btn-color);
-            line-height: 18px;
-            left: 32px;
-            border-radius: 32px;
-            padding: 0 16px;
-            filter: drop-shadow(2px 4px 6px black);
-            min-width: max-content;
-            top: -16px; /* Offset to center vertically on the top border if needed, or stay within wrapper flow */
-        }
-
         /* Ability Summary */
 
         ${s.ABILITY.SUMMARY} {
@@ -3142,20 +3138,15 @@ function enforceFullHeight() {
         .ct-notes__note {
             white-space: pre-wrap !important;
         }
-        .print-section-container.minimized .print-section-header,
         .print-section-container.minimized .print-section-content {
             display: none !important;
-        }
-
-        .print-section-container.minimized .print-section-restore {
-            display: block !important;
         }
 
         /* Unified Section Action Buttons */
         .be-section-actions {
             position: absolute;
-            top: 30px; /* Below the header */
-            left: 32px;
+            top: 8px; /* Repositioned to top since header is gone */
+            left: 8px;
             display: flex;
             gap: 8px;
             z-index: 20;
@@ -3202,6 +3193,10 @@ function enforceFullHeight() {
             .be-section-actions {
                 display: none !important;
             }
+        }
+
+        .be-section-primary-box, .be-section-primary-box * {
+            background: transparent !important;
         }
 
         /* Modal Styles */
@@ -3445,11 +3440,10 @@ function handleManageClones() {
         item.style.background = '#333';
         item.style.borderRadius = '4px';
         
-        const titleSpan = clone.querySelector('.print-section-header span');
-        const name = titleSpan ? titleSpan.textContent : 'Unnamed Clone';
+        const title = clone.dataset.title || (clone.querySelector('.print-section-header span')?.textContent) || 'Unnamed Clone';
         
         const nameLabel = document.createElement('span');
-        nameLabel.textContent = name;
+        nameLabel.textContent = title;
         item.appendChild(nameLabel);
         
         const actions = document.createElement('div');
@@ -3567,22 +3561,18 @@ function renderClonedSection(snapshot) {
     container.dataset.originalId = snapshot.originalId;
 
     // Double-click to edit title
-    const header = wrapper.querySelector('.print-section-header');
-    if (header) {
-        header.addEventListener('dblclick', async (e) => {
-            e.stopPropagation();
-            const titleSpan = header.querySelector('span');
-            const staticTitleSpan = container.querySelector(dom.selectors.CORE.GROUP_HEADER_CONTENT);
-            const currentTitle = titleSpan ? titleSpan.textContent.trim() : (staticTitleSpan ? staticTitleSpan.textContent.trim() : 'Clone');
-            // Use window reference for mockability in tests
-            const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
-            if (newTitle) {
-                if (titleSpan) titleSpan.textContent = newTitle;
-                if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
-                showFeedback('Title updated');
-            }
-        });
-    }
+    wrapper.addEventListener('dblclick', async (e) => {
+        e.stopPropagation();
+        const staticTitleSpan = container.querySelector(dom.selectors.CORE.GROUP_HEADER_CONTENT);
+        const currentTitle = wrapper.dataset.title || (staticTitleSpan ? staticTitleSpan.textContent.trim() : 'Clone');
+        // Use window reference for mockability in tests
+        const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
+        if (newTitle) {
+            wrapper.dataset.title = newTitle;
+            if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
+            showFeedback('Title updated');
+        }
+    });
 
     // Delete button
     const actionContainer = getOrCreateActionContainer(container);
@@ -3842,11 +3832,8 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
     });
 
     wrapper.addEventListener('click', (e) => {
-        if (document.body.classList.contains('be-lock-shapes')) return;
-        
         // Prevent handle click from re-triggering logic
         if (e.target.classList.contains('be-rotation-handle')) return;
-
         // Deselect others (auto-hide their handles if we want strict focus, 
         // but user asked for button control. Let's keep button as the main toggle.)
         document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
@@ -3904,14 +3891,14 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
         }
         
         if (!layerContainer) {
-            // Fallback to active shapes layer
+            // Fallback to active shapes layer (guaranteed to be a shape layer now)
             layerContainer = PeDom().getActiveShapesLayer().element;
         }
 
         if (layerContainer) {
             layerContainer.appendChild(wrapper);
         } else {
-            // Final fallback
+            // Final fallback to the hardcoded default shapes layer
             PeDom().getShapesLayer().element.appendChild(wrapper);
         }
     }
@@ -4079,14 +4066,13 @@ function applyGlobalFilters(filters) {
 
         /* Focus Highlight for Layer Management */
         .be-focus-highlight {
-            filter: drop-shadow(0 0 15px gold) !important;
+            filter: drop-shadow(0 0 15px gold) drop-shadow(0 0 15px gold) !important;
             transition: filter 0.3s ease-in-out;
             z-index: 100003 !important;
         }
 
         /* Exclude text, fonts, icons, images by inverting the hue filter */
         .print-section-content,
-        .print-section-header span,
         .be-section-actions,
         .ct-spell-damage-type__icon,
         .ct-item-status__icon,
@@ -4132,17 +4118,18 @@ function applyGlobalFilters(filters) {
         // 0. Check for existing section for this spell
     const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
                           .find(el => {
-                              const title = el.querySelector('.print-section-header span');
-                              return title && title.textContent.trim() === spellName;
+                              const wrapper = el.closest('.be-section-wrapper');
+                              return wrapper && wrapper.dataset.title === spellName;
                           });
     if (existing && !restoreData) {
         // Bring to front
+        const wrapper = existing.closest('.be-section-wrapper');
         let maxZ = 10000;
-        document.querySelectorAll('.print-section-container').forEach(el => {
+        document.querySelectorAll('.be-section-wrapper').forEach(el => {
             const z = parseInt(el.style.zIndex) || 10;
             if (z > maxZ) maxZ = z;
         });
-        existing.style.zIndex = maxZ + 1;
+        if (wrapper) wrapper.style.zIndex = maxZ + 1;
         if (existing.scrollIntoView) {
             existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -4162,21 +4149,6 @@ function applyGlobalFilters(filters) {
     const container = wrapper.querySelector('.print-section-container');
     container.classList.add('be-spell-detail', 'be-extracted-section');
     
-    // Customize Header: Add Close Button (instead of/beside minimize)
-    const header = wrapper.querySelector('.print-section-header');
-    if (header) {
-        // Change existing X button to remove for spell details
-            const xBtn = header.querySelector('.print-section-minimize');
-            if (xBtn) {
-                xBtn.title = 'Remove Section';
-                xBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    rollbackSection(container);
-                };
-            }
-        
-    }
-
     const layoutRoot = PeDom().getLayoutRoot().element;
     
     if (restoreData) {
@@ -5982,9 +5954,8 @@ async function handleLoadDefault() {
         // Reposition all spell detail sections to the Y of their original spell label, at left: 1200px
         document.querySelectorAll('.print-section-container.be-spell-detail').forEach(detail => {
             const detailWrapper = detail.closest('.be-section-wrapper') || detail;
-            const titleSpan = detailWrapper.querySelector('.print-section-header span');
-            if (titleSpan) {
-                const spellName = titleSpan.textContent.trim();
+            const spellName = detailWrapper.dataset.title || detailWrapper.querySelector('.print-section-header span')?.textContent.trim();
+            if (spellName) {
                 // Find the original spell label in the DOM (searching for exact text match)
                 const labels = Array.from(document.querySelectorAll('.ct-spells-spell__label'));
                 const originalLabel = labels.find(l => l.textContent.trim() === spellName);
@@ -6310,6 +6281,7 @@ async function scanLayout() {
 
         const wrapper = section.closest('.be-section-wrapper') || section;
         const header = wrapper.querySelector('.print-section-header span');
+        const title = wrapper.dataset.title || (header ? header.textContent.trim() : null);
         const content = section.querySelector('.print-section-content');
 
         const getBorderStyle = (el) => {
@@ -6320,7 +6292,7 @@ async function scanLayout() {
             const sanitizedHtml = content ? getSanitizedContent(content).innerHTML : '';
             layout.clones.push({
                 id: id,
-                title: header ? header.textContent.trim() : 'Clone',
+                title: title || 'Clone',
                 html: sanitizedHtml,
                 left: wrapper.style.left,
                 top: wrapper.style.top,
@@ -6338,7 +6310,7 @@ async function scanLayout() {
         if (section.classList.contains('be-spell-detail')) {
             layout.spell_details.push({
                 id: id,
-                spellName: header ? header.textContent.trim() : 'Spell',
+                spellName: title || 'Spell',
                 left: wrapper.style.left,
                 top: wrapper.style.top,
                 width: section.style.width,
@@ -6375,7 +6347,7 @@ async function scanLayout() {
                 id: id,
                 originalId: originalId,
                 parentSectionId: section.dataset.parentSectionId,
-                title: header ? header.textContent.trim() : 'Extracted',
+                title: title || 'Extracted',
                 left: wrapper.style.left,
                 top: wrapper.style.top,
                 width: section.style.width,
@@ -6995,8 +6967,8 @@ function injectCloneButtons(context = document) {
         // 1. Clone Button
         addRobustButton('be-clone-button', '📋', 'Clone Section', async (e) => {
             const id = section.id || 'unknown';
-            const header = section.querySelector(`${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`);
-            const sectionName = header ? header.textContent.trim() : 'Section';
+            const wrapper = section.closest('.be-section-wrapper') || section;
+            const sectionName = wrapper.dataset.title || section.querySelector(`${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`)?.textContent.trim() || 'Section';
 
             const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
 

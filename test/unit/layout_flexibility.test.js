@@ -59,12 +59,13 @@ describe('Layout Flexibility Logic', function() {
       assert.ok(css.includes('white-space: normal !important'), 'Should have text wrapping');
   });
   
-  it('should apply move cursor to headers', function() {
+  it('should apply move cursor to wrapper', function() {
       const styleTag = document.getElementById('ddb-print-enhance-style');
       const css = styleTag.textContent;
-      assert.ok(css.includes('.print-section-header'), 'Should have header styling');
-      assert.ok(css.includes('cursor: move'), 'Should have move cursor for drag signal');
-      assert.ok(css.includes('opacity: 0'), 'Header should be hidden by default');
-      assert.ok(css.includes('.be-section-wrapper:hover .print-section-header'), 'Header should show on hover');
+      assert.ok(css.includes('.be-section-wrapper'), 'Should have wrapper styling');
+      assert.ok(css.includes('cursor: grab'), 'Should have grab cursor for drag signal');
+      
+      // Ensure header styling is truly removed by checking for the specific header rules we deleted
+      assert.ok(!css.includes('.print-section-header {'), 'Should NOT have header styling anymore');
   });
 });

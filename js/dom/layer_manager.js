@@ -21,22 +21,17 @@ class LayerManager {
                 id: 'shapes-default', 
                 label: 'Shapes (Default)', 
                 layerId: 'print-enhance-shapes-layer', 
-                isLocked: false, 
+                isLocked: true, 
                 isHidden: false, 
                 isDisabledOnPrint: false 
             }
         ];
 
         this.panel = null;
+        this.isMinimized = false;
         this.contentLists = {}; // layerId -> div
-        this.activeLayerId = null; // Currently editing layer
+        this.activeLayerId = 'sections'; // Set sections as active by default
         this.contextMenu = null;
-
-        // Auto-activate if only one shape layer
-        if (this.shapeLayers.length === 1 && this.sectionsLayer.isLocked) {
-            this.shapeLayers[0].isLocked = false;
-            this.activeLayerId = this.shapeLayers[0].id;
-        }
     }
 
     /**
@@ -177,11 +172,25 @@ class LayerManager {
         const panel = document.createElement('div');
         panel.id = 'print-enhance-layer-manager';
         panel.className = 'be-layer-panel be-floating-ui';
+        if (this.isMinimized) panel.classList.add('minimized');
         
         // Header
         const header = document.createElement('div');
         header.className = 'be-layer-panel-header';
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
         header.innerHTML = '<strong>Layer Management</strong>';
+
+        const minBtn = document.createElement('button');
+        minBtn.innerHTML = this.isMinimized ? '□' : '_';
+        minBtn.title = this.isMinimized ? 'Restore' : 'Minimize';
+        minBtn.style.cssText = 'background: none; border: none; color: #aaa; cursor: pointer; padding: 0 4px; font-weight: bold; font-size: 14px;';
+        minBtn.onclick = (e) => {
+            e.stopPropagation();
+            this.toggleMinimize();
+        };
+        header.appendChild(minBtn);
         panel.appendChild(header);
 
         // 1. Sections Section (Hardcoded)
@@ -368,8 +377,7 @@ class LayerManager {
                 });
                 item.title = assetPath.split('/').pop();
             } else {
-                const header = el.querySelector('.print-section-header span');
-                const title = header ? header.textContent.trim() : 'Unnamed';
+                const title = el.dataset.title || (el.querySelector('.print-section-header span') ? el.querySelector('.print-section-header span').textContent.trim() : 'Unnamed');
 
                 item = document.createElement('div');
                 item.className = 'be-layer-item-card';
@@ -535,6 +543,17 @@ class LayerManager {
                 } else {
                     layerEl.classList.remove('be-active-layer');
                 }
+
+                // Apply Lock Styles (Faint and Non-Interactive)
+                if (layer.isLocked) {
+                    layerEl.style.opacity = '0.5';
+                    layerEl.style.pointerEvents = 'none';
+                    layerEl.classList.add('be-layer-locked');
+                } else {
+                    layerEl.style.opacity = '1';
+                    layerEl.style.pointerEvents = 'auto';
+                    layerEl.classList.remove('be-layer-locked');
+                }
             }
             
             const lockClass = `be-lock-${layer.id}`;
@@ -580,23 +599,30 @@ class LayerManager {
     }
 
     /**
-     * Gets the DOM container of the currently active layer.
-     * Falls back to the default shapes container if no layer is active.
+     * Gets the DOM container of the currently active SHAPE layer.
+     * Falls back to the default shapes container if the active layer is "sections" or none.
      */
     getActiveLayerContainer() {
-        if (this.activeLayerId) {
-            const layer = [this.sectionsLayer, ...this.shapeLayers].find(l => l.id === this.activeLayerId);
+        if (this.activeLayerId && this.activeLayerId !== 'sections') {
+            const layer = this.shapeLayers.find(l => l.id === this.activeLayerId);
             if (layer) {
                 const container = document.getElementById(layer.layerId);
                 if (container) return container;
             }
         }
-        // Fallback to default shapes layer if possible
+        // Fallback to default shapes layer if sections is active or no layer active
         const defaultLayer = this.shapeLayers[0];
         if (defaultLayer) {
             return document.getElementById(defaultLayer.layerId);
         }
         return null;
+    }
+
+    /**
+     * Gets the DOM container for the sections layer.
+     */
+    getSectionsContainer() {
+        return document.getElementById(this.sectionsLayer.layerId);
     }
 
     toggleLayerVisibility(layer, btn) {
@@ -664,6 +690,17 @@ class LayerManager {
         if (this.contextMenu) {
             this.contextMenu.remove();
             this.contextMenu = null;
+        }
+    }
+
+    /**
+     * Toggles the minimized state of the panel.
+     */
+    toggleMinimize() {
+        this.isMinimized = !this.isMinimized;
+        if (this.panel) {
+            this.panel.classList.toggle('minimized', this.isMinimized);
+            this.rebuildPanel(); // Rebuild to update button text/icon
         }
     }
 

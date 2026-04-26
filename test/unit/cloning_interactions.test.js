@@ -21,8 +21,7 @@ describe('Cloning Interactions', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-             <div class="be-section-wrapper" id="clone-123-wrapper">
-                <div class="print-section-header"><span>My Clone</span></div>
+             <div class="be-section-wrapper" id="clone-123-wrapper" data-title="My Clone">
                 <div class="print-section-container be-clone" id="clone-123">
                     <div class="print-section-content"><p>Content</p></div>
                 </div>
@@ -74,22 +73,19 @@ describe('Cloning Interactions', function() {
         };
 
         const wrapper = window.renderClonedSection(snapshot);
-        const header = wrapper.querySelector('.print-section-header');
         
         // Mock showInputModal to return new title
         const originalShowInputModal = window.showInputModal;
         window.showInputModal = () => Promise.resolve('Updated Title');
         
-        // Simulate double click
+        // Simulate double click on wrapper
         const dblClickEvent = new window.MouseEvent('dblclick', { bubbles: true });
-        header.dispatchEvent(dblClickEvent);
+        wrapper.dispatchEvent(dblClickEvent);
         
         // Wait for async handler
         await new Promise(resolve => setTimeout(resolve, 50));
         
-        const titleSpan = wrapper.querySelector('.print-section-header span');
-        assert.ok(titleSpan, 'Title span not found in draggable header');
-        assert.strictEqual(titleSpan.textContent, 'Updated Title');
+        assert.strictEqual(wrapper.dataset.title, 'Updated Title');
 
         const headerContent = wrapper.querySelector('.ct-content-group__header-content');
         assert.ok(headerContent.textContent.includes('Updated Title'), 'Header content should contain title');
