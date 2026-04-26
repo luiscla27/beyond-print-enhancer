@@ -37,18 +37,9 @@ describe('Layer Edit Mode & Hover Highlights (Failing Tests)', function() {
         const shapes = lm.shapeLayers[0];
         const sections = lm.sectionsLayer;
 
-        // Initially all unlocked (default in constructor is false)
-        assert.strictEqual(shapes.isLocked, false);
-        assert.strictEqual(sections.isLocked, false);
-
-        // Unlock shapes (already unlocked, but let's assume we want to enforce it)
-        // If we call toggleLayerLock on sections when it's unlocked, it should lock.
-        // The requirement is: "Modify the Edit mode so only one layer can be edited at once"
-        
-        // Let's start with both locked for clarity
-        shapes.isLocked = true;
-        sections.isLocked = true;
-        lm.refreshUI();
+        // Initially: sections unlocked, shapes locked
+        assert.strictEqual(sections.isLocked, false, 'Sections should be unlocked by default');
+        assert.strictEqual(shapes.isLocked, true, 'Shapes should be locked by default');
 
         // Unlock Shapes
         lm.toggleLayerLock(shapes);
@@ -65,8 +56,8 @@ describe('Layer Edit Mode & Hover Highlights (Failing Tests)', function() {
         const shapes = lm.shapeLayers[0];
         const sections = lm.sectionsLayer;
         
-        shapes.isLocked = true;
-        sections.isLocked = true;
+        // Initial state
+        assert.strictEqual(lm.activeLayerId, sections.id, 'Sections should be active by default');
 
         lm.toggleLayerLock(shapes);
         assert.strictEqual(lm.activeLayerId, shapes.id);

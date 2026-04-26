@@ -21,7 +21,7 @@ class LayerManager {
                 id: 'shapes-default', 
                 label: 'Shapes (Default)', 
                 layerId: 'print-enhance-shapes-layer', 
-                isLocked: false, 
+                isLocked: true, 
                 isHidden: false, 
                 isDisabledOnPrint: false 
             }
@@ -30,14 +30,8 @@ class LayerManager {
         this.panel = null;
         this.isMinimized = false;
         this.contentLists = {}; // layerId -> div
-        this.activeLayerId = null; // Currently editing layer
+        this.activeLayerId = 'sections'; // Set sections as active by default
         this.contextMenu = null;
-
-        // Auto-activate if only one shape layer
-        if (this.shapeLayers.length === 1 && this.sectionsLayer.isLocked) {
-            this.shapeLayers[0].isLocked = false;
-            this.activeLayerId = this.shapeLayers[0].id;
-        }
     }
 
     /**
