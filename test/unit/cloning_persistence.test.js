@@ -21,8 +21,7 @@ describe('Cloning Persistence', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-             <div class="be-section-wrapper" id="section-Actions-wrapper" style="left: 10px; top: 10px;">
-                <div class="print-section-header"><span>Actions</span></div>
+             <div class="be-section-wrapper" id="section-Actions-wrapper" style="left: 10px; top: 10px;" data-title="Actions">
                 <div class="print-section-container" id="section-Actions" style="width: 100px; height: 100px;">
                     <div class="print-section-content"><p>Actions Content</p></div>
                 </div>
@@ -76,25 +75,25 @@ describe('Cloning Persistence', function() {
 
   it('should include clones in scanLayout', async function() {
     // Manually add a clone to the DOM
+    const wrapper = document.createElement('div');
+    wrapper.className = 'be-section-wrapper';
+    wrapper.dataset.title = 'My Clone';
+    
     const clone = document.createElement('div');
     clone.id = 'clone-123';
     clone.className = 'print-section-container be-clone';
-    clone.style.left = '50px';
-    clone.style.top = '50px';
     clone.style.width = '150px';
     clone.style.height = '150px';
-    
-    const header = document.createElement('div');
-    header.className = 'print-section-header';
-    header.innerHTML = '<span>My Clone</span>';
-    clone.appendChild(header);
+    wrapper.style.left = '50px';
+    wrapper.style.top = '50px';
     
     const content = document.createElement('div');
     content.className = 'print-section-content';
     content.innerHTML = '<p>Clone Content</p>';
     clone.appendChild(content);
+    wrapper.appendChild(clone);
     
-    document.getElementById('print-layout-wrapper').appendChild(clone);
+    document.getElementById('print-layout-wrapper').appendChild(wrapper);
     
     const layout = await window.scanLayout();
     
@@ -133,7 +132,7 @@ describe('Cloning Persistence', function() {
     assert.ok(restoredClone.classList.contains('be-clone'), 'Missing be-clone class');
     const wrapper = restoredClone.closest('.be-section-wrapper');
     assert.ok(wrapper, 'Wrapper missing for restored clone');
-    assert.strictEqual(wrapper.querySelector('.print-section-header span').textContent, 'Restored Clone');
+    assert.strictEqual(wrapper.dataset.title, 'Restored Clone');
     assert.ok(restoredClone.querySelector('.print-section-content').innerHTML.includes('Restored Content'));
     assert.strictEqual(wrapper.style.left, '100px');
     assert.strictEqual(wrapper.style.top, '100px');

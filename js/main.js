@@ -2893,7 +2893,7 @@ function enforceFullHeight() {
 
         .be-hover-highlight,
         .be-focus-highlight-hover {
-            filter: drop-shadow(0 0 15px #28a745) !important;
+            filter: drop-shadow(0 0 15px #28a745) drop-shadow(0 0 15px #28a745) !important;
             transition: filter 0.3s ease-in-out;
             z-index: 100003 !important;
         }
@@ -2924,7 +2924,9 @@ function enforceFullHeight() {
             border-left: 3px solid #28a745;
             margin-left: -3px;
         }
-        #print-enhance-shapes-layer.be-active-layer {
+        #print-enhance-shapes-layer.be-active-layer,
+        #print-enhance-sections-layer.be-active-layer
+         {
             background-color: transparent;
             border-left: 0;
             margin-left: 0;
@@ -4086,7 +4088,7 @@ function applyGlobalFilters(filters) {
 
         /* Focus Highlight for Layer Management */
         .be-focus-highlight {
-            filter: drop-shadow(0 0 15px gold) !important;
+            filter: drop-shadow(0 0 15px gold) drop-shadow(0 0 15px gold) !important;
             transition: filter 0.3s ease-in-out;
             z-index: 100003 !important;
         }

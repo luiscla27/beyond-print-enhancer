@@ -13,19 +13,16 @@ describe('Drag-and-Drop Reordering Logic', function() {
       <html>
         <body>
           <div id="print-layout-wrapper">
-            <div class="be-section-wrapper" id="item-1-wrapper" style="position: absolute; left: 0px; top: 0px;">
-                <div class="print-section-header" draggable="true">Item 1 Header</div>
-                <div class="print-section-container" id="item-1" style="width: 200px; height: 100px;">
-                    <div class="print-section-content">Item 1</div>
-                </div>
+            <div class="be-section-wrapper" id="item-1-wrapper" style="position: absolute; left: 0px; top: 0px;" data-title="Item 1" draggable="true">
+               <div class="print-section-container" id="item-1" style="width: 200px; height: 100px;">
+                   <div class="print-section-content">Item 1</div>
+               </div>
             </div>
-            <div class="be-section-wrapper" id="item-2-wrapper" style="position: absolute; left: 200px; top: 0px;">
-                <div class="print-section-header" draggable="true">Item 2 Header</div>
-                <div class="print-section-container" id="item-2" style="width: 200px; height: 100px;">
-                    <div class="print-section-content">Item 2</div>
-                </div>
-            </div>
-          </div>
+            <div class="be-section-wrapper" id="item-2-wrapper" style="position: absolute; left: 200px; top: 0px;" data-title="Item 2" draggable="true">
+               <div class="print-section-container" id="item-2" style="width: 200px; height: 100px;">
+                   <div class="print-section-content">Item 2</div>
+               </div>
+            </div>          </div>
         </body>
       </html>
     `;
@@ -65,11 +62,10 @@ describe('Drag-and-Drop Reordering Logic', function() {
       container.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 1000 });
       wrapper1.getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 110 });
       
-      // Simulate Drag Start on Item 1 Header (click at 15, 15 - offset 5, 5)
-      const header1 = wrapper1.querySelector('.print-section-header');
+      // Simulate Drag Start on Item 1 Wrapper (click at 15, 15 - offset 5, 5)
       const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 15, clientY: 15 });
       startEvent.dataTransfer = { effectAllowed: '', setData: () => {} };
-      header1.dispatchEvent(startEvent);
+      wrapper1.dispatchEvent(startEvent);
       
       // Simulate Drop at 205, 205
       // New position: 205 - 0 - 5 = 200

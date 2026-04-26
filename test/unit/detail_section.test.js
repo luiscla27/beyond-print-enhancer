@@ -79,13 +79,12 @@ describe('UI - Spell Detail Section', function() {
     // We don't await here to check the intermediate state (spinner)
     window.createSpellDetailSection(spellName, coords);
     
-    const section = document.querySelector('.print-section-container.be-spell-detail');
-    assert.ok(section, 'Section should be created');
-    const wrapper = section.closest('.be-section-wrapper');
+    const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
+                         .find(el => el.dataset.title === spellName);
     assert.ok(wrapper, 'Wrapper should be found');
     assert.strictEqual(wrapper.style.left, '100px');
     assert.strictEqual(wrapper.style.top, '200px');
-    assert.ok(section.querySelector('.be-spinner'), 'Should show loading spinner initially');
+    assert.ok(wrapper.querySelector('.be-spinner'), 'Should show loading spinner initially');
   });
 
   it('should populate data after successful fetch', async function() {
@@ -104,7 +103,7 @@ describe('UI - Spell Detail Section', function() {
     await window.createSpellDetailSection(spellName, { x: 0, y: 0 });
     
     const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
-                         .find(w => w.textContent.includes('Shield'));
+                         .find(w => w.dataset.title === 'Shield');
     assert.ok(wrapper.textContent.includes('Abjuration'), 'Should display school');
     assert.ok(wrapper.textContent.includes('An invisible barrier'), 'Should display description');
     assert.strictEqual(wrapper.querySelector('.be-spinner'), null, 'Spinner should be removed');
@@ -118,7 +117,7 @@ describe('UI - Spell Detail Section', function() {
     await window.createSpellDetailSection(spellName, { x: 0, y: 0 });
     
     const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
-                         .find(w => w.textContent.includes('NonExistent'));
+                         .find(w => w.dataset.title === 'NonExistent');
     
     assert.ok(wrapper, 'Section for NonExistent should be found');
     assert.ok(wrapper.textContent.toLowerCase().includes('available'), 'Should show error message guidance');
@@ -156,10 +155,7 @@ describe('UI - Spell Detail Section', function() {
     // Create the detail section
     await window.createSpellDetailSection(spellName, { x: 400, y: 400 });
     const wrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
-                         .find(w => {
-                             const span = w.querySelector('.print-section-header span');
-                             return span && span.textContent.trim() === spellName;
-                         });
+                         .find(w => w.dataset.title === spellName);
     assert.ok(wrapper, 'Wrapper not found');
     const detail = wrapper.querySelector('.print-section-container');
     assert.ok(detail, 'Detail container not found');
@@ -176,10 +172,7 @@ describe('UI - Spell Detail Section', function() {
     
     // RE-QUERY live elements after reset
     const finalWrapper = Array.from(document.querySelectorAll('.be-section-wrapper'))
-                         .find(w => {
-                             const span = w.querySelector('.print-section-header span');
-                             return span && span.textContent.trim() === spellName;
-                         });
+                         .find(w => w.dataset.title === spellName);
     assert.ok(finalWrapper, 'Wrapper missing after reset');
     const finalDetail = finalWrapper.querySelector('.print-section-container');
 

@@ -62,16 +62,16 @@ describe('UI Wrapper Fix', function() {
   });
 
   describe('createDraggableContainer structure', function() {
-    it('should return a wrapper containing header and container', function() {
+    it('should return a wrapper containing container and data-title', function() {
         const content = document.createElement('div');
         content.textContent = 'Test Content';
         const wrapper = window.createDraggableContainer('Test Title', content, 'test-id');
         
         assert.ok(wrapper.classList.contains('be-section-wrapper'), 'Should have be-section-wrapper class');
+        assert.strictEqual(wrapper.dataset.title, 'Test Title', 'Should have data-title');
         
         const header = wrapper.querySelector('.print-section-header');
-        assert.ok(header, 'Header should be inside wrapper');
-        assert.strictEqual(header.parentElement, wrapper, 'Header should be direct child of wrapper');
+        assert.strictEqual(header, null, 'Header should be removed');
         
         const container = wrapper.querySelector('.print-section-container');
         assert.ok(container, 'Container should be inside wrapper');

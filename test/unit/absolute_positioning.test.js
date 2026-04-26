@@ -25,14 +25,12 @@ describe('Absolute Positioning Engine', function() {
         <head></head>
         <body>
           <div id="print-layout-wrapper">
-            <div class="be-section-wrapper" id="item-1-wrapper" style="position: absolute; left: 0px; top: 0px;">
-                <div class="print-section-header">Header</div>
+            <div class="be-section-wrapper" id="item-1-wrapper" style="position: absolute; left: 0px; top: 0px;" data-title="Item 1" draggable="true">
                 <div class="print-section-container" id="item-1">
                     <div class="print-section-content">Content</div>
                 </div>
             </div>
-            <div class="be-section-wrapper" id="item-2-wrapper" style="position: absolute; left: 200px; top: 0px;">
-                <div class="print-section-header">Header 2</div>
+            <div class="be-section-wrapper" id="item-2-wrapper" style="position: absolute; left: 200px; top: 0px;" data-title="Item 2" draggable="true">
                 <div class="print-section-container" id="item-2">
                     <div class="print-section-content">Content 2</div>
                 </div>
@@ -76,7 +74,6 @@ describe('Absolute Positioning Engine', function() {
   it('should update element coordinates on drop', function() {
     const item = document.getElementById('item-1');
     const wrapper = item.closest('.be-section-wrapper');
-    const header = wrapper.querySelector('.print-section-header');
     
     // Simulate drag start
     const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 10, clientY: 10 });
@@ -85,7 +82,7 @@ describe('Absolute Positioning Engine', function() {
         setData: () => {},
         setDragImage: () => {} 
     };
-    header.dispatchEvent(startEvent);
+    wrapper.dispatchEvent(startEvent);
     
     // Simulate drop at new location
     const dropEvent = new window.MouseEvent('drop', { 
@@ -118,7 +115,7 @@ describe('Absolute Positioning Engine', function() {
     };
     
     // Dispatch
-    wrapper.querySelector('.print-section-header').dispatchEvent(startEvent);
+    wrapper.dispatchEvent(startEvent);
     
     assert.ok(setDragImageCalled, 'setDragImage should be called');
     
