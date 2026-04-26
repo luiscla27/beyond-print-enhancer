@@ -158,10 +158,6 @@ function updatePrintStyles() {
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
     css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
-    
-    // Explicitly target the body lock classes to override them on print
-    css += '  body.be-lock-sections .be-section-wrapper, body.be-lock-shapes .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
-    css += '  body.be-lock-sections #print-enhance-sections-layer, body.be-lock-shapes .be-shape-layer-container { opacity: 1 !important; visibility: visible !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {
@@ -2871,20 +2867,13 @@ function enforceFullHeight() {
             object-fit: contain;
         }
         
-        /* Interaction Locking via Body Classes */
-        body.be-lock-sections #print-enhance-sections-layer {
-            pointer-events: none !important;
-            opacity: 0.4 !important;
-        }
-        body.be-lock-shapes #print-enhance-shapes-layer {
+        /* Layer Lock Interactions */
+        .be-layer-locked .be-section-wrapper {
             pointer-events: none !important;
             opacity: 0.5 !important;
         }
-        
-        /* Lock children when parent is locked */
-        body.be-lock-sections #print-enhance-sections-layer *,
-        body.be-lock-shapes #print-enhance-shapes-layer * {
-            pointer-events: none !important;
+        .be-layer-locked .be-rotation-handle {
+            display: none !important;
         }
 
         .be-section-wrapper:hover {
@@ -3001,19 +2990,11 @@ function enforceFullHeight() {
             background-color: transparent !important;
         }
 
-        /* Layer Lock States */
-        body.be-lock-sections .be-section-wrapper:not(.be-shape-wrapper) {
-            opacity: 0.4;
-            pointer-events: none !important;
-        }
-        body.be-lock-shapes .be-shape-wrapper {
-            opacity: 0.4;
-            pointer-events: none !important;
-        }
         /* Rotation handles should be hidden for locked shapes */
-        body.be-lock-shapes .be-rotation-handle {
+        .be-layer-locked .be-rotation-handle {
             display: none !important;
         }
+
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
             font-size: 10px !important;
@@ -3851,11 +3832,8 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
     });
 
     wrapper.addEventListener('click', (e) => {
-        if (document.body.classList.contains('be-lock-shapes')) return;
-        
         // Prevent handle click from re-triggering logic
         if (e.target.classList.contains('be-rotation-handle')) return;
-
         // Deselect others (auto-hide their handles if we want strict focus, 
         // but user asked for button control. Let's keep button as the main toggle.)
         document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {

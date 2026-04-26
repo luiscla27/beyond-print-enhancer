@@ -543,6 +543,17 @@ class LayerManager {
                 } else {
                     layerEl.classList.remove('be-active-layer');
                 }
+
+                // Apply Lock Styles (Faint and Non-Interactive)
+                if (layer.isLocked) {
+                    layerEl.style.opacity = '0.5';
+                    layerEl.style.pointerEvents = 'none';
+                    layerEl.classList.add('be-layer-locked');
+                } else {
+                    layerEl.style.opacity = '1';
+                    layerEl.style.pointerEvents = 'auto';
+                    layerEl.classList.remove('be-layer-locked');
+                }
             }
             
             const lockClass = `be-lock-${layer.id}`;
