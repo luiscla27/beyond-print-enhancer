@@ -75,7 +75,61 @@ function updatePropertiesPanel(panelElement = null) {
     title.style.color = 'var(--btn-color)';
     panel.appendChild(title);
 
-    // TODO: Add controls for font-size, compact mode, and border style
+    // 1. Font Size Slider
+    const fsContainer = document.createElement('div');
+    fsContainer.className = 'be-prop-control';
+    fsContainer.style.display = 'flex';
+    fsContainer.style.flexDirection = 'column';
+    fsContainer.style.gap = '4px';
+
+    const fsLabel = document.createElement('label');
+    fsLabel.textContent = 'Font Size';
+    fsLabel.style.fontSize = '11px';
+    fsLabel.style.color = '#ccc';
+    fsContainer.appendChild(fsLabel);
+
+    const fsSliderRow = document.createElement('div');
+    fsSliderRow.style.display = 'flex';
+    fsSliderRow.style.alignItems = 'center';
+    fsSliderRow.style.gap = '8px';
+
+    const wrapper = activeSection.closest('.be-section-wrapper') || activeSection;
+    const currentSize = wrapper.style.fontSize || '100%';
+    
+    let numericValue = 100;
+    let unit = '%';
+    const match = currentSize.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
+    if (match) {
+        numericValue = parseFloat(match[1]);
+        unit = match[2];
+    }
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = '50';
+    slider.max = '200';
+    slider.value = numericValue.toString();
+    slider.className = 'be-modal-slider';
+    slider.style.flexGrow = '1';
+
+    const valDisplay = document.createElement('span');
+    valDisplay.textContent = `${slider.value}${unit}`;
+    valDisplay.style.minWidth = '40px';
+    valDisplay.style.textAlign = 'right';
+    valDisplay.style.fontSize = '12px';
+
+    slider.oninput = () => {
+        valDisplay.textContent = `${slider.value}${unit}`;
+        wrapper.style.fontSize = `${slider.value}${unit}`;
+        updateLayoutBounds();
+    };
+
+    fsSliderRow.appendChild(slider);
+    fsSliderRow.appendChild(valDisplay);
+    fsContainer.appendChild(fsSliderRow);
+    panel.appendChild(fsContainer);
+
+    // TODO: Add controls for compact mode and border style
 }
 
 /**
