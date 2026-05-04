@@ -6,7 +6,7 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [ ] **Track: add a properties panel above the "hue shift colors" sliders. This new panel swill manage atributes PER section,when a section is marked as ACTIVE, the panel will control that specific section attributes, currentlyu we have "FONT-SIZE", "COMPACT MODE" and "BORDER STYLE". This panel MUST work as an alternative to change the values of those attributes modals (so in that panel ther will be an slider, a border selector, and a toogle option for the compact mode)**
+- [x] **Track: add a properties panel above the "hue shift colors" sliders. This new panel swill manage atributes PER section,when a section is marked as ACTIVE, the panel will control that specific section attributes, currentlyu we have "FONT-SIZE", "COMPACT MODE" and "BORDER STYLE". This panel MUST work as an alternative to change the values of those attributes modals (so in that panel ther will be an slider, a border selector, and a toogle option for the compact mode)** (Completed: 2026-05-03)
 *Link: [./tracks/properties_panel_20260503/](./tracks/properties_panel_20260503/)*
 
 ---
