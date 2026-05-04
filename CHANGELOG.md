@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-05-03
+
+### Added
+- **Font Size Slider:** Replaced the font size input modal with a range slider (50%-200%) featuring real-time live preview.
+- **Improved Style Persistence:** Added `fontSize` persistence for all section types (clones, extractions, shapes, etc.).
+- **Conductor Track:** Initialized a new track for a centralized "Properties Panel" to manage section attributes.
+
 ## [1.4.2] - 2026-03-24
 
 ### Added

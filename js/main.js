@@ -2892,8 +2892,7 @@ function enforceFullHeight() {
             pointer-events: none !important;
         }
 
-        .be-delete-layer-btn {
-            color: #ff4444 !important;
+        .be-delete-layer-btn {            color: #ff4444 !important;
         }
         .be-delete-layer-btn:hover {
             background-color: #552222 !important;
