@@ -3167,6 +3167,12 @@ function enforceFullHeight() {
         }
         .be-section-wrapper:hover .be-section-actions,
         .be-shape-wrapper:hover .be-section-actions {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .be-active-layer .be-section-wrapper:hover .be-section-actions,
+        .be-active-layer .be-shape-wrapper:hover .be-section-actions {
             opacity: 1;
             pointer-events: auto !important;
         }
