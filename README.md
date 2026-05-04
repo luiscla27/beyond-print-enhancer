@@ -39,17 +39,20 @@ To test the extension locally:
 
 ## Features
 
-1. Drag & Drop sections to reorder them.
-2. Resizable sections.
-3. Minimize sections.
-4. Save & Load templates.
-5. Clone sections, specifically for the SPELL section (e.g., "Combat Spells" vs "Utility Spells").
-6. Compact mode to maximize information density in heavy sections like Spells.
-7. Spell description cards.
-8. Merge sections together to save space. 
-9. Extrac specific cards content into its own cards
-11. **WIP**: Editable content and font resizing.
-12. **WIP**: Support for other color themes (beyond Red).
+1. **Drag & Drop Layout**: Freely reorder and position any character sheet section.
+2. **Resizable Sections**: Adjust section width and height to fit your custom layout.
+3. **Properties Panel**: A centralized panel to manage the active section's font size, compact mode, and border style in real-time.
+4. **Pixel-based Font Scaling**: Granular control over section font sizes (8px to 30px) with proportional scaling for headers and icons.
+5. **Decorative Shapes**: Add resizable, rotatable graphical elements to your sheet. Includes a library of borders, corners, and accents.
+6. **Custom Asset Upload**: Upload your own image files (PNG, WebP, etc.) to use as custom shapes.
+7. **Section Cloning**: Create snapshots of sections like Spells to show different filtered lists (e.g., "Combat" vs "Social") simultaneously.
+8. **Dynamic Extraction**: Double-click any block of content (traits, features, actions) to extract it into its own floating, resizable card.
+9. **Compact Mode**: One-click condensed view for complex sections to maximize information density.
+10. **Border Customization**: Choose from multiple themed border styles (Archer, Barbarian, Goth, etc.) for any section.
+11. **Premade Templates**: Apply professional layouts (like the classic Archer theme) instantly.
+12. **Global Visual Filters**: Adjust Hue, Saturation, Contrast, and Grayscale for all decorative elements while keeping text legible.
+13. **Save & Load**: Persist your custom layouts to browser storage or export them as JSON files to share.
+14. **Layer Management**: Organize your decorative elements into layers with custom print Z-ordering and visibility toggles.
 
 ## Instructions for use
 

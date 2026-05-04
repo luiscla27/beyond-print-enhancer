@@ -5,12 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-05-03
+
+### Added
+- **Centralized Properties Panel:** Introduced a dedicated UI panel above the hue sliders to manage individual section attributes.
+- **Active Section Management:** New selection model via '🎯' button to target specific sections for editing.
+- **Pixel-based Font Slider:** Granular font size control (8px to 30px) replacing the old percentage-based modal.
+- **Proportional Scaling:** Implemented a CSS variable system (`--be-font-scale`) ensuring headers and icons scale proportionally with the body text.
+- **Live UI Sync:** Properties panel controls (Font Size, Compact Mode, Border Style) now automatically sync with the active section's current state.
+
+### Changed
+- **Persistence Architecture:** Refactored font size storage to include a centralized `applyFontSize` helper, ensuring consistent scaling across all section types (clones, shapes, etc.).
+- **UI Refresh:** Replaced text-based property inputs with interactive sliders and live thumbnail buttons.
+
 ## [1.4.3] - 2026-05-03
 
 ### Added
-- **Font Size Slider:** Replaced the font size input modal with a range slider (50%-200%) featuring real-time live preview.
-- **Improved Style Persistence:** Added `fontSize` persistence for all section types (clones, extractions, shapes, etc.).
-- **Conductor Track:** Initialized a new track for a centralized "Properties Panel" to manage section attributes.
+- **Font Size Slider (Preliminary):** Initial implementation of the font size range slider.
+- **Persistence:** Added basic `fontSize` saving for all section types.
 
 ## [1.4.2] - 2026-03-24
 
