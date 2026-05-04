@@ -173,7 +173,61 @@ function updatePropertiesPanel(panelElement = null) {
     compactContainer.appendChild(compactToggle);
     panel.appendChild(compactContainer);
 
-    // TODO: Add controls for border style
+    // 3. Border Style Button
+    const borderContainer = document.createElement('div');
+    borderContainer.className = 'be-prop-control';
+    borderContainer.style.display = 'flex';
+    borderContainer.style.alignItems = 'center';
+    borderContainer.style.justifyContent = 'space-between';
+    borderContainer.style.padding = '4px 0';
+
+    const borderLabel = document.createElement('label');
+    borderLabel.textContent = 'Border Style';
+    borderLabel.style.fontSize = '12px';
+    borderLabel.style.color = '#ccc';
+    borderContainer.appendChild(borderLabel);
+
+    const borderBtn = document.createElement('button');
+    borderBtn.className = 'be-prop-border-button';
+    borderBtn.style.width = '60px';
+    borderBtn.style.height = '40px';
+    borderBtn.style.padding = '4px';
+    borderBtn.style.border = '1px solid #444';
+    borderBtn.style.backgroundColor = '#222';
+    borderBtn.style.cursor = 'pointer';
+    borderBtn.style.borderRadius = '4px';
+    borderBtn.style.display = 'flex';
+    borderBtn.style.alignItems = 'center';
+    borderBtn.style.justifyContent = 'center';
+    borderBtn.style.position = 'relative';
+    borderBtn.title = 'Change Border Style';
+
+    const currentBorderStyle = ALL_BORDER_STYLES.find(style => activeSection.classList.contains(style)) || 'default-border';
+
+    const borderPreview = document.createElement('div');
+    borderPreview.className = `be-border-preview ${currentBorderStyle}`;
+    borderPreview.style.width = '100%';
+    borderPreview.style.height = '100%';
+    borderPreview.style.pointerEvents = 'none';
+    borderBtn.appendChild(borderPreview);
+
+    borderBtn.onclick = async () => {
+        const style = ALL_BORDER_STYLES.find(s => activeSection.classList.contains(s)) || 'default-border';
+        const result = await showBorderPickerModal(style);
+
+        if (result) {
+            clearBorderStyles(activeSection);
+            activeSection.classList.add(result.style);
+            
+            // Update preview
+            borderPreview.className = `be-border-preview ${result.style}`;
+            
+            updateLayoutBounds();
+        }
+    };
+
+    borderContainer.appendChild(borderBtn);
+    panel.appendChild(borderContainer);
 }
 
 /**
