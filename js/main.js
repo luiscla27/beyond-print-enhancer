@@ -3081,6 +3081,17 @@ function enforceFullHeight() {
             object-fit: contain;
         }
         
+        .be-section-wrapper section > h2 + div,
+        .be-section-wrapper section {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .be-section-wrapper section > h2 + div {
+            display: flex;
+            height: 100% !important;
+        }
+        
         /* Layer Lock Interactions */
         .be-layer-locked .be-section-wrapper {
             pointer-events: none !important;
