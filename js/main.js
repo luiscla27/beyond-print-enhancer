@@ -126,12 +126,9 @@ function updatePropertiesPanel(panelElement = null) {
 
     slider.oninput = () => {
         const val = slider.value;
-        const scale = parseFloat(val) / 10; // Base 10px
         valDisplay.textContent = `${val}px`;
         
-        wrapper.style.setProperty('--be-font-scale', scale.toString(), 'important');
-        wrapper.style.setProperty('font-size', `${val}px`, 'important');
-        
+        applyFontSize(wrapper, `${val}px`);
         updateLayoutBounds();
     };
 
@@ -1917,7 +1914,7 @@ function renderExtractedSection(snapshot) {
     if (snapshot.top) wrapper.style.setProperty('top', snapshot.top, 'important');
     if (snapshot.zIndex) wrapper.style.setProperty('z-index', snapshot.zIndex, 'important');
     if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
-    if (snapshot.fontSize) wrapper.style.fontSize = snapshot.fontSize;
+    if (snapshot.fontSize) applyFontSize(wrapper, snapshot.fontSize);
 
     if (snapshot.minimized) {
         container.dataset.minimized = 'true';
@@ -3851,7 +3848,7 @@ function renderClonedSection(snapshot) {
     if (height) container.style.height = height;
     if (zIndex) wrapper.style.zIndex = zIndex;
     if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
-    if (snapshot.fontSize) wrapper.style.fontSize = snapshot.fontSize;
+    if (snapshot.fontSize) applyFontSize(wrapper, snapshot.fontSize);
 
     if (left && top) {
         wrapper.style.left = left;
@@ -4043,7 +4040,7 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
         if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
         if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
         if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
-        if (restoreData.fontSize) wrapper.style.fontSize = restoreData.fontSize;
+        if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
     } else {
         wrapper.style.setProperty('left', '50px', 'important');
         wrapper.style.setProperty('top', '160px', 'important');
@@ -4410,7 +4407,7 @@ function applyGlobalFilters(filters) {
         if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
         if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
         if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
-        if (restoreData.fontSize) wrapper.style.fontSize = restoreData.fontSize;
+        if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
         
         if (restoreData.minimized) {
             container.dataset.minimized = 'true';
@@ -6737,6 +6734,7 @@ async function scanLayout() {
             height: section.style.height,
             zIndex: wrapper.style.zIndex || '10',
             printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
+            fontSize: wrapper.style.fontSize,
             minimized: section.dataset.minimized === 'true',
             compact: section.classList.contains('be-compact-mode'),
             borderStyle: getBorderStyle(section),
@@ -7072,7 +7070,7 @@ async function applyLayout(layout) {
         if (styles.height) section.style.height = styles.height;
         if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
         if (styles.printZIndex) wrapper.dataset.printZ = styles.printZIndex;
-        if (styles.fontSize) wrapper.style.fontSize = styles.fontSize;
+        if (styles.fontSize) applyFontSize(wrapper, styles.fontSize);
 
         // Ensure container doesn't have duplicate positioning
         section.style.left = '';
@@ -7431,6 +7429,29 @@ function injectCloneButtons(context = document) {
         }
     });
 }
+/**
+ * Applies font size and proportional scale variable to a section wrapper.
+ */
+function applyFontSize(wrapper, sizeStr) {
+    if (!wrapper || !sizeStr) return;
+    
+    wrapper.style.setProperty('font-size', sizeStr, 'important');
+    
+    // Extract scale relative to 10px base
+    let numericValue = 10;
+    const match = sizeStr.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
+    if (match) {
+        numericValue = parseFloat(match[1]);
+        const unit = match[2];
+        if (unit === '%') numericValue = (numericValue / 100) * 10;
+        // em/rem are tricky without root context, but we'll assume they are relative to 16px
+        if (unit === 'em' || unit === 'rem') numericValue = numericValue * 16;
+        
+        const scale = numericValue / 10;
+        wrapper.style.setProperty('--be-font-scale', scale.toString(), 'important');
+    }
+}
+
 /**
  * Injects CSS for Compact Mode.
  */
