@@ -93,6 +93,7 @@ describe('Properties Panel Font Size Slider', function() {
     slider.dispatchEvent(inputEvent);
     
     assert.strictEqual(mockWrapper.style.fontSize, '120%');
+    assert.strictEqual(mockWrapper.style.getPropertyValue('--be-font-scale'), '1.2');
   });
 
   it('should sync the slider with the section font size when activated', function() {

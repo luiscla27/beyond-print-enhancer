@@ -119,8 +119,13 @@ function updatePropertiesPanel(panelElement = null) {
     valDisplay.style.fontSize = '12px';
 
     slider.oninput = () => {
-        valDisplay.textContent = `${slider.value}${unit}`;
-        wrapper.style.fontSize = `${slider.value}${unit}`;
+        const val = slider.value;
+        const scale = parseFloat(val) / 100;
+        valDisplay.textContent = `${val}${unit}`;
+        
+        wrapper.style.setProperty('--be-font-scale', scale.toString(), 'important');
+        wrapper.style.setProperty('font-size', `${val}${unit}`, 'important');
+        
         updateLayoutBounds();
     };
 
@@ -3128,15 +3133,17 @@ function enforceFullHeight() {
 
         ${s.UI.PRINT_CONTAINER}, 
         ${s.UI.PRINT_CONTAINER} * {
-            font-size: 10px !important;
+            font-size: calc(10px * var(--be-font-scale, 1)) !important;
             white-space: normal !important;
             overflow-wrap: break-word !important;
         }
+
         ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 *,
         ${s.UI.PRINT_CONTAINER} ${s.COMBAT.STATUSES} h2 + *,
         ${s.UI.PRINT_CONTAINER} ${s.CORE.QUICK_INFO} * {
-            font-size: 12px !important;
+            font-size: calc(12px * var(--be-font-scale, 1)) !important;
         }
+
         ${s.UI.PRINT_CONTAINER} ${s.UI.QUICK_INFO_HEALTH} * {
             font-size: 14px !important;
         }
