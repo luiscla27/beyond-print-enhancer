@@ -22,6 +22,70 @@ const CUSTOM_SHAPES_STORE = 'custom_shapes';
 const SCHEMA_VERSION = '1.5.0';
 const PeDom = () => window.DomManager.getInstance();
 
+let activeSection = null;
+
+/**
+ * Sets the active section and updates visual highlights.
+ */
+function setActiveSection(section) {
+    // Remove active class from previous
+    if (activeSection) {
+        activeSection.classList.remove('be-active-section');
+        const prevWrapper = activeSection.closest('.be-section-wrapper');
+        if (prevWrapper) prevWrapper.classList.remove('be-active-wrapper');
+    }
+
+    activeSection = section;
+
+    if (activeSection) {
+        activeSection.classList.add('be-active-section');
+        const wrapper = activeSection.closest('.be-section-wrapper');
+        if (wrapper) wrapper.classList.add('be-active-wrapper');
+    }
+
+    updatePropertiesPanel();
+}
+
+/**
+ * Updates the properties panel content based on the active section.
+ */
+function updatePropertiesPanel(panelElement = null) {
+    const panel = panelElement || document.getElementById('print-enhance-properties-panel');
+    if (!panel) return;
+
+    panel.innerHTML = '';
+
+    if (!activeSection) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'be-prop-panel-empty';
+        emptyMsg.textContent = 'Select a section to edit its properties';
+        emptyMsg.style.color = '#888';
+        emptyMsg.style.fontStyle = 'italic';
+        emptyMsg.style.textAlign = 'center';
+        emptyMsg.style.padding = '10px';
+        panel.appendChild(emptyMsg);
+        return;
+    }
+
+    const title = document.createElement('h4');
+    const header = activeSection.querySelector('.print-section-header span');
+    title.textContent = `Editing: ${header ? header.textContent.trim() : 'Section'}`;
+    title.style.margin = '0 0 8px 0';
+    title.style.fontSize = '14px';
+    title.style.color = 'var(--btn-color)';
+    panel.appendChild(title);
+
+    // TODO: Add controls for font-size, compact mode, and border style
+}
+
+/**
+ * Returns the currently active section.
+ */
+function getActiveSection() {
+    return activeSection;
+}
+
+
 /**
  * Initializes global hover highlights for the active layer.
  * Uses a single listener and z-index prioritization to prevent flickering on overlaps.
@@ -2917,6 +2981,15 @@ function enforceFullHeight() {
             border-left: 3px solid #28a745;
             margin-left: -3px;
         }
+
+        .be-active-wrapper {
+            filter: drop-shadow(0 0 10px #c53131) !important;
+            z-index: 100004 !important;
+        }
+
+        .be-active-section {
+            outline: 3px solid #c53131 !important;
+        }
         #print-enhance-shapes-layer.be-active-layer,
         #print-enhance-sections-layer.be-active-layer
          {
@@ -5373,8 +5446,22 @@ function createControls() {
         container.appendChild(btn);
     });
 
+    // Properties Panel Container
+    const propertiesPanel = document.createElement('div');
+    propertiesPanel.id = 'print-enhance-properties-panel';
+    propertiesPanel.style.display = 'flex';
+    propertiesPanel.style.flexDirection = 'column';
+    propertiesPanel.style.gap = '8px';
+    propertiesPanel.style.padding = '8px';
+    propertiesPanel.style.borderTop = '1px solid #444';
+    propertiesPanel.style.marginTop = '4px';
+    propertiesPanel.style.backgroundColor = '#1a1a1a';
+    propertiesPanel.style.borderRadius = '4px';
+    container.appendChild(propertiesPanel);
+
     // Filters Container
     const filtersContainer = document.createElement('div');
+    filtersContainer.className = 'be-filters-container';
     filtersContainer.style.display = 'flex';
     filtersContainer.style.flexDirection = 'column';
     filtersContainer.style.gap = '4px';
@@ -5710,6 +5797,8 @@ function createControls() {
     });
     
     filtersContainer.appendChild(resetAllBtn);
+
+    updatePropertiesPanel(propertiesPanel);
 
     // Load initial values
     if (window.Storage && typeof window.Storage.getFilters === 'function') {
@@ -7081,6 +7170,12 @@ function injectCloneButtons(context = document) {
             actionContainer.appendChild(btn);
         };
 
+        // 0. Select Section Button
+        addRobustButton('be-select-section-button', '🎯', 'Select Section for Editing', (e) => {
+            setActiveSection(section);
+            showFeedback('Section selected for editing');
+        });
+
         // 1. Clone Button
         addRobustButton('be-clone-button', '📋', 'Clone Section', async (e) => {
             const id = section.id || 'unknown';
@@ -7443,6 +7538,8 @@ function injectCompactStyles() {
     window.getCharacterId = getCharacterId;
     window.fetchSpellWithCache = fetchSpellWithCache;
     window.getCharacterSpells = getCharacterSpells;
+    window.setActiveSection = setActiveSection;
+    window.getActiveSection = getActiveSection;
 
 // Execution
 (async () => {
