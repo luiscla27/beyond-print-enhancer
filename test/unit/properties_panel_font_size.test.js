@@ -88,12 +88,13 @@ describe('Properties Panel Font Size Slider', function() {
     const propPanel = document.getElementById('print-enhance-properties-panel');
     const slider = propPanel.querySelector('input[type="range"]');
     
-    slider.value = '120';
+    slider.value = '15';
     const inputEvent = new window.Event('input', { bubbles: true });
     slider.dispatchEvent(inputEvent);
     
-    assert.strictEqual(mockWrapper.style.fontSize, '120%');
-    assert.strictEqual(mockWrapper.style.getPropertyValue('--be-font-scale'), '1.2');
+    assert.strictEqual(mockWrapper.style.fontSize, '15px');
+    // Scale = 15 / 10 = 1.5
+    assert.strictEqual(mockWrapper.style.getPropertyValue('--be-font-scale'), '1.5');
   });
 
   it('should sync the slider with the section font size when activated', function() {
@@ -103,7 +104,7 @@ describe('Properties Panel Font Size Slider', function() {
     
     const mockWrapper = document.createElement('div');
     mockWrapper.className = 'be-section-wrapper';
-    mockWrapper.style.fontSize = '80%';
+    mockWrapper.style.fontSize = '12px';
     section1.parentNode.insertBefore(mockWrapper, section1);
     mockWrapper.appendChild(section1);
     
@@ -113,6 +114,6 @@ describe('Properties Panel Font Size Slider', function() {
     const propPanel = document.getElementById('print-enhance-properties-panel');
     const slider = propPanel.querySelector('input[type="range"]');
     
-    assert.strictEqual(slider.value, '80');
+    assert.strictEqual(slider.value, '12');
   });
 });

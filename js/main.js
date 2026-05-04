@@ -94,37 +94,43 @@ function updatePropertiesPanel(panelElement = null) {
     fsSliderRow.style.gap = '8px';
 
     const wrapper = activeSection.closest('.be-section-wrapper') || activeSection;
-    const currentSize = wrapper.style.fontSize || '100%';
+    const currentSize = wrapper.style.fontSize || '10px';
     
-    let numericValue = 100;
-    let unit = '%';
+    let numericValue = 10;
+    let unit = 'px';
     const match = currentSize.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
     if (match) {
         numericValue = parseFloat(match[1]);
         unit = match[2];
+        
+        // If it was percentage, convert to px base 10 for the slider
+        if (unit === '%') {
+            numericValue = (numericValue / 100) * 10;
+            unit = 'px';
+        }
     }
 
     const slider = document.createElement('input');
     slider.type = 'range';
-    slider.min = '50';
-    slider.max = '200';
+    slider.min = '8';
+    slider.max = '30';
     slider.value = numericValue.toString();
     slider.className = 'be-modal-slider';
     slider.style.flexGrow = '1';
 
     const valDisplay = document.createElement('span');
-    valDisplay.textContent = `${slider.value}${unit}`;
+    valDisplay.textContent = `${slider.value}px`;
     valDisplay.style.minWidth = '40px';
     valDisplay.style.textAlign = 'right';
     valDisplay.style.fontSize = '12px';
 
     slider.oninput = () => {
         const val = slider.value;
-        const scale = parseFloat(val) / 100;
-        valDisplay.textContent = `${val}${unit}`;
+        const scale = parseFloat(val) / 10; // Base 10px
+        valDisplay.textContent = `${val}px`;
         
         wrapper.style.setProperty('--be-font-scale', scale.toString(), 'important');
-        wrapper.style.setProperty('font-size', `${val}${unit}`, 'important');
+        wrapper.style.setProperty('font-size', `${val}px`, 'important');
         
         updateLayoutBounds();
     };
