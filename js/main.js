@@ -7386,32 +7386,6 @@ function injectCloneButtons(context = document) {
             }
         });
 
-        // 4. Font Size Button
-        addRobustButton('be-font-size-button', '🔤', 'Change Font Size', async (e) => {
-            const wrapper = section.closest('.be-section-wrapper') || section;
-            const currentSize = wrapper.style.fontSize || '100%';
-            
-            // Try to extract numeric value and unit
-            let numericValue = 100;
-            let unit = '%';
-            const match = currentSize.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
-            if (match) {
-                numericValue = parseFloat(match[1]);
-                unit = match[2];
-            }
-
-            const result = await showSliderModal('Font Size', 'Adjust font size:', 50, 200, numericValue, unit, (val) => {
-                wrapper.style.fontSize = val + unit;
-                updateLayoutBounds();
-            });
-            
-            if (result === null) {
-                // Restore original on cancel
-                wrapper.style.fontSize = currentSize;
-                updateLayoutBounds();
-            }
-        });
-
         const isShape = section.classList.contains('be-shape-container');
 
         // 4. Delete Button (Generic for all)
