@@ -6,12 +6,6 @@ This file tracks all major development tracks for the project.
 
 ---
 
-- [x] **Track: add a properties panel above the "hue shift colors" sliders. This new panel swill manage atributes PER section,when a section is marked as ACTIVE, the panel will control that specific section attributes, currentlyu we have "FONT-SIZE", "COMPACT MODE" and "BORDER STYLE". This panel MUST work as an alternative to change the values of those attributes modals (so in that panel ther will be an slider, a border selector, and a toogle option for the compact mode)** (Completed: 2026-05-03)
-*Link: [./tracks/properties_panel_20260503/](./tracks/properties_panel_20260503/)*
-
----
-
-
 - [x] **Track: add a new option at the "Add layer modal" named "Upload from disk" this new ption should prompt the user t select an image file from his folders, once selected it should convert it to base64 and store in both IndexDB (so its available in the future). And also MUST be stored inside the JSON object saved. So its also available when the user shares his template. The new shape(s) must appear n a new tab at the "Select Decorative Shape" panel named "Custom Shapes", also the custom SHAPES MUST be availabe at the "Select Decorative Shape" shown when the "Switch Shape Asset" button its used** (Completed: 2026-04-23)
 *Link: [./tracks/custom_shapes_upload_20260423/](./tracks/custom_shapes_upload_20260423/)*
 
