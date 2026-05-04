@@ -140,7 +140,40 @@ function updatePropertiesPanel(panelElement = null) {
     fsContainer.appendChild(fsSliderRow);
     panel.appendChild(fsContainer);
 
-    // TODO: Add controls for compact mode and border style
+    // 2. Compact Mode Toggle
+    const compactContainer = document.createElement('div');
+    compactContainer.className = 'be-prop-control';
+    compactContainer.style.display = 'flex';
+    compactContainer.style.alignItems = 'center';
+    compactContainer.style.justifyContent = 'space-between';
+    compactContainer.style.padding = '4px 0';
+
+    const compactLabel = document.createElement('label');
+    compactLabel.textContent = 'Compact Mode';
+    compactLabel.style.fontSize = '12px';
+    compactLabel.style.color = '#ccc';
+    compactContainer.appendChild(compactLabel);
+
+    const compactToggle = document.createElement('input');
+    compactToggle.type = 'checkbox';
+    compactToggle.checked = activeSection.classList.contains('be-compact-mode');
+    compactToggle.style.cursor = 'pointer';
+    
+    compactToggle.onchange = () => {
+        activeSection.classList.toggle('be-compact-mode', compactToggle.checked);
+        updateLayoutBounds();
+        
+        // Sync with the section button if visible
+        const btn = activeSection.querySelector('.be-compact-toggle');
+        if (btn) {
+            btn.style.backgroundColor = compactToggle.checked ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
+        }
+    };
+
+    compactContainer.appendChild(compactToggle);
+    panel.appendChild(compactContainer);
+
+    // TODO: Add controls for border style
 }
 
 /**
