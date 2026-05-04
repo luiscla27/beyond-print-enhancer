@@ -1701,6 +1701,7 @@ function renderExtractedSection(snapshot) {
     if (snapshot.top) wrapper.style.setProperty('top', snapshot.top, 'important');
     if (snapshot.zIndex) wrapper.style.setProperty('z-index', snapshot.zIndex, 'important');
     if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
+    if (snapshot.fontSize) wrapper.style.fontSize = snapshot.fontSize;
 
     if (snapshot.minimized) {
         container.dataset.minimized = 'true';
@@ -2887,6 +2888,10 @@ function enforceFullHeight() {
             z-index: 100003 !important;
         }
 
+        body.be-lock-shapes #print-enhance-shapes-layer {
+            pointer-events: none !important;
+        }
+
         .be-delete-layer-btn {
             color: #ff4444 !important;
         }
@@ -3264,6 +3269,25 @@ function enforceFullHeight() {
             color: #ccc;
         }
 
+        .be-modal-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+        }
+        .be-modal-slider {
+            flex-grow: 1;
+            cursor: pointer;
+            accent-color: var(--btn-color);
+        }
+        .be-modal-slider-value {
+            font-weight: bold;
+            min-width: 50px;
+            text-align: right;
+            font-size: 1.1em;
+            color: white;
+        }
+
         /* Border Picker Styles */
         .be-border-options {
             display: flex;
@@ -3601,6 +3625,7 @@ function renderClonedSection(snapshot) {
     if (height) container.style.height = height;
     if (zIndex) wrapper.style.zIndex = zIndex;
     if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
+    if (snapshot.fontSize) wrapper.style.fontSize = snapshot.fontSize;
 
     if (left && top) {
         wrapper.style.left = left;
@@ -3792,6 +3817,7 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
         if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
         if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
         if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
+        if (restoreData.fontSize) wrapper.style.fontSize = restoreData.fontSize;
     } else {
         wrapper.style.setProperty('left', '50px', 'important');
         wrapper.style.setProperty('top', '160px', 'important');
@@ -4158,6 +4184,7 @@ function applyGlobalFilters(filters) {
         if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
         if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
         if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
+        if (restoreData.fontSize) wrapper.style.fontSize = restoreData.fontSize;
         
         if (restoreData.minimized) {
             container.dataset.minimized = 'true';
@@ -4406,6 +4433,92 @@ function showInputModal(title, message, defaultValue = '') {
             if (e.key === 'Enter') okBtn.click();
             if (e.key === 'Escape') cancelBtn.click();
         };
+    });
+}
+
+/**
+ * Shows a modal with a slider input.
+ * @returns {Promise<number|null>}
+ */
+function showSliderModal(title, message, min, max, defaultValue, unit = '%', onLiveUpdate = null) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'be-modal-overlay';
+        
+        const modal = document.createElement('div');
+        modal.className = 'be-modal';
+        
+        const h3 = document.createElement('h3');
+        h3.textContent = title;
+        modal.appendChild(h3);
+        
+        const p = document.createElement('p');
+        p.textContent = message;
+        modal.appendChild(p);
+        
+        const sliderContainer = document.createElement('div');
+        sliderContainer.className = 'be-modal-slider-container';
+        
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.className = 'be-modal-slider';
+        slider.min = min;
+        slider.max = max;
+        slider.value = defaultValue;
+        
+        const valueDisplay = document.createElement('span');
+        valueDisplay.className = 'be-modal-slider-value';
+        valueDisplay.textContent = `${slider.value}${unit}`;
+        
+        slider.oninput = () => {
+            valueDisplay.textContent = `${slider.value}${unit}`;
+            if (onLiveUpdate) onLiveUpdate(slider.value);
+        };
+        
+        sliderContainer.appendChild(slider);
+        sliderContainer.appendChild(valueDisplay);
+        modal.appendChild(sliderContainer);
+        
+        const actions = document.createElement('div');
+        actions.className = 'be-modal-actions';
+        
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'be-modal-cancel';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => {
+            overlay.remove();
+            resolve(null);
+        };
+        actions.appendChild(cancelBtn);
+        
+        const okBtn = document.createElement('button');
+        okBtn.className = 'be-modal-ok';
+        okBtn.textContent = 'Apply';
+        okBtn.onclick = () => {
+            const val = slider.value;
+            overlay.remove();
+            resolve(val);
+        };
+        actions.appendChild(okBtn);
+        
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        slider.focus();
+        
+        // Handle Enter/Esc
+        const keyHandler = (e) => {
+            if (e.key === 'Enter') {
+                okBtn.click();
+                window.removeEventListener('keydown', keyHandler);
+            }
+            if (e.key === 'Escape') {
+                cancelBtn.click();
+                window.removeEventListener('keydown', keyHandler);
+            }
+        };
+        window.addEventListener('keydown', keyHandler);
     });
 }
 
@@ -6300,6 +6413,7 @@ async function scanLayout() {
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '10',
                 printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
+                fontSize: wrapper.style.fontSize,
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode'),
                 borderStyle: getBorderStyle(section)
@@ -6317,6 +6431,7 @@ async function scanLayout() {
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '10',
                 printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
+                fontSize: wrapper.style.fontSize,
                 minimized: section.dataset.minimized === 'true',
                 borderStyle: getBorderStyle(section)
             });
@@ -6334,6 +6449,7 @@ async function scanLayout() {
                 zIndex: wrapper.style.zIndex || '110',
                 printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '110',
                 rotation: wrapper.dataset.rotation || '0',
+                fontSize: wrapper.style.fontSize,
                 minimized: section.dataset.minimized === 'true'
             });
             return;
@@ -6354,6 +6470,7 @@ async function scanLayout() {
                 height: section.style.height,
                 zIndex: wrapper.style.zIndex || '10',
                 printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
+                fontSize: wrapper.style.fontSize,
                 minimized: section.dataset.minimized === 'true',
                 compact: section.classList.contains('be-compact-mode'),
                 borderStyle: getBorderStyle(section)
@@ -6713,6 +6830,7 @@ async function applyLayout(layout) {
         if (styles.height) section.style.height = styles.height;
         if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
         if (styles.printZIndex) wrapper.dataset.printZ = styles.printZIndex;
+        if (styles.fontSize) wrapper.style.fontSize = styles.fontSize;
 
         // Ensure container doesn't have duplicate positioning
         section.style.left = '';
@@ -7012,6 +7130,32 @@ function injectCloneButtons(context = document) {
             if (result) {
                 clearBorderStyles(section);
                 section.classList.add(result.style);
+                updateLayoutBounds();
+            }
+        });
+
+        // 4. Font Size Button
+        addRobustButton('be-font-size-button', '🔤', 'Change Font Size', async (e) => {
+            const wrapper = section.closest('.be-section-wrapper') || section;
+            const currentSize = wrapper.style.fontSize || '100%';
+            
+            // Try to extract numeric value and unit
+            let numericValue = 100;
+            let unit = '%';
+            const match = currentSize.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
+            if (match) {
+                numericValue = parseFloat(match[1]);
+                unit = match[2];
+            }
+
+            const result = await showSliderModal('Font Size', 'Adjust font size:', 50, 200, numericValue, unit, (val) => {
+                wrapper.style.fontSize = val + unit;
+                updateLayoutBounds();
+            });
+            
+            if (result === null) {
+                // Restore original on cancel
+                wrapper.style.fontSize = currentSize;
                 updateLayoutBounds();
             }
         });
