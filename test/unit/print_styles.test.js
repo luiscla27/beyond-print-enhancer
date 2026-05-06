@@ -81,6 +81,28 @@ describe('Print Styles Injection', function() {
         assert.ok(opacityMatch, 'Should force opacity: 1 for locked sections');
     });
 
+    it('should target all elements with data-print-z and set layer ordering', function() {
+        // Setup a mock shape and section with data-print-z
+        const section = document.createElement('div');
+        section.id = 'test-section';
+        section.dataset.printZ = '50';
+        document.body.appendChild(section);
+
+        const shape = document.createElement('div');
+        shape.id = 'test-shape';
+        shape.dataset.printZ = '150';
+        document.body.appendChild(shape);
+
+        window.updatePrintStyles();
+        const style = document.getElementById('be-print-z-style');
+        const css = style.textContent;
+
+        assert.ok(css.includes('#test-section { z-index: 50 !important; }'), 'Should target section by ID');
+        assert.ok(css.includes('#test-shape { z-index: 150 !important; }'), 'Should target shape by ID');
+        assert.ok(css.includes('#print-enhance-sections-layer { z-index: 1000 !important; }'), 'Should set section layer Z');
+        assert.ok(css.includes('.be-shape-layer-container { z-index: 2000 !important; }'), 'Should set shape layer Z');
+    });
+
     it('should hide layers with data-print-disabled="true"', function() {
         const layer = document.createElement('div');
         layer.id = 'print-enhance-sections-layer';

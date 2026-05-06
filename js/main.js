@@ -361,7 +361,7 @@ function updatePrintStyles() {
         else document.body.appendChild(style);
     }
 
-    const elements = document.querySelectorAll('.be-section-wrapper[data-print-z]');
+    const elements = document.querySelectorAll('[data-print-z]');
     const disabledLayers = document.querySelectorAll('[data-print-disabled="true"]');
 
     let css = '@media print {\n';
@@ -371,6 +371,10 @@ function updatePrintStyles() {
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
     css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper, .be-shape-wrapper, .be-layer-locked .be-section-wrapper, .be-layer-locked .be-shape-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
+
+    // Force layer ordering on print: Sections < Shapes
+    css += '  #print-enhance-sections-layer { z-index: 1000 !important; }\n';
+    css += '  .be-shape-layer-container { z-index: 2000 !important; }\n';
 
     // Selection and Hover Highlights
     css += '  .be-active-wrapper, .be-hover-highlight, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n';
@@ -390,7 +394,7 @@ function updatePrintStyles() {
             css += `  #${el.id} { z-index: ${z} !important; }\n`;
         } else {
             // Fallback to data attribute if ID is missing
-            css += `  .be-section-wrapper[data-print-z="${z}"] { z-index: ${z} !important; }\n`;
+            css += `  [data-print-z="${z}"] { z-index: ${z} !important; }\n`;
         }
     });
     css += '}';
