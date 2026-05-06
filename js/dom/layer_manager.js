@@ -443,27 +443,31 @@ class LayerManager {
 
             const items = Array.from(list.querySelectorAll('.be-layer-item-card, .be-layer-item-thumb'));
             const baseZ = (layerIndex * 100) + 10;
+            const totalItems = items.length;
 
-            // Reorder actual DOM elements to match list order
             const layerContainer = document.getElementById(layer.layerId);
             
+            // Assign Z-indexes: Top item in list gets highest Z, Bottom gets lowest Z
             items.forEach((item, index) => {
                 const targetId = item.dataset.targetId;
                 const el = document.getElementById(targetId);
                 if (el) {
-                    // Update Print Z
-                    el.dataset.printZ = (baseZ + index).toString();
-                    
-                    // Reorder in DOM container if it moved between layers
-                    if (layerContainer && el.parentNode !== layerContainer) {
-                        layerContainer.appendChild(el);
-                        this.checkLayerLimit(layer);
-                    } else if (layerContainer) {
-                        // Just append to maintain order within same layer
+                    const zValue = baseZ + (totalItems - 1 - index);
+                    el.dataset.printZ = zValue.toString();
+                }
+            });
+
+            // Reorder actual DOM elements: Bottom item first, Top item last (so Top renders in front)
+            if (layerContainer) {
+                for (let i = totalItems - 1; i >= 0; i--) {
+                    const targetId = items[i].dataset.targetId;
+                    const el = document.getElementById(targetId);
+                    if (el) {
                         layerContainer.appendChild(el);
                     }
                 }
-            });
+                this.checkLayerLimit(layer);
+            }
         });
 
         if (window.updatePrintStyles) window.updatePrintStyles();
