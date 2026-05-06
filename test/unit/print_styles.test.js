@@ -56,6 +56,31 @@ describe('Print Styles Injection', function() {
         assert.ok(css.includes('opacity: 1 !important'), 'Should force full opacity on print');
     });
 
+    it('should hide selection and hover highlights on print', function() {
+        window.updatePrintStyles();
+        const style = document.getElementById('be-print-z-style');
+        const css = style.textContent;
+        
+        assert.ok(css.includes('.be-active-wrapper'), 'Should target be-active-wrapper');
+        assert.ok(css.includes('.be-hover-highlight'), 'Should target be-hover-highlight');
+        assert.ok(css.includes('filter: none !important'), 'Should disable filters on print');
+        assert.ok(css.includes('outline: none !important'), 'Should disable outlines on print');
+    });
+
+    it('should force full opacity even for locked layers on print', function() {
+        window.updatePrintStyles();
+        const style = document.getElementById('be-print-z-style');
+        const css = style.textContent;
+        
+        // We check for the be-layer-locked specificity override
+        assert.ok(css.includes('.be-layer-locked .be-section-wrapper'), 'Should target locked sections');
+        assert.ok(css.includes('.be-layer-locked .be-shape-wrapper'), 'Should target locked shapes');
+        
+        // Specifically check that the rule contains opacity: 1
+        const opacityMatch = css.match(/\.be-layer-locked \.be-section-wrapper[^}]*opacity:\s*1/);
+        assert.ok(opacityMatch, 'Should force opacity: 1 for locked sections');
+    });
+
     it('should hide layers with data-print-disabled="true"', function() {
         const layer = document.createElement('div');
         layer.id = 'print-enhance-sections-layer';

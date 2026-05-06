@@ -370,7 +370,10 @@ function updatePrintStyles() {
     css += '  #print-enhance-layer-manager { display: none !important; }\n';
     
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
-    css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
+    css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper, .be-shape-wrapper, .be-layer-locked .be-section-wrapper, .be-layer-locked .be-shape-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
+
+    // Selection and Hover Highlights
+    css += '  .be-active-wrapper, .be-hover-highlight, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n';
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach(layer => {
@@ -3632,7 +3635,9 @@ function enforceFullHeight() {
             html body #print-enhance-sections-layer,
             html body #print-enhance-shapes-layer,
             html body.be-lock-sections .be-section-wrapper,
-            html body.be-lock-shapes .be-shape-wrapper {
+            html body.be-lock-shapes .be-shape-wrapper,
+            html body .be-layer-locked .be-section-wrapper,
+            html body .be-layer-locked .be-shape-wrapper {
                 opacity: 1 !important;
                 visibility: visible !important;
                 pointer-events: none !important;
@@ -3642,6 +3647,15 @@ function enforceFullHeight() {
             html body .be-shape-wrapper * {
                 opacity: 1 !important;
                 visibility: visible !important;
+            }
+
+            /* Selection and Hover Highlights */
+            .be-active-wrapper,
+            .be-hover-highlight,
+            .be-focus-highlight-hover,
+            .be-active-section {
+                filter: none !important;
+                outline: none !important;
             }
 
             /* UI Cleanup */
