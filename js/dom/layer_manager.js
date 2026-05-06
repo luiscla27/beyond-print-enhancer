@@ -348,7 +348,10 @@ class LayerManager {
         if (!list) return;
 
         list.innerHTML = '';
-        const elements = document.querySelectorAll(`#${layer.layerId} ${selector}`);
+        // The DOM stores elements front-to-back (last element is visually on top).
+        // The UI list displays them top-to-bottom (top element is visually on top).
+        // Therefore, we must reverse the DOM order when generating the UI list.
+        const elements = Array.from(document.querySelectorAll(`#${layer.layerId} ${selector}`)).reverse();
         
         if (elements.length === 0) {
             list.innerHTML = '<span style="color: #666; font-style: italic; font-size: 10px;">Empty</span>';

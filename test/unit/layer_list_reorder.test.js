@@ -73,17 +73,19 @@ describe('Layer List Reorder Functionality', function() {
         lm.updatePrintZIndexes();
 
         // Verify printZIndex
-        // New order in DOM list: sec-2, sec-3, sec-1
+        // Original DOM: sec-1, sec-2, sec-3
+        // Initial UI list (reversed): sec-3, sec-2, sec-1
+        // Move first (sec-3) to end: sec-2, sec-1, sec-3
         // Implementation: baseZ + (total - 1 - index)
         // sec-2 (index 0) -> 12
-        // sec-3 (index 1) -> 11
-        // sec-1 (index 2) -> 10
+        // sec-1 (index 1) -> 11
+        // sec-3 (index 2) -> 10
         const wrapper1 = document.getElementById('sec-1-wrapper');
         const wrapper2 = document.getElementById('sec-2-wrapper');
         const wrapper3 = document.getElementById('sec-3-wrapper');
 
-        assert.strictEqual(wrapper1.dataset.printZ, '10', 'Bottom item (sec-1) should have lowest printZIndex');
-        assert.strictEqual(wrapper3.dataset.printZ, '11', 'Middle item (sec-3) should have middle printZIndex');
+        assert.strictEqual(wrapper1.dataset.printZ, '11', 'Middle item (sec-1) should have middle printZIndex');
+        assert.strictEqual(wrapper3.dataset.printZ, '10', 'Bottom item (sec-3) should have lowest printZIndex');
         assert.strictEqual(wrapper2.dataset.printZ, '12', 'Top item (sec-2) should have highest printZIndex');
     });
 });
