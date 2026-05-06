@@ -343,7 +343,10 @@ function toggleShapesMode(forceState) {
 function refreshLayers() {
     try {
         const lm = PeDom().getLayerManager();
-        if (lm) lm.refreshLayerContents();
+        if (lm) {
+            lm.refreshLayerContents();
+            lm.updatePrintZIndexes(true); // Silently sync Z-index with UI order
+        }
     } catch (e) {
         // Silently fail if UI not ready
     }

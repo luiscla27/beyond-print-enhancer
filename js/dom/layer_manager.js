@@ -433,7 +433,7 @@ class LayerManager {
     /**
      * Updates the printZIndex attribute of all elements based on their order in the layer list.
      */
-    updatePrintZIndexes() {
+    updatePrintZIndexes(silent = false) {
         // We'll iterate layers in reverse order for Z-Index management
         const allLayers = [this.sectionsLayer, ...this.shapeLayers];
         
@@ -467,7 +467,7 @@ class LayerManager {
         });
 
         if (window.updatePrintStyles) window.updatePrintStyles();
-        if (window.showFeedback) window.showFeedback('Layer order updated');
+        if (!silent && window.showFeedback) window.showFeedback('Layer order updated');
     }
 
     /**

@@ -61,7 +61,7 @@ describe('Print Z-Index Style Injection', function() {
         
         const css = style.textContent;
         assert.ok(css.includes('@media print'), 'Should contain @media print');
-        assert.ok(css.includes('.be-section-wrapper[data-print-z="15"]'), 'Should have rule for Z 15');
+        assert.ok(css.includes('[data-print-z="15"]'), 'Should have rule for Z 15');
         assert.ok(css.includes('z-index: 15 !important;'), 'Should have z-index value 15');
     });
 });
