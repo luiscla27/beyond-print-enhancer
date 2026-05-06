@@ -3091,14 +3091,13 @@ function enforceFullHeight() {
             object-fit: contain;
         }
         
-        .be-section-wrapper section > h2 + div,
+        .be-section-wrapper section:not(.ddbc-armor-class-box) > h2 + div,
         .be-section-wrapper section {
             height: 100%;
             width: 100%;
         }
         
-        .be-section-wrapper section > h2 + div {
-            display: flex;
+        .be-section-wrapper section:not(.ddbc-armor-class-box) > h2 + div {
             height: 100% !important;
         }
         
