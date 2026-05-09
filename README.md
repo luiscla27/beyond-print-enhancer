@@ -37,7 +37,7 @@ To test the extension locally:
 8. **Dynamic Extraction**: Double-click any block of content (traits, features, actions) to extract it into its own floating, resizable card.
 9. **Compact Mode**: One-click condensed view for complex sections to maximize information density.
 10. **Border Customization**: Choose from multiple themed border styles (Archer, Barbarian, Goth, etc.) for any section.
-11. **Premade Templates**: Apply professional layouts (like the classic Archer theme) instantly.
+11. **Templates**: Apply professional layouts (like the classic Archer theme) instantly.
 12. **Global Visual Filters**: Adjust Hue, Saturation, Contrast, and Grayscale for all decorative elements while keeping text legible.
 13. **Save & Load**: Persist your custom layouts to browser storage or export them as JSON files to share.
 14. **Layer Management**: Organize your decorative elements into layers with custom print Z-ordering and visibility toggles.

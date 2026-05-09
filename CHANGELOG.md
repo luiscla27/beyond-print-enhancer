@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.4.2] - 2026-03-24
 
 ### Added
-- **Premade Templates:** Introduced a new "PREMADE" templates system allowing users to apply professional character sheet layouts instantly.
+- **Templates:** Introduced a new "TEMPLATES" system allowing users to apply professional character sheet layouts instantly.
 - **Archer Template:** Full replication of the classic Archer-themed sheet, including custom borders, accents, and dividers.
 - **Catalog Service:** Centralized management for template definitions and application logic.
 - **New Shape Assets:** Expanded the asset library with `dwarf.webp`, `dwarf_hollow_hand.webp`, and `shield_stats.webp`.

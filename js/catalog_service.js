@@ -155,7 +155,7 @@ async function showPremadeCatalogModal() {
         modal.style.overflowY = 'auto';
         
         const h3 = document.createElement('h3');
-        h3.textContent = 'Premade Templates';
+        h3.textContent = 'Templates';
         modal.appendChild(h3);
 
         const grid = document.createElement('div');
@@ -165,7 +165,7 @@ async function showPremadeCatalogModal() {
         grid.style.gap = '15px';
         grid.style.marginTop = '20px';
 
-        catalog.templates.forEach(template => {
+        catalog.templates.filter(t => t.active).forEach(template => {
             const item = document.createElement('div');
             item.className = cls(selectors.ITEM);
             item.style.backgroundColor = '#333';

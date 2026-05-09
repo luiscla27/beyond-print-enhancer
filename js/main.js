@@ -3,133 +3,135 @@ Licensed under Blue Oak Model License 1.0.0
 */
 
 (function () {
-    if (window.__DDB_PRINT_ENHANCE_INITIALIZED__) {
-        safeLog('log', '[DDB Print Enhance] Already initialized.');
-        return;
-    }
+  if (window.__DDB_PRINT_ENHANCE_INITIALIZED__) {
+    safeLog("log", "[DDB Print Enhance] Already initialized.");
+    return;
+  }
 
-    window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
+  window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
 
-/**
- * Storage management for D&D Beyond Print Enhancer.
- * Uses IndexedDB to persist layout configurations and custom data.
- */
-const DB_NAME = 'DDBPrintEnhancerDB';
-const DB_VERSION = 4;
-const STORE_NAME = 'layouts';
-const SPELL_CACHE_STORE = 'spell_cache';
-const CUSTOM_SHAPES_STORE = 'custom_shapes';
-const SCHEMA_VERSION = '1.5.0';
-const PeDom = () => window.DomManager.getInstance();
+  /**
+   * Storage management for D&D Beyond Print Enhancer.
+   * Uses IndexedDB to persist layout configurations and custom data.
+   */
+  const DB_NAME = "DDBPrintEnhancerDB";
+  const DB_VERSION = 4;
+  const STORE_NAME = "layouts";
+  const SPELL_CACHE_STORE = "spell_cache";
+  const CUSTOM_SHAPES_STORE = "custom_shapes";
+  const SCHEMA_VERSION = "1.5.0";
+  const PeDom = () => window.DomManager.getInstance();
 
-let activeSection = null;
+  let activeSection = null;
 
-/**
- * Sets the active section and updates visual highlights.
- */
-function setActiveSection(section) {
+  /**
+   * Sets the active section and updates visual highlights.
+   */
+  function setActiveSection(section) {
     // Remove active class from previous
     if (activeSection) {
-        activeSection.classList.remove('be-active-section');
-        const prevWrapper = activeSection.closest('.be-section-wrapper');
-        if (prevWrapper) prevWrapper.classList.remove('be-active-wrapper');
+      activeSection.classList.remove("be-active-section");
+      const prevWrapper = activeSection.closest(".be-section-wrapper");
+      if (prevWrapper) prevWrapper.classList.remove("be-active-wrapper");
     }
 
     activeSection = section;
 
     if (activeSection) {
-        activeSection.classList.add('be-active-section');
-        const wrapper = activeSection.closest('.be-section-wrapper');
-        if (wrapper) wrapper.classList.add('be-active-wrapper');
+      activeSection.classList.add("be-active-section");
+      const wrapper = activeSection.closest(".be-section-wrapper");
+      if (wrapper) wrapper.classList.add("be-active-wrapper");
     }
 
     updatePropertiesPanel();
-}
+  }
 
-/**
- * Updates the properties panel content based on the active section.
- */
-function updatePropertiesPanel(panelElement = null) {
-    const panel = panelElement || document.getElementById('print-enhance-properties-panel');
+  /**
+   * Updates the properties panel content based on the active section.
+   */
+  function updatePropertiesPanel(panelElement = null) {
+    const panel =
+      panelElement || document.getElementById("print-enhance-properties-panel");
     if (!panel) return;
 
-    panel.innerHTML = '';
+    panel.innerHTML = "";
 
     if (!activeSection) {
-        const emptyMsg = document.createElement('div');
-        emptyMsg.className = 'be-prop-panel-empty';
-        emptyMsg.textContent = 'Select a section to edit its properties';
-        emptyMsg.style.color = '#888';
-        emptyMsg.style.fontStyle = 'italic';
-        emptyMsg.style.textAlign = 'center';
-        emptyMsg.style.padding = '10px';
-        panel.appendChild(emptyMsg);
-        return;
+      const emptyMsg = document.createElement("div");
+      emptyMsg.className = "be-prop-panel-empty";
+      emptyMsg.textContent = "Select a section to edit its properties";
+      emptyMsg.style.color = "#888";
+      emptyMsg.style.fontStyle = "italic";
+      emptyMsg.style.textAlign = "center";
+      emptyMsg.style.padding = "10px";
+      panel.appendChild(emptyMsg);
+      return;
     }
 
-    const title = document.createElement('h4');
-    const header = activeSection.querySelector('.print-section-header span');
-    title.textContent = `Editing: ${header ? header.textContent.trim() : 'Section'}`;
-    title.style.margin = '0 0 8px 0';
-    title.style.fontSize = '14px';
-    title.style.color = 'var(--btn-color)';
+    const title = document.createElement("h4");
+    const header = activeSection.querySelector(".print-section-header span");
+    title.textContent = `Editing: ${header ? header.textContent.trim() : "Section"}`;
+    title.style.margin = "0 0 8px 0";
+    title.style.fontSize = "14px";
+    title.style.color = "var(--btn-color)";
     panel.appendChild(title);
 
     // 1. Font Size Slider
-    const fsContainer = document.createElement('div');
-    fsContainer.className = 'be-prop-control';
-    fsContainer.style.display = 'flex';
-    fsContainer.style.flexDirection = 'column';
-    fsContainer.style.gap = '4px';
+    const fsContainer = document.createElement("div");
+    fsContainer.className = "be-prop-control";
+    fsContainer.style.display = "flex";
+    fsContainer.style.flexDirection = "column";
+    fsContainer.style.gap = "4px";
 
-    const fsLabel = document.createElement('label');
-    fsLabel.textContent = 'Font Size';
-    fsLabel.style.fontSize = '11px';
-    fsLabel.style.color = '#ccc';
+    const fsLabel = document.createElement("label");
+    fsLabel.textContent = "Font Size";
+    fsLabel.style.fontSize = "11px";
+    fsLabel.style.color = "#ccc";
     fsContainer.appendChild(fsLabel);
 
-    const fsSliderRow = document.createElement('div');
-    fsSliderRow.style.display = 'flex';
-    fsSliderRow.style.alignItems = 'center';
-    fsSliderRow.style.gap = '8px';
+    const fsSliderRow = document.createElement("div");
+    fsSliderRow.style.display = "flex";
+    fsSliderRow.style.alignItems = "center";
+    fsSliderRow.style.gap = "8px";
 
-    const wrapper = activeSection.closest('.be-section-wrapper') || activeSection;
-    const currentSize = wrapper.style.fontSize || '10px';
-    
+    const wrapper =
+      activeSection.closest(".be-section-wrapper") || activeSection;
+    const currentSize = wrapper.style.fontSize || "10px";
+
     let numericValue = 10;
-    let unit = 'px';
+    let unit = "px";
     const match = currentSize.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
     if (match) {
-        numericValue = parseFloat(match[1]);
-        unit = match[2];
-        
-        // If it was percentage, convert to px base 10 for the slider
-        if (unit === '%') {
-            numericValue = (numericValue / 100) * 10;
-            unit = 'px';
-        }
+      numericValue = parseFloat(match[1]);
+      unit = match[2];
+
+      // If it was percentage, convert to px base 10 for the slider
+      if (unit === "%") {
+        numericValue = (numericValue / 100) * 10;
+        unit = "px";
+      }
     }
 
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = '8';
-    slider.max = '30';
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "8";
+    slider.max = "30";
     slider.value = numericValue.toString();
-    slider.className = 'be-modal-slider';
-    slider.style.flexGrow = '1';
+    slider.className = "be-modal-slider";
+    slider.style.flexGrow = "1";
 
-    const valDisplay = document.createElement('span');
+    const valDisplay = document.createElement("span");
     valDisplay.textContent = `${slider.value}px`;
-    valDisplay.style.minWidth = '40px';
-    valDisplay.style.textAlign = 'right';
-    valDisplay.style.fontSize = '12px';
+    valDisplay.style.minWidth = "40px";
+    valDisplay.style.textAlign = "right";
+    valDisplay.style.fontSize = "12px";
 
     slider.oninput = () => {
-        const val = slider.value;
-        valDisplay.textContent = `${val}px`;
-        
-        applyFontSize(wrapper, `${val}px`);
-        updateLayoutBounds();
+      const val = slider.value;
+      valDisplay.textContent = `${val}px`;
+
+      applyFontSize(wrapper, `${val}px`);
+      updateLayoutBounds();
     };
 
     fsSliderRow.appendChild(slider);
@@ -138,294 +140,327 @@ function updatePropertiesPanel(panelElement = null) {
     panel.appendChild(fsContainer);
 
     // 2. Compact Mode Toggle
-    const compactContainer = document.createElement('div');
-    compactContainer.className = 'be-prop-control';
-    compactContainer.style.display = 'flex';
-    compactContainer.style.alignItems = 'center';
-    compactContainer.style.justifyContent = 'space-between';
-    compactContainer.style.padding = '4px 0';
+    const compactContainer = document.createElement("div");
+    compactContainer.className = "be-prop-control";
+    compactContainer.style.display = "flex";
+    compactContainer.style.alignItems = "center";
+    compactContainer.style.justifyContent = "space-between";
+    compactContainer.style.padding = "4px 0";
 
-    const compactLabel = document.createElement('label');
-    compactLabel.textContent = 'Compact Mode';
-    compactLabel.style.fontSize = '12px';
-    compactLabel.style.color = '#ccc';
+    const compactLabel = document.createElement("label");
+    compactLabel.textContent = "Compact Mode";
+    compactLabel.style.fontSize = "12px";
+    compactLabel.style.color = "#ccc";
     compactContainer.appendChild(compactLabel);
 
-    const compactToggle = document.createElement('input');
-    compactToggle.type = 'checkbox';
-    compactToggle.checked = activeSection.classList.contains('be-compact-mode');
-    compactToggle.style.cursor = 'pointer';
-    
+    const compactToggle = document.createElement("input");
+    compactToggle.type = "checkbox";
+    compactToggle.checked = activeSection.classList.contains("be-compact-mode");
+    compactToggle.style.cursor = "pointer";
+
     compactToggle.onchange = () => {
-        activeSection.classList.toggle('be-compact-mode', compactToggle.checked);
-        updateLayoutBounds();
-        
-        // Sync with the section button if visible
-        const btn = activeSection.querySelector('.be-compact-toggle');
-        if (btn) {
-            btn.style.backgroundColor = compactToggle.checked ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
-        }
+      activeSection.classList.toggle("be-compact-mode", compactToggle.checked);
+      updateLayoutBounds();
+
+      // Sync with the section button if visible
+      const btn = activeSection.querySelector(".be-compact-toggle");
+      if (btn) {
+        btn.style.backgroundColor = compactToggle.checked
+          ? "var(--btn-color)"
+          : "var(--btn-color-highlight)";
+      }
     };
 
     compactContainer.appendChild(compactToggle);
     panel.appendChild(compactContainer);
 
     // 3. Border Style Button
-    const borderContainer = document.createElement('div');
-    borderContainer.className = 'be-prop-control';
-    borderContainer.style.display = 'flex';
-    borderContainer.style.alignItems = 'center';
-    borderContainer.style.justifyContent = 'space-between';
-    borderContainer.style.padding = '4px 0';
+    const borderContainer = document.createElement("div");
+    borderContainer.className = "be-prop-control";
+    borderContainer.style.display = "flex";
+    borderContainer.style.alignItems = "center";
+    borderContainer.style.justifyContent = "space-between";
+    borderContainer.style.padding = "4px 0";
 
-    const borderLabel = document.createElement('label');
-    borderLabel.textContent = 'Border Style';
-    borderLabel.style.fontSize = '12px';
-    borderLabel.style.color = '#ccc';
+    const borderLabel = document.createElement("label");
+    borderLabel.textContent = "Border Style";
+    borderLabel.style.fontSize = "12px";
+    borderLabel.style.color = "#ccc";
     borderContainer.appendChild(borderLabel);
 
-    const borderBtn = document.createElement('button');
-    borderBtn.className = 'be-prop-border-button';
-    borderBtn.style.width = '60px';
-    borderBtn.style.height = '40px';
-    borderBtn.style.padding = '4px';
-    borderBtn.style.border = '1px solid #444';
-    borderBtn.style.backgroundColor = '#222';
-    borderBtn.style.cursor = 'pointer';
-    borderBtn.style.borderRadius = '4px';
-    borderBtn.style.display = 'flex';
-    borderBtn.style.alignItems = 'center';
-    borderBtn.style.justifyContent = 'center';
-    borderBtn.style.position = 'relative';
-    borderBtn.title = 'Change Border Style';
+    const borderBtn = document.createElement("button");
+    borderBtn.className = "be-prop-border-button";
+    borderBtn.style.width = "60px";
+    borderBtn.style.height = "40px";
+    borderBtn.style.padding = "4px";
+    borderBtn.style.border = "1px solid #444";
+    borderBtn.style.backgroundColor = "#222";
+    borderBtn.style.cursor = "pointer";
+    borderBtn.style.borderRadius = "4px";
+    borderBtn.style.display = "flex";
+    borderBtn.style.alignItems = "center";
+    borderBtn.style.justifyContent = "center";
+    borderBtn.style.position = "relative";
+    borderBtn.title = "Change Border Style";
 
-    const currentBorderStyle = ALL_BORDER_STYLES.find(style => activeSection.classList.contains(style)) || 'default-border';
+    const currentBorderStyle =
+      ALL_BORDER_STYLES.find((style) =>
+        activeSection.classList.contains(style),
+      ) || "default-border";
 
-    const borderPreview = document.createElement('div');
+    const borderPreview = document.createElement("div");
     borderPreview.className = `be-border-preview ${currentBorderStyle}`;
-    borderPreview.style.width = '100%';
-    borderPreview.style.height = '100%';
-    borderPreview.style.pointerEvents = 'none';
+    borderPreview.style.width = "100%";
+    borderPreview.style.height = "100%";
+    borderPreview.style.pointerEvents = "none";
     borderBtn.appendChild(borderPreview);
 
     borderBtn.onclick = async () => {
-        const style = ALL_BORDER_STYLES.find(s => activeSection.classList.contains(s)) || 'default-border';
-        const result = await showBorderPickerModal(style);
+      const style =
+        ALL_BORDER_STYLES.find((s) => activeSection.classList.contains(s)) ||
+        "default-border";
+      const result = await showBorderPickerModal(style);
 
-        if (result) {
-            clearBorderStyles(activeSection);
-            activeSection.classList.add(result.style);
-            
-            // Update preview
-            borderPreview.className = `be-border-preview ${result.style}`;
-            
-            updateLayoutBounds();
-        }
+      if (result) {
+        clearBorderStyles(activeSection);
+        activeSection.classList.add(result.style);
+
+        // Update preview
+        borderPreview.className = `be-border-preview ${result.style}`;
+
+        updateLayoutBounds();
+      }
     };
 
     borderContainer.appendChild(borderBtn);
     panel.appendChild(borderContainer);
-}
+  }
 
-/**
- * Returns the currently active section.
- */
-function getActiveSection() {
+  /**
+   * Returns the currently active section.
+   */
+  function getActiveSection() {
     return activeSection;
-}
+  }
 
+  /**
+   * Initializes global hover highlights for the active layer.
+   * Uses a single listener and z-index prioritization to prevent flickering on overlaps.
+   */
+  function initHoverHighlights() {
+    const container =
+      document.getElementById("print-layout-wrapper") || document.body;
 
-/**
- * Initializes global hover highlights for the active layer.
- * Uses a single listener and z-index prioritization to prevent flickering on overlaps.
- */
-function initHoverHighlights() {
-    const container = document.getElementById('print-layout-wrapper') || document.body;
+    container.addEventListener("mousemove", (e) => {
+      const lm = window.PeDom
+        ? window.PeDom().getLayerManager()
+        : window.DomManager
+          ? window.DomManager.getInstance().getLayerManager()
+          : null;
+      if (!lm || !lm.activeLayerId) {
+        document
+          .querySelectorAll(".be-hover-highlight")
+          .forEach((el) => el.classList.remove("be-hover-highlight"));
+        return;
+      }
 
-    container.addEventListener('mousemove', (e) => {
-        const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
-        if (!lm || !lm.activeLayerId) {
-            document.querySelectorAll('.be-hover-highlight').forEach(el => el.classList.remove('be-hover-highlight'));
-            return;
-        }
+      // Find all elements at current mouse position
+      const elements = document.elementsFromPoint(e.clientX, e.clientY);
 
-        // Find all elements at current mouse position
-        const elements = document.elementsFromPoint(e.clientX, e.clientY);
-        
-        // Filter for wrappers that belong to the active layer
-        const validWrappers = elements
-            .map(el => el.closest('.be-section-wrapper'))
-            .filter(wrapper => {
-                if (!wrapper) return false;
-                const layer = lm.getLayerForElement(wrapper.id);
-                return layer && layer.id === lm.activeLayerId;
-            });
-
-        // Unique set to handle parent/child overlap if any
-        const uniqueWrappers = Array.from(new Set(validWrappers));
-
-        if (uniqueWrappers.length === 0) {
-            document.querySelectorAll('.be-hover-highlight').forEach(el => el.classList.remove('be-hover-highlight'));
-            return;
-        }
-
-        // Prioritize by Z-Index
-        const bestWrapper = uniqueWrappers.reduce((prev, current) => {
-            const prevZ = parseInt(window.getComputedStyle(prev).zIndex) || 0;
-            const currentZ = parseInt(window.getComputedStyle(current).zIndex) || 0;
-            return (currentZ >= prevZ) ? current : prev;
+      // Filter for wrappers that belong to the active layer
+      const validWrappers = elements
+        .map((el) => el.closest(".be-section-wrapper"))
+        .filter((wrapper) => {
+          if (!wrapper) return false;
+          const layer = lm.getLayerForElement(wrapper.id);
+          return layer && layer.id === lm.activeLayerId;
         });
 
-        // Update classes
-        document.querySelectorAll('.be-hover-highlight').forEach(el => {
-            if (el !== bestWrapper) el.classList.remove('be-hover-highlight');
-        });
-        bestWrapper.classList.add('be-hover-highlight');
+      // Unique set to handle parent/child overlap if any
+      const uniqueWrappers = Array.from(new Set(validWrappers));
+
+      if (uniqueWrappers.length === 0) {
+        document
+          .querySelectorAll(".be-hover-highlight")
+          .forEach((el) => el.classList.remove("be-hover-highlight"));
+        return;
+      }
+
+      // Prioritize by Z-Index
+      const bestWrapper = uniqueWrappers.reduce((prev, current) => {
+        const prevZ = parseInt(window.getComputedStyle(prev).zIndex) || 0;
+        const currentZ = parseInt(window.getComputedStyle(current).zIndex) || 0;
+        return currentZ >= prevZ ? current : prev;
+      });
+
+      // Update classes
+      document.querySelectorAll(".be-hover-highlight").forEach((el) => {
+        if (el !== bestWrapper) el.classList.remove("be-hover-highlight");
+      });
+      bestWrapper.classList.add("be-hover-highlight");
     });
 
     // Clear highlights when leaving the container entirely
-    container.addEventListener('mouseleave', () => {
-        document.querySelectorAll('.be-hover-highlight').forEach(el => el.classList.remove('be-hover-highlight'));
+    container.addEventListener("mouseleave", () => {
+      document
+        .querySelectorAll(".be-hover-highlight")
+        .forEach((el) => el.classList.remove("be-hover-highlight"));
     });
-}
+  }
 
-/**
- * Toggles the interaction mode for the shapes layer.
- */
-function toggleShapesMode(forceState) {
-    const activeClass = 'be-shapes-mode-active';
-    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+  /**
+   * Toggles the interaction mode for the shapes layer.
+   */
+  function toggleShapesMode(forceState) {
+    const activeClass = "be-shapes-mode-active";
+    const lm = window.PeDom
+      ? window.PeDom().getLayerManager()
+      : window.DomManager
+        ? window.DomManager.getInstance().getLayerManager()
+        : null;
 
-    const isActive = forceState !== undefined ? forceState : !document.body.classList.contains(activeClass);
+    const isActive =
+      forceState !== undefined
+        ? forceState
+        : !document.body.classList.contains(activeClass);
 
     if (isActive) {
-        document.body.classList.add(activeClass);
+      document.body.classList.add(activeClass);
     } else {
-        document.body.classList.remove(activeClass);
+      document.body.classList.remove(activeClass);
     }
 
     if (lm) {
-        // In the new system, we toggle the default shape layer or all shape layers
-        const shapesLayer = lm.getLayerById('shapes-default') || (lm.shapeLayers && lm.shapeLayers[0]);
-        if (shapesLayer) {
-            // In the old system, "Shapes Mode ON" meant Locked: false
-            const shouldBeLocked = !isActive;
+      // In the new system, we toggle the default shape layer or all shape layers
+      const shapesLayer =
+        lm.getLayerById("shapes-default") ||
+        (lm.shapeLayers && lm.shapeLayers[0]);
+      if (shapesLayer) {
+        // In the old system, "Shapes Mode ON" meant Locked: false
+        const shouldBeLocked = !isActive;
 
-            // If the state is already what we want, do nothing to avoid feedback loops
-            if (shapesLayer.isLocked === shouldBeLocked) return;
+        // If the state is already what we want, do nothing to avoid feedback loops
+        if (shapesLayer.isLocked === shouldBeLocked) return;
 
-            // Find the button in the panel to keep UI in sync
-            const panel = document.getElementById('print-enhance-layer-manager');
-            let btn = null;
-            if (panel) {
-                const rows = Array.from(panel.querySelectorAll('.be-layer-row'));
-                const shapesRow = rows.find(r => r.dataset.layerId === shapesLayer.id);
-                if (shapesRow) btn = shapesRow.querySelector('button[title="Toggle Edit Mode"]');
-            }
-
-            // Call the new locking logic
-            lm.toggleLayerLock(shapesLayer, btn);
-            return;
+        // Find the button in the panel to keep UI in sync
+        const panel = document.getElementById("print-enhance-layer-manager");
+        let btn = null;
+        if (panel) {
+          const rows = Array.from(panel.querySelectorAll(".be-layer-row"));
+          const shapesRow = rows.find(
+            (r) => r.dataset.layerId === shapesLayer.id,
+          );
+          if (shapesRow)
+            btn = shapesRow.querySelector('button[title="Toggle Edit Mode"]');
         }
+
+        // Call the new locking logic
+        lm.toggleLayerLock(shapesLayer, btn);
+        return;
+      }
     }
 
     // Fallback if LayerManager is not initialized
-    const lockClass = 'be-lock-shapes';
+    const lockClass = "be-lock-shapes";
     if (isActive) {
-        document.body.classList.remove(lockClass);
+      document.body.classList.remove(lockClass);
     } else {
-        document.body.classList.add(lockClass);
+      document.body.classList.add(lockClass);
     }
-}
-/**
- * Helper to refresh Layer Manager content lists.
- */
-function refreshLayers() {
+  }
+  /**
+   * Helper to refresh Layer Manager content lists.
+   */
+  function refreshLayers() {
     try {
-        const lm = PeDom().getLayerManager();
-        if (lm) {
-            lm.refreshLayerContents();
-            lm.updatePrintZIndexes(true); // Silently sync Z-index with UI order
-        }
+      const lm = PeDom().getLayerManager();
+      if (lm) {
+        lm.refreshLayerContents();
+        lm.updatePrintZIndexes(true); // Silently sync Z-index with UI order
+      }
     } catch (e) {
-        // Silently fail if UI not ready
+      // Silently fail if UI not ready
     }
-}
+  }
 
-/**
- * Updates the injected CSS block for print z-index based on data attributes.
- */
-function updatePrintStyles() {
-    let style = document.getElementById('be-print-z-style');
+  /**
+   * Updates the injected CSS block for print z-index based on data attributes.
+   */
+  function updatePrintStyles() {
+    let style = document.getElementById("be-print-z-style");
     if (!style) {
-        style = document.createElement('style');
-        style.id = 'be-print-z-style';
-        if (document.head) document.head.appendChild(style);
-        else document.body.appendChild(style);
+      style = document.createElement("style");
+      style.id = "be-print-z-style";
+      if (document.head) document.head.appendChild(style);
+      else document.body.appendChild(style);
     }
 
-    const elements = document.querySelectorAll('[data-print-z]');
-    const disabledLayers = document.querySelectorAll('[data-print-disabled="true"]');
+    const elements = document.querySelectorAll("[data-print-z]");
+    const disabledLayers = document.querySelectorAll(
+      '[data-print-disabled="true"]',
+    );
 
-    let css = '@media print {\n';
-    
+    let css = "@media print {\n";
+
     // Hide the layer management panel on print
-    css += '  #print-enhance-layer-manager { display: none !important; }\n';
-    
+    css += "  #print-enhance-layer-manager { display: none !important; }\n";
+
     // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
-    css += '  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper, .be-shape-wrapper, .be-layer-locked .be-section-wrapper, .be-layer-locked .be-shape-wrapper { opacity: 1 !important; visibility: visible !important; }\n';
+    css +=
+      "  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper, .be-shape-wrapper, .be-layer-locked .be-section-wrapper, .be-layer-locked .be-shape-wrapper { opacity: 1 !important; visibility: visible !important; }\n";
 
     // Force layer ordering on print: Sections < Shapes
-    css += '  #print-enhance-sections-layer { z-index: 1000 !important; }\n';
-    css += '  .be-shape-layer-container { z-index: 2000 !important; }\n';
+    css += "  #print-enhance-sections-layer { z-index: 1000 !important; }\n";
+    css += "  .be-shape-layer-container { z-index: 2000 !important; }\n";
 
     // Selection and Hover Highlights
-    css += '  .be-active-wrapper, .be-hover-highlight, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n';
+    css +=
+      "  .be-active-wrapper, .be-hover-highlight, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n";
 
     // Hide layers that are explicitly disabled for print
-    disabledLayers.forEach(layer => {
-        if (layer.id) {
-            css += `  #${layer.id} { display: none !important; }\n`;
-        }
+    disabledLayers.forEach((layer) => {
+      if (layer.id) {
+        css += `  #${layer.id} { display: none !important; }\n`;
+      }
     });
 
     // Handle z-index overrides
-    elements.forEach(el => {
-        const z = el.dataset.printZ;
-        if (el && el.id) {
-            // Use ID for maximum specificity to override inline styles during print
-            css += `  #${el.id} { z-index: ${z} !important; }\n`;
-        } else {
-            // Fallback to data attribute if ID is missing
-            css += `  [data-print-z="${z}"] { z-index: ${z} !important; }\n`;
-        }
+    elements.forEach((el) => {
+      const z = el.dataset.printZ;
+      if (el && el.id) {
+        // Use ID for maximum specificity to override inline styles during print
+        css += `  #${el.id} { z-index: ${z} !important; }\n`;
+      } else {
+        // Fallback to data attribute if ID is missing
+        css += `  [data-print-z="${z}"] { z-index: ${z} !important; }\n`;
+      }
     });
-    css += '}';
+    css += "}";
     style.textContent = css;
-}
+  }
 
-window.updatePrintStyles = updatePrintStyles;
+  window.updatePrintStyles = updatePrintStyles;
 
-/**
- * Feature Flags
- */
-const ENABLE_PREMADE_TEMPLATES = false; // Set to true to show 'PREMADE' button
+  /**
+   * Feature Flags
+   */
+  const ENABLE_PREMADE_TEMPLATES = true; // Set to true to show 'TEMPLATES' button
 
-/**
- * Helper for logging that can be silenced in tests.
- */
-function safeLog(method, ...args) {
+  /**
+   * Helper for logging that can be silenced in tests.
+   */
+  function safeLog(method, ...args) {
     if (window.__DDB_TEST_MODE__) return;
     if (console[method]) {
-        console[method](...args);
+      console[method](...args);
     }
-}
-window.safeLog = safeLog;
+  }
+  window.safeLog = safeLog;
 
-/**
- * Full list of available assets for the shape picker.
- */
-const ASSET_LIST = [
+  /**
+   * Full list of available assets for the shape picker.
+   */
+  const ASSET_LIST = [
     "assets/border_ability.webp",
     "assets/border_archer_ability.webp",
     "assets/border_archer_footer.webp",
@@ -479,808 +514,889 @@ const ASSET_LIST = [
     "assets/sticks.webp",
     "assets/vine_hand.webp",
     "assets/vine_hollow.webp",
-    "assets/vine_plants.webp"
-];
+    "assets/vine_plants.webp",
+  ];
 
-/**
- * Metadata for assets including slice, width, and outset for border-image.
- * Values are calculated based on image dimensions and file sizes.
- * If 'isBackground' is true, it will be applied as background-image instead of border-image.
- */
-const ASSET_METADATA = {
+  /**
+   * Metadata for assets including slice, width, and outset for border-image.
+   * Values are calculated based on image dimensions and file sizes.
+   * If 'isBackground' is true, it will be applied as background-image instead of border-image.
+   */
+  const ASSET_METADATA = {
     "assets/border_ability.webp": {
-        "slice": 66,
-        "width": "28px",
-        "outset": "16px",
-        "className": "ability_border"
+      slice: 66,
+      width: "28px",
+      outset: "16px",
+      className: "ability_border",
     },
     "assets/border_barbarian.webp": {
-        "slice": 153,
-        "width": "142px",
-        "outset": "55px",
-        "className": "barbarian_border"
+      slice: 153,
+      width: "142px",
+      outset: "55px",
+      className: "barbarian_border",
     },
     "assets/border_archer_header.webp": {
-        "slice": "481 470 202 475",
-        "width": "172px 208px 81px 194px",
-        "outset": "10px",
-        "className": "archer_header_border"
+      slice: "481 470 202 475",
+      width: "172px 208px 81px 194px",
+      outset: "10px",
+      className: "archer_header_border",
     },
     "assets/border_archer_ability.webp": {
-        "slice": "167 174 79 178",
-        "width": "201px 245px 116px 242px",
-        "outset": "10px",
-        "className": "archer_ability_border"
+      slice: "167 174 79 178",
+      width: "201px 245px 116px 242px",
+      outset: "10px",
+      className: "archer_ability_border",
     },
     "assets/border_archer_footer.webp": {
-        "slice": "61 60 61 83",
-        "width": "35px 32px 36px 44px",
-        "outset": "10px",
-        "className": "archer_border_archer_footer"
+      slice: "61 60 61 83",
+      width: "35px 32px 36px 44px",
+      outset: "10px",
+      className: "archer_border_archer_footer",
     },
     "assets/border_archer_sidebar.webp": {
-        "slice": "61 60 61 83",
-        "width": "35px 32px 36px 44px",
-        "outset": "10px",
-        "className": "archer_border_archer_sidebar"
+      slice: "61 60 61 83",
+      width: "35px 32px 36px 44px",
+      outset: "10px",
+      className: "archer_border_archer_sidebar",
     },
     "assets/border_barbarian_hand.webp": {
-        "slice": 261,
-        "width": "100px",
-        "outset": "30px",
-        "className": "barbarian_hand_border"
+      slice: 261,
+      width: "100px",
+      outset: "30px",
+      className: "barbarian_hand_border",
     },
     "assets/border_box.webp": {
-        "slice": 45,
-        "width": "20px",
-        "outset": "7px 10px",
-        "className": "box_border"
+      slice: 45,
+      width: "20px",
+      outset: "7px 10px",
+      className: "box_border",
     },
     "assets/border_default.webp": {
-        "slice": 22,
-        "width": "24px",
-        "outset": "7px 10px",
-        "className": "default-border"
+      slice: 22,
+      width: "24px",
+      outset: "7px 10px",
+      className: "default-border",
     },
     "assets/border_goth1.webp": {
-        "slice": 250,
-        "width": "111px",
-        "outset": "54px 44px",
-        "className": "goth_border"
+      slice: 250,
+      width: "111px",
+      outset: "54px 44px",
+      className: "goth_border",
     },
     "assets/border_goth1_hand.webp": {
-        "slice": 261,
-        "width": "100px",
-        "outset": "30px",
-        "className": "goth_hand_border"
+      slice: 261,
+      width: "100px",
+      outset: "30px",
+      className: "goth_hand_border",
     },
     "assets/border_spikes.webp": {
-        "slice": 177,
-        "width": "118px",
-        "outset": "55px",
-        "className": "spikes_border"
+      slice: 177,
+      width: "118px",
+      outset: "55px",
+      className: "spikes_border",
     },
     "assets/dwarf.webp": {
-        "slice": 206,
-        "width": "205px",
-        "outset": "55px",
-        "className": "dwarf_border"
+      slice: 206,
+      width: "205px",
+      outset: "55px",
+      className: "dwarf_border",
     },
     "assets/dwarf_hollow.webp": {
-        "slice": 206,
-        "width": "143px",
-        "outset": "38px",
-        "className": "dwarf_hollow_border"
+      slice: 206,
+      width: "143px",
+      outset: "38px",
+      className: "dwarf_hollow_border",
     },
     "assets/dwarf_hollow_hand.webp": {
-        "slice": 259,
-        "width": "100px",
-        "outset": "30px",
-        "className": "dwarf_hollow_hand_border"
+      slice: 259,
+      width: "100px",
+      outset: "30px",
+      className: "dwarf_hollow_hand_border",
     },
     "assets/ornament.webp": {
-        "slice": 105,
-        "width": "88px",
-        "outset": "32px",
-        "className": "ornament_border"
+      slice: 105,
+      width: "88px",
+      outset: "32px",
+      className: "ornament_border",
     },
     "assets/ornament2.webp": {
-        "slice": 105,
-        "width": "144px",
-        "outset": "48px",
-        "className": "ornament2_border"
+      slice: 105,
+      width: "144px",
+      outset: "48px",
+      className: "ornament2_border",
     },
     "assets/ornament_bold.webp": {
-        "slice": 205,
-        "width": "222px",
-        "outset": "100px",
-        "className": "ornament_bold_border"
+      slice: 205,
+      width: "222px",
+      outset: "100px",
+      className: "ornament_bold_border",
     },
     "assets/ornament_bold2.webp": {
-        "slice": 205,
-        "width": "141px",
-        "outset": "50px",
-        "className": "ornament_bold2_border"
+      slice: 205,
+      width: "141px",
+      outset: "50px",
+      className: "ornament_bold2_border",
     },
     "assets/ornament_simple.webp": {
-        "slice": 83,
-        "width": "111px",
-        "outset": "45px",
-        "className": "ornament_simple_border"
+      slice: 83,
+      width: "111px",
+      outset: "45px",
+      className: "ornament_simple_border",
     },
     "assets/shapes/archer_accent_a.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/archer_accent_b.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/dwarf.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/dwarf_hollow_hand.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/shield_stats.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/archer_divider.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/archer_main.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/border_spikes_hand.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_barbarian.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_border_barbarian_hand.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_border_goth1.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_border_plants_hand.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_dwarf.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_dwarf_hollow.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament2.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament_bold.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament_bold2.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament_bold3.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament_simple.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_ornament_simple2.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_spikes.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_spike_hollow.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_spike_hollow2.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_sticks.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_sticks1.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/shapes/corner_vine_hollow.webp": {
-        "isBackground": true
+      isBackground: true,
     },
     "assets/spike_bold.webp": {
-        "slice": 83,
-        "width": "111px",
-        "outset": "55px",
-        "className": "spiky_bold_border"
+      slice: 83,
+      width: "111px",
+      outset: "55px",
+      className: "spiky_bold_border",
     },
     "assets/spike_hollow.webp": {
-        "slice": 205,
-        "width": "111px",
-        "outset": "45px",
-        "className": "spike_hollow_border"
+      slice: 205,
+      width: "111px",
+      outset: "45px",
+      className: "spike_hollow_border",
     },
     "assets/spike_hollow2.webp": {
-        "slice": 205,
-        "width": "100px",
-        "outset": "45px",
-        "className": "spiky_border"
+      slice: 205,
+      width: "100px",
+      outset: "45px",
+      className: "spiky_border",
     },
     "assets/sticks.webp": {
-        "slice": 245,
-        "width": "146px",
-        "outset": "65px",
-        "className": "sticks_border"
+      slice: 245,
+      width: "146px",
+      outset: "65px",
+      className: "sticks_border",
     },
     "assets/vine_hand.webp": {
-        "slice": 261,
-        "width": "100px",
-        "outset": "30px",
-        "className": "vine_hand_border"
+      slice: 261,
+      width: "100px",
+      outset: "30px",
+      className: "vine_hand_border",
     },
     "assets/vine_hollow.webp": {
-        "slice": 205,
-        "width": "130px",
-        "outset": "45px",
-        "className": "vine_border"
+      slice: 205,
+      width: "130px",
+      outset: "45px",
+      className: "vine_border",
     },
     "assets/vine_plants.webp": {
-        "slice": 200,
-        "width": "133px",
-        "outset": "55px",
-        "className": "plants_border"
-    }
-};
+      slice: 200,
+      width: "133px",
+      outset: "55px",
+      className: "plants_border",
+    },
+  };
 
-/**
- * All available border style classes, derived from metadata.
- */
-const ALL_BORDER_STYLES = [
-    'no-border',
+  /**
+   * All available border style classes, derived from metadata.
+   */
+  const ALL_BORDER_STYLES = [
+    "no-border",
     ...Object.values(ASSET_METADATA)
-        .map(meta => meta.className)
-        .filter(name => name)
-];
+      .map((meta) => meta.className)
+      .filter((name) => name),
+  ];
 
-/**
- * Parses and categorizes assets for the shape picker.
- * @param {string[]} fileList 
- * @returns {{borders: Array, shapes: Array}}
- */
-function parseAssets(fileList) {
+  /**
+   * Parses and categorizes assets for the shape picker.
+   * @param {string[]} fileList
+   * @returns {{borders: Array, shapes: Array}}
+   */
+  function parseAssets(fileList) {
     const categories = {
-        borders: [],
-        shapes: []
+      borders: [],
+      shapes: [],
     };
 
-    const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
+    const tagList = [
+      "bold",
+      "hand drawn",
+      "hollow",
+      "ornament",
+      "dwarf",
+      "goth",
+      "border",
+      "barbarian",
+      "vine",
+      "plants",
+      "spikes",
+      "sticks",
+    ];
 
-    fileList.forEach(filePath => {
-        if (!filePath.endsWith('.webp')) return;
+    fileList.forEach((filePath) => {
+      if (!filePath.endsWith(".webp")) return;
 
-        const isShape = filePath.includes('assets/shapes/');
-        const fileName = filePath.split('/').pop().toLowerCase();
-        
-        // Extract tags
-        const tags = tagList.filter(tag => fileName.includes(tag.replace(' ', '_')));
-        
-        // Specialized logic for "hand drawn" which might be "hand" in filename
-        if (fileName.includes('hand') && !tags.includes('hand drawn')) {
-            tags.push('hand drawn');
-        }
+      const isShape = filePath.includes("assets/shapes/");
+      const fileName = filePath.split("/").pop().toLowerCase();
 
-        const asset = {
-            path: filePath,
-            label: fileName.replace('.webp', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            tags: tags
-        };
+      // Extract tags
+      const tags = tagList.filter((tag) =>
+        fileName.includes(tag.replace(" ", "_")),
+      );
 
-        if (isShape) {
-            categories.shapes.push(asset);
-        } else {
-            categories.borders.push(asset);
-        }
+      // Specialized logic for "hand drawn" which might be "hand" in filename
+      if (fileName.includes("hand") && !tags.includes("hand drawn")) {
+        tags.push("hand drawn");
+      }
+
+      const asset = {
+        path: filePath,
+        label: fileName
+          .replace(".webp", "")
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
+        tags: tags,
+      };
+
+      if (isShape) {
+        categories.shapes.push(asset);
+      } else {
+        categories.borders.push(asset);
+      }
     });
 
     return categories;
-}
+  }
 
-/**
- * Calculates a snapped angle based on the step size.
- * @param {number} angle 
- * @param {number} step Default 15
- */
-function calculateSnappedAngle(angle, step = 15) {
+  /**
+   * Calculates a snapped angle based on the step size.
+   * @param {number} angle
+   * @param {number} step Default 15
+   */
+  function calculateSnappedAngle(angle, step = 15) {
     return Math.round(angle / step) * step;
-}
+  }
 
-/**
- * Calculates the angle in degrees between a center point and a pointer point.
- */
-function getAngleFromPoint(cx, cy, px, py) {
+  /**
+   * Calculates the angle in degrees between a center point and a pointer point.
+   */
+  function getAngleFromPoint(cx, cy, px, py) {
     const dy = py - cy;
     const dx = px - cx;
     let theta = Math.atan2(dy, dx);
     theta *= 180 / Math.PI;
     if (theta < 0) theta = 360 + theta;
     return theta;
-}
+  }
 
-// Default layouts are now loaded from premade templates (catalog.json)
+  // Default layouts are now loaded from premade templates (catalog.json)
 
+  let db = null;
 
-let db = null;
+  const Storage = {
+    SCHEMA_VERSION,
+    initPromise: null,
 
-const Storage = {
-  SCHEMA_VERSION,
-  initPromise: null,
+    /**
+     * Initialize the IndexedDB connection.
+     */
+    init: () => {
+      if (db) return Promise.resolve(db);
+      if (Storage.initPromise) return Storage.initPromise;
 
-  /**
-   * Initialize the IndexedDB connection.
-   */
-  init: () => {
-    if (db) return Promise.resolve(db);
-    if (Storage.initPromise) return Storage.initPromise;
+      Storage.initPromise = new Promise((resolve, reject) => {
+        try {
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    Storage.initPromise = new Promise((resolve, reject) => {
-      try {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onblocked = () => {
-          alert('Please close other tabs of D&D Beyond to allow the database to update.');
-          safeLog('warn', '[DDB Print Enhance] IndexedDB open blocked. Other tabs might be holding a connection.');
-        };
-
-        request.onerror = (event) => {
-          const error = event.target.error;
-          safeLog('error', `[DDB Print Enhance] IndexedDB error (${error?.name}): ${error?.message}`);
-          Storage.initPromise = null; // Allow retry
-          reject(error);
-        };
-
-        request.onupgradeneeded = (event) => {
-          const upgradeDb = event.target.result;
-          safeLog('log', `[DDB Print Enhance] Upgrading IndexedDB to version ${DB_VERSION}...`);
-          if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
-            upgradeDb.createObjectStore(STORE_NAME, { keyPath: 'characterId' });
-          }
-          if (!upgradeDb.objectStoreNames.contains(SPELL_CACHE_STORE)) {
-            upgradeDb.createObjectStore(SPELL_CACHE_STORE, { keyPath: 'name' });
-          }
-          if (!upgradeDb.objectStoreNames.contains(CUSTOM_SHAPES_STORE)) {
-            upgradeDb.createObjectStore(CUSTOM_SHAPES_STORE, { keyPath: 'id' });
-          }
-        };
-
-        request.onsuccess = (event) => {
-          db = event.target.result;
-          
-          db.onversionchange = () => {
-            db.close();
-            db = null;
-            Storage.initPromise = null;
-            safeLog('warn', '[DDB Print Enhance] Database version changed elsewhere. Connection closed.');
+          request.onblocked = () => {
+            alert(
+              "Please close other tabs of D&D Beyond to allow the database to update.",
+            );
+            safeLog(
+              "warn",
+              "[DDB Print Enhance] IndexedDB open blocked. Other tabs might be holding a connection.",
+            );
           };
 
-          resolve(db);
-        };
-      } catch (err) {
-        safeLog('error', '[DDB Print Enhance] Critical error opening IndexedDB:', err);
-        Storage.initPromise = null;
-        reject(err);
-      }
-    });
+          request.onerror = (event) => {
+            const error = event.target.error;
+            safeLog(
+              "error",
+              `[DDB Print Enhance] IndexedDB error (${error?.name}): ${error?.message}`,
+            );
+            Storage.initPromise = null; // Allow retry
+            reject(error);
+          };
 
-    return Storage.initPromise;
-  },
+          request.onupgradeneeded = (event) => {
+            const upgradeDb = event.target.result;
+            safeLog(
+              "log",
+              `[DDB Print Enhance] Upgrading IndexedDB to version ${DB_VERSION}...`,
+            );
+            if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
+              upgradeDb.createObjectStore(STORE_NAME, {
+                keyPath: "characterId",
+              });
+            }
+            if (!upgradeDb.objectStoreNames.contains(SPELL_CACHE_STORE)) {
+              upgradeDb.createObjectStore(SPELL_CACHE_STORE, {
+                keyPath: "name",
+              });
+            }
+            if (!upgradeDb.objectStoreNames.contains(CUSTOM_SHAPES_STORE)) {
+              upgradeDb.createObjectStore(CUSTOM_SHAPES_STORE, {
+                keyPath: "id",
+              });
+            }
+          };
 
-  /**
-   * Migrates layout data to the latest SCHEMA_VERSION.
-   * @param {object} data
-   * @returns {object}
-   */
-  migrateLayout: (data) => {
+          request.onsuccess = (event) => {
+            db = event.target.result;
+
+            db.onversionchange = () => {
+              db.close();
+              db = null;
+              Storage.initPromise = null;
+              safeLog(
+                "warn",
+                "[DDB Print Enhance] Database version changed elsewhere. Connection closed.",
+              );
+            };
+
+            resolve(db);
+          };
+        } catch (err) {
+          safeLog(
+            "error",
+            "[DDB Print Enhance] Critical error opening IndexedDB:",
+            err,
+          );
+          Storage.initPromise = null;
+          reject(err);
+        }
+      });
+
+      return Storage.initPromise;
+    },
+
+    /**
+     * Migrates layout data to the latest SCHEMA_VERSION.
+     * @param {object} data
+     * @returns {object}
+     */
+    migrateLayout: (data) => {
       if (!data) return data;
-      
+
       const migrated = { ...data };
 
       // Ensure shapeLayers exists
       if (!migrated.shapeLayers) {
-          migrated.shapeLayers = [];
+        migrated.shapeLayers = [];
       }
 
       // If shapeLayers is empty and it's a legacy version, migrate legacy data
-      if (migrated.shapeLayers.length === 0 && data.version !== SCHEMA_VERSION) {
-          const legacyShapes = data.shapes || [];
-          const legacyShapeLayerState = data.layers?.shapes || { isLocked: false, isHidden: false };
+      if (
+        migrated.shapeLayers.length === 0 &&
+        data.version !== SCHEMA_VERSION
+      ) {
+        const legacyShapes = data.shapes || [];
+        const legacyShapeLayerState = data.layers?.shapes || {
+          isLocked: false,
+          isHidden: false,
+        };
 
-          migrated.shapeLayers.push({
-              id: 'shapes-default',
-              name: 'Default Shapes Layer',
-              layerId: 'print-enhance-shapes-layer',
-              isLocked: legacyShapeLayerState.isLocked || false,
-              isHidden: legacyShapeLayerState.isHidden || false,
-              isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
-              elements: legacyShapes
-          });
+        migrated.shapeLayers.push({
+          id: "shapes-default",
+          name: "Default Shapes Layer",
+          layerId: "print-enhance-shapes-layer",
+          isLocked: legacyShapeLayerState.isLocked || false,
+          isHidden: legacyShapeLayerState.isHidden || false,
+          isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
+          elements: legacyShapes,
+        });
       }
 
       // Final version update
       migrated.version = SCHEMA_VERSION;
 
       return migrated;
-  },
+    },
 
-  /**
-   * Validates if the object matches the expected layout schema.
-   * @param {object} data 
-   * @returns {boolean}
-   */
-  validateLayout: (data) => {
-      if (!data || typeof data !== 'object') return false;
-      if (data.version === undefined || data.sections === undefined) return false;
-      if (typeof data.sections !== 'object') return false;
+    /**
+     * Validates if the object matches the expected layout schema.
+     * @param {object} data
+     * @returns {boolean}
+     */
+    validateLayout: (data) => {
+      if (!data || typeof data !== "object") return false;
+      if (data.version === undefined || data.sections === undefined)
+        return false;
+      if (typeof data.sections !== "object") return false;
       return true;
-  },
+    },
 
-  /**
-   * Save character layout data.
-   * @param {string} characterId 
-   * @param {object} data - { characterId, sectionOrder, customSpells }
-   */
-  saveLayout: async (characterId, data) => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      // Ensure characterId is present in the data object for the keyPath
-      const payload = { ...data, characterId };
-      
-      const request = store.put(payload);
+    /**
+     * Save character layout data.
+     * @param {string} characterId
+     * @param {object} data - { characterId, sectionOrder, customSpells }
+     */
+    saveLayout: async (characterId, data) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction([STORE_NAME], "readwrite");
+        const store = transaction.objectStore(STORE_NAME);
 
-      request.onsuccess = () => resolve();
-      request.onerror = (event) => reject(event.target.error);
-    });
-  },
+        // Ensure characterId is present in the data object for the keyPath
+        const payload = { ...data, characterId };
 
-  /**
-   * Load character layout data.
-   * @param {string} characterId 
-   * @returns {Promise<object|undefined>}
-   */
-  loadLayout: async (characterId) => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.get(characterId);
+        const request = store.put(payload);
 
-      request.onsuccess = (event) => resolve(Storage.migrateLayout(event.target.result));
-      request.onerror = (event) => reject(event.target.error);
-    });
-  },
+        request.onsuccess = () => resolve();
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
 
-  /**
-   * Save global layout data.
-   * @param {object} data 
-   */
-  saveGlobalLayout: (data) => {
-    return Storage.saveLayout('GLOBAL', data);
-  },
+    /**
+     * Load character layout data.
+     * @param {string} characterId
+     * @returns {Promise<object|undefined>}
+     */
+    loadLayout: async (characterId) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction([STORE_NAME], "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(characterId);
 
-  /**
-   * Load global layout data.
-   * @returns {Promise<object|undefined>}
-   */
-  loadGlobalLayout: () => {
-    return Storage.loadLayout('GLOBAL');
-  },
+        request.onsuccess = (event) =>
+          resolve(Storage.migrateLayout(event.target.result));
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
 
-  /**
-   * Save global hue shift value.
-   * @param {number} deg 
-   */
-  saveHueShift: async (deg) => {
-    const globalData = await Storage.loadGlobalLayout() || { version: SCHEMA_VERSION, sections: {} };
-    globalData.hueShift = deg;
-    return Storage.saveGlobalLayout(globalData);
-  },
+    /**
+     * Save global layout data.
+     * @param {object} data
+     */
+    saveGlobalLayout: (data) => {
+      return Storage.saveLayout("GLOBAL", data);
+    },
 
-  /**
-   * Get global hue shift value.
-   * @returns {Promise<number>}
-   */
-  getHueShift: async () => {
-    const globalData = await Storage.loadGlobalLayout();
-    return (globalData && globalData.hueShift !== undefined) ? globalData.hueShift : 0;
-  },
+    /**
+     * Load global layout data.
+     * @returns {Promise<object|undefined>}
+     */
+    loadGlobalLayout: () => {
+      return Storage.loadLayout("GLOBAL");
+    },
 
-  /**
-   * Save individual filter value.
-   * @param {string} key - contrast, greyscale, saturate, sepia
-   * @param {number} value 
-   */
-  saveFilter: async (key, value) => {
-    const globalData = await Storage.loadGlobalLayout() || { version: SCHEMA_VERSION, sections: {} };
-    if (!globalData.filters) globalData.filters = {};
-    globalData.filters[key] = value;
-    return Storage.saveGlobalLayout(globalData);
-  },
+    /**
+     * Save global hue shift value.
+     * @param {number} deg
+     */
+    saveHueShift: async (deg) => {
+      const globalData = (await Storage.loadGlobalLayout()) || {
+        version: SCHEMA_VERSION,
+        sections: {},
+      };
+      globalData.hueShift = deg;
+      return Storage.saveGlobalLayout(globalData);
+    },
 
-  /**
-   * Get all global filters.
-   * @returns {Promise<object>}
-   */
-  getFilters: async () => {
-    const globalData = await Storage.loadGlobalLayout();
-    const hue = (globalData && globalData.hueShift !== undefined) ? globalData.hueShift : 0;
-    const defaults = {
-      hue: hue,
-      contrast: 100,
-      greyscale: 100,
-      saturate: 100,
-      sepia: 0
-      };    if (!globalData || !globalData.filters) return defaults;
-    return { ...defaults, ...globalData.filters };
-  },
+    /**
+     * Get global hue shift value.
+     * @returns {Promise<number>}
+     */
+    getHueShift: async () => {
+      const globalData = await Storage.loadGlobalLayout();
+      return globalData && globalData.hueShift !== undefined
+        ? globalData.hueShift
+        : 0;
+    },
 
-  /**
-   * Save a custom shape globally.
-   * @param {object} shape {id, name, data}
-   */
-  saveCustomShape: async (shape) => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([CUSTOM_SHAPES_STORE], 'readwrite');
-      const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
-      const request = store.put(shape);
-      request.onsuccess = () => resolve();
-      request.onerror = (event) => reject(event.target.error);
-    });
-  },
+    /**
+     * Save individual filter value.
+     * @param {string} key - contrast, greyscale, saturate, sepia
+     * @param {number} value
+     */
+    saveFilter: async (key, value) => {
+      const globalData = (await Storage.loadGlobalLayout()) || {
+        version: SCHEMA_VERSION,
+        sections: {},
+      };
+      if (!globalData.filters) globalData.filters = {};
+      globalData.filters[key] = value;
+      return Storage.saveGlobalLayout(globalData);
+    },
 
-  /**
-   * Get all globally saved custom shapes.
-   * @returns {Promise<Array>}
-   */
-  getCustomShapes: async () => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([CUSTOM_SHAPES_STORE], 'readonly');
-      const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
-      const request = store.getAll();
-      request.onsuccess = (event) => resolve(event.target.result || []);
-      request.onerror = (event) => reject(event.target.error);
-    });
-  },
+    /**
+     * Get all global filters.
+     * @returns {Promise<object>}
+     */
+    getFilters: async () => {
+      const globalData = await Storage.loadGlobalLayout();
+      const hue =
+        globalData && globalData.hueShift !== undefined
+          ? globalData.hueShift
+          : 0;
+      const defaults = {
+        hue: hue,
+        contrast: 100,
+        greyscale: 100,
+        saturate: 100,
+        sepia: 0,
+      };
+      if (!globalData || !globalData.filters) return defaults;
+      return { ...defaults, ...globalData.filters };
+    },
 
-  /**
-   * Save multiple spells to the cache.
-   * @param {Array} spells 
-   */
-  saveSpells: async (spells) => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([SPELL_CACHE_STORE], 'readwrite');
-      const store = transaction.objectStore(SPELL_CACHE_STORE);
-      
-      spells.forEach(spell => store.put(spell));
+    /**
+     * Save a custom shape globally.
+     * @param {object} shape {id, name, data}
+     */
+    saveCustomShape: async (shape) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [CUSTOM_SHAPES_STORE],
+          "readwrite",
+        );
+        const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
+        const request = store.put(shape);
+        request.onsuccess = () => resolve();
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
 
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = (event) => reject(event.target.error);
-    });
-  },
+    /**
+     * Get all globally saved custom shapes.
+     * @returns {Promise<Array>}
+     */
+    getCustomShapes: async () => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [CUSTOM_SHAPES_STORE],
+          "readonly",
+        );
+        const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
+        const request = store.getAll();
+        request.onsuccess = (event) => resolve(event.target.result || []);
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
 
-  /**
-   * Get a spell from the cache by name.
-   * @param {string} name 
-   * @returns {Promise<object|undefined>}
-   */
-  getSpell: async (name) => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([SPELL_CACHE_STORE], 'readonly');
-      const store = transaction.objectStore(SPELL_CACHE_STORE);
-      const request = store.get(name);
+    /**
+     * Save multiple spells to the cache.
+     * @param {Array} spells
+     */
+    saveSpells: async (spells) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [SPELL_CACHE_STORE],
+          "readwrite",
+        );
+        const store = transaction.objectStore(SPELL_CACHE_STORE);
 
-      request.onsuccess = (event) => resolve(event.target.result);
-      request.onerror = (event) => reject(event.target.error);
-    });
-  },
+        spells.forEach((spell) => store.put(spell));
 
-  /**
-   * Get all spells from the cache.
-   * @returns {Promise<Array>}
-   */
-  getAllSpells: async () => {
-    const database = await Storage.init();
-    return new Promise((resolve, reject) => {
-      const transaction = database.transaction([SPELL_CACHE_STORE], 'readonly');
-      const store = transaction.objectStore(SPELL_CACHE_STORE);
-      const request = store.getAll();
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = (event) => reject(event.target.error);
+      });
+    },
 
-      request.onsuccess = (event) => resolve(event.target.result);
-      request.onerror = (event) => reject(event.target.error);
-    });
-  }
-};
+    /**
+     * Get a spell from the cache by name.
+     * @param {string} name
+     * @returns {Promise<object|undefined>}
+     */
+    getSpell: async (name) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [SPELL_CACHE_STORE],
+          "readonly",
+        );
+        const store = transaction.objectStore(SPELL_CACHE_STORE);
+        const request = store.get(name);
 
-const ImageProcessor = {
-  MAX_SIZE_BYTES: 750 * 1024, // 750KB threshold
-  TARGET_WIDTH: 1200, // Reasonable max width for shapes
+        request.onsuccess = (event) => resolve(event.target.result);
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
 
-  /**
-   * Processes a file: reads as base64 and compresses if needed.
-   * @param {File} file 
-   * @returns {Promise<string>} Base64 string
-   */
-  processImage: async (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target.result;
-        
-        if (file.size <= ImageProcessor.MAX_SIZE_BYTES) {
-          resolve(base64);
-        } else {
-          // Large file, needs compression
-          const confirmed = await window.confirm(
-            `The image "${file.name}" is large (${(file.size / 1024).toFixed(1)}KB). \n\nIt will be resized and compressed to ensure the layout remains fast and sharable. Quality may decrease slightly. \n\nDo you want to proceed?`
-          );
-          
-          if (!confirmed) {
-            reject(new Error('User cancelled compression'));
-            return;
+    /**
+     * Get all spells from the cache.
+     * @returns {Promise<Array>}
+     */
+    getAllSpells: async () => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [SPELL_CACHE_STORE],
+          "readonly",
+        );
+        const store = transaction.objectStore(SPELL_CACHE_STORE);
+        const request = store.getAll();
+
+        request.onsuccess = (event) => resolve(event.target.result);
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
+  };
+
+  const ImageProcessor = {
+    MAX_SIZE_BYTES: 750 * 1024, // 750KB threshold
+    TARGET_WIDTH: 1200, // Reasonable max width for shapes
+
+    /**
+     * Processes a file: reads as base64 and compresses if needed.
+     * @param {File} file
+     * @returns {Promise<string>} Base64 string
+     */
+    processImage: async (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64 = e.target.result;
+
+          if (file.size <= ImageProcessor.MAX_SIZE_BYTES) {
+            resolve(base64);
+          } else {
+            // Large file, needs compression
+            const confirmed = await window.confirm(
+              `The image "${file.name}" is large (${(file.size / 1024).toFixed(1)}KB). \n\nIt will be resized and compressed to ensure the layout remains fast and sharable. Quality may decrease slightly. \n\nDo you want to proceed?`,
+            );
+
+            if (!confirmed) {
+              reject(new Error("User cancelled compression"));
+              return;
+            }
+
+            try {
+              const compressed = await ImageProcessor.compress(base64);
+              resolve(compressed);
+            } catch (err) {
+              reject(err);
+            }
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    },
+
+    /**
+     * Compresses a base64 image using Canvas.
+     * @param {string} base64
+     * @returns {Promise<string>}
+     */
+    compress: async (base64) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          // Scale down if too wide
+          if (width > ImageProcessor.TARGET_WIDTH) {
+            const ratio = ImageProcessor.TARGET_WIDTH / width;
+            width = ImageProcessor.TARGET_WIDTH;
+            height = height * ratio;
           }
 
-          try {
-            const compressed = await ImageProcessor.compress(base64);
-            resolve(compressed);
-          } catch (err) {
-            reject(err);
-          }
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  },
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Export as WebP with 0.8 quality
+          resolve(canvas.toDataURL("image/webp", 0.8));
+        };
+        img.onerror = reject;
+        img.src = base64;
+      });
+    },
+  };
 
   /**
-   * Compresses a base64 image using Canvas.
-   * @param {string} base64 
-   * @returns {Promise<string>}
+   * Handles the "Upload from disk" flow.
    */
-  compress: async (base64) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+  async function handleUploadFromDisk(onSuccess) {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png, image/jpeg, image/webp, image/svg+xml";
 
-        // Scale down if too wide
-        if (width > ImageProcessor.TARGET_WIDTH) {
-          const ratio = ImageProcessor.TARGET_WIDTH / width;
-          width = ImageProcessor.TARGET_WIDTH;
-          height = height * ratio;
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const base64 = await ImageProcessor.processImage(file);
+
+        const shapeId = `custom-${Date.now()}`;
+        const shapeName = file.name.split(".")[0];
+
+        const customShape = {
+          id: shapeId,
+          name: shapeName,
+          data: base64,
+        };
+
+        // Save globally
+        await Storage.saveCustomShape(customShape);
+
+        // Add to current layout customShapes if not already there
+        const characterId = getCharacterId() || "GLOBAL";
+        const layout = await Storage.loadLayout(characterId);
+        if (layout) {
+          if (!layout.customShapes) layout.customShapes = [];
+          layout.customShapes.push(customShape);
+          await Storage.saveLayout(characterId, layout);
         }
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
+        showFeedback(`Custom shape "${shapeName}" uploaded and added.`);
 
-        // Export as WebP with 0.8 quality
-        resolve(canvas.toDataURL('image/webp', 0.8));
-      };
-      img.onerror = reject;
-      img.src = base64;
-    });
+        // Refresh layer manager UI if open
+        const lm = window.PeDom ? window.PeDom().getLayerManager() : null;
+        if (lm) lm.refreshUI();
+
+        if (onSuccess) onSuccess(base64);
+      } catch (err) {
+        if (err.message !== "User cancelled compression") {
+          safeLog("error", "[DDB Print Enhance] Upload failed:", err);
+          alert("Failed to process image. Please try a different file.");
+        }
+      }
+    };
+
+    input.click();
   }
-};
 
-/**
- * Handles the "Upload from disk" flow.
- */
-async function handleUploadFromDisk(onSuccess) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/png, image/jpeg, image/webp, image/svg+xml';
-  
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  /**
+   * Navigate to a specific character sheet section (tab).
+   */
+  function navToSection(name) {
+    const dom = window.DomManager.getInstance();
+    const tabs = dom.selectors.CORE.TAB_BUTTON
+      ? Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON))
+      : [];
 
-    try {
-      const base64 = await ImageProcessor.processImage(file);
-      
-      const shapeId = `custom-${Date.now()}`;
-      const shapeName = file.name.split('.')[0];
-      
-      const customShape = {
-        id: shapeId,
-        name: shapeName,
-        data: base64
-      };
+    // Try matching by data-testid first (very reliable)
+    const testIdMap = {
+      Actions: "ACTIONS",
+      Spells: "SPELLS",
+      Inventory: "EQUIPMENT",
+      Equipment: "EQUIPMENT",
+      "Features & Traits": "FEATURES_TRAITS",
+      Background: "DESCRIPTION",
+      Notes: "NOTES",
+      Extras: "EXTRAS",
+    };
 
-      // Save globally
-      await Storage.saveCustomShape(customShape);
-      
-      // Add to current layout customShapes if not already there
-      const characterId = getCharacterId() || 'GLOBAL';
-      const layout = await Storage.loadLayout(characterId);
-      if (layout) {
-        if (!layout.customShapes) layout.customShapes = [];
-        layout.customShapes.push(customShape);
-        await Storage.saveLayout(characterId, layout);
-      }
-
-      showFeedback(`Custom shape "${shapeName}" uploaded and added.`);
-      
-      // Refresh layer manager UI if open
-      const lm = window.PeDom ? window.PeDom().getLayerManager() : null;
-      if (lm) lm.refreshUI();
-
-      if (onSuccess) onSuccess(base64);
-
-    } catch (err) {
-      if (err.message !== 'User cancelled compression') {
-        safeLog('error', '[DDB Print Enhance] Upload failed:', err);
-        alert('Failed to process image. Please try a different file.');
-      }
+    let target = null;
+    const testId = testIdMap[name];
+    if (testId) {
+      target = tabs.find((tab) => tab.getAttribute("data-testid") === testId);
     }
-  };
 
-  input.click();
-}
+    // Fallback to text content
+    if (!target) {
+      target = tabs.find((tab) =>
+        tab.textContent.toLowerCase().includes(name.toLowerCase()),
+      );
+    }
 
-/**
- * Navigate to a specific character sheet section (tab).
- */
-function navToSection(name) {
-  const dom = window.DomManager.getInstance();
-  const tabs = dom.selectors.CORE.TAB_BUTTON ?
-               Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON)) : [];
-
-  // Try matching by data-testid first (very reliable)
-  const testIdMap = {
-      'Actions': 'ACTIONS',
-      'Spells': 'SPELLS',
-      'Inventory': 'EQUIPMENT',
-      'Equipment': 'EQUIPMENT',
-      'Features & Traits': 'FEATURES_TRAITS',
-      'Background': 'DESCRIPTION',
-      'Notes': 'NOTES',
-      'Extras': 'EXTRAS'
-  };
-
-  let target = null;
-  const testId = testIdMap[name];
-  if (testId) {
-      target = tabs.find(tab => tab.getAttribute('data-testid') === testId);
-  }
-
-  // Fallback to text content
-  if (!target) {
-      target = tabs.find(tab => tab.textContent.toLowerCase().includes(name.toLowerCase()));
-  }
-
-  if (target) {
-      safeLog('log', `[DDB Print Enhance] Navigating to: ${name}`);
+    if (target) {
+      safeLog("log", `[DDB Print Enhance] Navigating to: ${name}`);
       target.click();
       return target;
-  }
+    }
 
-  safeLog('error', `[DDB Print Enhance] Could not find tab for section: ${name}`);
-  return null;
-}
-/**
- * Helper to identify the base selector for an element
- */
-function getBaseSelector(el) {
+    safeLog(
+      "error",
+      `[DDB Print Enhance] Could not find tab for section: ${name}`,
+    );
+    return null;
+  }
+  /**
+   * Helper to identify the base selector for an element
+   */
+  function getBaseSelector(el) {
     const dom = window.DomManager.getInstance();
     const s = dom.selectors.EXTRACTABLE;
     // We match the pattern from DomManager selector strings
@@ -1289,276 +1405,370 @@ function getBaseSelector(el) {
     // Or just use the selector string itself as the source of truth for the regex if possible?
     // Let's use the explicit constants to build the regex logic if user insists on "no strings".
     // "No css selector" implies string literals.
-    
+
     // We can derive regex from the selector string if it follows '[class*="pattern"]'
     const getPattern = (sel) => {
-        const match = sel.match(/class\*="([^"]+)"/);
-        return match ? new RegExp(match[1] + '$') : null;
+      const match = sel.match(/class\*="([^"]+)"/);
+      return match ? new RegExp(match[1] + "$") : null;
     };
-    
+
     // Or we just map them manually since regex logic is code, not selector string.
     // The "string" in the code below is the key from DomManager, or we construct the target object using DomManager values.
-    
+
     const targets = [
-        { pattern: /-group$/, selector: s.GROUP },
-        { pattern: /-snippet--class$/, selector: s.SNIPPET_CLASS },
-        { pattern: /^styles_actionsList__/, selector: s.ACTIONS_LIST },
-        { pattern: /^styles_attackTable__/, selector: s.ATTACK_TABLE },
-        { pattern: /__traits$/, selector: s.TRAITS }
+      { pattern: /-group$/, selector: s.GROUP },
+      { pattern: /-snippet--class$/, selector: s.SNIPPET_CLASS },
+      { pattern: /^styles_actionsList__/, selector: s.ACTIONS_LIST },
+      { pattern: /^styles_attackTable__/, selector: s.ATTACK_TABLE },
+      { pattern: /__traits$/, selector: s.TRAITS },
     ];
 
     const classes = Array.from(el.classList);
     for (const target of targets) {
-        if (classes.some(c => c !== 'be-extractable' && target.pattern.test(c))) {
-            return target.selector;
-        }
+      if (
+        classes.some((c) => c !== "be-extractable" && target.pattern.test(c))
+      ) {
+        return target.selector;
+      }
     }
     return null;
-}
+  }
 
-/**
- * Helper to get a stable unique selector for extraction.
- * @param {HTMLElement} el The element to identify.
- * @param {boolean} includeContainers If true, includes elements inside .print-section-container.
- */
-function getExtractionSelector(el, includeContainers = false) {
-    const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
-    const selector = idClass ? `.${idClass}.be-extractable` : getBaseSelector(el);
+  /**
+   * Helper to get a stable unique selector for extraction.
+   * @param {HTMLElement} el The element to identify.
+   * @param {boolean} includeContainers If true, includes elements inside .print-section-container.
+   */
+  function getExtractionSelector(el, includeContainers = false) {
+    const idClass = Array.from(el.classList).find((c) =>
+      c.startsWith("be-ext-"),
+    );
+    const selector = idClass
+      ? `.${idClass}.be-extractable`
+      : getBaseSelector(el);
     if (!selector) return null;
 
     let matches = Array.from(document.querySelectorAll(selector));
     if (!includeContainers) {
-        matches = matches.filter(m => !m.closest('.print-section-container'));
+      matches = matches.filter((m) => !m.closest(".print-section-container"));
     }
     const index = matches.indexOf(el);
-    
+
     if (index !== -1) {
-        return { selector, index };
+      return { selector, index };
     }
     return null;
-}
-
-/**
- * Creates a standard draggable container for extracted content.
- */
-function createDraggableContainer(title, content, id) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'be-section-wrapper';
-  
-  // Extract and apply a specific class based on content for CSS targeting
-  const slug = getSectionSlug(content);
-  if (slug) {
-      wrapper.classList.add(`be-section-${slug}`);
-  } else {
-      wrapper.classList.add('be-section-unknown');
   }
 
-  wrapper.id = id ? `${id}-wrapper` : `wrapper-${Date.now()}`;
-  wrapper.dataset.title = title; // Store title for identification
-  wrapper.draggable = true; // Enable native dragging on the wrapper
+  /**
+   * Creates a standard draggable container for extracted content.
+   */
+  function createDraggableContainer(title, content, id) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "be-section-wrapper";
 
-  const container = document.createElement('div');
-  container.className = 'print-section-container';
-  container.id = id;
-  container.style.left = '';
-  container.style.top = '';
+    // Extract and apply a specific class based on content for CSS targeting
+    const slug = getSectionSlug(content);
+    if (slug) {
+      wrapper.classList.add(`be-section-${slug}`);
+    } else {
+      wrapper.classList.add("be-section-unknown");
+    }
 
-  const contentWrapper = document.createElement('div');
-  contentWrapper.className = 'print-section-content';
-  contentWrapper.appendChild(content);
-  container.appendChild(contentWrapper);
-  
-  wrapper.appendChild(container);
+    wrapper.id = id ? `${id}-wrapper` : `wrapper-${Date.now()}`;
+    wrapper.dataset.title = title; // Store title for identification
+    wrapper.draggable = true; // Enable native dragging on the wrapper
 
-  return wrapper;
-}
+    const container = document.createElement("div");
+    container.className = "print-section-container";
+    container.id = id;
+    container.style.left = "";
+    container.style.top = "";
 
-/**
- * Sleep helper for async flows.
- */
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+    const contentWrapper = document.createElement("div");
+    contentWrapper.className = "print-section-content";
+    contentWrapper.appendChild(content);
+    container.appendChild(contentWrapper);
 
-/**
- * Collect content from all tabs and wrap them in draggable containers.
- */
-/**
- * Collect content from all tabs and wrap them in draggable containers.
- */
-async function extractAndWrapSections() {
+    wrapper.appendChild(container);
+
+    return wrapper;
+  }
+
+  /**
+   * Sleep helper for async flows.
+   */
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Collect content from all tabs and wrap them in draggable containers.
+   */
+  /**
+   * Collect content from all tabs and wrap them in draggable containers.
+   */
+  async function extractAndWrapSections() {
     const dom = window.DomManager.getInstance();
-    
+
     // Strategy: Identify sections by looking for tab buttons using DomManager
     // We strictly use the defined selectors, no more fallbacks to hardcoded lists.
     let tabs = [];
     if (dom.selectors.CORE.TAB_BUTTON) {
-        tabs = Array.from(document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON));
-    }
-    
-    // If no tabs found, we can't extract dynamic sections.
-    if (tabs.length === 0) {
-        safeLog('warn', '[DDB Print] No tabs found using DomManager selectors. Extraction aborted.');
-        return [];
+      tabs = Array.from(
+        document.querySelectorAll(dom.selectors.CORE.TAB_BUTTON),
+      );
     }
 
-    const sectionsToExtract = tabs.map(t => ({
+    // If no tabs found, we can't extract dynamic sections.
+    if (tabs.length === 0) {
+      safeLog(
+        "warn",
+        "[DDB Print] No tabs found using DomManager selectors. Extraction aborted.",
+      );
+      return [];
+    }
+
+    const sectionsToExtract = tabs
+      .map((t) => ({
         name: t.textContent.trim(),
         title: t.textContent.trim(),
-        testId: t.getAttribute('data-testid')
-    })).filter(s => s.name);
+        testId: t.getAttribute("data-testid"),
+      }))
+      .filter((s) => s.name);
 
     const extractedContainers = [];
 
     for (const section of sectionsToExtract) {
-        const target = navToSection(section.name);
-        
-        // Give React time to render. Using Promise-based delay to be safe.
-        await new Promise(r => setTimeout(r, 100));
+      const target = navToSection(section.name);
 
-        if (target) { 
-            // Priority: Find the main structural container that holds the styles
-            // We use DomManager selectors
-            const selectors = [
-                dom.selectors.CORE.PRIMARY_BOX_WRAPPER,
-                dom.selectors.UI.PRIMARY_BOX,
-                // Removed specific fallbacks as per user request to have NO CSS strings in main.js
-            ];
-            
-            // Helper to find visible element among matches
-            let content = null;
-            for (const selector of selectors) {
-                if (!selector) continue;
-                const matches = document.querySelectorAll(selector);
-                // Find one that is not hidden.
-                const visibleMatch = Array.from(matches).find(el => {
-                    const style = window.getComputedStyle(el);
-                    return style.display !== 'none' && !el.classList.contains('hidden');
-                });
-                
-                if (visibleMatch) {
-                    content = visibleMatch;
-                    break;
-                }
-            }
+      // Give React time to render. Using Promise-based delay to be safe.
+      await new Promise((r) => setTimeout(r, 100));
 
-            if (content) {
-                // Refinement: If we matched a child but the parent is the actual styled container, go up.
-                if (content.parentElement && (
-                    content.parentElement.className.includes('primaryBox') ||
-                    content.parentElement.className.includes('ct-primary-box')
-                )) {
-                    content = content.parentElement;
-                }
+      if (target) {
+        // Priority: Find the main structural container that holds the styles
+        // We use DomManager selectors
+        const selectors = [
+          dom.selectors.CORE.PRIMARY_BOX_WRAPPER,
+          dom.selectors.UI.PRIMARY_BOX,
+          // Removed specific fallbacks as per user request to have NO CSS strings in main.js
+        ];
 
-            // User Request: DONT clone the "spells" tab (keep it live/interactive)
-                // Fix: Skip Spells in the loop to avoid breaking iteration.
-                // Strict Check: Use data-testid="SPELLS" if available, or name fallback
-                if (section.name.includes('Spells') || section.title.includes('Spells') || section.testId === 'SPELLS') {
-                    safeLog('log', '[DDB Print] Skipping Spells in main loop (will handle deferred/live)');
-                    continue;
-                }
+        // Helper to find visible element among matches
+        let content = null;
+        for (const selector of selectors) {
+          if (!selector) continue;
+          const matches = document.querySelectorAll(selector);
+          // Find one that is not hidden.
+          const visibleMatch = Array.from(matches).find((el) => {
+            const style = window.getComputedStyle(el);
+            return style.display !== "none" && !el.classList.contains("hidden");
+          });
 
-                const nodeToWrap = content.cloneNode(true);
-                
-                const clone = nodeToWrap; // Alias for existing logic compliance
-                
-                // Ensure the content is visible (it might be hidden if tab wasn't active)
-                clone.style.display = '';
-                clone.classList.remove('hidden'); // Remove potential utility classes for hiding
-
-                
-                // Cleanup: Remove unwanted elements from the clone
-                // 1. Hide <menu> tags (often used for popups/context)
-                clone.querySelectorAll('menu').forEach(el => el.style.display = 'none');
-                
-                // 2. Hide specific filters
-                clone.querySelectorAll('[data-testid="tab-filters"]').forEach(el => el.style.display = 'none');
-                
-                // 3. Layout Fix: Remove Scrollbars & Fixed Heights
-                // Force the container and its children to expand
-                // User Request: height: fit-content !important; display: flex !important;
-                clone.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
-                
-                // Apply similar logic to internal sections that might assume fixed height
-                clone.querySelectorAll('section, .ct-primary-box').forEach(el => {
-                    el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
-                });
-
-                // Targeted SVG Removal: Use helper function
-                removeSpecificSvgs(clone);
-
-                // RE-ENABLED: Fix Background SVGs to stretch for non-border backgrounds
-                const bgSvgs = clone.querySelectorAll([
-                    dom.selectors.UI.PRIMARY_BOX + ' > ' + dom.selectors.SVG.ALL,
-                    dom.selectors.SVG.REP_BOX,
-                    dom.selectors.SVG.BOX_BACKGROUND + ':not([style*="display: none"]) ' + dom.selectors.SVG.ALL
-                ].join(', '));
-                
-                bgSvgs.forEach(svg => {
-                    svg.style.height = '100%';
-                    svg.style.width = '100%';
-                    if(svg.hasAttribute('height')) svg.removeAttribute('height');
-                    if(svg.hasAttribute('width')) svg.removeAttribute('width');
-                    svg.setAttribute('preserveAspectRatio', 'none');
-                });
-                
-                // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws)
-                const groupBoxSvgs = clone.querySelectorAll([
-                    dom.selectors.SVG.PROFICIENCY,
-                    dom.selectors.SVG.SENSES,
-                    dom.selectors.SVG.SKILLS,
-                    dom.selectors.SVG.SAVING_THROWS
-                ].join(', '));
-                groupBoxSvgs.forEach(svg => {
-                        svg.setAttribute('preserveAspectRatio', 'none');
-                        svg.style.width = '100%';
-                        svg.style.height = '100%';
-                });
-                
-                // Also target potential internal scrolling containers
-                clone.querySelectorAll('*').forEach(el => {
-                    const tag = el.tagName.toLowerCase();
-                    if (tag === 'svg' || tag === 'g' || tag === 'path' || tag === 'symbol' || tag === 'defs') return;
-
-                    const style = window.getComputedStyle(el);
-                        if (style.overflow === 'auto' || style.overflow === 'scroll' || style.maxHeight !== 'none') {
-                            el.style.maxHeight = 'none';
-                            el.style.overflow = 'visible';
-                        }
-                });
-
-                // Create a clean wrapper for the print layout
-                const wrapper = document.createElement('div');
-                // We do NOT blindly copy parent classes here because we just cloned the PROPER container.
-                // But we can add a helper class.
-                wrapper.className = 'print-section-wrapper';
-                wrapper.appendChild(clone);
-
-                extractedContainers.push(createDraggableContainer(
-                    section.title, 
-                    wrapper, 
-                    `section-${section.name.replace(/\s+/g, '_')}`
-                ));
-            } else {
-                    safeLog('warn', `[DDB Print] Content content not found for section: ${section.name}`);
-            }
+          if (visibleMatch) {
+            content = visibleMatch;
+            break;
+          }
         }
+
+        if (content) {
+          // Refinement: If we matched a child but the parent is the actual styled container, go up.
+          if (
+            content.parentElement &&
+            (content.parentElement.className.includes("primaryBox") ||
+              content.parentElement.className.includes("ct-primary-box"))
+          ) {
+            content = content.parentElement;
+          }
+
+          // User Request: DONT clone the "spells" tab (keep it live/interactive)
+          // Fix: Skip Spells in the loop to avoid breaking iteration.
+          // Strict Check: Use data-testid="SPELLS" if available, or name fallback
+          if (
+            section.name.includes("Spells") ||
+            section.title.includes("Spells") ||
+            section.testId === "SPELLS"
+          ) {
+            safeLog(
+              "log",
+              "[DDB Print] Skipping Spells in main loop (will handle deferred/live)",
+            );
+            continue;
+          }
+
+          const nodeToWrap = content.cloneNode(true);
+
+          const clone = nodeToWrap; // Alias for existing logic compliance
+
+          // Ensure the content is visible (it might be hidden if tab wasn't active)
+          clone.style.display = "";
+          clone.classList.remove("hidden"); // Remove potential utility classes for hiding
+
+          // Cleanup: Remove unwanted elements from the clone
+          // 1. Hide <menu> tags (often used for popups/context)
+          clone
+            .querySelectorAll("menu")
+            .forEach((el) => (el.style.display = "none"));
+
+          // 2. Hide specific filters
+          clone
+            .querySelectorAll('[data-testid="tab-filters"]')
+            .forEach((el) => (el.style.display = "none"));
+
+          // 3. Layout Fix: Remove Scrollbars & Fixed Heights
+          // Force the container and its children to expand
+          // User Request: height: fit-content !important; display: flex !important;
+          clone.style.cssText +=
+            "height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;";
+
+          // Apply similar logic to internal sections that might assume fixed height
+          clone.querySelectorAll("section, .ct-primary-box").forEach((el) => {
+            el.style.cssText +=
+              "height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;";
+          });
+
+          // Targeted SVG Removal: Use helper function
+          removeSpecificSvgs(clone);
+
+          // RE-ENABLED: Fix Background SVGs to stretch for non-border backgrounds
+          const bgSvgs = clone.querySelectorAll(
+            [
+              dom.selectors.UI.PRIMARY_BOX + " > " + dom.selectors.SVG.ALL,
+              dom.selectors.SVG.REP_BOX,
+              dom.selectors.SVG.BOX_BACKGROUND +
+                ':not([style*="display: none"]) ' +
+                dom.selectors.SVG.ALL,
+            ].join(", "),
+          );
+
+          bgSvgs.forEach((svg) => {
+            svg.style.height = "100%";
+            svg.style.width = "100%";
+            if (svg.hasAttribute("height")) svg.removeAttribute("height");
+            if (svg.hasAttribute("width")) svg.removeAttribute("width");
+            svg.setAttribute("preserveAspectRatio", "none");
+          });
+
+          // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws)
+          const groupBoxSvgs = clone.querySelectorAll(
+            [
+              dom.selectors.SVG.PROFICIENCY,
+              dom.selectors.SVG.SENSES,
+              dom.selectors.SVG.SKILLS,
+              dom.selectors.SVG.SAVING_THROWS,
+            ].join(", "),
+          );
+          groupBoxSvgs.forEach((svg) => {
+            svg.setAttribute("preserveAspectRatio", "none");
+            svg.style.width = "100%";
+            svg.style.height = "100%";
+          });
+
+          // Also target potential internal scrolling containers
+          clone.querySelectorAll("*").forEach((el) => {
+            const tag = el.tagName.toLowerCase();
+            if (
+              tag === "svg" ||
+              tag === "g" ||
+              tag === "path" ||
+              tag === "symbol" ||
+              tag === "defs"
+            )
+              return;
+
+            const style = window.getComputedStyle(el);
+            if (
+              style.overflow === "auto" ||
+              style.overflow === "scroll" ||
+              style.maxHeight !== "none"
+            ) {
+              el.style.maxHeight = "none";
+              el.style.overflow = "visible";
+            }
+          });
+
+          // Create a clean wrapper for the print layout
+          const wrapper = document.createElement("div");
+          // We do NOT blindly copy parent classes here because we just cloned the PROPER container.
+          // But we can add a helper class.
+          wrapper.className = "print-section-wrapper";
+          wrapper.appendChild(clone);
+
+          extractedContainers.push(
+            createDraggableContainer(
+              section.title,
+              wrapper,
+              `section-${section.name.replace(/\s+/g, "_")}`,
+            ),
+          );
+        } else {
+          safeLog(
+            "warn",
+            `[DDB Print] Content content not found for section: ${section.name}`,
+          );
+        }
+      }
     }
 
+    return extractedContainers;
+  }
 
-  return extractedContainers;
-}
+  /**
+   * Creates and appends a new section created after the tidbits body.
+   */
+  function addInteractiveTidbitSection() {
+    const tidbitBody = document.querySelector(".ddbc-character-tidbits__body");
+    if (!tidbitBody) return;
 
-/**
- * Removes specific SVGs as requested by the user.
- * 1. First .ddbc-box-background
- * 2. All section > div > svg
- */
-function removeSpecificSvgs(container) {
+    const dom = window.DomManager.getInstance();
+    const nameEl =
+      document.querySelector(dom.selectors.CORE.TIDBITS_NAME) ||
+      document.querySelector(dom.selectors.CORE.TIDBITS_NAME_ALT);
+    const characterName = nameEl
+      ? nameEl.textContent.trim()
+      : "Custom Tidbit Section";
+
+    // Create the content for the new section
+    const content = document.createElement("div");
+    content.className = "be-tidbit-extension-section";
+    content.style.padding = "10px";
+    content.style.minHeight = "50px";
+    content.style.backgroundColor = "rgba(0,0,0,0.1)";
+    content.style.borderRadius = "4px";
+    content.style.marginTop = "10px";
+    content.innerHTML = `
+      <h3 style="margin:0 0 10px 0; font-size:16px; font-weight:bold; border-bottom:1px solid #ccc; padding-bottom:5px;">${characterName}</h3>
+      <p style="margin:0; font-size:12px; color:#666;">Extra Tidbits Information</p>
+    `;
+
+    // Use the existing helper to make it draggable
+    const wrapper = createDraggableContainer(
+      "Extra Tidbits",
+      content,
+      "section-extra-tidbits",
+    );
+
+    // Properly integrate the original tidbits body into the draggable container's content
+    const contentWrapper = wrapper.querySelector(".print-section-content");
+    if (contentWrapper) {
+      contentWrapper.appendChild(tidbitBody);
+    }
+
+    // Ensure it's integrated with the extension's layout system
+    if (typeof PeDom !== "undefined") {
+      PeDom().getSectionsLayer().element.appendChild(wrapper);
+    }
+  }
+
+  /**
+   * Removes specific SVGs as requested by the user.
+   * 1. First .ddbc-box-background
+   * 2. All section > div > svg
+   */
+  function removeSpecificSvgs(container) {
     if (window.__MOCK_REMOVE_SPECIFIC_SVGS__) {
-        window.__MOCK_REMOVE_SPECIFIC_SVGS__(container);
-        return;
+      window.__MOCK_REMOVE_SPECIFIC_SVGS__(container);
+      return;
     }
     if (!container) return;
 
@@ -1568,260 +1778,293 @@ function removeSpecificSvgs(container) {
     // 1. Remove first .ddbc-box-background
     const firstBg = container.querySelector(s.BOX_BACKGROUND);
     if (firstBg) {
-        // User Request: Don't hide the background if it belongs to Armor Class or Initiative
-        const isProtected = firstBg.querySelector(s.ARMOR_CLASS + ', ' + s.INITIATIVE) ||
-                            firstBg.closest(s.ARMOR_CLASS_BOX + ', ' + s.INITIATIVE_BOX);
-        
-        if (!isProtected) {
-            firstBg.style.display = 'none';
-        }
+      // User Request: Don't hide the background if it belongs to Armor Class or Initiative
+      const isProtected =
+        firstBg.querySelector(s.ARMOR_CLASS + ", " + s.INITIATIVE) ||
+        firstBg.closest(s.ARMOR_CLASS_BOX + ", " + s.INITIATIVE_BOX);
+
+      if (!isProtected) {
+        firstBg.style.display = "none";
+      }
     }
 
     // 2. Remove all section > div > svg
     // Check nested instances
-    container.querySelectorAll(s.GENERIC_SECTION).forEach(svg => {
-        if (!svg.classList.contains(s.ARMOR_CLASS.replace('.', '')) && !svg.classList.contains(s.INITIATIVE.replace('.', ''))) {
-            svg.style.display = 'none';
-        }
+    container.querySelectorAll(s.GENERIC_SECTION).forEach((svg) => {
+      if (
+        !svg.classList.contains(s.ARMOR_CLASS.replace(".", "")) &&
+        !svg.classList.contains(s.INITIATIVE.replace(".", ""))
+      ) {
+        svg.style.display = "none";
+      }
     });
-    
-    // Check if container itself matches section > div > svg pattern (e.g. if container is section)
-    if (container.tagName === 'SECTION') {
-        container.querySelectorAll(':scope > div > ' + s.ALL).forEach(svg => {
-             if (!svg.classList.contains(s.ARMOR_CLASS.replace('.', '')) && !svg.classList.contains(s.INITIATIVE.replace('.', ''))) {
-                svg.style.display = 'none';
-            }
-        });
-    }
-}
 
-/**
- * Appends all collected sections to the main sheet view.
- */
-/**
- * Copies SVG definitions to the print wrapper to ensure icons render.
- */
-function copySvgDefinitions(targetContainer) {
+    // Check if container itself matches section > div > svg pattern (e.g. if container is section)
+    if (container.tagName === "SECTION") {
+      container.querySelectorAll(":scope > div > " + s.ALL).forEach((svg) => {
+        if (
+          !svg.classList.contains(s.ARMOR_CLASS.replace(".", "")) &&
+          !svg.classList.contains(s.INITIATIVE.replace(".", ""))
+        ) {
+          svg.style.display = "none";
+        }
+      });
+    }
+  }
+
+  /**
+   * Appends all collected sections to the main sheet view.
+   */
+  /**
+   * Copies SVG definitions to the print wrapper to ensure icons render.
+   */
+  function copySvgDefinitions(targetContainer) {
     // Find all SVGs that might contain definitions (defs/symbol)
     // Find all SVGs that might contain definitions (defs/symbol)
     const dom = window.DomManager.getInstance();
     const svgs = document.querySelectorAll(dom.selectors.SVG.ALL);
-    svgs.forEach(svg => {
-        if (svg.querySelector(dom.selectors.SVG.DEFS.replace('svg ', '')) || svg.style.display === 'none') {
-            const clone = svg.cloneNode(true);
-            clone.style.display = 'none'; // Ensure it doesn't take up space
-            targetContainer.appendChild(clone);
-        }
+    svgs.forEach((svg) => {
+      if (
+        svg.querySelector(dom.selectors.SVG.DEFS.replace("svg ", "")) ||
+        svg.style.display === "none"
+      ) {
+        const clone = svg.cloneNode(true);
+        clone.style.display = "none"; // Ensure it doesn't take up space
+        targetContainer.appendChild(clone);
+      }
     });
-}
+  }
 
-/**
- * Appends all collected sections to the main sheet view.
- */
-/**
- * Injects detail section triggers into spell rows.
- */
-function injectSpellDetailTriggers(context = document) {
+  /**
+   * Appends all collected sections to the main sheet view.
+   */
+  /**
+   * Injects detail section triggers into spell rows.
+   */
+  function injectSpellDetailTriggers(context = document) {
     let rows;
     if (window.DomManager) {
-        // If context is an ElementWrapper, DomManager handles it
-        // If context is raw HTMLElement, we can wrap it or pass it if DomManager supports
-        // Our getSpellRows supports HTMLElement context
-        rows = window.DomManager.getInstance().getSpellRows(context).map(w => w.element);
+      // If context is an ElementWrapper, DomManager handles it
+      // If context is raw HTMLElement, we can wrap it or pass it if DomManager supports
+      // Our getSpellRows supports HTMLElement context
+      rows = window.DomManager.getInstance()
+        .getSpellRows(context)
+        .map((w) => w.element);
     } else {
-        rows = context.querySelectorAll('.ct-spells-spell');
+      rows = context.querySelectorAll(".ct-spells-spell");
     }
 
-    rows.forEach(row => {
-        if (row.querySelector('.be-spell-details-button')) return;
+    rows.forEach((row) => {
+      if (row.querySelector(".be-spell-details-button")) return;
 
-        const label = row.querySelector('.ct-spells-spell__label');
-        if (!label) return;
+      const label = row.querySelector(".ct-spells-spell__label");
+      if (!label) return;
 
-        const spellName = label.textContent.trim();
-        
-        const btn = document.createElement('button');
-        btn.className = 'be-spell-details-button';
-        btn.innerText = 'Details';
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            // Coordinates for floating section
-            const coords = { x: e.clientX, y: e.clientY, pageX: e.pageX, pageY: e.pageY };
-            if (window.createSpellDetailSection) {
-                window.createSpellDetailSection(spellName, coords);
-            } else {
-                safeLog('log', `[DDB Print] Details clicked for ${spellName} at`, coords);
-            }
+      const spellName = label.textContent.trim();
+
+      const btn = document.createElement("button");
+      btn.className = "be-spell-details-button";
+      btn.innerText = "Details";
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        // Coordinates for floating section
+        const coords = {
+          x: e.clientX,
+          y: e.clientY,
+          pageX: e.pageX,
+          pageY: e.pageY,
         };
+        if (window.createSpellDetailSection) {
+          window.createSpellDetailSection(spellName, coords);
+        } else {
+          safeLog(
+            "log",
+            `[DDB Print] Details clicked for ${spellName} at`,
+            coords,
+          );
+        }
+      };
 
-        row.appendChild(btn);
+      row.appendChild(btn);
     });
-}
+  }
 
-/**
- * Scans the DOM for elements that match extraction criteria and flags them.
- * Implements Top-Down Priority: nested matching elements are ignored.
- */
-/**
- * Scans the DOM for elements that match extraction criteria and flags them.
- * Implements Top-Down Priority: nested matching elements are ignored.
- * Also injects a unique-ish class based on content for stable persistence.
- */
-function flagExtractableElements() {
+  /**
+   * Scans the DOM for elements that match extraction criteria and flags them.
+   * Implements Top-Down Priority: nested matching elements are ignored.
+   */
+  /**
+   * Scans the DOM for elements that match extraction criteria and flags them.
+   * Implements Top-Down Priority: nested matching elements are ignored.
+   * Also injects a unique-ish class based on content for stable persistence.
+   */
+  function flagExtractableElements() {
     const dom = window.DomManager.getInstance();
     const s = dom.selectors.EXTRACTABLE;
     if (!s || !s.GROUP) return;
 
     const selectors = [
-        s.GROUP,
-        s.SNIPPET_CLASS,
-        s.ACTIONS_LIST,
-        s.ATTACK_TABLE,
-        s.TRAITS
+      s.GROUP,
+      s.SNIPPET_CLASS,
+      s.ACTIONS_LIST,
+      s.ATTACK_TABLE,
+      s.TRAITS,
     ];
 
-    const elements = Array.from(document.querySelectorAll(selectors.join(', ')));
-    
-    elements.forEach(el => {
-        // Nesting logic: Top-Down Priority.
-        // Check if any matching element strictly contains this one.
-        const isNested = elements.some(other => {
-            return other !== el && other.contains(el);
-        });
+    const elements = Array.from(
+      document.querySelectorAll(selectors.join(", ")),
+    );
 
-        if (!isNested) {
-            el.classList.add('be-extractable');
-            
-            // Generate and add an extraction-specific identification class
-            let title = findSectionTitle(el);
-            if (!title) {
-                title = el.textContent.trim().substring(0, 8);
-            }
-            
-            if (title) {
-                const sanitized = title.toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '_')
-                    .replace(/^_+|_+$/g, '');
-                
-                const idClass = `be-ext-${sanitized || 'content'}`;
-                el.classList.add(idClass);
-            }
+    elements.forEach((el) => {
+      // Nesting logic: Top-Down Priority.
+      // Check if any matching element strictly contains this one.
+      const isNested = elements.some((other) => {
+        return other !== el && other.contains(el);
+      });
 
-            // Attach extraction listener
-            el.ondblclick = async (e) => {
-                e.stopPropagation();
-                await handleElementExtraction(el);
-            };
+      if (!isNested) {
+        el.classList.add("be-extractable");
+
+        // Generate and add an extraction-specific identification class
+        let title = findSectionTitle(el);
+        if (!title) {
+          title = el.textContent.trim().substring(0, 8);
         }
-    });
-}
 
-/**
- * Handles the extraction of an element into a new floating section.
- */
-async function handleElementExtraction(el) {
+        if (title) {
+          const sanitized = title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+
+          const idClass = `be-ext-${sanitized || "content"}`;
+          el.classList.add(idClass);
+        }
+
+        // Attach extraction listener
+        el.ondblclick = async (e) => {
+          e.stopPropagation();
+          await handleElementExtraction(el);
+        };
+      }
+    });
+  }
+
+  /**
+   * Handles the extraction of an element into a new floating section.
+   */
+  async function handleElementExtraction(el) {
     // 1. Ensure original has an ID for tracking
     if (!el.id) {
-        el.id = `be-auto-id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      el.id = `be-auto-id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     }
 
     // 2. Discover Title
     let title = findSectionTitle(el);
     if (!title) {
-        title = await (window.showInputModal || showInputModal)('Extract Content', 'No title found. Enter a name for this section:', 'Extracted Section');
-        if (!title) return; // User cancelled
+      title = await (window.showInputModal || showInputModal)(
+        "Extract Content",
+        "No title found. Enter a name for this section:",
+        "Extracted Section",
+      );
+      if (!title) return; // User cancelled
     }
 
     // 3. Clone content
     const sanitizedClone = getSanitizedContent(el);
     const clone = sanitizedClone; // Alias for existing logic compliance
-    clone.style.display = ''; // Ensure clone is visible
-    clone.classList.remove('be-extractable'); // Avoid nested triggers in clone
-    
+    clone.style.display = ""; // Ensure clone is visible
+    clone.classList.remove("be-extractable"); // Avoid nested triggers in clone
+
     // Hide original header/title inside the clone to avoid duplication
-    const originalHeader = clone.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+    const originalHeader = clone.querySelector(
+      'h1, h2, h3, h4, h5, [class*="head"]',
+    );
     if (originalHeader) {
-        originalHeader.style.display = 'none';
+      originalHeader.style.display = "none";
     }
-    
+
     // Create section content using a DocumentFragment to avoid extra intermediate DIVs
     const fragment = document.createDocumentFragment();
 
     // Standardized header
-    const header = document.createElement('div');
-    header.className = 'ct-content-group__header';
-    const headerContent = document.createElement('div');
-    headerContent.className = 'ct-content-group__header-content';
+    const header = document.createElement("div");
+    header.className = "ct-content-group__header";
+    const headerContent = document.createElement("div");
+    headerContent.className = "ct-content-group__header-content";
     headerContent.textContent = title;
     header.appendChild(headerContent);
     fragment.appendChild(header);
 
     // If it's a merge wrapper, we take its children to avoid redundant DIV nesting
-    if (clone.classList.contains('be-merge-wrapper')) {
-        while (clone.firstChild) {
-            fragment.appendChild(clone.firstChild);
-        }
+    if (clone.classList.contains("be-merge-wrapper")) {
+      while (clone.firstChild) {
+        fragment.appendChild(clone.firstChild);
+      }
     } else {
-        fragment.appendChild(clone);
+      fragment.appendChild(clone);
     }
 
     // 4. Create floating section
     const sectionId = `extracted-section-${Date.now()}`;
     const wrapper = createDraggableContainer(title, fragment, sectionId);
-    wrapper.classList.add('be-extracted-section-wrapper');
-    const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('be-extracted-section');
+    wrapper.classList.add("be-extracted-section-wrapper");
+    const container = wrapper.querySelector(".print-section-container");
+    container.classList.add("be-extracted-section");
     container.dataset.originalId = el.id;
 
     // Store parent section ID for "Apply to all" and grouping logic
     const s = window.DomManager.getInstance().selectors;
     const parentSection = el.closest(`${s.UI.SUBSECTION}, ${s.UI.SECTION}`);
     if (parentSection) {
-        container.dataset.parentSectionId = parentSection.id;
+      container.dataset.parentSectionId = parentSection.id;
     }
-    
+
     // Store identification class for future merges
-    const idClass = Array.from(el.classList).find(c => c.startsWith('be-ext-'));
+    const idClass = Array.from(el.classList).find((c) =>
+      c.startsWith("be-ext-"),
+    );
     if (idClass) container.dataset.beExtClass = idClass;
 
     // 5. Use delete button for rollback
-    const deleteBtn = wrapper.querySelector('.be-delete-button');
+    const deleteBtn = wrapper.querySelector(".be-delete-button");
     if (deleteBtn) {
-        deleteBtn.title = 'Rollback Extraction';
-        const originalOnClick = deleteBtn.onclick;
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            rollbackSection(container);
-        };
+      deleteBtn.title = "Rollback Extraction";
+      const originalOnClick = deleteBtn.onclick;
+      deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        rollbackSection(container);
+      };
     }
 
     // 6. Position and Hide Original
     const rect = el.getBoundingClientRect();
     const layoutRoot = PeDom().getLayoutRoot().element;
     const rootRect = layoutRoot.getBoundingClientRect();
-    
-    wrapper.style.position = 'absolute';
+
+    wrapper.style.position = "absolute";
     wrapper.style.left = `${rect.left - rootRect.left + rect.width + 20}px`; // To the right of original
     wrapper.style.top = `${rect.top - rootRect.top}px`;
-    wrapper.style.zIndex = '10000';
+    wrapper.style.zIndex = "10000";
 
-    const innerContainer = wrapper.querySelector('.print-section-container');
+    const innerContainer = wrapper.querySelector(".print-section-container");
     innerContainer.style.width = `${rect.width}px`;
-    innerContainer.style.height = 'auto';
+    innerContainer.style.height = "auto";
 
     PeDom().getSectionsLayer().element.appendChild(wrapper);
 
     // In the case of spell sections, destroy original instead of hiding    // (They are ephemeral and don't have a home on the sheet to rollback to)
-    const isSpell = el.classList.contains('be-spell-detail') || 
-                    el.id.startsWith('spell-detail-') || 
-                    el.querySelector('[data-be-spell-merge]');
+    const isSpell =
+      el.classList.contains("be-spell-detail") ||
+      el.id.startsWith("spell-detail-") ||
+      el.querySelector("[data-be-spell-merge]");
 
     if (isSpell) {
-        el.remove();
+      el.remove();
     } else {
-        el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty("display", "none", "important");
     }
-    
+
     if (window.injectCloneButtons) window.injectCloneButtons(innerContainer);
     if (window.injectAppendButton) window.injectAppendButton(innerContainer);
     if (window.initResizeLogic) window.initResizeLogic();
@@ -1830,685 +2073,786 @@ async function handleElementExtraction(el) {
     showFeedback(`Extracted ${title}`);
 
     return wrapper;
-}
+  }
 
-/**
- * Renders an extracted section from a snapshot.
- */
-function renderExtractedSection(snapshot) {
+  /**
+   * Renders an extracted section from a snapshot.
+   */
+  function renderExtractedSection(snapshot) {
     // 1. Resolve the original element
     let original = document.getElementById(snapshot.originalId);
-    
+
     // If ID lookup fails (common on reloads), use the selector path
     if (!original && snapshot.selector && snapshot.index !== undefined) {
-        const matches = document.querySelectorAll(snapshot.selector);
-        original = matches[snapshot.index];
-        // Re-assign the ID if found so rollback works
-        if (original) {
-            original.id = snapshot.originalId;
-        }
+      const matches = document.querySelectorAll(snapshot.selector);
+      original = matches[snapshot.index];
+      // Re-assign the ID if found so rollback works
+      if (original) {
+        original.id = snapshot.originalId;
+      }
     }
 
     if (!original) {
-        safeLog('warn', `[DDB Print] Could not resolve original for extraction: ${snapshot.title}`);
-        return null;
+      safeLog(
+        "warn",
+        `[DDB Print] Could not resolve original for extraction: ${snapshot.title}`,
+      );
+      return null;
     }
 
     // 2. Clone LIVE content
     const sanitizedClone = getSanitizedContent(original);
     const sourceElement = sanitizedClone; // Alias for existing logic compliance
-    sourceElement.style.display = ''; 
-    sourceElement.classList.remove('be-extractable');
-    
+    sourceElement.style.display = "";
+    sourceElement.classList.remove("be-extractable");
+
     // Hide original title inside the live clone to avoid duplication
-    const originalHeader = sourceElement.querySelector('h1, h2, h3, h4, h5, [class*="head"]');
+    const originalHeader = sourceElement.querySelector(
+      'h1, h2, h3, h4, h5, [class*="head"]',
+    );
     if (originalHeader) {
-        originalHeader.style.display = 'none';
+      originalHeader.style.display = "none";
     }
 
     // 3. Assemble standardized header
     const fragment = document.createDocumentFragment();
-    const header = document.createElement('div');
-    header.className = 'ct-content-group__header';
-    const headerContent = document.createElement('div');
-    headerContent.className = 'ct-content-group__header-content';
+    const header = document.createElement("div");
+    header.className = "ct-content-group__header";
+    const headerContent = document.createElement("div");
+    headerContent.className = "ct-content-group__header-content";
     headerContent.textContent = snapshot.title;
     header.appendChild(headerContent);
 
     fragment.appendChild(header);
-    
+
     // Promote children if it's a merge wrapper, otherwise append the clone
-    if (sourceElement.classList.contains('be-merge-wrapper')) {
-        while (sourceElement.firstChild) {
-            fragment.appendChild(sourceElement.firstChild);
-        }
+    if (sourceElement.classList.contains("be-merge-wrapper")) {
+      while (sourceElement.firstChild) {
+        fragment.appendChild(sourceElement.firstChild);
+      }
     } else {
-        fragment.appendChild(sourceElement);
+      fragment.appendChild(sourceElement);
     }
 
-    const wrapper = createDraggableContainer(snapshot.title, fragment, snapshot.id);
-    wrapper.classList.add('be-extracted-section-wrapper');
-    const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('be-extracted-section');
+    const wrapper = createDraggableContainer(
+      snapshot.title,
+      fragment,
+      snapshot.id,
+    );
+    wrapper.classList.add("be-extracted-section-wrapper");
+    const container = wrapper.querySelector(".print-section-container");
+    container.classList.add("be-extracted-section");
     container.dataset.originalId = snapshot.originalId;
     if (snapshot.parentSectionId) {
-        container.dataset.parentSectionId = snapshot.parentSectionId;
+      container.dataset.parentSectionId = snapshot.parentSectionId;
     }
     if (snapshot.borderStyle) {
-        container.classList.add(snapshot.borderStyle);
+      container.classList.add(snapshot.borderStyle);
     }
-    
+
     // Restore identification class for future merges
     if (snapshot.selector) {
-        const idClass = snapshot.selector.split('.')[1]; // .be-ext-xxx.be-extractable -> be-ext-xxx
-        if (idClass) container.dataset.beExtClass = idClass;
+      const idClass = snapshot.selector.split(".")[1]; // .be-ext-xxx.be-extractable -> be-ext-xxx
+      if (idClass) container.dataset.beExtClass = idClass;
     }
 
     // 4. Link rollback logic
-    const xBtn = wrapper.querySelector('.print-section-minimize');
+    const xBtn = wrapper.querySelector(".print-section-minimize");
     if (xBtn) {
-        xBtn.title = 'Rollback Extraction';
-        xBtn.onclick = (e) => {
-            e.stopPropagation();
-            rollbackSection(container);
-        };
+      xBtn.title = "Rollback Extraction";
+      xBtn.onclick = (e) => {
+        e.stopPropagation();
+        rollbackSection(container);
+      };
     }
 
     // 5. Hide original in DOM
-    original.style.setProperty('display', 'none', 'important');
+    original.style.setProperty("display", "none", "important");
 
     // 6. Apply styles
-    if (snapshot.width) container.style.setProperty('width', snapshot.width, 'important');
-    if (snapshot.height) container.style.setProperty('height', snapshot.height, 'important');
-    if (snapshot.left) wrapper.style.setProperty('left', snapshot.left, 'important');
-    if (snapshot.top) wrapper.style.setProperty('top', snapshot.top, 'important');
-    if (snapshot.zIndex) wrapper.style.setProperty('z-index', snapshot.zIndex, 'important');
+    if (snapshot.width)
+      container.style.setProperty("width", snapshot.width, "important");
+    if (snapshot.height)
+      container.style.setProperty("height", snapshot.height, "important");
+    if (snapshot.left)
+      wrapper.style.setProperty("left", snapshot.left, "important");
+    if (snapshot.top)
+      wrapper.style.setProperty("top", snapshot.top, "important");
+    if (snapshot.zIndex)
+      wrapper.style.setProperty("z-index", snapshot.zIndex, "important");
     if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
     if (snapshot.fontSize) applyFontSize(wrapper, snapshot.fontSize);
 
     if (snapshot.minimized) {
-        container.dataset.minimized = 'true';
-        container.classList.add('minimized');
+      container.dataset.minimized = "true";
+      container.classList.add("minimized");
     }
 
     if (snapshot.compact) {
-        container.classList.add('be-compact-mode');
+      container.classList.add("be-compact-mode");
     }
 
     const layoutRoot = PeDom().getLayoutRoot().element;
     PeDom().getSectionsLayer().element.appendChild(wrapper);
-    
+
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
     if (window.initResizeLogic) window.initResizeLogic();
-    
-    return wrapper;
-}
 
-/**
- * Basic title discovery (to be refined in Phase 3).
- */
-function findSectionTitle(el) {
+    return wrapper;
+  }
+
+  /**
+   * Basic title discovery (to be refined in Phase 3).
+   */
+  function findSectionTitle(el) {
     const dom = window.DomManager.getInstance();
     const titleEl = el.querySelector(dom.selectors.EXTRACTABLE.HEADER_GENERIC);
     return titleEl ? titleEl.textContent.trim() : null;
-}
+  }
 
-/**
- * Extracts a section name/slug from inner classes to be used as a CSS class on the wrapper.
- * Searches for ct-subsection--{name} or ct-content-group--{name}
- */
-function getSectionSlug(content) {
+  /**
+   * Extracts a section name/slug from inner classes to be used as a CSS class on the wrapper.
+   * Searches for ct-subsection--{name} or ct-content-group--{name}
+   */
+  function getSectionSlug(content) {
     if (!content) return null;
-    
+
     // Check the content node itself first
     const classes = Array.from(content.classList || []);
-    const matchingClass = classes.find(c => c.startsWith('ct-subsection--') || c.startsWith('ct-content-group--'));
+    const matchingClass = classes.find(
+      (c) =>
+        c.startsWith("ct-subsection--") || c.startsWith("ct-content-group--"),
+    );
     if (matchingClass) {
-        return matchingClass.split('--')[1];
+      return matchingClass.split("--")[1];
     }
 
     // Then check children
-    const childWithClass = content.querySelector('[class*="ct-subsection--"], [class*="ct-content-group--"]');
+    const childWithClass = content.querySelector(
+      '[class*="ct-subsection--"], [class*="ct-content-group--"]',
+    );
     if (childWithClass) {
-        const matchingChildClass = Array.from(childWithClass.classList).find(c => c.startsWith('ct-subsection--') || c.startsWith('ct-content-group--'));
-        if (matchingChildClass) {
-            return matchingChildClass.split('--')[1];
-        }
+      const matchingChildClass = Array.from(childWithClass.classList).find(
+        (c) =>
+          c.startsWith("ct-subsection--") || c.startsWith("ct-content-group--"),
+      );
+      if (matchingChildClass) {
+        return matchingChildClass.split("--")[1];
+      }
     }
 
     return null;
-}
+  }
 
-/**
- * Sanitizes a content node by removing extension UI elements and preventing header duplication.
- * @param {HTMLElement} node The node to sanitize.
- * @returns {HTMLElement} A sanitized clone of the node.
- */
-function getSanitizedContent(node) {
+  /**
+   * Sanitizes a content node by removing extension UI elements and preventing header duplication.
+   * @param {HTMLElement} node The node to sanitize.
+   * @returns {HTMLElement} A sanitized clone of the node.
+   */
+  function getSanitizedContent(node) {
     const clone = node.cloneNode(true);
     const dom = window.DomManager.getInstance();
     const toRemove = [
-        '.be-clone-button',
-        '.be-compact-button',
-        '.be-append-button',
-        '.be-section-actions',
-        '.print-section-header',
-        '.print-section-minimize',
-        '.print-section-restore',
-        '.print-section-resize-handle',
-        dom.selectors.SPELLS.FILTER_CLASS,
-        dom.selectors.UI.MENU
+      ".be-clone-button",
+      ".be-compact-button",
+      ".be-append-button",
+      ".be-section-actions",
+      ".print-section-header",
+      ".print-section-minimize",
+      ".print-section-restore",
+      ".print-section-resize-handle",
+      dom.selectors.SPELLS.FILTER_CLASS,
+      dom.selectors.UI.MENU,
     ];
 
-    toRemove.forEach(selector => {
-        clone.querySelectorAll(selector).forEach(el => el.remove());
+    toRemove.forEach((selector) => {
+      clone.querySelectorAll(selector).forEach((el) => el.remove());
     });
 
     // Prevent header duplication: remove top-level standardized headers
     // because new ones are added when wrapping/rendering.
 
     if (window.DomManager) {
-        const dom = window.DomManager.getInstance();
-        const existingHeaders = clone.querySelectorAll(':scope > ' + dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER);
-        existingHeaders.forEach(h => h.remove());
+      const dom = window.DomManager.getInstance();
+      const existingHeaders = clone.querySelectorAll(
+        ":scope > " + dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER,
+      );
+      existingHeaders.forEach((h) => h.remove());
     }
 
     return clone;
-}
+  }
 
-/**
- * Gathers all potential merge targets and their display names.
- * Targets include .be-extractable (on sheet) and .be-extracted-section (floating).
- */
-function getMergeTargets() {
+  /**
+   * Gathers all potential merge targets and their display names.
+   * Targets include .be-extractable (on sheet) and .be-extracted-section (floating).
+   */
+  function getMergeTargets() {
     const targets = [];
 
     // 1. Sheet Targets (be-extractable)
-    document.querySelectorAll('.be-extractable').forEach(el => {
-        // Find parent section for breadcrumb
-        const parentSection = el.closest('.print-section-container');
-        let sectionName = 'Sheet';
-        if (parentSection) {
-            const wrapper = parentSection.closest('.be-section-wrapper') || parentSection;
-            sectionName = wrapper.dataset.title || (wrapper.querySelector('.print-section-header span') ? wrapper.querySelector('.print-section-header span').textContent.trim() : 'Section');
-        }
+    document.querySelectorAll(".be-extractable").forEach((el) => {
+      // Find parent section for breadcrumb
+      const parentSection = el.closest(".print-section-container");
+      let sectionName = "Sheet";
+      if (parentSection) {
+        const wrapper =
+          parentSection.closest(".be-section-wrapper") || parentSection;
+        sectionName =
+          wrapper.dataset.title ||
+          (wrapper.querySelector(".print-section-header span")
+            ? wrapper
+                .querySelector(".print-section-header span")
+                .textContent.trim()
+            : "Section");
+      }
 
-        const itemName = findSectionTitle(el) || el.textContent.trim().substring(0, 20);
-        targets.push({
-            type: 'sheet',
-            id: el.id,
-            name: `${sectionName} > ${itemName}`,
-            element: el
-        });
+      const itemName =
+        findSectionTitle(el) || el.textContent.trim().substring(0, 20);
+      targets.push({
+        type: "sheet",
+        id: el.id,
+        name: `${sectionName} > ${itemName}`,
+        element: el,
+      });
     });
 
     // 2. Floating Targets (be-extracted-section)
-    document.querySelectorAll('.print-section-container.be-extracted-section').forEach(el => {
-        const wrapper = el.closest('.be-section-wrapper') || el;
-        const itemName = wrapper.dataset.title || (wrapper.querySelector('.print-section-header span') ? wrapper.querySelector('.print-section-header span').textContent.trim() : 'Extracted Section');
-        
+    document
+      .querySelectorAll(".print-section-container.be-extracted-section")
+      .forEach((el) => {
+        const wrapper = el.closest(".be-section-wrapper") || el;
+        const itemName =
+          wrapper.dataset.title ||
+          (wrapper.querySelector(".print-section-header span")
+            ? wrapper
+                .querySelector(".print-section-header span")
+                .textContent.trim()
+            : "Extracted Section");
+
         // Find the inner standardized header if it exists for extra detail
-        const subHeader = el.querySelector('.ct-content-group__header-content');
-        const detail = subHeader ? ` (${subHeader.textContent.trim()})` : '';
+        const subHeader = el.querySelector(".ct-content-group__header-content");
+        const detail = subHeader ? ` (${subHeader.textContent.trim()})` : "";
 
         targets.push({
-            type: 'section',
-            id: el.id,
-            name: `Floating: ${itemName}${detail}`,
-            element: el
+          type: "section",
+          id: el.id,
+          name: `Floating: ${itemName}${detail}`,
+          element: el,
         });
-    });
+      });
 
     return targets;
-}
+  }
 
-/**
- * Injects an "Append after" button into an extracted section's header.
- */
-function injectAppendButton(container) {
+  /**
+   * Injects an "Append after" button into an extracted section's header.
+   */
+  function injectAppendButton(container) {
     const actionContainer = getOrCreateActionContainer(container);
-    if (actionContainer.querySelector('.be-append-button')) return;
+    if (actionContainer.querySelector(".be-append-button")) return;
 
-    const btn = document.createElement('button');
-    btn.className = 'be-append-button';
-    btn.innerHTML = '🔗';
-    btn.title = 'Append after...';
-    
+    const btn = document.createElement("button");
+    btn.className = "be-append-button";
+    btn.innerHTML = "🔗";
+    btn.title = "Append after...";
+
     btn.onclick = async (e) => {
-        e.stopPropagation();
-        const targets = getMergeTargets().filter(t => t.element !== container);
-        if (targets.length === 0) {
-            showFeedback('No available targets found');
-            return;
-        }
+      e.stopPropagation();
+      const targets = getMergeTargets().filter((t) => t.element !== container);
+      if (targets.length === 0) {
+        showFeedback("No available targets found");
+        return;
+      }
 
-        const selectedTarget = await showTargetSelectionModal(targets);
-        if (selectedTarget) {
-            handleMergeSections(container, selectedTarget);
-        }
+      const selectedTarget = await showTargetSelectionModal(targets);
+      if (selectedTarget) {
+        handleMergeSections(container, selectedTarget);
+      }
     };
 
     actionContainer.appendChild(btn);
-}
+  }
 
-/**
- * Shows a modal to select a merge target.
- */
-function showTargetSelectionModal(targets) {
+  /**
+   * Shows a modal to select a merge target.
+   */
+  function showTargetSelectionModal(targets) {
     return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'be-modal-overlay';
-        overlay.style.zIndex = '30000'; // Higher than floating sections
-        
-        const modal = document.createElement('div');
-        modal.className = 'be-modal';
-        modal.style.width = '500px';
-        modal.style.maxHeight = '80vh';
-        modal.style.overflowY = 'auto';
-        
-        const h3 = document.createElement('h3');
-        h3.textContent = 'Select Append Target';
-        modal.appendChild(h3);
+      const overlay = document.createElement("div");
+      overlay.className = "be-modal-overlay";
+      overlay.style.zIndex = "30000"; // Higher than floating sections
 
-        const list = document.createElement('div');
-        list.style.display = 'flex';
-        list.style.flexDirection = 'column';
-        list.style.gap = '5px';
-        list.style.marginTop = '15px';
+      const modal = document.createElement("div");
+      modal.className = "be-modal";
+      modal.style.width = "500px";
+      modal.style.maxHeight = "80vh";
+      modal.style.overflowY = "auto";
 
-        targets.forEach(target => {
-            const btn = document.createElement('button');
-            btn.textContent = target.name;
-            const dom = window.DomManager.getInstance();
-            btn.className = dom.selectors.CORE.THEME_BUTTON.substring(1);
-            btn.style.textAlign = 'left';
-            btn.style.padding = '8px 12px';
-            btn.style.width = '100%';
-            btn.onclick = () => {
-                overlay.remove();
-                resolve(target);
-            };
-            list.appendChild(btn);
-        });
+      const h3 = document.createElement("h3");
+      h3.textContent = "Select Append Target";
+      modal.appendChild(h3);
 
-        modal.appendChild(list);
+      const list = document.createElement("div");
+      list.style.display = "flex";
+      list.style.flexDirection = "column";
+      list.style.gap = "5px";
+      list.style.marginTop = "15px";
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.className = 'be-modal-cancel';
-        cancelBtn.style.marginTop = '15px';
-        cancelBtn.onclick = () => {
-            overlay.remove();
-            resolve(null);
+      targets.forEach((target) => {
+        const btn = document.createElement("button");
+        btn.textContent = target.name;
+        const dom = window.DomManager.getInstance();
+        btn.className = dom.selectors.CORE.THEME_BUTTON.substring(1);
+        btn.style.textAlign = "left";
+        btn.style.padding = "8px 12px";
+        btn.style.width = "100%";
+        btn.onclick = () => {
+          overlay.remove();
+          resolve(target);
         };
-        modal.appendChild(cancelBtn);
+        list.appendChild(btn);
+      });
 
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
+      modal.appendChild(list);
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.className = "be-modal-cancel";
+      cancelBtn.style.marginTop = "15px";
+      cancelBtn.onclick = () => {
+        overlay.remove();
+        resolve(null);
+      };
+      modal.appendChild(cancelBtn);
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
     });
-}
+  }
 
-/**
- * Handles the logic of merging one section into another target.
- */
-function handleMergeSections(sourceContainer, targetInfo) {
-    const sourceContent = sourceContainer.querySelector('.print-section-content');
+  /**
+   * Handles the logic of merging one section into another target.
+   */
+  function handleMergeSections(sourceContainer, targetInfo) {
+    const sourceContent = sourceContainer.querySelector(
+      ".print-section-content",
+    );
     if (!sourceContent) return;
 
     const sourceId = sourceContainer.dataset.originalId;
-    const sourceAssociatedIds = sourceContainer.dataset.associatedIds ? JSON.parse(sourceContainer.dataset.associatedIds) : [];
-    const allSourceIds = [sourceId, ...sourceAssociatedIds].filter(id => id);
+    const sourceAssociatedIds = sourceContainer.dataset.associatedIds
+      ? JSON.parse(sourceContainer.dataset.associatedIds)
+      : [];
+    const allSourceIds = [sourceId, ...sourceAssociatedIds].filter((id) => id);
 
     let targetContainer = null;
     let appendTarget = null;
 
-    if (targetInfo.type === 'section') {
-        targetContainer = targetInfo.element;
-        appendTarget = targetContainer.querySelector('.print-section-content');
+    if (targetInfo.type === "section") {
+      targetContainer = targetInfo.element;
+      appendTarget = targetContainer.querySelector(".print-section-content");
     } else {
-        // Sheet target: append after the element
-        appendTarget = targetInfo.element;
-        // Search for the closest section container OR the sheet body wrapper
-        targetContainer = appendTarget.closest('.print-section-container') || document.getElementById('print-layout-wrapper');
+      // Sheet target: append after the element
+      appendTarget = targetInfo.element;
+      // Search for the closest section container OR the sheet body wrapper
+      targetContainer =
+        appendTarget.closest(".print-section-container") ||
+        document.getElementById("print-layout-wrapper");
     }
 
     if (appendTarget) {
-        // Create a wrapper that mimics the target's classes (to preserve styling)
-        const wrapper = document.createElement('div');
-        // Copy classes from target element, but exclude our identification/trigger classes
-        const targetClasses = Array.from(targetInfo.element.classList)
-                                   .filter(c => c !== 'be-extractable' && !c.startsWith('be-ext-'));
-        wrapper.className = targetClasses.join(' ');
-        
-        wrapper.classList.add('be-merge-wrapper');
-        // ADD BACK the essential extraction classes for the merged content itself
-        wrapper.classList.add('be-extractable');
-        const idClass = sourceContainer.dataset.beExtClass;
-        if (idClass) wrapper.classList.add(idClass);
-        
-        // Tag for persistence if it's a group extraction
-        const sourceId = sourceContainer.dataset.originalId;
-        const isSpell = sourceContainer.classList.contains('be-spell-detail') || 
-                        sourceContainer.id?.startsWith('spell-detail-');
-        
-        if (!isSpell) {
-            wrapper.setAttribute('data-be-group-merge', sourceId);
+      // Create a wrapper that mimics the target's classes (to preserve styling)
+      const wrapper = document.createElement("div");
+      // Copy classes from target element, but exclude our identification/trigger classes
+      const targetClasses = Array.from(targetInfo.element.classList).filter(
+        (c) => c !== "be-extractable" && !c.startsWith("be-ext-"),
+      );
+      wrapper.className = targetClasses.join(" ");
+
+      wrapper.classList.add("be-merge-wrapper");
+      // ADD BACK the essential extraction classes for the merged content itself
+      wrapper.classList.add("be-extractable");
+      const idClass = sourceContainer.dataset.beExtClass;
+      if (idClass) wrapper.classList.add(idClass);
+
+      // Tag for persistence if it's a group extraction
+      const sourceId = sourceContainer.dataset.originalId;
+      const isSpell =
+        sourceContainer.classList.contains("be-spell-detail") ||
+        sourceContainer.id?.startsWith("spell-detail-");
+
+      if (!isSpell) {
+        wrapper.setAttribute("data-be-group-merge", sourceId);
+      }
+
+      // Store target metadata for persistence
+      wrapper.setAttribute("data-be-target-type", targetInfo.type);
+      wrapper.setAttribute("data-be-target-id", targetInfo.id || "");
+      if (targetInfo.type === "sheet") {
+        const res = getExtractionSelector(targetInfo.element, true); // True to include elements in containers
+        if (res) {
+          wrapper.setAttribute("data-be-target-selector", res.selector);
+          wrapper.setAttribute("data-be-target-index", res.index);
+          wrapper.setAttribute("data-be-target-name", targetInfo.name || "");
         }
+      }
 
-        // Store target metadata for persistence
-        wrapper.setAttribute('data-be-target-type', targetInfo.type);
-        wrapper.setAttribute('data-be-target-id', targetInfo.id || '');
-        if (targetInfo.type === 'sheet') {
-            const res = getExtractionSelector(targetInfo.element, true); // True to include elements in containers
-            if (res) {
-                wrapper.setAttribute('data-be-target-selector', res.selector);
-                wrapper.setAttribute('data-be-target-index', res.index);
-                wrapper.setAttribute('data-be-target-name', targetInfo.name || '');
-            }
+      // Attach extraction listener to the new merged wrapper
+      wrapper.ondblclick = async (e) => {
+        e.stopPropagation();
+        await handleElementExtraction(wrapper);
+      };
+
+      // If source is a spell detail, tag it for persistence
+      const sourceWrapper =
+        sourceContainer.closest(".be-section-wrapper") || sourceContainer;
+      const spellName = isSpell
+        ? sourceWrapper.dataset.title ||
+          sourceWrapper
+            .querySelector(".print-section-header span")
+            ?.textContent.trim()
+        : null;
+      let tagged = false;
+
+      // Move all children of sourceContent to the wrapper
+      while (sourceContent.firstChild) {
+        const child = sourceContent.firstChild;
+
+        if (child.nodeType === 1) {
+          // Element
+          // Clear dimensions that might have been set by resize logic
+          child.style.width = "";
+          child.style.minWidth = "";
+          child.style.height = "";
+
+          if (isSpell && !tagged) {
+            child.setAttribute("data-be-spell-merge", spellName);
+            child.setAttribute("data-be-original-id", sourceId);
+            tagged = true;
+          }
         }
+        wrapper.appendChild(child);
+      }
 
-        // Attach extraction listener to the new merged wrapper
-        wrapper.ondblclick = async (e) => {
-            e.stopPropagation();
-            await handleElementExtraction(wrapper);
-        };
+      // Now append the wrapper to the final target
+      if (targetInfo.type === "section") {
+        appendTarget.appendChild(wrapper);
+      } else {
+        // Insert after target element on sheet
+        appendTarget.parentNode.insertBefore(wrapper, appendTarget.nextSibling);
+      }
 
-        // If source is a spell detail, tag it for persistence
-        const sourceWrapper = sourceContainer.closest('.be-section-wrapper') || sourceContainer;
-        const spellName = isSpell ? (sourceWrapper.dataset.title || sourceWrapper.querySelector('.print-section-header span')?.textContent.trim()) : null;
-        let tagged = false;
+      // If target is a section, track IDs for rollback
+      if (targetContainer) {
+        const targetAssociatedIds = targetContainer.dataset.associatedIds
+          ? JSON.parse(targetContainer.dataset.associatedIds)
+          : [];
+        const newAssociatedIds = [...targetAssociatedIds, ...allSourceIds];
+        targetContainer.dataset.associatedIds =
+          JSON.stringify(newAssociatedIds);
+      }
 
-        // Move all children of sourceContent to the wrapper
-        while (sourceContent.firstChild) {
-            const child = sourceContent.firstChild;
-            
-            if (child.nodeType === 1) { // Element
-                // Clear dimensions that might have been set by resize logic
-                child.style.width = '';
-                child.style.minWidth = '';
-                child.style.height = '';
-
-                if (isSpell && !tagged) {
-                    child.setAttribute('data-be-spell-merge', spellName);
-                    child.setAttribute('data-be-original-id', sourceId);
-                    tagged = true;
-                }
-            }
-            wrapper.appendChild(child);
-        }
-
-        // Now append the wrapper to the final target
-        if (targetInfo.type === 'section') {
-            appendTarget.appendChild(wrapper);
-        } else {
-            // Insert after target element on sheet
-            appendTarget.parentNode.insertBefore(wrapper, appendTarget.nextSibling);
-        }
-
-        // If target is a section, track IDs for rollback
-        if (targetContainer) {
-            const targetAssociatedIds = targetContainer.dataset.associatedIds ? JSON.parse(targetContainer.dataset.associatedIds) : [];
-            const newAssociatedIds = [...targetAssociatedIds, ...allSourceIds];
-            targetContainer.dataset.associatedIds = JSON.stringify(newAssociatedIds);
-        }
-
-        // Destroy source container
-        sourceContainer.remove();
-        updateLayoutBounds();
-        showFeedback(`Merged into ${targetInfo.name}`);
+      // Destroy source container
+      sourceContainer.remove();
+      updateLayoutBounds();
+      showFeedback(`Merged into ${targetInfo.name}`);
     }
-}
+  }
 
-/**
- * Rolls back a section, restoring all associated original elements.
- */
-function rollbackSection(container) {
-    const wrapper = container.closest('.be-section-wrapper') || container;
+  /**
+   * Rolls back a section, restoring all associated original elements.
+   */
+  function rollbackSection(container) {
+    const wrapper = container.closest(".be-section-wrapper") || container;
     const originalId = container.dataset.originalId;
-    const associatedIds = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
-    
-    const allIds = [originalId, ...associatedIds].filter(id => id);
-    
-    allIds.forEach(id => {
-        const original = document.getElementById(id);
-        if (original) {
-            original.style.setProperty('display', '', 'important');
-        }
+    const associatedIds = container.dataset.associatedIds
+      ? JSON.parse(container.dataset.associatedIds)
+      : [];
+
+    const allIds = [originalId, ...associatedIds].filter((id) => id);
+
+    allIds.forEach((id) => {
+      const original = document.getElementById(id);
+      if (original) {
+        original.style.setProperty("display", "", "important");
+      }
     });
 
     wrapper.remove();
     updateLayoutBounds();
     refreshLayers();
-    showFeedback('Extraction rolled back');
-}
-
-/**
- * Injects extracted clones into the live Spells view to create the print layout.
- */
-async function injectClonesIntoSpellsView() {
-  const containers = await extractAndWrapSections();
-
-  // 1. Navigate to Spells to make it the active, visible view
-  await navToSection('Spells');
-  await new Promise(r => setTimeout(r, 200));
-
-  // 2. Find the Live Spells Node (which is now visible)
-  let spellsNode;
-  const dom = window.DomManager.getInstance();
-  const wrapper = dom.getSpellsContainer();
-  spellsNode = wrapper ? wrapper.element : null;
-
-  // Fallback to primary box if getSpellsContainer fails but we are on Spells tab?
-  // If getSpellsContainer relies on a specific class that might be missing, we could try finding the visible primary box.
-  if (!spellsNode) {
-      // Use DomManager's generic PRIMARY_BOX selector
-       const primaryBoxes = document.querySelectorAll(dom.selectors.UI.PRIMARY_BOX);
-       spellsNode = Array.from(primaryBoxes).find(el => {
-            const style = window.getComputedStyle(el);
-            return style.display !== 'none' && !el.classList.contains('hidden');
-       });
+    showFeedback("Extraction rolled back");
   }
 
-  if (!spellsNode) {
+  /**
+   * Injects extracted clones into the live Spells view to create the print layout.
+   */
+  async function injectClonesIntoSpellsView() {
+    const containers = await extractAndWrapSections();
+
+    // 1. Navigate to Spells to make it the active, visible view
+    await navToSection("Spells");
+    await new Promise((r) => setTimeout(r, 200));
+
+    // 2. Find the Live Spells Node (which is now visible)
+    let spellsNode;
+    const dom = window.DomManager.getInstance();
+    const wrapper = dom.getSpellsContainer();
+    spellsNode = wrapper ? wrapper.element : null;
+
+    // Fallback to primary box if getSpellsContainer fails but we are on Spells tab?
+    // If getSpellsContainer relies on a specific class that might be missing, we could try finding the visible primary box.
+    if (!spellsNode) {
+      // Use DomManager's generic PRIMARY_BOX selector
+      const primaryBoxes = document.querySelectorAll(
+        dom.selectors.UI.PRIMARY_BOX,
+      );
+      spellsNode = Array.from(primaryBoxes).find((el) => {
+        const style = window.getComputedStyle(el);
+        return style.display !== "none" && !el.classList.contains("hidden");
+      });
+    }
+
+    if (!spellsNode) {
       if (!window.__DDB_TEST_MODE__) {
-          safeLog('error', '[DDB Print] Could not find Live Spells Node! Aborting injection.');
+        safeLog(
+          "error",
+          "[DDB Print] Could not find Live Spells Node! Aborting injection.",
+        );
       }
       return;
-  }
+    }
 
-  // 3. Clean up the Live Spells Node (Hide UI, Fix Layout)
-  // We apply the same fixes as we did for clones, but IN PLACE.
-  spellsNode.querySelectorAll('menu').forEach(el => el.style.display = 'none');
+    // 3. Clean up the Live Spells Node (Hide UI, Fix Layout)
+    // We apply the same fixes as we did for clones, but IN PLACE.
+    spellsNode
+      .querySelectorAll("menu")
+      .forEach((el) => (el.style.display = "none"));
 
-  
-  spellsNode.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
-  
-  spellsNode.querySelectorAll(dom.selectors.UI.PRIMARY_BOX + ', section').forEach(el => {
-      el.style.cssText += 'height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;';
-  });
+    spellsNode.style.cssText +=
+      "height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;";
 
-  // Targeted SVG Removal for Spells: Use helper function
-  removeSpecificSvgs(spellsNode);
+    spellsNode
+      .querySelectorAll(dom.selectors.UI.PRIMARY_BOX + ", section")
+      .forEach((el) => {
+        el.style.cssText +=
+          "height: fit-content !important; display: flex !important; flex-direction: column !important; max-height: none !important; overflow: visible !important;";
+      });
 
-  // We RESTORE the logic for other SVGs as per user request.
+    // Targeted SVG Removal for Spells: Use helper function
+    removeSpecificSvgs(spellsNode);
 
-  const bgSvgs = spellsNode.querySelectorAll([
-      dom.selectors.UI.PRIMARY_BOX + ' > ' + dom.selectors.SVG.ALL,
-      dom.selectors.SVG.REP_BOX,
-      dom.selectors.SVG.BOX_BACKGROUND + ':not([style*="display: none"]) ' + dom.selectors.SVG.ALL
-  ].join(', '));
-  bgSvgs.forEach(svg => {
-      svg.style.height = '100%';
-      svg.style.width = '100%';
-      if(svg.hasAttribute('height')) svg.removeAttribute('height');
-      if(svg.hasAttribute('width')) svg.removeAttribute('width');
-      svg.setAttribute('preserveAspectRatio', 'none');
-  });
+    // We RESTORE the logic for other SVGs as per user request.
 
-  // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws) in Spells View
+    const bgSvgs = spellsNode.querySelectorAll(
+      [
+        dom.selectors.UI.PRIMARY_BOX + " > " + dom.selectors.SVG.ALL,
+        dom.selectors.SVG.REP_BOX,
+        dom.selectors.SVG.BOX_BACKGROUND +
+          ':not([style*="display: none"]) ' +
+          dom.selectors.SVG.ALL,
+      ].join(", "),
+    );
+    bgSvgs.forEach((svg) => {
+      svg.style.height = "100%";
+      svg.style.width = "100%";
+      if (svg.hasAttribute("height")) svg.removeAttribute("height");
+      if (svg.hasAttribute("width")) svg.removeAttribute("width");
+      svg.setAttribute("preserveAspectRatio", "none");
+    });
 
-  const groupBoxSvgs = spellsNode.querySelectorAll([
+    // Explicitly fix Group Boxes (Proficiency, Skills, Senses, Saving Throws) in Spells View
+
+    const groupBoxSvgs = spellsNode.querySelectorAll(
+      [
         dom.selectors.SVG.PROFICIENCY,
         dom.selectors.SVG.SENSES,
         dom.selectors.SVG.SKILLS,
-        dom.selectors.SVG.SAVING_THROWS
-    ].join(', '));
-  groupBoxSvgs.forEach(svg => {
-       svg.setAttribute('preserveAspectRatio', 'none');
-       svg.style.width = '100%';
-       svg.style.height = '100%';
-  });
+        dom.selectors.SVG.SAVING_THROWS,
+      ].join(", "),
+    );
+    groupBoxSvgs.forEach((svg) => {
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.style.width = "100%";
+      svg.style.height = "100%";
+    });
 
-  // 4. Identify the Unified Layout Root
-  // We want to move everything to .ct-subsections
-  const layoutRoot = document.querySelector(dom.selectors.CORE.SUBSECTIONS);
-  if (!layoutRoot) {
+    // 4. Identify the Unified Layout Root
+    // We want to move everything to .ct-subsections
+    const layoutRoot = document.querySelector(dom.selectors.CORE.SUBSECTIONS);
+    if (!layoutRoot) {
       if (!window.__DDB_TEST_MODE__) {
-          safeLog('warn', '[DDB Print] Could not find .ct-subsections! Falling back to original parent.');
+        safeLog(
+          "warn",
+          "[DDB Print] Could not find .ct-subsections! Falling back to original parent.",
+        );
       }
       return;
-  }
-  layoutRoot.id = 'print-layout-wrapper';
+    }
+    layoutRoot.id = "print-layout-wrapper";
 
-  // 5. Wrap existing Children (Skills, Senses, etc.)
-  // These are already in the DOM, we want to wrap them if they aren't already.
-  let unnamedSectionCounter = 1;
-  Array.from(layoutRoot.children).forEach(child => {
-      if (!child.classList.contains('print-section-container')) {
-          // Identify a title for the section (e.g. from a header)
-          const titleEl = child.querySelector('header, ' + dom.selectors.CORE.SUBSECTION_HEADER);
-          let title = titleEl ? titleEl.textContent.trim() : null;
-          
-          if (!title) {
-              title = `Section ${unnamedSectionCounter++}`;
-          }
-          
-          // Ensure SVGs are removed from existing sections too
-          removeSpecificSvgs(child);
-          
-          // Wrap it
-          const wrapper = createDraggableContainer(title, child, `section-${title.replace(/\s+/g, '-')}`);
-          PeDom().getSectionsLayer().element.appendChild(wrapper); // This moves 'child' into 'wrapped'
+    // 5. Wrap existing Children (Skills, Senses, etc.)
+    // These are already in the DOM, we want to wrap them if they aren't already.
+    let unnamedSectionCounter = 1;
+    Array.from(layoutRoot.children).forEach((child) => {
+      if (!child.classList.contains("print-section-container")) {
+        // Identify a title for the section (e.g. from a header)
+        const titleEl = child.querySelector(
+          "header, " + dom.selectors.CORE.SUBSECTION_HEADER,
+        );
+        let title = titleEl ? titleEl.textContent.trim() : null;
+
+        if (!title) {
+          title = `Section ${unnamedSectionCounter++}`;
+        }
+
+        // Ensure SVGs are removed from existing sections too
+        removeSpecificSvgs(child);
+
+        // Wrap it
+        const wrapper = createDraggableContainer(
+          title,
+          child,
+          `section-${title.replace(/\s+/g, "-")}`,
+        );
+        PeDom().getSectionsLayer().element.appendChild(wrapper); // This moves 'child' into 'wrapped'
       }
-  });
+    });
 
-  // 6. Wrap and Inject the Live Spells Node
-  const spellsContainer = createDraggableContainer('Spells', spellsNode, 'section-Spells');
+    // 6. Wrap and Inject the Live Spells Node
+    const spellsContainer = createDraggableContainer(
+      "Spells",
+      spellsNode,
+      "section-Spells",
+    );
 
-  // 7. Consolidate All Clones
-  const allSectionsOrdered = [];
-  const actionsContainer = containers.find(c => c.textContent.includes('Actions'));
-  if (actionsContainer) allSectionsOrdered.push(actionsContainer);
-  
-  allSectionsOrdered.push(spellsContainer);
-  
-  containers.forEach(container => {
+    // 7. Consolidate All Clones
+    const allSectionsOrdered = [];
+    const actionsContainer = containers.find((c) =>
+      c.textContent.includes("Actions"),
+    );
+    if (actionsContainer) allSectionsOrdered.push(actionsContainer);
+
+    allSectionsOrdered.push(spellsContainer);
+
+    containers.forEach((container) => {
       if (!allSectionsOrdered.includes(container)) {
-          allSectionsOrdered.push(container);
+        allSectionsOrdered.push(container);
       }
-  });
+    });
 
-  // Inject everything into the sections layer
-  allSectionsOrdered.forEach(container => {
+    // Inject everything into the sections layer
+    allSectionsOrdered.forEach((container) => {
       PeDom().getSectionsLayer().element.appendChild(container); // Append moves them to the end or maintains order if prepended
-  });
+    });
 
-  // 8. Hide Navigation UI (Using DomManager)
-  window.DomManager.getInstance().getNavigation().hide();
+    // 8. Hide Navigation UI (Using DomManager)
+    window.DomManager.getInstance().getNavigation().hide();
 
-  
-  // 9. Inject spell detail triggers into all sections
-  injectSpellDetailTriggers(layoutRoot);
-  
-  // Clean up global definitions
-  copySvgDefinitions(document.body); 
-}
+    // 9. Inject spell detail triggers into all sections
+    injectSpellDetailTriggers(layoutRoot);
 
-/**
- * Relocates defense information.
- */
-function moveDefenses() {
-  const dom = window.DomManager.getInstance();
-  const defensesSection = document.querySelector(dom.selectors.CORE.DEFENSES) || 
-                          document.querySelector(dom.selectors.CORE.DEFENSES_ALT);
-  if (!defensesSection) return;
-
-  const elem = defensesSection.cloneNode(true);
-  removeSpecificSvgs(elem); // Ensure SVGs are removed from Defenses clone
-  
-  // Remove header
-  const header = elem.querySelector(dom.selectors.CORE.DEFENSES_HEADER) || 
-                 elem.querySelector(dom.selectors.CORE.DEFENSES_HEADER_ALT);
-  if (header) header.remove();
-
-  const combatTablet = document.querySelector(dom.selectors.CORE.COMBAT_TABLET) || 
-                       document.querySelector(dom.selectors.CORE.COMBAT_TABLET_ALT);
-                       
-  if (combatTablet) {
-    const container = document.createElement('div');
-    container.style['border'] = 'thin black solid';
-    container.style['margin-top'] = '10px';
-    container.appendChild(elem);
-    combatTablet.parentElement.appendChild(container);
+    // Clean up global definitions
+    copySvgDefinitions(document.body);
   }
-}
 
-/**
- * Optimized layout for print.
- */
-function tweakStyles() {
-  // Hide major UI components using DomManager
-  window.DomManager.getInstance().hideCoreInterface();
+  /**
+   * Relocates defense information.
+   */
+  function moveDefenses() {
+    const dom = window.DomManager.getInstance();
+    const defensesSection =
+      document.querySelector(dom.selectors.CORE.DEFENSES) ||
+      document.querySelector(dom.selectors.CORE.DEFENSES_ALT);
+    if (!defensesSection) return;
 
-  const dom = window.DomManager.getInstance();
-  const name = document.querySelector(dom.selectors.CORE.TIDBITS_NAME) || 
-               document.querySelector(dom.selectors.CORE.TIDBITS_NAME_ALT);
-  if (name) name.style['color'] = 'black';
+    const elem = defensesSection.cloneNode(true);
+    removeSpecificSvgs(elem); // Ensure SVGs are removed from Defenses clone
 
-  // HP recovery
-  const allElements = Array.from(document.querySelectorAll('*'));
-  const hpElements = allElements.filter(el => 
-    el.textContent.trim().match(/^\d+\s*\/\s*\d+$/) && el.children.length === 0
-  );
-  
-  hpElements.forEach(el => {
-    el.style['font-size'] = '30px';
-    el.style['font-weight'] = 'bold';
-    el.style['color'] = 'black';
-  });
-}
+    // Remove header
+    const header =
+      elem.querySelector(dom.selectors.CORE.DEFENSES_HEADER) ||
+      elem.querySelector(dom.selectors.CORE.DEFENSES_HEADER_ALT);
+    if (header) header.remove();
 
-/**
- * Moves the character portrait to the primary box.
- */
-function movePortrait() {
+    const combatTablet =
+      document.querySelector(dom.selectors.CORE.COMBAT_TABLET) ||
+      document.querySelector(dom.selectors.CORE.COMBAT_TABLET_ALT);
+
+    if (combatTablet) {
+      const container = document.createElement("div");
+      container.style["border"] = "thin black solid";
+      container.style["margin-top"] = "10px";
+      container.appendChild(elem);
+      combatTablet.parentElement.appendChild(container);
+    }
+  }
+
+  /**
+   * Optimized layout for print.
+   */
+  function tweakStyles() {
+    // Hide major UI components using DomManager
+    window.DomManager.getInstance().hideCoreInterface();
+
+    const dom = window.DomManager.getInstance();
+    const name =
+      document.querySelector(dom.selectors.CORE.TIDBITS_NAME) ||
+      document.querySelector(dom.selectors.CORE.TIDBITS_NAME_ALT);
+    if (name) name.style["color"] = "black";
+
+    // HP recovery
+    const allElements = Array.from(document.querySelectorAll("*"));
+    const hpElements = allElements.filter(
+      (el) =>
+        el.textContent.trim().match(/^\d+\s*\/\s*\d+$/) &&
+        el.children.length === 0,
+    );
+
+    hpElements.forEach((el) => {
+      el.style["font-size"] = "30px";
+      el.style["font-weight"] = "bold";
+      el.style["color"] = "black";
+    });
+  }
+
+  /**
+   * Moves the character portrait to the primary box.
+   */
+  function movePortrait() {
     // User Request: Append .ddbc-character-avatar__portrait to .ct-subsection.ct-subsection--primary-box
     const dom = window.DomManager.getInstance();
     const portrait = document.querySelector(dom.selectors.UI.PORTRAIT);
     // UI.PRIMARY_BOX might be .ct-primary-box, check if we have the specific subsection target
     // The previous code targeted .ct-subsection.ct-subsection--primary-box
-    const target = document.querySelector('.ct-subsection.ct-subsection--primary-box');
-    
-    if (portrait && target) {
-        // Ensure portrait is visible and styled properly
-        portrait.style.display = 'block';
-        portrait.style.width = '100%';
-        portrait.style.height = 'auto'; // Maintain aspect ratio
-        
-        target.appendChild(portrait);
-        safeLog('log', '[DDB Print] Moved character portrait.');
-    } else {
-        if (!window.__DDB_TEST_MODE__) {
-            safeLog('warn', '[DDB Print] Could not find portrait or target to move.');
-        }
-    }
-}
+    const target = document.querySelector(
+      ".ct-subsection.ct-subsection--primary-box",
+    );
 
-/**
- * Moves Quick Info to a draggable container.
- */
-function moveQuickInfo() {
+    if (portrait && target) {
+      // Ensure portrait is visible and styled properly
+      portrait.style.display = "block";
+      portrait.style.width = "100%";
+      portrait.style.height = "auto"; // Maintain aspect ratio
+
+      target.appendChild(portrait);
+      safeLog("log", "[DDB Print] Moved character portrait.");
+    } else {
+      if (!window.__DDB_TEST_MODE__) {
+        safeLog(
+          "warn",
+          "[DDB Print] Could not find portrait or target to move.",
+        );
+      }
+    }
+  }
+
+  /**
+   * Moves Quick Info to a draggable container.
+   */
+  function moveQuickInfo() {
     // User Request: Make .ct-quick-info draggable
     let quickInfo;
     const dom = window.DomManager.getInstance();
@@ -2516,219 +2860,237 @@ function moveQuickInfo() {
     quickInfo = wrapper ? wrapper.element : null;
 
     if (quickInfo) {
-        const layoutRoot = PeDom().getLayoutRoot().element;
-        if (layoutRoot) {
-             // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
-             // Let's move it to preserve functionality.
-             const container = createDraggableContainer('Quick Info', quickInfo, 'section-Quick-Info');
-             PeDom().getSectionsLayer().element.appendChild(container);
-             
-             // Ensure it's visible if parent was hidden
-             quickInfo.style.display = 'flex'; 
-             // quickInfo usually has fixed position/margin in normal sheet, reset it
-             quickInfo.style.position = 'static';
-             quickInfo.style.margin = '0';
-        }
-    }
-}
+      const layoutRoot = PeDom().getLayoutRoot().element;
+      if (layoutRoot) {
+        // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
+        // Let's move it to preserve functionality.
+        const container = createDraggableContainer(
+          "Quick Info",
+          quickInfo,
+          "section-Quick-Info",
+        );
+        PeDom().getSectionsLayer().element.appendChild(container);
 
-/**
- * Suppresses global resize events to stabilize custom layout.
- */
-function suppressResizeEvents() {
-    safeLog('log', '[DDB Print] Suppressing global resize events...');
-    
+        // Ensure it's visible if parent was hidden
+        quickInfo.style.display = "flex";
+        // quickInfo usually has fixed position/margin in normal sheet, reset it
+        quickInfo.style.position = "static";
+        quickInfo.style.margin = "0";
+      }
+    }
+  }
+
+  /**
+   * Suppresses global resize events to stabilize custom layout.
+   */
+  function suppressResizeEvents() {
+    safeLog("log", "[DDB Print] Suppressing global resize events...");
+
     // 1. Nullify window.onresize
     window.onresize = null;
 
     // 2. Stop propagation of resize events in the capture phase
     // This targets listeners added BEFORE the extension was loaded
-    window.addEventListener('resize', (e) => {
+    window.addEventListener(
+      "resize",
+      (e) => {
         e.stopImmediatePropagation();
-    }, true);
+      },
+      true,
+    );
 
     // 3. Intercept addEventListener for 'resize'
     const originalAddEventListener = window.addEventListener;
-    window.addEventListener = function(type, listener, options) {
-        if (type === 'resize') {
-            safeLog('log', '[DDB Print] Blocking external resize listener.');
-            return;
-        }
-        return originalAddEventListener.apply(this, arguments);
+    window.addEventListener = function (type, listener, options) {
+      if (type === "resize") {
+        safeLog("log", "[DDB Print] Blocking external resize listener.");
+        return;
+      }
+      return originalAddEventListener.apply(this, arguments);
     };
-}
+  }
 
-/**
- * Separates ability scores into individual draggable sections.
- * This function:
- * 1. Identifies all ability score elements using DomManager selectors.
- * 2. Wraps each ability in a new draggable 'print-section-container'.
- * 3. Applies the 'ability_border' style by default.
- * 4. Moves the elements to the print layout wrapper.
- * 5. Performs specific SVG removal for each new container.
- * 6. Destroys the original empty parent sections to clean up the UI.
- */
-function separateAbilities() {
+  /**
+   * Separates ability scores into individual draggable sections.
+   * This function:
+   * 1. Identifies all ability score elements using DomManager selectors.
+   * 2. Wraps each ability in a new draggable 'print-section-container'.
+   * 3. Applies the 'ability_border' style by default.
+   * 4. Moves the elements to the print layout wrapper.
+   * 5. Performs specific SVG removal for each new container.
+   * 6. Destroys the original empty parent sections to clean up the UI.
+   */
+  function separateAbilities() {
     const dom = window.DomManager.getInstance();
     const abilities = document.querySelectorAll(dom.selectors.CORE.ABILITY);
-    const layoutRoot = document.getElementById('print-layout-wrapper');
+    const layoutRoot = document.getElementById("print-layout-wrapper");
 
     if (!abilities.length || !layoutRoot) return;
 
-    safeLog('log', `[DDB Print] Separating ${abilities.length} abilities...`);
+    safeLog("log", `[DDB Print] Separating ${abilities.length} abilities...`);
 
     const parentsToRemove = new Set();
 
     abilities.forEach((ability, index) => {
-        const parentSection = ability.closest('section');
-        if (parentSection) parentsToRemove.add(parentSection);
+      const parentSection = ability.closest("section");
+      if (parentSection) parentsToRemove.add(parentSection);
 
-        const nameEl = ability.querySelector(dom.selectors.CORE.ABILITY_NAME);
-        const name = nameEl ? nameEl.textContent.trim() : `Ability ${index + 1}`;
-        const id = `section-Ability-${name}`;
+      const nameEl = ability.querySelector(dom.selectors.CORE.ABILITY_NAME);
+      const name = nameEl ? nameEl.textContent.trim() : `Ability ${index + 1}`;
+      const id = `section-Ability-${name}`;
 
-        // Create container and MOVE the element
-        const wrapper = createDraggableContainer(name, ability, id);
-        const innerContainer = wrapper.querySelector('.print-section-container');
-        
-        // Default to ability border (if not overridden by saved layout later)
-        innerContainer.classList.add('ability_border');
-        
-        PeDom().getSectionsLayer().element.appendChild(wrapper);
+      // Create container and MOVE the element
+      const wrapper = createDraggableContainer(name, ability, id);
+      const innerContainer = wrapper.querySelector(".print-section-container");
 
-        // Targeted SVG Removal for the new section
-        removeSpecificSvgs(innerContainer);
+      // Default to ability border (if not overridden by saved layout later)
+      innerContainer.classList.add("ability_border");
 
-        // Reset internal styles to fit new container
-        ability.style.margin = '0';
-        ability.style.width = '100%';
-        ability.style.display = 'flex';
-        ability.style.flexDirection = 'column';
-        ability.style.alignItems = 'center';
+      PeDom().getSectionsLayer().element.appendChild(wrapper);
+
+      // Targeted SVG Removal for the new section
+      removeSpecificSvgs(innerContainer);
+
+      // Reset internal styles to fit new container
+      ability.style.margin = "0";
+      ability.style.width = "100%";
+      ability.style.display = "flex";
+      ability.style.flexDirection = "column";
+      ability.style.alignItems = "center";
     });
 
     // Destroy empty parents
-    parentsToRemove.forEach(p => p.remove());
-}
+    parentsToRemove.forEach((p) => p.remove());
+  }
 
-/**
- * Separates individual Quick Info boxes (AC, Initiative, etc.) into draggable sections.
- */
-function separateQuickInfoBoxes() {
+  /**
+   * Separates individual Quick Info boxes (AC, Initiative, etc.) into draggable sections.
+   */
+  function separateQuickInfoBoxes() {
     const dom = window.DomManager.getInstance();
     const boxes = document.querySelectorAll(dom.selectors.CORE.QUICK_INFO_BOX);
-    const layoutRoot = document.getElementById('print-layout-wrapper');
+    const layoutRoot = document.getElementById("print-layout-wrapper");
 
     if (!boxes.length || !layoutRoot) return;
 
-    safeLog('log', `[DDB Print] Separating ${boxes.length} quick-info boxes...`);
+    safeLog(
+      "log",
+      `[DDB Print] Separating ${boxes.length} quick-info boxes...`,
+    );
 
     const parentsToRemove = new Set();
 
     boxes.forEach((box, index) => {
-        // Collect parent for cleanup (usually .ct-quick-info)
-        const parentGroup = box.closest(dom.selectors.CORE.QUICK_INFO);
-        if (parentGroup) parentsToRemove.add(parentGroup);
+      // Collect parent for cleanup (usually .ct-quick-info)
+      const parentGroup = box.closest(dom.selectors.CORE.QUICK_INFO);
+      if (parentGroup) parentsToRemove.add(parentGroup);
 
-        const labelEl = box.querySelector(dom.selectors.CORE.QUICK_INFO_BOX_LABEL);
-        const label = labelEl ? labelEl.textContent.trim() : `Box ${index + 1}`;
-        const id = `section-Box-${label.replace(/\s+/g, '-')}`;
+      const labelEl = box.querySelector(
+        dom.selectors.CORE.QUICK_INFO_BOX_LABEL,
+      );
+      const label = labelEl ? labelEl.textContent.trim() : `Box ${index + 1}`;
+      const id = `section-Box-${label.replace(/\s+/g, "-")}`;
 
-        // Create container and MOVE the element
-        const wrapper = createDraggableContainer(label, box, id);
-        const innerContainer = wrapper.querySelector('.print-section-container');
-        
-        // Default to box border
-        innerContainer.classList.add('box_border');
-        
-        PeDom().getSectionsLayer().element.appendChild(wrapper);
+      // Create container and MOVE the element
+      const wrapper = createDraggableContainer(label, box, id);
+      const innerContainer = wrapper.querySelector(".print-section-container");
 
-        // Targeted SVG Removal for the new section
-        removeSpecificSvgs(innerContainer);
+      // Default to box border
+      innerContainer.classList.add("box_border");
 
-        // Reset internal styles
-        box.style.margin = '0';
-        box.style.width = '100%';
-        box.style.display = 'flex';
-        box.style.flexDirection = 'column';
-        box.style.alignItems = 'center';
+      PeDom().getSectionsLayer().element.appendChild(wrapper);
+
+      // Targeted SVG Removal for the new section
+      removeSpecificSvgs(innerContainer);
+
+      // Reset internal styles
+      box.style.margin = "0";
+      box.style.width = "100%";
+      box.style.display = "flex";
+      box.style.flexDirection = "column";
+      box.style.alignItems = "center";
     });
 
     // Extract Health if present (User Request)
     const health = document.querySelector(dom.selectors.UI.QUICK_INFO_HEALTH);
     if (health) {
-        // Only extract if it hasn't been extracted yet
-        if (!document.getElementById('section-Quick-Info-Health')) {
-            const wrapper = createDraggableContainer('Health', health, 'section-Quick-Info-Health');
-            const innerContainer = wrapper.querySelector('.print-section-container');
-            // Remove the header inside health if it exists to avoid duplication/weirdness
-            const healthHeader = health.querySelector('h1');
-            // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
-            
-            PeDom().getSectionsLayer().element.appendChild(wrapper);
-            
-            // Fix health display
-            health.style.display = 'block';
-            health.style.position = 'static';
-            health.style.width = '100%';
-            
-            removeSpecificSvgs(innerContainer);
-            
-            // Mark parent for removal if health was inside it
-            const parentGroup = health.parentElement; // usually .ct-quick-info
-             if (parentGroup && parentGroup.matches(dom.selectors.CORE.QUICK_INFO)) {
-                 parentsToRemove.add(parentGroup);
-             }
+      // Only extract if it hasn't been extracted yet
+      if (!document.getElementById("section-Quick-Info-Health")) {
+        const wrapper = createDraggableContainer(
+          "Health",
+          health,
+          "section-Quick-Info-Health",
+        );
+        const innerContainer = wrapper.querySelector(
+          ".print-section-container",
+        );
+        // Remove the header inside health if it exists to avoid duplication/weirdness
+        const healthHeader = health.querySelector("h1");
+        // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
+
+        PeDom().getSectionsLayer().element.appendChild(wrapper);
+
+        // Fix health display
+        health.style.display = "block";
+        health.style.position = "static";
+        health.style.width = "100%";
+
+        removeSpecificSvgs(innerContainer);
+
+        // Mark parent for removal if health was inside it
+        const parentGroup = health.parentElement; // usually .ct-quick-info
+        if (parentGroup && parentGroup.matches(dom.selectors.CORE.QUICK_INFO)) {
+          parentsToRemove.add(parentGroup);
         }
+      }
     }
 
     // Destroy empty groups
-    parentsToRemove.forEach(p => p.remove());
-}
+    parentsToRemove.forEach((p) => p.remove());
+  }
 
-/**
- * Drag and Drop Engine
- */
-function removeSearchBoxes() {
-  const dom = window.DomManager.getInstance();
-  const s = dom.selectors;
-  const searchSelectors = [
-    s.UI.HEADER_WRAPPER,
-    s.UI.SEARCH_INPUT,
-    s.UI.FILTER_GENERIC,
-     // Add DomManager selectors
-     s.SPELLS.FILTER,
-     s.EQUIPMENT.FILTER,
-     s.EQUIPMENT.INVENTORY_FILTER,
-     s.EXTRAS.FILTER,
-     s.TRAITS.MANAGEMENT_LINK
-  ].filter(Boolean); // Filter out undefineds
+  /**
+   * Drag and Drop Engine
+   */
+  function removeSearchBoxes() {
+    const dom = window.DomManager.getInstance();
+    const s = dom.selectors;
+    const searchSelectors = [
+      s.UI.HEADER_WRAPPER,
+      s.UI.SEARCH_INPUT,
+      s.UI.FILTER_GENERIC,
+      // Add DomManager selectors
+      s.SPELLS.FILTER,
+      s.EQUIPMENT.FILTER,
+      s.EQUIPMENT.INVENTORY_FILTER,
+      s.EXTRAS.FILTER,
+      s.TRAITS.MANAGEMENT_LINK,
+    ].filter(Boolean); // Filter out undefineds
 
-  // Flatten and query
-  const allSelectors = searchSelectors.join(',');
-  document.querySelectorAll(allSelectors).forEach(el => {
-    // User Request: Preserve Filters on Live Spells Tab
-    // Check if element is inside Spells container (or is the spells filter itself checking ancestors)
-    if (el.closest('.ct-spells') || el.closest('[data-testid="SPELLS"]')) {
+    // Flatten and query
+    const allSelectors = searchSelectors.join(",");
+    document.querySelectorAll(allSelectors).forEach((el) => {
+      // User Request: Preserve Filters on Live Spells Tab
+      // Check if element is inside Spells container (or is the spells filter itself checking ancestors)
+      if (el.closest(".ct-spells") || el.closest('[data-testid="SPELLS"]')) {
         return;
-    }
-    el.remove();
-  });
-}
+      }
+      el.remove();
+    });
+  }
 
-function enforceFullHeight() {
-    const styleId = 'ddb-print-enhance-style';
+  function enforceFullHeight() {
+    const styleId = "ddb-print-enhance-style";
     if (document.getElementById(styleId)) return;
 
     const dom = window.DomManager.getInstance();
     let s = dom.selectors;
 
-
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.id = styleId;
     style.textContent = `
         :root {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_default.webp")}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
@@ -2748,79 +3110,79 @@ function enforceFullHeight() {
             display: none !important;
         }
         .default-border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_default.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_default.webp")}');
             --border-img-width: 28px;
             --border-img-outset: 16px;
             --border-img-slice: 33;
         }
         .ability_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_ability.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_ability.webp")}');
             --border-img-width: 28px;
             --border-img-slice: 25;
             --border-img-outset: 8px;
         }
         .spikes_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_spikes.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_spikes.webp")}');
             --border-img-width: 118px;
             --border-img-slice: 177;
             --border-img-outset: 55px;
         }
         .barbarian_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_barbarian.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_barbarian.webp")}');
             --border-img-width: 88px;
             --border-img-slice: 146;
             --border-img-outset: 71px;
         }
         .goth_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_goth1.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_goth1.webp")}');
             --border-img-width: 111px;
             --border-img-slice: 250;
             --border-img-outset: 50px 35px;
         }
         .plants_border {
-            --border-img: url('${chrome.runtime.getURL('assets/vine_plants.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/vine_plants.webp")}');
             --border-img-width: 145px;
             --border-img-slice: 219;
             --border-img-outset: 50px;
         }
         .box_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_box.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_box.webp")}');
             --border-img-width: 25px;
             --border-img-slice: 22;
             --border-img-outset: 7px 10px;
         }
         .dwarf_border {
-            --border-img: url('${chrome.runtime.getURL('assets/dwarf.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/dwarf.webp")}');
             --border-img-width: 205px;
             --border-img-slice: 206;
             --border-img-outset: 173px;
         }
         .dwarf_hollow_border {
-            --border-img: url('${chrome.runtime.getURL('assets/dwarf_hollow.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/dwarf_hollow.webp")}');
             --border-img-width: 205px;
             --border-img-slice: 206;
             --border-img-outset: 173px;
         }
         .sticks_border {
-            --border-img: url('${chrome.runtime.getURL('assets/sticks.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/sticks.webp")}');
             --border-img-width: 90px;
             --border-img-slice: 245;
             --border-img-outset: 22px;
         }
         .ornament_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/ornament.webp")}');
             --border-img-width: 60px;
             --border-img-slice: 105;
             --border-img-outset: 25px;
         }
         .ornament2_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament2.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/ornament2.webp")}');
             --border-img-width: 60px;
             --border-img-slice: 105;
             --border-img-outset: 25px;
         }
         .ornament_bold_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/ornament_bold.webp")}');
             --border-img-width: 80px;
             --border-img-slice: 205;
             --border-img-outset: 25px;
@@ -2890,61 +3252,61 @@ function enforceFullHeight() {
         }
 
         .ornament_bold2_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament_bold2.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/ornament_bold2.webp")}');
             --border-img-width: 80px;
             --border-img-slice: 205;
             --border-img-outset: 24px;
         }
         .ornament_simple_border {
-            --border-img: url('${chrome.runtime.getURL('assets/ornament_simple.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/ornament_simple.webp")}');
             --border-img-width: 50px;
             --border-img-slice: 255;
             --border-img-outset: 20px;
         }
         .spike_hollow_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/spike_hollow.webp")}');
             --border-img-width: 100px;
             --border-img-slice: 205;
             --border-img-outset: 50px;
         }
         .spiky_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spike_hollow2.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/spike_hollow2.webp")}');
             --border-img-width: 100px;
             --border-img-slice: 205;
             --border-img-outset: 60px;
         }
         .spiky_bold_border {
-            --border-img: url('${chrome.runtime.getURL('assets/spike_bold.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/spike_bold.webp")}');
             --border-img-width: 120px;
             --border-img-slice: 205;
             --border-img-outset: 69px;
         }
         .vine_border {
-            --border-img: url('${chrome.runtime.getURL('assets/vine_hollow.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/vine_hollow.webp")}');
             --border-img-width: 130px;
             --border-img-slice: 205;
             --border-img-outset: 45px;
         }
         .archer_header_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_archer_header.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_archer_header.webp")}');
             --border-img-width: 172px 208px 81px 194px;
             --border-img-slice: 481 470 202 475;
             --border-img-outset: 10px;
         }
         .archer_ability_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_archer_ability.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_archer_ability.webp")}');
             --border-img-width: 201px 245px 116px 242px;
             --border-img-slice: 167 174 79 178;
             --border-img-outset: 10px;
         }
         .archer_border_archer_footer {
-            --border-img: url('${chrome.runtime.getURL('assets/border_archer_footer.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_archer_footer.webp")}');
             --border-img-width: 35px 32px 36px 44px;
             --border-img-slice: 61 60 61 83;
             --border-img-outset: 10px;
         }
         .archer_sidebar_border {
-            --border-img: url('${chrome.runtime.getURL('assets/border_archer_sidebar.webp')}');
+            --border-img: url('${chrome.runtime.getURL("assets/border_archer_sidebar.webp")}');
             --border-img-width: 35px 32px 36px 44px;
             --border-img-slice: 61 60 61 83;
             --border-img-outset: 10px;
@@ -3684,199 +4046,221 @@ function enforceFullHeight() {
         }
     `;
     document.head.appendChild(style);
-}
+  }
 
-/**
- * Shows a modal to manage existing clones.
- */
-function handleManageClones() {
-    const clones = document.querySelectorAll('.print-section-container.be-clone');
+  /**
+   * Shows a modal to manage existing clones.
+   */
+  function handleManageClones() {
+    const clones = document.querySelectorAll(
+      ".print-section-container.be-clone",
+    );
     if (clones.length === 0) {
-        showFeedback('No clones found');
-        return;
+      showFeedback("No clones found");
+      return;
     }
 
     // Modal for managing clones
-    const overlay = document.createElement('div');
-    overlay.className = 'be-modal-overlay';
-    
-    const modal = document.createElement('div');
-    modal.className = 'be-modal';
-    modal.style.width = '500px';
-    
-    const h3 = document.createElement('h3');
-    h3.textContent = 'Manage Clones';
+    const overlay = document.createElement("div");
+    overlay.className = "be-modal-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "be-modal";
+    modal.style.width = "500px";
+
+    const h3 = document.createElement("h3");
+    h3.textContent = "Manage Clones";
     modal.appendChild(h3);
-    
-    const list = document.createElement('div');
-    list.style.maxHeight = '300px';
-    list.style.overflowY = 'auto';
-    list.style.display = 'flex';
-    list.style.flexDirection = 'column';
-    list.style.gap = '8px';
-    
-    clones.forEach(clone => {
-        const item = document.createElement('div');
-        item.style.display = 'flex';
-        item.style.justifyContent = 'space-between';
-        item.style.alignItems = 'center';
-        item.style.padding = '8px';
-        item.style.background = '#333';
-        item.style.borderRadius = '4px';
-        
-        const title = clone.dataset.title || (clone.querySelector('.print-section-header span')?.textContent) || 'Unnamed Clone';
-        
-        const nameLabel = document.createElement('span');
-        nameLabel.textContent = title;
-        item.appendChild(nameLabel);
-        
-        const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.gap = '8px';
-        
-        const goBtn = document.createElement('button');
-        goBtn.textContent = '🎯';
-        goBtn.title = 'Jump to Clone';
-        goBtn.onclick = () => {
-            clone.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Flash effect
-            const originalOutline = clone.style.outline;
-            clone.style.outline = '4px solid gold';
-            setTimeout(() => clone.style.outline = originalOutline, 1000);
+
+    const list = document.createElement("div");
+    list.style.maxHeight = "300px";
+    list.style.overflowY = "auto";
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "8px";
+
+    clones.forEach((clone) => {
+      const item = document.createElement("div");
+      item.style.display = "flex";
+      item.style.justifyContent = "space-between";
+      item.style.alignItems = "center";
+      item.style.padding = "8px";
+      item.style.background = "#333";
+      item.style.borderRadius = "4px";
+
+      const title =
+        clone.dataset.title ||
+        clone.querySelector(".print-section-header span")?.textContent ||
+        "Unnamed Clone";
+
+      const nameLabel = document.createElement("span");
+      nameLabel.textContent = title;
+      item.appendChild(nameLabel);
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "8px";
+
+      const goBtn = document.createElement("button");
+      goBtn.textContent = "🎯";
+      goBtn.title = "Jump to Clone";
+      goBtn.onclick = () => {
+        clone.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Flash effect
+        const originalOutline = clone.style.outline;
+        clone.style.outline = "4px solid gold";
+        setTimeout(() => (clone.style.outline = originalOutline), 1000);
+        overlay.remove();
+      };
+      actions.appendChild(goBtn);
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "🗑️";
+      delBtn.title = "Delete Clone";
+      delBtn.onclick = () => {
+        if (confirm(`Delete "${name}"?`)) {
+          clone.remove();
+          item.remove();
+          if (list.children.length === 0) {
             overlay.remove();
-        };
-        actions.appendChild(goBtn);
-        
-        const delBtn = document.createElement('button');
-        delBtn.textContent = '🗑️';
-        delBtn.title = 'Delete Clone';
-        delBtn.onclick = () => {
-            if (confirm(`Delete "${name}"?`)) {
-                clone.remove();
-                item.remove();
-                if (list.children.length === 0) {
-                    overlay.remove();
-                }
-                showFeedback('Clone deleted');
-                updateLayoutBounds();
-            }
-        };
-        actions.appendChild(delBtn);
-        
-        item.appendChild(actions);
-        list.appendChild(item);
+          }
+          showFeedback("Clone deleted");
+          updateLayoutBounds();
+        }
+      };
+      actions.appendChild(delBtn);
+
+      item.appendChild(actions);
+      list.appendChild(item);
     });
-    
+
     modal.appendChild(list);
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.className = 'be-modal-ok';
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Close";
+    closeBtn.className = "be-modal-ok";
     closeBtn.onclick = () => overlay.remove();
     modal.appendChild(closeBtn);
-    
+
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-}
+  }
 
-/**
- * Captures a static snapshot of a section's content.
- * @param {string} sectionId 
- * @returns {object} Snapshot data.
- */
-function captureSectionSnapshot(sectionId) {
+  /**
+   * Captures a static snapshot of a section's content.
+   * @param {string} sectionId
+   * @returns {object} Snapshot data.
+   */
+  function captureSectionSnapshot(sectionId) {
     const section = document.getElementById(sectionId);
     if (!section) return null;
 
-    const content = section.querySelector('.print-section-content');
+    const content = section.querySelector(".print-section-content");
     if (!content) return null;
 
     // Use centralized sanitization
     const sanitizedClone = getSanitizedContent(content);
 
     const getBorderStyle = (el) => {
-        return ALL_BORDER_STYLES.find(style => el.classList.contains(style)) || null;
+      return (
+        ALL_BORDER_STYLES.find((style) => el.classList.contains(style)) || null
+      );
     };
 
     return {
-        originalId: sectionId,
-        html: sanitizedClone.innerHTML,
-        borderStyle: getBorderStyle(section),
-        styles: {
-            width: section.style.width,
-            height: section.style.height
-        }
+      originalId: sectionId,
+      html: sanitizedClone.innerHTML,
+      borderStyle: getBorderStyle(section),
+      styles: {
+        width: section.style.width,
+        height: section.style.height,
+      },
     };
-}
+  }
 
-/**
- * Renders a cloned section from snapshot data.
- * @param {object} snapshot 
- * @returns {HTMLElement} The created container.
- */
-function renderClonedSection(snapshot) {
+  /**
+   * Renders a cloned section from snapshot data.
+   * @param {object} snapshot
+   * @returns {HTMLElement} The created container.
+   */
+  function renderClonedSection(snapshot) {
     const fragment = document.createDocumentFragment();
-    const tempDiv = document.createElement('div');
+    const tempDiv = document.createElement("div");
     tempDiv.innerHTML = snapshot.html;
-    
+
     // Sanitize loaded HTML to prevent duplication
     const sanitizedClone = getSanitizedContent(tempDiv);
-    
+
     // Create the static header requested by user
     const dom = window.DomManager.getInstance();
-    const staticHeader = document.createElement('div');
-    staticHeader.className = dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER.substring(1);
-    const staticHeaderContent = document.createElement('div');
-    staticHeaderContent.className = dom.selectors.CORE.GROUP_HEADER_CONTENT.substring(1);
+    const staticHeader = document.createElement("div");
+    staticHeader.className =
+      dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER.substring(1);
+    const staticHeaderContent = document.createElement("div");
+    staticHeaderContent.className =
+      dom.selectors.CORE.GROUP_HEADER_CONTENT.substring(1);
     staticHeaderContent.textContent = snapshot.title;
     staticHeader.appendChild(staticHeaderContent);
-    
+
     // Append header first
     fragment.appendChild(staticHeader);
-    
+
     // Move all sanitized children to the fragment
     while (sanitizedClone.firstChild) {
-        fragment.appendChild(sanitizedClone.firstChild);
+      fragment.appendChild(sanitizedClone.firstChild);
     }
 
-    const wrapper = createDraggableContainer(snapshot.title, fragment, snapshot.id);
-    const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('be-clone');
+    const wrapper = createDraggableContainer(
+      snapshot.title,
+      fragment,
+      snapshot.id,
+    );
+    const container = wrapper.querySelector(".print-section-container");
+    container.classList.add("be-clone");
     container.dataset.originalId = snapshot.originalId;
 
     // Double-click to edit title
-    wrapper.addEventListener('dblclick', async (e) => {
-        e.stopPropagation();
-        const staticTitleSpan = container.querySelector(dom.selectors.CORE.GROUP_HEADER_CONTENT);
-        const currentTitle = wrapper.dataset.title || (staticTitleSpan ? staticTitleSpan.textContent.trim() : 'Clone');
-        // Use window reference for mockability in tests
-        const newTitle = await (window.showInputModal || showInputModal)('Edit Clone Title', 'Enter new title:', currentTitle);
-        if (newTitle) {
-            wrapper.dataset.title = newTitle;
-            if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
-            showFeedback('Title updated');
-        }
+    wrapper.addEventListener("dblclick", async (e) => {
+      e.stopPropagation();
+      const staticTitleSpan = container.querySelector(
+        dom.selectors.CORE.GROUP_HEADER_CONTENT,
+      );
+      const currentTitle =
+        wrapper.dataset.title ||
+        (staticTitleSpan ? staticTitleSpan.textContent.trim() : "Clone");
+      // Use window reference for mockability in tests
+      const newTitle = await (window.showInputModal || showInputModal)(
+        "Edit Clone Title",
+        "Enter new title:",
+        currentTitle,
+      );
+      if (newTitle) {
+        wrapper.dataset.title = newTitle;
+        if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
+        showFeedback("Title updated");
+      }
     });
 
     // Delete button
     const actionContainer = getOrCreateActionContainer(container);
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'be-clone-delete';
-    deleteBtn.innerHTML = '🗑️';
-    deleteBtn.title = 'Delete Clone';
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "be-clone-delete";
+    deleteBtn.innerHTML = "🗑️";
+    deleteBtn.title = "Delete Clone";
     deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm('Delete this clone?')) {
-            wrapper.remove();
-            showFeedback('Clone deleted');
-            updateLayoutBounds();
-        }
+      e.stopPropagation();
+      if (confirm("Delete this clone?")) {
+        wrapper.remove();
+        showFeedback("Clone deleted");
+        updateLayoutBounds();
+      }
     };
     actionContainer.appendChild(deleteBtn);
-    
+
     // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
     const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
-    const height = snapshot.height || (snapshot.styles && snapshot.styles.height);
+    const height =
+      snapshot.height || (snapshot.styles && snapshot.styles.height);
     const left = snapshot.left;
     const top = snapshot.top;
     const zIndex = snapshot.zIndex;
@@ -3888,161 +4272,172 @@ function renderClonedSection(snapshot) {
     if (snapshot.fontSize) applyFontSize(wrapper, snapshot.fontSize);
 
     if (left && top) {
-        wrapper.style.left = left;
-        wrapper.style.top = top;
+      wrapper.style.left = left;
+      wrapper.style.top = top;
     } else {
-        // Position it slightly offset from original or at top-left
-        const original = document.getElementById(snapshot.originalId);
-        if (original) {
-            const originalWrapper = original.closest('.be-section-wrapper') || original;
-            wrapper.style.left = (parseInt(originalWrapper.style.left) || 0) + 32 + 'px';
-            wrapper.style.top = (parseInt(originalWrapper.style.top) || 0) + 32 + 'px';
-            
-            // Ensure it's in front of the original
-            // Find max z-index in the layout
-            let maxZ = 10;
-            document.querySelectorAll('.be-section-wrapper').forEach(el => {
-                const z = parseInt(el.style.zIndex) || 10;
-                if (z > maxZ) maxZ = z;
-            });
-            wrapper.style.zIndex = maxZ + 1;
-        } else {
-            wrapper.style.left = '32px';
-            wrapper.style.top = '32px';
-        }
+      // Position it slightly offset from original or at top-left
+      const original = document.getElementById(snapshot.originalId);
+      if (original) {
+        const originalWrapper =
+          original.closest(".be-section-wrapper") || original;
+        wrapper.style.left =
+          (parseInt(originalWrapper.style.left) || 0) + 32 + "px";
+        wrapper.style.top =
+          (parseInt(originalWrapper.style.top) || 0) + 32 + "px";
+
+        // Ensure it's in front of the original
+        // Find max z-index in the layout
+        let maxZ = 10;
+        document.querySelectorAll(".be-section-wrapper").forEach((el) => {
+          const z = parseInt(el.style.zIndex) || 10;
+          if (z > maxZ) maxZ = z;
+        });
+        wrapper.style.zIndex = maxZ + 1;
+      } else {
+        wrapper.style.left = "32px";
+        wrapper.style.top = "32px";
+      }
     }
 
     if (snapshot.minimized) {
-        container.dataset.minimized = 'true';
-        container.classList.add('minimized');
+      container.dataset.minimized = "true";
+      container.classList.add("minimized");
     }
 
     if (snapshot.compact) {
-        container.classList.add('be-compact-mode');
-        // Button style will be handled by injection or separate update if needed, 
-        // but let's try to set it if button exists contextually (though injection happens later usually)
+      container.classList.add("be-compact-mode");
+      // Button style will be handled by injection or separate update if needed,
+      // but let's try to set it if button exists contextually (though injection happens later usually)
     }
 
     if (snapshot.borderStyle) {
-        container.classList.add(snapshot.borderStyle);
+      container.classList.add(snapshot.borderStyle);
     }
 
     const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-        PeDom().getShapesLayer().element.appendChild(wrapper);
+      PeDom().getShapesLayer().element.appendChild(wrapper);
     }
 
     // Re-init resize logic for the new container
     if (window.initResizeLogic) window.initResizeLogic();
-    
-    refreshLayers();
-    
-    return wrapper;
-}
 
-/**
- * Updates the state of control buttons (e.g., disabling Add Shape if no active layer).
- */
-function updateControlsState() {
-    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+    refreshLayers();
+
+    return wrapper;
+  }
+
+  /**
+   * Updates the state of control buttons (e.g., disabling Add Shape if no active layer).
+   */
+  function updateControlsState() {
+    const lm = window.PeDom
+      ? window.PeDom().getLayerManager()
+      : window.DomManager
+        ? window.DomManager.getInstance().getLayerManager()
+        : null;
     if (!lm) return;
 
-    const addShapeBtn = document.getElementById('be-btn-add-shape');
+    const addShapeBtn = document.getElementById("be-btn-add-shape");
     if (addShapeBtn) {
-        const hasActiveLayer = lm.activeLayerId !== null;
-        addShapeBtn.disabled = !hasActiveLayer;
-        addShapeBtn.style.opacity = !hasActiveLayer ? '0.5' : '1';
-        addShapeBtn.style.cursor = !hasActiveLayer ? 'not-allowed' : 'pointer';
-        addShapeBtn.title = !hasActiveLayer ? 'Select a layer in Layer Management to enable' : 'Add a decorative shape';
+      const hasActiveLayer = lm.activeLayerId !== null;
+      addShapeBtn.disabled = !hasActiveLayer;
+      addShapeBtn.style.opacity = !hasActiveLayer ? "0.5" : "1";
+      addShapeBtn.style.cursor = !hasActiveLayer ? "not-allowed" : "pointer";
+      addShapeBtn.title = !hasActiveLayer
+        ? "Select a layer in Layer Management to enable"
+        : "Add a decorative shape";
     }
-}
+  }
 
-window.updateControlsState = updateControlsState;
+  window.updateControlsState = updateControlsState;
 
-/**
- * Creates a floating decorative shape.
- */
-function createShape(assetPath, restoreData = null, targetLayerId = null) {
+  /**
+   * Creates a floating decorative shape.
+   */
+  function createShape(assetPath, restoreData = null, targetLayerId = null) {
     const id = restoreData ? restoreData.id : `shape-${Date.now()}`;
-    const content = document.createElement('div');
-    content.className = 'be-shape-content';
-    
+    const content = document.createElement("div");
+    content.className = "be-shape-content";
+
     // Create container using the existing helper
-    const wrapper = createDraggableContainer('', content, id);
-    wrapper.classList.add('be-shape-wrapper');
-    
-    const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('be-shape-container', 'be-shape');
+    const wrapper = createDraggableContainer("", content, id);
+    wrapper.classList.add("be-shape-wrapper");
+
+    const container = wrapper.querySelector(".print-section-container");
+    container.classList.add("be-shape-container", "be-shape");
     // Ensure ID is set from restoreData or generated
     container.id = id;
 
     // Show rotate button for shapes
-    const rotateBtn = wrapper.querySelector('.print-section-rotate');
+    const rotateBtn = wrapper.querySelector(".print-section-rotate");
     if (rotateBtn) {
-        rotateBtn.style.display = 'block';
+      rotateBtn.style.display = "block";
     }
 
     // Action Buttons logic (specific for shapes)
     const actionContainer = getOrCreateActionContainer(container);
-    
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'be-shape-delete be-robust-button';
-    deleteBtn.innerHTML = '🗑️';
-    deleteBtn.title = 'Delete Shape';
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "be-shape-delete be-robust-button";
+    deleteBtn.innerHTML = "🗑️";
+    deleteBtn.title = "Delete Shape";
     deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm('Delete this shape?')) {
-            wrapper.remove();
-            showFeedback('Shape deleted');
-            updateLayoutBounds();
-        }
+      e.stopPropagation();
+      if (confirm("Delete this shape?")) {
+        wrapper.remove();
+        showFeedback("Shape deleted");
+        updateLayoutBounds();
+      }
     };
 
-    const rotateToolBtn = document.createElement('button');
-    rotateToolBtn.className = 'be-shape-rotate be-robust-button';
-    rotateToolBtn.innerHTML = '↻';
-    rotateToolBtn.title = 'Toggle Rotation Tool';
+    const rotateToolBtn = document.createElement("button");
+    rotateToolBtn.className = "be-shape-rotate be-robust-button";
+    rotateToolBtn.innerHTML = "↻";
+    rotateToolBtn.title = "Toggle Rotation Tool";
     rotateToolBtn.onclick = (e) => {
-        e.stopPropagation();
-        const event = new CustomEvent('be-rotate-click', { bubbles: true });
-        rotateToolBtn.dispatchEvent(event);
+      e.stopPropagation();
+      const event = new CustomEvent("be-rotate-click", { bubbles: true });
+      rotateToolBtn.dispatchEvent(event);
     };
 
-    const cloneBtn = document.createElement('button');
-    cloneBtn.className = 'be-shape-clone be-robust-button';
-    cloneBtn.innerHTML = '📋';
-    cloneBtn.title = 'Clone Shape';
+    const cloneBtn = document.createElement("button");
+    cloneBtn.className = "be-shape-clone be-robust-button";
+    cloneBtn.innerHTML = "📋";
+    cloneBtn.title = "Clone Shape";
     cloneBtn.onclick = (e) => {
-        e.stopPropagation();
-        // Parse current position and offset by 16px
-        const left = parseInt(wrapper.style.left) || 0;
-        const top = parseInt(wrapper.style.top) || 0;
-        createShape(assetPath, {
-            left: (left + 16) + 'px',
-            top: (top + 16) + 'px',
-            width: container.style.width,
-            height: container.style.height,
-            rotation: wrapper.dataset.rotation
-        });
-        showFeedback('Shape cloned');
+      e.stopPropagation();
+      // Parse current position and offset by 16px
+      const left = parseInt(wrapper.style.left) || 0;
+      const top = parseInt(wrapper.style.top) || 0;
+      createShape(assetPath, {
+        left: left + 16 + "px",
+        top: top + 16 + "px",
+        width: container.style.width,
+        height: container.style.height,
+        rotation: wrapper.dataset.rotation,
+      });
+      showFeedback("Shape cloned");
     };
 
-    const switchBtn = document.createElement('button');
-    switchBtn.className = 'be-shape-switch be-robust-button';
-    switchBtn.innerHTML = '🔄';
-    switchBtn.title = 'Switch Shape Asset';
+    const switchBtn = document.createElement("button");
+    switchBtn.className = "be-shape-switch be-robust-button";
+    switchBtn.innerHTML = "🔄";
+    switchBtn.title = "Switch Shape Asset";
     switchBtn.onclick = async (e) => {
-        e.stopPropagation();
-        // Determine folder based on current asset
-        const folder = assetPath.includes('assets/shapes/') ? 'assets/shapes/' : 'assets/';
-        const result = await showShapePickerModal(assetPath, folder);
-        if (result) {
-            // Update the shape asset without replacing the wrapper
-            assetPath = result.assetPath; // Update local variable for next clone/switch
-            container.dataset.assetPath = assetPath;
-            applyShapeAsset(container, assetPath);
-            showFeedback('Shape switched');
-        }
+      e.stopPropagation();
+      // Determine folder based on current asset
+      const folder = assetPath.includes("assets/shapes/")
+        ? "assets/shapes/"
+        : "assets/";
+      const result = await showShapePickerModal(assetPath, folder);
+      if (result) {
+        // Update the shape asset without replacing the wrapper
+        assetPath = result.assetPath; // Update local variable for next clone/switch
+        container.dataset.assetPath = assetPath;
+        applyShapeAsset(container, assetPath);
+        showFeedback("Shape switched");
+      }
     };
 
     actionContainer.appendChild(rotateToolBtn);
@@ -4053,239 +4448,247 @@ function createShape(assetPath, restoreData = null, targetLayerId = null) {
     // Asset Application
     container.dataset.assetPath = assetPath;
     applyShapeAsset(container, assetPath);
-    
+
     // Z-Index Management (at least 100 higher than sections)
     let maxZ = 110;
-    document.querySelectorAll('.be-section-wrapper').forEach(el => {
-        // Only count sections, not other shapes for the base 110 offset
-        if (!el.classList.contains('be-shape-wrapper')) {
-            const z = parseInt(el.style.zIndex) || 10;
-            if (z > maxZ - 100) maxZ = z + 100;
-        } else {
-            // But shapes should also stack on top of each other
-            const z = parseInt(el.style.zIndex) || 110;
-            if (z > maxZ) maxZ = z;
-        }
+    document.querySelectorAll(".be-section-wrapper").forEach((el) => {
+      // Only count sections, not other shapes for the base 110 offset
+      if (!el.classList.contains("be-shape-wrapper")) {
+        const z = parseInt(el.style.zIndex) || 10;
+        if (z > maxZ - 100) maxZ = z + 100;
+      } else {
+        // But shapes should also stack on top of each other
+        const z = parseInt(el.style.zIndex) || 110;
+        if (z > maxZ) maxZ = z;
+      }
     });
     wrapper.style.zIndex = maxZ + 1;
-    
+
     // Restore saved state
     if (restoreData) {
-        if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
-        if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
-        if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
-        if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
-        if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
-        if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
-        if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
+      if (restoreData.width)
+        container.style.setProperty("width", restoreData.width, "important");
+      if (restoreData.height)
+        container.style.setProperty("height", restoreData.height, "important");
+      if (restoreData.left)
+        wrapper.style.setProperty("left", restoreData.left, "important");
+      if (restoreData.top)
+        wrapper.style.setProperty("top", restoreData.top, "important");
+      if (restoreData.zIndex)
+        wrapper.style.setProperty("z-index", restoreData.zIndex, "important");
+      if (restoreData.printZIndex)
+        wrapper.dataset.printZ = restoreData.printZIndex;
+      if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
     } else {
-        wrapper.style.setProperty('left', '50px', 'important');
-        wrapper.style.setProperty('top', '160px', 'important');
-        container.style.setProperty('width', '200px', 'important');
-        container.style.setProperty('height', '200px', 'important');
+      wrapper.style.setProperty("left", "50px", "important");
+      wrapper.style.setProperty("top", "160px", "important");
+      container.style.setProperty("width", "200px", "important");
+      container.style.setProperty("height", "200px", "important");
     }
 
-    container.style.left = '';
-    container.style.top = '';
+    container.style.left = "";
+    container.style.top = "";
 
     // Rotation Logic
-    let currentRotation = (restoreData && restoreData.rotation) ? parseInt(restoreData.rotation) : 0;
+    let currentRotation =
+      restoreData && restoreData.rotation ? parseInt(restoreData.rotation) : 0;
 
     const applyRotation = (angle) => {
-        currentRotation = calculateSnappedAngle(angle) % 360;
-        // Apply rotation to container, not wrapper
-        container.style.transform = `rotate(${currentRotation}deg)`;
-        wrapper.dataset.rotation = currentRotation;
-        
-        // Clear wrapper transform to avoid conflict
-        wrapper.style.transform = '';
+      currentRotation = calculateSnappedAngle(angle) % 360;
+      // Apply rotation to container, not wrapper
+      container.style.transform = `rotate(${currentRotation}deg)`;
+      wrapper.dataset.rotation = currentRotation;
+
+      // Clear wrapper transform to avoid conflict
+      wrapper.style.transform = "";
     };
 
     if (currentRotation !== 0) {
-        applyRotation(currentRotation);
+      applyRotation(currentRotation);
     }
 
     // Listener for header rotate button - TOGGLE HANDLE
-    wrapper.addEventListener('be-rotate-click', (e) => {
-        const existingHandle = wrapper.querySelector('.be-rotation-handle');
-        if (existingHandle) {
-            existingHandle.remove();
-            showFeedback('Rotation tool hidden');
-        } else {
-            addRotationHandle();
-            showFeedback('Rotation tool shown');
-        }
+    wrapper.addEventListener("be-rotate-click", (e) => {
+      const existingHandle = wrapper.querySelector(".be-rotation-handle");
+      if (existingHandle) {
+        existingHandle.remove();
+        showFeedback("Rotation tool hidden");
+      } else {
+        addRotationHandle();
+        showFeedback("Rotation tool shown");
+      }
     });
 
-    wrapper.addEventListener('click', (e) => {
-        // Prevent handle click from re-triggering logic
-        if (e.target.classList.contains('be-rotation-handle')) return;
-        // Deselect others (auto-hide their handles if we want strict focus, 
-        // but user asked for button control. Let's keep button as the main toggle.)
-        document.querySelectorAll('.be-shape-wrapper.selected').forEach(el => {
-            if (el !== wrapper) {
-                el.classList.remove('selected');
-            }
-        });
-
-        if (!wrapper.classList.contains('selected')) {
-            wrapper.classList.add('selected');
+    wrapper.addEventListener("click", (e) => {
+      // Prevent handle click from re-triggering logic
+      if (e.target.classList.contains("be-rotation-handle")) return;
+      // Deselect others (auto-hide their handles if we want strict focus,
+      // but user asked for button control. Let's keep button as the main toggle.)
+      document.querySelectorAll(".be-shape-wrapper.selected").forEach((el) => {
+        if (el !== wrapper) {
+          el.classList.remove("selected");
         }
+      });
+
+      if (!wrapper.classList.contains("selected")) {
+        wrapper.classList.add("selected");
+      }
     });
 
     function addRotationHandle() {
-        if (wrapper.querySelector('.be-rotation-handle')) return;
-        
-        const handle = document.createElement('div');
-        handle.className = 'be-rotation-handle';
-        handle.title = 'Drag to Rotate (15° snap)';
-        wrapper.appendChild(handle);
+      if (wrapper.querySelector(".be-rotation-handle")) return;
 
-        handle.addEventListener('mousedown', (mdE) => {
-            mdE.preventDefault();
-            mdE.stopPropagation();
+      const handle = document.createElement("div");
+      handle.className = "be-rotation-handle";
+      handle.title = "Drag to Rotate (15° snap)";
+      wrapper.appendChild(handle);
 
-            const rect = wrapper.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
+      handle.addEventListener("mousedown", (mdE) => {
+        mdE.preventDefault();
+        mdE.stopPropagation();
 
-            const onMouseMove = (mmE) => {
-                // Calculate angle from center to mouse
-                let angle = getAngleFromPoint(cx, cy, mmE.clientX, mmE.clientY);
-                // Adjust by 90 because handle is at top (270 deg)
-                // and CSS 0 is Right (East). Top is -90 or 270.
-                applyRotation(angle + 90);
-            };
+        const rect = wrapper.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
 
-            const onMouseUp = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                showFeedback(`Rotated to ${currentRotation}°`);
-            };
+        const onMouseMove = (mmE) => {
+          // Calculate angle from center to mouse
+          let angle = getAngleFromPoint(cx, cy, mmE.clientX, mmE.clientY);
+          // Adjust by 90 because handle is at top (270 deg)
+          // and CSS 0 is Right (East). Top is -90 or 270.
+          applyRotation(angle + 90);
+        };
 
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        });
+        const onMouseUp = () => {
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+          showFeedback(`Rotated to ${currentRotation}°`);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
     }
 
     const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-        // TARGET LAYER APPENDING
-        let layerContainer = null;
-        if (targetLayerId) {
-            layerContainer = document.getElementById(targetLayerId);
-        }
-        
-        if (!layerContainer) {
-            // Fallback to active shapes layer (guaranteed to be a shape layer now)
-            layerContainer = PeDom().getActiveShapesLayer().element;
-        }
+      // TARGET LAYER APPENDING
+      let layerContainer = null;
+      if (targetLayerId) {
+        layerContainer = document.getElementById(targetLayerId);
+      }
 
-        if (layerContainer) {
-            layerContainer.appendChild(wrapper);
-        } else {
-            // Final fallback to the hardcoded default shapes layer
-            PeDom().getShapesLayer().element.appendChild(wrapper);
-        }
+      if (!layerContainer) {
+        // Fallback to active shapes layer (guaranteed to be a shape layer now)
+        layerContainer = PeDom().getActiveShapesLayer().element;
+      }
+
+      if (layerContainer) {
+        layerContainer.appendChild(wrapper);
+      } else {
+        // Final fallback to the hardcoded default shapes layer
+        PeDom().getShapesLayer().element.appendChild(wrapper);
+      }
     }
 
     // Re-init resize logic for the new container
     if (window.initResizeLogic) window.initResizeLogic();
-    
+
     refreshLayers();
-    
+
     return wrapper;
-}
+  }
 
-
-/**
- * Helper to apply asset to a shape container via class or inline style.
- */
-function applyShapeAsset(container, assetPath) {
+  /**
+   * Helper to apply asset to a shape container via class or inline style.
+   */
+  function applyShapeAsset(container, assetPath) {
     // Remove existing classes from metadata
-    Object.values(ASSET_METADATA).forEach(meta => {
-        if (meta.className) container.classList.remove(meta.className);
+    Object.values(ASSET_METADATA).forEach((meta) => {
+      if (meta.className) container.classList.remove(meta.className);
     });
 
     // Reset styles that might have been applied
-    container.style.borderStyle = '';
-    container.style.borderImageSource = '';
-    container.style.borderImageSlice = '';
-    container.style.borderImageWidth = '';
-    container.style.borderImageOutset = '';
-    container.style.borderImageRepeat = '';
-    container.style.backgroundImage = '';
-    container.style.backgroundSize = '';
-    container.style.backgroundRepeat = '';
-    container.style.backgroundPosition = '';
-    container.style.border = '';
-    container.style.backgroundColor = 'transparent';
-    container.innerHTML = ''; // Clear any existing img tags
-    
-    // Default to hiding the ::before border for shapes unless it's a "border" asset with a class
-    container.classList.add('be-no-border');
+    container.style.borderStyle = "";
+    container.style.borderImageSource = "";
+    container.style.borderImageSlice = "";
+    container.style.borderImageWidth = "";
+    container.style.borderImageOutset = "";
+    container.style.borderImageRepeat = "";
+    container.style.backgroundImage = "";
+    container.style.backgroundSize = "";
+    container.style.backgroundRepeat = "";
+    container.style.backgroundPosition = "";
+    container.style.border = "";
+    container.style.backgroundColor = "transparent";
+    container.innerHTML = ""; // Clear any existing img tags
 
-    const isBase64 = assetPath && assetPath.startsWith('data:');
+    // Default to hiding the ::before border for shapes unless it's a "border" asset with a class
+    container.classList.add("be-no-border");
+
+    const isBase64 = assetPath && assetPath.startsWith("data:");
     const getUrl = (path) => {
-        if (isBase64) return path;
-        return (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) 
-            ? chrome.runtime.getURL(path) 
-            : path;
+      if (isBase64) return path;
+      return typeof chrome !== "undefined" &&
+        chrome.runtime &&
+        chrome.runtime.getURL
+        ? chrome.runtime.getURL(path)
+        : path;
     };
 
     const meta = ASSET_METADATA[assetPath];
     if (isBase64 || meta) {
-        if (isBase64 || meta.isBackground) {
-            // Use <img> for print compatibility (background-graphics are often disabled)
-            const img = document.createElement('img');
-            img.className = 'be-shape-asset';
-            img.src = getUrl(assetPath);
-            Object.assign(img.style, {
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                pointerEvents: 'none',
-                display: 'block'
-            });
-            container.appendChild(img);
-            container.style.border = 'none';
-        } else if (meta.className) {
-            container.classList.add(meta.className);
-            container.classList.remove('be-no-border'); // Show the ::before border
-        } else if (meta.slice !== undefined) {
-            container.style.borderStyle = 'solid';
-            container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
-            container.style.borderImageSlice = meta.slice.toString();
-            container.style.borderImageWidth = meta.width || '20px';
-            container.style.borderImageOutset = meta.outset || '0';
-            container.style.borderImageRepeat = 'round';
-        } else {
-            // Default border fallback if slice is missing
-            container.style.borderStyle = 'solid';
-            container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
-            container.style.borderImageSlice = '33';
-            container.style.borderImageWidth = '20px';
-        }
-    } else {
-        // Fallback for unknown assets
-        container.style.borderStyle = 'solid';
+      if (isBase64 || meta.isBackground) {
+        // Use <img> for print compatibility (background-graphics are often disabled)
+        const img = document.createElement("img");
+        img.className = "be-shape-asset";
+        img.src = getUrl(assetPath);
+        Object.assign(img.style, {
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          pointerEvents: "none",
+          display: "block",
+        });
+        container.appendChild(img);
+        container.style.border = "none";
+      } else if (meta.className) {
+        container.classList.add(meta.className);
+        container.classList.remove("be-no-border"); // Show the ::before border
+      } else if (meta.slice !== undefined) {
+        container.style.borderStyle = "solid";
         container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
-        container.style.borderImageSlice = '33';
-        container.style.borderImageWidth = '20px';
+        container.style.borderImageSlice = meta.slice.toString();
+        container.style.borderImageWidth = meta.width || "20px";
+        container.style.borderImageOutset = meta.outset || "0";
+        container.style.borderImageRepeat = "round";
+      } else {
+        // Default border fallback if slice is missing
+        container.style.borderStyle = "solid";
+        container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
+        container.style.borderImageSlice = "33";
+        container.style.borderImageWidth = "20px";
+      }
+    } else {
+      // Fallback for unknown assets
+      container.style.borderStyle = "solid";
+      container.style.borderImageSource = `url('${getUrl(assetPath)}')`;
+      container.style.borderImageSlice = "33";
+      container.style.borderImageWidth = "20px";
     }
-}
+  }
 
-/**
- * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
- * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
- */
-/**
- * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
- * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
- */
-function applyGlobalFilters(filters) {
+  /**
+   * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
+   * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
+   */
+  /**
+   * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
+   * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
+   */
+  function applyGlobalFilters(filters) {
     const { hue, contrast, greyscale, saturate, sepia } = filters;
-    
+
     // Full composite filter (for isolated elements)
     const fullFilterStr = `
         hue-rotate(${hue}deg)
@@ -4293,7 +4696,9 @@ function applyGlobalFilters(filters) {
         saturate(${saturate}%)
         grayscale(${greyscale}%)
         sepia(${sepia}%)
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, " ")
+      .trim();
 
     // Decoration-only filters (excludes hue-rotate to prevent double-application when parent is hue-rotated)
     const decorationFilterStr = `
@@ -4301,30 +4706,36 @@ function applyGlobalFilters(filters) {
         saturate(${saturate}%)
         grayscale(${greyscale}%)
         sepia(${sepia}%)
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, " ")
+      .trim();
 
     // Reversible filter for main containers (protects content from destructive filters)
     const containerFilterStr = `
         hue-rotate(${hue}deg)
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, " ")
+      .trim();
 
     const inverseContainerFilterStr = `
         hue-rotate(-${hue}deg)
-    `.replace(/\s+/g, ' ').trim();
+    `
+      .replace(/\s+/g, " ")
+      .trim();
 
     // Apply to document root for global CSS variable access
     const root = document.documentElement;
-    root.style.setProperty('--be-full-filter', fullFilterStr);
-    root.style.setProperty('--be-decoration-filter', decorationFilterStr);
-    root.style.setProperty('--be-hue-filter', containerFilterStr);
-    root.style.setProperty('--be-inv-hue-filter', inverseContainerFilterStr);
+    root.style.setProperty("--be-full-filter", fullFilterStr);
+    root.style.setProperty("--be-decoration-filter", decorationFilterStr);
+    root.style.setProperty("--be-hue-filter", containerFilterStr);
+    root.style.setProperty("--be-inv-hue-filter", inverseContainerFilterStr);
 
     // Keep the dynamic style block for non-variable-aware elements or specific exclusions
-    let style = document.getElementById('be-global-filters-style');
+    let style = document.getElementById("be-global-filters-style");
     if (!style) {
-        style = document.createElement('style');
-        style.id = 'be-global-filters-style';
-        document.head.appendChild(style);
+      style = document.createElement("style");
+      style.id = "be-global-filters-style";
+      document.head.appendChild(style);
     }
 
     style.textContent = `
@@ -4388,105 +4799,120 @@ function applyGlobalFilters(filters) {
             filter: none !important;
         }
     `;
-}
+  }
 
+  // Export for testing and cross-script access
+  window.createShape = createShape;
+  window.applyShapeAsset = applyShapeAsset;
+  window.clearBorderStyles = clearBorderStyles;
+  window.showFeedback = showFeedback;
 
-// Export for testing and cross-script access
-    window.createShape = createShape;
-    window.applyShapeAsset = applyShapeAsset;
-    window.clearBorderStyles = clearBorderStyles;
-    window.showFeedback = showFeedback;
-
-    /**
-     * Creates and manages a floating spell detail section.
-     */
-    async function createSpellDetailSection(spellName, coords, restoreData = null) {
-        // 0. Check for existing section for this spell
-    const existing = Array.from(document.querySelectorAll('.be-spell-detail'))
-                          .find(el => {
-                              const wrapper = el.closest('.be-section-wrapper');
-                              return wrapper && wrapper.dataset.title === spellName;
-                          });
+  /**
+   * Creates and manages a floating spell detail section.
+   */
+  async function createSpellDetailSection(
+    spellName,
+    coords,
+    restoreData = null,
+  ) {
+    // 0. Check for existing section for this spell
+    const existing = Array.from(
+      document.querySelectorAll(".be-spell-detail"),
+    ).find((el) => {
+      const wrapper = el.closest(".be-section-wrapper");
+      return wrapper && wrapper.dataset.title === spellName;
+    });
     if (existing && !restoreData) {
-        // Bring to front
-        const wrapper = existing.closest('.be-section-wrapper');
-        let maxZ = 10000;
-        document.querySelectorAll('.be-section-wrapper').forEach(el => {
-            const z = parseInt(el.style.zIndex) || 10;
-            if (z > maxZ) maxZ = z;
-        });
-        if (wrapper) wrapper.style.zIndex = maxZ + 1;
-        if (existing.scrollIntoView) {
-            existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        showFeedback(`${spellName} is already open`);
-        return;
+      // Bring to front
+      const wrapper = existing.closest(".be-section-wrapper");
+      let maxZ = 10000;
+      document.querySelectorAll(".be-section-wrapper").forEach((el) => {
+        const z = parseInt(el.style.zIndex) || 10;
+        if (z > maxZ) maxZ = z;
+      });
+      if (wrapper) wrapper.style.zIndex = maxZ + 1;
+      if (existing.scrollIntoView) {
+        existing.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      showFeedback(`${spellName} is already open`);
+      return;
     }
 
     const id = restoreData ? restoreData.id : `spell-detail-${Date.now()}`;
-    
-    // 1. Create immediate shell
-    const content = document.createElement('div');
-    content.className = 'print-section-content';
-    content.innerHTML = '<div class="be-spinner"></div>';
-    
-    const wrapper = createDraggableContainer(spellName, content, id);
-    wrapper.classList.add('be-spell-detail-wrapper', 'be-extracted-section-wrapper');
-    const container = wrapper.querySelector('.print-section-container');
-    container.classList.add('be-spell-detail', 'be-extracted-section');
-    
-    const layoutRoot = PeDom().getLayoutRoot().element;
-    
-    if (restoreData) {
-        if (restoreData.left) wrapper.style.setProperty('left', restoreData.left, 'important');
-        if (restoreData.top) wrapper.style.setProperty('top', restoreData.top, 'important');
-        if (restoreData.width) container.style.setProperty('width', restoreData.width, 'important');
-        if (restoreData.height) container.style.setProperty('height', restoreData.height, 'important');
-        if (restoreData.zIndex) wrapper.style.setProperty('z-index', restoreData.zIndex, 'important');
-        if (restoreData.printZIndex) wrapper.dataset.printZ = restoreData.printZIndex;
-        if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
-        
-        if (restoreData.minimized) {
-            container.dataset.minimized = 'true';
-            container.classList.add('minimized');
-        }
-    } else {
-        // Calculate relative coordinates to the layout wrapper
-        const rootRect = layoutRoot.getBoundingClientRect();
-        
-        // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
-        const x = coords.x - rootRect.left;
-        const y = coords.y - rootRect.top;
 
-        wrapper.style.position = 'absolute'; 
-        wrapper.style.left = `${x}px`;
-        wrapper.style.top = `${y}px`;
-        container.style.width = '300px';
-        container.style.height = 'auto';
-        wrapper.style.zIndex = '10000';
+    // 1. Create immediate shell
+    const content = document.createElement("div");
+    content.className = "print-section-content";
+    content.innerHTML = '<div class="be-spinner"></div>';
+
+    const wrapper = createDraggableContainer(spellName, content, id);
+    wrapper.classList.add(
+      "be-spell-detail-wrapper",
+      "be-extracted-section-wrapper",
+    );
+    const container = wrapper.querySelector(".print-section-container");
+    container.classList.add("be-spell-detail", "be-extracted-section");
+
+    const layoutRoot = PeDom().getLayoutRoot().element;
+
+    if (restoreData) {
+      if (restoreData.left)
+        wrapper.style.setProperty("left", restoreData.left, "important");
+      if (restoreData.top)
+        wrapper.style.setProperty("top", restoreData.top, "important");
+      if (restoreData.width)
+        container.style.setProperty("width", restoreData.width, "important");
+      if (restoreData.height)
+        container.style.setProperty("height", restoreData.height, "important");
+      if (restoreData.zIndex)
+        wrapper.style.setProperty("z-index", restoreData.zIndex, "important");
+      if (restoreData.printZIndex)
+        wrapper.dataset.printZ = restoreData.printZIndex;
+      if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
+
+      if (restoreData.minimized) {
+        container.dataset.minimized = "true";
+        container.classList.add("minimized");
+      }
+    } else {
+      // Calculate relative coordinates to the layout wrapper
+      const rootRect = layoutRoot.getBoundingClientRect();
+
+      // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
+      const x = coords.x - rootRect.left;
+      const y = coords.y - rootRect.top;
+
+      wrapper.style.position = "absolute";
+      wrapper.style.left = `${x}px`;
+      wrapper.style.top = `${y}px`;
+      container.style.width = "300px";
+      container.style.height = "auto";
+      wrapper.style.zIndex = "10000";
     }
 
     PeDom().getSectionsLayer().element.appendChild(wrapper);
     if (window.injectCloneButtons) window.injectCloneButtons(container);
     if (window.injectAppendButton) window.injectAppendButton(container);
-    
+
     // 2. Fetch Data
     const spell = await fetchSpellWithCache(spellName);
-    
-    const contentWrapper = container.querySelector('.print-section-content');
+
+    const contentWrapper = container.querySelector(".print-section-content");
     if (!contentWrapper) return;
 
     if (spell) {
-        // 3. Render Data
-        const dom = window.DomManager.getInstance();
-        const header = document.createElement('div');
-        header.className = dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER.substring(1);
-        const headerContent = document.createElement('div');
-        headerContent.className = dom.selectors.CORE.GROUP_HEADER_CONTENT.substring(1);
-        headerContent.textContent = spell.name;
-        header.appendChild(headerContent);
+      // 3. Render Data
+      const dom = window.DomManager.getInstance();
+      const header = document.createElement("div");
+      header.className =
+        dom.selectors.EXTRACTABLE.CONTENT_GROUP_HEADER.substring(1);
+      const headerContent = document.createElement("div");
+      headerContent.className =
+        dom.selectors.CORE.GROUP_HEADER_CONTENT.substring(1);
+      headerContent.textContent = spell.name;
+      header.appendChild(headerContent);
 
-        contentWrapper.innerHTML = `
+      contentWrapper.innerHTML = `
             <div style="padding: 10px; color: black; background: white;">
                 <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">
                     Level ${spell.level} ${spell.school}
@@ -4497,10 +4923,10 @@ function applyGlobalFilters(filters) {
                 <div class="spell-description" style="white-space: pre-wrap; font-size: 13px;">${spell.description}</div>
             </div>
         `;
-        contentWrapper.prepend(header);
+      contentWrapper.prepend(header);
     } else {
-        // 4. Render Error
-        contentWrapper.innerHTML = `
+      // 4. Render Error
+      contentWrapper.innerHTML = `
             <div style="padding: 15px; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
                 Only previously loaded spells and current ones from the original section are available. 
                 Please add the spell from the manage spells button and try again.
@@ -4510,13 +4936,14 @@ function applyGlobalFilters(filters) {
                 </div>
             </div>
         `;
-        
-        contentWrapper.querySelector('.be-delete-button').onclick = () => container.remove();
-        contentWrapper.querySelector('.be-retry-button').onclick = () => {
-            contentWrapper.innerHTML = '<div class="be-spinner"></div>';
-            createSpellDetailSection(spellName, coords);
-            container.remove(); // Replace old with new
-        };
+
+      contentWrapper.querySelector(".be-delete-button").onclick = () =>
+        container.remove();
+      contentWrapper.querySelector(".be-retry-button").onclick = () => {
+        contentWrapper.innerHTML = '<div class="be-spinner"></div>';
+        createSpellDetailSection(spellName, coords);
+        container.remove(); // Replace old with new
+      };
     }
 
     // Re-init resize logic for the new container
@@ -4524,807 +4951,893 @@ function applyGlobalFilters(filters) {
     updateLayoutBounds();
 
     return container;
-}
+  }
 
-/**
- * Gets the character ID from the URL.
- */
-function getCharacterId() {
-    return window.location.pathname.split('/').pop();
-}
+  /**
+   * Gets the character ID from the URL.
+   */
+  function getCharacterId() {
+    return window.location.pathname.split("/").pop();
+  }
 
-/**
- * Retrieves a spell from cache or API.
- */
-async function fetchSpellWithCache(spellName) {
+  /**
+   * Retrieves a spell from cache or API.
+   */
+  async function fetchSpellWithCache(spellName) {
     try {
-        await Storage.init();
-        
-        // 1. Check Cache
-        const cached = await Storage.getSpell(spellName);
-        if (cached) {
-            safeLog('log', `[DDB Print] Cache Hit: ${spellName}`);
-            return cached;
-        }
+      await Storage.init();
 
-        safeLog('log', `[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`);
+      // 1. Check Cache
+      const cached = await Storage.getSpell(spellName);
+      if (cached) {
+        safeLog("log", `[DDB Print] Cache Hit: ${spellName}`);
+        return cached;
+      }
 
-        // 2. Fetch API on miss
-        const charId = getCharacterId();
-        if (!charId || charId === 'characters') {
-            safeLog('error', '[DDB Print] Could not determine character ID for spell fetch');
-            return null;
-        }
+      safeLog(
+        "log",
+        `[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`,
+      );
 
-        const spells = await getCharacterSpells(charId);
-        if (spells && spells.length > 0) {
-            // 3. Update Cache with ALL spells
-            await Storage.saveSpells(spells);
-            
-            // 4. Return the specific spell
-            return spells.find(s => s.name === spellName) || null;
-        }
+      // 2. Fetch API on miss
+      const charId = getCharacterId();
+      if (!charId || charId === "characters") {
+        safeLog(
+          "error",
+          "[DDB Print] Could not determine character ID for spell fetch",
+        );
+        return null;
+      }
+
+      const spells = await getCharacterSpells(charId);
+      if (spells && spells.length > 0) {
+        // 3. Update Cache with ALL spells
+        await Storage.saveSpells(spells);
+
+        // 4. Return the specific spell
+        return spells.find((s) => s.name === spellName) || null;
+      }
     } catch (err) {
-        safeLog('error', '[DDB Print] Error in fetchSpellWithCache', err);
+      safeLog("error", "[DDB Print] Error in fetchSpellWithCache", err);
     }
     return null;
-}
+  }
 
-async function getCharacterSpells(charId) {
+  async function getCharacterSpells(charId) {
     const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
-    
+
     try {
-        // In MV3, cross-origin fetch must be done from background script
-        const response = await new Promise((resolve) => {
-            chrome.runtime.sendMessage({ type: 'FETCH_CHARACTER_DATA', url }, (result) => {
-                resolve(result);
-            });
-        });
+      // In MV3, cross-origin fetch must be done from background script
+      const response = await new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+          { type: "FETCH_CHARACTER_DATA", url },
+          (result) => {
+            resolve(result);
+          },
+        );
+      });
 
-        if (!response || !response.success) {
-            throw new Error(response ? response.error : "Could not fetch character data via background.");
+      if (!response || !response.success) {
+        throw new Error(
+          response
+            ? response.error
+            : "Could not fetch character data via background.",
+        );
+      }
+
+      const json = response.data;
+      const data = json.data;
+
+      // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
+      // We flatten them all into one list
+      const spellSources = [
+        ...(data.classSpells || []),
+        ...(data.spells.race || []),
+        ...(data.spells.class || []),
+        ...(data.spells.feat || []),
+        ...(data.spells.item || []),
+      ];
+
+      // Some sources (like classSpells) are nested differently
+      const spells = [];
+
+      spellSources.forEach((source) => {
+        // Handle class-specific nested spells
+        if (source.spells) {
+          source.spells.forEach((s) => spells.push(s.definition));
         }
-        
-        const json = response.data;
-        const data = json.data;
+        // Handle flat spell objects (items/feats/race)
+        else if (source.definition) {
+          spells.push(source.definition);
+        }
+      });
 
-        // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
-        // We flatten them all into one list
-        const spellSources = [
-            ...(data.classSpells || []),
-            ...(data.spells.race || []),
-            ...(data.spells.class || []),
-            ...(data.spells.feat || []),
-            ...(data.spells.item || [])
-        ];
-
-        // Some sources (like classSpells) are nested differently
-        const spells = [];
-        
-        spellSources.forEach(source => {
-            // Handle class-specific nested spells
-            if (source.spells) {
-                source.spells.forEach(s => spells.push(s.definition));
-            } 
-            // Handle flat spell objects (items/feats/race)
-            else if (source.definition) {
-                spells.push(source.definition);
-            }
-        });
-
-        // Map it to a cleaner format (Name + Description)
-        return spells.map(s => ({
-            name: s.name,
-            level: s.level,
-            description: s.description.replace(/<[^>]*>?/gm, ''), // Strips HTML tags
-            range: `${s.range.rangeValue || ''} ${s.range.origin}`,
-            school: s.school
-        }));
-
+      // Map it to a cleaner format (Name + Description)
+      return spells.map((s) => ({
+        name: s.name,
+        level: s.level,
+        description: s.description.replace(/<[^>]*>?/gm, ""), // Strips HTML tags
+        range: `${s.range.rangeValue || ""} ${s.range.origin}`,
+        school: s.school,
+      }));
     } catch (err) {
-        safeLog('error', "Error fetching spells:", err);
+      safeLog("error", "Error fetching spells:", err);
     }
-}
+  }
 
-/**
- * Removes all border style classes from an element.
- */
-function clearBorderStyles(el) {
+  /**
+   * Removes all border style classes from an element.
+   */
+  function clearBorderStyles(el) {
     if (!el) return;
     el.classList.remove(...ALL_BORDER_STYLES);
-}
+  }
 
-/**
- * Shows a modal with an input field.
- * @returns {Promise<string|null>}
- */
-function showInputModal(title, message, defaultValue = '') {
+  /**
+   * Shows a modal with an input field.
+   * @returns {Promise<string|null>}
+   */
+  function showInputModal(title, message, defaultValue = "") {
     return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'be-modal-overlay';
-        
-        const modal = document.createElement('div');
-        modal.className = 'be-modal';
-        
-        const h3 = document.createElement('h3');
-        h3.textContent = title;
-        modal.appendChild(h3);
-        
-        const p = document.createElement('p');
-        p.textContent = message;
-        modal.appendChild(p);
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = defaultValue;
-        modal.appendChild(input);
-        
-        const actions = document.createElement('div');
-        actions.className = 'be-modal-actions';
-        
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'be-modal-cancel';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.onclick = () => {
-            overlay.remove();
-            resolve(null);
-        };
-        actions.appendChild(cancelBtn);
-        
-        const okBtn = document.createElement('button');
-        okBtn.className = 'be-modal-ok';
-        okBtn.textContent = 'OK';
-        okBtn.onclick = () => {
-            const val = input.value;
-            overlay.remove();
-            resolve(val);
-        };
-        actions.appendChild(okBtn);
-        
-        modal.appendChild(actions);
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        input.focus();
-        input.select();
-        
-        // Handle Enter/Esc
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter') okBtn.click();
-            if (e.key === 'Escape') cancelBtn.click();
-        };
+      const overlay = document.createElement("div");
+      overlay.className = "be-modal-overlay";
+
+      const modal = document.createElement("div");
+      modal.className = "be-modal";
+
+      const h3 = document.createElement("h3");
+      h3.textContent = title;
+      modal.appendChild(h3);
+
+      const p = document.createElement("p");
+      p.textContent = message;
+      modal.appendChild(p);
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = defaultValue;
+      modal.appendChild(input);
+
+      const actions = document.createElement("div");
+      actions.className = "be-modal-actions";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "be-modal-cancel";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => {
+        overlay.remove();
+        resolve(null);
+      };
+      actions.appendChild(cancelBtn);
+
+      const okBtn = document.createElement("button");
+      okBtn.className = "be-modal-ok";
+      okBtn.textContent = "OK";
+      okBtn.onclick = () => {
+        const val = input.value;
+        overlay.remove();
+        resolve(val);
+      };
+      actions.appendChild(okBtn);
+
+      modal.appendChild(actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      input.focus();
+      input.select();
+
+      // Handle Enter/Esc
+      input.onkeydown = (e) => {
+        if (e.key === "Enter") okBtn.click();
+        if (e.key === "Escape") cancelBtn.click();
+      };
     });
-}
+  }
 
-/**
- * Shows a modal with a slider input.
- * @returns {Promise<number|null>}
- */
-function showSliderModal(title, message, min, max, defaultValue, unit = '%', onLiveUpdate = null) {
+  /**
+   * Shows a modal with a slider input.
+   * @returns {Promise<number|null>}
+   */
+  function showSliderModal(
+    title,
+    message,
+    min,
+    max,
+    defaultValue,
+    unit = "%",
+    onLiveUpdate = null,
+  ) {
     return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'be-modal-overlay';
-        
-        const modal = document.createElement('div');
-        modal.className = 'be-modal';
-        
-        const h3 = document.createElement('h3');
-        h3.textContent = title;
-        modal.appendChild(h3);
-        
-        const p = document.createElement('p');
-        p.textContent = message;
-        modal.appendChild(p);
-        
-        const sliderContainer = document.createElement('div');
-        sliderContainer.className = 'be-modal-slider-container';
-        
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.className = 'be-modal-slider';
-        slider.min = min;
-        slider.max = max;
-        slider.value = defaultValue;
-        
-        const valueDisplay = document.createElement('span');
-        valueDisplay.className = 'be-modal-slider-value';
+      const overlay = document.createElement("div");
+      overlay.className = "be-modal-overlay";
+
+      const modal = document.createElement("div");
+      modal.className = "be-modal";
+
+      const h3 = document.createElement("h3");
+      h3.textContent = title;
+      modal.appendChild(h3);
+
+      const p = document.createElement("p");
+      p.textContent = message;
+      modal.appendChild(p);
+
+      const sliderContainer = document.createElement("div");
+      sliderContainer.className = "be-modal-slider-container";
+
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.className = "be-modal-slider";
+      slider.min = min;
+      slider.max = max;
+      slider.value = defaultValue;
+
+      const valueDisplay = document.createElement("span");
+      valueDisplay.className = "be-modal-slider-value";
+      valueDisplay.textContent = `${slider.value}${unit}`;
+
+      slider.oninput = () => {
         valueDisplay.textContent = `${slider.value}${unit}`;
-        
-        slider.oninput = () => {
-            valueDisplay.textContent = `${slider.value}${unit}`;
-            if (onLiveUpdate) onLiveUpdate(slider.value);
-        };
-        
-        sliderContainer.appendChild(slider);
-        sliderContainer.appendChild(valueDisplay);
-        modal.appendChild(sliderContainer);
-        
-        const actions = document.createElement('div');
-        actions.className = 'be-modal-actions';
-        
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'be-modal-cancel';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.onclick = () => {
-            overlay.remove();
-            resolve(null);
-        };
-        actions.appendChild(cancelBtn);
-        
-        const okBtn = document.createElement('button');
-        okBtn.className = 'be-modal-ok';
-        okBtn.textContent = 'Apply';
-        okBtn.onclick = () => {
-            const val = slider.value;
-            overlay.remove();
-            resolve(val);
-        };
-        actions.appendChild(okBtn);
-        
-        modal.appendChild(actions);
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        slider.focus();
-        
-        // Handle Enter/Esc
-        const keyHandler = (e) => {
-            if (e.key === 'Enter') {
-                okBtn.click();
-                window.removeEventListener('keydown', keyHandler);
-            }
-            if (e.key === 'Escape') {
-                cancelBtn.click();
-                window.removeEventListener('keydown', keyHandler);
-            }
-        };
-        window.addEventListener('keydown', keyHandler);
-    });
-}
+        if (onLiveUpdate) onLiveUpdate(slider.value);
+      };
 
-/**
- * Shows a modal to pick a border style.
- * @param {string} currentStyle The current border class name.
- * @returns {Promise<{style: string, applyToAll: boolean}|null>}
- */
-function showBorderPickerModal(currentStyle = 'default-border') {
+      sliderContainer.appendChild(slider);
+      sliderContainer.appendChild(valueDisplay);
+      modal.appendChild(sliderContainer);
+
+      const actions = document.createElement("div");
+      actions.className = "be-modal-actions";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "be-modal-cancel";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => {
+        overlay.remove();
+        resolve(null);
+      };
+      actions.appendChild(cancelBtn);
+
+      const okBtn = document.createElement("button");
+      okBtn.className = "be-modal-ok";
+      okBtn.textContent = "Apply";
+      okBtn.onclick = () => {
+        const val = slider.value;
+        overlay.remove();
+        resolve(val);
+      };
+      actions.appendChild(okBtn);
+
+      modal.appendChild(actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      slider.focus();
+
+      // Handle Enter/Esc
+      const keyHandler = (e) => {
+        if (e.key === "Enter") {
+          okBtn.click();
+          window.removeEventListener("keydown", keyHandler);
+        }
+        if (e.key === "Escape") {
+          cancelBtn.click();
+          window.removeEventListener("keydown", keyHandler);
+        }
+      };
+      window.addEventListener("keydown", keyHandler);
+    });
+  }
+
+  /**
+   * Shows a modal to pick a border style.
+   * @param {string} currentStyle The current border class name.
+   * @returns {Promise<{style: string, applyToAll: boolean}|null>}
+   */
+  function showBorderPickerModal(currentStyle = "default-border") {
     return new Promise((resolve) => {
-        const overlay = document.createElement('div');
-        overlay.className = 'be-modal-overlay';
-        
-        const modal = document.createElement('div');
-        modal.className = 'be-modal';
-        modal.style.width = '450px';
-        
-        const h3 = document.createElement('h3');
-        h3.textContent = 'Select Section Border';
-        modal.appendChild(h3);
-        
-        const optionsContainer = document.createElement('div');
-        optionsContainer.className = 'be-border-options';
-        
-        const styles = [
-            { id: 'default-border', label: 'Default' },
-            { id: 'no-border', label: 'None' },
-            { id: 'ability_border', label: 'Ability' },
-            { id: 'spikes_border', label: 'Spikes' },
-            { id: 'barbarian_border', label: 'Barbarian' },
-            { id: 'goth_border', label: 'Goth' },
-            { id: 'plants_border', label: 'Plants' },
-            { id: 'box_border', label: 'Box' },
-            { id: 'dwarf_border', label: 'Dwarf' },
-            { id: 'dwarf_hollow_border', label: 'Dwarf Hollow' },
-            { id: 'sticks_border', label: 'Sticks' },
-            { id: 'ornament_border', label: 'Ornament 1' },
-            { id: 'ornament2_border', label: 'Ornament 2' },
-            { id: 'ornament_bold_border', label: 'Ornament Bold' },
-            { id: 'ornament_bold2_border', label: 'Ornament Bold 2' },
-            { id: 'ornament_simple_border', label: 'Ornament Simple' },
-            { id: 'spike_hollow_border', label: 'Spike Hollow' },
-            { id: 'spiky_border', label: 'Spiky' },
-            { id: 'spiky_bold_border', label: 'Spiky Bold' },
-            { id: 'vine_border', label: 'Vine' }
-        ];
-        
-        let selectedStyle = currentStyle || 'default-border';
-        const optionEls = [];
+      const overlay = document.createElement("div");
+      overlay.className = "be-modal-overlay";
 
-        styles.forEach(style => {
-            const opt = document.createElement('div');
-            opt.className = 'be-border-option';
-            if (selectedStyle === style.id) opt.classList.add('selected');
-            
-            const preview = document.createElement('div');
-            preview.className = `be-border-preview ${style.id}`;
-            opt.appendChild(preview);
-            
-            const label = document.createElement('div');
-            label.textContent = style.label;
-            label.style.fontSize = '12px';
-            opt.appendChild(label);
-            
-            opt.onclick = () => {
-                optionEls.forEach(el => el.classList.remove('selected'));
-                opt.classList.add('selected');
-                selectedStyle = style.id;
-            };
-            
-            optionEls.push(opt);
-            optionsContainer.appendChild(opt);
-        });
-        
-        modal.appendChild(optionsContainer);
-        
-        const actions = document.createElement('div');
-        actions.className = 'be-modal-actions';
-        
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'be-modal-cancel';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.onclick = () => {
-            overlay.remove();
-            resolve(null);
+      const modal = document.createElement("div");
+      modal.className = "be-modal";
+      modal.style.width = "450px";
+
+      const h3 = document.createElement("h3");
+      h3.textContent = "Select Section Border";
+      modal.appendChild(h3);
+
+      const optionsContainer = document.createElement("div");
+      optionsContainer.className = "be-border-options";
+
+      const styles = [
+        { id: "default-border", label: "Default" },
+        { id: "no-border", label: "None" },
+        { id: "ability_border", label: "Ability" },
+        { id: "spikes_border", label: "Spikes" },
+        { id: "barbarian_border", label: "Barbarian" },
+        { id: "goth_border", label: "Goth" },
+        { id: "plants_border", label: "Plants" },
+        { id: "box_border", label: "Box" },
+        { id: "dwarf_border", label: "Dwarf" },
+        { id: "dwarf_hollow_border", label: "Dwarf Hollow" },
+        { id: "sticks_border", label: "Sticks" },
+        { id: "ornament_border", label: "Ornament 1" },
+        { id: "ornament2_border", label: "Ornament 2" },
+        { id: "ornament_bold_border", label: "Ornament Bold" },
+        { id: "ornament_bold2_border", label: "Ornament Bold 2" },
+        { id: "ornament_simple_border", label: "Ornament Simple" },
+        { id: "spike_hollow_border", label: "Spike Hollow" },
+        { id: "spiky_border", label: "Spiky" },
+        { id: "spiky_bold_border", label: "Spiky Bold" },
+        { id: "vine_border", label: "Vine" },
+      ];
+
+      let selectedStyle = currentStyle || "default-border";
+      const optionEls = [];
+
+      styles.forEach((style) => {
+        const opt = document.createElement("div");
+        opt.className = "be-border-option";
+        if (selectedStyle === style.id) opt.classList.add("selected");
+
+        const preview = document.createElement("div");
+        preview.className = `be-border-preview ${style.id}`;
+        opt.appendChild(preview);
+
+        const label = document.createElement("div");
+        label.textContent = style.label;
+        label.style.fontSize = "12px";
+        opt.appendChild(label);
+
+        opt.onclick = () => {
+          optionEls.forEach((el) => el.classList.remove("selected"));
+          opt.classList.add("selected");
+          selectedStyle = style.id;
         };
-        actions.appendChild(cancelBtn);
-        
-        const okBtn = document.createElement('button');
-        okBtn.className = 'be-modal-ok';
-        okBtn.textContent = 'Apply';
-        okBtn.onclick = () => {
-            overlay.remove();
-            resolve({
-                style: selectedStyle
-            });
-        };
-        actions.appendChild(okBtn);
-        
-        modal.appendChild(actions);
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        // Handle Esc
-        window.addEventListener('keydown', function escHandler(e) {
-            if (e.key === 'Escape') {
-                cancelBtn.click();
-                window.removeEventListener('keydown', escHandler);
-            }
-            if (e.key === 'Enter') {
-                okBtn.click();
-                window.removeEventListener('keydown', escHandler);
-            }
+
+        optionEls.push(opt);
+        optionsContainer.appendChild(opt);
+      });
+
+      modal.appendChild(optionsContainer);
+
+      const actions = document.createElement("div");
+      actions.className = "be-modal-actions";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "be-modal-cancel";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => {
+        overlay.remove();
+        resolve(null);
+      };
+      actions.appendChild(cancelBtn);
+
+      const okBtn = document.createElement("button");
+      okBtn.className = "be-modal-ok";
+      okBtn.textContent = "Apply";
+      okBtn.onclick = () => {
+        overlay.remove();
+        resolve({
+          style: selectedStyle,
         });
+      };
+      actions.appendChild(okBtn);
+
+      modal.appendChild(actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Handle Esc
+      window.addEventListener("keydown", function escHandler(e) {
+        if (e.key === "Escape") {
+          cancelBtn.click();
+          window.removeEventListener("keydown", escHandler);
+        }
+        if (e.key === "Enter") {
+          okBtn.click();
+          window.removeEventListener("keydown", escHandler);
+        }
+      });
     });
-}
+  }
 
-/**
- * Shows a modal to pick a decorative shape or border asset.
- * @param {string} currentAsset Optional path to pre-select
- * @param {string} filterFolder Optional folder path to force a tab (e.g. 'assets/shapes/')
- * @returns {Promise<{assetPath: string} | null>}
- */
-function showShapePickerModal(currentAsset = '', filterFolder = '') {
-    const lm = window.PeDom ? window.PeDom().getLayerManager() : (window.DomManager ? window.DomManager.getInstance().getLayerManager() : null);
+  /**
+   * Shows a modal to pick a decorative shape or border asset.
+   * @param {string} currentAsset Optional path to pre-select
+   * @param {string} filterFolder Optional folder path to force a tab (e.g. 'assets/shapes/')
+   * @returns {Promise<{assetPath: string} | null>}
+   */
+  function showShapePickerModal(currentAsset = "", filterFolder = "") {
+    const lm = window.PeDom
+      ? window.PeDom().getLayerManager()
+      : window.DomManager
+        ? window.DomManager.getInstance().getLayerManager()
+        : null;
     if (!lm || !lm.activeLayerId) {
-        showFeedback('Please select/unlock a layer in Layer Management first.', 'error');
-        return Promise.resolve(null);
+      showFeedback(
+        "Please select/unlock a layer in Layer Management first.",
+        "error",
+      );
+      return Promise.resolve(null);
     }
 
     return new Promise((resolve) => {
-        const categories = parseAssets(ASSET_LIST);
-        const overlay = document.createElement('div');
-        overlay.className = 'be-modal-overlay';
+      const categories = parseAssets(ASSET_LIST);
+      const overlay = document.createElement("div");
+      overlay.className = "be-modal-overlay";
 
-        const modal = document.createElement('div');
-        modal.className = 'be-modal';
-        modal.style.width = '600px'; // Increased width for better grid display
+      const modal = document.createElement("div");
+      modal.className = "be-modal";
+      modal.style.width = "600px"; // Increased width for better grid display
 
-        const h3 = document.createElement('h3');
-        h3.textContent = 'Select Decorative Shape';
-        modal.appendChild(h3);
+      const h3 = document.createElement("h3");
+      h3.textContent = "Select Decorative Shape";
+      modal.appendChild(h3);
 
-        // Tab State
-        let activeTab = 'borders';
-        if (filterFolder === 'assets/shapes/') {
-            activeTab = 'shapes';
-        } else if (filterFolder === 'assets/') {
-            activeTab = 'borders';
-        } else if (currentAsset.includes('assets/shapes/')) {
-            activeTab = 'shapes';
-        }
+      // Tab State
+      let activeTab = "borders";
+      if (filterFolder === "assets/shapes/") {
+        activeTab = "shapes";
+      } else if (filterFolder === "assets/") {
+        activeTab = "borders";
+      } else if (currentAsset.includes("assets/shapes/")) {
+        activeTab = "shapes";
+      }
 
-        const tabsContainer = document.createElement('div');
-        tabsContainer.className = 'be-modal-tabs';
-        tabsContainer.style.display = filterFolder ? 'none' : 'flex';
-        tabsContainer.style.gap = '10px';
-        tabsContainer.style.marginBottom = '15px';
-        tabsContainer.style.borderBottom = '1px solid #444';
+      const tabsContainer = document.createElement("div");
+      tabsContainer.className = "be-modal-tabs";
+      tabsContainer.style.display = filterFolder ? "none" : "flex";
+      tabsContainer.style.gap = "10px";
+      tabsContainer.style.marginBottom = "15px";
+      tabsContainer.style.borderBottom = "1px solid #444";
 
-        const borderTab = document.createElement('button');
-        borderTab.textContent = 'Borders';
-        borderTab.className = 'be-modal-tab' + (activeTab === 'borders' ? ' active' : '');
-        borderTab.style.padding = '8px 16px';
-        borderTab.style.background = (activeTab === 'borders' ? '#444' : '#222');
-        borderTab.style.color = (activeTab === 'borders' ? 'white' : '#ccc');
-        borderTab.style.border = 'none';
-        borderTab.style.cursor = 'pointer';
-        borderTab.style.borderTopLeftRadius = '4px';
-        borderTab.style.borderTopRightRadius = '4px';
+      const borderTab = document.createElement("button");
+      borderTab.textContent = "Borders";
+      borderTab.className =
+        "be-modal-tab" + (activeTab === "borders" ? " active" : "");
+      borderTab.style.padding = "8px 16px";
+      borderTab.style.background = activeTab === "borders" ? "#444" : "#222";
+      borderTab.style.color = activeTab === "borders" ? "white" : "#ccc";
+      borderTab.style.border = "none";
+      borderTab.style.cursor = "pointer";
+      borderTab.style.borderTopLeftRadius = "4px";
+      borderTab.style.borderTopRightRadius = "4px";
 
-        const shapeTab = document.createElement('button');
-        shapeTab.textContent = 'Shapes';
-        shapeTab.className = 'be-modal-tab' + (activeTab === 'shapes' ? ' active' : '');
-        shapeTab.style.padding = '8px 16px';
-        shapeTab.style.background = (activeTab === 'shapes' ? '#444' : '#222');
-        shapeTab.style.color = (activeTab === 'shapes' ? 'white' : '#ccc');
-        shapeTab.style.border = 'none';
-        shapeTab.style.cursor = 'pointer';
-        shapeTab.style.borderTopLeftRadius = '4px';
-        shapeTab.style.borderTopRightRadius = '4px';
+      const shapeTab = document.createElement("button");
+      shapeTab.textContent = "Shapes";
+      shapeTab.className =
+        "be-modal-tab" + (activeTab === "shapes" ? " active" : "");
+      shapeTab.style.padding = "8px 16px";
+      shapeTab.style.background = activeTab === "shapes" ? "#444" : "#222";
+      shapeTab.style.color = activeTab === "shapes" ? "white" : "#ccc";
+      shapeTab.style.border = "none";
+      shapeTab.style.cursor = "pointer";
+      shapeTab.style.borderTopLeftRadius = "4px";
+      shapeTab.style.borderTopRightRadius = "4px";
 
-        const customTab = document.createElement('button');
-        customTab.textContent = 'Custom';
-        customTab.className = 'be-modal-tab' + (activeTab === 'custom' ? ' active' : '');
-        customTab.style.padding = '8px 16px';
-        customTab.style.background = (activeTab === 'custom' ? '#444' : '#222');
-        customTab.style.color = (activeTab === 'custom' ? 'white' : '#ccc');
-        customTab.style.border = 'none';
-        customTab.style.cursor = 'pointer';
-        customTab.style.borderTopLeftRadius = '4px';
-        customTab.style.borderTopRightRadius = '4px';
+      const customTab = document.createElement("button");
+      customTab.textContent = "Custom";
+      customTab.className =
+        "be-modal-tab" + (activeTab === "custom" ? " active" : "");
+      customTab.style.padding = "8px 16px";
+      customTab.style.background = activeTab === "custom" ? "#444" : "#222";
+      customTab.style.color = activeTab === "custom" ? "white" : "#ccc";
+      customTab.style.border = "none";
+      customTab.style.cursor = "pointer";
+      customTab.style.borderTopLeftRadius = "4px";
+      customTab.style.borderTopRightRadius = "4px";
 
-        tabsContainer.appendChild(borderTab);
-        tabsContainer.appendChild(shapeTab);
-        tabsContainer.appendChild(customTab);
-        modal.appendChild(tabsContainer);
+      tabsContainer.appendChild(borderTab);
+      tabsContainer.appendChild(shapeTab);
+      tabsContainer.appendChild(customTab);
+      modal.appendChild(tabsContainer);
 
-        // Tag Filters
-        const tagsContainer = document.createElement('div');
-        tagsContainer.className = 'be-modal-tags';
-        tagsContainer.style.display = (activeTab === 'custom' ? 'none' : 'flex');
-        tagsContainer.style.flexWrap = 'wrap';
-        tagsContainer.style.gap = '5px';
-        tagsContainer.style.marginBottom = '15px';
+      // Tag Filters
+      const tagsContainer = document.createElement("div");
+      tagsContainer.className = "be-modal-tags";
+      tagsContainer.style.display = activeTab === "custom" ? "none" : "flex";
+      tagsContainer.style.flexWrap = "wrap";
+      tagsContainer.style.gap = "5px";
+      tagsContainer.style.marginBottom = "15px";
 
-        const tagList = ["bold", "hand drawn", "hollow", "ornament", "dwarf", "goth", "border", "barbarian", "vine", "plants", "spikes", "sticks"];
-        let activeTag = null;
+      const tagList = [
+        "bold",
+        "hand drawn",
+        "hollow",
+        "ornament",
+        "dwarf",
+        "goth",
+        "border",
+        "barbarian",
+        "vine",
+        "plants",
+        "spikes",
+        "sticks",
+      ];
+      let activeTag = null;
 
-        const renderTags = () => {
-            tagsContainer.innerHTML = '';
-            // "All" tag
-            const allTag = document.createElement('button');
-            allTag.textContent = 'All';
-            allTag.style.fontSize = '10px';
-            allTag.style.padding = '2px 8px';
-            allTag.style.borderRadius = '10px';
-            allTag.style.border = '1px solid #666';
-            allTag.style.background = activeTag === null ? '#666' : '#222';
-            allTag.style.color = 'white';
-            allTag.style.cursor = 'pointer';
-            allTag.onclick = () => {
-                activeTag = null;
-                renderTags();
-                renderAssets(activeTab);
+      const renderTags = () => {
+        tagsContainer.innerHTML = "";
+        // "All" tag
+        const allTag = document.createElement("button");
+        allTag.textContent = "All";
+        allTag.style.fontSize = "10px";
+        allTag.style.padding = "2px 8px";
+        allTag.style.borderRadius = "10px";
+        allTag.style.border = "1px solid #666";
+        allTag.style.background = activeTag === null ? "#666" : "#222";
+        allTag.style.color = "white";
+        allTag.style.cursor = "pointer";
+        allTag.onclick = () => {
+          activeTag = null;
+          renderTags();
+          renderAssets(activeTab);
+        };
+        tagsContainer.appendChild(allTag);
+
+        tagList.forEach((tag) => {
+          const btn = document.createElement("button");
+          btn.textContent = tag;
+          btn.style.fontSize = "10px";
+          btn.style.padding = "2px 8px";
+          btn.style.borderRadius = "10px";
+          btn.style.border = "1px solid #666";
+          btn.style.background = activeTag === tag ? "#666" : "#222";
+          btn.style.color = "white";
+          btn.style.cursor = "pointer";
+          btn.onclick = () => {
+            activeTag = activeTag === tag ? null : tag;
+            renderTags();
+            renderAssets(activeTab);
+          };
+          tagsContainer.appendChild(btn);
+        });
+      };
+
+      renderTags();
+      modal.appendChild(tagsContainer);
+
+      const optionsContainer = document.createElement("div");
+      optionsContainer.className = "be-border-options";
+      optionsContainer.style.maxHeight = "400px";
+      optionsContainer.style.overflowY = "auto";
+      optionsContainer.style.display = "flex";
+      optionsContainer.style.flexWrap = "wrap";
+      optionsContainer.style.gap = "10px";
+      optionsContainer.style.padding = "10px";
+
+      let selectedAsset =
+        currentAsset ||
+        (categories[activeTab] && categories[activeTab].length > 0
+          ? categories[activeTab][0].path
+          : "");
+
+      const renderAssets = async (tabName) => {
+        try {
+          optionsContainer.innerHTML = "";
+          let assets = [];
+
+          if (tabName === "custom") {
+            assets = await Storage.getCustomShapes();
+          } else {
+            assets = categories[tabName] || [];
+          }
+
+          if (activeTag && tabName !== "custom") {
+            assets = assets.filter((a) => a.tags.includes(activeTag));
+          }
+
+          if (assets.length === 0 && tabName !== "custom") {
+            const empty = document.createElement("div");
+            empty.textContent = "No shapes found for this filter.";
+            empty.style.color = "#888";
+            empty.style.padding = "20px";
+            optionsContainer.appendChild(empty);
+            return;
+          }
+
+          if (tabName === "custom") {
+            const uploadContainer = document.createElement("div");
+            uploadContainer.style.cssText =
+              "grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; padding: 20px; border: 2px dashed #444; border-radius: 8px; margin-bottom: 10px;";
+
+            const uploadBtn = document.createElement("button");
+            uploadBtn.textContent = "Upload from disk";
+            uploadBtn.className = "be-modal-button";
+            uploadBtn.style.cssText =
+              "background: #0056b3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;";
+            uploadBtn.onclick = () =>
+              handleUploadFromDisk((base64) => {
+                overlay.remove();
+                resolve({ assetPath: base64 });
+              });
+            uploadContainer.appendChild(uploadBtn);
+
+            const helpText = document.createElement("div");
+            helpText.textContent =
+              "PNG, JPEG, WebP, or SVG. Large files will be compressed.";
+            helpText.style.cssText =
+              "font-size: 11px; color: #777; margin-top: 8px;";
+            uploadContainer.appendChild(helpText);
+
+            optionsContainer.appendChild(uploadContainer);
+
+            if (assets.length === 0) {
+              const empty = document.createElement("div");
+              empty.textContent = "No custom shapes uploaded yet.";
+              empty.style.color = "#555";
+              empty.style.padding = "20px";
+              empty.style.gridColumn = "1 / -1";
+              empty.style.textAlign = "center";
+              optionsContainer.appendChild(empty);
+            }
+          }
+
+          assets.forEach((asset) => {
+            const opt = document.createElement("div");
+            opt.className = "be-border-option";
+            opt.title = asset.label || asset.name || asset.id;
+            const assetPath = asset.path || asset.data; // Use data (base64) for custom
+            if (selectedAsset === assetPath) opt.classList.add("selected");
+
+            const preview = document.createElement("div");
+            preview.className = `be-border-preview`;
+
+            // Asset Application Logic using ASSET_METADATA
+            const meta =
+              ASSET_METADATA[asset.path] ||
+              (tabName === "custom" ? { isBackground: true } : null);
+            if (meta) {
+              const url =
+                tabName === "custom"
+                  ? asset.data
+                  : chrome.runtime.getURL(asset.path);
+              if (meta.isBackground) {
+                preview.style.backgroundImage = `url('${url}')`;
+                preview.style.backgroundSize = "contain";
+                preview.style.backgroundRepeat = "no-repeat";
+                preview.style.backgroundPosition = "center";
+                preview.style.border = "none";
+              } else if (meta.className) {
+                preview.classList.add(meta.className);
+              } else {
+                preview.style.borderStyle = "solid";
+                preview.style.borderImageSource = `url('${url}')`;
+                preview.style.borderImageSlice = meta.slice
+                  ? meta.slice.toString()
+                  : "33";
+                preview.style.borderImageWidth = meta.width || "20px";
+                preview.style.borderImageOutset = meta.outset || "0";
+                preview.style.borderImageRepeat = "round";
+              }
+            } else {
+              // Fallback for unknown assets
+              const url =
+                tabName === "custom"
+                  ? asset.data
+                  : chrome.runtime.getURL(asset.path);
+              preview.style.borderStyle = "solid";
+              preview.style.borderImageSource = `url('${url}')`;
+              preview.style.borderImageSlice = "33";
+              preview.style.borderImageWidth = "20px";
+            }
+
+            opt.appendChild(preview);
+
+            const label = document.createElement("div");
+            label.textContent = asset.label || asset.name;
+            label.style.fontSize = "10px";
+            label.style.marginTop = "5px";
+            opt.appendChild(label);
+
+            opt.onclick = () => {
+              optionsContainer
+                .querySelectorAll(".be-border-option")
+                .forEach((el) => el.classList.remove("selected"));
+              opt.classList.add("selected");
+              selectedAsset = assetPath;
             };
-            tagsContainer.appendChild(allTag);
 
-            tagList.forEach(tag => {
-                const btn = document.createElement('button');
-                btn.textContent = tag;
-                btn.style.fontSize = '10px';
-                btn.style.padding = '2px 8px';
-                btn.style.borderRadius = '10px';
-                btn.style.border = '1px solid #666';
-                btn.style.background = activeTag === tag ? '#666' : '#222';
-                btn.style.color = 'white';
-                btn.style.cursor = 'pointer';
-                btn.onclick = () => {
-                    activeTag = (activeTag === tag) ? null : tag;
-                    renderTags();
-                    renderAssets(activeTab);
-                };
-                tagsContainer.appendChild(btn);
-            });
-        };
-
-        renderTags();
-        modal.appendChild(tagsContainer);
-
-        const optionsContainer = document.createElement('div');
-        optionsContainer.className = 'be-border-options';
-        optionsContainer.style.maxHeight = '400px';
-        optionsContainer.style.overflowY = 'auto';
-        optionsContainer.style.display = 'flex';
-        optionsContainer.style.flexWrap = 'wrap';
-        optionsContainer.style.gap = '10px';
-        optionsContainer.style.padding = '10px';
-
-        let selectedAsset = currentAsset || (categories[activeTab] && categories[activeTab].length > 0 ? categories[activeTab][0].path : '');
-
-        const renderAssets = async (tabName) => {
-            try {
-                optionsContainer.innerHTML = '';
-            let assets = [];
-            
-            if (tabName === 'custom') {
-                assets = await Storage.getCustomShapes();
-            } else {
-                assets = categories[tabName] || [];
-            }
-
-            if (activeTag && tabName !== 'custom') {
-                assets = assets.filter(a => a.tags.includes(activeTag));
-            }
-
-            if (assets.length === 0 && tabName !== 'custom') {
-                const empty = document.createElement('div');
-                empty.textContent = 'No shapes found for this filter.';
-                empty.style.color = '#888';
-                empty.style.padding = '20px';
-                optionsContainer.appendChild(empty);
-                return;
-            }
-
-            if (tabName === 'custom') {
-                const uploadContainer = document.createElement('div');
-                uploadContainer.style.cssText = 'grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; padding: 20px; border: 2px dashed #444; border-radius: 8px; margin-bottom: 10px;';
-                
-                const uploadBtn = document.createElement('button');
-                uploadBtn.textContent = 'Upload from disk';
-                uploadBtn.className = 'be-modal-button';
-                uploadBtn.style.cssText = 'background: #0056b3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;';
-                uploadBtn.onclick = () => handleUploadFromDisk((base64) => {
-                    overlay.remove();
-                    resolve({ assetPath: base64 });
-                });
-                uploadContainer.appendChild(uploadBtn);
-
-                const helpText = document.createElement('div');
-                helpText.textContent = 'PNG, JPEG, WebP, or SVG. Large files will be compressed.';
-                helpText.style.cssText = 'font-size: 11px; color: #777; margin-top: 8px;';
-                uploadContainer.appendChild(helpText);
-
-                optionsContainer.appendChild(uploadContainer);
-
-                if (assets.length === 0) {
-                    const empty = document.createElement('div');
-                    empty.textContent = 'No custom shapes uploaded yet.';
-                    empty.style.color = '#555';
-                    empty.style.padding = '20px';
-                    empty.style.gridColumn = '1 / -1';
-                    empty.style.textAlign = 'center';
-                    optionsContainer.appendChild(empty);
-                }
-            }
-
-            assets.forEach(asset => {
-                const opt = document.createElement('div');
-                opt.className = 'be-border-option';
-                opt.title = asset.label || asset.name || asset.id;
-                const assetPath = asset.path || asset.data; // Use data (base64) for custom
-                if (selectedAsset === assetPath) opt.classList.add('selected');
-
-                const preview = document.createElement('div');
-                preview.className = `be-border-preview`;
-
-                // Asset Application Logic using ASSET_METADATA
-                const meta = ASSET_METADATA[asset.path] || (tabName === 'custom' ? { isBackground: true } : null);
-                if (meta) {
-                    const url = tabName === 'custom' ? asset.data : chrome.runtime.getURL(asset.path);
-                    if (meta.isBackground) {
-                        preview.style.backgroundImage = `url('${url}')`;
-                        preview.style.backgroundSize = 'contain';
-                        preview.style.backgroundRepeat = 'no-repeat';
-                        preview.style.backgroundPosition = 'center';
-                        preview.style.border = 'none';
-                    } else if (meta.className) {
-                        preview.classList.add(meta.className);
-                    } else {
-                        preview.style.borderStyle = 'solid';
-                        preview.style.borderImageSource = `url('${url}')`;
-                        preview.style.borderImageSlice = (meta.slice ? meta.slice.toString() : '33');
-                        preview.style.borderImageWidth = meta.width || '20px';
-                        preview.style.borderImageOutset = meta.outset || '0';
-                        preview.style.borderImageRepeat = 'round';
-                    }
-                } else {
-                    // Fallback for unknown assets
-                    const url = tabName === 'custom' ? asset.data : chrome.runtime.getURL(asset.path);
-                    preview.style.borderStyle = 'solid';
-                    preview.style.borderImageSource = `url('${url}')`;
-                    preview.style.borderImageSlice = '33';
-                    preview.style.borderImageWidth = '20px';
-                }
-
-                opt.appendChild(preview);
-
-                const label = document.createElement('div');
-                label.textContent = asset.label || asset.name;
-                label.style.fontSize = '10px';
-                label.style.marginTop = '5px';
-                opt.appendChild(label);
-
-                opt.onclick = () => {
-                    optionsContainer.querySelectorAll('.be-border-option').forEach(el => el.classList.remove('selected'));
-                    opt.classList.add('selected');
-                    selectedAsset = assetPath;
-                };
-
-                optionsContainer.appendChild(opt);
-            });
+            optionsContainer.appendChild(opt);
+          });
         } catch (err) {
-            console.warn('DEBUG ERROR in renderAssets:', err);
+          console.warn("DEBUG ERROR in renderAssets:", err);
         }
-    };
+      };
 
-        borderTab.onclick = () => {
-            activeTab = 'borders';
-            [borderTab, shapeTab, customTab].forEach(t => t.classList.remove('active'));
-            [borderTab, shapeTab, customTab].forEach(t => t.style.background = '#222');
-            [borderTab, shapeTab, customTab].forEach(t => t.style.color = '#ccc');
-            
-            borderTab.classList.add('active');
-            borderTab.style.background = '#444';
-            borderTab.style.color = 'white';
-            tagsContainer.style.display = 'flex';
-            renderAssets('borders');
-        };
+      borderTab.onclick = () => {
+        activeTab = "borders";
+        [borderTab, shapeTab, customTab].forEach((t) =>
+          t.classList.remove("active"),
+        );
+        [borderTab, shapeTab, customTab].forEach(
+          (t) => (t.style.background = "#222"),
+        );
+        [borderTab, shapeTab, customTab].forEach(
+          (t) => (t.style.color = "#ccc"),
+        );
 
-        shapeTab.onclick = () => {
-            activeTab = 'shapes';
-            [borderTab, shapeTab, customTab].forEach(t => t.classList.remove('active'));
-            [borderTab, shapeTab, customTab].forEach(t => t.style.background = '#222');
-            [borderTab, shapeTab, customTab].forEach(t => t.style.color = '#ccc');
+        borderTab.classList.add("active");
+        borderTab.style.background = "#444";
+        borderTab.style.color = "white";
+        tagsContainer.style.display = "flex";
+        renderAssets("borders");
+      };
 
-            shapeTab.classList.add('active');
-            shapeTab.style.background = '#444';
-            shapeTab.style.color = 'white';
-            tagsContainer.style.display = 'flex';
-            renderAssets('shapes');
-        };
+      shapeTab.onclick = () => {
+        activeTab = "shapes";
+        [borderTab, shapeTab, customTab].forEach((t) =>
+          t.classList.remove("active"),
+        );
+        [borderTab, shapeTab, customTab].forEach(
+          (t) => (t.style.background = "#222"),
+        );
+        [borderTab, shapeTab, customTab].forEach(
+          (t) => (t.style.color = "#ccc"),
+        );
 
-        customTab.onclick = () => {
-            activeTab = 'custom';
-            [borderTab, shapeTab, customTab].forEach(t => t.classList.remove('active'));
-            [borderTab, shapeTab, customTab].forEach(t => t.style.background = '#222');
-            [borderTab, shapeTab, customTab].forEach(t => t.style.color = '#ccc');
+        shapeTab.classList.add("active");
+        shapeTab.style.background = "#444";
+        shapeTab.style.color = "white";
+        tagsContainer.style.display = "flex";
+        renderAssets("shapes");
+      };
 
-            customTab.classList.add('active');
-            customTab.style.background = '#444';
-            customTab.style.color = 'white';
-            tagsContainer.style.display = 'none';
-            renderAssets('custom');
-        };
+      customTab.onclick = () => {
+        activeTab = "custom";
+        [borderTab, shapeTab, customTab].forEach((t) =>
+          t.classList.remove("active"),
+        );
+        [borderTab, shapeTab, customTab].forEach(
+          (t) => (t.style.background = "#222"),
+        );
+        [borderTab, shapeTab, customTab].forEach(
+          (t) => (t.style.color = "#ccc"),
+        );
 
-        renderAssets(activeTab);
-        modal.appendChild(optionsContainer);
+        customTab.classList.add("active");
+        customTab.style.background = "#444";
+        customTab.style.color = "white";
+        tagsContainer.style.display = "none";
+        renderAssets("custom");
+      };
 
-        const actions = document.createElement('div');
-        actions.className = 'be-modal-actions';
+      renderAssets(activeTab);
+      modal.appendChild(optionsContainer);
 
-        const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'be-modal-cancel';
-        cancelBtn.textContent = 'Cancel';
-        cancelBtn.onclick = () => {
-            overlay.remove();
-            resolve(null);
-        };
-        actions.appendChild(cancelBtn);
+      const actions = document.createElement("div");
+      actions.className = "be-modal-actions";
 
-        const okBtn = document.createElement('button');
-        okBtn.className = 'be-modal-ok';
-        okBtn.textContent = 'Add Shape';
-        okBtn.onclick = () => {
-            overlay.remove();
-            resolve({
-                assetPath: selectedAsset
-            });
-        };
-        actions.appendChild(okBtn);
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "be-modal-cancel";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => {
+        overlay.remove();
+        resolve(null);
+      };
+      actions.appendChild(cancelBtn);
 
-        modal.appendChild(actions);
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-
-        // Handle Esc
-        window.addEventListener('keydown', function escHandler(e) {
-            if (e.key === 'Escape') {
-                cancelBtn.click();
-                window.removeEventListener('keydown', escHandler);
-            }
-            if (e.key === 'Enter') {
-                okBtn.click();
-                window.removeEventListener('keydown', escHandler);
-            }
+      const okBtn = document.createElement("button");
+      okBtn.className = "be-modal-ok";
+      okBtn.textContent = "Add Shape";
+      okBtn.onclick = () => {
+        overlay.remove();
+        resolve({
+          assetPath: selectedAsset,
         });
-        });
+      };
+      actions.appendChild(okBtn);
+
+      modal.appendChild(actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Handle Esc
+      window.addEventListener("keydown", function escHandler(e) {
+        if (e.key === "Escape") {
+          cancelBtn.click();
+          window.removeEventListener("keydown", escHandler);
         }
-
-        /**
-        * Initializes ResizeObserver to scale content to fit its container.
-        */
-function initResponsiveScaling() {
-    const observer = new ResizeObserver(entries => {
-        for (const entry of entries) {
-            const container = entry.target;
-            const content = container.querySelector('.print-section-content');
-            const inner = content ? content.firstElementChild : null;
-            
-            if (!inner) continue;
-
-            // Reset scaling to measure natural size
-            inner.style.transform = 'none';
-            inner.style.width = '100%';
-            
-            const containerWidth = content.clientWidth;
-            const containerHeight = content.clientHeight;
-            const contentWidth = inner.scrollWidth;
-            const contentHeight = inner.scrollHeight;
-
-            if (contentWidth > containerWidth || contentHeight > containerHeight) {
-                const scaleX = containerWidth / contentWidth;
-                const scaleY = containerHeight / contentHeight;
-                const scale = Math.min(scaleX, scaleY, 1);
-                
-                if (scale < 1) {
-                    inner.style.transform = `scale(${scale})`;
-                    inner.style.width = `${100 / scale}%`; // Counteract scale for width to prevent shrinking
-                    container.setAttribute('data-scaling', 'true');
-                } else {
-                    container.removeAttribute('data-scaling');
-                }
-            } else {
-                container.removeAttribute('data-scaling');
-            }
+        if (e.key === "Enter") {
+          okBtn.click();
+          window.removeEventListener("keydown", escHandler);
         }
+      });
+    });
+  }
+
+  /**
+   * Initializes ResizeObserver to scale content to fit its container.
+   */
+  function initResponsiveScaling() {
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const container = entry.target;
+        const content = container.querySelector(".print-section-content");
+        const inner = content ? content.firstElementChild : null;
+
+        if (!inner) continue;
+
+        // Reset scaling to measure natural size
+        inner.style.transform = "none";
+        inner.style.width = "100%";
+
+        const containerWidth = content.clientWidth;
+        const containerHeight = content.clientHeight;
+        const contentWidth = inner.scrollWidth;
+        const contentHeight = inner.scrollHeight;
+
+        if (contentWidth > containerWidth || contentHeight > containerHeight) {
+          const scaleX = containerWidth / contentWidth;
+          const scaleY = containerHeight / contentHeight;
+          const scale = Math.min(scaleX, scaleY, 1);
+
+          if (scale < 1) {
+            inner.style.transform = `scale(${scale})`;
+            inner.style.width = `${100 / scale}%`; // Counteract scale for width to prevent shrinking
+            container.setAttribute("data-scaling", "true");
+          } else {
+            container.removeAttribute("data-scaling");
+          }
+        } else {
+          container.removeAttribute("data-scaling");
+        }
+      }
     });
 
-    document.querySelectorAll('.print-section-container').forEach(container => {
-    });
-}
+    document
+      .querySelectorAll(".print-section-container")
+      .forEach((container) => {});
+  }
 
-/**
- * Handles Z-Index for click-to-front behavior
- */
-function initZIndexManagement() {
-    const container = document.getElementById('print-layout-wrapper');
+  /**
+   * Handles Z-Index for click-to-front behavior
+   */
+  function initZIndexManagement() {
+    const container = document.getElementById("print-layout-wrapper");
     if (!container) return;
 
-    container.addEventListener('mousedown', (e) => {
-        const clickedEl = e.target.closest('.be-section-wrapper');
-        if (!clickedEl) return;
+    container.addEventListener("mousedown", (e) => {
+      const clickedEl = e.target.closest(".be-section-wrapper");
+      if (!clickedEl) return;
 
-        const isShape = clickedEl.classList.contains('be-shape-wrapper');
-        const allElements = document.querySelectorAll('.be-section-wrapper');
-        
-        let maxSectionZ = 10;
-        let maxShapeZ = 110;
+      const isShape = clickedEl.classList.contains("be-shape-wrapper");
+      const allElements = document.querySelectorAll(".be-section-wrapper");
 
-        allElements.forEach(el => {
-            const z = parseInt(el.style.zIndex) || parseInt(window.getComputedStyle(el).zIndex) || 10;
-            if (el.classList.contains('be-shape-wrapper')) {
-                if (z > maxShapeZ) maxShapeZ = z;
-            } else {
-                if (z > maxSectionZ) maxSectionZ = z;
-            }
-        });
+      let maxSectionZ = 10;
+      let maxShapeZ = 110;
 
-        if (isShape) {
-            // Shapes always on top of sections and front of other shapes
-            clickedEl.style.zIndex = Math.max(maxShapeZ, maxSectionZ + 100) + 1;
+      allElements.forEach((el) => {
+        const z =
+          parseInt(el.style.zIndex) ||
+          parseInt(window.getComputedStyle(el).zIndex) ||
+          10;
+        if (el.classList.contains("be-shape-wrapper")) {
+          if (z > maxShapeZ) maxShapeZ = z;
         } else {
-            // Sections stay below shapes (usually < 110)
-            clickedEl.style.zIndex = maxSectionZ + 1;
+          if (z > maxSectionZ) maxSectionZ = z;
         }
+      });
+
+      if (isShape) {
+        // Shapes always on top of sections and front of other shapes
+        clickedEl.style.zIndex = Math.max(maxShapeZ, maxSectionZ + 100) + 1;
+      } else {
+        // Sections stay below shapes (usually < 110)
+        clickedEl.style.zIndex = maxSectionZ + 1;
+      }
     });
-}
+  }
 
-
-/**
- * Automatically arranges sections in a masonry-like grid
- */
-function autoArrangeSections() {
-    const containers = Array.from(document.querySelectorAll('.print-section-container'))
-                          .filter(el => !el.classList.contains('be-shape'));
+  /**
+   * Automatically arranges sections in a masonry-like grid
+   */
+  function autoArrangeSections() {
+    const containers = Array.from(
+      document.querySelectorAll(".print-section-container"),
+    ).filter((el) => !el.classList.contains("be-shape"));
     if (containers.length === 0) return;
 
     const viewportWidth = window.innerWidth || 1200; // Fallback
@@ -5334,119 +5847,135 @@ function autoArrangeSections() {
     const gutter = 15;
     let columnsInRow = 0;
 
-    containers.forEach(container => {
-        const wrapper = container.closest('.be-section-wrapper') || container;
-        
-        wrapper.style.left = '0px';
-        wrapper.style.top = '0px'; 
+    containers.forEach((container) => {
+      const wrapper = container.closest(".be-section-wrapper") || container;
 
-        const width = container.offsetWidth || 300;
-        const height = container.offsetHeight || 150;
+      wrapper.style.left = "0px";
+      wrapper.style.top = "0px";
 
-        // Check if we need a new row:
-        // 1. If it doesn't fit horizontally
-        // 2. OR if we've reached the 3-column limit
-        if ((currentX + width > viewportWidth - 20 && currentX > 10) || columnsInRow >= 3) {
-            // New row
-            currentX = 10;
-            currentY += rowHeight + gutter;
-            rowHeight = 0;
-            columnsInRow = 0;
-        }
+      const width = container.offsetWidth || 300;
+      const height = container.offsetHeight || 150;
 
-        // Snap to grid
-        const snapX = Math.round(currentX / 16) * 16;
-        const snapY = Math.round(currentY / 16) * 16;
+      // Check if we need a new row:
+      // 1. If it doesn't fit horizontally
+      // 2. OR if we've reached the 3-column limit
+      if (
+        (currentX + width > viewportWidth - 20 && currentX > 10) ||
+        columnsInRow >= 3
+      ) {
+        // New row
+        currentX = 10;
+        currentY += rowHeight + gutter;
+        rowHeight = 0;
+        columnsInRow = 0;
+      }
 
-        wrapper.style.left = `${snapX}px`;
-        wrapper.style.top = `${snapY}px`;
-        
-        currentX += width + gutter;
-        if (height > rowHeight) rowHeight = height;
-        columnsInRow++;
+      // Snap to grid
+      const snapX = Math.round(currentX / 16) * 16;
+      const snapY = Math.round(currentY / 16) * 16;
+
+      wrapper.style.left = `${snapX}px`;
+      wrapper.style.top = `${snapY}px`;
+
+      currentX += width + gutter;
+      if (height > rowHeight) rowHeight = height;
+      columnsInRow++;
     });
-    
-    updateLayoutBounds();
-}
 
-/**
- * Custom Resize Logic for 16px Grid Snapping
- */
-function initResizeLogic() {
+    updateLayoutBounds();
+  }
+
+  /**
+   * Custom Resize Logic for 16px Grid Snapping
+   */
+  function initResizeLogic() {
     // Add resize handles if not present
-    document.querySelectorAll('.print-section-container').forEach(section => {
-        if (!section.querySelector('.print-section-resize-handle')) {
-            const handle = document.createElement('div');
-            handle.className = 'print-section-resize-handle';
-            section.appendChild(handle);
-            
-            handle.addEventListener('mousedown', initResize);
-        }
+    document.querySelectorAll(".print-section-container").forEach((section) => {
+      if (!section.querySelector(".print-section-resize-handle")) {
+        const handle = document.createElement("div");
+        handle.className = "print-section-resize-handle";
+        section.appendChild(handle);
+
+        handle.addEventListener("mousedown", initResize);
+      }
     });
 
     let resizingSection = null;
     let startX, startY, startWidth, startHeight;
 
     function initResize(e) {
-        resizingSection = e.target.closest('.print-section-container');
-        startX = e.clientX;
-        startY = e.clientY;
-        startWidth = parseInt(window.getComputedStyle(resizingSection).width, 10);
-        startHeight = parseInt(window.getComputedStyle(resizingSection).height, 10);
-        
-        document.documentElement.addEventListener('mousemove', doResize, false);
-        document.documentElement.addEventListener('mouseup', stopResize, false);
-        e.stopPropagation();
-        e.preventDefault();
+      resizingSection = e.target.closest(".print-section-container");
+      startX = e.clientX;
+      startY = e.clientY;
+      startWidth = parseInt(window.getComputedStyle(resizingSection).width, 10);
+      startHeight = parseInt(
+        window.getComputedStyle(resizingSection).height,
+        10,
+      );
+
+      document.documentElement.addEventListener("mousemove", doResize, false);
+      document.documentElement.addEventListener("mouseup", stopResize, false);
+      e.stopPropagation();
+      e.preventDefault();
     }
 
     function doResize(e) {
-        if (!resizingSection) return;
-        
-        // Calculate raw new dimensions
-        let rawNewWidth = startWidth + (e.clientX - startX);
-        let rawNewHeight = startHeight + (e.clientY - startY);
-        
-        // Snap to 16px
-        let newWidth = Math.round(rawNewWidth / 16) * 16;
-        let newHeight = Math.round(rawNewHeight / 16) * 16;
-        
-        // Min dimensions
-        if (newWidth < 50) newWidth = 48; // nearest 16 is 48
-        if (newHeight < 30) newHeight = 32;
+      if (!resizingSection) return;
 
-        resizingSection.style.width = newWidth + 'px';
-        resizingSection.style.height = newHeight + 'px';
+      // Calculate raw new dimensions
+      let rawNewWidth = startWidth + (e.clientX - startX);
+      let rawNewHeight = startHeight + (e.clientY - startY);
+
+      // Snap to 16px
+      let newWidth = Math.round(rawNewWidth / 16) * 16;
+      let newHeight = Math.round(rawNewHeight / 16) * 16;
+
+      // Min dimensions
+      if (newWidth < 50) newWidth = 48; // nearest 16 is 48
+      if (newHeight < 30) newHeight = 32;
+
+      resizingSection.style.width = newWidth + "px";
+      resizingSection.style.height = newHeight + "px";
     }
 
     function stopResize() {
-        if (resizingSection) {
-            const finalWidth = parseInt(resizingSection.style.width, 10);
-            // Ensure finalWidth is valid number, fallback to computed if needed (though doResize sets style)
-            if (!isNaN(finalWidth)) {
-                const deltaX = finalWidth - startWidth;
-                if (deltaX !== 0) {
-                    adjustInnerContentWidth(resizingSection, deltaX);
-                }
-            }
+      if (resizingSection) {
+        const finalWidth = parseInt(resizingSection.style.width, 10);
+        // Ensure finalWidth is valid number, fallback to computed if needed (though doResize sets style)
+        if (!isNaN(finalWidth)) {
+          const deltaX = finalWidth - startWidth;
+          if (deltaX !== 0) {
+            adjustInnerContentWidth(resizingSection, deltaX);
+          }
         }
+      }
 
-        resizingSection = null;
-        document.documentElement.removeEventListener('mousemove', doResize, false);
-        document.documentElement.removeEventListener('mouseup', stopResize, false);
-        updateLayoutBounds();
+      resizingSection = null;
+      document.documentElement.removeEventListener(
+        "mousemove",
+        doResize,
+        false,
+      );
+      document.documentElement.removeEventListener(
+        "mouseup",
+        stopResize,
+        false,
+      );
+      updateLayoutBounds();
     }
-}
+  }
 
-/**
- * Adjusts the width of immediate children of specific containers based on resize delta.
- */
-function adjustInnerContentWidth(section, deltaX) {
+  /**
+   * Adjusts the width of immediate children of specific containers based on resize delta.
+   */
+  function adjustInnerContentWidth(section, deltaX) {
     // User Request: Scan for containers ending in "-row-header" or "-content"
-    const containers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
-    
+    const containers = section.querySelectorAll(
+      'div[class$="-row-header"], div[class$="-content"]',
+    );
+
     // Find the master parent content width
-    const parentContent = section.querySelector('.print-section-content');
+    const parentContent = section.querySelector(".print-section-content");
     if (!parentContent) return;
 
     // Use padding-box width (clientWidth) or computed width
@@ -5456,41 +5985,43 @@ function adjustInnerContentWidth(section, deltaX) {
 
     if (!parentWidth) return;
 
-    containers.forEach(container => {
-        // User Request: Override width of IMMEDIATE divs
-        Array.from(container.children).forEach(child => {
-            if (child.tagName === 'DIV') {
-                // Set width to match the PARENT content width
-                child.style.setProperty('width', `${parentWidth}px`, 'important');
-                child.style.setProperty('min-width', `${parentWidth}px`, 'important');
-            }
-        });
+    containers.forEach((container) => {
+      // User Request: Override width of IMMEDIATE divs
+      Array.from(container.children).forEach((child) => {
+        if (child.tagName === "DIV") {
+          // Set width to match the PARENT content width
+          child.style.setProperty("width", `${parentWidth}px`, "important");
+          child.style.setProperty("min-width", `${parentWidth}px`, "important");
+        }
+      });
     });
-}
+  }
 
-/**
- * Updates the size of the layout wrapper to fit all sections
- */
-function updateLayoutBounds() {
-    const container = document.getElementById('print-layout-wrapper');
+  /**
+   * Updates the size of the layout wrapper to fit all sections
+   */
+  function updateLayoutBounds() {
+    const container = document.getElementById("print-layout-wrapper");
     if (!container) return;
 
     let maxBottom = 0;
     let maxRight = 0;
 
-    const wrappers = Array.from(document.querySelectorAll('.be-section-wrapper'));
-    wrappers.forEach(wrapper => {
-        // Since wrappers are absolute in a relative container, style.top is relative to container top.
-        const top = parseInt(wrapper.style.top) || 0;
-        const left = parseInt(wrapper.style.left) || 0;
-        const width = wrapper.offsetWidth || 0;
-        const height = wrapper.offsetHeight || 0;
+    const wrappers = Array.from(
+      document.querySelectorAll(".be-section-wrapper"),
+    );
+    wrappers.forEach((wrapper) => {
+      // Since wrappers are absolute in a relative container, style.top is relative to container top.
+      const top = parseInt(wrapper.style.top) || 0;
+      const left = parseInt(wrapper.style.left) || 0;
+      const width = wrapper.offsetWidth || 0;
+      const height = wrapper.offsetHeight || 0;
 
-        const bottom = top + height;
-        const right = left + width;
+      const bottom = top + height;
+      const right = left + width;
 
-        if (bottom > maxBottom) maxBottom = bottom;
-        if (right > maxRight) maxRight = right;
+      if (bottom > maxBottom) maxBottom = bottom;
+      if (right > maxRight) maxRight = right;
     });
 
     // Add padding (e.g., 50px)
@@ -5499,293 +6030,339 @@ function updateLayoutBounds() {
 
     // Apply min-height/width to ensure it at least covers the viewport
     // User Request: Update body container height to always be at least the same height as furthest coordinate
-    
+
     // 1. Update the wrapper itself
-    const minH = Math.max(newHeight, window.innerHeight) + 'px';
+    const minH = Math.max(newHeight, window.innerHeight) + "px";
     container.style.minHeight = minH;
     container.style.height = minH; // Explicitly set height too just in case
-    container.style.minWidth = Math.max(newWidth, window.innerWidth) + 'px';
+    container.style.minWidth = Math.max(newWidth, window.innerWidth) + "px";
 
     // 2. Also attempt to update parent containers if they restrict height
     let sheetDesktop, sheetInner;
     if (window.DomManager) {
-        const desktopWrapper = window.DomManager.getInstance().getCharacterSheet();
-        sheetDesktop = desktopWrapper ? desktopWrapper.element : null;
-        
-        const innerWrapper = window.DomManager.getInstance().getSheetInner();
-        sheetInner = innerWrapper ? innerWrapper.element : null;
+      const desktopWrapper =
+        window.DomManager.getInstance().getCharacterSheet();
+      sheetDesktop = desktopWrapper ? desktopWrapper.element : null;
+
+      const innerWrapper = window.DomManager.getInstance().getSheetInner();
+      sheetInner = innerWrapper ? innerWrapper.element : null;
     } else {
-        sheetDesktop = document.querySelector('.ct-character-sheet-desktop');
-        sheetInner = document.querySelector('.ct-character-sheet__inner');
+      sheetDesktop = document.querySelector(".ct-character-sheet-desktop");
+      sheetInner = document.querySelector(".ct-character-sheet__inner");
     }
 
     if (sheetDesktop) {
-        sheetDesktop.style.minHeight = minH;
-        // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
-        sheetDesktop.style.height = 'auto'; 
+      sheetDesktop.style.minHeight = minH;
+      // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
+      sheetDesktop.style.height = "auto";
     }
-    
+
     if (sheetInner) {
-         sheetInner.style.minHeight = minH;
+      sheetInner.style.minHeight = minH;
     }
 
     drawPageSeparators(newHeight, 1200);
-}
+  }
 
-/**
- * Creates the floating control panel.
- */
-function createControls() {
-    safeLog('log', '[DDB Print] createControls: building container...');
-    const container = document.createElement('div');
-    container.id = 'print-enhance-controls';
-    container.style.position = 'fixed';
-    container.style.top = '10px';
-    container.style.left = '10px';
-    container.style.zIndex = '10000';
-    container.style.background = '#222';
-    container.style.border = '1px solid #444';
-    container.style.padding = '8px';
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.gap = '8px';
-    container.style.borderRadius = '8px';
-    container.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
-    container.style.transition = 'opacity 0.3s, transform 0.3s';
-    
+  /**
+   * Creates the floating control panel.
+   */
+  function createControls() {
+    safeLog("log", "[DDB Print] createControls: building container...");
+    const container = document.createElement("div");
+    container.id = "print-enhance-controls";
+    container.style.position = "fixed";
+    container.style.top = "10px";
+    container.style.left = "10px";
+    container.style.zIndex = "10000";
+    container.style.background = "#222";
+    container.style.border = "1px solid #444";
+    container.style.padding = "8px";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "8px";
+    container.style.borderRadius = "8px";
+    container.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)";
+    container.style.transition = "opacity 0.3s, transform 0.3s";
+
     // Hover logic
-    container.addEventListener('mouseenter', () => {
-        container.style.transform = 'scale(1.02)';
+    container.addEventListener("mouseenter", () => {
+      container.style.transform = "scale(1.02)";
     });
-    container.addEventListener('mouseleave', () => {
-        container.style.transform = 'scale(1)';
+    container.addEventListener("mouseleave", () => {
+      container.style.transform = "scale(1)";
     });
 
     const buttons = [
-        ...(ENABLE_PREMADE_TEMPLATES ? [{ label: 'PREMADE', icon: '🌟', action: () => showPremadeCatalogModal() }] : []),
-        { label: 'Load', icon: '📂', action: handleLoadFile },
-        { label: 'Reset to Default', icon: '🔄', action: handleLoadDefault },
-        { label: 'Manage Clones', icon: '📋', action: handleManageClones },
-        { label: 'Add Shape', icon: '🎨', action: async () => {
-            const result = await showShapePickerModal();
-            if (result) {
-                createShape(result.assetPath);
-                showFeedback('Shape added');
-            }
-        }, id: 'be-btn-add-shape' },
-        { label: 'Manage Compact', icon: '📏', action: handleManageCompact },
-        { label: 'Print', icon: '🖨️', action: () => window.print() },
-        { label: 'Save to Browser', icon: '💾', action: handleSaveBrowser },
-        { label: 'Save to PC', icon: '💻', action: handleSavePC },
-        { 
-            label: 'Bugs & Feature Request', 
-            icon: '🐛', 
-            action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer/issues', '_blank') 
+      ...(ENABLE_PREMADE_TEMPLATES
+        ? [
+            {
+              label: "TEMPLATES",
+              icon: "🌟",
+              action: () => showPremadeCatalogModal(),
+            },
+          ]
+        : []),
+      { label: "Load", icon: "📂", action: handleLoadFile },
+      { label: "Reset to Default", icon: "🔄", action: handleLoadDefault },
+      { label: "Manage Clones", icon: "📋", action: handleManageClones },
+      {
+        label: "Add Shape",
+        icon: "🎨",
+        action: async () => {
+          const result = await showShapePickerModal();
+          if (result) {
+            createShape(result.assetPath);
+            showFeedback("Shape added");
+          }
         },
-        { 
-            label: 'Contribute', 
-            icon: '⭐', 
-            action: () => window.open('https://github.com/luiscla27/beyond-print-enhancer', '_blank'), 
-            bgLightColor: '#a79863',
-            bgColor: '#73611d'
-        }
+        id: "be-btn-add-shape",
+      },
+      { label: "Manage Compact", icon: "📏", action: handleManageCompact },
+      { label: "Print", icon: "🖨️", action: () => window.print() },
+      { label: "Save to Browser", icon: "💾", action: handleSaveBrowser },
+      { label: "Save to PC", icon: "💻", action: handleSavePC },
+      {
+        label: "Bugs & Feature Request",
+        icon: "🐛",
+        action: () =>
+          window.open(
+            "https://github.com/luiscla27/beyond-print-enhancer/issues",
+            "_blank",
+          ),
+      },
+      {
+        label: "Contribute",
+        icon: "⭐",
+        action: () =>
+          window.open(
+            "https://github.com/luiscla27/beyond-print-enhancer",
+            "_blank",
+          ),
+        bgLightColor: "#a79863",
+        bgColor: "#73611d",
+      },
     ];
 
-    buttons.forEach(btnInfo => {
-        const btn = document.createElement('button');
-        if (btnInfo.className) btn.className = btnInfo.className;
-        btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
-        btn.style.backgroundColor = btnInfo.bgColor || '#333';
-        btn.style.color = 'white';
-        btn.style.border = '1px solid #555';
-        btn.style.padding = '6px 12px';
-        btn.style.borderRadius = '4px';
-        btn.style.cursor = 'pointer';
-        btn.style.fontSize = '12px';
-        btn.style.textAlign = 'left';
-        btn.style.transition = 'background-color 0.2s';
-        
-        btn.onmouseenter = () => btn.style.backgroundColor = btnInfo.bgLightColor || '#444';
-        btn.onmouseleave = () => btn.style.backgroundColor = btnInfo.bgColor || '#333';
-        
-        const logEvent = (name, btnInfo) => {
-            safeLog('log', `[DDB Print] Button ${name}: ${btnInfo.label}`);
-        };
+    buttons.forEach((btnInfo) => {
+      const btn = document.createElement("button");
+      if (btnInfo.className) btn.className = btnInfo.className;
+      btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
+      btn.style.backgroundColor = btnInfo.bgColor || "#333";
+      btn.style.color = "white";
+      btn.style.border = "1px solid #555";
+      btn.style.padding = "6px 12px";
+      btn.style.borderRadius = "4px";
+      btn.style.cursor = "pointer";
+      btn.style.fontSize = "12px";
+      btn.style.textAlign = "left";
+      btn.style.transition = "background-color 0.2s";
 
-        btn.addEventListener('mousedown', () => logEvent('Mousedown', btnInfo));
-        btn.addEventListener('mouseup', () => logEvent('Mouseup', btnInfo));
-        
-        btn.addEventListener('click', async (e) => {
-            safeLog('log', `[DDB Print] Button Clicked: ${btnInfo.label}`);
-            try {
-                if (typeof btnInfo.action === 'function') {
-                    const result = btnInfo.action(e);
-                    if (result instanceof Promise) {
-                        await result;
-                    }
-                } else {
-                    safeLog('error', `[DDB Print] No valid action for ${btnInfo.label}`);
-                }
-            } catch (err) {
-                safeLog('error', `[DDB Print] Error executing ${btnInfo.label}:`, err);
+      btn.onmouseenter = () =>
+        (btn.style.backgroundColor = btnInfo.bgLightColor || "#444");
+      btn.onmouseleave = () =>
+        (btn.style.backgroundColor = btnInfo.bgColor || "#333");
+
+      const logEvent = (name, btnInfo) => {
+        safeLog("log", `[DDB Print] Button ${name}: ${btnInfo.label}`);
+      };
+
+      btn.addEventListener("mousedown", () => logEvent("Mousedown", btnInfo));
+      btn.addEventListener("mouseup", () => logEvent("Mouseup", btnInfo));
+
+      btn.addEventListener("click", async (e) => {
+        safeLog("log", `[DDB Print] Button Clicked: ${btnInfo.label}`);
+        try {
+          if (typeof btnInfo.action === "function") {
+            const result = btnInfo.action(e);
+            if (result instanceof Promise) {
+              await result;
             }
-        });
-        
-        container.appendChild(btn);
+          } else {
+            safeLog(
+              "error",
+              `[DDB Print] No valid action for ${btnInfo.label}`,
+            );
+          }
+        } catch (err) {
+          safeLog(
+            "error",
+            `[DDB Print] Error executing ${btnInfo.label}:`,
+            err,
+          );
+        }
+      });
+
+      container.appendChild(btn);
     });
 
     // Properties Panel Container
-    const propertiesPanel = document.createElement('div');
-    propertiesPanel.id = 'print-enhance-properties-panel';
-    propertiesPanel.style.display = 'flex';
-    propertiesPanel.style.flexDirection = 'column';
-    propertiesPanel.style.gap = '8px';
-    propertiesPanel.style.padding = '8px';
-    propertiesPanel.style.borderTop = '1px solid #444';
-    propertiesPanel.style.marginTop = '4px';
-    propertiesPanel.style.backgroundColor = '#1a1a1a';
-    propertiesPanel.style.borderRadius = '4px';
+    const propertiesPanel = document.createElement("div");
+    propertiesPanel.id = "print-enhance-properties-panel";
+    propertiesPanel.style.display = "flex";
+    propertiesPanel.style.flexDirection = "column";
+    propertiesPanel.style.gap = "8px";
+    propertiesPanel.style.padding = "8px";
+    propertiesPanel.style.borderTop = "1px solid #444";
+    propertiesPanel.style.marginTop = "4px";
+    propertiesPanel.style.backgroundColor = "#1a1a1a";
+    propertiesPanel.style.borderRadius = "4px";
     container.appendChild(propertiesPanel);
 
     // Filters Container
-    const filtersContainer = document.createElement('div');
-    filtersContainer.className = 'be-filters-container';
-    filtersContainer.style.display = 'flex';
-    filtersContainer.style.flexDirection = 'column';
-    filtersContainer.style.gap = '4px';
-    filtersContainer.style.padding = '4px 8px';
-    filtersContainer.style.borderTop = '1px solid #444';
-    filtersContainer.style.marginTop = '4px';
+    const filtersContainer = document.createElement("div");
+    filtersContainer.className = "be-filters-container";
+    filtersContainer.style.display = "flex";
+    filtersContainer.style.flexDirection = "column";
+    filtersContainer.style.gap = "4px";
+    filtersContainer.style.padding = "4px 8px";
+    filtersContainer.style.borderTop = "1px solid #444";
+    filtersContainer.style.marginTop = "4px";
 
     // Local state for filters to avoid async race conditions during slider movement
     let currentFilters = {
-        hue: 0,
-        contrast: 100,
-        saturate: 100,
-        greyscale: 0,
-        sepia: 0
+      hue: 0,
+      contrast: 100,
+      saturate: 100,
+      greyscale: 0,
+      sepia: 0,
     };
 
     /**
      * Helper to create a filter slider.
      */
-    const createFilterSlider = (labelStr, key, min, max, unit, defaultValue, hideSlider = false) => {
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.flexDirection = 'column';
-        row.style.gap = '2px';
-        row.style.marginBottom = '4px';
+    const createFilterSlider = (
+      labelStr,
+      key,
+      min,
+      max,
+      unit,
+      defaultValue,
+      hideSlider = false,
+    ) => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.flexDirection = "column";
+      row.style.gap = "2px";
+      row.style.marginBottom = "4px";
 
-        const labelRow = document.createElement('div');
-        labelRow.style.display = 'flex';
-        labelRow.style.justifyContent = 'space-between';
-        labelRow.style.alignItems = 'center';
+      const labelRow = document.createElement("div");
+      labelRow.style.display = "flex";
+      labelRow.style.justifyContent = "space-between";
+      labelRow.style.alignItems = "center";
 
-        const label = document.createElement('label');
-        label.textContent = `${labelStr}: ${defaultValue}${unit}`;
-        label.style.color = 'white';
-        label.style.fontSize = '11px';
-        label.style.fontWeight = 'bold';
-        labelRow.appendChild(label);
+      const label = document.createElement("label");
+      label.textContent = `${labelStr}: ${defaultValue}${unit}`;
+      label.style.color = "white";
+      label.style.fontSize = "11px";
+      label.style.fontWeight = "bold";
+      labelRow.appendChild(label);
 
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.min = min.toString();
-        slider.max = max.toString();
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = min.toString();
+      slider.max = max.toString();
+      slider.value = defaultValue.toString();
+      slider.style.width = "100%";
+      slider.style.cursor = "pointer";
+      if (hideSlider) {
+        slider.style.display = "none";
+      }
+
+      const resetBtn = document.createElement("button");
+      resetBtn.textContent = "↺";
+      resetBtn.style.background = "none";
+      resetBtn.style.border = "none";
+      resetBtn.style.color = "#aaa";
+      resetBtn.style.cursor = "pointer";
+      resetBtn.style.fontSize = "12px";
+      resetBtn.style.padding = "0";
+      resetBtn.style.lineHeight = "1";
+      resetBtn.title = `Reset ${labelStr}`;
+
+      resetBtn.addEventListener("click", async () => {
         slider.value = defaultValue.toString();
-        slider.style.width = '100%';
-        slider.style.cursor = 'pointer';
-        if (hideSlider) {
-            slider.style.display = 'none';
+        label.textContent = `${labelStr}: ${defaultValue}${unit}`;
+        currentFilters[key] = defaultValue;
+        if (typeof window.applyGlobalFilters === "function") {
+          window.applyGlobalFilters(currentFilters);
         }
+        if (window.Storage) {
+          await window.Storage.saveFilter(key, defaultValue);
+        }
+      });
+      labelRow.appendChild(resetBtn);
+      row.appendChild(labelRow);
 
-        const resetBtn = document.createElement('button');
-        resetBtn.textContent = '↺';
-        resetBtn.style.background = 'none';
-        resetBtn.style.border = 'none';
-        resetBtn.style.color = '#aaa';
-        resetBtn.style.cursor = 'pointer';
-        resetBtn.style.fontSize = '12px';
-        resetBtn.style.padding = '0';
-        resetBtn.style.lineHeight = '1';
-        resetBtn.title = `Reset ${labelStr}`;
-        
-        resetBtn.addEventListener('click', async () => {
-            slider.value = defaultValue.toString();
-            label.textContent = `${labelStr}: ${defaultValue}${unit}`;
-            currentFilters[key] = defaultValue;
-            if (typeof window.applyGlobalFilters === 'function') {
-                window.applyGlobalFilters(currentFilters);
-            }
-            if (window.Storage) {
-                await window.Storage.saveFilter(key, defaultValue);
-            }
-        });
-        labelRow.appendChild(resetBtn);
-        row.appendChild(labelRow);
+      slider.oninput = (e) => {
+        const val = parseInt(e.target.value, 10);
+        label.textContent = `${labelStr}: ${val}${unit}`;
 
-        slider.oninput = (e) => {
-            const val = parseInt(e.target.value, 10);
-            label.textContent = `${labelStr}: ${val}${unit}`;
-            
-            // Update local state synchronously
-            currentFilters[key] = val;
-            
-            // Apply filters immediately
-            if (typeof window.applyGlobalFilters === 'function') {
-                window.applyGlobalFilters(currentFilters);
-            }
-        };
+        // Update local state synchronously
+        currentFilters[key] = val;
 
-        slider.onchange = async (e) => {
-            if (window.Storage) {
-                await window.Storage.saveFilter(key, parseInt(e.target.value, 10));
-            }
-        };
+        // Apply filters immediately
+        if (typeof window.applyGlobalFilters === "function") {
+          window.applyGlobalFilters(currentFilters);
+        }
+      };
 
-        row.appendChild(slider);
-        filtersContainer.appendChild(row);
-        return { slider, label, row };
+      slider.onchange = async (e) => {
+        if (window.Storage) {
+          await window.Storage.saveFilter(key, parseInt(e.target.value, 10));
+        }
+      };
+
+      row.appendChild(slider);
+      filtersContainer.appendChild(row);
+      return { slider, label, row };
     };
 
     const sliders = {
-        hue: createFilterSlider('🎨 Hue Shift', 'hue', 0, 360, '°', 0, true),
-        contrast: createFilterSlider('🌓 Contrast', 'contrast', 0, 200, '%', 100),
-        saturate: createFilterSlider('🌈 Saturate', 'saturate', 0, 200, '%', 100),
-        greyscale: createFilterSlider('🌑 Greyscale', 'greyscale', 0, 100, '%', 100),
-        sepia: createFilterSlider('📜 Sepia', 'sepia', 0, 100, '%', 0)
+      hue: createFilterSlider("🎨 Hue Shift", "hue", 0, 360, "°", 0, true),
+      contrast: createFilterSlider("🌓 Contrast", "contrast", 0, 200, "%", 100),
+      saturate: createFilterSlider("🌈 Saturate", "saturate", 0, 200, "%", 100),
+      greyscale: createFilterSlider(
+        "🌑 Greyscale",
+        "greyscale",
+        0,
+        100,
+        "%",
+        100,
+      ),
+      sepia: createFilterSlider("📜 Sepia", "sepia", 0, 100, "%", 0),
     };
 
     // Color Picker Button & Floating Hue Picker
-    const colorPickerBtn = document.createElement('button');
-    colorPickerBtn.textContent = '🎨 Color Picker';
-    colorPickerBtn.style.marginTop = '4px';
-    colorPickerBtn.style.fontSize = '10px';
-    colorPickerBtn.style.padding = '4px 8px';
-    colorPickerBtn.style.width = '100%';
-    colorPickerBtn.className = 'be-modal-ok'; // Use consistent style
+    const colorPickerBtn = document.createElement("button");
+    colorPickerBtn.textContent = "🎨 Color Picker";
+    colorPickerBtn.style.marginTop = "4px";
+    colorPickerBtn.style.fontSize = "10px";
+    colorPickerBtn.style.padding = "4px 8px";
+    colorPickerBtn.style.width = "100%";
+    colorPickerBtn.className = "be-modal-ok"; // Use consistent style
     sliders.hue.row.appendChild(colorPickerBtn);
 
-    const huePicker = document.createElement('div');
-    huePicker.style.position = 'fixed';
-    huePicker.style.zIndex = '20000';
-    huePicker.style.setProperty('display', 'none', 'important'); // Hidden by default
-    huePicker.style.flexDirection = 'column';
-    huePicker.style.gap = '8px';
-    huePicker.style.padding = '8px';
-    huePicker.style.backgroundColor = '#1a1a1a';
-    huePicker.style.border = '1px solid #444';
-    huePicker.style.borderRadius = '4px';
-    huePicker.style.boxShadow = '0 4px 20px rgba(0,0,0,0.6)';
-    huePicker.style.width = '140px'; // 60 columns * 2px + padding
+    const huePicker = document.createElement("div");
+    huePicker.style.position = "fixed";
+    huePicker.style.zIndex = "20000";
+    huePicker.style.setProperty("display", "none", "important"); // Hidden by default
+    huePicker.style.flexDirection = "column";
+    huePicker.style.gap = "8px";
+    huePicker.style.padding = "8px";
+    huePicker.style.backgroundColor = "#1a1a1a";
+    huePicker.style.border = "1px solid #444";
+    huePicker.style.borderRadius = "4px";
+    huePicker.style.boxShadow = "0 4px 20px rgba(0,0,0,0.6)";
+    huePicker.style.width = "140px"; // 60 columns * 2px + padding
     document.body.appendChild(huePicker);
 
-    const gridContainer = document.createElement('div');
-    gridContainer.style.display = 'grid';
-    gridContainer.style.gridTemplateColumns = 'repeat(60, 2px)';
-    gridContainer.style.gap = '0';
-    gridContainer.style.cursor = 'crosshair';
-    gridContainer.style.border = '1px solid #333';
+    const gridContainer = document.createElement("div");
+    gridContainer.style.display = "grid";
+    gridContainer.style.gridTemplateColumns = "repeat(60, 2px)";
+    gridContainer.style.gap = "0";
+    gridContainer.style.cursor = "crosshair";
+    gridContainer.style.border = "1px solid #333";
     huePicker.appendChild(gridContainer);
 
     let tempInitialHue = currentFilters.hue || 0;
@@ -5793,49 +6370,57 @@ function createControls() {
     let tempInitialGreyscale = currentFilters.greyscale || 100;
 
     const revertPickerChanges = () => {
-        currentFilters.hue = tempInitialHue;
-        currentFilters.saturate = tempInitialSaturate;
-        currentFilters.greyscale = tempInitialGreyscale;
-        
-        // Update UI
-        sliders.hue.slider.value = tempInitialHue.toString();
-        sliders.hue.label.textContent = `🎨 Hue Shift: ${tempInitialHue}°`;
-        sliders.saturate.slider.value = tempInitialSaturate.toString();
-        sliders.saturate.label.textContent = `🌈 Saturate: ${tempInitialSaturate}%`;
-        sliders.greyscale.slider.value = tempInitialGreyscale.toString();
-        sliders.greyscale.label.textContent = `🌑 Greyscale: ${tempInitialGreyscale}%`;
+      currentFilters.hue = tempInitialHue;
+      currentFilters.saturate = tempInitialSaturate;
+      currentFilters.greyscale = tempInitialGreyscale;
 
-        if (typeof window.applyGlobalFilters === 'function') {
-            window.applyGlobalFilters(currentFilters);
-        }
+      // Update UI
+      sliders.hue.slider.value = tempInitialHue.toString();
+      sliders.hue.label.textContent = `🎨 Hue Shift: ${tempInitialHue}°`;
+      sliders.saturate.slider.value = tempInitialSaturate.toString();
+      sliders.saturate.label.textContent = `🌈 Saturate: ${tempInitialSaturate}%`;
+      sliders.greyscale.slider.value = tempInitialGreyscale.toString();
+      sliders.greyscale.label.textContent = `🌑 Greyscale: ${tempInitialGreyscale}%`;
+
+      if (typeof window.applyGlobalFilters === "function") {
+        window.applyGlobalFilters(currentFilters);
+      }
     };
 
     colorPickerBtn.onclick = (e) => {
-        e.stopPropagation();
-        const rect = colorPickerBtn.getBoundingClientRect();
-        huePicker.style.top = `${rect.top - 160}px`; // Increased offset for new slider
-        huePicker.style.left = `${rect.left}px`;
-        
-        const isHidden = huePicker.style.display === 'none' || huePicker.style.getPropertyValue('display') === 'none';
-        if (isHidden) {
-            // Capture initial state before previewing
-            tempInitialHue = currentFilters.hue || 0;
-            tempInitialSaturate = currentFilters.saturate || 100;
-            tempInitialGreyscale = currentFilters.greyscale || 100;
-            huePicker.style.setProperty('display', 'flex', 'important');
-        } else {
-            revertPickerChanges();
-            huePicker.style.setProperty('display', 'none', 'important');
-        }
+      e.stopPropagation();
+      const rect = colorPickerBtn.getBoundingClientRect();
+      huePicker.style.top = `${rect.top - 160}px`; // Increased offset for new slider
+      huePicker.style.left = `${rect.left}px`;
+
+      const isHidden =
+        huePicker.style.display === "none" ||
+        huePicker.style.getPropertyValue("display") === "none";
+      if (isHidden) {
+        // Capture initial state before previewing
+        tempInitialHue = currentFilters.hue || 0;
+        tempInitialSaturate = currentFilters.saturate || 100;
+        tempInitialGreyscale = currentFilters.greyscale || 100;
+        huePicker.style.setProperty("display", "flex", "important");
+      } else {
+        revertPickerChanges();
+        huePicker.style.setProperty("display", "none", "important");
+      }
     };
 
     // Close picker when clicking outside
-    document.addEventListener('click', (e) => {
-        const isVisible = huePicker.style.display === 'flex' || huePicker.style.getPropertyValue('display') === 'flex';
-        if (isVisible && !huePicker.contains(e.target) && e.target !== colorPickerBtn) {
-            revertPickerChanges();
-            huePicker.style.setProperty('display', 'none', 'important');
-        }
+    document.addEventListener("click", (e) => {
+      const isVisible =
+        huePicker.style.display === "flex" ||
+        huePicker.style.getPropertyValue("display") === "flex";
+      if (
+        isVisible &&
+        !huePicker.contains(e.target) &&
+        e.target !== colorPickerBtn
+      ) {
+        revertPickerChanges();
+        huePicker.style.setProperty("display", "none", "important");
+      }
     });
 
     let selectedHue = currentFilters.hue || 0;
@@ -5843,39 +6428,39 @@ function createControls() {
     let selectedGreyscale = currentFilters.greyscale || 100;
 
     // Grayscale Slider inside picker
-    const pickerGreyscaleContainer = document.createElement('div');
-    pickerGreyscaleContainer.style.display = 'flex';
-    pickerGreyscaleContainer.style.flexDirection = 'column';
-    pickerGreyscaleContainer.style.gap = '2px';
-    pickerGreyscaleContainer.style.marginBottom = '4px';
+    const pickerGreyscaleContainer = document.createElement("div");
+    pickerGreyscaleContainer.style.display = "flex";
+    pickerGreyscaleContainer.style.flexDirection = "column";
+    pickerGreyscaleContainer.style.gap = "2px";
+    pickerGreyscaleContainer.style.marginBottom = "4px";
 
-    const pickerGreyscaleLabel = document.createElement('label');
-    pickerGreyscaleLabel.style.fontSize = '9px';
-    pickerGreyscaleLabel.style.color = '#ccc';
+    const pickerGreyscaleLabel = document.createElement("label");
+    pickerGreyscaleLabel.style.fontSize = "9px";
+    pickerGreyscaleLabel.style.color = "#ccc";
     pickerGreyscaleLabel.textContent = `Greyscale: ${currentFilters.greyscale}%`;
     pickerGreyscaleContainer.appendChild(pickerGreyscaleLabel);
 
-    const pickerGreyscaleSlider = document.createElement('input');
-    pickerGreyscaleSlider.type = 'range';
-    pickerGreyscaleSlider.min = '0';
-    pickerGreyscaleSlider.max = '100';
+    const pickerGreyscaleSlider = document.createElement("input");
+    pickerGreyscaleSlider.type = "range";
+    pickerGreyscaleSlider.min = "0";
+    pickerGreyscaleSlider.max = "100";
     pickerGreyscaleSlider.value = (currentFilters.greyscale || 100).toString();
-    pickerGreyscaleSlider.style.width = '100%';
-    pickerGreyscaleSlider.style.height = '12px';
-    
+    pickerGreyscaleSlider.style.width = "100%";
+    pickerGreyscaleSlider.style.height = "12px";
+
     pickerGreyscaleSlider.oninput = (e) => {
-        const val = parseInt(e.target.value, 10);
-        selectedGreyscale = val;
-        pickerGreyscaleLabel.textContent = `Greyscale: ${val}%`;
-        
-        // Preview immediately
-        currentFilters.greyscale = val;
-        sliders.greyscale.slider.value = val.toString();
-        sliders.greyscale.label.textContent = `🌑 Greyscale: ${val}%`;
-        
-        if (typeof window.applyGlobalFilters === 'function') {
-            window.applyGlobalFilters(currentFilters);
-        }
+      const val = parseInt(e.target.value, 10);
+      selectedGreyscale = val;
+      pickerGreyscaleLabel.textContent = `Greyscale: ${val}%`;
+
+      // Preview immediately
+      currentFilters.greyscale = val;
+      sliders.greyscale.slider.value = val.toString();
+      sliders.greyscale.label.textContent = `🌑 Greyscale: ${val}%`;
+
+      if (typeof window.applyGlobalFilters === "function") {
+        window.applyGlobalFilters(currentFilters);
+      }
     };
     pickerGreyscaleContainer.appendChild(pickerGreyscaleSlider);
     huePicker.insertBefore(pickerGreyscaleContainer, gridContainer);
@@ -5883,1013 +6468,1101 @@ function createControls() {
     // 600 swatches for a perfect 2D map (60 hues x 10 saturations)
     // Rows = Saturation (0% to 200%), Columns = Hue (0 to 360)
     const saturations = [0, 25, 50, 75, 100, 120, 140, 160, 180, 200];
-    
-    saturations.forEach(sat => {
-        for (let i = 0; i < 60; i++) {
-            const deg = i * 6;
-            const swatch = document.createElement('div');
-            swatch.style.height = '8px';
-            swatch.style.width = '2px';
-            swatch.style.backgroundColor = '#e61919'; // Base red
-            // Show Hue, Saturation and current Greyscale in the preview
-            swatch.style.filter = `hue-rotate(${deg}deg) saturate(${sat}%) grayscale(${currentFilters.greyscale || 0}%)`;
-            swatch.title = `Hue: ${deg}°, Sat: ${sat}%`;
-            
-            swatch.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectedHue = deg;
-                selectedSaturate = sat;
-                
-                // Preview Hue immediately
-                sliders.hue.slider.value = deg.toString();
-                sliders.hue.label.textContent = `🎨 Hue Shift: ${deg}°`;
-                currentFilters.hue = deg;
 
-                // Preview Saturation immediately
-                sliders.saturate.slider.value = sat.toString();
-                sliders.saturate.label.textContent = `🌈 Saturate: ${sat}%`;
-                currentFilters.saturate = sat;
+    saturations.forEach((sat) => {
+      for (let i = 0; i < 60; i++) {
+        const deg = i * 6;
+        const swatch = document.createElement("div");
+        swatch.style.height = "8px";
+        swatch.style.width = "2px";
+        swatch.style.backgroundColor = "#e61919"; // Base red
+        // Show Hue, Saturation and current Greyscale in the preview
+        swatch.style.filter = `hue-rotate(${deg}deg) saturate(${sat}%) grayscale(${currentFilters.greyscale || 0}%)`;
+        swatch.title = `Hue: ${deg}°, Sat: ${sat}%`;
 
-                if (typeof window.applyGlobalFilters === 'function') {
-                    window.applyGlobalFilters(currentFilters);
-                }
-            });
-            gridContainer.appendChild(swatch);
-        }
+        swatch.addEventListener("click", (e) => {
+          e.stopPropagation();
+          selectedHue = deg;
+          selectedSaturate = sat;
+
+          // Preview Hue immediately
+          sliders.hue.slider.value = deg.toString();
+          sliders.hue.label.textContent = `🎨 Hue Shift: ${deg}°`;
+          currentFilters.hue = deg;
+
+          // Preview Saturation immediately
+          sliders.saturate.slider.value = sat.toString();
+          sliders.saturate.label.textContent = `🌈 Saturate: ${sat}%`;
+          currentFilters.saturate = sat;
+
+          if (typeof window.applyGlobalFilters === "function") {
+            window.applyGlobalFilters(currentFilters);
+          }
+        });
+        gridContainer.appendChild(swatch);
+      }
     });
 
-    const acceptBtn = document.createElement('button');
-    acceptBtn.textContent = 'Accept';
-    acceptBtn.className = 'be-modal-ok';
-    acceptBtn.style.fontSize = '10px';
-    acceptBtn.style.padding = '4px';
-    acceptBtn.style.width = '100%';
-    
+    const acceptBtn = document.createElement("button");
+    acceptBtn.textContent = "Accept";
+    acceptBtn.className = "be-modal-ok";
+    acceptBtn.style.fontSize = "10px";
+    acceptBtn.style.padding = "4px";
+    acceptBtn.style.width = "100%";
+
     acceptBtn.onclick = async (e) => {
-        e.stopPropagation();
-        if (window.Storage) {
-            await window.Storage.saveFilter('hue', selectedHue);
-            await window.Storage.saveFilter('saturate', selectedSaturate);
-            await window.Storage.saveFilter('greyscale', selectedGreyscale);
-        }
-        // Update the "initial" state to the newly accepted values
-        tempInitialHue = selectedHue;
-        tempInitialSaturate = selectedSaturate;
-        tempInitialGreyscale = selectedGreyscale;
-        huePicker.style.setProperty('display', 'none', 'important');
+      e.stopPropagation();
+      if (window.Storage) {
+        await window.Storage.saveFilter("hue", selectedHue);
+        await window.Storage.saveFilter("saturate", selectedSaturate);
+        await window.Storage.saveFilter("greyscale", selectedGreyscale);
+      }
+      // Update the "initial" state to the newly accepted values
+      tempInitialHue = selectedHue;
+      tempInitialSaturate = selectedSaturate;
+      tempInitialGreyscale = selectedGreyscale;
+      huePicker.style.setProperty("display", "none", "important");
     };
     huePicker.appendChild(acceptBtn);
 
     // Global Reset Button (Excluding Hue)
-    const resetAllBtn = document.createElement('button');
-    resetAllBtn.textContent = 'Reset All Filters (excl. Hue)';
-    resetAllBtn.className = 'be-modal-ok'; // Reusing existing style
-    resetAllBtn.style.marginTop = '8px';
-    resetAllBtn.style.fontSize = '10px';
-    resetAllBtn.style.padding = '4px 8px';
-    resetAllBtn.style.width = '100%';
-    resetAllBtn.id = 'be-reset-all-filters';
-    
-    resetAllBtn.addEventListener('click', async () => {
-        try {
-            const defaults = {
-                contrast: 100,
-                saturate: 100,
-                greyscale: 100,
-                sepia: 0
-            };
-            
-            for (const [key, defVal] of Object.entries(defaults)) {
-                currentFilters[key] = defVal;
-                const s = sliders[key];
-                if (s) {
-                    s.slider.value = defVal.toString();
-                    const labelBase = s.label.textContent.split(':')[0];
-                    s.label.textContent = `${labelBase}: ${defVal}%`;
-                }
-            }
-            
-            if (typeof window.applyGlobalFilters === 'function') {
-                window.applyGlobalFilters(currentFilters);
-            }
+    const resetAllBtn = document.createElement("button");
+    resetAllBtn.textContent = "Reset All Filters (excl. Hue)";
+    resetAllBtn.className = "be-modal-ok"; // Reusing existing style
+    resetAllBtn.style.marginTop = "8px";
+    resetAllBtn.style.fontSize = "10px";
+    resetAllBtn.style.padding = "4px 8px";
+    resetAllBtn.style.width = "100%";
+    resetAllBtn.id = "be-reset-all-filters";
 
-            // Save after UI update
-            if (window.Storage) {
-                for (const [key, defVal] of Object.entries(defaults)) {
-                    await window.Storage.saveFilter(key, defVal);
-                }
-            }
-        } catch (err) {
-            safeLog('error', `[DDB Print] Global Reset Error:`, err);
+    resetAllBtn.addEventListener("click", async () => {
+      try {
+        const defaults = {
+          contrast: 100,
+          saturate: 100,
+          greyscale: 100,
+          sepia: 0,
+        };
+
+        for (const [key, defVal] of Object.entries(defaults)) {
+          currentFilters[key] = defVal;
+          const s = sliders[key];
+          if (s) {
+            s.slider.value = defVal.toString();
+            const labelBase = s.label.textContent.split(":")[0];
+            s.label.textContent = `${labelBase}: ${defVal}%`;
+          }
         }
+
+        if (typeof window.applyGlobalFilters === "function") {
+          window.applyGlobalFilters(currentFilters);
+        }
+
+        // Save after UI update
+        if (window.Storage) {
+          for (const [key, defVal] of Object.entries(defaults)) {
+            await window.Storage.saveFilter(key, defVal);
+          }
+        }
+      } catch (err) {
+        safeLog("error", `[DDB Print] Global Reset Error:`, err);
+      }
     });
-    
+
     filtersContainer.appendChild(resetAllBtn);
 
     updatePropertiesPanel(propertiesPanel);
 
     // Load initial values
-    if (window.Storage && typeof window.Storage.getFilters === 'function') {
-        window.Storage.getFilters().then(filters => {
-            currentFilters = filters; // Initialize local state
-            Object.keys(sliders).forEach(key => {
-                const val = filters[key];
-                const unit = (key === 'hue') ? '°' : '%';
-                const labelBase = sliders[key].label.textContent.split(':')[0];
-                
-                sliders[key].slider.value = val;
-                sliders[key].label.textContent = `${labelBase}: ${val}${unit}`;
-            });
-            
-            if (typeof window.applyGlobalFilters === 'function') {
-                window.applyGlobalFilters(filters);
-            }
+    if (window.Storage && typeof window.Storage.getFilters === "function") {
+      window.Storage.getFilters().then((filters) => {
+        currentFilters = filters; // Initialize local state
+        Object.keys(sliders).forEach((key) => {
+          const val = filters[key];
+          const unit = key === "hue" ? "°" : "%";
+          const labelBase = sliders[key].label.textContent.split(":")[0];
+
+          sliders[key].slider.value = val;
+          sliders[key].label.textContent = `${labelBase}: ${val}${unit}`;
         });
+
+        if (typeof window.applyGlobalFilters === "function") {
+          window.applyGlobalFilters(filters);
+        }
+      });
     }
 
     container.appendChild(filtersContainer);
 
-    safeLog('log', '[DDB Print] createControls: appending to body...');
+    safeLog("log", "[DDB Print] createControls: appending to body...");
     document.body.appendChild(container);
-    
+
     // Verify visibility after a tiny delay
     setTimeout(() => {
-        const el = document.getElementById('print-enhance-controls');
-        if (el) {
-            const style = window.getComputedStyle(el);
-            safeLog('log', `[DDB Print] Controls verified. Display: ${style.display}, Visibility: ${style.visibility}, Opacity: ${style.opacity}`);
-            if (style.display === 'none') {
-                safeLog('error', '[DDB Print] CRITICAL: Controls are HIDDEN by CSS!');
-            }
-        } else {
-            safeLog('error', '[DDB Print] CRITICAL: Controls container missing from DOM after append!');
+      const el = document.getElementById("print-enhance-controls");
+      if (el) {
+        const style = window.getComputedStyle(el);
+        safeLog(
+          "log",
+          `[DDB Print] Controls verified. Display: ${style.display}, Visibility: ${style.visibility}, Opacity: ${style.opacity}`,
+        );
+        if (style.display === "none") {
+          safeLog("error", "[DDB Print] CRITICAL: Controls are HIDDEN by CSS!");
         }
+      } else {
+        safeLog(
+          "error",
+          "[DDB Print] CRITICAL: Controls container missing from DOM after append!",
+        );
+      }
     }, 500);
 
     // Inject print-only styles to hide controls
-    if (!document.getElementById('ddb-print-controls-style')) {
-        const style = document.createElement('style');
-        style.id = 'ddb-print-controls-style';
-        style.textContent = '@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }';
-        document.head.appendChild(style);
+    if (!document.getElementById("ddb-print-controls-style")) {
+      const style = document.createElement("style");
+      style.id = "ddb-print-controls-style";
+      style.textContent =
+        "@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }";
+      document.head.appendChild(style);
     }
 
     // Initialize Layer Management Panel
     PeDom().getLayerManager();
 
     // Ensure print styles (opacity overrides, manager hiding) are generated on initialization
-    if (typeof window.updatePrintStyles === 'function') {
-        window.updatePrintStyles();
+    if (typeof window.updatePrintStyles === "function") {
+      window.updatePrintStyles();
     }
-}
+  }
 
-/**
- * Shows a modal to manage Compact Mode status for named sections.
- */
-function handleManageCompact() {
+  /**
+   * Shows a modal to manage Compact Mode status for named sections.
+   */
+  function handleManageCompact() {
     // Find all sections that are candidates for compact mode logic
     // Criteria: Named sections (excluding section-\d+), or clones of named sections.
-    const allSections = Array.from(document.querySelectorAll('.print-section-container'));
-    
-    const candidates = allSections.filter(section => {
-        const sourceId = section.dataset.originalId || section.id || '';
-        const isNumbered = /^section-Section-\d+$/.test(sourceId);
-        return sourceId && !isNumbered; // Only named sections
+    const allSections = Array.from(
+      document.querySelectorAll(".print-section-container"),
+    );
+
+    const candidates = allSections.filter((section) => {
+      const sourceId = section.dataset.originalId || section.id || "";
+      const isNumbered = /^section-Section-\d+$/.test(sourceId);
+      return sourceId && !isNumbered; // Only named sections
     });
 
     if (candidates.length === 0) {
-        showFeedback('No compact-compatible sections found');
-        return;
+      showFeedback("No compact-compatible sections found");
+      return;
     }
 
     // Modal
-    const overlay = document.createElement('div');
-    overlay.className = 'be-modal-overlay';
-    
-    const modal = document.createElement('div');
-    modal.className = 'be-modal';
-    modal.style.width = '500px';
-    
-    const h3 = document.createElement('h3');
-    h3.textContent = 'Manage Compact Mode';
+    const overlay = document.createElement("div");
+    overlay.className = "be-modal-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "be-modal";
+    modal.style.width = "500px";
+
+    const h3 = document.createElement("h3");
+    h3.textContent = "Manage Compact Mode";
     modal.appendChild(h3);
 
     // Toggle All Button
-    const toggleAllBtn = document.createElement('button');
-    toggleAllBtn.textContent = 'Toggle All';
-    toggleAllBtn.className = 'be-modal-ok'; // Reusing style
-    toggleAllBtn.style.marginBottom = '10px';
-    toggleAllBtn.style.alignSelf = 'flex-start';
-    
+    const toggleAllBtn = document.createElement("button");
+    toggleAllBtn.textContent = "Toggle All";
+    toggleAllBtn.className = "be-modal-ok"; // Reusing style
+    toggleAllBtn.style.marginBottom = "10px";
+    toggleAllBtn.style.alignSelf = "flex-start";
+
     // Check if majority are currently compact to decide initial toggle direction
-    const compactCount = candidates.filter(s => s.classList.contains('be-compact-mode')).length;
+    const compactCount = candidates.filter((s) =>
+      s.classList.contains("be-compact-mode"),
+    ).length;
     const allCompact = compactCount === candidates.length;
-    
+
     toggleAllBtn.onclick = () => {
-        const newState = !allCompact; // If all are on, turn off. Otherwise turn on.
-        candidates.forEach(section => {
-             // Update class
-            if (newState) section.classList.add('be-compact-mode');
-            else section.classList.remove('be-compact-mode');
-            
-            // Sync button style if present
-            const btn = section.querySelector('.be-compact-button');
-            if (btn) {
-                 btn.style.backgroundColor = newState ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
-            }
-        });
-        updateLayoutBounds();
-        overlay.remove();
-        showFeedback(newState ? 'All sections compacted' : 'All sections expanded');
+      const newState = !allCompact; // If all are on, turn off. Otherwise turn on.
+      candidates.forEach((section) => {
+        // Update class
+        if (newState) section.classList.add("be-compact-mode");
+        else section.classList.remove("be-compact-mode");
+
+        // Sync button style if present
+        const btn = section.querySelector(".be-compact-button");
+        if (btn) {
+          btn.style.backgroundColor = newState
+            ? "var(--btn-color)"
+            : "var(--btn-color-highlight)";
+        }
+      });
+      updateLayoutBounds();
+      overlay.remove();
+      showFeedback(
+        newState ? "All sections compacted" : "All sections expanded",
+      );
     };
     modal.appendChild(toggleAllBtn);
 
-    
-    const list = document.createElement('div');
-    list.style.maxHeight = '300px';
-    list.style.overflowY = 'auto';
-    list.style.display = 'flex';
-    list.style.flexDirection = 'column';
-    list.style.gap = '8px';
-    
-    candidates.forEach(section => {
-        const item = document.createElement('div');
-        item.style.display = 'flex';
-        item.style.justifyContent = 'space-between';
-        item.style.alignItems = 'center';
-        item.style.padding = '8px';
-        item.style.background = '#333';
-        item.style.borderRadius = '4px';
-        
-        const titleSpan = section.querySelector('.print-section-header span, .ct-subsection__header, .ct-section__header');
-        const name = titleSpan ? titleSpan.textContent.trim() : (section.id || 'Unnamed');
-        
-        const nameLabel = document.createElement('span');
-        nameLabel.textContent = name;
-        item.appendChild(nameLabel);
-        
-        const toggleBtn = document.createElement('button');
-        const isCompact = section.classList.contains('be-compact-mode');
-        toggleBtn.textContent = isCompact ? 'ON' : 'OFF';
-        toggleBtn.style.backgroundColor = isCompact ? '#4CAF50' : '#f44336';
-        toggleBtn.style.color = 'white';
-        toggleBtn.style.border = 'none';
-        toggleBtn.style.padding = '4px 8px';
-        toggleBtn.style.borderRadius = '4px';
-        toggleBtn.style.cursor = 'pointer';
-        
-        toggleBtn.onclick = () => {
-            const newState = section.classList.toggle('be-compact-mode');
-            toggleBtn.textContent = newState ? 'ON' : 'OFF';
-            toggleBtn.style.backgroundColor = newState ? '#4CAF50' : '#f44336';
-            
-            // Sync the manual button on the section if it exists
-            const manualBtn = section.querySelector('.be-compact-button');
-            if (manualBtn) {
-                manualBtn.style.backgroundColor = newState ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
-            }
-            updateLayoutBounds();
-        };
-        
-        item.appendChild(toggleBtn);
-        list.appendChild(item);
+    const list = document.createElement("div");
+    list.style.maxHeight = "300px";
+    list.style.overflowY = "auto";
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "8px";
+
+    candidates.forEach((section) => {
+      const item = document.createElement("div");
+      item.style.display = "flex";
+      item.style.justifyContent = "space-between";
+      item.style.alignItems = "center";
+      item.style.padding = "8px";
+      item.style.background = "#333";
+      item.style.borderRadius = "4px";
+
+      const titleSpan = section.querySelector(
+        ".print-section-header span, .ct-subsection__header, .ct-section__header",
+      );
+      const name = titleSpan
+        ? titleSpan.textContent.trim()
+        : section.id || "Unnamed";
+
+      const nameLabel = document.createElement("span");
+      nameLabel.textContent = name;
+      item.appendChild(nameLabel);
+
+      const toggleBtn = document.createElement("button");
+      const isCompact = section.classList.contains("be-compact-mode");
+      toggleBtn.textContent = isCompact ? "ON" : "OFF";
+      toggleBtn.style.backgroundColor = isCompact ? "#4CAF50" : "#f44336";
+      toggleBtn.style.color = "white";
+      toggleBtn.style.border = "none";
+      toggleBtn.style.padding = "4px 8px";
+      toggleBtn.style.borderRadius = "4px";
+      toggleBtn.style.cursor = "pointer";
+
+      toggleBtn.onclick = () => {
+        const newState = section.classList.toggle("be-compact-mode");
+        toggleBtn.textContent = newState ? "ON" : "OFF";
+        toggleBtn.style.backgroundColor = newState ? "#4CAF50" : "#f44336";
+
+        // Sync the manual button on the section if it exists
+        const manualBtn = section.querySelector(".be-compact-button");
+        if (manualBtn) {
+          manualBtn.style.backgroundColor = newState
+            ? "var(--btn-color)"
+            : "var(--btn-color-highlight)";
+        }
+        updateLayoutBounds();
+      };
+
+      item.appendChild(toggleBtn);
+      list.appendChild(item);
     });
-    
+
     modal.appendChild(list);
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.className = 'be-modal-ok';
-    closeBtn.style.marginTop = '10px';
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Close";
+    closeBtn.className = "be-modal-ok";
+    closeBtn.style.marginTop = "10px";
     closeBtn.onclick = () => overlay.remove();
     modal.appendChild(closeBtn);
-    
+
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-}
+  }
 
-/**
- * Handles saving the layout to IndexedDB.
- */
-async function handleSaveBrowser() {
-    safeLog('log', '[DDB Print] handleSaveBrowser: starting...');
+  /**
+   * Handles saving the layout to IndexedDB.
+   */
+  async function handleSaveBrowser() {
+    safeLog("log", "[DDB Print] handleSaveBrowser: starting...");
     try {
-        await Storage.init();
-        const layout = await scanLayout();
-        safeLog('log', '[DDB Print] handleSaveBrowser: layout captured');
-        await Storage.saveGlobalLayout(layout);
+      await Storage.init();
+      const layout = await scanLayout();
+      safeLog("log", "[DDB Print] handleSaveBrowser: layout captured");
+      await Storage.saveGlobalLayout(layout);
 
-        // Also save for specific character for the "revert to character" feature later
-        const characterId = getCharacterId();
-        if (characterId) {
-            safeLog('log', '[DDB Print] handleSaveBrowser: saving for character:', characterId);
-            await Storage.saveLayout(characterId, layout);
-        }
+      // Also save for specific character for the "revert to character" feature later
+      const characterId = getCharacterId();
+      if (characterId) {
+        safeLog(
+          "log",
+          "[DDB Print] handleSaveBrowser: saving for character:",
+          characterId,
+        );
+        await Storage.saveLayout(characterId, layout);
+      }
 
-        safeLog('log', '[DDB Print] handleSaveBrowser: success');
-        showFeedback('Saved to browser!');
+      safeLog("log", "[DDB Print] handleSaveBrowser: success");
+      showFeedback("Saved to browser!");
     } catch (err) {
-        safeLog('error', '[DDB Print] Save failed', err);
-        alert('Failed to save layout to browser.');
+      safeLog("error", "[DDB Print] Save failed", err);
+      alert("Failed to save layout to browser.");
     }
-}
+  }
 
-/**
- * Handles saving to PC.
- */
-async function handleSavePC() {
-    safeLog('log', '[DDB Print] handleSavePC: capturing layout...');
+  /**
+   * Handles saving to PC.
+   */
+  async function handleSavePC() {
+    safeLog("log", "[DDB Print] handleSavePC: capturing layout...");
     const layout = await scanLayout();
     const data = JSON.stringify(layout, null, 2);
-    const filename = `ddb-layout-${new Date().toISOString().split('T')[0]}.json`;
+    const filename = `ddb-layout-${new Date().toISOString().split("T")[0]}.json`;
 
     try {
-        safeLog('log', '[DDB Print] handleSavePC: generating file...');
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        safeLog('log', '[DDB Print] handleSavePC: clicking link...');
-        a.click();
+      safeLog("log", "[DDB Print] handleSavePC: generating file...");
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      safeLog("log", "[DDB Print] handleSavePC: clicking link...");
+      a.click();
 
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 0);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      }, 0);
 
-        showFeedback('Download started!');
+      showFeedback("Download started!");
     } catch (err) {
-        safeLog('error', '[DDB Print] Download failed, showing modal', err);
-        showFallbackModal(data);
+      safeLog("error", "[DDB Print] Download failed, showing modal", err);
+      showFallbackModal(data);
     }
-}
-/**
- * Applies the default layout using the Archer template.
- */
-async function applyDefaultLayout() {
-    safeLog('log', '[DDB Print] Applying Default Layouts (Archer Template)...');
+  }
+  /**
+   * Applies the default layout using the Archer template.
+   */
+  async function applyDefaultLayout() {
+    safeLog("log", "[DDB Print] Applying Default Layouts (Archer Template)...");
 
     // Remove all shapes before applying the template
-    document.querySelectorAll('.be-shape-wrapper').forEach(el => {
-        el.remove();
+    document.querySelectorAll(".be-shape-wrapper").forEach((el) => {
+      el.remove();
     });
 
-    if (typeof CatalogService !== 'undefined' && typeof CatalogService.applyTemplate === 'function') {
-        try {
-            await CatalogService.applyTemplate('archer', true);
-            safeLog('log', '[DDB Print] Default Archer template applied successfully.');
-        } catch (err) {
-            safeLog('error', '[DDB Print] Failed to apply default Archer template:', err);
-        }
+    if (
+      typeof CatalogService !== "undefined" &&
+      typeof CatalogService.applyTemplate === "function"
+    ) {
+      try {
+        await CatalogService.applyTemplate("archer", true);
+        safeLog(
+          "log",
+          "[DDB Print] Default Archer template applied successfully.",
+        );
+      } catch (err) {
+        safeLog(
+          "error",
+          "[DDB Print] Failed to apply default Archer template:",
+          err,
+        );
+      }
     } else {
-        safeLog('error', '[DDB Print] CatalogService not found. Cannot apply default layout.');
+      safeLog(
+        "error",
+        "[DDB Print] CatalogService not found. Cannot apply default layout.",
+      );
     }
 
-    if (typeof updateLayoutBounds === 'function') updateLayoutBounds();
-    
+    if (typeof updateLayoutBounds === "function") updateLayoutBounds();
+
     // Refresh print styles after applying default template
-    if (typeof updatePrintStyles === 'function') {
-        updatePrintStyles();
+    if (typeof updatePrintStyles === "function") {
+      updatePrintStyles();
     }
-}
-/**
- * Handles loading default layout.
- */
-async function handleLoadDefault() {
-    if (!confirm('This will reset your layout to defaults. Are you sure?')) return;
+  }
+  /**
+   * Handles loading default layout.
+   */
+  async function handleLoadDefault() {
+    if (!confirm("This will reset your layout to defaults. Are you sure?"))
+      return;
 
     try {
-        const database = await Storage.init();
-        
-        // Remove from IndexedDB
-        const transaction = database.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        store.delete('GLOBAL');
-        
-        const characterId = getCharacterId();
-        if (characterId) {
-            store.delete(characterId);
-        }
+      const database = await Storage.init();
 
-        // Reset styles in DOM
-        document.querySelectorAll('.print-section-container').forEach(container => {
-            const wrapper = container.closest('.be-section-wrapper') || container;
-            container.style.width = '';
-            container.style.height = '';
-            wrapper.style.left = '';
-            wrapper.style.top = '';
-            wrapper.style.zIndex = '10';
-            container.dataset.minimized = 'false';
-            
-            const content = container.querySelector('.print-section-content');
-            if (content) content.style.display = 'flex';
+      // Remove from IndexedDB
+      const transaction = database.transaction([STORE_NAME], "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      store.delete("GLOBAL");
 
-            // Reset inner widths
-            const inners = container.querySelectorAll('div[class$="-row-header"], div[class$="-content"] div');
-            inners.forEach(el => {
-                if (el.tagName === 'DIV') {
-                    el.style.width = '';
-                    el.style.minWidth = '';
-                }
-            });
+      const characterId = getCharacterId();
+      if (characterId) {
+        store.delete(characterId);
+      }
+
+      // Reset styles in DOM
+      document
+        .querySelectorAll(".print-section-container")
+        .forEach((container) => {
+          const wrapper = container.closest(".be-section-wrapper") || container;
+          container.style.width = "";
+          container.style.height = "";
+          wrapper.style.left = "";
+          wrapper.style.top = "";
+          wrapper.style.zIndex = "10";
+          container.dataset.minimized = "false";
+
+          const content = container.querySelector(".print-section-content");
+          if (content) content.style.display = "flex";
+
+          // Reset inner widths
+          const inners = container.querySelectorAll(
+            'div[class$="-row-header"], div[class$="-content"] div',
+          );
+          inners.forEach((el) => {
+            if (el.tagName === "DIV") {
+              el.style.width = "";
+              el.style.minWidth = "";
+            }
+          });
         });
 
-        // Trigger default layout
-        await applyDefaultLayout();
+      // Trigger default layout
+      await applyDefaultLayout();
 
-        // Reposition clones in front of their parents
-        document.querySelectorAll('.print-section-container.be-clone').forEach(clone => {
-            const originalId = clone.dataset.originalId;
-            const original = document.getElementById(originalId);
+      // Reposition clones in front of their parents
+      document
+        .querySelectorAll(".print-section-container.be-clone")
+        .forEach((clone) => {
+          const originalId = clone.dataset.originalId;
+          const original = document.getElementById(originalId);
+          if (original) {
+            const cloneWrapper = clone.closest(".be-section-wrapper") || clone;
+            const originalWrapper =
+              original.closest(".be-section-wrapper") || original;
+
+            const x = (parseInt(originalWrapper.style.left) || 0) + 32;
+            const y = (parseInt(originalWrapper.style.top) || 0) + 32;
+            cloneWrapper.style.setProperty("left", `${x}px`, "important");
+            cloneWrapper.style.setProperty("top", `${y}px`, "important");
+
+            // Maintain current dimensions if they exist, otherwise they might be reset by the global query
+            const currentWidth = clone.style.width;
+            const currentHeight = clone.style.height;
+            if (currentWidth)
+              clone.style.setProperty("width", currentWidth, "important");
+            if (currentHeight)
+              clone.style.setProperty("height", currentHeight, "important");
+
+            cloneWrapper.style.zIndex =
+              (parseInt(originalWrapper.style.zIndex) || 10) + 1;
+          }
+        });
+
+      // Handle merged sections: Rollback groups and prepare spells for recreation
+      const mergedSpells = Array.from(
+        document.querySelectorAll("[data-be-spell-merge]"),
+      );
+      const spellNamesToRecreate = [
+        ...new Set(
+          mergedSpells.map((el) => el.getAttribute("data-be-spell-merge")),
+        ),
+      ];
+
+      document.querySelectorAll(".be-merge-wrapper").forEach((wrapper) => {
+        const groupMergeId = wrapper.getAttribute("data-be-group-merge");
+        if (groupMergeId) {
+          const original = document.getElementById(groupMergeId);
+          if (original) original.style.setProperty("display", "", "important");
+        }
+        wrapper.remove();
+      });
+
+      // Recreate merged spells as floating sections
+      for (const spellName of spellNamesToRecreate) {
+        await createSpellDetailSection(spellName, { x: 0, y: 0 });
+      }
+
+      // Reposition all spell detail sections to the Y of their original spell label, at left: 1200px
+      document
+        .querySelectorAll(".print-section-container.be-spell-detail")
+        .forEach((detail) => {
+          const detailWrapper = detail.closest(".be-section-wrapper") || detail;
+          const spellName =
+            detailWrapper.dataset.title ||
+            detailWrapper
+              .querySelector(".print-section-header span")
+              ?.textContent.trim();
+          if (spellName) {
+            // Find the original spell label in the DOM (searching for exact text match)
+            const labels = Array.from(
+              document.querySelectorAll(".ct-spells-spell__label"),
+            );
+            const originalLabel = labels.find(
+              (l) => l.textContent.trim() === spellName,
+            );
+
+            if (originalLabel) {
+              const layoutRoot = document.getElementById(
+                "print-layout-wrapper",
+              );
+              const rootRect = layoutRoot.getBoundingClientRect();
+              const labelRect = originalLabel.getBoundingClientRect();
+
+              // Calculate Y relative to the layout wrapper
+              const y = labelRect.top - rootRect.top;
+              detailWrapper.style.left = "1200px";
+              detailWrapper.style.top = `${y}px`;
+              detail.style.width = "300px";
+              detail.style.height = "auto";
+            } else {
+              // Fallback: move to the right edge
+              detailWrapper.style.left = "1200px";
+              detail.style.width = "300px";
+              detail.style.height = "auto";
+            }
+          }
+        });
+
+      // Rollback all OTHER extractions
+      document
+        .querySelectorAll(
+          ".print-section-container.be-extracted-section:not(.be-spell-detail)",
+        )
+        .forEach((container) => {
+          // Use rollbackSection logic but avoiding multiple feedbacks/bounds updates
+          const originalId = container.dataset.originalId;
+          const associatedIds = container.dataset.associatedIds
+            ? JSON.parse(container.dataset.associatedIds)
+            : [];
+          const allIds = [originalId, ...associatedIds].filter((id) => id);
+
+          allIds.forEach((id) => {
+            const original = document.getElementById(id);
             if (original) {
-                const cloneWrapper = clone.closest('.be-section-wrapper') || clone;
-                const originalWrapper = original.closest('.be-section-wrapper') || original;
-
-                const x = (parseInt(originalWrapper.style.left) || 0) + 32;
-                const y = (parseInt(originalWrapper.style.top) || 0) + 32;
-                cloneWrapper.style.setProperty('left', `${x}px`, 'important');
-                cloneWrapper.style.setProperty('top', `${y}px`, 'important');
-                
-                // Maintain current dimensions if they exist, otherwise they might be reset by the global query
-                const currentWidth = clone.style.width;
-                const currentHeight = clone.style.height;
-                if (currentWidth) clone.style.setProperty('width', currentWidth, 'important');
-                if (currentHeight) clone.style.setProperty('height', currentHeight, 'important');
-
-                cloneWrapper.style.zIndex = (parseInt(originalWrapper.style.zIndex) || 10) + 1;
+              original.style.setProperty("display", "", "important");
             }
+          });
+          const wrapper = container.closest(".be-section-wrapper") || container;
+          wrapper.remove();
         });
 
-        // Handle merged sections: Rollback groups and prepare spells for recreation
-        const mergedSpells = Array.from(document.querySelectorAll('[data-be-spell-merge]'));
-        const spellNamesToRecreate = [...new Set(mergedSpells.map(el => el.getAttribute('data-be-spell-merge')))];
-
-        document.querySelectorAll('.be-merge-wrapper').forEach(wrapper => {
-            const groupMergeId = wrapper.getAttribute('data-be-group-merge');
-            if (groupMergeId) {
-                const original = document.getElementById(groupMergeId);
-                if (original) original.style.setProperty('display', '', 'important');
-            }
-            wrapper.remove();
-        });
-
-        // Recreate merged spells as floating sections
-        for (const spellName of spellNamesToRecreate) {
-            await createSpellDetailSection(spellName, { x: 0, y: 0 });
-        }
-
-        // Reposition all spell detail sections to the Y of their original spell label, at left: 1200px
-        document.querySelectorAll('.print-section-container.be-spell-detail').forEach(detail => {
-            const detailWrapper = detail.closest('.be-section-wrapper') || detail;
-            const spellName = detailWrapper.dataset.title || detailWrapper.querySelector('.print-section-header span')?.textContent.trim();
-            if (spellName) {
-                // Find the original spell label in the DOM (searching for exact text match)
-                const labels = Array.from(document.querySelectorAll('.ct-spells-spell__label'));
-                const originalLabel = labels.find(l => l.textContent.trim() === spellName);
-                
-                if (originalLabel) {
-                    const layoutRoot = document.getElementById('print-layout-wrapper');
-                    const rootRect = layoutRoot.getBoundingClientRect();
-                    const labelRect = originalLabel.getBoundingClientRect();
-                    
-                    // Calculate Y relative to the layout wrapper
-                    const y = labelRect.top - rootRect.top;
-                    detailWrapper.style.left = '1200px';
-                    detailWrapper.style.top = `${y}px`;
-                    detail.style.width = '300px';
-                    detail.style.height = 'auto';
-                } else {
-                    // Fallback: move to the right edge
-                    detailWrapper.style.left = '1200px';
-                    detail.style.width = '300px';
-                    detail.style.height = 'auto';
-                }
-            }
-        });
-
-        // Rollback all OTHER extractions
-        document.querySelectorAll('.print-section-container.be-extracted-section:not(.be-spell-detail)').forEach(container => {
-            // Use rollbackSection logic but avoiding multiple feedbacks/bounds updates
-            const originalId = container.dataset.originalId;
-            const associatedIds = container.dataset.associatedIds ? JSON.parse(container.dataset.associatedIds) : [];
-            const allIds = [originalId, ...associatedIds].filter(id => id);
-            
-            allIds.forEach(id => {
-                const original = document.getElementById(id);
-                if (original) {
-                    original.style.setProperty('display', '', 'important');
-                }
-            });
-            const wrapper = container.closest('.be-section-wrapper') || container;
-            wrapper.remove();
-        });
-
-        updateLayoutBounds();
-        showFeedback('Layout reset to defaults!');
+      updateLayoutBounds();
+      showFeedback("Layout reset to defaults!");
     } catch (err) {
-        safeLog('error', '[DDB Print] Reset failed', err);
-        alert('Failed to reset layout.');
+      safeLog("error", "[DDB Print] Reset failed", err);
+      alert("Failed to reset layout.");
     }
-}
+  }
 
-/**
- * Handles loading from file.
- */
-function handleLoadFile() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    
+  /**
+   * Handles loading from file.
+   */
+  function handleLoadFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
     input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const layout = JSON.parse(event.target.result);
-                if (Storage.validateLayout(layout)) {
-                    // Check version compatibility
-                    if (layout.version !== Storage.SCHEMA_VERSION) {
-                        alert(`Warning: The loaded layout version (${layout.version}) is older than the current version (${Storage.SCHEMA_VERSION}). Some newer features might not be present. It is recommended to save your layout again to upgrade the file.`);
-                    }
-                    await applyLayout(layout);
-                    showFeedback('Layout loaded!');
-                } else {
-                    alert('Invalid layout file format.');
-                }
-            } catch (err) {
-                safeLog('error', '[DDB Print] Load failed', err);
-                alert('Failed to parse layout file.');
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const layout = JSON.parse(event.target.result);
+          if (Storage.validateLayout(layout)) {
+            // Check version compatibility
+            if (layout.version !== Storage.SCHEMA_VERSION) {
+              alert(
+                `Warning: The loaded layout version (${layout.version}) is older than the current version (${Storage.SCHEMA_VERSION}). Some newer features might not be present. It is recommended to save your layout again to upgrade the file.`,
+              );
             }
-        };
-        reader.readAsText(file);
-    };
-    
-    input.click();
-}
-
-/**
- * Handles restoring the layout from IndexedDB.
- */
-async function restoreLayout() {
-    try {
-        await Storage.init();
-        
-        // Strategy: Load character-specific first, fallback to global
-        const characterId = getCharacterId();
-        let layout = null;
-        
-        if (characterId) {
-            layout = await Storage.loadLayout(characterId);
-        }
-        
-        if (!layout) {
-            layout = await Storage.loadGlobalLayout();
-        }
-
-        if (layout && Storage.validateLayout(layout)) {
-            safeLog('log', '[DDB Print] Restoring saved layout...');
             await applyLayout(layout);
-            return true;
+            showFeedback("Layout loaded!");
+          } else {
+            alert("Invalid layout file format.");
+          }
+        } catch (err) {
+          safeLog("error", "[DDB Print] Load failed", err);
+          alert("Failed to parse layout file.");
         }
+      };
+      reader.readAsText(file);
+    };
+
+    input.click();
+  }
+
+  /**
+   * Handles restoring the layout from IndexedDB.
+   */
+  async function restoreLayout() {
+    try {
+      await Storage.init();
+
+      // Strategy: Load character-specific first, fallback to global
+      const characterId = getCharacterId();
+      let layout = null;
+
+      if (characterId) {
+        layout = await Storage.loadLayout(characterId);
+      }
+
+      if (!layout) {
+        layout = await Storage.loadGlobalLayout();
+      }
+
+      if (layout && Storage.validateLayout(layout)) {
+        safeLog("log", "[DDB Print] Restoring saved layout...");
+        await applyLayout(layout);
+        return true;
+      }
     } catch (err) {
-        safeLog('error', '[DDB Print] Restore failed', err);
+      safeLog("error", "[DDB Print] Restore failed", err);
     }
     return false;
-}
+  }
 
-/**
- * Shows a temporary feedback message.
- */
-function showFeedback(msg) {
-    const feedback = document.createElement('div');
-    feedback.className = 'be-feedback';
+  /**
+   * Shows a temporary feedback message.
+   */
+  function showFeedback(msg) {
+    const feedback = document.createElement("div");
+    feedback.className = "be-feedback";
     feedback.textContent = msg;
-    feedback.style.position = 'fixed';
-    feedback.style.top = '20px';
-    feedback.style.left = '50%';
-    feedback.style.transform = 'translateX(-50%)';
-    feedback.style.backgroundColor = '#333';
-    feedback.style.color = 'white';
-    feedback.style.padding = '10px 20px';
-    feedback.style.borderRadius = '5px';
-    feedback.style.zIndex = '10001';
-    feedback.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
-    feedback.style.transition = 'opacity 0.5s';
+    feedback.style.position = "fixed";
+    feedback.style.top = "20px";
+    feedback.style.left = "50%";
+    feedback.style.transform = "translateX(-50%)";
+    feedback.style.backgroundColor = "#333";
+    feedback.style.color = "white";
+    feedback.style.padding = "10px 20px";
+    feedback.style.borderRadius = "5px";
+    feedback.style.zIndex = "10001";
+    feedback.style.boxShadow = "0 2px 10px rgba(0,0,0,0.5)";
+    feedback.style.transition = "opacity 0.5s";
 
     document.body.appendChild(feedback);
 
     setTimeout(() => {
-        feedback.style.opacity = '0';
-        setTimeout(() => feedback.remove(), 500);
+      feedback.style.opacity = "0";
+      setTimeout(() => feedback.remove(), 500);
     }, 2000);
-}
-/**
- * Shows a modal with layout data for manual copying.
- * @param {string} jsonData 
- */
-function showFallbackModal(jsonData) {
+  }
+  /**
+   * Shows a modal with layout data for manual copying.
+   * @param {string} jsonData
+   */
+  function showFallbackModal(jsonData) {
     // Overlay
-    const overlay = document.createElement('div');
-    overlay.id = 'print-enhance-overlay';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
-    overlay.style.zIndex = '20000';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.backdropFilter = 'blur(4px)';
+    const overlay = document.createElement("div");
+    overlay.id = "print-enhance-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0,0,0,0.8)";
+    overlay.style.zIndex = "20000";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.backdropFilter = "blur(4px)";
 
     // Modal
-    const modal = document.createElement('div');
-    modal.style.backgroundColor = '#222';
-    modal.style.color = 'white';
-    modal.style.padding = '20px';
-    modal.style.borderRadius = '12px';
-    modal.style.width = '80%';
-    modal.style.maxWidth = '600px';
-    modal.style.display = 'flex';
-    modal.style.flexDirection = 'column';
-    modal.style.gap = '15px';
-    modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
-    modal.style.border = '1px solid #444';
+    const modal = document.createElement("div");
+    modal.style.backgroundColor = "#222";
+    modal.style.color = "white";
+    modal.style.padding = "20px";
+    modal.style.borderRadius = "12px";
+    modal.style.width = "80%";
+    modal.style.maxWidth = "600px";
+    modal.style.display = "flex";
+    modal.style.flexDirection = "column";
+    modal.style.gap = "15px";
+    modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
+    modal.style.border = "1px solid #444";
 
-    const title = document.createElement('h3');
-    title.textContent = 'Layout JSON Data';
-    title.style.margin = '0';
+    const title = document.createElement("h3");
+    title.textContent = "Layout JSON Data";
+    title.style.margin = "0";
     modal.appendChild(title);
 
-    const info = document.createElement('p');
-    info.textContent = 'Copy the layout data below to save it manually.';
-    info.style.fontSize = '14px';
+    const info = document.createElement("p");
+    info.textContent = "Copy the layout data below to save it manually.";
+    info.style.fontSize = "14px";
     modal.appendChild(info);
 
-    const textarea = document.createElement('textarea');
+    const textarea = document.createElement("textarea");
     textarea.value = jsonData;
     textarea.readOnly = true;
-    textarea.style.height = '200px';
-    textarea.style.backgroundColor = '#111';
-    textarea.style.color = '#0f0';
-    textarea.style.border = '1px solid #333';
-    textarea.style.padding = '10px';
-    textarea.style.fontFamily = 'monospace';
-    textarea.style.borderRadius = '4px';
+    textarea.style.height = "200px";
+    textarea.style.backgroundColor = "#111";
+    textarea.style.color = "#0f0";
+    textarea.style.border = "1px solid #333";
+    textarea.style.padding = "10px";
+    textarea.style.fontFamily = "monospace";
+    textarea.style.borderRadius = "4px";
     modal.appendChild(textarea);
 
-    const btnGroup = document.createElement('div');
-    btnGroup.style.display = 'flex';
-    btnGroup.style.justifyContent = 'flex-end';
-    btnGroup.style.gap = '10px';
+    const btnGroup = document.createElement("div");
+    btnGroup.style.display = "flex";
+    btnGroup.style.justifyContent = "flex-end";
+    btnGroup.style.gap = "10px";
 
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = 'Copy to Clipboard';
-    copyBtn.style.padding = '8px 16px';
-    copyBtn.style.cursor = 'pointer';
+    const copyBtn = document.createElement("button");
+    copyBtn.textContent = "Copy to Clipboard";
+    copyBtn.style.padding = "8px 16px";
+    copyBtn.style.cursor = "pointer";
     copyBtn.onclick = () => {
-        textarea.select();
-        document.execCommand('copy');
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 2000);
+      textarea.select();
+      document.execCommand("copy");
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => (copyBtn.textContent = "Copy to Clipboard"), 2000);
     };
     btnGroup.appendChild(copyBtn);
 
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.style.padding = '8px 16px';
-    closeBtn.style.cursor = 'pointer';
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Close";
+    closeBtn.style.padding = "8px 16px";
+    closeBtn.style.cursor = "pointer";
     closeBtn.onclick = () => overlay.remove();
     btnGroup.appendChild(closeBtn);
 
     modal.appendChild(btnGroup);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-}
+  }
 
-/**
- * Scans the current DOM for layout information.
- * @returns {object} Layout data following the schema.
- */
-/**
- * Scans the current DOM for layout information.
- * @returns {object} Layout data following the schema.
- */
-async function scanLayout() {
-    const peDom = typeof PeDom !== 'undefined' ? PeDom() : null;
+  /**
+   * Scans the current DOM for layout information.
+   * @returns {object} Layout data following the schema.
+   */
+  /**
+   * Scans the current DOM for layout information.
+   * @returns {object} Layout data following the schema.
+   */
+  async function scanLayout() {
+    const peDom = typeof PeDom !== "undefined" ? PeDom() : null;
     const layerManager = peDom ? peDom.getLayerManager() : null;
-    
+
     const layout = {
-        version: Storage.SCHEMA_VERSION,
-        sections: {},
-        clones: [],
-        extractions: [],
-        shapes: [], // Legacy shapes array
-        shapeLayers: [], // New multi-layer format
-        spell_details: [],
-        merges: [],
-        spell_cache: []
+      version: Storage.SCHEMA_VERSION,
+      sections: {},
+      clones: [],
+      extractions: [],
+      shapes: [], // Legacy shapes array
+      shapeLayers: [], // New multi-layer format
+      spell_details: [],
+      merges: [],
+      spell_cache: [],
     };
 
     // Capture shape layers state
     const layerStates = {};
     if (layerManager) {
-        layerManager.shapeLayers.forEach(layer => {
-            const layerData = {
-                id: layer.id,
-                name: layer.label,
-                isLocked: layer.isLocked,
-                isHidden: layer.isHidden,
-                isDisabledOnPrint: layer.isDisabledOnPrint,
-                elements: []
-            };
+      layerManager.shapeLayers.forEach((layer) => {
+        const layerData = {
+          id: layer.id,
+          name: layer.label,
+          isLocked: layer.isLocked,
+          isHidden: layer.isHidden,
+          isDisabledOnPrint: layer.isDisabledOnPrint,
+          elements: [],
+        };
 
-            const layerEl = document.getElementById(layer.layerId);
-            if (layerEl) {
-                const shapes = layerEl.querySelectorAll('.be-shape-wrapper');
-                shapes.forEach(wrapper => {
-                    const container = wrapper.querySelector('.be-shape-container');
-                    if (!container) return;
+        const layerEl = document.getElementById(layer.layerId);
+        if (layerEl) {
+          const shapes = layerEl.querySelectorAll(".be-shape-wrapper");
+          shapes.forEach((wrapper) => {
+            const container = wrapper.querySelector(".be-shape-container");
+            if (!container) return;
 
-                    layerData.elements.push({
-                        id: container.id,
-                        assetPath: container.dataset.assetPath,
-                        left: wrapper.style.left,
-                        top: wrapper.style.top,
-                        width: container.style.width,
-                        height: container.style.height,
-                        zIndex: wrapper.style.zIndex,
-                        printZIndex: wrapper.dataset.printZ,
-                        rotation: wrapper.dataset.rotation || '0'
-                    });
-                });
-            }
-            layout.shapeLayers.push(layerData);
-
-            layerStates[layer.id] = {
-                isLocked: layer.isLocked,
-                isHidden: layer.isHidden,
-                isDisabledOnPrint: layer.isDisabledOnPrint
-            };
-        });
-
-        // Capture sections layer state
-        const secLayer = layerManager.sectionsLayer;
-        if (secLayer) {
-            layerStates[secLayer.id] = {
-                isLocked: secLayer.isLocked,
-                isHidden: secLayer.isHidden,
-                isDisabledOnPrint: secLayer.isDisabledOnPrint
-            };
+            layerData.elements.push({
+              id: container.id,
+              assetPath: container.dataset.assetPath,
+              left: wrapper.style.left,
+              top: wrapper.style.top,
+              width: container.style.width,
+              height: container.style.height,
+              zIndex: wrapper.style.zIndex,
+              printZIndex: wrapper.dataset.printZ,
+              rotation: wrapper.dataset.rotation || "0",
+            });
+          });
         }
+        layout.shapeLayers.push(layerData);
+
+        layerStates[layer.id] = {
+          isLocked: layer.isLocked,
+          isHidden: layer.isHidden,
+          isDisabledOnPrint: layer.isDisabledOnPrint,
+        };
+      });
+
+      // Capture sections layer state
+      const secLayer = layerManager.sectionsLayer;
+      if (secLayer) {
+        layerStates[secLayer.id] = {
+          isLocked: secLayer.isLocked,
+          isHidden: secLayer.isHidden,
+          isDisabledOnPrint: secLayer.isDisabledOnPrint,
+        };
+      }
     }
-    
+
     layout.layers = {
-        ...layerStates,
-        activeLayerId: layerManager?.activeLayerId || null
+      ...layerStates,
+      activeLayerId: layerManager?.activeLayerId || null,
     };
 
     // Include cached spells
     try {
-        await Storage.init();
-        layout.spell_cache = await Storage.getAllSpells();
+      await Storage.init();
+      layout.spell_cache = await Storage.getAllSpells();
     } catch (err) {
-        safeLog('error', '[DDB Print] Could not scan spell cache', err);
+      safeLog("error", "[DDB Print] Could not scan spell cache", err);
     }
 
     // 1. Scan for standard sections and floating containers
-    const sections = document.querySelectorAll('.print-section-container');
-    sections.forEach(section => {
-        const id = section.id;
-        if (!id) return;
+    const sections = document.querySelectorAll(".print-section-container");
+    sections.forEach((section) => {
+      const id = section.id;
+      if (!id) return;
 
-        const wrapper = section.closest('.be-section-wrapper') || section;
-        const header = wrapper.querySelector('.print-section-header span');
-        const title = wrapper.dataset.title || (header ? header.textContent.trim() : null);
-        const content = section.querySelector('.print-section-content');
+      const wrapper = section.closest(".be-section-wrapper") || section;
+      const header = wrapper.querySelector(".print-section-header span");
+      const title =
+        wrapper.dataset.title || (header ? header.textContent.trim() : null);
+      const content = section.querySelector(".print-section-content");
 
-        const getBorderStyle = (el) => {
-            return ALL_BORDER_STYLES.find(style => el.classList.contains(style)) || null;
-        };
+      const getBorderStyle = (el) => {
+        return (
+          ALL_BORDER_STYLES.find((style) => el.classList.contains(style)) ||
+          null
+        );
+      };
 
-        if (section.classList.contains('be-clone')) {
-            const sanitizedHtml = content ? getSanitizedContent(content).innerHTML : '';
-            layout.clones.push({
-                id: id,
-                title: title || 'Clone',
-                html: sanitizedHtml,
-                left: wrapper.style.left,
-                top: wrapper.style.top,
-                width: section.style.width,
-                height: section.style.height,
-                zIndex: wrapper.style.zIndex || '10',
-                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
-                fontSize: wrapper.style.fontSize,
-                minimized: section.dataset.minimized === 'true',
-                compact: section.classList.contains('be-compact-mode'),
-                borderStyle: getBorderStyle(section)
-            });
-            return;
-        }
-
-        if (section.classList.contains('be-spell-detail')) {
-            layout.spell_details.push({
-                id: id,
-                spellName: title || 'Spell',
-                left: wrapper.style.left,
-                top: wrapper.style.top,
-                width: section.style.width,
-                height: section.style.height,
-                zIndex: wrapper.style.zIndex || '10',
-                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
-                fontSize: wrapper.style.fontSize,
-                minimized: section.dataset.minimized === 'true',
-                borderStyle: getBorderStyle(section)
-            });
-            return;
-        }
-
-        if (section.classList.contains('be-shape')) {
-            layout.shapes.push({
-                id: id,
-                assetPath: section.dataset.assetPath,
-                left: wrapper.style.left,
-                top: wrapper.style.top,
-                width: section.style.width,
-                height: section.style.height,
-                zIndex: wrapper.style.zIndex || '110',
-                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '110',
-                rotation: wrapper.dataset.rotation || '0',
-                fontSize: wrapper.style.fontSize,
-                minimized: section.dataset.minimized === 'true'
-            });
-            return;
-        }
-
-        if (section.classList.contains('be-extracted-section')) {
-            const originalId = section.dataset.originalId;
-            const original = document.getElementById(originalId);
-
-            const extractionData = {
-                id: id,
-                originalId: originalId,
-                parentSectionId: section.dataset.parentSectionId,
-                title: title || 'Extracted',
-                left: wrapper.style.left,
-                top: wrapper.style.top,
-                width: section.style.width,
-                height: section.style.height,
-                zIndex: wrapper.style.zIndex || '10',
-                printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
-                fontSize: wrapper.style.fontSize,
-                minimized: section.dataset.minimized === 'true',
-                compact: section.classList.contains('be-compact-mode'),
-                borderStyle: getBorderStyle(section)
-            };
-
-            if (original) {
-                const resolution = getExtractionSelector(original, true);
-                if (resolution) {
-                    extractionData.selector = resolution.selector;
-                    extractionData.index = resolution.index;
-                }
-            }
-
-            layout.extractions.push(extractionData);
-            return;
-        }
-
-        layout.sections[id] = {
-            left: wrapper.style.left,
-            top: wrapper.style.top,
-            width: section.style.width,
-            height: section.style.height,
-            zIndex: wrapper.style.zIndex || '10',
-            printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || '10',
-            fontSize: wrapper.style.fontSize,
-            minimized: section.dataset.minimized === 'true',
-            compact: section.classList.contains('be-compact-mode'),
-            borderStyle: getBorderStyle(section),
-            innerWidths: {}
-        };
-
-        const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
-        innerContainers.forEach((container, cIdx) => {
-            Array.from(container.children).forEach((child, dIdx) => {
-                if (child.tagName === 'DIV' && child.style.width) {
-                    const key = `${cIdx}-${dIdx}`;
-                    layout.sections[id].innerWidths[key] = child.style.width;
-                }
-            });
+      if (section.classList.contains("be-clone")) {
+        const sanitizedHtml = content
+          ? getSanitizedContent(content).innerHTML
+          : "";
+        layout.clones.push({
+          id: id,
+          title: title || "Clone",
+          html: sanitizedHtml,
+          left: wrapper.style.left,
+          top: wrapper.style.top,
+          width: section.style.width,
+          height: section.style.height,
+          zIndex: wrapper.style.zIndex || "10",
+          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
+          fontSize: wrapper.style.fontSize,
+          minimized: section.dataset.minimized === "true",
+          compact: section.classList.contains("be-compact-mode"),
+          borderStyle: getBorderStyle(section),
         });
+        return;
+      }
+
+      if (section.classList.contains("be-spell-detail")) {
+        layout.spell_details.push({
+          id: id,
+          spellName: title || "Spell",
+          left: wrapper.style.left,
+          top: wrapper.style.top,
+          width: section.style.width,
+          height: section.style.height,
+          zIndex: wrapper.style.zIndex || "10",
+          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
+          fontSize: wrapper.style.fontSize,
+          minimized: section.dataset.minimized === "true",
+          borderStyle: getBorderStyle(section),
+        });
+        return;
+      }
+
+      if (section.classList.contains("be-shape")) {
+        layout.shapes.push({
+          id: id,
+          assetPath: section.dataset.assetPath,
+          left: wrapper.style.left,
+          top: wrapper.style.top,
+          width: section.style.width,
+          height: section.style.height,
+          zIndex: wrapper.style.zIndex || "110",
+          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "110",
+          rotation: wrapper.dataset.rotation || "0",
+          fontSize: wrapper.style.fontSize,
+          minimized: section.dataset.minimized === "true",
+        });
+        return;
+      }
+
+      if (section.classList.contains("be-extracted-section")) {
+        const originalId = section.dataset.originalId;
+        const original = document.getElementById(originalId);
+
+        const extractionData = {
+          id: id,
+          originalId: originalId,
+          parentSectionId: section.dataset.parentSectionId,
+          title: title || "Extracted",
+          left: wrapper.style.left,
+          top: wrapper.style.top,
+          width: section.style.width,
+          height: section.style.height,
+          zIndex: wrapper.style.zIndex || "10",
+          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
+          fontSize: wrapper.style.fontSize,
+          minimized: section.dataset.minimized === "true",
+          compact: section.classList.contains("be-compact-mode"),
+          borderStyle: getBorderStyle(section),
+        };
+
+        if (original) {
+          const resolution = getExtractionSelector(original, true);
+          if (resolution) {
+            extractionData.selector = resolution.selector;
+            extractionData.index = resolution.index;
+          }
+        }
+
+        layout.extractions.push(extractionData);
+        return;
+      }
+
+      layout.sections[id] = {
+        left: wrapper.style.left,
+        top: wrapper.style.top,
+        width: section.style.width,
+        height: section.style.height,
+        zIndex: wrapper.style.zIndex || "10",
+        printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
+        fontSize: wrapper.style.fontSize,
+        minimized: section.dataset.minimized === "true",
+        compact: section.classList.contains("be-compact-mode"),
+        borderStyle: getBorderStyle(section),
+        innerWidths: {},
+      };
+
+      const innerContainers = section.querySelectorAll(
+        'div[class$="-row-header"], div[class$="-content"]',
+      );
+      innerContainers.forEach((container, cIdx) => {
+        Array.from(container.children).forEach((child, dIdx) => {
+          if (child.tagName === "DIV" && child.style.width) {
+            const key = `${cIdx}-${dIdx}`;
+            layout.sections[id].innerWidths[key] = child.style.width;
+          }
+        });
+      });
     });
 
     // 2. Scan for Merges (systematic approach using stored attributes)
-    document.querySelectorAll('.be-merge-wrapper').forEach(wrapper => {
-        const groupId = wrapper.getAttribute('data-be-group-merge');
-        const spellMergeChild = wrapper.querySelector('[data-be-spell-merge]');
-        const spellName = spellMergeChild ? spellMergeChild.getAttribute('data-be-spell-merge') : null;
+    document.querySelectorAll(".be-merge-wrapper").forEach((wrapper) => {
+      const groupId = wrapper.getAttribute("data-be-group-merge");
+      const spellMergeChild = wrapper.querySelector("[data-be-spell-merge]");
+      const spellName = spellMergeChild
+        ? spellMergeChild.getAttribute("data-be-spell-merge")
+        : null;
 
-        if (!groupId && !spellName) return;
+      if (!groupId && !spellName) return;
 
-        // Retrieve target metadata stored during merge
-        const targetType = wrapper.getAttribute('data-be-target-type');
-        const targetId = wrapper.getAttribute('data-be-target-id');
-        const targetSelector = wrapper.getAttribute('data-be-target-selector');
-        const targetIndex = wrapper.getAttribute('data-be-target-index');
-        const targetName = wrapper.getAttribute('data-be-target-name');
+      // Retrieve target metadata stored during merge
+      const targetType = wrapper.getAttribute("data-be-target-type");
+      const targetId = wrapper.getAttribute("data-be-target-id");
+      const targetSelector = wrapper.getAttribute("data-be-target-selector");
+      const targetIndex = wrapper.getAttribute("data-be-target-index");
+      const targetName = wrapper.getAttribute("data-be-target-name");
 
-        if (!targetType) return;
+      if (!targetType) return;
 
-        const mergeEntry = {
-            source: spellName ? { type: 'spell', spellName } : { type: 'group', originalId: groupId },
-            target: {
-                type: targetType,
-                id: targetId,
-                selector: targetSelector,
-                index: targetIndex !== null ? parseInt(targetIndex) : undefined,
-                name: targetName
-            }
-        };
+      const mergeEntry = {
+        source: spellName
+          ? { type: "spell", spellName }
+          : { type: "group", originalId: groupId },
+        target: {
+          type: targetType,
+          id: targetId,
+          selector: targetSelector,
+          index: targetIndex !== null ? parseInt(targetIndex) : undefined,
+          name: targetName,
+        },
+      };
 
-        // Source details for groups
-        if (mergeEntry.source.type === 'group') {
-            const orig = document.getElementById(groupId);
-            if (orig) {
-                const res = getExtractionSelector(orig, true);
-                if (res) {
-                    mergeEntry.source.selector = res.selector;
-                    mergeEntry.source.index = res.index;
-                    mergeEntry.source.title = findSectionTitle(orig) || 'Merged Content';
-                }
-            }
+      // Source details for groups
+      if (mergeEntry.source.type === "group") {
+        const orig = document.getElementById(groupId);
+        if (orig) {
+          const res = getExtractionSelector(orig, true);
+          if (res) {
+            mergeEntry.source.selector = res.selector;
+            mergeEntry.source.index = res.index;
+            mergeEntry.source.title =
+              findSectionTitle(orig) || "Merged Content";
+          }
         }
+      }
 
-        layout.merges.push(mergeEntry);
+      layout.merges.push(mergeEntry);
     });
 
     return layout;
-}
+  }
 
-
-
-/**
- * Migrates layout data from older versions to the current schema.
- * @param {object} data 
- * @returns {object} Migrated data.
- */
-function migrateLayout(data) {
-    if (!data || typeof data !== 'object') return data;
+  /**
+   * Migrates layout data from older versions to the current schema.
+   * @param {object} data
+   * @returns {object} Migrated data.
+   */
+  function migrateLayout(data) {
+    if (!data || typeof data !== "object") return data;
 
     // 1. Handle wrapped templates (Catalog/PREMADE format)
-    if (data.data && typeof data.data === 'object' && !data.sections) {
-        const templateData = data.data;
-        // Merge template data into the main object
-        for (const key in templateData) {
-            if (Object.prototype.hasOwnProperty.call(templateData, key)) {
-                data[key] = templateData[key];
-            }
+    if (data.data && typeof data.data === "object" && !data.sections) {
+      const templateData = data.data;
+      // Merge template data into the main object
+      for (const key in templateData) {
+        if (Object.prototype.hasOwnProperty.call(templateData, key)) {
+          data[key] = templateData[key];
         }
-        delete data.data;
+      }
+      delete data.data;
     }
-    
+
     // 2. Version-based Migrations
-    const version = data.version || '1.0.0';
-    
+    const version = data.version || "1.0.0";
+
     // Legacy to 1.4.0 (GIF to WebP migration)
-    if (version < '1.4.0') {
-        safeLog('log', `[DDB Print] Migrating layout from ${version} to 1.4.0...`);
-        
-        const migratePath = (path) => {
-            if (typeof path === 'string' && path.endsWith('.gif')) {
-                return path.replace('.gif', '.webp');
-            }
-            return path;
-        };
+    if (version < "1.4.0") {
+      safeLog(
+        "log",
+        `[DDB Print] Migrating layout from ${version} to 1.4.0...`,
+      );
 
-        // Migrate Shapes
-        if (data.shapes && Array.isArray(data.shapes)) {
-            data.shapes.forEach(shape => {
-                shape.assetPath = migratePath(shape.assetPath);
-            });
+      const migratePath = (path) => {
+        if (typeof path === "string" && path.endsWith(".gif")) {
+          return path.replace(".gif", ".webp");
         }
+        return path;
+      };
 
-        // Migrate Borders in standard sections
-        if (data.sections) {
-            Object.values(data.sections).forEach(sect => {
-                if (sect.borderStyle && typeof sect.borderStyle === 'string') {
-                    // Border styles are classes, but some might have embedded paths in newer versions
-                    // (Though currently they are just class names like 'spikes_border')
-                }
-            });
-        }
+      // Migrate Shapes
+      if (data.shapes && Array.isArray(data.shapes)) {
+        data.shapes.forEach((shape) => {
+          shape.assetPath = migratePath(shape.assetPath);
+        });
+      }
 
-        data.version = '1.4.0';
+      // Migrate Borders in standard sections
+      if (data.sections) {
+        Object.values(data.sections).forEach((sect) => {
+          if (sect.borderStyle && typeof sect.borderStyle === "string") {
+            // Border styles are classes, but some might have embedded paths in newer versions
+            // (Though currently they are just class names like 'spikes_border')
+          }
+        });
+      }
+
+      data.version = "1.4.0";
     }
 
     // Initialize merges array if missing
@@ -6897,100 +7570,102 @@ function migrateLayout(data) {
 
     // Helper to extract merges from legacy associatedExtractions
     const extractLegacyMerges = (containerId, associated) => {
-        if (!Array.isArray(associated)) return;
-        associated.forEach(aEx => {
-            // Avoid duplicates if already migrated
-            const exists = data.merges.some(m => 
-                m.target.id === containerId && 
-                (m.source.originalId === aEx.originalId || m.source.spellName === aEx.spellName)
-            );
-            if (exists) return;
+      if (!Array.isArray(associated)) return;
+      associated.forEach((aEx) => {
+        // Avoid duplicates if already migrated
+        const exists = data.merges.some(
+          (m) =>
+            m.target.id === containerId &&
+            (m.source.originalId === aEx.originalId ||
+              m.source.spellName === aEx.spellName),
+        );
+        if (exists) return;
 
-            data.merges.push({
-                source: aEx, // Structure matches (type, originalId, spellName, etc)
-                target: {
-                    type: 'section',
-                    id: containerId
-                }
-            });
+        data.merges.push({
+          source: aEx, // Structure matches (type, originalId, spellName, etc)
+          target: {
+            type: "section",
+            id: containerId,
+          },
         });
+      });
     };
 
     // Scan extractions
     if (data.extractions) {
-        data.extractions.forEach(ex => {
-            if (ex.associatedExtractions) {
-                extractLegacyMerges(ex.id, ex.associatedExtractions);
-                delete ex.associatedExtractions;
-            }
-        });
+      data.extractions.forEach((ex) => {
+        if (ex.associatedExtractions) {
+          extractLegacyMerges(ex.id, ex.associatedExtractions);
+          delete ex.associatedExtractions;
+        }
+      });
     }
 
     // Scan clones
     if (data.clones) {
-        data.clones.forEach(cl => {
-            if (cl.associatedExtractions) {
-                extractLegacyMerges(cl.id, cl.associatedExtractions);
-                delete cl.associatedExtractions;
-            }
-        });
+      data.clones.forEach((cl) => {
+        if (cl.associatedExtractions) {
+          extractLegacyMerges(cl.id, cl.associatedExtractions);
+          delete cl.associatedExtractions;
+        }
+      });
     }
 
     // Scan standard sections
     if (data.sections) {
-        Object.entries(data.sections).forEach(([id, sect]) => {
-            if (sect.associatedExtractions) {
-                extractLegacyMerges(id, sect.associatedExtractions);
-                delete sect.associatedExtractions;
-            }
-        });
+      Object.entries(data.sections).forEach(([id, sect]) => {
+        if (sect.associatedExtractions) {
+          extractLegacyMerges(id, sect.associatedExtractions);
+          delete sect.associatedExtractions;
+        }
+      });
     }
-    
-    return data;
-}
 
-/**
- * Applies layout information to the current DOM.
- * @param {object} layout 
- */
-async function applyLayout(layout) {
+    return data;
+  }
+
+  /**
+   * Applies layout information to the current DOM.
+   * @param {object} layout
+   */
+  async function applyLayout(layout) {
     layout = Storage.migrateLayout(layout);
     if (!layout) return;
 
-    const peDom = typeof PeDom !== 'undefined' ? PeDom() : null;
+    const peDom = typeof PeDom !== "undefined" ? PeDom() : null;
     const layerManager = peDom ? peDom.getLayerManager() : null;
 
-        // Restore shape layers state
-        if (layerManager && layout.shapeLayers) {
-            // Reset shapeLayers in LayerManager
-            layerManager.shapeLayers = [];
-            layout.shapeLayers.forEach(savedLayer => {
-                const layer = layerManager.addShapeLayer(savedLayer.name, savedLayer);
-                layer.id = savedLayer.id; // Preserve ID
-                layer.layerId = savedLayer.layerId || `print-enhance-layer-${layer.id}`;
-            });
-            
-            // Restore active layer ID if present
-            if (layout.layers && layout.layers.activeLayerId) {
-                layerManager.activeLayerId = layout.layers.activeLayerId;
-                // Sync lock state of the active layer
-                const active = layerManager.getLayerById(layerManager.activeLayerId);
-                if (active) active.isLocked = false;
-            }
+    // Restore shape layers state
+    if (layerManager && layout.shapeLayers) {
+      // Reset shapeLayers in LayerManager
+      layerManager.shapeLayers = [];
+      layout.shapeLayers.forEach((savedLayer) => {
+        const layer = layerManager.addShapeLayer(savedLayer.name, savedLayer);
+        layer.id = savedLayer.id; // Preserve ID
+        layer.layerId = savedLayer.layerId || `print-enhance-layer-${layer.id}`;
+      });
 
-            layerManager.refreshUI();
-            if (window.updateControlsState) window.updateControlsState();
-        }
+      // Restore active layer ID if present
+      if (layout.layers && layout.layers.activeLayerId) {
+        layerManager.activeLayerId = layout.layers.activeLayerId;
+        // Sync lock state of the active layer
+        const active = layerManager.getLayerById(layerManager.activeLayerId);
+        if (active) active.isLocked = false;
+      }
+
+      layerManager.refreshUI();
+      if (window.updateControlsState) window.updateControlsState();
+    }
 
     if (layerManager && layout.layers?.sections) {
-        const layer = layerManager.sectionsLayer;
-        const saved = layout.layers.sections;
-        if (layer) {
-            layer.isLocked = saved.isLocked || false;
-            layer.isHidden = saved.isHidden || false;
-            layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
-        }
-        layerManager.refreshUI();
+      const layer = layerManager.sectionsLayer;
+      const saved = layout.layers.sections;
+      if (layer) {
+        layer.isLocked = saved.isLocked || false;
+        layer.isHidden = saved.isHidden || false;
+        layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
+      }
+      layerManager.refreshUI();
     }
 
     // 0. Ensure elements are flagged (crucial for selector-based restoration)
@@ -6998,242 +7673,272 @@ async function applyLayout(layout) {
 
     // Save spells to cache if present
     if (layout.spell_cache && Array.isArray(layout.spell_cache)) {
-        try {
-            await Storage.init();
-            await Storage.saveSpells(layout.spell_cache);
-        } catch (err) {
-            safeLog('error', '[DDB Print] Could not restore spell cache', err);
-        }
+      try {
+        await Storage.init();
+        await Storage.saveSpells(layout.spell_cache);
+      } catch (err) {
+        safeLog("error", "[DDB Print] Could not restore spell cache", err);
+      }
     }
 
     // Remove existing clones to avoid duplicates on re-apply
-    document.querySelectorAll('.print-section-container.be-clone').forEach(el => el.remove());
+    document
+      .querySelectorAll(".print-section-container.be-clone")
+      .forEach((el) => el.remove());
     // Remove existing extractions to avoid duplicates
-    document.querySelectorAll('.print-section-container.be-extracted-section').forEach(el => {
+    document
+      .querySelectorAll(".print-section-container.be-extracted-section")
+      .forEach((el) => {
         const originalId = el.dataset.originalId;
         const original = document.getElementById(originalId);
-        if (original) original.style.display = '';
+        if (original) original.style.display = "";
         el.remove();
-    });
+      });
 
     // Restore clones
     if (layout.clones && Array.isArray(layout.clones)) {
-        layout.clones.forEach(cloneData => {
-            renderClonedSection(cloneData);
-        });
+      layout.clones.forEach((cloneData) => {
+        renderClonedSection(cloneData);
+      });
     }
 
     // Restore extractions
     if (layout.extractions && Array.isArray(layout.extractions)) {
-        const deferredExtractions = [];
-        layout.extractions.forEach(exData => {
-            const success = renderExtractedSection(exData);
-            if (!success) deferredExtractions.push(exData);
-        });
+      const deferredExtractions = [];
+      layout.extractions.forEach((exData) => {
+        const success = renderExtractedSection(exData);
+        if (!success) deferredExtractions.push(exData);
+      });
 
-        // Retry deferred extractions once after a delay (React lazy-load buffer)
-        if (deferredExtractions.length > 0) {
-            setTimeout(() => {
-                // Re-flag elements just in case new ones appeared
-                flagExtractableElements();
-                deferredExtractions.forEach(exData => {
-                    renderExtractedSection(exData);
-                });
-                if (typeof window.updatePrintStyles === 'function') {
-                    window.updatePrintStyles();
-                }
-            }, 1000);
-        }
+      // Retry deferred extractions once after a delay (React lazy-load buffer)
+      if (deferredExtractions.length > 0) {
+        setTimeout(() => {
+          // Re-flag elements just in case new ones appeared
+          flagExtractableElements();
+          deferredExtractions.forEach((exData) => {
+            renderExtractedSection(exData);
+          });
+          if (typeof window.updatePrintStyles === "function") {
+            window.updatePrintStyles();
+          }
+        }, 1000);
+      }
     }
 
     // Restore spell details
     if (layout.spell_details && Array.isArray(layout.spell_details)) {
-        for (const spellData of layout.spell_details) {
-            const container = await createSpellDetailSection(spellData.spellName, null, spellData);
-            if (container && spellData.borderStyle) {
-                container.classList.add(spellData.borderStyle);
-            }
+      for (const spellData of layout.spell_details) {
+        const container = await createSpellDetailSection(
+          spellData.spellName,
+          null,
+          spellData,
+        );
+        if (container && spellData.borderStyle) {
+          container.classList.add(spellData.borderStyle);
         }
+      }
     }
 
     // Restore shapes from multi-layer format
-    if (layerManager && layout.shapeLayers && Array.isArray(layout.shapeLayers)) {
-        // Remove existing shape wrappers to avoid duplicates and ID conflicts
-        document.querySelectorAll('.be-shape-wrapper').forEach(el => el.remove());
+    if (
+      layerManager &&
+      layout.shapeLayers &&
+      Array.isArray(layout.shapeLayers)
+    ) {
+      // Remove existing shape wrappers to avoid duplicates and ID conflicts
+      document
+        .querySelectorAll(".be-shape-wrapper")
+        .forEach((el) => el.remove());
 
-        // Restore each layer and its elements
-        layout.shapeLayers.forEach(layerData => {
-            const layer = layerManager.getLayerById(layerData.id) || layerManager.addShapeLayer(layerData.name, layerData);
-            if (layer) {
-                // Ensure correct state
-                layer.id = layerData.id;
-                layer.isLocked = layerData.isLocked;
-                layer.isHidden = layerData.isHidden;
-                layer.isDisabledOnPrint = layerData.isDisabledOnPrint;
+      // Restore each layer and its elements
+      layout.shapeLayers.forEach((layerData) => {
+        const layer =
+          layerManager.getLayerById(layerData.id) ||
+          layerManager.addShapeLayer(layerData.name, layerData);
+        if (layer) {
+          // Ensure correct state
+          layer.id = layerData.id;
+          layer.isLocked = layerData.isLocked;
+          layer.isHidden = layerData.isHidden;
+          layer.isDisabledOnPrint = layerData.isDisabledOnPrint;
 
-                if (Array.isArray(layerData.elements)) {
-                    layerData.elements.forEach(elementData => {
-                        createShape(elementData.assetPath, elementData, layer.layerId);
-                    });
-                }
-            }
-        });
-        layerManager.refreshUI();
+          if (Array.isArray(layerData.elements)) {
+            layerData.elements.forEach((elementData) => {
+              createShape(elementData.assetPath, elementData, layer.layerId);
+            });
+          }
+        }
+      });
+      layerManager.refreshUI();
     } else if (layout.shapes && Array.isArray(layout.shapes)) {
-        // Fallback to legacy single layer shapes if shapeLayers not present
-        // Remove existing shapes to avoid duplicates
-        document.querySelectorAll('.print-section-container.be-shape').forEach(el => el.remove());
-        layout.shapes.forEach(shapeData => {
-            createShape(shapeData.assetPath, shapeData);
-        });
+      // Fallback to legacy single layer shapes if shapeLayers not present
+      // Remove existing shapes to avoid duplicates
+      document
+        .querySelectorAll(".print-section-container.be-shape")
+        .forEach((el) => el.remove());
+      layout.shapes.forEach((shapeData) => {
+        createShape(shapeData.assetPath, shapeData);
+      });
     }
 
     for (const [id, styles] of Object.entries(layout.sections)) {
-        const section = document.getElementById(id);
-        if (!section) continue;
+      const section = document.getElementById(id);
+      if (!section) continue;
 
-        const wrapper = section.closest('.be-section-wrapper') || section;
+      const wrapper = section.closest(".be-section-wrapper") || section;
 
-        // Apply border style
-        clearBorderStyles(section);
-        if (styles.borderStyle) {
-            section.classList.add(styles.borderStyle);
-        }
+      // Apply border style
+      clearBorderStyles(section);
+      if (styles.borderStyle) {
+        section.classList.add(styles.borderStyle);
+      }
 
-        // Apply main styles
-        if (styles.left) wrapper.style.left = styles.left;
-        if (styles.top) wrapper.style.top = styles.top;
-        if (styles.width) section.style.width = styles.width;
-        if (styles.height) section.style.height = styles.height;
-        if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
-        if (styles.printZIndex) wrapper.dataset.printZ = styles.printZIndex;
-        if (styles.fontSize) applyFontSize(wrapper, styles.fontSize);
+      // Apply main styles
+      if (styles.left) wrapper.style.left = styles.left;
+      if (styles.top) wrapper.style.top = styles.top;
+      if (styles.width) section.style.width = styles.width;
+      if (styles.height) section.style.height = styles.height;
+      if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
+      if (styles.printZIndex) wrapper.dataset.printZ = styles.printZIndex;
+      if (styles.fontSize) applyFontSize(wrapper, styles.fontSize);
 
-        // Ensure container doesn't have duplicate positioning
-        section.style.left = '';
-        section.style.top = '';
+      // Ensure container doesn't have duplicate positioning
+      section.style.left = "";
+      section.style.top = "";
 
-        // Handle minimization
-        if (styles.minimized) {
-            section.dataset.minimized = 'true';
-            const content = section.querySelector('.print-section-content');
-            if (content) content.style.display = 'none';
-        } else {
-            section.dataset.minimized = 'false';
-            const content = section.querySelector('.print-section-content');
-            if (content) content.style.display = 'flex';
-        }
+      // Handle minimization
+      if (styles.minimized) {
+        section.dataset.minimized = "true";
+        const content = section.querySelector(".print-section-content");
+        if (content) content.style.display = "none";
+      } else {
+        section.dataset.minimized = "false";
+        const content = section.querySelector(".print-section-content");
+        if (content) content.style.display = "flex";
+      }
 
-        // Handle compact mode restoration
-        if (styles.compact) {
-            section.classList.add('be-compact-mode');
-            const btn = section.querySelector('.be-compact-button');
-            if (btn) btn.style.backgroundColor = 'var(--btn-color)';
-        } else {
-            section.classList.remove('be-compact-mode');
-            const btn = section.querySelector('.be-compact-button');
-            if (btn) btn.style.backgroundColor = 'var(--btn-color-highlight)';
-        }
+      // Handle compact mode restoration
+      if (styles.compact) {
+        section.classList.add("be-compact-mode");
+        const btn = section.querySelector(".be-compact-button");
+        if (btn) btn.style.backgroundColor = "var(--btn-color)";
+      } else {
+        section.classList.remove("be-compact-mode");
+        const btn = section.querySelector(".be-compact-button");
+        if (btn) btn.style.backgroundColor = "var(--btn-color-highlight)";
+      }
 
-        // Apply inner widths
-        if (styles.innerWidths) {
-            const innerContainers = section.querySelectorAll('div[class$="-row-header"], div[class$="-content"]');
-            for (const [key, width] of Object.entries(styles.innerWidths)) {
-                const [cIdx, dIdx] = key.split('-').map(Number);
-                const container = innerContainers[cIdx];
-                if (container) {
-                    const child = container.children[dIdx];
-                    if (child && child.tagName === 'DIV') {
-                        child.style.width = width;
-                        child.style.minWidth = width;
-                    }
-                }
+      // Apply inner widths
+      if (styles.innerWidths) {
+        const innerContainers = section.querySelectorAll(
+          'div[class$="-row-header"], div[class$="-content"]',
+        );
+        for (const [key, width] of Object.entries(styles.innerWidths)) {
+          const [cIdx, dIdx] = key.split("-").map(Number);
+          const container = innerContainers[cIdx];
+          if (container) {
+            const child = container.children[dIdx];
+            if (child && child.tagName === "DIV") {
+              child.style.width = width;
+              child.style.minWidth = width;
             }
+          }
         }
+      }
     }
 
     // 5. Restore Systematic Merges
     if (layout.merges && Array.isArray(layout.merges)) {
-        for (const merge of layout.merges) {
-            try {
-                let sourceContainer = null;
-                
-                // 5.1 Resolve or Create Source
-                if (merge.source.type === 'spell') {
-                    sourceContainer = await createSpellDetailSection(merge.source.spellName, { x: 0, y: 0 });
-                } else if (merge.source.type === 'group') {
-                    // Re-extract the group
-                    let original = document.getElementById(merge.source.originalId);
-                    if (!original && merge.source.selector) {
-                        const matches = document.querySelectorAll(merge.source.selector);
-                        original = matches[merge.source.index];
-                        if (original) original.id = merge.source.originalId;
-                    }
-                    if (original) {
-                        sourceContainer = await handleElementExtraction(original);
-                    }
-                }
+      for (const merge of layout.merges) {
+        try {
+          let sourceContainer = null;
 
-                if (!sourceContainer) continue;
-
-                // 5.2 Resolve Target
-                let targetInfo = null;
-                if (merge.target.type === 'section') {
-                    const tEl = document.getElementById(merge.target.id);
-                    if (tEl) {
-                        targetInfo = {
-                            type: 'section',
-                            id: merge.target.id,
-                            element: tEl,
-                            name: merge.target.id
-                        };
-                    }
-                } else if (merge.target.type === 'sheet') {
-                    let tEl = document.getElementById(merge.target.id);
-                    if (!tEl && merge.target.selector) {
-                        const matches = document.querySelectorAll(merge.target.selector);
-                        tEl = matches[merge.target.index];
-                    }
-                    if (tEl) {
-                        targetInfo = {
-                            type: 'sheet',
-                            id: merge.target.id,
-                            element: tEl,
-                            name: merge.target.name || 'Sheet Target'
-                        };
-                    }
-                }
-
-                // 5.3 Execute Merge
-                if (targetInfo && sourceContainer) {
-                    // safeLog('log', `[DDB Print] Restoring merge: ${sourceContainer.id} -> ${targetInfo.name || targetInfo.id}`);
-                    handleMergeSections(sourceContainer, targetInfo);
-                } else {
-                    safeLog('warn', '[DDB Print] Could not resolve merge target or source', merge.target, !!sourceContainer);
-                }
-            } catch (err) {
-                safeLog('error', '[DDB Print] Failed to process merge', merge, err);
+          // 5.1 Resolve or Create Source
+          if (merge.source.type === "spell") {
+            sourceContainer = await createSpellDetailSection(
+              merge.source.spellName,
+              { x: 0, y: 0 },
+            );
+          } else if (merge.source.type === "group") {
+            // Re-extract the group
+            let original = document.getElementById(merge.source.originalId);
+            if (!original && merge.source.selector) {
+              const matches = document.querySelectorAll(merge.source.selector);
+              original = matches[merge.source.index];
+              if (original) original.id = merge.source.originalId;
             }
+            if (original) {
+              sourceContainer = await handleElementExtraction(original);
+            }
+          }
+
+          if (!sourceContainer) continue;
+
+          // 5.2 Resolve Target
+          let targetInfo = null;
+          if (merge.target.type === "section") {
+            const tEl = document.getElementById(merge.target.id);
+            if (tEl) {
+              targetInfo = {
+                type: "section",
+                id: merge.target.id,
+                element: tEl,
+                name: merge.target.id,
+              };
+            }
+          } else if (merge.target.type === "sheet") {
+            let tEl = document.getElementById(merge.target.id);
+            if (!tEl && merge.target.selector) {
+              const matches = document.querySelectorAll(merge.target.selector);
+              tEl = matches[merge.target.index];
+            }
+            if (tEl) {
+              targetInfo = {
+                type: "sheet",
+                id: merge.target.id,
+                element: tEl,
+                name: merge.target.name || "Sheet Target",
+              };
+            }
+          }
+
+          // 5.3 Execute Merge
+          if (targetInfo && sourceContainer) {
+            // safeLog('log', `[DDB Print] Restoring merge: ${sourceContainer.id} -> ${targetInfo.name || targetInfo.id}`);
+            handleMergeSections(sourceContainer, targetInfo);
+          } else {
+            safeLog(
+              "warn",
+              "[DDB Print] Could not resolve merge target or source",
+              merge.target,
+              !!sourceContainer,
+            );
+          }
+        } catch (err) {
+          safeLog("error", "[DDB Print] Failed to process merge", merge, err);
         }
+      }
     }
 
     updateLayoutBounds();
     refreshLayers();
-    if (typeof updatePrintStyles === 'function') {
-        updatePrintStyles();
+    if (typeof updatePrintStyles === "function") {
+      updatePrintStyles();
     }
-}
+  }
 
-/**
- * Draws visual page separators to indicate print boundaries.
- * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
- */
-function drawPageSeparators(totalHeight, totalWidth) {
-    const container = document.getElementById('print-layout-wrapper');
+  /**
+   * Draws visual page separators to indicate print boundaries.
+   * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
+   */
+  function drawPageSeparators(totalHeight, totalWidth) {
+    const container = document.getElementById("print-layout-wrapper");
     if (!container) return;
 
     // Remove existing separators
-    container.querySelectorAll('.print-page-separator').forEach(el => el.remove());
+    container
+      .querySelectorAll(".print-page-separator")
+      .forEach((el) => el.remove());
 
     // Constants for Letter Portrait at 96 DPI
     // Standard Letter is 8.5in x 11in.
@@ -7250,232 +7955,288 @@ function drawPageSeparators(totalHeight, totalWidth) {
     // Effective Pixel Height = 1056 / Scale Factor
     // Example: 1200px wide content. Scale = 0.68.
     // Effective Height = 1056 / 0.68 = 1552px.
-    
+
     // Default scale is 1 if content fits or is smaller
     let effectivePageHeight = PAGE_HEIGHT_PX;
     let scaleLabel = "100%";
-    
+
     if (totalWidth > PAGE_WIDTH_PX) {
-        const scale = PAGE_WIDTH_PX / totalWidth;
-        effectivePageHeight = PAGE_HEIGHT_PX / scale;
-        scaleLabel = `${Math.round(scale * 100)}%`;
+      const scale = PAGE_WIDTH_PX / totalWidth;
+      effectivePageHeight = PAGE_HEIGHT_PX / scale;
+      scaleLabel = `${Math.round(scale * 100)}%`;
     }
 
-    safeLog('log', `[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`);
+    safeLog(
+      "log",
+      `[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`,
+    );
 
     let currentY = effectivePageHeight;
     let pageNum = 1;
-    
+
     while (currentY < totalHeight) {
-        const separator = document.createElement('div');
-        separator.className = 'print-page-separator';
-        separator.style.position = 'absolute';
-        separator.style.left = '0';
-        separator.style.top = `${currentY}px`;
-        separator.style.width = `${totalWidth}px`;
-        separator.style.height = '2px';
-        separator.style.borderTop = '2px dashed red';
-        separator.style.zIndex = '99995'; 
-        separator.style.pointerEvents = 'none';
-        separator.style.opacity = '0.5';
-        
-        // Label
-        const label = document.createElement('span');
-        label.textContent = `Page ${pageNum} END (Scale: ${scaleLabel})`;
-        label.style.position = 'absolute';
-        label.style.right = '5px';
-        label.style.top = '-15px';
-        label.style.color = 'red';
-        label.style.fontSize = '12px';
-        label.style.fontWeight = 'bold';
-        label.style.backgroundColor = 'rgba(255,255,255,0.8)';
-        
-        separator.appendChild(label);
-        container.appendChild(separator);
-        
-        currentY += effectivePageHeight;
-        pageNum++;
+      const separator = document.createElement("div");
+      separator.className = "print-page-separator";
+      separator.style.position = "absolute";
+      separator.style.left = "0";
+      separator.style.top = `${currentY}px`;
+      separator.style.width = `${totalWidth}px`;
+      separator.style.height = "2px";
+      separator.style.borderTop = "2px dashed red";
+      separator.style.zIndex = "99995";
+      separator.style.pointerEvents = "none";
+      separator.style.opacity = "0.5";
+
+      // Label
+      const label = document.createElement("span");
+      label.textContent = `Page ${pageNum} END (Scale: ${scaleLabel})`;
+      label.style.position = "absolute";
+      label.style.right = "5px";
+      label.style.top = "-15px";
+      label.style.color = "red";
+      label.style.fontSize = "12px";
+      label.style.fontWeight = "bold";
+      label.style.backgroundColor = "rgba(255,255,255,0.8)";
+
+      separator.appendChild(label);
+      container.appendChild(separator);
+
+      currentY += effectivePageHeight;
+      pageNum++;
     }
-}
+  }
 
-
-/**
- * Gets or creates a container for section-level action buttons (Clone, Compact, Append, Delete).
- * @param {HTMLElement} section The section element.
- * @returns {HTMLElement} The container element.
- */
-function getOrCreateActionContainer(section) {
-    const wrapper = section.closest('.be-section-wrapper') || section;
-    let container = wrapper.querySelector('.be-section-actions');
+  /**
+   * Gets or creates a container for section-level action buttons (Clone, Compact, Append, Delete).
+   * @param {HTMLElement} section The section element.
+   * @returns {HTMLElement} The container element.
+   */
+  function getOrCreateActionContainer(section) {
+    const wrapper = section.closest(".be-section-wrapper") || section;
+    let container = wrapper.querySelector(".be-section-actions");
     if (!container) {
-        container = document.createElement('div');
-        container.className = 'be-section-actions';
-        // Ensure buttons are reachable
-        container.style.zIndex = '1000000';
-        container.style.pointerEvents = 'all';
-        wrapper.appendChild(container);
+      container = document.createElement("div");
+      container.className = "be-section-actions";
+      // Ensure buttons are reachable
+      container.style.zIndex = "1000000";
+      container.style.pointerEvents = "all";
+      wrapper.appendChild(container);
     }
     return container;
-}
+  }
 
-/**
- * Injects clone buttons and compact toggles into sections.
- */
-function injectCloneButtons(context = document) {
+  /**
+   * Injects clone buttons and compact toggles into sections.
+   */
+  function injectCloneButtons(context = document) {
     const s = window.DomManager.getInstance().selectors;
     const selector = `${s.UI.SUBSECTION}, ${s.UI.SECTION}, .print-section-container, .be-shape-container`;
     // If the context itself matches the selector, include it
     const elements = Array.from(context.querySelectorAll(selector));
     if (context instanceof HTMLElement && context.matches(selector)) {
-        elements.push(context);
+      elements.push(context);
     }
 
-    elements.forEach(section => {
-        const actionContainer = getOrCreateActionContainer(section);
+    elements.forEach((section) => {
+      const actionContainer = getOrCreateActionContainer(section);
 
-        // Helper to add robust button
-        const addRobustButton = (className, icon, title, action) => {
-            if (actionContainer.querySelector(`.${className}`)) return;
+      // Helper to add robust button
+      const addRobustButton = (className, icon, title, action) => {
+        if (actionContainer.querySelector(`.${className}`)) return;
 
-            const btn = document.createElement('button');
-            btn.className = className;
-            btn.innerHTML = icon;
-            btn.title = title;
+        const btn = document.createElement("button");
+        btn.className = className;
+        btn.innerHTML = icon;
+        btn.title = title;
 
-            const log = (msg) => safeLog('log', `[DDB Print] Section Button ${className} (${section.id}): ${msg}`);
+        const log = (msg) =>
+          safeLog(
+            "log",
+            `[DDB Print] Section Button ${className} (${section.id}): ${msg}`,
+          );
 
-            btn.addEventListener('mousedown', () => log('Mousedown'));
-            btn.addEventListener('mouseup', () => log('Mouseup'));
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                log('Clicked');
-                try {
-                    await action(e);
-                } catch (err) {
-                    safeLog('error', `[DDB Print] Error in section button ${className}:`, err);
-                }
-            });
-
-            actionContainer.appendChild(btn);
-        };
-
-        // 0. Select Section Button
-        addRobustButton('be-select-section-button', '🎯', 'Select Section for Editing', (e) => {
-            setActiveSection(section);
-            showFeedback('Section selected for editing');
+        btn.addEventListener("mousedown", () => log("Mousedown"));
+        btn.addEventListener("mouseup", () => log("Mouseup"));
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          log("Clicked");
+          try {
+            await action(e);
+          } catch (err) {
+            safeLog(
+              "error",
+              `[DDB Print] Error in section button ${className}:`,
+              err,
+            );
+          }
         });
 
-        // 1. Clone Button
-        addRobustButton('be-clone-button', '📋', 'Clone Section', async (e) => {
-            const id = section.id || 'unknown';
-            const wrapper = section.closest('.be-section-wrapper') || section;
-            const sectionName = wrapper.dataset.title || section.querySelector(`${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`)?.textContent.trim() || 'Section';
+        actionContainer.appendChild(btn);
+      };
 
-            const title = await showInputModal('Clone Section', `Enter a name for this ${sectionName} clone:`, `${sectionName} (Clone)`);
+      // 0. Select Section Button
+      addRobustButton(
+        "be-select-section-button",
+        "🎯",
+        "Select Section for Editing",
+        (e) => {
+          setActiveSection(section);
+          showFeedback("Section selected for editing");
+        },
+      );
 
-            if (title) {
-                const snapshot = captureSectionSnapshot(id);
-                if (snapshot) {
-                    snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-                    snapshot.title = title;
+      // 1. Clone Button
+      addRobustButton("be-clone-button", "📋", "Clone Section", async (e) => {
+        const id = section.id || "unknown";
+        const wrapper = section.closest(".be-section-wrapper") || section;
+        const sectionName =
+          wrapper.dataset.title ||
+          section
+            .querySelector(
+              `${s.CORE.SUBSECTION_HEADER}, ${s.CORE.SECTION_HEADER}, .print-section-header span`,
+            )
+            ?.textContent.trim() ||
+          "Section";
 
-                    const clone = renderClonedSection(snapshot);
-                    if (clone) {
-                        showFeedback(`Cloned: ${title}`);
-                        updateLayoutBounds();
-                        injectCloneButtons();
-                        injectSpellDetailTriggers(clone);
-                    }
-                } else {
-                    showFeedback('Failed to capture snapshot.');
-                }
+        const title = await showInputModal(
+          "Clone Section",
+          `Enter a name for this ${sectionName} clone:`,
+          `${sectionName} (Clone)`,
+        );
+
+        if (title) {
+          const snapshot = captureSectionSnapshot(id);
+          if (snapshot) {
+            snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            snapshot.title = title;
+
+            const clone = renderClonedSection(snapshot);
+            if (clone) {
+              showFeedback(`Cloned: ${title}`);
+              updateLayoutBounds();
+              injectCloneButtons();
+              injectSpellDetailTriggers(clone);
             }
-        });
-
-        // 2. Compact Mode Button
-        const sourceId = section.dataset.originalId || section.id || '';
-        const isNumbered = /^section-Section-\d+$/.test(sourceId);
-
-        if (sourceId && !isNumbered) {
-            addRobustButton('be-compact-button', '📏', 'Toggle Compact Mode', (e) => {
-                const btn = e.currentTarget;
-                const isCompact = section.classList.toggle('be-compact-mode');
-                btn.style.backgroundColor = isCompact ? 'var(--btn-color)' : 'var(--btn-color-highlight)';
-                updateLayoutBounds();
-            });
+          } else {
+            showFeedback("Failed to capture snapshot.");
+          }
         }
+      });
 
-        // 3. Border Style Button
-        addRobustButton('be-border-button', '🖼️', 'Select Border Style', async (e) => {
-            const currentStyle = ALL_BORDER_STYLES.find(style => section.classList.contains(style)) || 'default-border';
-            const result = await showBorderPickerModal(currentStyle);
+      // 2. Compact Mode Button
+      const sourceId = section.dataset.originalId || section.id || "";
+      const isNumbered = /^section-Section-\d+$/.test(sourceId);
 
-            if (result) {
-                clearBorderStyles(section);
-                section.classList.add(result.style);
-                updateLayoutBounds();
+      if (sourceId && !isNumbered) {
+        addRobustButton(
+          "be-compact-button",
+          "📏",
+          "Toggle Compact Mode",
+          (e) => {
+            const btn = e.currentTarget;
+            const isCompact = section.classList.toggle("be-compact-mode");
+            btn.style.backgroundColor = isCompact
+              ? "var(--btn-color)"
+              : "var(--btn-color-highlight)";
+            updateLayoutBounds();
+          },
+        );
+      }
+
+      // 3. Border Style Button
+      addRobustButton(
+        "be-border-button",
+        "🖼️",
+        "Select Border Style",
+        async (e) => {
+          const currentStyle =
+            ALL_BORDER_STYLES.find((style) =>
+              section.classList.contains(style),
+            ) || "default-border";
+          const result = await showBorderPickerModal(currentStyle);
+
+          if (result) {
+            clearBorderStyles(section);
+            section.classList.add(result.style);
+            updateLayoutBounds();
+          }
+        },
+      );
+
+      const isShape = section.classList.contains("be-shape-container");
+
+      // 4. Delete Button (Generic for all)
+      addRobustButton(
+        "be-clone-delete",
+        "🗑️",
+        isShape ? "Delete Shape" : "Delete Section",
+        (e) => {
+          const wrapper =
+            section.closest(".be-section-wrapper") ||
+            section.closest(".be-shape-wrapper");
+          if (wrapper) {
+            if (
+              confirm(
+                `Are you sure you want to delete this ${isShape ? "shape" : "section"}?`,
+              )
+            ) {
+              wrapper.remove();
+              updateLayoutBounds();
+              refreshLayers();
             }
+          }
+        },
+      );
+
+      // 5. Rotate Tool Button (only for shapes)
+      if (isShape) {
+        addRobustButton("be-shape-rotate", "↻", "Toggle Rotation Tool", (e) => {
+          const event = new CustomEvent("be-rotate-click", { bubbles: true });
+          e.target.dispatchEvent(event);
         });
-
-        const isShape = section.classList.contains('be-shape-container');
-
-        // 4. Delete Button (Generic for all)
-        addRobustButton('be-clone-delete', '🗑️', isShape ? 'Delete Shape' : 'Delete Section', (e) => {
-            const wrapper = section.closest('.be-section-wrapper') || section.closest('.be-shape-wrapper');
-            if (wrapper) {
-                if (confirm(`Are you sure you want to delete this ${isShape ? 'shape' : 'section'}?`)) {
-                    wrapper.remove();
-                    updateLayoutBounds();
-                    refreshLayers();
-                }
-            }
-        });
-
-        // 5. Rotate Tool Button (only for shapes)
-        if (isShape) {
-            addRobustButton('be-shape-rotate', '↻', 'Toggle Rotation Tool', (e) => {
-                const event = new CustomEvent('be-rotate-click', { bubbles: true });
-                e.target.dispatchEvent(event);
-            });
-        }
+      }
     });
-}
-/**
- * Applies font size and proportional scale variable to a section wrapper.
- */
-function applyFontSize(wrapper, sizeStr) {
+  }
+  /**
+   * Applies font size and proportional scale variable to a section wrapper.
+   */
+  function applyFontSize(wrapper, sizeStr) {
     if (!wrapper || !sizeStr) return;
-    
-    wrapper.style.setProperty('font-size', sizeStr, 'important');
-    
+
+    wrapper.style.setProperty("font-size", sizeStr, "important");
+
     // Extract scale relative to 10px base
     let numericValue = 10;
     const match = sizeStr.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
     if (match) {
-        numericValue = parseFloat(match[1]);
-        const unit = match[2];
-        if (unit === '%') numericValue = (numericValue / 100) * 10;
-        // em/rem are tricky without root context, but we'll assume they are relative to 16px
-        if (unit === 'em' || unit === 'rem') numericValue = numericValue * 16;
-        
-        const scale = numericValue / 10;
-        wrapper.style.setProperty('--be-font-scale', scale.toString(), 'important');
-    }
-}
+      numericValue = parseFloat(match[1]);
+      const unit = match[2];
+      if (unit === "%") numericValue = (numericValue / 100) * 10;
+      // em/rem are tricky without root context, but we'll assume they are relative to 16px
+      if (unit === "em" || unit === "rem") numericValue = numericValue * 16;
 
-/**
- * Injects CSS for Compact Mode.
- */
-function injectCompactStyles() {
-    if (document.getElementById('ddb-print-compact-style')) return;
+      const scale = numericValue / 10;
+      wrapper.style.setProperty(
+        "--be-font-scale",
+        scale.toString(),
+        "important",
+      );
+    }
+  }
+
+  /**
+   * Injects CSS for Compact Mode.
+   */
+  function injectCompactStyles() {
+    if (document.getElementById("ddb-print-compact-style")) return;
 
     const s = window.DomManager.getInstance().selectors;
-    
-    // Ensure all keys exist to prevent template error if fallback was partial
-    const c = s.COMPACT; 
 
-    const style = document.createElement('style');
-    style.id = 'ddb-print-compact-style';
+    // Ensure all keys exist to prevent template error if fallback was partial
+    const c = s.COMPACT;
+
+    const style = document.createElement("style");
+    style.id = "ddb-print-compact-style";
     style.textContent = `
         .print-section-container.be-compact-mode {
             --reduce-height-by: 0px;
@@ -7662,95 +8423,95 @@ function injectCompactStyles() {
         }
     `;
     document.head.appendChild(style);
-}
+  }
 
-    // Expose for testing synchronously
+  // Expose for testing synchronously
 
-    window.createDraggableContainer = createDraggableContainer;
-    window.extractAndWrapSections = extractAndWrapSections;
-    window.injectClonesIntoSpellsView = injectClonesIntoSpellsView;
-    window.enforceFullHeight = enforceFullHeight;
-    window.removeSearchBoxes = removeSearchBoxes;
-    window.tweakStyles = tweakStyles;
-    window.injectCompactStyles = injectCompactStyles;
-    window.moveDefenses = moveDefenses;
-    window.movePortrait = movePortrait;
-    window.initResponsiveScaling = initResponsiveScaling;
-    window.initZIndexManagement = initZIndexManagement;
-    window.autoArrangeSections = autoArrangeSections;
-    window.initResizeLogic = initResizeLogic;
-    window.updateLayoutBounds = updateLayoutBounds;
-    window.removeSpecificSvgs = removeSpecificSvgs;
-    window.drawPageSeparators = drawPageSeparators;
-    window.moveQuickInfo = moveQuickInfo;
-    window.toggleShapesMode = toggleShapesMode;
-    window.suppressResizeEvents = suppressResizeEvents;
-    window.separateAbilities = separateAbilities;
-    window.separateQuickInfoBoxes = separateQuickInfoBoxes;
-    window.adjustInnerContentWidth = adjustInnerContentWidth;
-    window.scanLayout = scanLayout;
-    window.migrateLayout = migrateLayout;
-    window.applyLayout = applyLayout;
-    window.applyDefaultLayout = applyDefaultLayout;
-    window.handleSaveBrowser = handleSaveBrowser;
-    window.handleLoadDefault = handleLoadDefault;
-    window.handleSavePC = handleSavePC;
-    window.handleLoadFile = handleLoadFile;
-    window.restoreLayout = restoreLayout;
-    window.showFeedback = showFeedback;
-    window.createControls = createControls;
-    window.showFallbackModal = showFallbackModal;
-    window.showInputModal = showInputModal;
-    window.showBorderPickerModal = showBorderPickerModal;
-    window.showShapePickerModal = showShapePickerModal;
-    window.handleManageClones = handleManageClones;
-    window.getOrCreateActionContainer = getOrCreateActionContainer;
-    window.captureSectionSnapshot = captureSectionSnapshot;
-    window.renderClonedSection = renderClonedSection;
-    window.createShape = createShape;
-    window.applyShapeAsset = applyShapeAsset;
-    window.Storage = Storage;
-    window.injectCloneButtons = injectCloneButtons;
-    window.injectSpellDetailTriggers = injectSpellDetailTriggers;
-    window.flagExtractableElements = flagExtractableElements;
-    window.findSectionTitle = findSectionTitle;
-    window.applyGlobalFilters = applyGlobalFilters;
-    window.createSpellDetailSection = createSpellDetailSection;
-    window.injectAppendButton = injectAppendButton;
-    window.getMergeTargets = getMergeTargets;
-    window.handleMergeSections = handleMergeSections;
-    window.handleElementExtraction = handleElementExtraction;
-    window.rollbackSection = rollbackSection;
-    window.getCharacterId = getCharacterId;
-    window.fetchSpellWithCache = fetchSpellWithCache;
-    window.getCharacterSpells = getCharacterSpells;
-    window.setActiveSection = setActiveSection;
-    window.getActiveSection = getActiveSection;
+  window.createDraggableContainer = createDraggableContainer;
+  window.extractAndWrapSections = extractAndWrapSections;
+  window.injectClonesIntoSpellsView = injectClonesIntoSpellsView;
+  window.enforceFullHeight = enforceFullHeight;
+  window.removeSearchBoxes = removeSearchBoxes;
+  window.tweakStyles = tweakStyles;
+  window.injectCompactStyles = injectCompactStyles;
+  window.moveDefenses = moveDefenses;
+  window.movePortrait = movePortrait;
+  window.initResponsiveScaling = initResponsiveScaling;
+  window.initZIndexManagement = initZIndexManagement;
+  window.autoArrangeSections = autoArrangeSections;
+  window.initResizeLogic = initResizeLogic;
+  window.updateLayoutBounds = updateLayoutBounds;
+  window.removeSpecificSvgs = removeSpecificSvgs;
+  window.drawPageSeparators = drawPageSeparators;
+  window.moveQuickInfo = moveQuickInfo;
+  window.toggleShapesMode = toggleShapesMode;
+  window.suppressResizeEvents = suppressResizeEvents;
+  window.separateAbilities = separateAbilities;
+  window.separateQuickInfoBoxes = separateQuickInfoBoxes;
+  window.adjustInnerContentWidth = adjustInnerContentWidth;
+  window.scanLayout = scanLayout;
+  window.migrateLayout = migrateLayout;
+  window.applyLayout = applyLayout;
+  window.applyDefaultLayout = applyDefaultLayout;
+  window.handleSaveBrowser = handleSaveBrowser;
+  window.handleLoadDefault = handleLoadDefault;
+  window.handleSavePC = handleSavePC;
+  window.handleLoadFile = handleLoadFile;
+  window.restoreLayout = restoreLayout;
+  window.showFeedback = showFeedback;
+  window.createControls = createControls;
+  window.showFallbackModal = showFallbackModal;
+  window.showInputModal = showInputModal;
+  window.showBorderPickerModal = showBorderPickerModal;
+  window.showShapePickerModal = showShapePickerModal;
+  window.handleManageClones = handleManageClones;
+  window.getOrCreateActionContainer = getOrCreateActionContainer;
+  window.captureSectionSnapshot = captureSectionSnapshot;
+  window.renderClonedSection = renderClonedSection;
+  window.createShape = createShape;
+  window.applyShapeAsset = applyShapeAsset;
+  window.Storage = Storage;
+  window.injectCloneButtons = injectCloneButtons;
+  window.injectSpellDetailTriggers = injectSpellDetailTriggers;
+  window.flagExtractableElements = flagExtractableElements;
+  window.findSectionTitle = findSectionTitle;
+  window.applyGlobalFilters = applyGlobalFilters;
+  window.createSpellDetailSection = createSpellDetailSection;
+  window.injectAppendButton = injectAppendButton;
+  window.getMergeTargets = getMergeTargets;
+  window.handleMergeSections = handleMergeSections;
+  window.handleElementExtraction = handleElementExtraction;
+  window.rollbackSection = rollbackSection;
+  window.getCharacterId = getCharacterId;
+  window.fetchSpellWithCache = fetchSpellWithCache;
+  window.getCharacterSpells = getCharacterSpells;
+  window.setActiveSection = setActiveSection;
+  window.getActiveSection = getActiveSection;
 
-// Execution
-(async () => {
+  // Execution
+  (async () => {
     if (window.__DDB_TEST_MODE__) return;
-    
+
     // Initialize storage first
     try {
-        await Storage.init();
+      await Storage.init();
     } catch (err) {
-        safeLog('error', '[DDB Print] Failed to initialize storage:', err);
+      safeLog("error", "[DDB Print] Failed to initialize storage:", err);
     }
 
     // Stabilize layout by suppressing global resize events
     suppressResizeEvents();
-    
+
     // Idempotency: cleanup previous run if exists
-    const existingWrapper = document.getElementById('print-layout-wrapper');
+    const existingWrapper = document.getElementById("print-layout-wrapper");
     if (existingWrapper) {
-        // User Request: Confirmation for re-run
-        if (confirm('You need to reload to apply changes again, are you sure?')) {
-            window.location.reload();
-            return;
-        } else {
-            return; // Do nothing
-        }
+      // User Request: Confirmation for re-run
+      if (confirm("You need to reload to apply changes again, are you sure?")) {
+        window.location.reload();
+        return;
+      } else {
+        return; // Do nothing
+      }
     }
 
     enforceFullHeight();
@@ -7763,27 +8524,28 @@ function injectCompactStyles() {
     moveQuickInfo(); // User Request: Make Quick Info draggable
     separateAbilities();
     separateQuickInfoBoxes();
+    addInteractiveTidbitSection();
     injectCloneButtons();
     flagExtractableElements();
     initDragAndDrop();
     initHoverHighlights();
     if (window.injectDnDStyles) {
-        window.injectDnDStyles();
-        safeLog('log', '[DDB Print] DnD Styles Injected');
+      window.injectDnDStyles();
+      safeLog("log", "[DDB Print] DnD Styles Injected");
     }
     initResponsiveScaling();
     initZIndexManagement();
     initResizeLogic();
-    
+
     // UI Controls
     createControls();
-    
+
     let layoutRestored = false;
     layoutRestored = await restoreLayout();
     if (layoutRestored) updateLayoutBounds();
-    
+
     if (!layoutRestored) {
-        await applyDefaultLayout();
+      await applyDefaultLayout();
     }
 
     // Default to Shapes Mode OFF
@@ -7795,5 +8557,5 @@ function injectCompactStyles() {
     window.applyShapeAsset = applyShapeAsset;
     window.clearBorderStyles = clearBorderStyles;
     window.showFeedback = showFeedback;
-})();
+  })();
 })();

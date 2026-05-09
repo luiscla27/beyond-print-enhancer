@@ -1,11 +1,116 @@
 {
   "templates": [
     {
+      "id": "basic",
+      "name": "Basic Template",
+      "active": true,
+      "description": "A basic template for character sheets.",
+      "thumbnail": "assets/thumbnails/basic.webp",
+      "path": "assets/templates/basic_template.json"
+    },
+    {
+      "id": "compact",
+      "name": "Compact Template",
+      "active": false,
+      "description": "A compact template for character sheets.",
+      "thumbnail": "assets/thumbnails/compact.webp",
+      "path": "assets/templates/compact_template.json"
+    },
+    {
       "id": "archer",
       "name": "Archer Template",
+      "active": true,
       "description": "A thematic template inspired by rangers and archers, featuring braided ropes, leather accents, and ornate flourishes.",
       "thumbnail": "assets/thumbnails/archer.webp",
       "path": "assets/templates/archer_template.json"
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian Template",
+      "active": false,
+      "description": "A thematic template inspired by barbarians, featuring furs, tribal markings, and bold, rugged elements.",
+      "thumbnail": "assets/thumbnails/barbarian.webp",
+      "path": "assets/templates/barbarian_template.json"
+    },
+    {
+      "id": "bard",
+      "name": "Bard Template",
+      "active": false,
+      "description": "A thematic template inspired by bards, featuring musical motifs, elegant scrolls, and vibrant flourishes.",
+      "thumbnail": "assets/thumbnails/bard.webp",
+      "path": "assets/templates/bard_template.json"
+    },
+    {
+      "id": "cleric",
+      "name": "Cleric Template",
+      "active": false,
+      "description": "A thematic template inspired by clerics, featuring holy symbols, divine light effects, and formal layouts.",
+      "thumbnail": "assets/thumbnails/cleric.webp",
+      "path": "assets/templates/cleric_template.json"
+    },
+    {
+      "id": "druid",
+      "name": "Druid Template",
+      "active": false,
+      "description": "A thematic template inspired by druids, featuring natural elements, wood textures, and organic shapes.",
+      "thumbnail": "assets/thumbnails/druid.webp",
+      "path": "assets/templates/druid_template.json"
+    },
+    {
+      "id": "fighter",
+      "name": "Fighter Template",
+      "active": false,
+      "description": "A thematic template inspired by fighters, featuring armor plating, metallic textures, and bold, structured layouts.",
+      "thumbnail": "assets/thumbnails/fighter.webp",
+      "path": "assets/templates/fighter_template.json"
+    },
+    {
+      "id": "monk",
+      "name": "Monk Template",
+      "active": false,
+      "description": "A thematic template inspired by monks, featuring minimalist layouts, zen garden elements, and flowing energy lines.",
+      "thumbnail": "assets/thumbnails/monk.webp",
+      "path": "assets/templates/monk_template.json"
+    },
+    {
+      "id": "paladin",
+      "name": "Paladin Template",
+      "active": false,
+      "description": "A thematic template inspired by paladins, featuring heraldic crests, stained glass effects, and noble, ornate designs.",
+      "thumbnail": "assets/thumbnails/paladin.webp",
+      "path": "assets/templates/paladin_template.json"
+    },
+    {
+      "id": "rogue",
+      "name": "Rogue Template",
+      "active": false,
+      "description": "A thematic template inspired by rogues, featuring shadow effects, lock motifs, and mysterious, layered designs.",
+      "thumbnail": "assets/thumbnails/rogue.webp",
+      "path": "assets/templates/rogue_template.json"
+    },
+    {
+      "id": "sorcerer",
+      "name": "Sorcerer Template",
+      "active": false,
+      "description": "A thematic template inspired by sorcerers, featuring arcane symbols, magical energy, and vibrant, mystical layouts.",
+      "thumbnail": "assets/thumbnails/sorcerer.webp",
+      "path": "assets/templates/sorcerer_template.json"
+    },
+    {
+      "id": "warlock",
+      "name": "Warlock Template",
+      "active": false,
+      "description": "A thematic template inspired by warlocks, featuring otherworldly pact symbols, dark magic effects, and mysterious, ornate designs.",
+      "thumbnail": "assets/thumbnails/warlock.webp",
+      "path": "assets/templates/warlock_template.json"
+    },
+    {
+      "id": "wizard",
+      "name": "Wizard Template",
+      "active": false,
+      "description": "A thematic template inspired by wizards, featuring spellbooks, arcane circles, and scholarly, magical layouts.",
+      "thumbnail": "assets/thumbnails/wizard.webp",
+      "path": "assets/templates/wizard_template.json"
     }
   ]
 }
