@@ -1721,29 +1721,19 @@ Licensed under Blue Oak Model License 1.0.0
     if (!tidbitBody) return;
 
     const dom = window.DomManager.getInstance();
-    const nameEl =
-      document.querySelector(dom.selectors.CORE.TIDBITS_NAME) ||
-      document.querySelector(dom.selectors.CORE.TIDBITS_NAME_ALT);
-    const characterName = nameEl
-      ? nameEl.textContent.trim()
-      : "Custom Tidbit Section";
+    const nameEl = document.querySelector(dom.selectors.CORE.TIDBITS_NAME);
+    const characterName = nameEl ? nameEl.textContent.trim() : "";
 
     // Create the content for the new section
     const content = document.createElement("div");
     content.className = "be-tidbit-extension-section";
-    content.style.padding = "10px";
-    content.style.minHeight = "50px";
-    content.style.backgroundColor = "rgba(0,0,0,0.1)";
-    content.style.borderRadius = "4px";
-    content.style.marginTop = "10px";
     content.innerHTML = `
-      <h3 style="margin:0 0 10px 0; font-size:16px; font-weight:bold; border-bottom:1px solid #ccc; padding-bottom:5px;">${characterName}</h3>
-      <p style="margin:0; font-size:12px; color:#666;">Extra Tidbits Information</p>
+      <h3>${characterName}</h3>
     `;
 
     // Use the existing helper to make it draggable
     const wrapper = createDraggableContainer(
-      "Extra Tidbits",
+      characterName,
       content,
       "section-extra-tidbits",
     );
@@ -2798,9 +2788,7 @@ Licensed under Blue Oak Model License 1.0.0
     window.DomManager.getInstance().hideCoreInterface();
 
     const dom = window.DomManager.getInstance();
-    const name =
-      document.querySelector(dom.selectors.CORE.TIDBITS_NAME) ||
-      document.querySelector(dom.selectors.CORE.TIDBITS_NAME_ALT);
+    const name = document.querySelector(dom.selectors.CORE.TIDBITS_NAME);
     if (name) name.style["color"] = "black";
 
     // HP recovery
