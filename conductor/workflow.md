@@ -76,6 +76,10 @@ For each task in `plan.md`, we follow this sequence:
     -   Once the user approves the phase, finalize the `plan.md` by ensuring all tasks in the phase are marked `[x]`.
     -   Stage and commit any remaining documentation changes (like updating the plan).
     -   Record the final commit SHA of the phase in `plan.md` as the checkpoint for the next phase.
+5.  **Documentation Update Task:**
+    -   Scan all work completed in the current phase.
+    -   Acknowledge the changes and update the appropriate markdown documentation files (e.g., `GEMINI.md`, `workflow.md`, `tech-stack.md`, `product.md`, `spec.md`) to reflect the newly implemented functionality and ensure design principles and architectural context are preserved for future runs.
+    -   This step must be explicitly represented in `plan.md` as a final task for every phase: `- [ ] Task: Update project-wide documentation (GEMINI.md, workflow.md, etc.) and record phase checkpoint`.
 
 ## Release Workflow
 
