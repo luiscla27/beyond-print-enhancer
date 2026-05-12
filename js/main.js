@@ -9,6 +9,7 @@ Licensed under Blue Oak Model License 1.0.0
   }
 
   window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
+  window.skillsSplit = false;
 
   /**
    * Storage management for D&D Beyond Print Enhancer.
@@ -4304,7 +4305,7 @@ Licensed under Blue Oak Model License 1.0.0
 
     const layoutRoot = PeDom().getLayoutRoot().element;
     if (layoutRoot) {
-      PeDom().getShapesLayer().element.appendChild(wrapper);
+      PeDom().getSectionsLayer().element.appendChild(wrapper);
     }
 
     // Re-init resize logic for the new container
@@ -7233,6 +7234,7 @@ Licensed under Blue Oak Model License 1.0.0
 
     const layout = {
       version: Storage.SCHEMA_VERSION,
+      skillsSplit: window.skillsSplit || false,
       sections: {},
       clones: [],
       extractions: [],
@@ -7619,6 +7621,18 @@ Licensed under Blue Oak Model License 1.0.0
   async function applyLayout(layout) {
     layout = Storage.migrateLayout(layout);
     if (!layout) return;
+
+    // Restore skillsSplit flag
+    window.skillsSplit = layout.skillsSplit || false;
+
+    // Trigger auto-split if the flag is set and we have the original box
+    if (window.skillsSplit) {
+      setTimeout(() => {
+        if (typeof window.splitSkillsBox === "function") {
+          window.splitSkillsBox(true);
+        }
+      }, 500);
+    }
 
     const peDom = typeof PeDom !== "undefined" ? PeDom() : null;
     const layerManager = peDom ? peDom.getLayerManager() : null;
@@ -8014,6 +8028,82 @@ Licensed under Blue Oak Model License 1.0.0
   }
 
   /**
+   * Splits the skills box into individual stat-based sections.
+   * @param {boolean} isSilent If true, suppresses feedback messages.
+   */
+  async function splitSkillsBox(isSilent = false) {
+    const s = window.DomManager.getInstance().selectors;
+    const skillsBox =
+      document.querySelector(".ct-skills__box") ||
+      document.querySelector(".ct-subsection--skills");
+    if (!skillsBox) {
+      if (!isSilent) showFeedback("Skills box not found");
+      return;
+    }
+
+    const wrapper = skillsBox.closest(".be-section-wrapper") || skillsBox;
+    const container =
+      wrapper.querySelector(".print-section-container") ||
+      (wrapper.classList.contains("print-section-container") ? wrapper : null);
+
+    if (!container || !container.id) {
+      if (!isSilent) showFeedback("Could not find skills box container ID");
+      return;
+    }
+
+    const originalId = container.id;
+
+    const stats = ["STR", "INT", "WIS", "CHA", "DEX"];
+
+    // Capture the original section snapshot
+    const snapshot = captureSectionSnapshot(originalId);
+    if (!snapshot) {
+      if (!isSilent) showFeedback("Failed to capture skills box");
+      return;
+    }
+
+    // Create 5 clones
+    for (const stat of stats) {
+      const statSnapshot = JSON.parse(JSON.stringify(snapshot));
+      statSnapshot.id = `skills-${stat.toLowerCase()}-${Date.now()}-${Math.floor(
+        Math.random() * 1000,
+      )}`;
+      statSnapshot.title = stat;
+
+      const clone = renderClonedSection(statSnapshot);
+      if (clone) {
+        // Filtering: remove non-matching rows
+        const rows = clone.querySelectorAll(".ct-skills__item");
+        rows.forEach((row) => {
+          const statEl = row.querySelector(".ct-skills__item--stat");
+          if (statEl && statEl.textContent.trim().toUpperCase() !== stat) {
+            row.remove();
+          }
+        });
+
+        // Re-inject buttons (clone, etc.) but NOT the splitter
+        injectCloneButtons(clone);
+
+        // Ensure the splitter button is not there (remove all instances from clone)
+        clone
+          .querySelectorAll(".be-split-skills-button")
+          .forEach((btn) => btn.remove());
+      }
+    }
+
+    // Delete the original section
+    if (wrapper) {
+      wrapper.remove();
+    }
+
+    window.skillsSplit = true;
+    updateLayoutBounds();
+    if (!isSilent) showFeedback("Skills box split successfully");
+  }
+
+  window.splitSkillsBox = splitSkillsBox;
+
+  /**
    * Injects clone buttons and compact toggles into sections.
    */
   function injectCloneButtons(context = document) {
@@ -8182,6 +8272,25 @@ Licensed under Blue Oak Model License 1.0.0
           const event = new CustomEvent("be-rotate-click", { bubbles: true });
           e.target.dispatchEvent(event);
         });
+      }
+
+      // 6. Split Skills Button (Only for Skills Box)
+      const isSkillsBox =
+        section.querySelector(".ct-skills__box") ||
+        section.classList.contains("ct-skills__box") ||
+        section.querySelector(".ct-subsection--skills") ||
+        section.classList.contains("ct-subsection--skills");
+      if (isSkillsBox && !section.classList.contains("be-clone")) {
+        addRobustButton(
+          "be-split-skills-button",
+          "✂️",
+          "Split Skills Box into Stat Groups",
+          async () => {
+            if (typeof window.splitSkillsBox === "function") {
+              await window.splitSkillsBox();
+            }
+          },
+        );
       }
     });
   }
@@ -8545,5 +8654,7 @@ Licensed under Blue Oak Model License 1.0.0
     window.applyShapeAsset = applyShapeAsset;
     window.clearBorderStyles = clearBorderStyles;
     window.showFeedback = showFeedback;
+    window.splitSkillsBox = splitSkillsBox;
+    window.skillsSplit = window.skillsSplit || false;
   })();
 })();
