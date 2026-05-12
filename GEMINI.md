@@ -17,6 +17,13 @@
 
 ## UI Design & Isolation
 - **Aggressive Hiding (Deep Clean):** The project uses a "Deep Clean" CSS rule in `js/main.js` to hide site-native elements. ALL new floating UI elements (panels, modals, layers) MUST be explicitly excluded from this rule.
+- **Cloning & Layer Integrity:** 
+    - When creating clones (manual or automatic), ALWAYS append the new elements to the **Sections Layer** (`PeDom().getSectionsLayer()`) and NOT the Shapes Layer.
+    - Clones MUST be tagged with the `be-clone` class.
+- **Robust Selectors:**
+    - **Skills Detection:** Support both `.ct-skills__box` and `.ct-subsection--skills` to account for different character sheet layouts.
+    - **Skill Stats:** Check both `.ct-skills__item--stat` and `.ct-skills__col--stat` when identifying skill ability scores.
+- **Action Button Exclusion:** Any specialized action buttons injected into sections (e.g., the Splitter button) MUST be explicitly removed from cloned instances to prevent redundant or recursive UI.
 - **Naming Conventions:** 
     - IDs for persistent UI elements MUST start with `print-enhance-` (e.g., `print-enhance-layer-manager`).
     - Classes for persistent UI elements MUST start with `be-` (e.g., `be-layer-panel`).

@@ -26,7 +26,7 @@ describe('Skill Box Splitting', function() {
                         <div class="ct-skills__box">
                             <div class="ct-skills__item">
                                 <span class="ct-skills__item--label">Acrobatics</span>
-                                <span class="ct-skills__item--stat">DEX</span>
+                                <span class="ct-skills__col--stat">DEX</span>
                             </div>
                             <div class="ct-skills__item">
                                 <span class="ct-skills__item--label">Athletics</span>
@@ -34,7 +34,7 @@ describe('Skill Box Splitting', function() {
                             </div>
                             <div class="ct-skills__item">
                                 <span class="ct-skills__item--label">Arcana</span>
-                                <span class="ct-skills__item--stat">INT</span>
+                                <span class="ct-skills__col--stat">INT</span>
                             </div>
                             <div class="ct-skills__item">
                                 <span class="ct-skills__item--label">Insight</span>
@@ -42,7 +42,7 @@ describe('Skill Box Splitting', function() {
                             </div>
                             <div class="ct-skills__item">
                                 <span class="ct-skills__item--label">Deception</span>
-                                <span class="ct-skills__item--stat">CHA</span>
+                                <span class="ct-skills__col--stat">CHA</span>
                             </div>
                         </div>
                     </div>
@@ -122,7 +122,8 @@ describe('Skill Box Splitting', function() {
         // Check filtering
         const items = clone.querySelectorAll('.ct-skills__item');
         assert.strictEqual(items.length, 1, `Clone for ${stat} should have exactly 1 skill item`);
-        const itemStat = items[0].querySelector('.ct-skills__item--stat').textContent.trim();
+        const statEl = items[0].querySelector('.ct-skills__item--stat') || items[0].querySelector('.ct-skills__col--stat');
+        const itemStat = statEl.textContent.trim();
         assert.strictEqual(itemStat, stat, `Skill item in ${stat} clone should match the stat`);
     });
 

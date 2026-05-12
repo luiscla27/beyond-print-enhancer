@@ -8075,8 +8075,12 @@ Licensed under Blue Oak Model License 1.0.0
         // Filtering: remove non-matching rows
         const rows = clone.querySelectorAll(".ct-skills__item");
         rows.forEach((row) => {
-          const statEl = row.querySelector(".ct-skills__item--stat");
-          if (statEl && statEl.textContent.trim().toUpperCase() !== stat) {
+          const statEl =
+            row.querySelector(".ct-skills__item--stat") ||
+            row.querySelector(".ct-skills__col--stat");
+          const skillStat = statEl ? statEl.textContent.trim().toUpperCase() : "";
+          
+          if (skillStat !== stat) {
             row.remove();
           }
         });
