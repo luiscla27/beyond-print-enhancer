@@ -23,6 +23,57 @@ Licensed under Blue Oak Model License 1.0.0
   const SCHEMA_VERSION = "1.5.0";
   const PeDom = () => window.DomManager.getInstance();
 
+  /**
+   * Creates a minimalist context menu for secondary actions.
+   */
+  function createContextMenu() {
+    const menu = document.createElement("div");
+    menu.className = "be-context-menu";
+    menu.style.display = "none";
+
+    // Close menu when clicking outside
+    const closeListener = (e) => {
+      if (!menu.contains(e.target)) {
+        menu.style.display = "none";
+        document.removeEventListener("mousedown", closeListener);
+      }
+    };
+
+    // Store listener on element so we can remove it if toggled manually
+    menu._closeListener = closeListener;
+
+    return menu;
+  }
+
+  /**
+   * Toggles the visibility of a context menu.
+   */
+  function toggleContextMenu(menu) {
+    const isVisible = menu.style.display === "block";
+    if (isVisible) {
+      menu.style.display = "none";
+      document.removeEventListener("mousedown", menu._closeListener);
+    } else {
+      menu.style.display = "block";
+      document.addEventListener("mousedown", menu._closeListener);
+    }
+  }
+
+  /**
+   * Creates a 'More Options' trigger button.
+   */
+  function createMenuTrigger() {
+    const btn = document.createElement("button");
+    btn.className = "be-more-options-button";
+    btn.innerHTML = "⋮";
+    btn.title = "More Options";
+    return btn;
+  }
+
+  window.createContextMenu = createContextMenu;
+  window.toggleContextMenu = toggleContextMenu;
+  window.createMenuTrigger = createMenuTrigger;
+
   let activeSection = null;
 
   /**
@@ -3167,6 +3218,47 @@ Licensed under Blue Oak Model License 1.0.0
             --border-img-width: 80px;
             --border-img-slice: 205;
             --border-img-outset: 25px;
+        }
+
+        /* Context Menu Styles */
+        .be-context-menu {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 4px 0;
+            z-index: 32000;
+            display: none;
+            min-width: 120px;
+        }
+        .be-context-menu button {
+            display: block;
+            width: 100%;
+            text-align: left !important;
+            padding: 8px 12px !important;
+            border: none !important;
+            background: none !important;
+            cursor: pointer !important;
+            font-size: 12px !important;
+            color: #333 !important;
+            height: auto !important;
+            border-radius: 0 !important;
+            filter: none !important;
+        }
+        .be-context-menu button:hover {
+            background-color: #f5f5f5 !important;
+        }
+        .be-more-options-button {
+            cursor: pointer;
+            font-size: 16px;
+            background: none;
+            border: none;
+            padding: 0 4px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Layer Management Panel Styles */

@@ -1,9 +1,9 @@
 # Implementation Plan: UI Revamp - Section Actions Context Menu
 
 ## Phase 1: Context Menu Core UI & CSS
-- [ ] Task: Write tests for Context Menu DOM generation and basic interactivity (toggle visibility).
-- [ ] Task: Implement the shared context menu DOM generation logic and the 'More Options' trigger button.
-- [ ] Task: Implement the custom, minimalist CSS for the floating menu panel, ensuring it matches requirements.
+- [x] Task: Write tests for Context Menu DOM generation and basic interactivity (toggle visibility).
+- [x] Task: Implement the shared context menu DOM generation logic and the 'More Options' trigger button.
+- [x] Task: Implement the custom, minimalist CSS for the floating menu panel, ensuring it matches requirements.
 - [ ] Task: Conductor - User Manual Verification 'Context Menu Core UI & CSS' (Protocol in workflow.md)
 
 ## Phase 2: Section Actions Refactor
