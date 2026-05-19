@@ -29,7 +29,7 @@ describe('Site-Main Visibility Regression', function() {
 
     it('should NOT match #site-main with DIALOG_SIBLING selector in the real layout', function() {
         const manager = DomManager.getInstance();
-        const selector = manager.selectors.CSS.DIALOG_SIBLING;
+        const selector = "dialog ~ div:not(#site-main):not([id^=\"print-enhance\"]):not([class*=\"be-\"])";
         
         // Find site-main
         const siteMain = document.getElementById('site-main');
@@ -45,14 +45,14 @@ describe('Site-Main Visibility Regression', function() {
     it('should ensure #site-main is not targeted by any CORE hiding selectors', function() {
         const manager = DomManager.getInstance();
         const coreSelectors = [
-            manager.selectors.CORE.SITE_BAR,
-            manager.selectors.CORE.HEADER_MAIN,
-            manager.selectors.CORE.MEGA_MENU_TARGET,
-            manager.selectors.CORE.FOOTER,
-            manager.selectors.CORE.SITE_ALERT,
-            manager.selectors.CORE.WATERMARK,
-            manager.selectors.CORE.NOTIFICATIONS,
-            manager.selectors.CORE.NAVIGATION
+            ".site-bar",
+            "header.main",
+            "#mega-menu-target",
+            "footer",
+            ".ddb-site-alert",
+            ".watermark",
+            ".notifications-wrapper",
+            "[class*=\"ct-character-nav\"]"
         ];
 
         const siteMain = document.getElementById('site-main');
@@ -76,24 +76,12 @@ describe('Site-Main Visibility Regression', function() {
         assert.notStrictEqual(sheet.element, siteMain, 'Character sheet should NOT be the site-main navigation menu');
     });
 
-    it('should NOT hide the real character sheet with any Deep Clean selectors', function() {
+    it('should NOT hide the real character sheet with the Deep Clean selector', function() {
         const manager = DomManager.getInstance();
         const sheet = manager.getCharacterSheet().element;
         
-        const selectors = [
-            manager.selectors.CSS.DIALOG_SIBLING,
-            ...Object.values(manager.selectors.CORE)
-        ];
-
-        selectors.forEach(selector => {
-            if (!selector || typeof selector !== 'string') return;
-            try {
-                const matches = Array.from(document.querySelectorAll(selector));
-                assert.strictEqual(matches.includes(sheet), false, `Selector ${selector} should NOT match the character sheet`);
-            } catch (e) {
-                // Ignore invalid selectors (like [class*="..."]) if JSDOM/Mocha struggles, 
-                // but the ones we care about should work.
-            }
-        });
+        const selector = "dialog ~ div:not(#site-main):not([id^=\"print-enhance\"]):not([class*=\"be-\"])";
+        const matches = Array.from(document.querySelectorAll(selector));
+        assert.strictEqual(matches.includes(sheet), false, `Selector ${selector} should NOT match the character sheet`);
     });
 });

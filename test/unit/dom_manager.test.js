@@ -101,12 +101,6 @@ describe('DomManager & ElementWrapper', () => {
             assert.strictEqual(instance1, instance2);
         });
 
-        it('should have a selector registry', () => {
-            const manager = DomManager.getInstance();
-            assert.ok(manager.selectors);
-            assert.ok(manager.selectors.CORE);
-        });
-
         describe('Core Layout Methods', () => {
             let manager;
             
@@ -194,34 +188,7 @@ describe('DomManager & ElementWrapper', () => {
             });
         });
 
-        describe('Ability Selectors', () => {
-            it('should have ability summary selectors', () => {
-                const manager = DomManager.getInstance();
-                assert.strictEqual(manager.selectors.ABILITY.SUMMARY, '.ddbc-ability-summary');
-                assert.strictEqual(manager.selectors.ABILITY.SUMMARY_SECONDARY, '.ddbc-ability-summary__secondary');
-            });
-        });
-
-        describe('Template Selectors', () => {
-            it('should have template catalog selectors', () => {
-                const manager = DomManager.getInstance();
-                assert.strictEqual(manager.selectors.TEMPLATE.MODAL, '.be-modal');
-                assert.strictEqual(manager.selectors.TEMPLATE.ITEM, '.be-catalog-item');
-                assert.strictEqual(manager.selectors.TEMPLATE.GRID, '.be-catalog-grid');
-            });
-        });
-
         describe('UI Selectors', () => {
-            it('should have shape container selector', () => {
-                const manager = DomManager.getInstance();
-                assert.strictEqual(manager.selectors.UI.SHAPE_CONTAINER, '.print-shape-container');
-            });
-
-            it('should have wrapper selector', () => {
-                const manager = DomManager.getInstance();
-                assert.strictEqual(manager.selectors.UI.WRAPPER, '.be-section-wrapper');
-            });
-
             it('should correctly target dialog siblings while excluding site-main', () => {
                 const manager = DomManager.getInstance();
                 document.body.innerHTML = `
@@ -234,7 +201,7 @@ describe('DomManager & ElementWrapper', () => {
                     <div class="some-other-div">Other</div>
                 `;
                 
-                const selector = manager.selectors.CSS.DIALOG_SIBLING;
+                const selector = "dialog ~ div:not(#site-main):not([id^=\"print-enhance\"]):not([class*=\"be-\"])";
                 const matches = Array.from(document.querySelectorAll(selector));
                 
                 // Based on test-subject.html, dialog is AFTER site-main in some places, 

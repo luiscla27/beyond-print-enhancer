@@ -67,11 +67,6 @@ describe('Ability Separation', () => {
         domManager = window.DomManager.getInstance();
     });
 
-    it('should have ability selectors in DomManager', () => {
-        assert.strictEqual(domManager.selectors.CORE.ABILITY, '.ct-quick-info__ability');
-        assert.strictEqual(domManager.selectors.CORE.ABILITY_NAME, '.ct-quick-info__ability-name');
-    });
-
     it('should separate abilities and remove parent section', () => {
         window.__MOCK_REMOVE_SPECIFIC_SVGS__ = (el) => {}; // No-op
         

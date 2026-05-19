@@ -130,18 +130,17 @@ const CatalogService = {
  */
 async function showPremadeCatalogModal() {
     const catalog = await CatalogService.loadCatalog();
-    const dom = (typeof DomManager !== 'undefined') ? DomManager.getInstance() : null;
-    const selectors = dom ? dom.selectors.TEMPLATE : {
-        MODAL: 'be-modal',
-        ITEM: 'be-catalog-item',
-        GRID: 'be-catalog-grid',
-        THUMBNAIL: 'be-catalog-thumbnail',
-        TITLE: 'be-catalog-title',
-        DESCRIPTION: 'be-catalog-description'
-    };
-
     // Helper to get class name without dot
     const cls = (selector) => selector.startsWith('.') ? selector.slice(1) : selector;
+    
+    const selectors = {
+        MODAL: '.be-modal',
+        ITEM: '.be-catalog-item',
+        GRID: '.be-catalog-grid',
+        THUMBNAIL: '.be-catalog-thumbnail',
+        TITLE: '.be-catalog-title',
+        DESCRIPTION: '.be-catalog-description'
+    };
     
     return new Promise((resolve) => {
         const overlay = document.createElement('div');
