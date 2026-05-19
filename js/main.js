@@ -8386,10 +8386,15 @@ Licensed under Blue Oak Model License 1.0.0
           "🔄",
           "Switch Shape Asset",
           async () => {
-            const asset = await showShapePickerModal();
-            if (asset) {
-              applyShapeAsset(section, asset);
-              showFeedback(`Shape asset updated: ${asset.name}`);
+            const currentAsset = section.dataset.assetPath || "";
+            const folder = currentAsset.includes("assets/shapes/")
+              ? "assets/shapes/"
+              : "assets/";
+            const result = await showShapePickerModal(currentAsset, folder);
+            if (result) {
+              section.dataset.assetPath = result.assetPath;
+              applyShapeAsset(section, result.assetPath);
+              showFeedback(`Shape asset updated: ${result.name || "New Asset"}`);
             }
           },
           menu,

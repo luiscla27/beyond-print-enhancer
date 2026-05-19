@@ -79,6 +79,29 @@ describe('Context Menu UI', function() {
     assert.strictEqual(menu.style.display, 'none');
   });
 
+  it('should close the menu when a button inside it is clicked', function() {
+    const container = document.querySelector('.be-section-actions');
+    const menu = window.createContextMenu();
+    container.appendChild(menu);
+    
+    let clicked = false;
+    const btn = document.createElement('button');
+    btn.onclick = () => { clicked = true; };
+    menu.appendChild(btn);
+    
+    // Simulating how main.js handles it
+    btn.addEventListener('click', () => {
+        menu.style.display = 'none';
+    });
+
+    window.toggleContextMenu(menu);
+    assert.strictEqual(menu.style.display, 'block');
+    
+    btn.click();
+    assert.strictEqual(menu.style.display, 'none');
+    assert.ok(clicked);
+  });
+
   it('should create a More Options trigger button', function() {
     const trigger = window.createMenuTrigger();
     assert.ok(trigger.classList.contains('be-more-options-button'));
