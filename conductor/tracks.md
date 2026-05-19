@@ -8,26 +8,7 @@ This file tracks all major development tracks for the project.
 ---
 
 - [x] **Track: add a new option at the "Add layer modal" named "Upload from disk" this new ption should prompt the user t select an image file from his folders, once selected it should convert it to base64 and store in both IndexDB (so its available in the future). And also MUST be stored inside the JSON object saved. So its also available when the user shares his template. The new shape(s) must appear n a new tab at the "Select Decorative Shape" panel named "Custom Shapes", also the custom SHAPES MUST be availabe at the "Select Decorative Shape" shown when the "Switch Shape Asset" button its used** (Completed: 2026-04-23)
-*Link: [./tracks/custom_shapes_upload_20260423/](./tracks/custom_shapes_upload_20260423/)*
-
-
-
-
-- [x] **Track: Shape Layer Management** (Completed: 2026-04-22)
-  *Link: [./archive/shape_layer_management_20260422/](./archive/shape_layer_management_20260422/)*
-- [x] **Track: Layer Visibility and Print Fixes** (Completed: 2026-04-21)
-
-  *Link: [./archive/layer_print_visibility_20260421/](./archive/layer_print_visibility_20260421/)*
-- [x] **Track: Layer List Focus & Print Z-Index Management** (Completed: 2026-04-20)
-*Link: [./archive/layer_focus_print_z_20260420/](./archive/layer_focus_print_z_20260420/)*
-- [x] **Track: Now that the 'shapes mode' is no longer available, theres no way to edit the 'shapes' layer; add a new track to fix it, the desired behaviour is to add a a CHECK per each whole layer (pe-sections-layer). The check will enable/disable the 'edit mode' allowing the elements on the layer to be draggable and editable.** (Completed: 2026-04-19)
-  *Link: [./archive/layer_edit_mode_20260419/](./archive/layer_edit_mode_20260419/)*
-- [x] **Track: Layer Content Visualization** (Completed: 2026-04-10)
-  *Link: [./archive/layer_details_20260407/](./archive/layer_details_20260407/)*
-- [x] **Track: Layer Management Panel and Refactor** (Completed: 2026-04-07)
-  *Link: [./archive/layer_management_20260407/](./archive/layer_management_20260407/)*
-- [x] **Track: Replicate 'sheet_archer.png' as a template, adding premade templates menu and extracting required shapes/borders.** (Completed: 2026-03-24)
-  *Link: [./archive/archer_template_replication_20260318/](./archive/archer_template_replication_20260318/)*
+  *Link: [./archive/custom_shapes_upload_20260423/](./archive/custom_shapes_upload_20260423/)*
 - [x] **Track: Asset Compression & WebP Migration** (Completed: 2026-03-18)
   *Link: [./archive/asset_compression_20260318/](./archive/asset_compression_20260318/)*
 - [x] **Track: Image Filter Fix & Reset UI** (Completed: 2026-03-11)
