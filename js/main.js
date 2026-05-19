@@ -8193,6 +8193,9 @@ Licensed under Blue Oak Model License 1.0.0
   /**
    * Injects clone buttons and compact toggles into sections.
    */
+  /**
+   * Injects clone buttons and compact toggles into sections and shapes.
+   */
   function injectCloneButtons(context = document) {
     const selector = `.ct-subsection, .ct-section, .print-section-container, .be-shape-container`;
     // If the context itself matches the selector, include it
@@ -8203,10 +8206,34 @@ Licensed under Blue Oak Model License 1.0.0
 
     elements.forEach((section) => {
       const actionContainer = getOrCreateActionContainer(section);
+      const isShape = section.classList.contains("be-shape-container");
+
+      // Get or create context menu
+      let menu = actionContainer.querySelector(".be-context-menu");
+      if (!menu) {
+        menu = createContextMenu();
+        actionContainer.appendChild(menu);
+
+        const trigger = createMenuTrigger();
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          // Position menu
+          menu.style.top = "100%";
+          menu.style.right = "0";
+          toggleContextMenu(menu);
+        });
+        actionContainer.appendChild(trigger);
+      }
 
       // Helper to add robust button
-      const addRobustButton = (className, icon, title, action) => {
-        if (actionContainer.querySelector(`.${className}`)) return;
+      const addRobustButton = (
+        className,
+        icon,
+        title,
+        action,
+        targetContainer = actionContainer,
+      ) => {
+        if (targetContainer.querySelector(`.${className}`)) return;
 
         const btn = document.createElement("button");
         btn.className = className;
@@ -8216,7 +8243,7 @@ Licensed under Blue Oak Model License 1.0.0
         const log = (msg) =>
           safeLog(
             "log",
-            `[DDB Print] Section Button ${className} (${section.id}): ${msg}`,
+            `[DDB Print] Button ${className} (${section.id}): ${msg}`,
           );
 
         btn.addEventListener("mousedown", () => log("Mousedown"));
@@ -8224,162 +8251,227 @@ Licensed under Blue Oak Model License 1.0.0
         btn.addEventListener("click", async (e) => {
           e.stopPropagation();
           log("Clicked");
+          if (targetContainer === menu) {
+            menu.style.display = "none";
+            document.removeEventListener("mousedown", menu._closeListener);
+          }
           try {
             await action(e);
           } catch (err) {
-            safeLog(
-              "error",
-              `[DDB Print] Error in section button ${className}:`,
-              err,
-            );
+            safeLog("error", `[DDB Print] Error in button ${className}:`, err);
           }
         });
 
-        actionContainer.appendChild(btn);
+        targetContainer.appendChild(btn);
       };
 
-      // 0. Select Section Button
-      addRobustButton(
-        "be-select-section-button",
-        "🎯",
-        "Select Section for Editing",
-        (e) => {
-          setActiveSection(section);
-          showFeedback("Section selected for editing");
-        },
-      );
+      if (!isShape) {
+        // --- SECTION ACTIONS ---
 
-      // 1. Clone Button
-      addRobustButton("be-clone-button", "📋", "Clone Section", async (e) => {
-        const id = section.id || "unknown";
-        const wrapper = section.closest(".be-section-wrapper") || section;
-        const sectionName =
-          wrapper.dataset.title ||
-          section
-            .querySelector(
-              `.ct-subsection__header, .ct-section__header, .print-section-header span`,
-            )
-            ?.textContent.trim() ||
-          "Section";
-
-        const title = await showInputModal(
-          "Clone Section",
-          `Enter a name for this ${sectionName} clone:`,
-          `${sectionName} (Clone)`,
-        );
-
-        if (title) {
-          const snapshot = captureSectionSnapshot(id);
-          if (snapshot) {
-            snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            snapshot.title = title;
-
-            const clone = renderClonedSection(snapshot);
-            if (clone) {
-              showFeedback(`Cloned: ${title}`);
-              updateLayoutBounds();
-              injectCloneButtons();
-              injectSpellDetailTriggers(clone);
-            }
-          } else {
-            showFeedback("Failed to capture snapshot.");
-          }
-        }
-      });
-
-      // 2. Compact Mode Button
-      const sourceId = section.dataset.originalId || section.id || "";
-      const isNumbered = /^section-Section-\d+$/.test(sourceId);
-
-      if (sourceId && !isNumbered) {
+        // 0. Select Section Button (Visible)
         addRobustButton(
-          "be-compact-button",
-          "📏",
-          "Toggle Compact Mode",
-          (e) => {
-            const btn = e.currentTarget;
-            const isCompact = section.classList.toggle("be-compact-mode");
-            btn.style.backgroundColor = isCompact
-              ? "var(--btn-color)"
-              : "var(--btn-color-highlight)";
-            updateLayoutBounds();
+          "be-select-section-button",
+          "🎯",
+          "Select Section for Editing",
+          () => {
+            setActiveSection(section);
+            showFeedback("Section selected for editing");
           },
         );
-      }
 
-      // 3. Border Style Button
-      addRobustButton(
-        "be-border-button",
-        "🖼️",
-        "Select Border Style",
-        async (e) => {
-          const currentStyle =
-            ALL_BORDER_STYLES.find((style) =>
-              section.classList.contains(style),
-            ) || "default-border";
-          const result = await showBorderPickerModal(currentStyle);
+        // 1. Clone Button (Menu)
+        addRobustButton(
+          "be-clone-button",
+          "📋",
+          "Clone Section",
+          async () => {
+            const id = section.id || "unknown";
+            const wrapper = section.closest(".be-section-wrapper") || section;
+            const sectionName =
+              wrapper.dataset.title ||
+              section
+                .querySelector(
+                  `.ct-subsection__header, .ct-section__header, .print-section-header span`,
+                )
+                ?.textContent.trim() ||
+              "Section";
 
-          if (result) {
-            clearBorderStyles(section);
-            section.classList.add(result.style);
-            updateLayoutBounds();
-          }
-        },
-      );
+            const title = await showInputModal(
+              "Clone Section",
+              `Enter a name for this ${sectionName} clone:`,
+              `${sectionName} (Clone)`,
+            );
 
-      const isShape = section.classList.contains("be-shape-container");
+            if (title) {
+              const snapshot = captureSectionSnapshot(id);
+              if (snapshot) {
+                snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                snapshot.title = title;
 
-      // 4. Delete Button (Generic for all)
-      addRobustButton(
-        "be-clone-delete",
-        "🗑️",
-        isShape ? "Delete Shape" : "Delete Section",
-        (e) => {
-          const wrapper =
-            section.closest(".be-section-wrapper") ||
-            section.closest(".be-shape-wrapper");
+                const clone = renderClonedSection(snapshot);
+                if (clone) {
+                  showFeedback(`Cloned: ${title}`);
+                  updateLayoutBounds();
+                  injectCloneButtons();
+                  injectSpellDetailTriggers(clone);
+                }
+              } else {
+                showFeedback("Failed to capture snapshot.");
+              }
+            }
+          },
+          menu,
+        );
+
+        // 2. Compact Mode Button (Menu)
+        const sourceId = section.dataset.originalId || section.id || "";
+        const isNumbered = /^section-Section-\d+$/.test(sourceId);
+
+        if (sourceId && !isNumbered) {
+          addRobustButton(
+            "be-compact-button",
+            "📏",
+            "Toggle Compact Mode",
+            (e) => {
+              const btn = e.currentTarget;
+              const wrapper = section.closest(".be-section-wrapper") || section;
+              const container =
+                wrapper.querySelector(".print-section-container") ||
+                (wrapper.classList.contains("print-section-container")
+                  ? wrapper
+                  : null);
+
+              if (container) {
+                const isCompact = container.classList.toggle("compact-mode");
+                btn.innerHTML = isCompact ? "📐" : "📏";
+                showFeedback(
+                  isCompact ? "Compact mode ON" : "Compact mode OFF",
+                );
+                updateLayoutBounds();
+              }
+            },
+            menu,
+          );
+        }
+
+        // 3. Border Style Button (Menu)
+        addRobustButton(
+          "be-border-button",
+          "🖼️",
+          "Change Border Style",
+          async () => {
+            const style = await showBorderPickerModal();
+            if (style !== null) {
+              applyBorderStyle(section, style);
+              showFeedback(`Border applied: ${style || "None"}`);
+            }
+          },
+          menu,
+        );
+
+        // 4. Split Skills Button (Menu)
+        const isSkills =
+          section.querySelector(".ct-skills__box") ||
+          section.querySelector(".ct-subsection--skills");
+        if (isSkills && !window.skillsSplit) {
+          addRobustButton(
+            "be-split-skills-button",
+            "🔪",
+            "Split Skills into Individual Stats",
+            async () => {
+              await splitSkillsBox();
+            },
+            menu,
+          );
+        }
+
+        // 5. Delete Button (for clones - Visible)
+        if (section.id && section.id.startsWith("clone-")) {
+          addRobustButton(
+            "be-clone-delete",
+            "🗑️",
+            "Delete this Clone",
+            () => {
+              const wrapper = section.closest(".be-section-wrapper") || section;
+              if (
+                confirm("Are you sure you want to delete this cloned section?")
+              ) {
+                wrapper.remove();
+                updateLayoutBounds();
+                showFeedback("Clone deleted");
+              }
+            },
+          );
+        }
+      } else {
+        // --- SHAPE ACTIONS ---
+
+        // 1. Delete Shape (Visible)
+        addRobustButton("be-shape-delete", "🗑️", "Delete Shape", () => {
+          const wrapper = section.closest(".be-shape-wrapper");
           if (wrapper) {
-            if (
-              confirm(
-                `Are you sure you want to delete this ${isShape ? "shape" : "section"}?`,
-              )
-            ) {
+            if (confirm("Are you sure you want to delete this shape?")) {
               wrapper.remove();
               updateLayoutBounds();
               refreshLayers();
             }
           }
-        },
-      );
+        });
 
-      // 5. Rotate Tool Button (only for shapes)
-      if (isShape) {
+        // 2. Rotate Shape (Visible)
         addRobustButton("be-shape-rotate", "↻", "Toggle Rotation Tool", (e) => {
           const event = new CustomEvent("be-rotate-click", { bubbles: true });
           e.target.dispatchEvent(event);
         });
-      }
 
-      // 6. Split Skills Button (Only for Skills Box)
-      const isSkillsBox =
-        section.querySelector(".ct-skills__box") ||
-        section.classList.contains("ct-skills__box") ||
-        section.querySelector(".ct-subsection--skills") ||
-        section.classList.contains("ct-subsection--skills");
-      if (isSkillsBox && !section.classList.contains("be-clone")) {
+        // 3. Switch Shape Asset (Menu)
         addRobustButton(
-          "be-split-skills-button",
-          "✂️",
-          "Split Skills Box into Stat Groups",
+          "be-shape-switch",
+          "🔄",
+          "Switch Shape Asset",
           async () => {
-            if (typeof window.splitSkillsBox === "function") {
-              await window.splitSkillsBox();
+            const asset = await showShapePickerModal();
+            if (asset) {
+              applyShapeAsset(section, asset);
+              showFeedback(`Shape asset updated: ${asset.name}`);
             }
           },
+          menu,
+        );
+
+        // 4. Clone Shape (Menu)
+        addRobustButton(
+          "be-shape-clone",
+          "📋",
+          "Clone Shape",
+          () => {
+            const wrapper = section.closest(".be-shape-wrapper");
+            if (wrapper) {
+              const clone = wrapper.cloneNode(true);
+              // Update ID to avoid duplicates
+              const newId = `shape-clone-${Date.now()}`;
+              clone.id = newId;
+              const innerShape = clone.querySelector(".be-shape-container");
+              if (innerShape) innerShape.id = `inner-${newId}`;
+
+              // Offset position slightly
+              const top = parseFloat(wrapper.style.top || 0);
+              const left = parseFloat(wrapper.style.left || 0);
+              clone.style.top = `${top + 20}px`;
+              clone.style.left = `${left + 20}px`;
+
+              wrapper.parentNode.appendChild(clone);
+              injectCloneButtons(clone);
+              refreshLayers();
+              showFeedback("Shape cloned");
+            }
+          },
+          menu,
         );
       }
     });
   }
+
   /**
    * Applies font size and proportional scale variable to a section wrapper.
    */
@@ -8422,8 +8514,7 @@ Licensed under Blue Oak Model License 1.0.0
             --reduce-width-by: 0px;
         }
         .print-section-container.be-compact-mode [class^="styles_tableHeader__"],
-        .print-section-container.be-compact-mode [class$="__header"],
-         {
+        .print-section-container.be-compact-mode [class$="__header"] {
             margin-top: 10px !important;
             margin-bottom: 5px !important;
             padding-bottom: 2px !important;
