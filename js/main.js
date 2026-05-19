@@ -4609,6 +4609,23 @@ Licensed under Blue Oak Model License 1.0.0
    * Helper to apply asset to a shape container via class or inline style.
    */
   function applyShapeAsset(container, assetPath) {
+    if (!container) return;
+
+    // Type safety check
+    if (typeof assetPath !== "string") {
+      safeLog(
+        "error",
+        `[DDB Print] applyShapeAsset: assetPath must be a string, got ${typeof assetPath}`,
+        assetPath,
+      );
+      // Try to recover if it's the result object
+      if (assetPath && typeof assetPath.assetPath === "string") {
+        assetPath = assetPath.assetPath;
+      } else {
+        return;
+      }
+    }
+
     // Remove existing classes from metadata
     Object.values(ASSET_METADATA).forEach((meta) => {
       if (meta.className) container.classList.remove(meta.className);
@@ -8392,9 +8409,21 @@ Licensed under Blue Oak Model License 1.0.0
               : "assets/";
             const result = await showShapePickerModal(currentAsset, folder);
             if (result) {
-              section.dataset.assetPath = result.assetPath;
-              applyShapeAsset(section, result.assetPath);
-              showFeedback(`Shape asset updated: ${result.name || "New Asset"}`);
+              // result should be {assetPath: '...'}
+              const newPath = result.assetPath || result; // Handle both object and raw string
+              if (typeof newPath === "string") {
+                section.dataset.assetPath = newPath;
+                applyShapeAsset(section, newPath);
+                showFeedback(
+                  `Shape asset updated: ${result.name || "New Asset"}`,
+                );
+              } else {
+                safeLog(
+                  "error",
+                  "[DDB Print] Invalid result from shape picker",
+                  result,
+                );
+              }
             }
           },
           menu,
