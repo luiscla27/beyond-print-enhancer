@@ -62,7 +62,8 @@ describe('Print Styles Injection', function() {
         const css = style.textContent;
         
         assert.ok(css.includes('.be-active-wrapper'), 'Should target be-active-wrapper');
-        assert.ok(css.includes('.be-hover-highlight'), 'Should target be-hover-highlight');
+        assert.ok(css.includes('.be-section-wrapper:hover'), 'Should target be-section-wrapper:hover');
+        assert.ok(css.includes('.be-shape-wrapper:hover'), 'Should target be-shape-wrapper:hover');
         assert.ok(css.includes('filter: none !important'), 'Should disable filters on print');
         assert.ok(css.includes('outline: none !important'), 'Should disable outlines on print');
     });

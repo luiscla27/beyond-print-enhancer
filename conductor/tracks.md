@@ -82,8 +82,5 @@ This file tracks all major development tracks for the project.
   *Link: [./archive/modernization_20260204/](./archive/modernization_20260204/)*
 - [x] **Track: Revamp of the .be-section-actions buttons layout to use a new context menu for secondary actions.** (Completed: 2026-05-18)
   *Link: [./archive/ui_actions_revamp_20260518/](./archive/ui_actions_revamp_20260518/)*
-
----
-
-- [ ] **Track: Refactor hover logic to use native CSS instead of JavaScript.**
-*Link: [./tracks/css_hover_refactor_20260518/](./tracks/css_hover_refactor_20260518/)*
+- [x] **Track: Refactor hover logic to use native CSS instead of JavaScript.** (Completed: 2026-05-18)
+  *Link: [./archive/css_hover_refactor_20260518/](./archive/css_hover_refactor_20260518/)*

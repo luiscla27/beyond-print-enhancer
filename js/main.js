@@ -299,67 +299,6 @@ Licensed under Blue Oak Model License 1.0.0
    * Initializes global hover highlights for the active layer.
    * Uses a single listener and z-index prioritization to prevent flickering on overlaps.
    */
-  function initHoverHighlights() {
-    const container =
-      document.getElementById("print-layout-wrapper") || document.body;
-
-    container.addEventListener("mousemove", (e) => {
-      const lm = window.PeDom
-        ? window.PeDom().getLayerManager()
-        : window.DomManager
-          ? window.DomManager.getInstance().getLayerManager()
-          : null;
-      if (!lm || !lm.activeLayerId) {
-        document
-          .querySelectorAll(".be-hover-highlight")
-          .forEach((el) => el.classList.remove("be-hover-highlight"));
-        return;
-      }
-
-      // Find all elements at current mouse position
-      const elements = document.elementsFromPoint(e.clientX, e.clientY);
-
-      // Filter for wrappers that belong to the active layer
-      const validWrappers = elements
-        .map((el) => el.closest(".be-section-wrapper"))
-        .filter((wrapper) => {
-          if (!wrapper) return false;
-          const layer = lm.getLayerForElement(wrapper.id);
-          return layer && layer.id === lm.activeLayerId;
-        });
-
-      // Unique set to handle parent/child overlap if any
-      const uniqueWrappers = Array.from(new Set(validWrappers));
-
-      if (uniqueWrappers.length === 0) {
-        document
-          .querySelectorAll(".be-hover-highlight")
-          .forEach((el) => el.classList.remove("be-hover-highlight"));
-        return;
-      }
-
-      // Prioritize by Z-Index
-      const bestWrapper = uniqueWrappers.reduce((prev, current) => {
-        const prevZ = parseInt(window.getComputedStyle(prev).zIndex) || 0;
-        const currentZ = parseInt(window.getComputedStyle(current).zIndex) || 0;
-        return currentZ >= prevZ ? current : prev;
-      });
-
-      // Update classes
-      document.querySelectorAll(".be-hover-highlight").forEach((el) => {
-        if (el !== bestWrapper) el.classList.remove("be-hover-highlight");
-      });
-      bestWrapper.classList.add("be-hover-highlight");
-    });
-
-    // Clear highlights when leaving the container entirely
-    container.addEventListener("mouseleave", () => {
-      document
-        .querySelectorAll(".be-hover-highlight")
-        .forEach((el) => el.classList.remove("be-hover-highlight"));
-    });
-  }
-
   /**
    * Toggles the interaction mode for the shapes layer.
    */
@@ -467,7 +406,7 @@ Licensed under Blue Oak Model License 1.0.0
 
     // Selection and Hover Highlights
     css +=
-      "  .be-active-wrapper, .be-hover-highlight, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n";
+      "  .be-active-wrapper, .be-section-wrapper:hover, .be-shape-wrapper:hover, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n";
 
     // Hide layers that are explicitly disabled for print
     disabledLayers.forEach((layer) => {
@@ -3545,11 +3484,8 @@ Licensed under Blue Oak Model License 1.0.0
             display: none !important;
         }
 
-        .be-section-wrapper:hover {
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .be-hover-highlight,
+        .be-active-layer .be-section-wrapper:hover,
+        .be-active-layer .be-shape-wrapper:hover,
         .be-focus-highlight-hover {
             filter: drop-shadow(0 0 15px #28a745) drop-shadow(0 0 15px #28a745) !important;
             transition: filter 0.3s ease-in-out;
@@ -4092,7 +4028,8 @@ Licensed under Blue Oak Model License 1.0.0
 
             /* Selection and Hover Highlights */
             .be-active-wrapper,
-            .be-hover-highlight,
+            .be-section-wrapper:hover,
+            .be-shape-wrapper:hover,
             .be-focus-highlight-hover,
             .be-active-section {
                 filter: none !important;
@@ -8788,7 +8725,6 @@ Licensed under Blue Oak Model License 1.0.0
     injectCloneButtons();
     flagExtractableElements();
     initDragAndDrop();
-    initHoverHighlights();
     if (window.injectDnDStyles) {
       window.injectDnDStyles();
       safeLog("log", "[DDB Print] DnD Styles Injected");
