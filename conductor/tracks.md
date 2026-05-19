@@ -80,8 +80,5 @@ This file tracks all major development tracks for the project.
   *Link: [./archive/selector_recovery_20260204/](./archive/selector_recovery_20260204/)*
 - [x] **Track: Site Modernization Audit** (Completed: 2026-02-04)
   *Link: [./archive/modernization_20260204/](./archive/modernization_20260204/)*
-
----
-
 - [x] **Track: Revamp of the .be-section-actions buttons layout to use a new context menu for secondary actions.** (Completed: 2026-05-18)
-*Link: [./tracks/ui_actions_revamp_20260518/](./tracks/ui_actions_revamp_20260518/)*
+  *Link: [./archive/ui_actions_revamp_20260518/](./archive/ui_actions_revamp_20260518/)*
