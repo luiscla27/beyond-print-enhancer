@@ -15,8 +15,10 @@
 - [x] Task: Write tests verifying that shapes only display `be-shape-delete` and `be-shape-rotate` natively, with others inside the menu.
 - [x] Task: Refactor shape UI injection logic to append `be-shape-switch` and `be-shape-clone` to the new context menu.
 - [x] Task: Ensure placement and styling of the context menu button for shapes is completely consistent with sections.
+- [x] Task: Refactor createShape to use unified injectCloneButtons logic.
 - [ ] Task: Conductor - User Manual Verification 'Shape Actions Refactor & Consistency' (Protocol in workflow.md)
 
 ## Phase 4: Final Polish & Documentation
-- [ ] Task: Perform a full pass to verify edge cases (e.g., menu closing when clicking outside).
-- [ ] Task: Update project-wide documentation (GEMINI.md, workflow.md, etc.) and record phase checkpoint.
+- [x] Task: Perform a full pass to verify edge cases (e.g., menu closing when clicking outside).
+- [x] Task: Update project-wide documentation (GEMINI.md, workflow.md, etc.) and record phase checkpoint.
+- [x] Task: Fix be-compact-mode class name and nested container processing.

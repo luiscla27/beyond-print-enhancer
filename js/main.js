@@ -4448,75 +4448,8 @@ Licensed under Blue Oak Model License 1.0.0
       rotateBtn.style.display = "block";
     }
 
-    // Action Buttons logic (specific for shapes)
-    const actionContainer = getOrCreateActionContainer(container);
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "be-shape-delete be-robust-button";
-    deleteBtn.innerHTML = "🗑️";
-    deleteBtn.title = "Delete Shape";
-    deleteBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (confirm("Delete this shape?")) {
-        wrapper.remove();
-        showFeedback("Shape deleted");
-        updateLayoutBounds();
-      }
-    };
-
-    const rotateToolBtn = document.createElement("button");
-    rotateToolBtn.className = "be-shape-rotate be-robust-button";
-    rotateToolBtn.innerHTML = "↻";
-    rotateToolBtn.title = "Toggle Rotation Tool";
-    rotateToolBtn.onclick = (e) => {
-      e.stopPropagation();
-      const event = new CustomEvent("be-rotate-click", { bubbles: true });
-      rotateToolBtn.dispatchEvent(event);
-    };
-
-    const cloneBtn = document.createElement("button");
-    cloneBtn.className = "be-shape-clone be-robust-button";
-    cloneBtn.innerHTML = "📋";
-    cloneBtn.title = "Clone Shape";
-    cloneBtn.onclick = (e) => {
-      e.stopPropagation();
-      // Parse current position and offset by 16px
-      const left = parseInt(wrapper.style.left) || 0;
-      const top = parseInt(wrapper.style.top) || 0;
-      createShape(assetPath, {
-        left: left + 16 + "px",
-        top: top + 16 + "px",
-        width: container.style.width,
-        height: container.style.height,
-        rotation: wrapper.dataset.rotation,
-      });
-      showFeedback("Shape cloned");
-    };
-
-    const switchBtn = document.createElement("button");
-    switchBtn.className = "be-shape-switch be-robust-button";
-    switchBtn.innerHTML = "🔄";
-    switchBtn.title = "Switch Shape Asset";
-    switchBtn.onclick = async (e) => {
-      e.stopPropagation();
-      // Determine folder based on current asset
-      const folder = assetPath.includes("assets/shapes/")
-        ? "assets/shapes/"
-        : "assets/";
-      const result = await showShapePickerModal(assetPath, folder);
-      if (result) {
-        // Update the shape asset without replacing the wrapper
-        assetPath = result.assetPath; // Update local variable for next clone/switch
-        container.dataset.assetPath = assetPath;
-        applyShapeAsset(container, assetPath);
-        showFeedback("Shape switched");
-      }
-    };
-
-    actionContainer.appendChild(rotateToolBtn);
-    actionContainer.appendChild(cloneBtn);
-    actionContainer.appendChild(switchBtn);
-    actionContainer.appendChild(deleteBtn);
+    // Action Buttons logic (specific for shapes) handled by injectCloneButtons
+    injectCloneButtons(wrapper);
 
     // Asset Application
     container.dataset.assetPath = assetPath;
@@ -5144,6 +5077,19 @@ Licensed under Blue Oak Model License 1.0.0
   function clearBorderStyles(el) {
     if (!el) return;
     el.classList.remove(...ALL_BORDER_STYLES);
+  }
+
+  /**
+   * Applies a border style to a section.
+   */
+  function applyBorderStyle(section, style) {
+    if (!section || !style) return;
+    const styleId = typeof style === "string" ? style : style.style;
+    clearBorderStyles(section);
+    if (styleId && styleId !== "no-border") {
+      section.classList.add(styleId);
+    }
+    if (typeof updateLayoutBounds === "function") updateLayoutBounds();
   }
 
   /**
@@ -8199,10 +8145,21 @@ Licensed under Blue Oak Model License 1.0.0
   function injectCloneButtons(context = document) {
     const selector = `.ct-subsection, .ct-section, .print-section-container, .be-shape-container`;
     // If the context itself matches the selector, include it
-    const elements = Array.from(context.querySelectorAll(selector));
+    let elements = Array.from(context.querySelectorAll(selector));
     if (context instanceof HTMLElement && context.matches(selector)) {
       elements.push(context);
     }
+
+    // Filter out redundant containers (e.g., .print-section-container inside a .ct-subsection)
+    elements = elements.filter((el) => {
+      if (el.classList.contains("print-section-container")) {
+        const parentSection = el.parentElement?.closest(
+          ".ct-subsection, .ct-section",
+        );
+        if (parentSection) return false;
+      }
+      return true;
+    });
 
     elements.forEach((section) => {
       const actionContainer = getOrCreateActionContainer(section);
@@ -8342,14 +8299,13 @@ Licensed under Blue Oak Model License 1.0.0
                   : null);
 
               if (container) {
-                const isCompact = container.classList.toggle("compact-mode");
+                const isCompact = container.classList.toggle("be-compact-mode");
                 btn.innerHTML = isCompact ? "📐" : "📏";
                 showFeedback(
                   isCompact ? "Compact mode ON" : "Compact mode OFF",
                 );
                 updateLayoutBounds();
-              }
-            },
+              }            },
             menu,
           );
         }

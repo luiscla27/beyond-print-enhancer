@@ -54,9 +54,9 @@ describe('Shape Actions Revamp', function() {
   });
 
   it('should only show primary buttons in the action bar for shapes', function() {
-    window.injectCloneButtons();
-    const shape = document.getElementById('shape-1');
-    const actionContainer = shape.querySelector('.be-section-actions');
+    const shapeWrapper = window.createShape('assets/ornament.webp');
+    const shape = shapeWrapper.querySelector('.be-shape-container');
+    const actionContainer = shapeWrapper.querySelector('.be-section-actions');
     
     const visibleButtons = Array.from(actionContainer.children).filter(el => 
       el.tagName === 'BUTTON' && !el.classList.contains('be-context-menu') && window.getComputedStyle(el).display !== 'none'
@@ -70,9 +70,9 @@ describe('Shape Actions Revamp', function() {
   });
 
   it('should have secondary shape buttons inside the context menu', function() {
-    window.injectCloneButtons();
-    const shape = document.getElementById('shape-1');
-    const menu = shape.querySelector('.be-context-menu');
+    const shapeWrapper = window.createShape('assets/ornament.webp');
+    const shape = shapeWrapper.querySelector('.be-shape-container');
+    const menu = shapeWrapper.querySelector('.be-context-menu');
     
     assert.ok(menu, 'Should have a context menu');
     assert.ok(menu.querySelector('.be-shape-switch'), 'Should have switch shape button in menu');

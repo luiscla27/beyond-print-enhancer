@@ -20,8 +20,12 @@ describe('Section Actions Revamp', function() {
       <html>
         <body>
           <div id="test-container">
-            <div id="section-1" class="ct-subsection"></div>
-            <div id="clone-1" class="ct-subsection"></div>
+            <div id="section-1" class="ct-subsection">
+              <div class="print-section-container"></div>
+            </div>
+            <div id="clone-1" class="ct-subsection">
+              <div class="print-section-container"></div>
+            </div>
           </div>
         </body>
       </html>
@@ -93,5 +97,19 @@ describe('Section Actions Revamp', function() {
     assert.ok(menu.querySelector('.be-clone-button'), 'Should have clone button in menu');
     assert.ok(menu.querySelector('.be-border-button'), 'Should have border button in menu');
     assert.ok(menu.querySelector('.be-compact-button'), 'Should have compact button in menu');
+  });
+
+  it('should toggle be-compact-mode when compact button is clicked', function() {
+    window.injectCloneButtons();
+    const section = document.getElementById('section-1');
+    const container = section.querySelector('.print-section-container');
+    const menu = section.querySelector('.be-context-menu');
+    const compactBtn = menu.querySelector('.be-compact-button');
+    
+    compactBtn.click();
+    assert.ok(container.classList.contains('be-compact-mode'), 'Container should have be-compact-mode class');
+    
+    compactBtn.click();
+    assert.ok(!container.classList.contains('be-compact-mode'), 'Container should NOT have be-compact-mode class');
   });
 });
