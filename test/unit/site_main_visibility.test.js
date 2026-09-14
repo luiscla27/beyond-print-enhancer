@@ -28,7 +28,6 @@ describe('Site-Main Visibility Regression', function() {
     });
 
     it('should NOT match #site-main with DIALOG_SIBLING selector in the real layout', function() {
-        const manager = DomManager.getInstance();
         const selector = "dialog ~ div:not(#site-main):not([id^=\"print-enhance\"]):not([class*=\"be-\"])";
         
         // Find site-main
@@ -43,7 +42,6 @@ describe('Site-Main Visibility Regression', function() {
     });
 
     it('should ensure #site-main is not targeted by any CORE hiding selectors', function() {
-        const manager = DomManager.getInstance();
         const coreSelectors = [
             ".site-bar",
             "header.main",

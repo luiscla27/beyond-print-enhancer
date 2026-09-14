@@ -28,11 +28,38 @@ describe('Shapes Mode Lockdown', function() {
         const domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
         const dnd = fs.readFileSync(path.resolve(__dirname, '../../js/dnd.js'), 'utf8');
         const mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+        const sectionCloning = fs.readFileSync(path.resolve(__dirname, '../../js/section_cloning.js'), 'utf8');
+        const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.js'), 'utf8');
+        const filters = fs.readFileSync(path.resolve(__dirname, '../../js/filters.js'), 'utf8');
+        const spellsUi = fs.readFileSync(path.resolve(__dirname, '../../js/spells_ui.js'), 'utf8');
+        const modals = fs.readFileSync(path.resolve(__dirname, '../../js/modals.js'), 'utf8');
+        const shapePicker = fs.readFileSync(path.resolve(__dirname, '../../js/shape_picker.js'), 'utf8');
+        const propertiesPanel = fs.readFileSync(path.resolve(__dirname, '../../js/properties_panel.js'), 'utf8');
+        const controls = fs.readFileSync(path.resolve(__dirname, '../../js/controls.js'), 'utf8');
+        const layoutScan = fs.readFileSync(path.resolve(__dirname, '../../js/layout_scan.js'), 'utf8');
+        const layoutApply = fs.readFileSync(path.resolve(__dirname, '../../js/layout_apply.js'), 'utf8');
+        const persistence = fs.readFileSync(path.resolve(__dirname, '../../js/persistence.js'), 'utf8');
+
+        const sectionUtils = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+        const printStyles = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
 
         window.eval(elementWrapper);
         window.eval(domManager);
         window.eval(dnd);
-        window.eval(mainJs);
+        window.eval(printStyles);
+        window.eval(sectionUtils);
+                window.eval(modals);
+                window.eval(propertiesPanel);
+                window.eval(layoutScan);
+                window.eval(layoutApply);
+                window.eval(persistence);
+                window.eval(controls);
+                window.eval(shapePicker);
+                window.eval(spellsUi);
+                window.eval(filters);
+                window.eval(layoutOps);
+        window.eval(sectionCloning);
+window.eval(mainJs);
 
         if (window.enforceFullHeight) {
             window.enforceFullHeight();

@@ -24,6 +24,24 @@ describe('Print Z-Index Style Injection', function() {
             getAllSpells: () => Promise.resolve([])
         };
 
+        require('../../js/print_styles.js');
+
+        require('../../js/section_utils.js');
+        require('../../js/image_processor.js');
+        require('../../js/storage.js');
+        require('../../js/asset_catalog.js');
+        require('../../js/context_menu.js');
+        require('../../js/section_cloning.js');
+        require('../../js/layout_ops.js');
+        require('../../js/filters.js');
+        require('../../js/spells_ui.js');
+        require('../../js/modals.js');
+        require('../../js/shape_picker.js');
+        require('../../js/properties_panel.js');
+        require('../../js/controls.js');
+        require('../../js/layout_scan.js');
+        require('../../js/layout_apply.js');
+        require('../../js/persistence.js');
         require('../../js/main.js');
     });
 
@@ -34,6 +52,23 @@ describe('Print Z-Index Style Injection', function() {
         delete global.NodeList;
         delete global.Node;
         delete global.Storage;
+        delete require.cache[require.resolve('../../js/print_styles.js')];
+        delete require.cache[require.resolve('../../js/section_utils.js')];
+        delete require.cache[require.resolve('../../js/image_processor.js')];
+        delete require.cache[require.resolve('../../js/asset_catalog.js')];
+        delete require.cache[require.resolve('../../js/storage.js')];
+        delete require.cache[require.resolve('../../js/context_menu.js')];
+        delete require.cache[require.resolve('../../js/section_cloning.js')];
+        delete require.cache[require.resolve('../../js/layout_ops.js')];
+        delete require.cache[require.resolve('../../js/filters.js')];
+        delete require.cache[require.resolve('../../js/spells_ui.js')];
+        delete require.cache[require.resolve('../../js/modals.js')];
+        delete require.cache[require.resolve('../../js/shape_picker.js')];
+        delete require.cache[require.resolve('../../js/properties_panel.js')];
+        delete require.cache[require.resolve('../../js/controls.js')];
+        delete require.cache[require.resolve('../../js/layout_scan.js')];
+        delete require.cache[require.resolve('../../js/layout_apply.js')];
+        delete require.cache[require.resolve('../../js/persistence.js')];
         delete require.cache[require.resolve('../../js/main.js')];
     });
 
