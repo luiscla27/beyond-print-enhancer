@@ -1,8 +1,0 @@
-{
-  "track_id": "ability_summary_css_20260219",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-19T23:42:00Z",
-  "updated_at": "2026-02-19T23:42:00Z",
-  "description": "Add ability summary CSS classes, centralize selectors in DomManager, and update workflow rule."
-}

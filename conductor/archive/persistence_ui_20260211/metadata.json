@@ -1,8 +1,0 @@
-{
-  "track_id": "persistence_ui_20260211",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-12T00:17:00Z",
-  "updated_at": "2026-02-12T00:17:00Z",
-  "description": "Add layout management buttons (Save Browser/PC, Load Default, Load, Contribute) with persistence via IndexedDB and JSON."
-}

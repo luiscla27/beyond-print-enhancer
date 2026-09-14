@@ -3,6 +3,12 @@ Licensed under Blue Oak Model License 1.0.0
 */
 
 (function () {
+
+
+
+
+
+
   if (window.__DDB_PRINT_ENHANCE_INITIALIZED__) {
     safeLog("log", "[DDB Print Enhance] Already initialized.");
     return;
@@ -11,289 +17,161 @@ Licensed under Blue Oak Model License 1.0.0
   window.__DDB_PRINT_ENHANCE_INITIALIZED__ = true;
   window.skillsSplit = false;
 
+  // Encapsulated module js/context_menu.js (loaded before main.js in the
+  // production script list and the shared test harness boot). The public
+  // window.* handles for the menu primitives now come from the module.
+  // NOTE: fail-open (`|| {}`) is intentional — a handful of test suites boot
+  // main.js standalone (page-script templates) and never invoke the menu
+  // paths; throwing here would break them. The menu primitives only throw if
+  // actually called while the module is absent (a load-order wiring bug).
+  const { createContextMenu, toggleContextMenu, createMenuTrigger } =
+    window.ContextMenu || {};
+
+  // Encapsulated module js/asset_catalog.js (pure data: border/shape
+  // asset lists, metadata, parseAssets categorizer). Loaded before
+  // main.js in the production script list and the shared harness boot.
+  // Fail-open defaults keep standalone-boot suites load-safe; the picker
+  // simply lists no assets if the module was not wired in.
+
+  // Encapsulated module js/storage.js (IndexedDB data-access layer:
+  // layouts, global filters/hue, custom shapes, spell cache,
+  // migrate/validate). Loaded before main.js in the production script
+  // list and the shared harness boot.
+  // Seam (ratified): the module registers on window.__DDBStorage so
+  // suites that pre-stub window.Storage keep their exact pre-extraction
+  // clobber timing via the window.Storage export at the end of this IIFE.
+  const Storage = window.__DDBStorage || {};
+
+  // Encapsulated module js/image_processor.js (canvas read/resize/compress)
+  // is consumed by js/shape_picker.js via window.ImageProcessor; main.js no
+  // longer references it directly.
+
+  // Encapsulated module js/section_utils.js (title/slug/sanitize +
+  // extraction selector helpers + shared DOM helpers applyFontSize /
+  // refreshLayers, relocated here in Phase 7).
+  const SectionUtils = window.SectionUtils || {};
+  const { findSectionTitle, getSectionSlug, getSanitizedContent, getExtractionSelector, applyFontSize, refreshLayers } = SectionUtils;
+
+  // Encapsulated module js/print_styles.js (print CSS + layout-bounds
+  // generation).
+  const PrintStyles = window.PrintStyles || {};
+  const { updatePrintStyles, updateLayoutBounds, drawPageSeparators, injectCompactStyles, enforceFullHeight } = PrintStyles;
+
+  const AssetCatalog = window.AssetCatalog || {};
+  const ASSET_METADATA = AssetCatalog.ASSET_METADATA || {};
+
+  // Encapsulated module js/section_cloning.js (clone/extract section
+  // snapshots + rollback). Loaded before main.js in the production script
+  // list and the shared harness boot.
+  const SectionCloning = window.SectionCloning || {};
+  const { captureSectionSnapshot, renderClonedSection, rollbackSection, rollbackExtraction } = SectionCloning;
+
+  // Encapsulated module js/layout_ops.js (portrait/quick-info/ability
+  // separation, search-box cleanup, inner-content width). Loaded before
+  // main.js in the production script list and the shared harness boot.
+  const LayoutOps = window.LayoutOps || {};
+  const { movePortrait, moveDefenses, moveQuickInfo, separateAbilities, separateQuickInfoBoxes, removeSearchBoxes, adjustInnerContentWidth } = LayoutOps;
+
+  // Encapsulated module js/filters.js (global filter CSS + border-style
+  // helpers). Loaded before main.js in the production script list and the
+  // shared harness boot.
+  const Filters = window.Filters || {};
+  const { applyGlobalFilters, clearBorderStyles, applyBorderStyle } = Filters;
+
+  // Encapsulated module js/spells_ui.js (floating spell detail sections +
+  // spell fetch/cache). Loaded before main.js in the production script list
+  // and the shared harness boot.
+  const SpellsUi = window.SpellsUi || {};
+  const { createSpellDetailSection, getCharacterId, fetchSpellWithCache, getCharacterSpells, injectSpellDetailTriggers } = SpellsUi;
+
+  // Encapsulated modules js/modals.js + js/shape_picker.js (modal toolkit
+  // and the shape/border asset picker). Loaded before main.js in the
+  // production script list and the shared harness boot.
+  const Modals = window.Modals || {};
+  const { showInputModal, showFallbackModal, showFeedback } = Modals;
+
   /**
-   * Storage management for D&D Beyond Print Enhancer.
-   * Uses IndexedDB to persist layout configurations and custom data.
+   * AC-5 (U-17): show a persistent "nothing found" state.
+   *
+   * The three former call sites raised a toast, which expired after 3s — so a
+   * user who looked away had no explanation for why nothing opened. This resolves
+   * the dialog seam at CALL time via `window.Modals` (working note 5: js/modals.js
+   * is loaded before main.js in production, but a bare unit boot may not have it),
+   * and falls back to the toast rather than to silence if the seam is missing.
    */
-  const DB_NAME = "DDBPrintEnhancerDB";
-  const DB_VERSION = 4;
-  const STORE_NAME = "layouts";
-  const SPELL_CACHE_STORE = "spell_cache";
-  const CUSTOM_SHAPES_STORE = "custom_shapes";
-  const SCHEMA_VERSION = "1.5.0";
+  function emptyState(title, opts) {
+    const api = Modals.showEmptyStateDialog || window.Modals && window.Modals.showEmptyStateDialog;
+    if (typeof api === "function") {
+      return api(Object.assign({ title }, opts || {}));
+    }
+    showFeedback(title + (opts && opts.message ? ` \u2014 ${opts.message}` : ""));
+    return Promise.resolve(null);
+  }
+
+  /**
+   * U-36: in-app confirmation instead of the native `confirm()`.
+   *
+   * A native confirm is unstyled, is announced as browser chrome rather than as
+   * part of the product, and — the part that matters for a delete — a user who
+   * has ticked "prevent this page from creating additional dialogs" gets no
+   * dialog at all. Resolved through the shared modal primitive; a bare unit boot
+   * without js/modals.js falls back to the native dialog so the existing
+   * `window.confirm` stubs keep working.
+   */
+  const askConfirm = (opts) => {
+    const w = typeof window !== "undefined" ? window : null;
+    if (w && typeof w.confirmAction === "function") return w.confirmAction(opts);
+    const text = opts.title
+      ? opts.title + "\n\n" + (opts.message || "")
+      : opts.message || "";
+    const nativeConfirm = w && typeof w.confirm === "function" ? w.confirm.bind(w) : null;
+    return Promise.resolve(nativeConfirm ? nativeConfirm(text) : false);
+  };
+
+  /**
+   * Resolve the destructive-action gate at CALL time (track
+   * destructive_recovery_20260911). js/persistence.js is loaded before this file in
+   * both the production script list and the harness boot, but the seam is still read
+   * per call rather than captured (the codebase convention), and its absence in a bare
+   * harness fails OPEN by design — pinned by test/unit/destructive_recovery.test.js.
+   */
+  // AC-5: the gate's policy lives in ONE place now (js/recovery_ui.js's `destructiveGate`);
+  // this wrapper only resolves the seam at CALL time. The fail-open for a seam-less harness is
+  // kept HERE as well, because this module is also booted on its own by the unit harnesses.
+  const destructiveGate = async (reason) => {
+    if (typeof window.destructiveGate === "function") {
+      return window.destructiveGate(reason);
+    }
+    return { ok: true, missing: true };
+  };
+
+  const ShapePicker = window.ShapePicker || {};
+  const { showShapePickerModal, showAssetPickerModal } = ShapePicker;
+
+  // Encapsulated modules js/properties_panel.js + js/controls.js (active-
+  // section state + properties panel; the fixed control panel with filter
+  // sliders and color picker). Loaded before main.js in the production
+  // script list and the shared harness boot.
+  const PropertiesPanel = window.PropertiesPanel || {};
+  const { setActiveSection, getActiveSection, updateControlsState } = PropertiesPanel;
+
+  const Controls = window.Controls || {};
+  const { createControls } = Controls;
+
+  // Encapsulated modules js/persistence.js + js/layout_scan.js +
+  // js/layout_apply.js (user save/load flows, DOM<->layout-data
+  // serialization/apply). Loaded before main.js in the production script
+  // list and the shared harness boot.
+  const Persistence = window.Persistence || {};
+  const { handleSaveBrowser, handleSavePC, handleLoadFile, restoreLayout, applyDefaultLayout, handleLoadDefault, restoreFailureCard: showRestoreFailureCard, announceBootRestore } = Persistence;
+
+  const LayoutScan = window.LayoutScan || {};
+  const { scanLayout, migrateLayout } = LayoutScan;
+
+  const LayoutApply = window.LayoutApply || {};
+  const { applyLayout } = LayoutApply;
+
   const PeDom = () => window.DomManager.getInstance();
-
-  /**
-   * Creates a minimalist context menu for secondary actions.
-   */
-  function createContextMenu() {
-    const menu = document.createElement("div");
-    menu.className = "be-context-menu";
-    menu.style.display = "none";
-
-    // Close menu when clicking outside
-    const closeListener = (e) => {
-      if (!menu.contains(e.target)) {
-        menu.style.display = "none";
-        document.removeEventListener("mousedown", closeListener);
-      }
-    };
-
-    // Store listener on element so we can remove it if toggled manually
-    menu._closeListener = closeListener;
-
-    return menu;
-  }
-
-  /**
-   * Toggles the visibility of a context menu.
-   */
-  function toggleContextMenu(menu) {
-    const isVisible = menu.style.display === "block";
-    if (isVisible) {
-      menu.style.display = "none";
-      document.removeEventListener("mousedown", menu._closeListener);
-    } else {
-      menu.style.display = "block";
-      document.addEventListener("mousedown", menu._closeListener);
-    }
-  }
-
-  /**
-   * Creates a 'More Options' trigger button.
-   */
-  function createMenuTrigger() {
-    const btn = document.createElement("button");
-    btn.className = "be-more-options-button";
-    btn.innerHTML = "⋮";
-    btn.title = "More Options";
-    return btn;
-  }
-
-  window.createContextMenu = createContextMenu;
-  window.toggleContextMenu = toggleContextMenu;
-  window.createMenuTrigger = createMenuTrigger;
-
-  let activeSection = null;
-
-  /**
-   * Sets the active section and updates visual highlights.
-   */
-  function setActiveSection(section) {
-    // Remove active class from previous
-    if (activeSection) {
-      activeSection.classList.remove("be-active-section");
-      const prevWrapper = activeSection.closest(".be-section-wrapper");
-      if (prevWrapper) prevWrapper.classList.remove("be-active-wrapper");
-    }
-
-    activeSection = section;
-
-    if (activeSection) {
-      activeSection.classList.add("be-active-section");
-      const wrapper = activeSection.closest(".be-section-wrapper");
-      if (wrapper) wrapper.classList.add("be-active-wrapper");
-    }
-
-    updatePropertiesPanel();
-  }
-
-  /**
-   * Updates the properties panel content based on the active section.
-   */
-  function updatePropertiesPanel(panelElement = null) {
-    const panel =
-      panelElement || document.getElementById("print-enhance-properties-panel");
-    if (!panel) return;
-
-    panel.innerHTML = "";
-
-    if (!activeSection) {
-      const emptyMsg = document.createElement("div");
-      emptyMsg.className = "be-prop-panel-empty";
-      emptyMsg.textContent = "Select a section to edit its properties";
-      emptyMsg.style.color = "#888";
-      emptyMsg.style.fontStyle = "italic";
-      emptyMsg.style.textAlign = "center";
-      emptyMsg.style.padding = "10px";
-      panel.appendChild(emptyMsg);
-      return;
-    }
-
-    const title = document.createElement("h4");
-    const header = activeSection.querySelector(".print-section-header span");
-    title.textContent = `Editing: ${header ? header.textContent.trim() : "Section"}`;
-    title.style.margin = "0 0 8px 0";
-    title.style.fontSize = "14px";
-    title.style.color = "var(--btn-color)";
-    panel.appendChild(title);
-
-    // 1. Font Size Slider
-    const fsContainer = document.createElement("div");
-    fsContainer.className = "be-prop-control";
-    fsContainer.style.display = "flex";
-    fsContainer.style.flexDirection = "column";
-    fsContainer.style.gap = "4px";
-
-    const fsLabel = document.createElement("label");
-    fsLabel.textContent = "Font Size";
-    fsLabel.style.fontSize = "11px";
-    fsLabel.style.color = "#ccc";
-    fsContainer.appendChild(fsLabel);
-
-    const fsSliderRow = document.createElement("div");
-    fsSliderRow.style.display = "flex";
-    fsSliderRow.style.alignItems = "center";
-    fsSliderRow.style.gap = "8px";
-
-    const wrapper =
-      activeSection.closest(".be-section-wrapper") || activeSection;
-    const currentSize = wrapper.style.fontSize || "10px";
-
-    let numericValue = 10;
-    let unit = "px";
-    const match = currentSize.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
-    if (match) {
-      numericValue = parseFloat(match[1]);
-      unit = match[2];
-
-      // If it was percentage, convert to px base 10 for the slider
-      if (unit === "%") {
-        numericValue = (numericValue / 100) * 10;
-        unit = "px";
-      }
-    }
-
-    const slider = document.createElement("input");
-    slider.type = "range";
-    slider.min = "8";
-    slider.max = "30";
-    slider.value = numericValue.toString();
-    slider.className = "be-modal-slider";
-    slider.style.flexGrow = "1";
-
-    const valDisplay = document.createElement("span");
-    valDisplay.textContent = `${slider.value}px`;
-    valDisplay.style.minWidth = "40px";
-    valDisplay.style.textAlign = "right";
-    valDisplay.style.fontSize = "12px";
-
-    slider.oninput = () => {
-      const val = slider.value;
-      valDisplay.textContent = `${val}px`;
-
-      applyFontSize(wrapper, `${val}px`);
-      updateLayoutBounds();
-    };
-
-    fsSliderRow.appendChild(slider);
-    fsSliderRow.appendChild(valDisplay);
-    fsContainer.appendChild(fsSliderRow);
-    panel.appendChild(fsContainer);
-
-    // 2. Compact Mode Toggle
-    const compactContainer = document.createElement("div");
-    compactContainer.className = "be-prop-control";
-    compactContainer.style.display = "flex";
-    compactContainer.style.alignItems = "center";
-    compactContainer.style.justifyContent = "space-between";
-    compactContainer.style.padding = "4px 0";
-
-    const compactLabel = document.createElement("label");
-    compactLabel.textContent = "Compact Mode";
-    compactLabel.style.fontSize = "12px";
-    compactLabel.style.color = "#ccc";
-    compactContainer.appendChild(compactLabel);
-
-    const compactToggle = document.createElement("input");
-    compactToggle.type = "checkbox";
-    compactToggle.checked = activeSection.classList.contains("be-compact-mode");
-    compactToggle.style.cursor = "pointer";
-
-    compactToggle.onchange = () => {
-      activeSection.classList.toggle("be-compact-mode", compactToggle.checked);
-      updateLayoutBounds();
-
-      // Sync with the section button if visible
-      const btn = activeSection.querySelector(".be-compact-toggle");
-      if (btn) {
-        btn.style.backgroundColor = compactToggle.checked
-          ? "var(--btn-color)"
-          : "var(--btn-color-highlight)";
-      }
-    };
-
-    compactContainer.appendChild(compactToggle);
-    panel.appendChild(compactContainer);
-
-    // 3. Border Style Button
-    const borderContainer = document.createElement("div");
-    borderContainer.className = "be-prop-control";
-    borderContainer.style.display = "flex";
-    borderContainer.style.alignItems = "center";
-    borderContainer.style.justifyContent = "space-between";
-    borderContainer.style.padding = "4px 0";
-
-    const borderLabel = document.createElement("label");
-    borderLabel.textContent = "Border Style";
-    borderLabel.style.fontSize = "12px";
-    borderLabel.style.color = "#ccc";
-    borderContainer.appendChild(borderLabel);
-
-    const borderBtn = document.createElement("button");
-    borderBtn.className = "be-prop-border-button";
-    borderBtn.style.width = "60px";
-    borderBtn.style.height = "40px";
-    borderBtn.style.padding = "4px";
-    borderBtn.style.border = "1px solid #444";
-    borderBtn.style.backgroundColor = "#222";
-    borderBtn.style.cursor = "pointer";
-    borderBtn.style.borderRadius = "4px";
-    borderBtn.style.display = "flex";
-    borderBtn.style.alignItems = "center";
-    borderBtn.style.justifyContent = "center";
-    borderBtn.style.position = "relative";
-    borderBtn.title = "Change Border Style";
-
-    const currentBorderStyle =
-      ALL_BORDER_STYLES.find((style) =>
-        activeSection.classList.contains(style),
-      ) || "default-border";
-
-    const borderPreview = document.createElement("div");
-    borderPreview.className = `be-border-preview ${currentBorderStyle}`;
-    borderPreview.style.width = "100%";
-    borderPreview.style.height = "100%";
-    borderPreview.style.pointerEvents = "none";
-    borderBtn.appendChild(borderPreview);
-
-    borderBtn.onclick = async () => {
-      const style =
-        ALL_BORDER_STYLES.find((s) => activeSection.classList.contains(s)) ||
-        "default-border";
-      const result = await showBorderPickerModal(style);
-
-      if (result) {
-        clearBorderStyles(activeSection);
-        activeSection.classList.add(result.style);
-
-        // Update preview
-        borderPreview.className = `be-border-preview ${result.style}`;
-
-        updateLayoutBounds();
-      }
-    };
-
-    borderContainer.appendChild(borderBtn);
-    panel.appendChild(borderContainer);
-  }
-
-  /**
-   * Returns the currently active section.
-   */
-  function getActiveSection() {
-    return activeSection;
-  }
 
   /**
    * Initializes global hover highlights for the active layer.
@@ -359,476 +237,38 @@ Licensed under Blue Oak Model License 1.0.0
       document.body.classList.add(lockClass);
     }
   }
-  /**
-   * Helper to refresh Layer Manager content lists.
-   */
-  function refreshLayers() {
-    try {
-      const lm = PeDom().getLayerManager();
-      if (lm) {
-        lm.refreshLayerContents();
-        lm.updatePrintZIndexes(true); // Silently sync Z-index with UI order
-      }
-    } catch (e) {
-      // Silently fail if UI not ready
-    }
-  }
 
-  /**
-   * Updates the injected CSS block for print z-index based on data attributes.
-   */
-  function updatePrintStyles() {
-    let style = document.getElementById("be-print-z-style");
-    if (!style) {
-      style = document.createElement("style");
-      style.id = "be-print-z-style";
-      if (document.head) document.head.appendChild(style);
-      else document.body.appendChild(style);
-    }
-
-    const elements = document.querySelectorAll("[data-print-z]");
-    const disabledLayers = document.querySelectorAll(
-      '[data-print-disabled="true"]',
-    );
-
-    let css = "@media print {\n";
-
-    // Hide the layer management panel on print
-    css += "  #print-enhance-layer-manager { display: none !important; }\n";
-
-    // Force all sections and layer containers to be fully opaque on print (ignores edit-mode/lock opacity)
-    css +=
-      "  .be-shape-layer-container, #print-enhance-sections-layer, .be-section-wrapper, .be-shape-wrapper, .be-layer-locked .be-section-wrapper, .be-layer-locked .be-shape-wrapper { opacity: 1 !important; visibility: visible !important; }\n";
-
-    // Force layer ordering on print: Sections < Shapes
-    css += "  #print-enhance-sections-layer { z-index: 1000 !important; }\n";
-    css += "  .be-shape-layer-container { z-index: 2000 !important; }\n";
-
-    // Selection and Hover Highlights
-    css +=
-      "  .be-active-wrapper, .be-section-wrapper:hover, .be-shape-wrapper:hover, .be-focus-highlight-hover, .be-active-section { filter: none !important; outline: none !important; }\n";
-
-    // Hide layers that are explicitly disabled for print
-    disabledLayers.forEach((layer) => {
-      if (layer.id) {
-        css += `  #${layer.id} { display: none !important; }\n`;
-      }
-    });
-
-    // Handle z-index overrides
-    elements.forEach((el) => {
-      const z = el.dataset.printZ;
-      if (el && el.id) {
-        // Use ID for maximum specificity to override inline styles during print
-        css += `  #${el.id} { z-index: ${z} !important; }\n`;
-      } else {
-        // Fallback to data attribute if ID is missing
-        css += `  [data-print-z="${z}"] { z-index: ${z} !important; }\n`;
-      }
-    });
-    css += "}";
-    style.textContent = css;
-  }
 
   window.updatePrintStyles = updatePrintStyles;
 
   /**
-   * Feature Flags
-   */
-  const ENABLE_PREMADE_TEMPLATES = true; // Set to true to show 'TEMPLATES' button
 
   /**
-   * Helper for logging that can be silenced in tests.
+   * The ONE logger (AC-5, track refactor_surface_20260911): every other module calls
+   * `window.safeLog?.(...)` at CALL time, and this is the only implementation of the test-mode
+   * silencing.
+   *
+   * DOCUMENTED DEGRADATION, not a hidden delta: a consumer whose call runs before this module has
+   * evaluated — or in a harness that boots that module alone — gets `window.safeLog === undefined`
+   * and the optional call DROPS the line. That is deliberate: the old per-module fallbacks each
+   * carried their own `console` bridge (a second implementation, and in js/dnd.js's case one with no
+   * test-mode silencing), so "log it to console anyway" is not available without re-introducing what
+   * AC-5 removed. In production this module is last in the injected list and every consumer calls at
+   * RUNTIME, so the seam is present; the drop applies to harness boots and to a hypothetical load
+   * failure of this file, and it is silent rather than fatal by design.
    */
   function safeLog(method, ...args) {
     if (window.__DDB_TEST_MODE__) return;
-    if (console[method]) {
-      console[method](...args);
-    }
-  }
+    // The exemption is SCOPED to these two statements (O-4's guard requires `no-console` to be an
+    // ERROR with no file-scoped allowlist), so the rule cannot be bypassed anywhere else in this file.
+    if (console[method]) { // eslint-disable-line no-console
+      console[method](...args); // eslint-disable-line no-console
+    }  }
   window.safeLog = safeLog;
 
-  /**
-   * Full list of available assets for the shape picker.
-   */
-  const ASSET_LIST = [
-    "assets/border_ability.webp",
-    "assets/border_archer_ability.webp",
-    "assets/border_archer_footer.webp",
-    "assets/border_archer_header.webp",
-    "assets/border_archer_sidebar.webp",
-    "assets/border_barbarian.webp",
-    "assets/border_barbarian_hand.webp",
-    "assets/border_box.webp",
-    "assets/border_default.webp",
-    "assets/border_goth1.webp",
-    "assets/border_goth1_hand.webp",
-    "assets/border_spikes.webp",
-    "assets/dwarf.webp",
-    "assets/dwarf_hollow.webp",
-    "assets/dwarf_hollow_hand.webp",
-    "assets/ornament.webp",
-    "assets/ornament2.webp",
-    "assets/ornament_bold.webp",
-    "assets/ornament_bold2.webp",
-    "assets/ornament_simple.webp",
-    "assets/shapes/archer_accent_a.webp",
-    "assets/shapes/archer_accent_b.webp",
-    "assets/shapes/dwarf.webp",
-    "assets/shapes/dwarf_hollow_hand.webp",
-    "assets/shapes/shield_stats.webp",
-    "assets/shapes/archer_divider.webp",
-    "assets/shapes/archer_main.webp",
-    "assets/shapes/border_spikes_hand.webp",
-    "assets/shapes/corner_barbarian.webp",
-    "assets/shapes/corner_border_barbarian_hand.webp",
-    "assets/shapes/corner_border_goth1.webp",
-    "assets/shapes/corner_border_plants_hand.webp",
-    "assets/shapes/corner_dwarf.webp",
-    "assets/shapes/corner_dwarf_hollow.webp",
-    "assets/shapes/corner_ornament.webp",
-    "assets/shapes/corner_ornament2.webp",
-    "assets/shapes/corner_ornament_bold.webp",
-    "assets/shapes/corner_ornament_bold2.webp",
-    "assets/shapes/corner_ornament_bold3.webp",
-    "assets/shapes/corner_ornament_simple.webp",
-    "assets/shapes/corner_ornament_simple2.webp",
-    "assets/shapes/corner_spikes.webp",
-    "assets/shapes/corner_spike_hollow.webp",
-    "assets/shapes/corner_spike_hollow2.webp",
-    "assets/shapes/corner_sticks.webp",
-    "assets/shapes/corner_sticks1.webp",
-    "assets/shapes/corner_vine_hollow.webp",
-    "assets/spike_bold.webp",
-    "assets/spike_hollow.webp",
-    "assets/spike_hollow2.webp",
-    "assets/sticks.webp",
-    "assets/vine_hand.webp",
-    "assets/vine_hollow.webp",
-    "assets/vine_plants.webp",
-  ];
 
-  /**
-   * Metadata for assets including slice, width, and outset for border-image.
-   * Values are calculated based on image dimensions and file sizes.
-   * If 'isBackground' is true, it will be applied as background-image instead of border-image.
-   */
-  const ASSET_METADATA = {
-    "assets/border_ability.webp": {
-      slice: 66,
-      width: "28px",
-      outset: "16px",
-      className: "ability_border",
-    },
-    "assets/border_barbarian.webp": {
-      slice: 153,
-      width: "142px",
-      outset: "55px",
-      className: "barbarian_border",
-    },
-    "assets/border_archer_header.webp": {
-      slice: "481 470 202 475",
-      width: "172px 208px 81px 194px",
-      outset: "10px",
-      className: "archer_header_border",
-    },
-    "assets/border_archer_ability.webp": {
-      slice: "167 174 79 178",
-      width: "201px 245px 116px 242px",
-      outset: "10px",
-      className: "archer_ability_border",
-    },
-    "assets/border_archer_footer.webp": {
-      slice: "61 60 61 83",
-      width: "35px 32px 36px 44px",
-      outset: "10px",
-      className: "archer_border_archer_footer",
-    },
-    "assets/border_archer_sidebar.webp": {
-      slice: "61 60 61 83",
-      width: "35px 32px 36px 44px",
-      outset: "10px",
-      className: "archer_border_archer_sidebar",
-    },
-    "assets/border_barbarian_hand.webp": {
-      slice: 261,
-      width: "100px",
-      outset: "30px",
-      className: "barbarian_hand_border",
-    },
-    "assets/border_box.webp": {
-      slice: 45,
-      width: "20px",
-      outset: "7px 10px",
-      className: "box_border",
-    },
-    "assets/border_default.webp": {
-      slice: 22,
-      width: "24px",
-      outset: "7px 10px",
-      className: "default-border",
-    },
-    "assets/border_goth1.webp": {
-      slice: 250,
-      width: "111px",
-      outset: "54px 44px",
-      className: "goth_border",
-    },
-    "assets/border_goth1_hand.webp": {
-      slice: 261,
-      width: "100px",
-      outset: "30px",
-      className: "goth_hand_border",
-    },
-    "assets/border_spikes.webp": {
-      slice: 177,
-      width: "118px",
-      outset: "55px",
-      className: "spikes_border",
-    },
-    "assets/dwarf.webp": {
-      slice: 206,
-      width: "205px",
-      outset: "55px",
-      className: "dwarf_border",
-    },
-    "assets/dwarf_hollow.webp": {
-      slice: 206,
-      width: "143px",
-      outset: "38px",
-      className: "dwarf_hollow_border",
-    },
-    "assets/dwarf_hollow_hand.webp": {
-      slice: 259,
-      width: "100px",
-      outset: "30px",
-      className: "dwarf_hollow_hand_border",
-    },
-    "assets/ornament.webp": {
-      slice: 105,
-      width: "88px",
-      outset: "32px",
-      className: "ornament_border",
-    },
-    "assets/ornament2.webp": {
-      slice: 105,
-      width: "144px",
-      outset: "48px",
-      className: "ornament2_border",
-    },
-    "assets/ornament_bold.webp": {
-      slice: 205,
-      width: "222px",
-      outset: "100px",
-      className: "ornament_bold_border",
-    },
-    "assets/ornament_bold2.webp": {
-      slice: 205,
-      width: "141px",
-      outset: "50px",
-      className: "ornament_bold2_border",
-    },
-    "assets/ornament_simple.webp": {
-      slice: 83,
-      width: "111px",
-      outset: "45px",
-      className: "ornament_simple_border",
-    },
-    "assets/shapes/archer_accent_a.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/archer_accent_b.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/dwarf.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/dwarf_hollow_hand.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/shield_stats.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/archer_divider.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/archer_main.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/border_spikes_hand.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_barbarian.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_border_barbarian_hand.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_border_goth1.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_border_plants_hand.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_dwarf.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_dwarf_hollow.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament2.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament_bold.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament_bold2.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament_bold3.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament_simple.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_ornament_simple2.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_spikes.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_spike_hollow.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_spike_hollow2.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_sticks.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_sticks1.webp": {
-      isBackground: true,
-    },
-    "assets/shapes/corner_vine_hollow.webp": {
-      isBackground: true,
-    },
-    "assets/spike_bold.webp": {
-      slice: 83,
-      width: "111px",
-      outset: "55px",
-      className: "spiky_bold_border",
-    },
-    "assets/spike_hollow.webp": {
-      slice: 205,
-      width: "111px",
-      outset: "45px",
-      className: "spike_hollow_border",
-    },
-    "assets/spike_hollow2.webp": {
-      slice: 205,
-      width: "100px",
-      outset: "45px",
-      className: "spiky_border",
-    },
-    "assets/sticks.webp": {
-      slice: 245,
-      width: "146px",
-      outset: "65px",
-      className: "sticks_border",
-    },
-    "assets/vine_hand.webp": {
-      slice: 261,
-      width: "100px",
-      outset: "30px",
-      className: "vine_hand_border",
-    },
-    "assets/vine_hollow.webp": {
-      slice: 205,
-      width: "130px",
-      outset: "45px",
-      className: "vine_border",
-    },
-    "assets/vine_plants.webp": {
-      slice: 200,
-      width: "133px",
-      outset: "55px",
-      className: "plants_border",
-    },
-  };
 
-  /**
-   * All available border style classes, derived from metadata.
-   */
-  const ALL_BORDER_STYLES = [
-    "no-border",
-    ...Object.values(ASSET_METADATA)
-      .map((meta) => meta.className)
-      .filter((name) => name),
-  ];
 
-  /**
-   * Parses and categorizes assets for the shape picker.
-   * @param {string[]} fileList
-   * @returns {{borders: Array, shapes: Array}}
-   */
-  function parseAssets(fileList) {
-    const categories = {
-      borders: [],
-      shapes: [],
-    };
-
-    const tagList = [
-      "bold",
-      "hand drawn",
-      "hollow",
-      "ornament",
-      "dwarf",
-      "goth",
-      "border",
-      "barbarian",
-      "vine",
-      "plants",
-      "spikes",
-      "sticks",
-    ];
-
-    fileList.forEach((filePath) => {
-      if (!filePath.endsWith(".webp")) return;
-
-      const isShape = filePath.includes("assets/shapes/");
-      const fileName = filePath.split("/").pop().toLowerCase();
-
-      // Extract tags
-      const tags = tagList.filter((tag) =>
-        fileName.includes(tag.replace(" ", "_")),
-      );
-
-      // Specialized logic for "hand drawn" which might be "hand" in filename
-      if (fileName.includes("hand") && !tags.includes("hand drawn")) {
-        tags.push("hand drawn");
-      }
-
-      const asset = {
-        path: filePath,
-        label: fileName
-          .replace(".webp", "")
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()),
-        tags: tags,
-      };
-
-      if (isShape) {
-        categories.shapes.push(asset);
-      } else {
-        categories.borders.push(asset);
-      }
-    });
-
-    return categories;
-  }
 
   /**
    * Calculates a snapped angle based on the step size.
@@ -853,499 +293,13 @@ Licensed under Blue Oak Model License 1.0.0
 
   // Default layouts are now loaded from premade templates (catalog.json)
 
-  let db = null;
-
-  const Storage = {
-    SCHEMA_VERSION,
-    initPromise: null,
-
-    /**
-     * Initialize the IndexedDB connection.
-     */
-    init: () => {
-      if (db) return Promise.resolve(db);
-      if (Storage.initPromise) return Storage.initPromise;
-
-      Storage.initPromise = new Promise((resolve, reject) => {
-        try {
-          const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-          request.onblocked = () => {
-            alert(
-              "Please close other tabs of D&D Beyond to allow the database to update.",
-            );
-            safeLog(
-              "warn",
-              "[DDB Print Enhance] IndexedDB open blocked. Other tabs might be holding a connection.",
-            );
-          };
-
-          request.onerror = (event) => {
-            const error = event.target.error;
-            safeLog(
-              "error",
-              `[DDB Print Enhance] IndexedDB error (${error?.name}): ${error?.message}`,
-            );
-            Storage.initPromise = null; // Allow retry
-            reject(error);
-          };
-
-          request.onupgradeneeded = (event) => {
-            const upgradeDb = event.target.result;
-            safeLog(
-              "log",
-              `[DDB Print Enhance] Upgrading IndexedDB to version ${DB_VERSION}...`,
-            );
-            if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) {
-              upgradeDb.createObjectStore(STORE_NAME, {
-                keyPath: "characterId",
-              });
-            }
-            if (!upgradeDb.objectStoreNames.contains(SPELL_CACHE_STORE)) {
-              upgradeDb.createObjectStore(SPELL_CACHE_STORE, {
-                keyPath: "name",
-              });
-            }
-            if (!upgradeDb.objectStoreNames.contains(CUSTOM_SHAPES_STORE)) {
-              upgradeDb.createObjectStore(CUSTOM_SHAPES_STORE, {
-                keyPath: "id",
-              });
-            }
-          };
-
-          request.onsuccess = (event) => {
-            db = event.target.result;
-
-            db.onversionchange = () => {
-              db.close();
-              db = null;
-              Storage.initPromise = null;
-              safeLog(
-                "warn",
-                "[DDB Print Enhance] Database version changed elsewhere. Connection closed.",
-              );
-            };
-
-            resolve(db);
-          };
-        } catch (err) {
-          safeLog(
-            "error",
-            "[DDB Print Enhance] Critical error opening IndexedDB:",
-            err,
-          );
-          Storage.initPromise = null;
-          reject(err);
-        }
-      });
-
-      return Storage.initPromise;
-    },
-
-    /**
-     * Migrates layout data to the latest SCHEMA_VERSION.
-     * @param {object} data
-     * @returns {object}
-     */
-    migrateLayout: (data) => {
-      if (!data) return data;
-
-      const migrated = { ...data };
-
-      // Ensure shapeLayers exists
-      if (!migrated.shapeLayers) {
-        migrated.shapeLayers = [];
-      }
-
-      // If shapeLayers is empty and it's a legacy version, migrate legacy data
-      if (
-        migrated.shapeLayers.length === 0 &&
-        data.version !== SCHEMA_VERSION
-      ) {
-        const legacyShapes = data.shapes || [];
-        const legacyShapeLayerState = data.layers?.shapes || {
-          isLocked: false,
-          isHidden: false,
-        };
-
-        migrated.shapeLayers.push({
-          id: "shapes-default",
-          name: "Default Shapes Layer",
-          layerId: "print-enhance-shapes-layer",
-          isLocked: legacyShapeLayerState.isLocked || false,
-          isHidden: legacyShapeLayerState.isHidden || false,
-          isDisabledOnPrint: legacyShapeLayerState.isDisabledOnPrint || false,
-          elements: legacyShapes,
-        });
-      }
-
-      // Final version update
-      migrated.version = SCHEMA_VERSION;
-
-      return migrated;
-    },
-
-    /**
-     * Validates if the object matches the expected layout schema.
-     * @param {object} data
-     * @returns {boolean}
-     */
-    validateLayout: (data) => {
-      if (!data || typeof data !== "object") return false;
-      if (data.version === undefined || data.sections === undefined)
-        return false;
-      if (typeof data.sections !== "object") return false;
-      return true;
-    },
-
-    /**
-     * Save character layout data.
-     * @param {string} characterId
-     * @param {object} data - { characterId, sectionOrder, customSpells }
-     */
-    saveLayout: async (characterId, data) => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction([STORE_NAME], "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-
-        // Ensure characterId is present in the data object for the keyPath
-        const payload = { ...data, characterId };
-
-        const request = store.put(payload);
-
-        request.onsuccess = () => resolve();
-        request.onerror = (event) => reject(event.target.error);
-      });
-    },
-
-    /**
-     * Load character layout data.
-     * @param {string} characterId
-     * @returns {Promise<object|undefined>}
-     */
-    loadLayout: async (characterId) => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction([STORE_NAME], "readonly");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(characterId);
-
-        request.onsuccess = (event) =>
-          resolve(Storage.migrateLayout(event.target.result));
-        request.onerror = (event) => reject(event.target.error);
-      });
-    },
-
-    /**
-     * Save global layout data.
-     * @param {object} data
-     */
-    saveGlobalLayout: (data) => {
-      return Storage.saveLayout("GLOBAL", data);
-    },
-
-    /**
-     * Load global layout data.
-     * @returns {Promise<object|undefined>}
-     */
-    loadGlobalLayout: () => {
-      return Storage.loadLayout("GLOBAL");
-    },
-
-    /**
-     * Save global hue shift value.
-     * @param {number} deg
-     */
-    saveHueShift: async (deg) => {
-      const globalData = (await Storage.loadGlobalLayout()) || {
-        version: SCHEMA_VERSION,
-        sections: {},
-      };
-      globalData.hueShift = deg;
-      return Storage.saveGlobalLayout(globalData);
-    },
-
-    /**
-     * Get global hue shift value.
-     * @returns {Promise<number>}
-     */
-    getHueShift: async () => {
-      const globalData = await Storage.loadGlobalLayout();
-      return globalData && globalData.hueShift !== undefined
-        ? globalData.hueShift
-        : 0;
-    },
-
-    /**
-     * Save individual filter value.
-     * @param {string} key - contrast, greyscale, saturate, sepia
-     * @param {number} value
-     */
-    saveFilter: async (key, value) => {
-      const globalData = (await Storage.loadGlobalLayout()) || {
-        version: SCHEMA_VERSION,
-        sections: {},
-      };
-      if (!globalData.filters) globalData.filters = {};
-      globalData.filters[key] = value;
-      return Storage.saveGlobalLayout(globalData);
-    },
-
-    /**
-     * Get all global filters.
-     * @returns {Promise<object>}
-     */
-    getFilters: async () => {
-      const globalData = await Storage.loadGlobalLayout();
-      const hue =
-        globalData && globalData.hueShift !== undefined
-          ? globalData.hueShift
-          : 0;
-      const defaults = {
-        hue: hue,
-        contrast: 100,
-        greyscale: 100,
-        saturate: 100,
-        sepia: 0,
-      };
-      if (!globalData || !globalData.filters) return defaults;
-      return { ...defaults, ...globalData.filters };
-    },
-
-    /**
-     * Save a custom shape globally.
-     * @param {object} shape {id, name, data}
-     */
-    saveCustomShape: async (shape) => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction(
-          [CUSTOM_SHAPES_STORE],
-          "readwrite",
-        );
-        const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
-        const request = store.put(shape);
-        request.onsuccess = () => resolve();
-        request.onerror = (event) => reject(event.target.error);
-      });
-    },
-
-    /**
-     * Get all globally saved custom shapes.
-     * @returns {Promise<Array>}
-     */
-    getCustomShapes: async () => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction(
-          [CUSTOM_SHAPES_STORE],
-          "readonly",
-        );
-        const store = transaction.objectStore(CUSTOM_SHAPES_STORE);
-        const request = store.getAll();
-        request.onsuccess = (event) => resolve(event.target.result || []);
-        request.onerror = (event) => reject(event.target.error);
-      });
-    },
-
-    /**
-     * Save multiple spells to the cache.
-     * @param {Array} spells
-     */
-    saveSpells: async (spells) => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction(
-          [SPELL_CACHE_STORE],
-          "readwrite",
-        );
-        const store = transaction.objectStore(SPELL_CACHE_STORE);
-
-        spells.forEach((spell) => store.put(spell));
-
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = (event) => reject(event.target.error);
-      });
-    },
-
-    /**
-     * Get a spell from the cache by name.
-     * @param {string} name
-     * @returns {Promise<object|undefined>}
-     */
-    getSpell: async (name) => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction(
-          [SPELL_CACHE_STORE],
-          "readonly",
-        );
-        const store = transaction.objectStore(SPELL_CACHE_STORE);
-        const request = store.get(name);
-
-        request.onsuccess = (event) => resolve(event.target.result);
-        request.onerror = (event) => reject(event.target.error);
-      });
-    },
-
-    /**
-     * Get all spells from the cache.
-     * @returns {Promise<Array>}
-     */
-    getAllSpells: async () => {
-      const database = await Storage.init();
-      return new Promise((resolve, reject) => {
-        const transaction = database.transaction(
-          [SPELL_CACHE_STORE],
-          "readonly",
-        );
-        const store = transaction.objectStore(SPELL_CACHE_STORE);
-        const request = store.getAll();
-
-        request.onsuccess = (event) => resolve(event.target.result);
-        request.onerror = (event) => reject(event.target.error);
-      });
-    },
-  };
-
-  const ImageProcessor = {
-    MAX_SIZE_BYTES: 750 * 1024, // 750KB threshold
-    TARGET_WIDTH: 1200, // Reasonable max width for shapes
-
-    /**
-     * Processes a file: reads as base64 and compresses if needed.
-     * @param {File} file
-     * @returns {Promise<string>} Base64 string
-     */
-    processImage: async (file) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const base64 = e.target.result;
-
-          if (file.size <= ImageProcessor.MAX_SIZE_BYTES) {
-            resolve(base64);
-          } else {
-            // Large file, needs compression
-            const confirmed = await window.confirm(
-              `The image "${file.name}" is large (${(file.size / 1024).toFixed(1)}KB). \n\nIt will be resized and compressed to ensure the layout remains fast and sharable. Quality may decrease slightly. \n\nDo you want to proceed?`,
-            );
-
-            if (!confirmed) {
-              reject(new Error("User cancelled compression"));
-              return;
-            }
-
-            try {
-              const compressed = await ImageProcessor.compress(base64);
-              resolve(compressed);
-            } catch (err) {
-              reject(err);
-            }
-          }
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    },
-
-    /**
-     * Compresses a base64 image using Canvas.
-     * @param {string} base64
-     * @returns {Promise<string>}
-     */
-    compress: async (base64) => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let width = img.width;
-          let height = img.height;
-
-          // Scale down if too wide
-          if (width > ImageProcessor.TARGET_WIDTH) {
-            const ratio = ImageProcessor.TARGET_WIDTH / width;
-            width = ImageProcessor.TARGET_WIDTH;
-            height = height * ratio;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Export as WebP with 0.8 quality
-          resolve(canvas.toDataURL("image/webp", 0.8));
-        };
-        img.onerror = reject;
-        img.src = base64;
-      });
-    },
-  };
-
-  /**
-   * Handles the "Upload from disk" flow.
-   */
-  async function handleUploadFromDisk(onSuccess) {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/png, image/jpeg, image/webp, image/svg+xml";
-
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      try {
-        const base64 = await ImageProcessor.processImage(file);
-
-        const shapeId = `custom-${Date.now()}`;
-        const shapeName = file.name.split(".")[0];
-
-        const customShape = {
-          id: shapeId,
-          name: shapeName,
-          data: base64,
-        };
-
-        // Save globally
-        await Storage.saveCustomShape(customShape);
-
-        // Add to current layout customShapes if not already there
-        const characterId = getCharacterId() || "GLOBAL";
-        const layout = await Storage.loadLayout(characterId);
-        if (layout) {
-          if (!layout.customShapes) layout.customShapes = [];
-          layout.customShapes.push(customShape);
-          await Storage.saveLayout(characterId, layout);
-        }
-
-        showFeedback(`Custom shape "${shapeName}" uploaded and added.`);
-
-        // Refresh layer manager UI if open
-        const lm = window.PeDom ? window.PeDom().getLayerManager() : null;
-        if (lm) lm.refreshUI();
-
-        if (onSuccess) onSuccess(base64);
-      } catch (err) {
-        if (err.message !== "User cancelled compression") {
-          safeLog("error", "[DDB Print Enhance] Upload failed:", err);
-          alert("Failed to process image. Please try a different file.");
-        }
-      }
-    };
-
-    input.click();
-  }
-
   /**
    * Navigate to a specific character sheet section (tab).
    */
   function navToSection(name) {
-    const dom = window.DomManager.getInstance();
-    const tabs = "button[class*=\"tabButton\"]"
-      ? Array.from(document.querySelectorAll("button[class*=\"tabButton\"]"))
-      : [];
+    const tabs = Array.from(
+      document.querySelectorAll("button[class*=\"tabButton\"]"),
+    );
 
     // Try matching by data-testid first (very reliable)
     const testIdMap = {
@@ -1384,71 +338,7 @@ Licensed under Blue Oak Model License 1.0.0
     );
     return null;
   }
-  /**
-   * Helper to identify the base selector for an element
-   */
-  function getBaseSelector(el) {
-    const dom = window.DomManager.getInstance();
-    // We match the pattern from DomManager selector strings
-    // Assumption: The selector string IS the class selector.
-    // We can extract the class name from the selector string (e.g. '[class*="-group"]' -> '-group')
-    // Or just use the selector string itself as the source of truth for the regex if possible?
-    // Let's use the explicit constants to build the regex logic if user insists on "no strings".
-    // "No css selector" implies string literals.
 
-    // We can derive regex from the selector string if it follows '[class*="pattern"]'
-    const getPattern = (sel) => {
-      const match = sel.match(/class\*="([^"]+)"/);
-      return match ? new RegExp(match[1] + "$") : null;
-    };
-
-    // Or we just map them manually since regex logic is code, not selector string.
-    // The "string" in the code below is the key from DomManager, or we construct the target object using DomManager values.
-
-    const targets = [
-      { pattern: /-group$/, selector: "[class*=\"-group\"]" },
-      { pattern: /-snippet--class$/, selector: "[class*=\"-snippet--class\"]" },
-      { pattern: /^styles_actionsList__/, selector: "[class*=\"styles_actionsList__\"]" },
-      { pattern: /^styles_attackTable__/, selector: "[class*=\"styles_attackTable__\"]" },
-      { pattern: /__traits$/, selector: "[class*=\"__traits\"]" },
-    ];
-
-    const classes = Array.from(el.classList);
-    for (const target of targets) {
-      if (
-        classes.some((c) => c !== "be-extractable" && target.pattern.test(c))
-      ) {
-        return target.selector;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Helper to get a stable unique selector for extraction.
-   * @param {HTMLElement} el The element to identify.
-   * @param {boolean} includeContainers If true, includes elements inside .print-section-container.
-   */
-  function getExtractionSelector(el, includeContainers = false) {
-    const idClass = Array.from(el.classList).find((c) =>
-      c.startsWith("be-ext-"),
-    );
-    const selector = idClass
-      ? `.${idClass}.be-extractable`
-      : getBaseSelector(el);
-    if (!selector) return null;
-
-    let matches = Array.from(document.querySelectorAll(selector));
-    if (!includeContainers) {
-      matches = matches.filter((m) => !m.closest(".print-section-container"));
-    }
-    const index = matches.indexOf(el);
-
-    if (index !== -1) {
-      return { selector, index };
-    }
-    return null;
-  }
 
   /**
    * Creates a standard draggable container for extracted content.
@@ -1467,7 +357,10 @@ Licensed under Blue Oak Model License 1.0.0
 
     wrapper.id = id ? `${id}-wrapper` : `wrapper-${Date.now()}`;
     wrapper.dataset.title = title; // Store title for identification
-    wrapper.draggable = true; // Enable native dragging on the wrapper
+    // Track drag_ux_overhaul_20260909 (Phase 1): the wrapper is deliberately
+    // NOT a native drag source (no draggable=true) — the pointer-events
+    // engine in js/dnd.js arms drags after a movement threshold so text
+    // selection and clicks stay intact (spec.md AC-1/AC-2).
 
     const container = document.createElement("div");
     container.className = "print-section-container";
@@ -1486,29 +379,18 @@ Licensed under Blue Oak Model License 1.0.0
   }
 
   /**
-   * Sleep helper for async flows.
-   */
-  function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
    * Collect content from all tabs and wrap them in draggable containers.
    */
   /**
    * Collect content from all tabs and wrap them in draggable containers.
    */
   async function extractAndWrapSections() {
-    const dom = window.DomManager.getInstance();
 
     // Strategy: Identify sections by looking for tab buttons using DomManager
     // We strictly use the defined selectors, no more fallbacks to hardcoded lists.
-    let tabs = [];
-    if ("button[class*=\"tabButton\"]") {
-      tabs = Array.from(
-        document.querySelectorAll("button[class*=\"tabButton\"]"),
-      );
-    }
+    let tabs = Array.from(
+      document.querySelectorAll("button[class*=\"tabButton\"]"),
+    );
 
     // If no tabs found, we can't extract dynamic sections.
     if (tabs.length === 0) {
@@ -1710,7 +592,6 @@ Licensed under Blue Oak Model License 1.0.0
     const tidbitBody = document.querySelector(".ddbc-character-tidbits__body");
     if (!tidbitBody) return;
 
-    const dom = window.DomManager.getInstance();
     const nameEl = document.querySelector(".ddbc-character-tidbits__heading h1");
     const characterName = nameEl ? nameEl.textContent.trim() : "";
 
@@ -1752,7 +633,6 @@ Licensed under Blue Oak Model License 1.0.0
     }
     if (!container) return;
 
-    const dom = window.DomManager.getInstance();
     // 1. Remove first .ddbc-box-background
     const firstBg = container.querySelector(".ddbc-box-background");
     if (firstBg) {
@@ -1799,7 +679,6 @@ Licensed under Blue Oak Model License 1.0.0
   function copySvgDefinitions(targetContainer) {
     // Find all SVGs that might contain definitions (defs/symbol)
     // Find all SVGs that might contain definitions (defs/symbol)
-    const dom = window.DomManager.getInstance();
     const svgs = document.querySelectorAll("svg");
     svgs.forEach((svg) => {
       if (
@@ -1814,60 +693,6 @@ Licensed under Blue Oak Model License 1.0.0
   }
 
   /**
-   * Appends all collected sections to the main sheet view.
-   */
-  /**
-   * Injects detail section triggers into spell rows.
-   */
-  function injectSpellDetailTriggers(context = document) {
-    let rows;
-    if (window.DomManager) {
-      // If context is an ElementWrapper, DomManager handles it
-      // If context is raw HTMLElement, we can wrap it or pass it if DomManager supports
-      // Our getSpellRows supports HTMLElement context
-      rows = window.DomManager.getInstance()
-        .getSpellRows(context)
-        .map((w) => w.element);
-    } else {
-      rows = context.querySelectorAll(".ct-spells-spell");
-    }
-
-    rows.forEach((row) => {
-      if (row.querySelector(".be-spell-details-button")) return;
-
-      const label = row.querySelector(".ct-spells-spell__label");
-      if (!label) return;
-
-      const spellName = label.textContent.trim();
-
-      const btn = document.createElement("button");
-      btn.className = "be-spell-details-button";
-      btn.innerText = "Details";
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        // Coordinates for floating section
-        const coords = {
-          x: e.clientX,
-          y: e.clientY,
-          pageX: e.pageX,
-          pageY: e.pageY,
-        };
-        if (window.createSpellDetailSection) {
-          window.createSpellDetailSection(spellName, coords);
-        } else {
-          safeLog(
-            "log",
-            `[DDB Print] Details clicked for ${spellName} at`,
-            coords,
-          );
-        }
-      };
-
-      row.appendChild(btn);
-    });
-  }
-
-  /**
    * Scans the DOM for elements that match extraction criteria and flags them.
    * Implements Top-Down Priority: nested matching elements are ignored.
    */
@@ -1877,9 +702,6 @@ Licensed under Blue Oak Model License 1.0.0
    * Also injects a unique-ish class based on content for stable persistence.
    */
   function flagExtractableElements() {
-    const dom = window.DomManager.getInstance();
-    if (!"[class*=\"-group\"]") return;
-
     const selectors = [
       "[class*=\"-group\"]",
       "[class*=\"-snippet--class\"]",
@@ -1921,7 +743,7 @@ Licensed under Blue Oak Model License 1.0.0
         // Attach extraction listener
         el.ondblclick = async (e) => {
           e.stopPropagation();
-          await handleElementExtraction(el);
+          await extractElementRecorded(el);
         };
       }
     });
@@ -2006,10 +828,9 @@ Licensed under Blue Oak Model License 1.0.0
     const deleteBtn = wrapper.querySelector(".be-delete-button");
     if (deleteBtn) {
       deleteBtn.title = "Rollback Extraction";
-      const originalOnClick = deleteBtn.onclick;
       deleteBtn.onclick = (e) => {
         e.stopPropagation();
-        rollbackSection(container);
+        rollbackExtraction(container);
       };
     }
 
@@ -2021,7 +842,7 @@ Licensed under Blue Oak Model License 1.0.0
     wrapper.style.position = "absolute";
     wrapper.style.left = `${rect.left - rootRect.left + rect.width + 20}px`; // To the right of original
     wrapper.style.top = `${rect.top - rootRect.top}px`;
-    wrapper.style.zIndex = "10000";
+    wrapper.style.zIndex = window.Z.PANEL; // AC-5 (was "10000")
 
     const innerContainer = wrapper.querySelector(".print-section-container");
     innerContainer.style.width = `${rect.width}px`;
@@ -2051,214 +872,8 @@ Licensed under Blue Oak Model License 1.0.0
     return wrapper;
   }
 
-  /**
-   * Renders an extracted section from a snapshot.
-   */
-  function renderExtractedSection(snapshot) {
-    // 1. Resolve the original element
-    let original = document.getElementById(snapshot.originalId);
 
-    // If ID lookup fails (common on reloads), use the selector path
-    if (!original && snapshot.selector && snapshot.index !== undefined) {
-      const matches = document.querySelectorAll(snapshot.selector);
-      original = matches[snapshot.index];
-      // Re-assign the ID if found so rollback works
-      if (original) {
-        original.id = snapshot.originalId;
-      }
-    }
 
-    if (!original) {
-      safeLog(
-        "warn",
-        `[DDB Print] Could not resolve original for extraction: ${snapshot.title}`,
-      );
-      return null;
-    }
-
-    // 2. Clone LIVE content
-    const sanitizedClone = getSanitizedContent(original);
-    const sourceElement = sanitizedClone; // Alias for existing logic compliance
-    sourceElement.style.display = "";
-    sourceElement.classList.remove("be-extractable");
-
-    // Hide original title inside the live clone to avoid duplication
-    const originalHeader = sourceElement.querySelector(
-      'h1, h2, h3, h4, h5, [class*="head"]',
-    );
-    if (originalHeader) {
-      originalHeader.style.display = "none";
-    }
-
-    // 3. Assemble standardized header
-    const fragment = document.createDocumentFragment();
-    const header = document.createElement("div");
-    header.className = "ct-content-group__header";
-    const headerContent = document.createElement("div");
-    headerContent.className = "ct-content-group__header-content";
-    headerContent.textContent = snapshot.title;
-    header.appendChild(headerContent);
-
-    fragment.appendChild(header);
-
-    // Promote children if it's a merge wrapper, otherwise append the clone
-    if (sourceElement.classList.contains("be-merge-wrapper")) {
-      while (sourceElement.firstChild) {
-        fragment.appendChild(sourceElement.firstChild);
-      }
-    } else {
-      fragment.appendChild(sourceElement);
-    }
-
-    const wrapper = createDraggableContainer(
-      snapshot.title,
-      fragment,
-      snapshot.id,
-    );
-    wrapper.classList.add("be-extracted-section-wrapper");
-    const container = wrapper.querySelector(".print-section-container");
-    container.classList.add("be-extracted-section");
-    container.dataset.originalId = snapshot.originalId;
-    if (snapshot.parentSectionId) {
-      container.dataset.parentSectionId = snapshot.parentSectionId;
-    }
-    if (snapshot.borderStyle) {
-      container.classList.add(snapshot.borderStyle);
-    }
-
-    // Restore identification class for future merges
-    if (snapshot.selector) {
-      const idClass = snapshot.selector.split(".")[1]; // .be-ext-xxx.be-extractable -> be-ext-xxx
-      if (idClass) container.dataset.beExtClass = idClass;
-    }
-
-    // 4. Link rollback logic
-    const xBtn = wrapper.querySelector(".print-section-minimize");
-    if (xBtn) {
-      xBtn.title = "Rollback Extraction";
-      xBtn.onclick = (e) => {
-        e.stopPropagation();
-        rollbackSection(container);
-      };
-    }
-
-    // 5. Hide original in DOM
-    original.style.setProperty("display", "none", "important");
-
-    // 6. Apply styles
-    if (snapshot.width)
-      container.style.setProperty("width", snapshot.width, "important");
-    if (snapshot.height)
-      container.style.setProperty("height", snapshot.height, "important");
-    if (snapshot.left)
-      wrapper.style.setProperty("left", snapshot.left, "important");
-    if (snapshot.top)
-      wrapper.style.setProperty("top", snapshot.top, "important");
-    if (snapshot.zIndex)
-      wrapper.style.setProperty("z-index", snapshot.zIndex, "important");
-    if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
-    if (snapshot.fontSize) applyFontSize(wrapper, snapshot.fontSize);
-
-    if (snapshot.minimized) {
-      container.dataset.minimized = "true";
-      container.classList.add("minimized");
-    }
-
-    if (snapshot.compact) {
-      container.classList.add("be-compact-mode");
-    }
-
-    const layoutRoot = PeDom().getLayoutRoot().element;
-    PeDom().getSectionsLayer().element.appendChild(wrapper);
-
-    if (window.injectCloneButtons) window.injectCloneButtons(container);
-    if (window.injectAppendButton) window.injectAppendButton(container);
-    if (window.initResizeLogic) window.initResizeLogic();
-
-    return wrapper;
-  }
-
-  /**
-   * Basic title discovery (to be refined in Phase 3).
-   */
-  function findSectionTitle(el) {
-    const dom = window.DomManager.getInstance();
-    const titleEl = el.querySelector("h1, h2, h3, h4, h5, [class*=\"head\"], [data-testid*=\"header\"], [data-testid*=\"heading\"]");
-    return titleEl ? titleEl.textContent.trim() : null;
-  }
-
-  /**
-   * Extracts a section name/slug from inner classes to be used as a CSS class on the wrapper.
-   * Searches for ct-subsection--{name} or ct-content-group--{name}
-   */
-  function getSectionSlug(content) {
-    if (!content) return null;
-
-    // Check the content node itself first
-    const classes = Array.from(content.classList || []);
-    const matchingClass = classes.find(
-      (c) =>
-        c.startsWith("ct-subsection--") || c.startsWith("ct-content-group--"),
-    );
-    if (matchingClass) {
-      return matchingClass.split("--")[1];
-    }
-
-    // Then check children
-    const childWithClass = content.querySelector(
-      '[class*="ct-subsection--"], [class*="ct-content-group--"]',
-    );
-    if (childWithClass) {
-      const matchingChildClass = Array.from(childWithClass.classList).find(
-        (c) =>
-          c.startsWith("ct-subsection--") || c.startsWith("ct-content-group--"),
-      );
-      if (matchingChildClass) {
-        return matchingChildClass.split("--")[1];
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Sanitizes a content node by removing extension UI elements and preventing header duplication.
-   * @param {HTMLElement} node The node to sanitize.
-   * @returns {HTMLElement} A sanitized clone of the node.
-   */
-  function getSanitizedContent(node) {
-    const clone = node.cloneNode(true);
-    const dom = window.DomManager.getInstance();
-    const toRemove = [
-      ".be-clone-button",
-      ".be-compact-button",
-      ".be-append-button",
-      ".be-section-actions",
-      ".print-section-header",
-      ".print-section-minimize",
-      ".print-section-restore",
-      ".print-section-resize-handle",
-      ".ct-spells-filter",
-      "menu",
-    ];
-
-    toRemove.forEach((selector) => {
-      clone.querySelectorAll(selector).forEach((el) => el.remove());
-    });
-
-    // Prevent header duplication: remove top-level standardized headers
-    // because new ones are added when wrapping/rendering.
-
-    if (window.DomManager) {
-      const dom = window.DomManager.getInstance();
-      const existingHeaders = clone.querySelectorAll(
-        ":scope > " + ".ct-content-group__header",
-      );
-      existingHeaders.forEach((h) => h.remove());
-    }
-
-    return clone;
-  }
 
   /**
    * Gathers all potential merge targets and their display names.
@@ -2338,13 +953,32 @@ Licensed under Blue Oak Model License 1.0.0
       e.stopPropagation();
       const targets = getMergeTargets().filter((t) => t.element !== container);
       if (targets.length === 0) {
-        showFeedback("No available targets found");
+        // AC-5 (U-17): a dialog that stays, not a toast that expires (U-17).
+        emptyState("No available targets found", {
+          message: "There are no other sections on this sheet to append to.",
+          hint: "Extract or clone a second section first, then use Append again.",
+        });
         return;
       }
 
       const selectedTarget = await showTargetSelectionModal(targets);
       if (selectedTarget) {
+        // AC-1: snapshot first — merging DESTROYS the source container, and until
+        // now it did so with no confirmation and no way back. Gated at this USER
+        // entry point, not inside handleMergeSections: the layout-apply path calls
+        // that function too (js/layout_apply.js), where a gate would write a backup
+        // per merge and could even block a restore when storage was tight — exactly
+        // when the user needs restore most.
+        const mergeGate = await destructiveGate(
+          `Merge sections into "${selectedTarget.name}"`,
+        );
+        if (!mergeGate.ok) return;
         handleMergeSections(container, selectedTarget);
+        // AC-3: the snapshot just taken IS the undo (this transform used to have no
+        // confirmation AND no way back).
+        window.offerUndo && window.offerUndo(mergeGate.record,
+          `Merged sections into "${selectedTarget.name}"`,
+        );
       }
     };
 
@@ -2355,57 +989,50 @@ Licensed under Blue Oak Model License 1.0.0
    * Shows a modal to select a merge target.
    */
   function showTargetSelectionModal(targets) {
-    return new Promise((resolve) => {
-      const overlay = document.createElement("div");
-      overlay.className = "be-modal-overlay";
-      overlay.style.zIndex = "30000"; // Higher than floating sections
+    const api = window.Modals;
+    if (!api || typeof api.__createModal !== "function") {
+      // Bare boot without the modal primitive: fail loudly rather than
+      // silently doing nothing (a merge would look like it simply did not run).
+      showFeedback("Could not open the append-target dialog. Reload the page.", "error");
+      return Promise.resolve(null);
+    }
 
-      const modal = document.createElement("div");
-      modal.className = "be-modal";
-      modal.style.width = "500px";
-      modal.style.maxHeight = "80vh";
-      modal.style.overflowY = "auto";
+    const handle = api.__createModal({
+      title: "Select Append Target",
+      body(ctx) {
+        ctx.overlay.style.zIndex = window.Z.CONTEXT_MENU; // AC-5, above floating sections
+        ctx.modal.style.width = "500px";
+        ctx.modal.style.maxHeight = "80vh";
+        ctx.modal.style.overflowY = "auto";
 
-      const h3 = document.createElement("h3");
-      h3.textContent = "Select Append Target";
-      modal.appendChild(h3);
+        const list = document.createElement("div");
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
+        list.style.gap = "5px";
 
-      const list = document.createElement("div");
-      list.style.display = "flex";
-      list.style.flexDirection = "column";
-      list.style.gap = "5px";
-      list.style.marginTop = "15px";
+        targets.forEach((target) => {
+          const btn = document.createElement("button");
+          btn.textContent = target.name;
+          btn.className = ".ct-theme-button".substring(1);
+          btn.type = "button";
+          btn.style.textAlign = "left";
+          btn.style.padding = "8px 12px";
+          btn.style.width = "100%";
+          btn.onclick = () => ctx.close(target);
+          list.appendChild(btn);
+        });
+        ctx.bodyEl.appendChild(list);
 
-      targets.forEach((target) => {
-        const btn = document.createElement("button");
-        btn.textContent = target.name;
-        const dom = window.DomManager.getInstance();
-        btn.className = ".ct-theme-button".substring(1);
-        btn.style.textAlign = "left";
-        btn.style.padding = "8px 12px";
-        btn.style.width = "100%";
-        btn.onclick = () => {
-          overlay.remove();
-          resolve(target);
-        };
-        list.appendChild(btn);
-      });
-
-      modal.appendChild(list);
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.className = "be-modal-cancel";
-      cancelBtn.style.marginTop = "15px";
-      cancelBtn.onclick = () => {
-        overlay.remove();
-        resolve(null);
-      };
-      modal.appendChild(cancelBtn);
-
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.className = "be-modal-cancel";
+        cancelBtn.type = "button";
+        ctx.actionsRow.appendChild(cancelBtn);
+        cancelBtn.onclick = () => ctx.close(null);
+      },
     });
+
+    return handle.promise;
   }
 
   /**
@@ -2478,7 +1105,7 @@ Licensed under Blue Oak Model License 1.0.0
       // Attach extraction listener to the new merged wrapper
       wrapper.ondblclick = async (e) => {
         e.stopPropagation();
-        await handleElementExtraction(wrapper);
+        await extractElementRecorded(wrapper);
       };
 
       // If source is a spell detail, tag it for persistence
@@ -2531,35 +1158,12 @@ Licensed under Blue Oak Model License 1.0.0
       }
 
       // Destroy source container
+      // (The AC-1 gate is at this action's USER entry point — see the Append
+      // button — because the layout-apply path also calls this function.)
       sourceContainer.remove();
       updateLayoutBounds();
       showFeedback(`Merged into ${targetInfo.name}`);
     }
-  }
-
-  /**
-   * Rolls back a section, restoring all associated original elements.
-   */
-  function rollbackSection(container) {
-    const wrapper = container.closest(".be-section-wrapper") || container;
-    const originalId = container.dataset.originalId;
-    const associatedIds = container.dataset.associatedIds
-      ? JSON.parse(container.dataset.associatedIds)
-      : [];
-
-    const allIds = [originalId, ...associatedIds].filter((id) => id);
-
-    allIds.forEach((id) => {
-      const original = document.getElementById(id);
-      if (original) {
-        original.style.setProperty("display", "", "important");
-      }
-    });
-
-    wrapper.remove();
-    updateLayoutBounds();
-    refreshLayers();
-    showFeedback("Extraction rolled back");
   }
 
   /**
@@ -2735,45 +1339,12 @@ Licensed under Blue Oak Model License 1.0.0
   }
 
   /**
-   * Relocates defense information.
-   */
-  function moveDefenses() {
-    const dom = window.DomManager.getInstance();
-    const defensesSection =
-      document.querySelector(".ct-sidebar__section--defenses") ||
-      document.querySelector("[class*=\"sidebar__section--defenses\"]");
-    if (!defensesSection) return;
-
-    const elem = defensesSection.cloneNode(true);
-    removeSpecificSvgs(elem); // Ensure SVGs are removed from Defenses clone
-
-    // Remove header
-    const header =
-      elem.querySelector(".ct-sidebar__section-header") ||
-      elem.querySelector("[class*=\"sidebar__section-header\"]");
-    if (header) header.remove();
-
-    const combatTablet =
-      document.querySelector(".ct-status-summary-bar") ||
-      document.querySelector("[class*=\"status-summary-bar\"]");
-
-    if (combatTablet) {
-      const container = document.createElement("div");
-      container.style["border"] = "thin black solid";
-      container.style["margin-top"] = "10px";
-      container.appendChild(elem);
-      combatTablet.parentElement.appendChild(container);
-    }
-  }
-
-  /**
    * Optimized layout for print.
    */
   function tweakStyles() {
     // Hide major UI components using DomManager
     window.DomManager.getInstance().hideCoreInterface();
 
-    const dom = window.DomManager.getInstance();
     const name = document.querySelector(".ddbc-character-tidbits__heading h1");
     if (name) name.style["color"] = "black";
 
@@ -2790,68 +1361,6 @@ Licensed under Blue Oak Model License 1.0.0
       el.style["font-weight"] = "bold";
       el.style["color"] = "black";
     });
-  }
-
-  /**
-   * Moves the character portrait to the primary box.
-   */
-  function movePortrait() {
-    // User Request: Append .ddbc-character-avatar__portrait to .ct-subsection.ct-subsection--primary-box
-    const dom = window.DomManager.getInstance();
-    const portrait = document.querySelector(".ddbc-character-avatar__portrait");
-    // UI.PRIMARY_BOX might be .ct-primary-box, check if we have the specific subsection target
-    // The previous code targeted .ct-subsection.ct-subsection--primary-box
-    const target = document.querySelector(
-      ".ct-subsection.ct-subsection--primary-box",
-    );
-
-    if (portrait && target) {
-      // Ensure portrait is visible and styled properly
-      portrait.style.display = "block";
-      portrait.style.width = "100%";
-      portrait.style.height = "auto"; // Maintain aspect ratio
-
-      target.appendChild(portrait);
-      safeLog("log", "[DDB Print] Moved character portrait.");
-    } else {
-      if (!window.__DDB_TEST_MODE__) {
-        safeLog(
-          "warn",
-          "[DDB Print] Could not find portrait or target to move.",
-        );
-      }
-    }
-  }
-
-  /**
-   * Moves Quick Info to a draggable container.
-   */
-  function moveQuickInfo() {
-    // User Request: Make .ct-quick-info draggable
-    let quickInfo;
-    const dom = window.DomManager.getInstance();
-    const wrapper = dom.getQuickInfo();
-    quickInfo = wrapper ? wrapper.element : null;
-
-    if (quickInfo) {
-      const layoutRoot = PeDom().getLayoutRoot().element;
-      if (layoutRoot) {
-        // Clone it? Or move it? Moving is safer for events, but cloning preserves original structure if needed.
-        // Let's move it to preserve functionality.
-        const container = createDraggableContainer(
-          "Quick Info",
-          quickInfo,
-          "section-Quick-Info",
-        );
-        PeDom().getSectionsLayer().element.appendChild(container);
-
-        // Ensure it's visible if parent was hidden
-        quickInfo.style.display = "flex";
-        // quickInfo usually has fixed position/margin in normal sheet, reset it
-        quickInfo.style.position = "static";
-        quickInfo.style.margin = "0";
-      }
-    }
   }
 
   /**
@@ -2875,1187 +1384,13 @@ Licensed under Blue Oak Model License 1.0.0
 
     // 3. Intercept addEventListener for 'resize'
     const originalAddEventListener = window.addEventListener;
-    window.addEventListener = function (type, listener, options) {
+    window.addEventListener = function (type) {
       if (type === "resize") {
         safeLog("log", "[DDB Print] Blocking external resize listener.");
         return;
       }
       return originalAddEventListener.apply(this, arguments);
     };
-  }
-
-  /**
-   * Separates ability scores into individual draggable sections.
-   * This function:
-   * 1. Identifies all ability score elements using DomManager selectors.
-   * 2. Wraps each ability in a new draggable 'print-section-container'.
-   * 3. Applies the 'ability_border' style by default.
-   * 4. Moves the elements to the print layout wrapper.
-   * 5. Performs specific SVG removal for each new container.
-   * 6. Destroys the original empty parent sections to clean up the UI.
-   */
-  function separateAbilities() {
-    const dom = window.DomManager.getInstance();
-    const abilities = document.querySelectorAll(".ct-quick-info__ability");
-    const layoutRoot = document.getElementById("print-layout-wrapper");
-
-    if (!abilities.length || !layoutRoot) return;
-
-    safeLog("log", `[DDB Print] Separating ${abilities.length} abilities...`);
-
-    const parentsToRemove = new Set();
-
-    abilities.forEach((ability, index) => {
-      const parentSection = ability.closest("section");
-      if (parentSection) parentsToRemove.add(parentSection);
-
-      const nameEl = ability.querySelector(".ct-quick-info__ability-name");
-      const name = nameEl ? nameEl.textContent.trim() : `Ability ${index + 1}`;
-      const id = `section-Ability-${name}`;
-
-      // Create container and MOVE the element
-      const wrapper = createDraggableContainer(name, ability, id);
-      const innerContainer = wrapper.querySelector(".print-section-container");
-
-      // Default to ability border (if not overridden by saved layout later)
-      innerContainer.classList.add("ability_border");
-
-      PeDom().getSectionsLayer().element.appendChild(wrapper);
-
-      // Targeted SVG Removal for the new section
-      removeSpecificSvgs(innerContainer);
-
-      // Reset internal styles to fit new container
-      ability.style.margin = "0";
-      ability.style.width = "100%";
-      ability.style.display = "flex";
-      ability.style.flexDirection = "column";
-      ability.style.alignItems = "center";
-    });
-
-    // Destroy empty parents
-    parentsToRemove.forEach((p) => p.remove());
-  }
-
-  /**
-   * Separates individual Quick Info boxes (AC, Initiative, etc.) into draggable sections.
-   */
-  function separateQuickInfoBoxes() {
-    const dom = window.DomManager.getInstance();
-    const boxes = document.querySelectorAll(".ct-quick-info__box");
-    const layoutRoot = document.getElementById("print-layout-wrapper");
-
-    if (!boxes.length || !layoutRoot) return;
-
-    safeLog(
-      "log",
-      `[DDB Print] Separating ${boxes.length} quick-info boxes...`,
-    );
-
-    const parentsToRemove = new Set();
-
-    boxes.forEach((box, index) => {
-      // Collect parent for cleanup (usually .ct-quick-info)
-      const parentGroup = box.closest(".ct-quick-info");
-      if (parentGroup) parentsToRemove.add(parentGroup);
-
-      const labelEl = box.querySelector(
-        ".ct-quick-info__box-label",
-      );
-      const label = labelEl ? labelEl.textContent.trim() : `Box ${index + 1}`;
-      const id = `section-Box-${label.replace(/\s+/g, "-")}`;
-
-      // Create container and MOVE the element
-      const wrapper = createDraggableContainer(label, box, id);
-      const innerContainer = wrapper.querySelector(".print-section-container");
-
-      // Default to box border
-      innerContainer.classList.add("box_border");
-
-      PeDom().getSectionsLayer().element.appendChild(wrapper);
-
-      // Targeted SVG Removal for the new section
-      removeSpecificSvgs(innerContainer);
-
-      // Reset internal styles
-      box.style.margin = "0";
-      box.style.width = "100%";
-      box.style.display = "flex";
-      box.style.flexDirection = "column";
-      box.style.alignItems = "center";
-    });
-
-    // Extract Health if present (User Request)
-    const health = document.querySelector(".ct-quick-info__health");
-    if (health) {
-      // Only extract if it hasn't been extracted yet
-      if (!document.getElementById("section-Quick-Info-Health")) {
-        const wrapper = createDraggableContainer(
-          "Health",
-          health,
-          "section-Quick-Info-Health",
-        );
-        const innerContainer = wrapper.querySelector(
-          ".print-section-container",
-        );
-        // Remove the header inside health if it exists to avoid duplication/weirdness
-        const healthHeader = health.querySelector("h1");
-        // We can't easily remove h1 if it's needed, but let's trust CSS to handle display
-
-        PeDom().getSectionsLayer().element.appendChild(wrapper);
-
-        // Fix health display
-        health.style.display = "block";
-        health.style.position = "static";
-        health.style.width = "100%";
-
-        removeSpecificSvgs(innerContainer);
-
-        // Mark parent for removal if health was inside it
-        const parentGroup = health.parentElement; // usually .ct-quick-info
-        if (parentGroup && parentGroup.matches(".ct-quick-info")) {
-          parentsToRemove.add(parentGroup);
-        }
-      }
-    }
-
-    // Destroy empty groups
-    parentsToRemove.forEach((p) => p.remove());
-  }
-
-  /**
-   * Drag and Drop Engine
-   */
-  function removeSearchBoxes() {
-    const dom = window.DomManager.getInstance();
-    const searchSelectors = [
-      ".header-wrapper",
-      "input[type=\"search\"]",
-      "[class*=\"filter\"]",
-      // Add DomManager selectors
-      ".ct-spells-filter",
-      ".ct-equipment__filter",
-      ".ct-inventory__filter",
-      ".ct-extras__filter",
-      ".ct-features__management-link",
-    ].filter(Boolean); // Filter out undefineds
-
-    // Flatten and query
-    const allSelectors = searchSelectors.join(",");
-    document.querySelectorAll(allSelectors).forEach((el) => {
-      // User Request: Preserve Filters on Live Spells Tab
-      // Check if element is inside Spells container (or is the spells filter itself checking ancestors)
-      if (el.closest(".ct-spells") || el.closest('[data-testid="SPELLS"]')) {
-        return;
-      }
-      el.remove();
-    });
-  }
-
-  function enforceFullHeight() {
-    const styleId = "ddb-print-enhance-style";
-    if (document.getElementById(styleId)) return;
-
-    const dom = window.DomManager.getInstance();
-    const style = document.createElement("style");
-    style.id = styleId;
-    style.textContent = `
-        :root {
-            --border-img: url('${chrome.runtime.getURL("assets/border_default.webp")}');
-            --border-img-width: 28px;
-            --border-img-outset: 16px;
-            --border-img-slice: 33;
-            --btn-color: #c53131;
-            --btn-color-highlight: #f18383ff;
-            --be-full-filter: none;
-            --be-decoration-filter: none;
-            --be-hue-filter: none;
-            --be-inv-hue-filter: none;
-        }
-        .no-border {
-            border-image-source: none !important;
-            border-style: none !important;
-        }
-        /* Hidden ::before when no-border */
-        .no-border::before {
-            display: none !important;
-        }
-        .default-border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_default.webp")}');
-            --border-img-width: 28px;
-            --border-img-outset: 16px;
-            --border-img-slice: 33;
-        }
-        .ability_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_ability.webp")}');
-            --border-img-width: 28px;
-            --border-img-slice: 25;
-            --border-img-outset: 8px;
-        }
-        .spikes_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_spikes.webp")}');
-            --border-img-width: 118px;
-            --border-img-slice: 177;
-            --border-img-outset: 55px;
-        }
-        .barbarian_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_barbarian.webp")}');
-            --border-img-width: 88px;
-            --border-img-slice: 146;
-            --border-img-outset: 71px;
-        }
-        .goth_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_goth1.webp")}');
-            --border-img-width: 111px;
-            --border-img-slice: 250;
-            --border-img-outset: 50px 35px;
-        }
-        .plants_border {
-            --border-img: url('${chrome.runtime.getURL("assets/vine_plants.webp")}');
-            --border-img-width: 145px;
-            --border-img-slice: 219;
-            --border-img-outset: 50px;
-        }
-        .box_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_box.webp")}');
-            --border-img-width: 25px;
-            --border-img-slice: 22;
-            --border-img-outset: 7px 10px;
-        }
-        .dwarf_border {
-            --border-img: url('${chrome.runtime.getURL("assets/dwarf.webp")}');
-            --border-img-width: 205px;
-            --border-img-slice: 206;
-            --border-img-outset: 173px;
-        }
-        .dwarf_hollow_border {
-            --border-img: url('${chrome.runtime.getURL("assets/dwarf_hollow.webp")}');
-            --border-img-width: 205px;
-            --border-img-slice: 206;
-            --border-img-outset: 173px;
-        }
-        .sticks_border {
-            --border-img: url('${chrome.runtime.getURL("assets/sticks.webp")}');
-            --border-img-width: 90px;
-            --border-img-slice: 245;
-            --border-img-outset: 22px;
-        }
-        .ornament_border {
-            --border-img: url('${chrome.runtime.getURL("assets/ornament.webp")}');
-            --border-img-width: 60px;
-            --border-img-slice: 105;
-            --border-img-outset: 25px;
-        }
-        .ornament2_border {
-            --border-img: url('${chrome.runtime.getURL("assets/ornament2.webp")}');
-            --border-img-width: 60px;
-            --border-img-slice: 105;
-            --border-img-outset: 25px;
-        }
-        .ornament_bold_border {
-            --border-img: url('${chrome.runtime.getURL("assets/ornament_bold.webp")}');
-            --border-img-width: 80px;
-            --border-img-slice: 205;
-            --border-img-outset: 25px;
-        }
-
-        /* Context Menu Styles */
-        .be-context-menu {
-            position: absolute;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            padding: 4px 0;
-            z-index: 32000;
-            display: none;
-            min-width: 120px;
-        }
-        .be-context-menu button {
-            display: block;
-            width: 100%;
-            text-align: left !important;
-            padding: 8px 12px !important;
-            border: none !important;
-            background: none !important;
-            cursor: pointer !important;
-            font-size: 12px !important;
-            color: #333 !important;
-            height: auto !important;
-            border-radius: 0 !important;
-            filter: none !important;
-        }
-        .be-context-menu button:hover {
-            background-color: #f5f5f5 !important;
-        }
-        .be-more-options-button {
-            cursor: pointer;
-            font-size: 16px;
-            background: none;
-            border: none;
-            padding: 0 4px;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Layer Management Panel Styles */
-        .be-layer-panel {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            width: 250px;
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-            padding: 8px;
-            z-index: 31000; /* Above modals and other extensions */
-            font-family: sans-serif;
-            font-size: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            transition: width 0.3s ease, height 0.3s ease;
-        }
-        .be-layer-panel.minimized {
-            width: 180px;
-            height: 32px;
-            padding: 4px 8px;
-            overflow: hidden;
-        }
-        .be-layer-panel.minimized .be-layer-panel-header {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .be-layer-panel-header {
-            border-bottom: 1px solid #444;
-            margin-bottom: 8px;
-            padding-bottom: 4px;
-            text-align: center;
-        }
-        .be-layer-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .be-layer-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px;
-            background: #333;
-            border-radius: 4px;
-        }
-        .be-layer-controls {
-            display: flex;
-            gap: 4px;
-        }
-        .be-layer-controls button {
-            background: #444;
-            border: 1px solid #555;
-            color: white;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 14px;
-        }
-        .be-layer-controls button:hover {
-            background: #555;
-        }
-
-        .ornament_bold2_border {
-            --border-img: url('${chrome.runtime.getURL("assets/ornament_bold2.webp")}');
-            --border-img-width: 80px;
-            --border-img-slice: 205;
-            --border-img-outset: 24px;
-        }
-        .ornament_simple_border {
-            --border-img: url('${chrome.runtime.getURL("assets/ornament_simple.webp")}');
-            --border-img-width: 50px;
-            --border-img-slice: 255;
-            --border-img-outset: 20px;
-        }
-        .spike_hollow_border {
-            --border-img: url('${chrome.runtime.getURL("assets/spike_hollow.webp")}');
-            --border-img-width: 100px;
-            --border-img-slice: 205;
-            --border-img-outset: 50px;
-        }
-        .spiky_border {
-            --border-img: url('${chrome.runtime.getURL("assets/spike_hollow2.webp")}');
-            --border-img-width: 100px;
-            --border-img-slice: 205;
-            --border-img-outset: 60px;
-        }
-        .spiky_bold_border {
-            --border-img: url('${chrome.runtime.getURL("assets/spike_bold.webp")}');
-            --border-img-width: 120px;
-            --border-img-slice: 205;
-            --border-img-outset: 69px;
-        }
-        .vine_border {
-            --border-img: url('${chrome.runtime.getURL("assets/vine_hollow.webp")}');
-            --border-img-width: 130px;
-            --border-img-slice: 205;
-            --border-img-outset: 45px;
-        }
-        .archer_header_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_archer_header.webp")}');
-            --border-img-width: 172px 208px 81px 194px;
-            --border-img-slice: 481 470 202 475;
-            --border-img-outset: 10px;
-        }
-        .archer_ability_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_archer_ability.webp")}');
-            --border-img-width: 201px 245px 116px 242px;
-            --border-img-slice: 167 174 79 178;
-            --border-img-outset: 10px;
-        }
-        .archer_border_archer_footer {
-            --border-img: url('${chrome.runtime.getURL("assets/border_archer_footer.webp")}');
-            --border-img-width: 35px 32px 36px 44px;
-            --border-img-slice: 61 60 61 83;
-            --border-img-outset: 10px;
-        }
-        .archer_sidebar_border {
-            --border-img: url('${chrome.runtime.getURL("assets/border_archer_sidebar.webp")}');
-            --border-img-width: 35px 32px 36px 44px;
-            --border-img-slice: 61 60 61 83;
-            --border-img-outset: 10px;
-        }
-
-        .ct-quick-info__box,
-        section {
-            height: 100% !important;
-            padding: 0 !important;
-        }
-
-        #character-tools-target {
-            background-color: white;
-        }
-
-        /* Deep Clean: Aggressively hide top elements */
-        [data-original-id="section-Section-6"] .print-section-header > span, 
-        [data-original-id="section-Section-6"] .print-section-content .ct-primary-box, 
-        div#section-Section-6 .print-section-header > span, 
-        div#section-Section-6 .print-section-content .ct-primary-box, 
-        footer, 
-        header.main, 
-        #mega-menu-target, 
-        .mm-navbar,
-        [class*="ct-character-nav"], 
-        .notifications-wrapper,
-        .ddb-site-alert, 
-        .site-bar, 
-        .watermark, 
-        dialog ~ div:not(#site-main):not([id^="print-enhance"]):not([class*="be-"]),
-        .ct-character-sheet:before,
-        .ct-equipment__filter,
-        .ct-extras-filter__interactions,
-        .ct-spells-spell__action,
-        [class$="__actions--collapsed"],
-        .dice-rolling-panel,
-        .ct-features__management-link,
-        .ct-character-sheet-desktop .ct-character-header-desktop,
-        .ct-quick-info__health h1 + div,
-        .ct-quick-info__inspiration,
-        .ct-subsection__footer,
-        .ddbc-theme-link,
-        .ddbc-character-tidbits__heading {
-            display: none !important;
-        }
-
-        .ct-quick-info__health h1 {
-            position: static;
-            transform: none;
-        }
-        /* REsizable */
-        .ct-character-sheet-desktop .ct-subsection {
-            position: static!important;
-            display: flex!important;
-            flex-flow: row!important;
-            height: 100%;
-        }
-        .ct-character-sheet-desktop .ct-subsections {
-            height: auto !important;
-            display: block;
-            width: 100%;
-            position: relative !important;
-        }
-
-        /* User Request: Side Panel Fixed & Scrollable */
-        .ct-sidebar__portal {
-            position: fixed !important;
-            top: 0 !important;
-            right: 0 !important;
-            height: 100% !important;
-            z-index: 9999 !important;
-        }
-        .ct-spell-manager {
-            overflow-y: auto !important;
-            max-height: 100% !important;
-        }
-        .ct-sidebar {
-            position: static !important;
-        }
-        .ct-sidebar__inner {
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-        }
-        .ct-character-sheet {
-            background: url(https://www.dndbeyond.com/avatars/61/510/636453152253102859.jpeg) no-repeat, url(https://www.dndbeyond.com/attachments/0/84/background_texture.png) #333 !important;
-        }
-        .ct-character-sheet-desktop {
-            background-color: white;
-            height: 100%;
-            -webkit-box-shadow: 5px 5px 15px 5px #3f3f3fff;
-            box-shadow: 5px 5px 15px 5px #3f3f3fff;
-        }
-
-        .print-section-wrapper,
-        .print-section-wrapper > * {
-            width: 100%;
-            max-width: 1200px;
-            padding: 0 !important;
-        }
-
-        @media (min-width: 1200px) {
-            .ct-primary-box {
-                width: 100% !important;
-            }
-        }
-
-        @media screen {
-            .ct-character-sheet-desktop {
-                max-width: none !important;
-                margin: 0 !important;
-                width: 100% !important;
-                background-color: white !important;
-            }
-        }
-        
-        .pe-layer {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            pointer-events: none !important;
-            z-index: 1000;
-            overflow: visible !important;
-        }
-        
-        #print-enhance-shapes-layer {
-            z-index: 1001; /* Above sections */
-        }
-        
-        .be-section-wrapper {
-            position: absolute !important;
-            display: flex !important;
-            flex-direction: column !important;
-            z-index: 10;
-            min-width: max-content;
-            transition: opacity 0.2s;
-            pointer-events: auto !important; /* Interactive by default */
-        }
-        
-        .be-section-wrapper img {
-            background-color: transparent;
-            border: none;
-            object-fit: contain;
-        }
-        
-        .be-section-wrapper section:not(.ddbc-armor-class-box) > h2 + div,
-        .be-section-wrapper section {
-            height: 100%;
-            width: 100%;
-        }
-        
-        .be-section-wrapper section:not(.ddbc-armor-class-box) > h2 + div {
-            height: 100% !important;
-        }
-        
-        /* Layer Lock Interactions */
-        .be-layer-locked .be-section-wrapper {
-            pointer-events: none !important;
-            opacity: 0.5 !important;
-        }
-        .be-layer-locked .be-rotation-handle {
-            display: none !important;
-        }
-
-        .be-active-layer .be-section-wrapper:hover,
-        .be-active-layer .be-shape-wrapper:hover,
-        .be-focus-highlight-hover {
-            filter: drop-shadow(0 0 15px #28a745) drop-shadow(0 0 15px #28a745) !important;
-            transition: filter 0.3s ease-in-out;
-            z-index: 100003 !important;
-        }
-
-        body.be-lock-shapes #print-enhance-shapes-layer {
-            pointer-events: none !important;
-        }
-
-        .be-delete-layer-btn {            color: #ff4444 !important;
-        }
-        .be-delete-layer-btn:hover {
-            background-color: #552222 !important;
-        }
-
-        .be-context-menu {
-            user-select: none;
-            overflow: hidden;
-            animation: be-fade-in 0.1s ease-out;
-        }
-        @keyframes be-fade-in {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .be-context-menu-item:hover {
-            background-color: #333 !important;
-        }
-
-        .be-active-layer {
-            background-color: #28a74533;
-            border-left: 3px solid #28a745;
-            margin-left: -3px;
-        }
-
-        .be-active-wrapper {
-            filter: drop-shadow(0 0 10px #c53131) !important;
-            z-index: 100004 !important;
-        }
-
-        .be-active-section {
-            outline: 3px solid #c53131 !important;
-        }
-        #print-enhance-shapes-layer.be-active-layer,
-        #print-enhance-sections-layer.be-active-layer
-         {
-            background-color: transparent;
-            border-left: 0;
-            margin-left: 0;
-        }
-
-        .be-section-wrapper {
-            cursor: grab;
-            transition: opacity 0.3s ease;
-            box-decoration-break: clone;
-            -webkit-box-decoration-break: clone;
-            box-sizing: border-box;
-            break-inside: avoid;
-            display: flex !important;
-            flex-direction: column !important;
-            min-height: 30px !important;
-            min-width: 50px !important;
-        }
-        .be-section-wrapper.dragging {
-            cursor: grabbing;
-        }
-        .be-section-wrapper * {
-            cursor: auto;
-        }
-        .be-section-wrapper:hover .be-section-actions,
-        .be-shape-wrapper:hover .be-section-actions {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .be-active-layer .be-section-wrapper:hover .be-section-actions,
-        .be-active-layer .be-shape-wrapper:hover .be-section-actions {
-            opacity: 1;
-            pointer-events: auto !important;
-        }
-
-        .print-section-container {
-            --reduce-height-by: 0px;
-            --reduce-width-by: 0px;
-            background-color: rgba(255, 255, 255, 0.85);
-            box-decoration-break: clone;
-            -webkit-box-decoration-break: clone;
-            box-sizing: border-box;
-            break-inside: avoid;
-            display: flex !important;
-            flex-direction: column !important;
-            min-height: 30px !important;
-            min-width: 50px !important;
-            overflow: visible !important; /* Changed to visible so ::before border outsets are not clipped */
-            position: relative !important;
-            filter: var(--be-hue-filter) !important;
-            z-index: 0;
-        }
-
-        .print-section-container:not(.be-no-border)::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            border-color: transparent;
-            border-image-outset: var(--border-img-outset);
-            border-image-repeat: round;
-            border-image-slice: var(--border-img-slice);
-            border-image-source: var(--border-img);
-            border-image-width: var(--border-img-width);
-            border-style: solid;
-            border-width: 0;
-            filter: var(--be-decoration-filter) !important;
-            z-index: -1;
-        }
-
-        .print-shape-container {
-            background-color: transparent !important;
-            border-width: 0;
-            border-style: solid;
-            pointer-events: auto;
-        }
-        .print-shape-container .print-section-content {
-            background-color: transparent !important;
-        }
-
-        /* Rotation handles should be hidden for locked shapes */
-        .be-layer-locked .be-rotation-handle {
-            display: none !important;
-        }
-
-        .print-section-container, 
-        .print-section-container * {
-            font-size: calc(10px * var(--be-font-scale, 1)) !important;
-            white-space: normal !important;
-            overflow-wrap: break-word !important;
-        }
-
-        .print-section-container .ct-combat__statuses h2 *,
-        .print-section-container .ct-combat__statuses h2 + *,
-        .print-section-container .ct-quick-info * {
-            font-size: calc(12px * var(--be-font-scale, 1)) !important;
-        }
-
-        .print-section-container .ct-quick-info__health * {
-            font-size: 14px !important;
-        }
-        .print-section-container [class^="styles_heading__"],
-        .print-section-container [class^="styles_sectionHeading__"],
-        .print-section-container [class$="-heading"],
-        .print-section-container [class$="__heading"],
-        .print-section-container [class$="__heading"] ,
-        .print-section-container .ct-content-group__header-content {
-            font-size: 12px !important;
-            font-weight: bold !important;
-            text-transform: uppercase;
-            border-bottom: 1px solid #979797;
-            margin-bottom: 4px;
-        }
-        .print-section-container [class^="styles_sectionHeading__"],
-        .print-section-container [class$="__heading"],
-        .print-section-container [class$="__heading"]  {
-            font-size: 10px !important;
-        }
-        .print-section-container [class^="styles_sectionHeading__"],
-        .print-section-container [class$="__heading"],
-        .print-section-container [class$="__heading"] ,
-        .print-section-container [class^="styles_heading__"] [class$="-heading"] {
-            border-bottom: 0
-        }
-        .print-section-content {
-            flex: 1 1 auto !important;
-            overflow: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            position: relative !important;
-        }
-        .ct-senses__callout-value,
-        .integrated-dice__container,
-        .integrated-dice__container span {
-            font-size: 16px !important;
-        }
-        .ddbc-armor-class-box__value {
-            font-size: 26px !important;
-        }
-
-            /* Scaling helper */
-        .print-section-container[data-scaling="true"] .print-section-content > div {
-            transform-origin: top left;
-        }
-        .print-section-container div[class$="-row-header"] > div, 
-        .print-section-container div[class$="-content"] > div > div {
-            min-width: 38px;
-        }
-        .print-section-container div[class$="-row-header"] div[class$="--name"], 
-        .print-section-container div[class$="-content"] div[class$="__name"] {
-            max-width: 72px;
-        }
-        .print-section-container div[class$="-content"] div[class$="-slot__name"] {
-            max-width: 200px;
-        }
-        .print-section-container div[class$="-content"] div[class$="-item__name"] {
-            max-width: 136px;
-        }
-    
-        .ddbc-character-avatar__portrait {
-            width: 100%;
-        }
-        
-        /* Ability Summary */
-
-        .ddbc-ability-summary {
-            display: contents;
-        }
-        .ddbc-ability-summary__secondary {
-            position: static!important;
-            border: 2px solid var(--btn-color);
-            border-radius: 150px;
-            padding: 8px 13px;
-            font-size: 16px !important;
-            width: fit-content;
-            background: white;
-        }
-        .ddbc-ability-summary__label {
-            font-size: 12px !important;
-        }
-
-        /* PROFICIENCY & WALKING SPEED */
-        
-        .ct-quick-info__box * {
-            font-size: 14px !important;
-            line-height: 21px;
-        }
-
-        /* Custom Resize Handle */
-
-        .print-section-resize-handle {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 16px;
-            height: 16px;
-            cursor: se-resize;
-            z-index: 20;
-            opacity: 0; /* Hidden by default */
-        }
-        .be-section-wrapper:hover .print-section-resize-handle {
-            opacity: 1;
-            background: linear-gradient(135deg, transparent 50%, var(--btn-color) 50%);
-        }
-        .be-section-wrapper.be-shape-wrapper:hover .print-section-resize-handle {
-            background: linear-gradient(135deg, transparent 50%, rgba(40, 167, 69, 0.8) 50%) !important;
-        }
-
-        /* Skills specific compact logic (already mostly covered by global above) */
-        .ct-skills, .ct-skills * {
-            font-size: 10px !important;
-        }
-
-        .ct-skills__box {
-            overflow: hidden !important;
-            border: 1px solid black !important;
-        }
-        .ct-skills > div > div,
-        .ct-skills > div > div > * {
-            height: 26px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            font-size: 10px !important;
-            line-height: 10px !important;
-            display: flex;
-            align-items: center;
-        }
-        .ct-notes__note {
-            white-space: pre-wrap !important;
-        }
-        .print-section-container.minimized .print-section-content {
-            display: none !important;
-        }
-
-        /* Unified Section Action Buttons */
-        .be-section-actions {
-            position: absolute;
-            top: 8px; /* Repositioned to top since header is gone */
-            left: 8px;
-            display: flex;
-            gap: 8px;
-            z-index: 20;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-        }
-        .be-section-actions button {
-            width: 39px;
-            height: 32px;
-            cursor: pointer;
-            background: var(--btn-color);
-            border: 1px solid rgb(85, 85, 85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            margin: 0;
-            filter: drop-shadow(2px 4px 6px black);
-            border-radius: 32px;
-            color: white;
-            font-size: 18px !important;
-            transition: background-color 0.2s;
-        }
-        .be-section-actions button:hover {
-            background-color: var(--btn-color-highlight);
-        }
-        .be-shape .be-section-actions button {
-            background-color: #28a745 !important;
-        }
-        .be-shape .be-section-actions button:hover {
-            background-color: #218838 !important;
-        }
-        .be-clone-button {
-            font-size: 21px !important;
-        }
-        .be-clone-delete:hover {
-            background: #cc0000 !important;
-        }
-        .be-shape-delete:hover {
-            background: #1e7e34 !important;
-        }
-        @media print {
-            .be-section-actions {
-                display: none !important;
-            }
-        }
-
-        .be-section-primary-box, .be-section-primary-box * {
-            background: transparent !important;
-        }
-
-        /* Modal Styles */
-        .be-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100000;
-            backdrop-filter: blur(4px);
-        }
-        .be-modal {
-            background: #222;
-            color: white;
-            padding: 24px;
-            border-radius: 12px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid #444;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .be-modal h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-        .be-modal p {
-            margin: 0;
-            font-size: 14px;
-            color: #ccc;
-        }
-        .be-modal input {
-            background: #111;
-            border: 1px solid #444;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .be-modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-        .be-modal-actions button {
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            border: 1px solid #555;
-        }
-        .be-modal-ok {
-            background: #444;
-            color: white;
-        }
-        .be-modal-cancel {
-            background: transparent;
-            color: #ccc;
-        }
-
-        .be-modal-slider-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 10px 0;
-        }
-        .be-modal-slider {
-            flex-grow: 1;
-            cursor: pointer;
-            accent-color: var(--btn-color);
-        }
-        .be-modal-slider-value {
-            font-weight: bold;
-            min-width: 50px;
-            text-align: right;
-            font-size: 1.1em;
-            color: white;
-        }
-
-        /* Border Picker Styles */
-        .be-border-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            overflow-y: auto;
-            max-height: 400px;
-            margin: 20px 0;
-            justify-content: center;
-        }
-        .be-border-option {
-            cursor: pointer;
-            padding: 10px;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-            text-align: center;
-            width: 100px;
-            border-radius: 4px;
-        }
-        .be-border-option:hover {
-            background: #333;
-        }
-        .be-border-option.selected {
-            border-color: var(--btn-color);
-            background: #444;
-        }
-        .be-rotation-handle {
-            position: absolute;
-            top: -45px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 30px;
-            background: white;
-            border: 3px solid #f0f;
-            border-radius: 50%;
-            cursor: grab;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-        .be-rotation-handle::before {
-            content: '↻';
-            color: #f0f;
-            font-weight: bold;
-        }
-        .be-rotation-handle:active {
-            cursor: grabbing;
-        }
-        .be-rotation-handle::after {
-            content: '';
-            position: absolute;
-            top: 28px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 3px;
-            height: 17px;
-            background: #f0f;
-        }
-        .be-border-preview {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 5px;
-            background: white;
-            box-sizing: border-box;
-            border-width: 0px;
-            border-style: solid;
-            border-color: transparent;
-            border-image-source: var(--border-img);
-            border-image-slice: var(--border-img-slice);
-            border-image-width: var(--border-img-width);
-            border-image-repeat: round;
-        }
-
-        /* Final Print Overrides - Highest Priority */
-        @media print {
-            @page {
-                margin: 0;
-                size: letter portrait;
-            }
-            body {
-                margin-top: 0in !important;
-                margin-bottom: 0.25in !important;
-                margin-left: 0.1in !important;
-                margin-right: 0.1in !important;
-                padding: 0 !important;
-            }
-            
-            html, body, .ct-character-sheet-desktop {
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-                transform: none !important;
-            }
-
-            /* Content Opacity Fix */
-            html body .be-section-wrapper,
-            html body .be-shape-wrapper,
-            html body #print-enhance-sections-layer,
-            html body #print-enhance-shapes-layer,
-            html body.be-lock-sections .be-section-wrapper,
-            html body.be-lock-shapes .be-shape-wrapper,
-            html body .be-layer-locked .be-section-wrapper,
-            html body .be-layer-locked .be-shape-wrapper {
-                opacity: 1 !important;
-                visibility: visible !important;
-                pointer-events: none !important;
-            }
-            
-            html body .be-section-wrapper *, 
-            html body .be-shape-wrapper * {
-                opacity: 1 !important;
-                visibility: visible !important;
-            }
-
-            /* Selection and Hover Highlights */
-            .be-active-wrapper,
-            .be-section-wrapper:hover,
-            .be-shape-wrapper:hover,
-            .be-focus-highlight-hover,
-            .be-active-section {
-                filter: none !important;
-                outline: none !important;
-            }
-
-            /* UI Cleanup */
-            .print-section-header, 
-            .be-section-actions, 
-            .print-section-resize-handle,
-            .be-rotation-handle,
-            .be-shapes-mode-btn,
-            .print-page-separator,
-            #print-enhance-controls, 
-            #print-enhance-overlay {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-            }
-
-            .ct-spells-filter {
-                visibility: hidden !important;
-            }
-        }
-    `;
-    document.head.appendChild(style);
   }
 
   /**
@@ -4066,298 +1401,112 @@ Licensed under Blue Oak Model License 1.0.0
       ".print-section-container.be-clone",
     );
     if (clones.length === 0) {
-      showFeedback("No clones found");
+      // AC-5 (U-17): a dialog that stays, not a toast that expires.
+      emptyState("No clones found", {
+        message: "This sheet has no clones to manage yet.",
+        hint: "Clone a section first (the clone button on any section), then come back here.",
+      });
       return;
     }
 
-    // Modal for managing clones
-    const overlay = document.createElement("div");
-    overlay.className = "be-modal-overlay";
-
-    const modal = document.createElement("div");
-    modal.className = "be-modal";
-    modal.style.width = "500px";
-
-    const h3 = document.createElement("h3");
-    h3.textContent = "Manage Clones";
-    modal.appendChild(h3);
-
-    const list = document.createElement("div");
-    list.style.maxHeight = "300px";
-    list.style.overflowY = "auto";
-    list.style.display = "flex";
-    list.style.flexDirection = "column";
-    list.style.gap = "8px";
-
-    clones.forEach((clone) => {
-      const item = document.createElement("div");
-      item.style.display = "flex";
-      item.style.justifyContent = "space-between";
-      item.style.alignItems = "center";
-      item.style.padding = "8px";
-      item.style.background = "#333";
-      item.style.borderRadius = "4px";
-
-      const title =
-        clone.dataset.title ||
-        clone.querySelector(".print-section-header span")?.textContent ||
-        "Unnamed Clone";
-
-      const nameLabel = document.createElement("span");
-      nameLabel.textContent = title;
-      item.appendChild(nameLabel);
-
-      const actions = document.createElement("div");
-      actions.style.display = "flex";
-      actions.style.gap = "8px";
-
-      const goBtn = document.createElement("button");
-      goBtn.textContent = "🎯";
-      goBtn.title = "Jump to Clone";
-      goBtn.onclick = () => {
-        clone.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Flash effect
-        const originalOutline = clone.style.outline;
-        clone.style.outline = "4px solid gold";
-        setTimeout(() => (clone.style.outline = originalOutline), 1000);
-        overlay.remove();
-      };
-      actions.appendChild(goBtn);
-
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "🗑️";
-      delBtn.title = "Delete Clone";
-      delBtn.onclick = () => {
-        if (confirm(`Delete "${name}"?`)) {
-          clone.remove();
-          item.remove();
-          if (list.children.length === 0) {
-            overlay.remove();
-          }
-          showFeedback("Clone deleted");
-          updateLayoutBounds();
-        }
-      };
-      actions.appendChild(delBtn);
-
-      item.appendChild(actions);
-      list.appendChild(item);
-    });
-
-    modal.appendChild(list);
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Close";
-    closeBtn.className = "be-modal-ok";
-    closeBtn.onclick = () => overlay.remove();
-    modal.appendChild(closeBtn);
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-  }
-
-  /**
-   * Captures a static snapshot of a section's content.
-   * @param {string} sectionId
-   * @returns {object} Snapshot data.
-   */
-  function captureSectionSnapshot(sectionId) {
-    const section = document.getElementById(sectionId);
-    if (!section) return null;
-
-    const content = section.querySelector(".print-section-content");
-    if (!content) return null;
-
-    // Use centralized sanitization
-    const sanitizedClone = getSanitizedContent(content);
-
-    const getBorderStyle = (el) => {
-      return (
-        ALL_BORDER_STYLES.find((style) => el.classList.contains(style)) || null
-      );
-    };
-
-    return {
-      originalId: sectionId,
-      html: sanitizedClone.innerHTML,
-      borderStyle: getBorderStyle(section),
-      styles: {
-        width: section.style.width,
-        height: section.style.height,
-      },
-    };
-  }
-
-  /**
-   * Renders a cloned section from snapshot data.
-   * @param {object} snapshot
-   * @returns {HTMLElement} The created container.
-   */
-  function renderClonedSection(snapshot) {
-    const fragment = document.createDocumentFragment();
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = snapshot.html;
-
-    // Sanitize loaded HTML to prevent duplication
-    const sanitizedClone = getSanitizedContent(tempDiv);
-
-    // Create the static header requested by user
-    const dom = window.DomManager.getInstance();
-    const staticHeader = document.createElement("div");
-    staticHeader.className =
-      ".ct-content-group__header".substring(1);
-    const staticHeaderContent = document.createElement("div");
-    staticHeaderContent.className =
-      ".ct-content-group__header-content".substring(1);
-    staticHeaderContent.textContent = snapshot.title;
-    staticHeader.appendChild(staticHeaderContent);
-
-    // Append header first
-    fragment.appendChild(staticHeader);
-
-    // Move all sanitized children to the fragment
-    while (sanitizedClone.firstChild) {
-      fragment.appendChild(sanitizedClone.firstChild);
+    // Modal for managing clones — built on the shared modal primitive (U-20),
+    // so it gains role/aria, a close ✕, backdrop cancel, Esc and focus handling
+    // it never had (it could previously only be left via its own Close button).
+    const modalApi = window.Modals;
+    if (!modalApi || typeof modalApi.__createModal !== "function") {
+      showFeedback("Could not open the clones dialog. Reload the page.", "error");
+      return;
     }
 
-    const wrapper = createDraggableContainer(
-      snapshot.title,
-      fragment,
-      snapshot.id,
-    );
-    const container = wrapper.querySelector(".print-section-container");
-    container.classList.add("be-clone");
-    container.dataset.originalId = snapshot.originalId;
+    modalApi.__createModal({
+      title: "Manage Clones",
+      body(ctx) {
+        ctx.modal.style.width = "500px";
 
-    // Double-click to edit title
-    wrapper.addEventListener("dblclick", async (e) => {
-      e.stopPropagation();
-      const staticTitleSpan = container.querySelector(
-        ".ct-content-group__header-content",
-      );
-      const currentTitle =
-        wrapper.dataset.title ||
-        (staticTitleSpan ? staticTitleSpan.textContent.trim() : "Clone");
-      // Use window reference for mockability in tests
-      const newTitle = await (window.showInputModal || showInputModal)(
-        "Edit Clone Title",
-        "Enter new title:",
-        currentTitle,
-      );
-      if (newTitle) {
-        wrapper.dataset.title = newTitle;
-        if (staticTitleSpan) staticTitleSpan.textContent = newTitle;
-        showFeedback("Title updated");
-      }
-    });
+        const list = document.createElement("div");
+        list.style.maxHeight = "300px";
+        list.style.overflowY = "auto";
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
+        list.style.gap = "8px";
 
-    // Delete button
-    const actionContainer = getOrCreateActionContainer(container);
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "be-clone-delete";
-    deleteBtn.innerHTML = "🗑️";
-    deleteBtn.title = "Delete Clone";
-    deleteBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (confirm("Delete this clone?")) {
-        wrapper.remove();
-        showFeedback("Clone deleted");
-        updateLayoutBounds();
-      }
-    };
-    actionContainer.appendChild(deleteBtn);
+        clones.forEach((clone) => {
+          const item = document.createElement("div");
+          item.style.display = "flex";
+          item.style.justifyContent = "space-between";
+          item.style.alignItems = "center";
+          item.style.padding = "8px";
+          item.style.background = "#333";
+          item.style.borderRadius = "4px";
 
-    // Use saved styles if available (top level for persistence, snapshot.styles for immediate)
-    const width = snapshot.width || (snapshot.styles && snapshot.styles.width);
-    const height =
-      snapshot.height || (snapshot.styles && snapshot.styles.height);
-    const left = snapshot.left;
-    const top = snapshot.top;
-    const zIndex = snapshot.zIndex;
+          const title =
+            clone.dataset.title ||
+            clone.querySelector(".print-section-header span")?.textContent ||
+            "Unnamed Clone";
 
-    if (width) container.style.width = width;
-    if (height) container.style.height = height;
-    if (zIndex) wrapper.style.zIndex = zIndex;
-    if (snapshot.printZIndex) wrapper.dataset.printZ = snapshot.printZIndex;
-    if (snapshot.fontSize) applyFontSize(wrapper, snapshot.fontSize);
+          const nameLabel = document.createElement("span");
+          nameLabel.textContent = title;
+          item.appendChild(nameLabel);
 
-    if (left && top) {
-      wrapper.style.left = left;
-      wrapper.style.top = top;
-    } else {
-      // Position it slightly offset from original or at top-left
-      const original = document.getElementById(snapshot.originalId);
-      if (original) {
-        const originalWrapper =
-          original.closest(".be-section-wrapper") || original;
-        wrapper.style.left =
-          (parseInt(originalWrapper.style.left) || 0) + 32 + "px";
-        wrapper.style.top =
-          (parseInt(originalWrapper.style.top) || 0) + 32 + "px";
+          const actions = document.createElement("div");
+          actions.style.display = "flex";
+          actions.style.gap = "8px";
 
-        // Ensure it's in front of the original
-        // Find max z-index in the layout
-        let maxZ = 10;
-        document.querySelectorAll(".be-section-wrapper").forEach((el) => {
-          const z = parseInt(el.style.zIndex) || 10;
-          if (z > maxZ) maxZ = z;
+          const goBtn = document.createElement("button");
+          goBtn.textContent = "🎯";
+          goBtn.title = "Jump to Clone";
+          goBtn.type = "button";
+          goBtn.onclick = () => {
+            clone.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Flash effect
+            const originalOutline = clone.style.outline;
+            clone.style.outline = "4px solid gold";
+            setTimeout(() => (clone.style.outline = originalOutline), 1000);
+            ctx.close(null);
+          };
+          actions.appendChild(goBtn);
+
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "🗑️";
+          delBtn.title = "Delete Clone";
+          delBtn.type = "button";
+          delBtn.onclick = async () => {
+            const okToDelete = await askConfirm({
+              title: "Delete clone",
+              message: `Delete "${title}"? This cannot be undone.`,
+              confirmLabel: "Delete",
+              danger: true,
+            });
+            if (okToDelete) {
+              const cloneGate = await destructiveGate(`Delete clone "${title}"`);
+              if (!cloneGate.ok) return;
+              clone.remove();
+              item.remove();
+              // AC-3: the snapshot just taken IS the undo.
+              window.offerUndo && window.offerUndo(cloneGate.record, `Deleted clone "${title}"`);
+              if (list.children.length === 0) {
+                ctx.close(null);
+              }
+              showFeedback("Clone deleted");
+              updateLayoutBounds();
+            }
+          };
+          actions.appendChild(delBtn);
+
+          item.appendChild(actions);
+          list.appendChild(item);
         });
-        wrapper.style.zIndex = maxZ + 1;
-      } else {
-        wrapper.style.left = "32px";
-        wrapper.style.top = "32px";
-      }
-    }
 
-    if (snapshot.minimized) {
-      container.dataset.minimized = "true";
-      container.classList.add("minimized");
-    }
+        ctx.bodyEl.appendChild(list);
 
-    if (snapshot.compact) {
-      container.classList.add("be-compact-mode");
-      // Button style will be handled by injection or separate update if needed,
-      // but let's try to set it if button exists contextually (though injection happens later usually)
-    }
-
-    if (snapshot.borderStyle) {
-      container.classList.add(snapshot.borderStyle);
-    }
-
-    const layoutRoot = PeDom().getLayoutRoot().element;
-    if (layoutRoot) {
-      PeDom().getSectionsLayer().element.appendChild(wrapper);
-    }
-
-    // Re-init resize logic for the new container
-    if (window.initResizeLogic) window.initResizeLogic();
-
-    refreshLayers();
-
-    return wrapper;
-  }
-
-  /**
-   * Updates the state of control buttons (e.g., disabling Add Shape if no active layer).
-   */
-  function updateControlsState() {
-    const lm = window.PeDom
-      ? window.PeDom().getLayerManager()
-      : window.DomManager
-        ? window.DomManager.getInstance().getLayerManager()
-        : null;
-    if (!lm) return;
-
-    const addShapeBtn = document.getElementById("be-btn-add-shape");
-    if (addShapeBtn) {
-      const hasActiveLayer = lm.activeLayerId !== null;
-      addShapeBtn.disabled = !hasActiveLayer;
-      addShapeBtn.style.opacity = !hasActiveLayer ? "0.5" : "1";
-      addShapeBtn.style.cursor = !hasActiveLayer ? "not-allowed" : "pointer";
-      addShapeBtn.title = !hasActiveLayer
-        ? "Select a layer in Layer Management to enable"
-        : "Add a decorative shape";
-    }
+        const closeBtn = document.createElement("button");
+        closeBtn.textContent = "Close";
+        closeBtn.className = "be-modal-ok";
+        closeBtn.type = "button";
+        ctx.actionsRow.appendChild(closeBtn);
+        closeBtn.onclick = () => ctx.close(null);
+      },
+    });
   }
 
   window.updateControlsState = updateControlsState;
@@ -4389,35 +1538,56 @@ Licensed under Blue Oak Model License 1.0.0
     injectCloneButtons(wrapper);
 
     // Asset Application
-    container.dataset.assetPath = assetPath;
+    // Asset Application.
+    //
+    // track undo_stack_20260911 (contract.md §3): the assignment below used to run
+    // unconditionally, so a restore whose recorded `assetPath` was ABSENT wrote the
+    // STRING "undefined" into the DOM (`dataset` coerces), and the next scan reported
+    // `assetPath: "undefined"` where the record had no `assetPath` at all — an
+    // asymmetry, and one a faithful inverse cannot have. The attribute is now written
+    // when the scan would read it and REMOVED when it would not, so absent stays absent
+    // and empty stays empty.
+    if (typeof assetPath === "string") container.dataset.assetPath = assetPath;
+    else delete container.dataset.assetPath;
     applyShapeAsset(container, assetPath);
 
     // Z-Index Management (at least 100 higher than sections)
-    let maxZ = 110;
+    let maxZ = window.Z.SHAPE_DEFAULT; // AC-5 (was 110)
     document.querySelectorAll(".be-section-wrapper").forEach((el) => {
       // Only count sections, not other shapes for the base 110 offset
       if (!el.classList.contains("be-shape-wrapper")) {
-        const z = parseInt(el.style.zIndex) || 10;
-        if (z > maxZ - 100) maxZ = z + 100;
+        const z = parseInt(el.style.zIndex) || window.Z.SECTION_DEFAULT;
+        if (z > maxZ - window.Z.SHAPE_STEP) maxZ = z + window.Z.SHAPE_STEP;
       } else {
         // But shapes should also stack on top of each other
-        const z = parseInt(el.style.zIndex) || 110;
+        const z = parseInt(el.style.zIndex) || window.Z.SHAPE_DEFAULT;
         if (z > maxZ) maxZ = z;
       }
     });
     wrapper.style.zIndex = maxZ + 1;
 
-    // Restore saved state
+    // Restore saved state.
+    //
+    // track undo_stack_20260911 (contract.md §3, D-2): these guards used to be
+    // TRUTHINESS checks (`if (restoreData.width)`), which silently dropped a recorded
+    // FALSY value — an element whose recorded `zIndex` was "" kept the freshly computed
+    // `maxZ + 1` above instead of the value the record held, so the inverse wrote a
+    // value the record never contained and `scanLayout` -> `applyLayout` was not exact.
+    // They are now PRESENCE checks: a key that is present is written back even when its
+    // value is empty, which is what a faithful inverse requires. `printZIndex` and
+    // `fontSize` keep their truthiness form because an empty value there means "absent"
+    // in the scan as well.
     if (restoreData) {
-      if (restoreData.width)
+      const has = (k) => restoreData[k] !== undefined && restoreData[k] !== null;
+      if (has("width"))
         container.style.setProperty("width", restoreData.width, "important");
-      if (restoreData.height)
+      if (has("height"))
         container.style.setProperty("height", restoreData.height, "important");
-      if (restoreData.left)
+      if (has("left"))
         wrapper.style.setProperty("left", restoreData.left, "important");
-      if (restoreData.top)
+      if (has("top"))
         wrapper.style.setProperty("top", restoreData.top, "important");
-      if (restoreData.zIndex)
+      if (has("zIndex"))
         wrapper.style.setProperty("z-index", restoreData.zIndex, "important");
       if (restoreData.printZIndex)
         wrapper.dataset.printZ = restoreData.printZIndex;
@@ -4451,7 +1621,7 @@ Licensed under Blue Oak Model License 1.0.0
     }
 
     // Listener for header rotate button - TOGGLE HANDLE
-    wrapper.addEventListener("be-rotate-click", (e) => {
+    wrapper.addEventListener("be-rotate-click", () => {
       const existingHandle = wrapper.querySelector(".be-rotation-handle");
       if (existingHandle) {
         existingHandle.remove();
@@ -4494,6 +1664,22 @@ Licensed under Blue Oak Model License 1.0.0
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
 
+        // Phase 2b (track undo_stack_20260911): rotate requests NO persist today (U-4),
+        // so its commit point is DEFINED as this gesture: capture at the handle's
+        // mousedown, record at mouseup. `container` is the element the rotation is
+        // applied to, and `dataset.rotation` is the persisted field (scanLayout reads it,
+        // createShape re-applies it), so the inverse restores the angle.
+        const rotationBefore = currentRotation;
+        // Phase 2 (track refactor_surface_20260911): the reversible record starts HERE, on the
+        // pristine pre-gesture DOM, and is pushed at mouseup through the ONE shared protocol
+        // (`window.beginMutation` / `window.pushMutation`) — the same shape resize, nudge and
+        // drag use. This site used to hand-roll the capture-and-push dance INLINE, and that is
+        // why it drifted: its settled branch kept pushing a mid-gesture capture RAW. The shared
+        // helper was fixed for exactly that in Phase 1 (F-9 for the helper, F-1 for this site).
+        const rotateMut = window.beginMutation
+          ? window.beginMutation({ rotation: String(rotationBefore) })
+          : null;
+
         const onMouseMove = (mmE) => {
           // Calculate angle from center to mouse
           let angle = getAngleFromPoint(cx, cy, mmE.clientX, mmE.clientY);
@@ -4506,6 +1692,26 @@ Licensed under Blue Oak Model License 1.0.0
           document.removeEventListener("mousemove", onMouseMove);
           document.removeEventListener("mouseup", onMouseUp);
           showFeedback(`Rotated to ${currentRotation}°`);
+
+          // No-op guard: a gesture that left the angle where it was pushes nothing.
+          if (currentRotation === rotationBefore) return;
+          if (!rotateMut || typeof window.pushMutation !== "function") return;
+          window.pushMutation(
+            rotateMut,
+            "Rotate \"" + wrapper.id + "\"",
+            window.MUTATION_CLASSES.ROTATE,
+            (layout, snap) => {
+              // A capture that settled after the rotation wrote holds the NEW angle; the repair
+              // puts the pre-gesture one back so the inverse restores the old orientation. It now
+              // runs for the SETTLED branch too (Phase 1) — which is the defect this site
+              // carried, and the reason the repair is no longer duplicated here.
+              if (window.patchCapturedFields) {
+                window.patchCapturedFields(layout, container.id, {
+                  rotation: String(snap.rotation),
+                });
+              }
+            },
+          );
         };
 
         document.addEventListener("mousemove", onMouseMove);
@@ -4638,129 +1844,6 @@ Licensed under Blue Oak Model License 1.0.0
     }
   }
 
-  /**
-   * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
-   * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
-   */
-  /**
-   * Applies global filters (hue, contrast, greyscale, saturate, sepia) to all decorative elements.
-   * @param {object} filters - { hue, contrast, greyscale, saturate, sepia }
-   */
-  function applyGlobalFilters(filters) {
-    const { hue, contrast, greyscale, saturate, sepia } = filters;
-
-    // Full composite filter (for isolated elements)
-    const fullFilterStr = `
-        hue-rotate(${hue}deg)
-        contrast(${contrast}%)
-        saturate(${saturate}%)
-        grayscale(${greyscale}%)
-        sepia(${sepia}%)
-    `
-      .replace(/\s+/g, " ")
-      .trim();
-
-    // Decoration-only filters (excludes hue-rotate to prevent double-application when parent is hue-rotated)
-    const decorationFilterStr = `
-        contrast(${contrast}%)
-        saturate(${saturate}%)
-        grayscale(${greyscale}%)
-        sepia(${sepia}%)
-    `
-      .replace(/\s+/g, " ")
-      .trim();
-
-    // Reversible filter for main containers (protects content from destructive filters)
-    const containerFilterStr = `
-        hue-rotate(${hue}deg)
-    `
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const inverseContainerFilterStr = `
-        hue-rotate(-${hue}deg)
-    `
-      .replace(/\s+/g, " ")
-      .trim();
-
-    // Apply to document root for global CSS variable access
-    const root = document.documentElement;
-    root.style.setProperty("--be-full-filter", fullFilterStr);
-    root.style.setProperty("--be-decoration-filter", decorationFilterStr);
-    root.style.setProperty("--be-hue-filter", containerFilterStr);
-    root.style.setProperty("--be-inv-hue-filter", inverseContainerFilterStr);
-
-    // Keep the dynamic style block for non-variable-aware elements or specific exclusions
-    let style = document.getElementById("be-global-filters-style");
-    if (!style) {
-      style = document.createElement("style");
-      style.id = "be-global-filters-style";
-      document.head.appendChild(style);
-    }
-
-    style.textContent = `
-        /* Shape assets and borders get decoration filters when they are INSIDE a hue-rotated container.
-           Otherwise they need the full filter (including hue-rotate). */
-        
-        /* Default for standalone shapes (like those added with "Add Shape") */
-        .be-shape-container,
-        img.be-shape-asset {
-            filter: var(--be-full-filter) !important;
-        }
-
-        /* If nested inside a container that already has hue-rotate, only apply decoration filters */
-        .print-section-container .be-shape-container,
-        .print-section-container img.be-shape-asset,
-        .print-shape-container {
-            filter: var(--be-decoration-filter) !important;
-        }
-
-        /* Border pseudo-elements (the ::before of .print-section-container)
-           already inherit from the container, so they always use decoration-only. */
-        .print-section-container::before {
-            filter: var(--be-decoration-filter) !important;
-        }
-
-        /* Focus Highlight for Layer Management */
-        .be-focus-highlight {
-            filter: drop-shadow(0 0 15px gold) drop-shadow(0 0 15px gold) !important;
-            transition: filter 0.3s ease-in-out;
-            z-index: 100003 !important;
-        }
-
-        /* Exclude text, fonts, icons, images by inverting the hue filter */
-        .print-section-content,
-        .be-section-actions,
-        .ct-spell-damage-type__icon,
-        .ct-item-status__icon,
-        .ct-character-portrait__img,
-        .ct-extra-row__img,
-        .ddbc-character-avatar__portrait,
-        .ddbc-file-icon,
-        [class$="__attack-save-icon"],
-        [class$="__range-icon"],
-        [class$="__casting-time-icon"],
-        [class$="__damage-effect-icon"],
-        img:not(.be-shape-asset):not(.print-section-content img) {
-            filter: var(--be-inv-hue-filter) !important;
-        }
-
-        /* Prevent double-inversion for elements already inside an inverted container */
-        .print-section-content img,
-        .print-section-content [class*="icon"],
-        .print-section-content *,
-        .be-section-actions * {
-            filter: none !important;
-        }
-
-        /* Ensure the control panel is NEVER affected */
-        #print-enhance-controls,
-        #print-enhance-controls * {
-            filter: none !important;
-        }
-    `;
-  }
-
   // Export for testing and cross-script access
   window.createShape = createShape;
   window.applyShapeAsset = applyShapeAsset;
@@ -4768,1001 +1851,211 @@ Licensed under Blue Oak Model License 1.0.0
   window.showFeedback = showFeedback;
 
   /**
-   * Creates and manages a floating spell detail section.
+   * Scales a section's content down so it FITS its container instead of being clipped by it.
+   *
+   * WHAT THIS REPLACED (issue `responsive_scaling_observer_never_observed_20260912`, wired 2026-09-13
+   * at the operator's decision "finish the wiring, do not delete it"). The function used to construct
+   * a ResizeObserver and NEVER call `observe()` on it — and an observer that observes nothing never
+   * fires — so the entire callback was inert, as was the empty `forEach` that closed the function, as
+   * was the `data-scaling` rule in `js/print_styles.js` (its attribute was only ever set from that
+   * dead callback). The one test for the feature COPIED the algorithm instead of exercising the
+   * wiring, which is how an inert feature kept a green suite.
+   *
+   * HOW IT WORKS NOW — three parts, each of which the old code lacked:
+   *   1. `observe()` every `.print-section-container` that exists at boot, so each gets its
+   *      guaranteed first delivery (ResizeObserver reports every newly observed element).
+   *   2. A MutationObserver on the document keeps that true as sections are CREATED (which is the
+   *      normal case: at `initResponsiveScaling()`'s call site the sheet has NO containers yet —
+   *      they are built by layout apply/default afterwards), and forces a RE-MEASURE when content is
+   *      added into, moved into, or removed from a section — a container of fixed height does not
+   *      resize when its overflow grows, so no size notification would otherwise arrive.
+   *   3. A per-container record of the box it was last measured at, because applying a scale changes
+   *      the inner's layout width, which changes an auto-height container's box, which delivers a
+   *      SECOND notification for the same logical measurement. Without the record the feature writes
+   *      styles in a loop and Chromium reports it as an observer loop; with it, the second pass is a
+   *      no-op and the sheet settles.
+   *
+   * The scale is applied to `.print-section-content > div` and its origin is pinned to top-left by
+   * the (now reachable) `data-scaling` rule, so a scaled section keeps its width and its left edge.
    */
-  async function createSpellDetailSection(
-    spellName,
-    coords,
-    restoreData = null,
-  ) {
-    // 0. Check for existing section for this spell
-    const existing = Array.from(
-      document.querySelectorAll(".be-spell-detail"),
-    ).find((el) => {
-      const wrapper = el.closest(".be-section-wrapper");
-      return wrapper && wrapper.dataset.title === spellName;
-    });
-    if (existing && !restoreData) {
-      // Bring to front
-      const wrapper = existing.closest(".be-section-wrapper");
-      let maxZ = 10000;
-      document.querySelectorAll(".be-section-wrapper").forEach((el) => {
-        const z = parseInt(el.style.zIndex) || 10;
-        if (z > maxZ) maxZ = z;
-      });
-      if (wrapper) wrapper.style.zIndex = maxZ + 1;
-      if (existing.scrollIntoView) {
-        existing.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      showFeedback(`${spellName} is already open`);
-      return;
-    }
+  let responsiveScalingInstalled = false;
 
-    const id = restoreData ? restoreData.id : `spell-detail-${Date.now()}`;
-
-    // 1. Create immediate shell
-    const content = document.createElement("div");
-    content.className = "print-section-content";
-    content.innerHTML = '<div class="be-spinner"></div>';
-
-    const wrapper = createDraggableContainer(spellName, content, id);
-    wrapper.classList.add(
-      "be-spell-detail-wrapper",
-      "be-extracted-section-wrapper",
-    );
-    const container = wrapper.querySelector(".print-section-container");
-    container.classList.add("be-spell-detail", "be-extracted-section");
-
-    const layoutRoot = PeDom().getLayoutRoot().element;
-
-    if (restoreData) {
-      if (restoreData.left)
-        wrapper.style.setProperty("left", restoreData.left, "important");
-      if (restoreData.top)
-        wrapper.style.setProperty("top", restoreData.top, "important");
-      if (restoreData.width)
-        container.style.setProperty("width", restoreData.width, "important");
-      if (restoreData.height)
-        container.style.setProperty("height", restoreData.height, "important");
-      if (restoreData.zIndex)
-        wrapper.style.setProperty("z-index", restoreData.zIndex, "important");
-      if (restoreData.printZIndex)
-        wrapper.dataset.printZ = restoreData.printZIndex;
-      if (restoreData.fontSize) applyFontSize(wrapper, restoreData.fontSize);
-
-      if (restoreData.minimized) {
-        container.dataset.minimized = "true";
-        container.classList.add("minimized");
-      }
-    } else {
-      // Calculate relative coordinates to the layout wrapper
-      const rootRect = layoutRoot.getBoundingClientRect();
-
-      // Use clientX/Y but subtract parent Rect to account for transforms/scrolling parent
-      const x = coords.x - rootRect.left;
-      const y = coords.y - rootRect.top;
-
-      wrapper.style.position = "absolute";
-      wrapper.style.left = `${x}px`;
-      wrapper.style.top = `${y}px`;
-      container.style.width = "300px";
-      container.style.height = "auto";
-      wrapper.style.zIndex = "10000";
-    }
-
-    PeDom().getSectionsLayer().element.appendChild(wrapper);
-    if (window.injectCloneButtons) window.injectCloneButtons(container);
-    if (window.injectAppendButton) window.injectAppendButton(container);
-
-    // 2. Fetch Data
-    const spell = await fetchSpellWithCache(spellName);
-
-    const contentWrapper = container.querySelector(".print-section-content");
-    if (!contentWrapper) return;
-
-    if (spell) {
-      // 3. Render Data
-      const dom = window.DomManager.getInstance();
-      const header = document.createElement("div");
-      header.className =
-        ".ct-content-group__header".substring(1);
-      const headerContent = document.createElement("div");
-      headerContent.className =
-        ".ct-content-group__header-content".substring(1);
-      headerContent.textContent = spell.name;
-      header.appendChild(headerContent);
-
-      contentWrapper.innerHTML = `
-            <div style="padding: 10px; color: black; background: white;">
-                <div style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 2px;">
-                    Level ${spell.level} ${spell.school}
-                </div>
-                <div style="margin-bottom: 10px; font-style: italic; font-size: 0.9em;">
-                    Range: ${spell.range}
-                </div>
-                <div class="spell-description" style="white-space: pre-wrap; font-size: 13px;">${spell.description}</div>
-            </div>
-        `;
-      contentWrapper.prepend(header);
-    } else {
-      // 4. Render Error
-      contentWrapper.innerHTML = `
-            <div style="padding: 15px; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">
-                Only previously loaded spells and current ones from the original section are available. 
-                Please add the spell from the manage spells button and try again.
-                <div class="be-error-actions">
-                    <button class="ct-theme-button be-retry-button">Retry</button>
-                    <button class="ct-theme-button be-delete-button">Delete</button>
-                </div>
-            </div>
-        `;
-
-      contentWrapper.querySelector(".be-delete-button").onclick = () =>
-        container.remove();
-      contentWrapper.querySelector(".be-retry-button").onclick = () => {
-        contentWrapper.innerHTML = '<div class="be-spinner"></div>';
-        createSpellDetailSection(spellName, coords);
-        container.remove(); // Replace old with new
-      };
-    }
-
-    // Re-init resize logic for the new container
-    if (window.initResizeLogic) window.initResizeLogic();
-    updateLayoutBounds();
-
-    return container;
-  }
-
-  /**
-   * Gets the character ID from the URL.
-   */
-  function getCharacterId() {
-    return window.location.pathname.split("/").pop();
-  }
-
-  /**
-   * Retrieves a spell from cache or API.
-   */
-  async function fetchSpellWithCache(spellName) {
-    try {
-      await Storage.init();
-
-      // 1. Check Cache
-      const cached = await Storage.getSpell(spellName);
-      if (cached) {
-        safeLog("log", `[DDB Print] Cache Hit: ${spellName}`);
-        return cached;
-      }
-
-      safeLog(
-        "log",
-        `[DDB Print] Cache Miss: ${spellName}. Fetching all spells...`,
-      );
-
-      // 2. Fetch API on miss
-      const charId = getCharacterId();
-      if (!charId || charId === "characters") {
-        safeLog(
-          "error",
-          "[DDB Print] Could not determine character ID for spell fetch",
-        );
-        return null;
-      }
-
-      const spells = await getCharacterSpells(charId);
-      if (spells && spells.length > 0) {
-        // 3. Update Cache with ALL spells
-        await Storage.saveSpells(spells);
-
-        // 4. Return the specific spell
-        return spells.find((s) => s.name === spellName) || null;
-      }
-    } catch (err) {
-      safeLog("error", "[DDB Print] Error in fetchSpellWithCache", err);
-    }
-    return null;
-  }
-
-  async function getCharacterSpells(charId) {
-    const url = `https://character-service.dndbeyond.com/character/v5/character/${charId}`;
-
-    try {
-      // In MV3, cross-origin fetch must be done from background script
-      const response = await new Promise((resolve) => {
-        chrome.runtime.sendMessage(
-          { type: "FETCH_CHARACTER_DATA", url },
-          (result) => {
-            resolve(result);
-          },
-        );
-      });
-
-      if (!response || !response.success) {
-        throw new Error(
-          response
-            ? response.error
-            : "Could not fetch character data via background.",
-        );
-      }
-
-      const json = response.data;
-      const data = json.data;
-
-      // D&D Beyond stores spells in multiple arrays (Race, Class, Feats, etc.)
-      // We flatten them all into one list
-      const spellSources = [
-        ...(data.classSpells || []),
-        ...(data.spells.race || []),
-        ...(data.spells.class || []),
-        ...(data.spells.feat || []),
-        ...(data.spells.item || []),
-      ];
-
-      // Some sources (like classSpells) are nested differently
-      const spells = [];
-
-      spellSources.forEach((source) => {
-        // Handle class-specific nested spells
-        if (source.spells) {
-          source.spells.forEach((s) => spells.push(s.definition));
-        }
-        // Handle flat spell objects (items/feats/race)
-        else if (source.definition) {
-          spells.push(source.definition);
-        }
-      });
-
-      // Map it to a cleaner format (Name + Description)
-      return spells.map((s) => ({
-        name: s.name,
-        level: s.level,
-        description: s.description.replace(/<[^>]*>?/gm, ""), // Strips HTML tags
-        range: `${s.range.rangeValue || ""} ${s.range.origin}`,
-        school: s.school,
-      }));
-    } catch (err) {
-      safeLog("error", "Error fetching spells:", err);
-    }
-  }
-
-  /**
-   * Removes all border style classes from an element.
-   */
-  function clearBorderStyles(el) {
-    if (!el) return;
-    el.classList.remove(...ALL_BORDER_STYLES);
-  }
-
-  /**
-   * Applies a border style to a section.
-   */
-  function applyBorderStyle(section, style) {
-    if (!section || !style) return;
-    const styleId = typeof style === "string" ? style : style.style;
-    clearBorderStyles(section);
-    if (styleId && styleId !== "no-border") {
-      section.classList.add(styleId);
-    }
-    if (typeof updateLayoutBounds === "function") updateLayoutBounds();
-  }
-
-  /**
-   * Shows a modal with an input field.
-   * @returns {Promise<string|null>}
-   */
-  function showInputModal(title, message, defaultValue = "") {
-    return new Promise((resolve) => {
-      const overlay = document.createElement("div");
-      overlay.className = "be-modal-overlay";
-
-      const modal = document.createElement("div");
-      modal.className = "be-modal";
-
-      const h3 = document.createElement("h3");
-      h3.textContent = title;
-      modal.appendChild(h3);
-
-      const p = document.createElement("p");
-      p.textContent = message;
-      modal.appendChild(p);
-
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = defaultValue;
-      modal.appendChild(input);
-
-      const actions = document.createElement("div");
-      actions.className = "be-modal-actions";
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "be-modal-cancel";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = () => {
-        overlay.remove();
-        resolve(null);
-      };
-      actions.appendChild(cancelBtn);
-
-      const okBtn = document.createElement("button");
-      okBtn.className = "be-modal-ok";
-      okBtn.textContent = "OK";
-      okBtn.onclick = () => {
-        const val = input.value;
-        overlay.remove();
-        resolve(val);
-      };
-      actions.appendChild(okBtn);
-
-      modal.appendChild(actions);
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-
-      input.focus();
-      input.select();
-
-      // Handle Enter/Esc
-      input.onkeydown = (e) => {
-        if (e.key === "Enter") okBtn.click();
-        if (e.key === "Escape") cancelBtn.click();
-      };
-    });
-  }
-
-  /**
-   * Shows a modal with a slider input.
-   * @returns {Promise<number|null>}
-   */
-  function showSliderModal(
-    title,
-    message,
-    min,
-    max,
-    defaultValue,
-    unit = "%",
-    onLiveUpdate = null,
-  ) {
-    return new Promise((resolve) => {
-      const overlay = document.createElement("div");
-      overlay.className = "be-modal-overlay";
-
-      const modal = document.createElement("div");
-      modal.className = "be-modal";
-
-      const h3 = document.createElement("h3");
-      h3.textContent = title;
-      modal.appendChild(h3);
-
-      const p = document.createElement("p");
-      p.textContent = message;
-      modal.appendChild(p);
-
-      const sliderContainer = document.createElement("div");
-      sliderContainer.className = "be-modal-slider-container";
-
-      const slider = document.createElement("input");
-      slider.type = "range";
-      slider.className = "be-modal-slider";
-      slider.min = min;
-      slider.max = max;
-      slider.value = defaultValue;
-
-      const valueDisplay = document.createElement("span");
-      valueDisplay.className = "be-modal-slider-value";
-      valueDisplay.textContent = `${slider.value}${unit}`;
-
-      slider.oninput = () => {
-        valueDisplay.textContent = `${slider.value}${unit}`;
-        if (onLiveUpdate) onLiveUpdate(slider.value);
-      };
-
-      sliderContainer.appendChild(slider);
-      sliderContainer.appendChild(valueDisplay);
-      modal.appendChild(sliderContainer);
-
-      const actions = document.createElement("div");
-      actions.className = "be-modal-actions";
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "be-modal-cancel";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = () => {
-        overlay.remove();
-        resolve(null);
-      };
-      actions.appendChild(cancelBtn);
-
-      const okBtn = document.createElement("button");
-      okBtn.className = "be-modal-ok";
-      okBtn.textContent = "Apply";
-      okBtn.onclick = () => {
-        const val = slider.value;
-        overlay.remove();
-        resolve(val);
-      };
-      actions.appendChild(okBtn);
-
-      modal.appendChild(actions);
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-
-      slider.focus();
-
-      // Handle Enter/Esc
-      const keyHandler = (e) => {
-        if (e.key === "Enter") {
-          okBtn.click();
-          window.removeEventListener("keydown", keyHandler);
-        }
-        if (e.key === "Escape") {
-          cancelBtn.click();
-          window.removeEventListener("keydown", keyHandler);
-        }
-      };
-      window.addEventListener("keydown", keyHandler);
-    });
-  }
-
-  /**
-   * Shows a modal to pick a border style.
-   * @param {string} currentStyle The current border class name.
-   * @returns {Promise<{style: string, applyToAll: boolean}|null>}
-   */
-  function showBorderPickerModal(currentStyle = "default-border") {
-    return new Promise((resolve) => {
-      const overlay = document.createElement("div");
-      overlay.className = "be-modal-overlay";
-
-      const modal = document.createElement("div");
-      modal.className = "be-modal";
-      modal.style.width = "450px";
-
-      const h3 = document.createElement("h3");
-      h3.textContent = "Select Section Border";
-      modal.appendChild(h3);
-
-      const optionsContainer = document.createElement("div");
-      optionsContainer.className = "be-border-options";
-
-      const styles = [
-        { id: "default-border", label: "Default" },
-        { id: "no-border", label: "None" },
-        { id: "ability_border", label: "Ability" },
-        { id: "spikes_border", label: "Spikes" },
-        { id: "barbarian_border", label: "Barbarian" },
-        { id: "goth_border", label: "Goth" },
-        { id: "plants_border", label: "Plants" },
-        { id: "box_border", label: "Box" },
-        { id: "dwarf_border", label: "Dwarf" },
-        { id: "dwarf_hollow_border", label: "Dwarf Hollow" },
-        { id: "sticks_border", label: "Sticks" },
-        { id: "ornament_border", label: "Ornament 1" },
-        { id: "ornament2_border", label: "Ornament 2" },
-        { id: "ornament_bold_border", label: "Ornament Bold" },
-        { id: "ornament_bold2_border", label: "Ornament Bold 2" },
-        { id: "ornament_simple_border", label: "Ornament Simple" },
-        { id: "spike_hollow_border", label: "Spike Hollow" },
-        { id: "spiky_border", label: "Spiky" },
-        { id: "spiky_bold_border", label: "Spiky Bold" },
-        { id: "vine_border", label: "Vine" },
-      ];
-
-      let selectedStyle = currentStyle || "default-border";
-      const optionEls = [];
-
-      styles.forEach((style) => {
-        const opt = document.createElement("div");
-        opt.className = "be-border-option";
-        if (selectedStyle === style.id) opt.classList.add("selected");
-
-        const preview = document.createElement("div");
-        preview.className = `be-border-preview ${style.id}`;
-        opt.appendChild(preview);
-
-        const label = document.createElement("div");
-        label.textContent = style.label;
-        label.style.fontSize = "12px";
-        opt.appendChild(label);
-
-        opt.onclick = () => {
-          optionEls.forEach((el) => el.classList.remove("selected"));
-          opt.classList.add("selected");
-          selectedStyle = style.id;
-        };
-
-        optionEls.push(opt);
-        optionsContainer.appendChild(opt);
-      });
-
-      modal.appendChild(optionsContainer);
-
-      const actions = document.createElement("div");
-      actions.className = "be-modal-actions";
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "be-modal-cancel";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = () => {
-        overlay.remove();
-        resolve(null);
-      };
-      actions.appendChild(cancelBtn);
-
-      const okBtn = document.createElement("button");
-      okBtn.className = "be-modal-ok";
-      okBtn.textContent = "Apply";
-      okBtn.onclick = () => {
-        overlay.remove();
-        resolve({
-          style: selectedStyle,
-        });
-      };
-      actions.appendChild(okBtn);
-
-      modal.appendChild(actions);
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-
-      // Handle Esc
-      window.addEventListener("keydown", function escHandler(e) {
-        if (e.key === "Escape") {
-          cancelBtn.click();
-          window.removeEventListener("keydown", escHandler);
-        }
-        if (e.key === "Enter") {
-          okBtn.click();
-          window.removeEventListener("keydown", escHandler);
-        }
-      });
-    });
-  }
-
-  /**
-   * Shows a modal to pick a decorative shape or border asset.
-   * @param {string} currentAsset Optional path to pre-select
-   * @param {string} filterFolder Optional folder path to force a tab (e.g. 'assets/shapes/')
-   * @returns {Promise<{assetPath: string} | null>}
-   */
-  function showShapePickerModal(currentAsset = "", filterFolder = "") {
-    const lm = window.PeDom
-      ? window.PeDom().getLayerManager()
-      : window.DomManager
-        ? window.DomManager.getInstance().getLayerManager()
-        : null;
-    if (!lm || !lm.activeLayerId) {
-      showFeedback(
-        "Please select/unlock a layer in Layer Management first.",
-        "error",
-      );
-      return Promise.resolve(null);
-    }
-
-    return new Promise((resolve) => {
-      const categories = parseAssets(ASSET_LIST);
-      const overlay = document.createElement("div");
-      overlay.className = "be-modal-overlay";
-
-      const modal = document.createElement("div");
-      modal.className = "be-modal";
-      modal.style.width = "600px"; // Increased width for better grid display
-
-      const h3 = document.createElement("h3");
-      h3.textContent = "Select Decorative Shape";
-      modal.appendChild(h3);
-
-      // Tab State
-      let activeTab = "borders";
-      if (filterFolder === "assets/shapes/") {
-        activeTab = "shapes";
-      } else if (filterFolder === "assets/") {
-        activeTab = "borders";
-      } else if (currentAsset.includes("assets/shapes/")) {
-        activeTab = "shapes";
-      }
-
-      const tabsContainer = document.createElement("div");
-      tabsContainer.className = "be-modal-tabs";
-      tabsContainer.style.display = filterFolder ? "none" : "flex";
-      tabsContainer.style.gap = "10px";
-      tabsContainer.style.marginBottom = "15px";
-      tabsContainer.style.borderBottom = "1px solid #444";
-
-      const borderTab = document.createElement("button");
-      borderTab.textContent = "Borders";
-      borderTab.className =
-        "be-modal-tab" + (activeTab === "borders" ? " active" : "");
-      borderTab.style.padding = "8px 16px";
-      borderTab.style.background = activeTab === "borders" ? "#444" : "#222";
-      borderTab.style.color = activeTab === "borders" ? "white" : "#ccc";
-      borderTab.style.border = "none";
-      borderTab.style.cursor = "pointer";
-      borderTab.style.borderTopLeftRadius = "4px";
-      borderTab.style.borderTopRightRadius = "4px";
-
-      const shapeTab = document.createElement("button");
-      shapeTab.textContent = "Shapes";
-      shapeTab.className =
-        "be-modal-tab" + (activeTab === "shapes" ? " active" : "");
-      shapeTab.style.padding = "8px 16px";
-      shapeTab.style.background = activeTab === "shapes" ? "#444" : "#222";
-      shapeTab.style.color = activeTab === "shapes" ? "white" : "#ccc";
-      shapeTab.style.border = "none";
-      shapeTab.style.cursor = "pointer";
-      shapeTab.style.borderTopLeftRadius = "4px";
-      shapeTab.style.borderTopRightRadius = "4px";
-
-      const customTab = document.createElement("button");
-      customTab.textContent = "Custom";
-      customTab.className =
-        "be-modal-tab" + (activeTab === "custom" ? " active" : "");
-      customTab.style.padding = "8px 16px";
-      customTab.style.background = activeTab === "custom" ? "#444" : "#222";
-      customTab.style.color = activeTab === "custom" ? "white" : "#ccc";
-      customTab.style.border = "none";
-      customTab.style.cursor = "pointer";
-      customTab.style.borderTopLeftRadius = "4px";
-      customTab.style.borderTopRightRadius = "4px";
-
-      tabsContainer.appendChild(borderTab);
-      tabsContainer.appendChild(shapeTab);
-      tabsContainer.appendChild(customTab);
-      modal.appendChild(tabsContainer);
-
-      // Tag Filters
-      const tagsContainer = document.createElement("div");
-      tagsContainer.className = "be-modal-tags";
-      tagsContainer.style.display = activeTab === "custom" ? "none" : "flex";
-      tagsContainer.style.flexWrap = "wrap";
-      tagsContainer.style.gap = "5px";
-      tagsContainer.style.marginBottom = "15px";
-
-      const tagList = [
-        "bold",
-        "hand drawn",
-        "hollow",
-        "ornament",
-        "dwarf",
-        "goth",
-        "border",
-        "barbarian",
-        "vine",
-        "plants",
-        "spikes",
-        "sticks",
-      ];
-      let activeTag = null;
-
-      const renderTags = () => {
-        tagsContainer.innerHTML = "";
-        // "All" tag
-        const allTag = document.createElement("button");
-        allTag.textContent = "All";
-        allTag.style.fontSize = "10px";
-        allTag.style.padding = "2px 8px";
-        allTag.style.borderRadius = "10px";
-        allTag.style.border = "1px solid #666";
-        allTag.style.background = activeTag === null ? "#666" : "#222";
-        allTag.style.color = "white";
-        allTag.style.cursor = "pointer";
-        allTag.onclick = () => {
-          activeTag = null;
-          renderTags();
-          renderAssets(activeTab);
-        };
-        tagsContainer.appendChild(allTag);
-
-        tagList.forEach((tag) => {
-          const btn = document.createElement("button");
-          btn.textContent = tag;
-          btn.style.fontSize = "10px";
-          btn.style.padding = "2px 8px";
-          btn.style.borderRadius = "10px";
-          btn.style.border = "1px solid #666";
-          btn.style.background = activeTag === tag ? "#666" : "#222";
-          btn.style.color = "white";
-          btn.style.cursor = "pointer";
-          btn.onclick = () => {
-            activeTag = activeTag === tag ? null : tag;
-            renderTags();
-            renderAssets(activeTab);
-          };
-          tagsContainer.appendChild(btn);
-        });
-      };
-
-      renderTags();
-      modal.appendChild(tagsContainer);
-
-      const optionsContainer = document.createElement("div");
-      optionsContainer.className = "be-border-options";
-      optionsContainer.style.maxHeight = "400px";
-      optionsContainer.style.overflowY = "auto";
-      optionsContainer.style.display = "flex";
-      optionsContainer.style.flexWrap = "wrap";
-      optionsContainer.style.gap = "10px";
-      optionsContainer.style.padding = "10px";
-
-      let selectedAsset =
-        currentAsset ||
-        (categories[activeTab] && categories[activeTab].length > 0
-          ? categories[activeTab][0].path
-          : "");
-
-      const renderAssets = async (tabName) => {
-        try {
-          optionsContainer.innerHTML = "";
-          let assets = [];
-
-          if (tabName === "custom") {
-            assets = await Storage.getCustomShapes();
-          } else {
-            assets = categories[tabName] || [];
-          }
-
-          if (activeTag && tabName !== "custom") {
-            assets = assets.filter((a) => a.tags.includes(activeTag));
-          }
-
-          if (assets.length === 0 && tabName !== "custom") {
-            const empty = document.createElement("div");
-            empty.textContent = "No shapes found for this filter.";
-            empty.style.color = "#888";
-            empty.style.padding = "20px";
-            optionsContainer.appendChild(empty);
-            return;
-          }
-
-          if (tabName === "custom") {
-            const uploadContainer = document.createElement("div");
-            uploadContainer.style.cssText =
-              "grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; padding: 20px; border: 2px dashed #444; border-radius: 8px; margin-bottom: 10px;";
-
-            const uploadBtn = document.createElement("button");
-            uploadBtn.textContent = "Upload from disk";
-            uploadBtn.className = "be-modal-button";
-            uploadBtn.style.cssText =
-              "background: #0056b3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;";
-            uploadBtn.onclick = () =>
-              handleUploadFromDisk((base64) => {
-                overlay.remove();
-                resolve({ assetPath: base64 });
-              });
-            uploadContainer.appendChild(uploadBtn);
-
-            const helpText = document.createElement("div");
-            helpText.textContent =
-              "PNG, JPEG, WebP, or SVG. Large files will be compressed.";
-            helpText.style.cssText =
-              "font-size: 11px; color: #777; margin-top: 8px;";
-            uploadContainer.appendChild(helpText);
-
-            optionsContainer.appendChild(uploadContainer);
-
-            if (assets.length === 0) {
-              const empty = document.createElement("div");
-              empty.textContent = "No custom shapes uploaded yet.";
-              empty.style.color = "#555";
-              empty.style.padding = "20px";
-              empty.style.gridColumn = "1 / -1";
-              empty.style.textAlign = "center";
-              optionsContainer.appendChild(empty);
-            }
-          }
-
-          assets.forEach((asset) => {
-            const opt = document.createElement("div");
-            opt.className = "be-border-option";
-            opt.title = asset.label || asset.name || asset.id;
-            const assetPath = asset.path || asset.data; // Use data (base64) for custom
-            if (selectedAsset === assetPath) opt.classList.add("selected");
-
-            const preview = document.createElement("div");
-            preview.className = `be-border-preview`;
-
-            // Asset Application Logic using ASSET_METADATA
-            const meta =
-              ASSET_METADATA[asset.path] ||
-              (tabName === "custom" ? { isBackground: true } : null);
-            if (meta) {
-              const url =
-                tabName === "custom"
-                  ? asset.data
-                  : chrome.runtime.getURL(asset.path);
-              if (meta.isBackground) {
-                preview.style.backgroundImage = `url('${url}')`;
-                preview.style.backgroundSize = "contain";
-                preview.style.backgroundRepeat = "no-repeat";
-                preview.style.backgroundPosition = "center";
-                preview.style.border = "none";
-              } else if (meta.className) {
-                preview.classList.add(meta.className);
-              } else {
-                preview.style.borderStyle = "solid";
-                preview.style.borderImageSource = `url('${url}')`;
-                preview.style.borderImageSlice = meta.slice
-                  ? meta.slice.toString()
-                  : "33";
-                preview.style.borderImageWidth = meta.width || "20px";
-                preview.style.borderImageOutset = meta.outset || "0";
-                preview.style.borderImageRepeat = "round";
-              }
-            } else {
-              // Fallback for unknown assets
-              const url =
-                tabName === "custom"
-                  ? asset.data
-                  : chrome.runtime.getURL(asset.path);
-              preview.style.borderStyle = "solid";
-              preview.style.borderImageSource = `url('${url}')`;
-              preview.style.borderImageSlice = "33";
-              preview.style.borderImageWidth = "20px";
-            }
-
-            opt.appendChild(preview);
-
-            const label = document.createElement("div");
-            label.textContent = asset.label || asset.name;
-            label.style.fontSize = "10px";
-            label.style.marginTop = "5px";
-            opt.appendChild(label);
-
-            opt.onclick = () => {
-              optionsContainer
-                .querySelectorAll(".be-border-option")
-                .forEach((el) => el.classList.remove("selected"));
-              opt.classList.add("selected");
-              selectedAsset = assetPath;
-            };
-
-            optionsContainer.appendChild(opt);
-          });
-        } catch (err) {
-          console.warn("DEBUG ERROR in renderAssets:", err);
-        }
-      };
-
-      borderTab.onclick = () => {
-        activeTab = "borders";
-        [borderTab, shapeTab, customTab].forEach((t) =>
-          t.classList.remove("active"),
-        );
-        [borderTab, shapeTab, customTab].forEach(
-          (t) => (t.style.background = "#222"),
-        );
-        [borderTab, shapeTab, customTab].forEach(
-          (t) => (t.style.color = "#ccc"),
-        );
-
-        borderTab.classList.add("active");
-        borderTab.style.background = "#444";
-        borderTab.style.color = "white";
-        tagsContainer.style.display = "flex";
-        renderAssets("borders");
-      };
-
-      shapeTab.onclick = () => {
-        activeTab = "shapes";
-        [borderTab, shapeTab, customTab].forEach((t) =>
-          t.classList.remove("active"),
-        );
-        [borderTab, shapeTab, customTab].forEach(
-          (t) => (t.style.background = "#222"),
-        );
-        [borderTab, shapeTab, customTab].forEach(
-          (t) => (t.style.color = "#ccc"),
-        );
-
-        shapeTab.classList.add("active");
-        shapeTab.style.background = "#444";
-        shapeTab.style.color = "white";
-        tagsContainer.style.display = "flex";
-        renderAssets("shapes");
-      };
-
-      customTab.onclick = () => {
-        activeTab = "custom";
-        [borderTab, shapeTab, customTab].forEach((t) =>
-          t.classList.remove("active"),
-        );
-        [borderTab, shapeTab, customTab].forEach(
-          (t) => (t.style.background = "#222"),
-        );
-        [borderTab, shapeTab, customTab].forEach(
-          (t) => (t.style.color = "#ccc"),
-        );
-
-        customTab.classList.add("active");
-        customTab.style.background = "#444";
-        customTab.style.color = "white";
-        tagsContainer.style.display = "none";
-        renderAssets("custom");
-      };
-
-      renderAssets(activeTab);
-      modal.appendChild(optionsContainer);
-
-      const actions = document.createElement("div");
-      actions.className = "be-modal-actions";
-
-      const cancelBtn = document.createElement("button");
-      cancelBtn.className = "be-modal-cancel";
-      cancelBtn.textContent = "Cancel";
-      cancelBtn.onclick = () => {
-        overlay.remove();
-        resolve(null);
-      };
-      actions.appendChild(cancelBtn);
-
-      const okBtn = document.createElement("button");
-      okBtn.className = "be-modal-ok";
-      okBtn.textContent = "Add Shape";
-      okBtn.onclick = () => {
-        overlay.remove();
-        resolve({
-          assetPath: selectedAsset,
-        });
-      };
-      actions.appendChild(okBtn);
-
-      modal.appendChild(actions);
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-
-      // Handle Esc
-      window.addEventListener("keydown", function escHandler(e) {
-        if (e.key === "Escape") {
-          cancelBtn.click();
-          window.removeEventListener("keydown", escHandler);
-        }
-        if (e.key === "Enter") {
-          okBtn.click();
-          window.removeEventListener("keydown", escHandler);
-        }
-      });
-    });
-  }
-
-  /**
-   * Initializes ResizeObserver to scale content to fit its container.
-   */
   function initResponsiveScaling() {
+    if (responsiveScalingInstalled) return;
+    if (typeof ResizeObserver !== "function") return; // no observer in this host
+    responsiveScalingInstalled = true;
+
+    const observed = new WeakSet();
+    const pendingRecheck = new WeakSet(); // strong refs would keep removed sections alive
+    const lastMeasured = new WeakMap();
+
+    /** The quantity the algorithm measures against: the content box of the scroll parent. */
+    function measuredBox(container) {
+      const content = container.querySelector(".print-section-content");
+      if (!content) return null;
+      return `${content.clientWidth}x${content.clientHeight}`;
+    }
+
+    /** Take the scale back off one section: the attribute and the compensation ride together. */
+    function clearScaling(container, inner) {
+      inner.style.transform = "";
+      inner.style.removeProperty("--be-scale");
+      container.removeAttribute("data-scaling");
+    }
+
+    /** Applying the minimum scale currently permitted for automatic fit-to-container. */
+    const MIN_SCALE_FLOOR = 0.60;
+
+    function fitContainer(container) {
+      const content = container.querySelector(".print-section-content");
+      const inner = content ? content.firstElementChild : null;
+
+      if (container.dataset.noAutoScale === "true") {
+        clearScaling(container, inner);
+        return;
+      }
+
+      if (!inner) {
+        container.removeAttribute("data-scaling");
+        return;
+      }
+
+      // Reset scaling to measure natural size. THE ATTRIBUTE GOES FIRST: the width
+      // compensation is a stylesheet rule keyed on `data-scaling` (see the record-collision
+      // note in the header above), so dropping it is what takes the compensation off for the
+      // measurement — no inline width is ever written or cleared here.
+      container.removeAttribute("data-scaling");
+      inner.style.transform = "none";
+      inner.style.removeProperty("--be-scale");
+
+      const containerWidth = content.clientWidth;
+      const containerHeight = content.clientHeight;
+      const contentWidth = inner.scrollWidth;
+      const contentHeight = inner.scrollHeight;
+
+      if (contentWidth > containerWidth || contentHeight > containerHeight) {
+        const scaleX = containerWidth / contentWidth;
+        const scaleY = containerHeight / contentHeight;
+        const rawScale = Math.min(scaleX, scaleY, 1);
+        const scale = Math.min(Math.max(rawScale, MIN_SCALE_FLOOR), 1);
+
+        if (scale < 1) {
+          inner.style.transform = `scale(${scale})`;
+          // The compensation travels as a custom property, NOT as `inner.style.width`.
+          inner.style.setProperty("--be-scale", String(scale));
+          container.setAttribute("data-scaling", "true");
+        } else {
+          clearScaling(container, inner);
+        }
+      } else {
+        clearScaling(container, inner);
+      }
+    }
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const container = entry.target;
-        const content = container.querySelector(".print-section-content");
-        const inner = content ? content.firstElementChild : null;
-
-        if (!inner) continue;
-
-        // Reset scaling to measure natural size
-        inner.style.transform = "none";
-        inner.style.width = "100%";
-
-        const containerWidth = content.clientWidth;
-        const containerHeight = content.clientHeight;
-        const contentWidth = inner.scrollWidth;
-        const contentHeight = inner.scrollHeight;
-
-        if (contentWidth > containerWidth || contentHeight > containerHeight) {
-          const scaleX = containerWidth / contentWidth;
-          const scaleY = containerHeight / contentHeight;
-          const scale = Math.min(scaleX, scaleY, 1);
-
-          if (scale < 1) {
-            inner.style.transform = `scale(${scale})`;
-            inner.style.width = `${100 / scale}%`; // Counteract scale for width to prevent shrinking
-            container.setAttribute("data-scaling", "true");
-          } else {
-            container.removeAttribute("data-scaling");
-          }
-        } else {
-          container.removeAttribute("data-scaling");
+        const box = measuredBox(container);
+        // A recheck was requested (content changed, or this is a fresh observe): the box alone
+        // cannot tell us the content changed, so those passes skip the size record.
+        if (!pendingRecheck.has(container) && box === lastMeasured.get(container)) {
+          continue;
         }
+        pendingRecheck.delete(container);
+        lastMeasured.set(container, box);
+        fitContainer(container);
       }
     });
 
-    document
-      .querySelectorAll(".print-section-container")
-      .forEach((container) => {});
+    /** Every container at or inside `node`. */
+    function containersIn(node) {
+      if (node.nodeType !== 1) return [];
+      if (node.classList && node.classList.contains("print-section-container")) {
+        return [node];
+      }
+      return Array.from(node.querySelectorAll(".print-section-container"));
+    }
+
+    /** Start observing one container, and make sure it is measured even if its box never moved. */
+    function observeContainer(container) {
+      if (observed.has(container)) {
+        pendingRecheck.add(container);
+        return;
+      }
+      try {
+        observer.observe(container);
+      } catch {
+        return; // a bare harness whose observer cannot take a target: nothing to scale yet
+      }
+      observed.add(container);
+      pendingRecheck.add(container);
+    }
+
+    function forgetContainer(container) {
+      if (!observed.has(container)) return;
+      observed.delete(container);
+      pendingRecheck.delete(container);
+      lastMeasured.delete(container);
+      try {
+        observer.unobserve(container);
+      } catch {
+        /* the harness's mock may not implement unobserve; the WeakSet already dropped it */
+      }
+    }
+
+    /** The containers a mutation touches: added ones, and the section a change happened inside of. */
+    function recheckFor(record) {
+      let touched = false;
+      for (const node of record.addedNodes) {
+        for (const container of containersIn(node)) {
+          observeContainer(container);
+          touched = true;
+        }
+      }
+      for (const node of record.removedNodes) {
+        for (const container of containersIn(node)) {
+          // A move out of the sheet must leave the section unobserved, or a re-insert would be
+          // skipped by `observed` and never measured again.
+          forgetContainer(container);
+          touched = true;
+        }
+        if (
+          node.nodeType === 1 &&
+          !containersIn(node).length &&
+          node.closest
+        ) {
+          const owner = node.closest(".print-section-container");
+          if (owner && observed.has(owner)) pendingRecheck.add(owner);
+        }
+      }
+      if (!touched && record.target && record.target.closest) {
+        // Content edited IN PLACE inside a section (no node added or removed at this level):
+        // the container's box can stay identical while its overflow grows, so the size record
+        // would suppress the re-measure — request one explicitly.
+        const owner = record.target.closest(".print-section-container");
+        if (owner && observed.has(owner)) pendingRecheck.add(owner);
+      }
+    }
+
+    let mutationObserver = null;
+    if (typeof MutationObserver === "function") {
+      mutationObserver = new MutationObserver((records) => {
+        for (const record of records) recheckFor(record);
+      });
+      mutationObserver.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    /** Observe every container currently in the document (the boot-time pass). */
+    function observeExistingContainers() {
+      document
+        .querySelectorAll(".print-section-container")
+        .forEach(observeContainer);
+    }
+
+    observeExistingContainers();
   }
 
   /**
@@ -5780,7 +2073,7 @@ Licensed under Blue Oak Model License 1.0.0
       const allElements = document.querySelectorAll(".be-section-wrapper");
 
       let maxSectionZ = 10;
-      let maxShapeZ = 110;
+      let maxShapeZ = window.Z.SHAPE_DEFAULT; // AC-5 (was 110)
 
       allElements.forEach((el) => {
         const z =
@@ -5875,6 +2168,10 @@ Licensed under Blue Oak Model License 1.0.0
 
     let resizingSection = null;
     let startX, startY, startWidth, startHeight;
+    // Phase 2: the reversible-record state for the resize gesture — ONE handle on the shared
+    // protocol's `{snap, settled, capture}` record, instead of the three hand-rolled variables
+    // this used to keep (a capture, its settled value, and a parallel geometry snapshot).
+    let resizeMut = null;
 
     function initResize(e) {
       resizingSection = e.target.closest(".print-section-container");
@@ -5885,6 +2182,20 @@ Licensed under Blue Oak Model License 1.0.0
         window.getComputedStyle(resizingSection).height,
         10,
       );
+
+      // Phase 2b (track undo_stack_20260911): this class requests NO persist today (U-4),
+      // so its commit point is DEFINED here as gesture start -> gesture end, and the
+      // capture begins at mousedown on the pristine DOM. The geometry is saved
+      // SYNCHRONOUSLY as well, because a capture that finishes its DOM reads after
+      // doResize/stopResize have written records the POST-resize size; that late case is
+      // repaired from these values rather than by deferring the resize.
+      resizeMut = window.beginMutation
+        ? window.beginMutation(
+            window.snapshotContainerGeometry
+              ? window.snapshotContainerGeometry(resizingSection)
+              : null,
+          )
+        : null;
 
       document.documentElement.addEventListener("mousemove", doResize, false);
       document.documentElement.addEventListener("mouseup", stopResize, false);
@@ -5912,7 +2223,10 @@ Licensed under Blue Oak Model License 1.0.0
     }
 
     function stopResize() {
+      let subjectId = null;
+      let changed = false;
       if (resizingSection) {
+        subjectId = resizingSection.id;
         const finalWidth = parseInt(resizingSection.style.width, 10);
         // Ensure finalWidth is valid number, fallback to computed if needed (though doResize sets style)
         if (!isNaN(finalWidth)) {
@@ -5920,6 +2234,8 @@ Licensed under Blue Oak Model License 1.0.0
           if (deltaX !== 0) {
             adjustInnerContentWidth(resizingSection, deltaX);
           }
+          changed = deltaX !== 0 ||
+            parseInt(resizingSection.style.height, 10) !== startHeight;
         }
       }
 
@@ -5935,682 +2251,85 @@ Licensed under Blue Oak Model License 1.0.0
         false,
       );
       updateLayoutBounds();
-    }
-  }
 
-  /**
-   * Adjusts the width of immediate children of specific containers based on resize delta.
-   */
-  function adjustInnerContentWidth(section, deltaX) {
-    // User Request: Scan for containers ending in "-row-header" or "-content"
-    const containers = section.querySelectorAll(
-      'div[class$="-row-header"], div[class$="-content"]',
-    );
+      // The DOM work above stays SYNCHRONOUS (unchanged from before this track); the
+      // record is pushed afterwards. Phase 2b's no-op guard: a resize that moved nothing
+      // pushes nothing.
+      const mut = resizeMut;
+      const id = subjectId;
+      resizeMut = null;
+      if (!changed || !id || !mut || typeof window.pushMutation !== "function") return;
 
-    // Find the master parent content width
-    const parentContent = section.querySelector(".print-section-content");
-    if (!parentContent) return;
-
-    // Use padding-box width (clientWidth) or computed width
-    // The previous logic relied on delta, but user wants EXACT match to parent.
-    // However, .print-section-content might have padding, so inner divs should likely match CLIENT width.
-    const parentWidth = parentContent.clientWidth;
-
-    if (!parentWidth) return;
-
-    containers.forEach((container) => {
-      // User Request: Override width of IMMEDIATE divs
-      Array.from(container.children).forEach((child) => {
-        if (child.tagName === "DIV") {
-          // Set width to match the PARENT content width
-          child.style.setProperty("width", `${parentWidth}px`, "important");
-          child.style.setProperty("min-width", `${parentWidth}px`, "important");
-        }
-      });
-    });
-  }
-
-  /**
-   * Updates the size of the layout wrapper to fit all sections
-   */
-  function updateLayoutBounds() {
-    const container = document.getElementById("print-layout-wrapper");
-    if (!container) return;
-
-    let maxBottom = 0;
-    let maxRight = 0;
-
-    const wrappers = Array.from(
-      document.querySelectorAll(".be-section-wrapper"),
-    );
-    wrappers.forEach((wrapper) => {
-      // Since wrappers are absolute in a relative container, style.top is relative to container top.
-      const top = parseInt(wrapper.style.top) || 0;
-      const left = parseInt(wrapper.style.left) || 0;
-      const width = wrapper.offsetWidth || 0;
-      const height = wrapper.offsetHeight || 0;
-
-      const bottom = top + height;
-      const right = left + width;
-
-      if (bottom > maxBottom) maxBottom = bottom;
-      if (right > maxRight) maxRight = right;
-    });
-
-    // Add padding (e.g., 50px)
-    const newHeight = maxBottom + 50;
-    const newWidth = maxRight + 50;
-
-    // Apply min-height/width to ensure it at least covers the viewport
-    // User Request: Update body container height to always be at least the same height as furthest coordinate
-
-    // 1. Update the wrapper itself
-    const minH = Math.max(newHeight, window.innerHeight) + "px";
-    container.style.minHeight = minH;
-    container.style.height = minH; // Explicitly set height too just in case
-    container.style.minWidth = Math.max(newWidth, window.innerWidth) + "px";
-
-    // 2. Also attempt to update parent containers if they restrict height
-    let sheetDesktop, sheetInner;
-    if (window.DomManager) {
-      const desktopWrapper =
-        window.DomManager.getInstance().getCharacterSheet();
-      sheetDesktop = desktopWrapper ? desktopWrapper.element : null;
-
-      const innerWrapper = window.DomManager.getInstance().getSheetInner();
-      sheetInner = innerWrapper ? innerWrapper.element : null;
-    } else {
-      sheetDesktop = document.querySelector(".ct-character-sheet-desktop");
-      sheetInner = document.querySelector(".ct-character-sheet__inner");
-    }
-
-    if (sheetDesktop) {
-      sheetDesktop.style.minHeight = minH;
-      // height: auto is usually enough on parent if child pushes it, but flex/grid/absolute might interfere
-      sheetDesktop.style.height = "auto";
-    }
-
-    if (sheetInner) {
-      sheetInner.style.minHeight = minH;
-    }
-
-    drawPageSeparators(newHeight, 1200);
-  }
-
-  /**
-   * Creates the floating control panel.
-   */
-  function createControls() {
-    safeLog("log", "[DDB Print] createControls: building container...");
-    const container = document.createElement("div");
-    container.id = "print-enhance-controls";
-    container.style.position = "fixed";
-    container.style.top = "10px";
-    container.style.left = "10px";
-    container.style.zIndex = "10000";
-    container.style.background = "#222";
-    container.style.border = "1px solid #444";
-    container.style.padding = "8px";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.gap = "8px";
-    container.style.borderRadius = "8px";
-    container.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)";
-    container.style.transition = "opacity 0.3s, transform 0.3s";
-
-    // Hover logic
-    container.addEventListener("mouseenter", () => {
-      container.style.transform = "scale(1.02)";
-    });
-    container.addEventListener("mouseleave", () => {
-      container.style.transform = "scale(1)";
-    });
-
-    const buttons = [
-      ...(ENABLE_PREMADE_TEMPLATES
-        ? [
-            {
-              label: "TEMPLATES",
-              icon: "🌟",
-              action: () => showPremadeCatalogModal(),
-            },
-          ]
-        : []),
-      { label: "Load", icon: "📂", action: handleLoadFile },
-      { label: "Reset to Default", icon: "🔄", action: handleLoadDefault },
-      { label: "Manage Clones", icon: "📋", action: handleManageClones },
-      {
-        label: "Add Shape",
-        icon: "🎨",
-        action: async () => {
-          const result = await showShapePickerModal();
-          if (result) {
-            createShape(result.assetPath);
-            showFeedback("Shape added");
-          }
-        },
-        id: "be-btn-add-shape",
-      },
-      { label: "Manage Compact", icon: "📏", action: handleManageCompact },
-      { label: "Print", icon: "🖨️", action: () => window.print() },
-      { label: "Save to Browser", icon: "💾", action: handleSaveBrowser },
-      { label: "Save to PC", icon: "💻", action: handleSavePC },
-      {
-        label: "Bugs & Feature Request",
-        icon: "🐛",
-        action: () =>
-          window.open(
-            "https://github.com/luiscla27/beyond-print-enhancer/issues",
-            "_blank",
-          ),
-      },
-      {
-        label: "Contribute",
-        icon: "⭐",
-        action: () =>
-          window.open(
-            "https://github.com/luiscla27/beyond-print-enhancer",
-            "_blank",
-          ),
-        bgLightColor: "#a79863",
-        bgColor: "#73611d",
-      },
-    ];
-
-    buttons.forEach((btnInfo) => {
-      const btn = document.createElement("button");
-      if (btnInfo.className) btn.className = btnInfo.className;
-      btn.innerHTML = `<span style="margin-right: 5px;">${btnInfo.icon}</span> ${btnInfo.label}`;
-      btn.style.backgroundColor = btnInfo.bgColor || "#333";
-      btn.style.color = "white";
-      btn.style.border = "1px solid #555";
-      btn.style.padding = "6px 12px";
-      btn.style.borderRadius = "4px";
-      btn.style.cursor = "pointer";
-      btn.style.fontSize = "12px";
-      btn.style.textAlign = "left";
-      btn.style.transition = "background-color 0.2s";
-
-      btn.onmouseenter = () =>
-        (btn.style.backgroundColor = btnInfo.bgLightColor || "#444");
-      btn.onmouseleave = () =>
-        (btn.style.backgroundColor = btnInfo.bgColor || "#333");
-
-      const logEvent = (name, btnInfo) => {
-        safeLog("log", `[DDB Print] Button ${name}: ${btnInfo.label}`);
-      };
-
-      btn.addEventListener("mousedown", () => logEvent("Mousedown", btnInfo));
-      btn.addEventListener("mouseup", () => logEvent("Mouseup", btnInfo));
-
-      btn.addEventListener("click", async (e) => {
-        safeLog("log", `[DDB Print] Button Clicked: ${btnInfo.label}`);
-        try {
-          if (typeof btnInfo.action === "function") {
-            const result = btnInfo.action(e);
-            if (result instanceof Promise) {
-              await result;
-            }
-          } else {
-            safeLog(
-              "error",
-              `[DDB Print] No valid action for ${btnInfo.label}`,
-            );
-          }
-        } catch (err) {
-          safeLog(
-            "error",
-            `[DDB Print] Error executing ${btnInfo.label}:`,
-            err,
-          );
-        }
-      });
-
-      container.appendChild(btn);
-    });
-
-    // Properties Panel Container
-    const propertiesPanel = document.createElement("div");
-    propertiesPanel.id = "print-enhance-properties-panel";
-    propertiesPanel.style.display = "flex";
-    propertiesPanel.style.flexDirection = "column";
-    propertiesPanel.style.gap = "8px";
-    propertiesPanel.style.padding = "8px";
-    propertiesPanel.style.borderTop = "1px solid #444";
-    propertiesPanel.style.marginTop = "4px";
-    propertiesPanel.style.backgroundColor = "#1a1a1a";
-    propertiesPanel.style.borderRadius = "4px";
-    container.appendChild(propertiesPanel);
-
-    // Filters Container
-    const filtersContainer = document.createElement("div");
-    filtersContainer.className = "be-filters-container";
-    filtersContainer.style.display = "flex";
-    filtersContainer.style.flexDirection = "column";
-    filtersContainer.style.gap = "4px";
-    filtersContainer.style.padding = "4px 8px";
-    filtersContainer.style.borderTop = "1px solid #444";
-    filtersContainer.style.marginTop = "4px";
-
-    // Local state for filters to avoid async race conditions during slider movement
-    let currentFilters = {
-      hue: 0,
-      contrast: 100,
-      saturate: 100,
-      greyscale: 0,
-      sepia: 0,
-    };
-
-    /**
-     * Helper to create a filter slider.
-     */
-    const createFilterSlider = (
-      labelStr,
-      key,
-      min,
-      max,
-      unit,
-      defaultValue,
-      hideSlider = false,
-    ) => {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.flexDirection = "column";
-      row.style.gap = "2px";
-      row.style.marginBottom = "4px";
-
-      const labelRow = document.createElement("div");
-      labelRow.style.display = "flex";
-      labelRow.style.justifyContent = "space-between";
-      labelRow.style.alignItems = "center";
-
-      const label = document.createElement("label");
-      label.textContent = `${labelStr}: ${defaultValue}${unit}`;
-      label.style.color = "white";
-      label.style.fontSize = "11px";
-      label.style.fontWeight = "bold";
-      labelRow.appendChild(label);
-
-      const slider = document.createElement("input");
-      slider.type = "range";
-      slider.min = min.toString();
-      slider.max = max.toString();
-      slider.value = defaultValue.toString();
-      slider.style.width = "100%";
-      slider.style.cursor = "pointer";
-      if (hideSlider) {
-        slider.style.display = "none";
-      }
-
-      const resetBtn = document.createElement("button");
-      resetBtn.textContent = "↺";
-      resetBtn.style.background = "none";
-      resetBtn.style.border = "none";
-      resetBtn.style.color = "#aaa";
-      resetBtn.style.cursor = "pointer";
-      resetBtn.style.fontSize = "12px";
-      resetBtn.style.padding = "0";
-      resetBtn.style.lineHeight = "1";
-      resetBtn.title = `Reset ${labelStr}`;
-
-      resetBtn.addEventListener("click", async () => {
-        slider.value = defaultValue.toString();
-        label.textContent = `${labelStr}: ${defaultValue}${unit}`;
-        currentFilters[key] = defaultValue;
-        if (typeof window.applyGlobalFilters === "function") {
-          window.applyGlobalFilters(currentFilters);
-        }
-        if (window.Storage) {
-          await window.Storage.saveFilter(key, defaultValue);
-        }
-      });
-      labelRow.appendChild(resetBtn);
-      row.appendChild(labelRow);
-
-      slider.oninput = (e) => {
-        const val = parseInt(e.target.value, 10);
-        label.textContent = `${labelStr}: ${val}${unit}`;
-
-        // Update local state synchronously
-        currentFilters[key] = val;
-
-        // Apply filters immediately
-        if (typeof window.applyGlobalFilters === "function") {
-          window.applyGlobalFilters(currentFilters);
+      // Repaired UNCONDITIONALLY, from the synchronous snapshot — not only when the capture
+      // was still in flight. The capture starts at mousedown, and the product's click-to-front
+      // handler runs on the SAME mousedown, so even a capture that settled during the gesture
+      // can hold the RAISED z-index (measured for the drag class; this one has the same
+      // shape). Repairing always makes the record the pre-GESTURE state.
+      const repair = (layout, snap) => {
+        if (!layout) return;
+        if (snap && window.patchCapturedFields) {
+          window.patchCapturedFields(layout, id, {
+            width: snap.width,
+            height: snap.height,
+            innerWidths: snap.innerWidths,
+            zIndex: snap.zIndex,
+            printZIndex: snap.printZIndex,
+          });
         }
       };
-
-      slider.onchange = async (e) => {
-        if (window.Storage) {
-          await window.Storage.saveFilter(key, parseInt(e.target.value, 10));
-        }
-      };
-
-      row.appendChild(slider);
-      filtersContainer.appendChild(row);
-      return { slider, label, row };
-    };
-
-    const sliders = {
-      hue: createFilterSlider("🎨 Hue Shift", "hue", 0, 360, "°", 0, true),
-      contrast: createFilterSlider("🌓 Contrast", "contrast", 0, 200, "%", 100),
-      saturate: createFilterSlider("🌈 Saturate", "saturate", 0, 200, "%", 100),
-      greyscale: createFilterSlider(
-        "🌑 Greyscale",
-        "greyscale",
-        0,
-        100,
-        "%",
-        100,
-      ),
-      sepia: createFilterSlider("📜 Sepia", "sepia", 0, 100, "%", 0),
-    };
-
-    // Color Picker Button & Floating Hue Picker
-    const colorPickerBtn = document.createElement("button");
-    colorPickerBtn.textContent = "🎨 Color Picker";
-    colorPickerBtn.style.marginTop = "4px";
-    colorPickerBtn.style.fontSize = "10px";
-    colorPickerBtn.style.padding = "4px 8px";
-    colorPickerBtn.style.width = "100%";
-    colorPickerBtn.className = "be-modal-ok"; // Use consistent style
-    sliders.hue.row.appendChild(colorPickerBtn);
-
-    const huePicker = document.createElement("div");
-    huePicker.style.position = "fixed";
-    huePicker.style.zIndex = "20000";
-    huePicker.style.setProperty("display", "none", "important"); // Hidden by default
-    huePicker.style.flexDirection = "column";
-    huePicker.style.gap = "8px";
-    huePicker.style.padding = "8px";
-    huePicker.style.backgroundColor = "#1a1a1a";
-    huePicker.style.border = "1px solid #444";
-    huePicker.style.borderRadius = "4px";
-    huePicker.style.boxShadow = "0 4px 20px rgba(0,0,0,0.6)";
-    huePicker.style.width = "140px"; // 60 columns * 2px + padding
-    document.body.appendChild(huePicker);
-
-    const gridContainer = document.createElement("div");
-    gridContainer.style.display = "grid";
-    gridContainer.style.gridTemplateColumns = "repeat(60, 2px)";
-    gridContainer.style.gap = "0";
-    gridContainer.style.cursor = "crosshair";
-    gridContainer.style.border = "1px solid #333";
-    huePicker.appendChild(gridContainer);
-
-    let tempInitialHue = currentFilters.hue || 0;
-    let tempInitialSaturate = currentFilters.saturate || 100;
-    let tempInitialGreyscale = currentFilters.greyscale || 100;
-
-    const revertPickerChanges = () => {
-      currentFilters.hue = tempInitialHue;
-      currentFilters.saturate = tempInitialSaturate;
-      currentFilters.greyscale = tempInitialGreyscale;
-
-      // Update UI
-      sliders.hue.slider.value = tempInitialHue.toString();
-      sliders.hue.label.textContent = `🎨 Hue Shift: ${tempInitialHue}°`;
-      sliders.saturate.slider.value = tempInitialSaturate.toString();
-      sliders.saturate.label.textContent = `🌈 Saturate: ${tempInitialSaturate}%`;
-      sliders.greyscale.slider.value = tempInitialGreyscale.toString();
-      sliders.greyscale.label.textContent = `🌑 Greyscale: ${tempInitialGreyscale}%`;
-
-      if (typeof window.applyGlobalFilters === "function") {
-        window.applyGlobalFilters(currentFilters);
-      }
-    };
-
-    colorPickerBtn.onclick = (e) => {
-      e.stopPropagation();
-      const rect = colorPickerBtn.getBoundingClientRect();
-      huePicker.style.top = `${rect.top - 160}px`; // Increased offset for new slider
-      huePicker.style.left = `${rect.left}px`;
-
-      const isHidden =
-        huePicker.style.display === "none" ||
-        huePicker.style.getPropertyValue("display") === "none";
-      if (isHidden) {
-        // Capture initial state before previewing
-        tempInitialHue = currentFilters.hue || 0;
-        tempInitialSaturate = currentFilters.saturate || 100;
-        tempInitialGreyscale = currentFilters.greyscale || 100;
-        huePicker.style.setProperty("display", "flex", "important");
-      } else {
-        revertPickerChanges();
-        huePicker.style.setProperty("display", "none", "important");
-      }
-    };
-
-    // Close picker when clicking outside
-    document.addEventListener("click", (e) => {
-      const isVisible =
-        huePicker.style.display === "flex" ||
-        huePicker.style.getPropertyValue("display") === "flex";
-      if (
-        isVisible &&
-        !huePicker.contains(e.target) &&
-        e.target !== colorPickerBtn
-      ) {
-        revertPickerChanges();
-        huePicker.style.setProperty("display", "none", "important");
-      }
-    });
-
-    let selectedHue = currentFilters.hue || 0;
-    let selectedSaturate = currentFilters.saturate || 100;
-    let selectedGreyscale = currentFilters.greyscale || 100;
-
-    // Grayscale Slider inside picker
-    const pickerGreyscaleContainer = document.createElement("div");
-    pickerGreyscaleContainer.style.display = "flex";
-    pickerGreyscaleContainer.style.flexDirection = "column";
-    pickerGreyscaleContainer.style.gap = "2px";
-    pickerGreyscaleContainer.style.marginBottom = "4px";
-
-    const pickerGreyscaleLabel = document.createElement("label");
-    pickerGreyscaleLabel.style.fontSize = "9px";
-    pickerGreyscaleLabel.style.color = "#ccc";
-    pickerGreyscaleLabel.textContent = `Greyscale: ${currentFilters.greyscale}%`;
-    pickerGreyscaleContainer.appendChild(pickerGreyscaleLabel);
-
-    const pickerGreyscaleSlider = document.createElement("input");
-    pickerGreyscaleSlider.type = "range";
-    pickerGreyscaleSlider.min = "0";
-    pickerGreyscaleSlider.max = "100";
-    pickerGreyscaleSlider.value = (currentFilters.greyscale || 100).toString();
-    pickerGreyscaleSlider.style.width = "100%";
-    pickerGreyscaleSlider.style.height = "12px";
-
-    pickerGreyscaleSlider.oninput = (e) => {
-      const val = parseInt(e.target.value, 10);
-      selectedGreyscale = val;
-      pickerGreyscaleLabel.textContent = `Greyscale: ${val}%`;
-
-      // Preview immediately
-      currentFilters.greyscale = val;
-      sliders.greyscale.slider.value = val.toString();
-      sliders.greyscale.label.textContent = `🌑 Greyscale: ${val}%`;
-
-      if (typeof window.applyGlobalFilters === "function") {
-        window.applyGlobalFilters(currentFilters);
-      }
-    };
-    pickerGreyscaleContainer.appendChild(pickerGreyscaleSlider);
-    huePicker.insertBefore(pickerGreyscaleContainer, gridContainer);
-
-    // 600 swatches for a perfect 2D map (60 hues x 10 saturations)
-    // Rows = Saturation (0% to 200%), Columns = Hue (0 to 360)
-    const saturations = [0, 25, 50, 75, 100, 120, 140, 160, 180, 200];
-
-    saturations.forEach((sat) => {
-      for (let i = 0; i < 60; i++) {
-        const deg = i * 6;
-        const swatch = document.createElement("div");
-        swatch.style.height = "8px";
-        swatch.style.width = "2px";
-        swatch.style.backgroundColor = "#e61919"; // Base red
-        // Show Hue, Saturation and current Greyscale in the preview
-        swatch.style.filter = `hue-rotate(${deg}deg) saturate(${sat}%) grayscale(${currentFilters.greyscale || 0}%)`;
-        swatch.title = `Hue: ${deg}°, Sat: ${sat}%`;
-
-        swatch.addEventListener("click", (e) => {
-          e.stopPropagation();
-          selectedHue = deg;
-          selectedSaturate = sat;
-
-          // Preview Hue immediately
-          sliders.hue.slider.value = deg.toString();
-          sliders.hue.label.textContent = `🎨 Hue Shift: ${deg}°`;
-          currentFilters.hue = deg;
-
-          // Preview Saturation immediately
-          sliders.saturate.slider.value = sat.toString();
-          sliders.saturate.label.textContent = `🌈 Saturate: ${sat}%`;
-          currentFilters.saturate = sat;
-
-          if (typeof window.applyGlobalFilters === "function") {
-            window.applyGlobalFilters(currentFilters);
-          }
-        });
-        gridContainer.appendChild(swatch);
-      }
-    });
-
-    const acceptBtn = document.createElement("button");
-    acceptBtn.textContent = "Accept";
-    acceptBtn.className = "be-modal-ok";
-    acceptBtn.style.fontSize = "10px";
-    acceptBtn.style.padding = "4px";
-    acceptBtn.style.width = "100%";
-
-    acceptBtn.onclick = async (e) => {
-      e.stopPropagation();
-      if (window.Storage) {
-        await window.Storage.saveFilter("hue", selectedHue);
-        await window.Storage.saveFilter("saturate", selectedSaturate);
-        await window.Storage.saveFilter("greyscale", selectedGreyscale);
-      }
-      // Update the "initial" state to the newly accepted values
-      tempInitialHue = selectedHue;
-      tempInitialSaturate = selectedSaturate;
-      tempInitialGreyscale = selectedGreyscale;
-      huePicker.style.setProperty("display", "none", "important");
-    };
-    huePicker.appendChild(acceptBtn);
-
-    // Global Reset Button (Excluding Hue)
-    const resetAllBtn = document.createElement("button");
-    resetAllBtn.textContent = "Reset All Filters (excl. Hue)";
-    resetAllBtn.className = "be-modal-ok"; // Reusing existing style
-    resetAllBtn.style.marginTop = "8px";
-    resetAllBtn.style.fontSize = "10px";
-    resetAllBtn.style.padding = "4px 8px";
-    resetAllBtn.style.width = "100%";
-    resetAllBtn.id = "be-reset-all-filters";
-
-    resetAllBtn.addEventListener("click", async () => {
-      try {
-        const defaults = {
-          contrast: 100,
-          saturate: 100,
-          greyscale: 100,
-          sepia: 0,
-        };
-
-        for (const [key, defVal] of Object.entries(defaults)) {
-          currentFilters[key] = defVal;
-          const s = sliders[key];
-          if (s) {
-            s.slider.value = defVal.toString();
-            const labelBase = s.label.textContent.split(":")[0];
-            s.label.textContent = `${labelBase}: ${defVal}%`;
-          }
-        }
-
-        if (typeof window.applyGlobalFilters === "function") {
-          window.applyGlobalFilters(currentFilters);
-        }
-
-        // Save after UI update
-        if (window.Storage) {
-          for (const [key, defVal] of Object.entries(defaults)) {
-            await window.Storage.saveFilter(key, defVal);
-          }
-        }
-      } catch (err) {
-        safeLog("error", `[DDB Print] Global Reset Error:`, err);
-      }
-    });
-
-    filtersContainer.appendChild(resetAllBtn);
-
-    updatePropertiesPanel(propertiesPanel);
-
-    // Load initial values
-    if (window.Storage && typeof window.Storage.getFilters === "function") {
-      window.Storage.getFilters().then((filters) => {
-        currentFilters = filters; // Initialize local state
-        Object.keys(sliders).forEach((key) => {
-          const val = filters[key];
-          const unit = key === "hue" ? "°" : "%";
-          const labelBase = sliders[key].label.textContent.split(":")[0];
-
-          sliders[key].slider.value = val;
-          sliders[key].label.textContent = `${labelBase}: ${val}${unit}`;
-        });
-
-        if (typeof window.applyGlobalFilters === "function") {
-          window.applyGlobalFilters(filters);
-        }
-      });
-    }
-
-    container.appendChild(filtersContainer);
-
-    safeLog("log", "[DDB Print] createControls: appending to body...");
-    document.body.appendChild(container);
-
-    // Verify visibility after a tiny delay
-    setTimeout(() => {
-      const el = document.getElementById("print-enhance-controls");
-      if (el) {
-        const style = window.getComputedStyle(el);
-        safeLog(
-          "log",
-          `[DDB Print] Controls verified. Display: ${style.display}, Visibility: ${style.visibility}, Opacity: ${style.opacity}`,
-        );
-        if (style.display === "none") {
-          safeLog("error", "[DDB Print] CRITICAL: Controls are HIDDEN by CSS!");
-        }
-      } else {
-        safeLog(
-          "error",
-          "[DDB Print] CRITICAL: Controls container missing from DOM after append!",
-        );
-      }
-    }, 500);
-
-    // Inject print-only styles to hide controls
-    if (!document.getElementById("ddb-print-controls-style")) {
-      const style = document.createElement("style");
-      style.id = "ddb-print-controls-style";
-      style.textContent =
-        "@media print { #print-enhance-controls, #print-enhance-overlay { display: none !important; } }";
-      document.head.appendChild(style);
-    }
-
-    // Initialize Layer Management Panel
-    PeDom().getLayerManager();
-
-    // Ensure print styles (opacity overrides, manager hiding) are generated on initialization
-    if (typeof window.updatePrintStyles === "function") {
-      window.updatePrintStyles();
+      window.pushMutation(mut, "Resize \"" + id + "\"", window.MUTATION_CLASSES.RESIZE, repair);
     }
   }
 
   /**
    * Shows a modal to manage Compact Mode status for named sections.
    */
+  /**
+   * Phase 2e/2f (track undo_stack_20260911): record a mutation that happens inside an
+   * already-async action handler.
+   *
+   * These handlers are `await`ed by the click bridge, so awaiting the capture first is
+   * exact and simple: `scanLayout` awaits storage mid-scan, so it must finish before
+   * anything changes. Returns false when no record could be taken, which the caller uses
+   * to skip its mutation (the abort contract the destructive gate already honours).
+   *
+   * The MOUNT (`addRobustButton`) is defined further down this file, so this is a plain
+   * function declaration and hoists to it.
+   */
+  async function captureMutationNow(label, klass) {
+    if (typeof window.captureUndo !== "function") return false;
+    const entry = await window.captureUndo(label, klass);
+    return Boolean(entry);
+  }
+
+  /**
+   * EXTRACT, recorded — the USER entry point for extraction.
+   *
+   * ATTEMPTED AND REVERTED 2026-09-11, and the reason is recorded because the GAP IS REAL and
+   * should not be mistaken for "handled": creating an extraction is a structural addition
+   * (`scanLayout` records `extractions[]`) with NO capture point, so "extract this" is not
+   * undoable while "roll the extraction back" is.
+   *
+   * WHY IT IS NOT SIMPLY WIRED HERE. Awaiting the capture before the mutation defers the
+   * extraction by a microtask, and EIGHT existing tests dispatch a dblclick and then assert
+   * synchronously — they went red, which is the same tension Phase 2e hit for the border and
+   * compact sites. Wiring this class properly therefore needs the NON-DEFERRING pattern
+   * (start the capture, mutate synchronously, push afterwards) PLUS a repair, because this
+   * class ADDS an entry: a capture that finishes after the mutation INCLUDES the new
+   * extraction, so the record would be the post-state and the undo a no-op. The repair is
+   * straightforward but specific — snapshot the extraction ids synchronously before the
+   * mutation, then strip any entry the record gained — and it is left for its own change
+   * rather than half-landed here.
+   *
+   * The capture also cannot live inside `handleElementExtraction` itself:
+   * `js/layout_apply.js:278` AWAITS that function on the RESTORE path, so a record there would
+   * be pushed by every layout apply — the feedback loop the contract forbids. Same reason the
+   * destructive gate for `splitSkillsBox` sits at its user entry point, not inside it.
+   */
+  async function extractElementRecorded(el) {
+    return handleElementExtraction(el);
+  }
+
   function handleManageCompact() {
     // Find all sections that are candidates for compact mode logic
     // Criteria: Named sections (excluding section-\d+), or clones of named sections.
@@ -6625,1372 +2344,158 @@ Licensed under Blue Oak Model License 1.0.0
     });
 
     if (candidates.length === 0) {
-      showFeedback("No compact-compatible sections found");
+      // AC-5 (U-17): a dialog that stays, not a toast that expires.
+      emptyState("No compact-compatible sections found", {
+        message:
+          "Compact mode needs at least one named section to fold, and this sheet has none.",
+        hint: "Extract or clone a named section first, then try Manage Compact again.",
+      });
       return;
     }
 
-    // Modal
-    const overlay = document.createElement("div");
-    overlay.className = "be-modal-overlay";
+    // Modal — built on the shared modal primitive (U-20): gains role/aria, a
+    // close ✕, backdrop cancel, Esc and focus handling it never had.
+    const modalApi = window.Modals;
+    if (!modalApi || typeof modalApi.__createModal !== "function") {
+      showFeedback("Could not open the compact-mode dialog. Reload the page.", "error");
+      return;
+    }
 
-    const modal = document.createElement("div");
-    modal.className = "be-modal";
-    modal.style.width = "500px";
+    modalApi.__createModal({
+      title: "Manage Compact Mode",
+      body(ctx) {
+        ctx.modal.style.width = "500px";
 
-    const h3 = document.createElement("h3");
-    h3.textContent = "Manage Compact Mode";
-    modal.appendChild(h3);
+        // Toggle All Button
+      const toggleAllBtn = document.createElement("button");
+      toggleAllBtn.textContent = "Toggle All";
+      toggleAllBtn.className = "be-modal-ok"; // Reusing style
+      toggleAllBtn.style.marginBottom = "10px";
+      toggleAllBtn.style.alignSelf = "flex-start";
 
-    // Toggle All Button
-    const toggleAllBtn = document.createElement("button");
-    toggleAllBtn.textContent = "Toggle All";
-    toggleAllBtn.className = "be-modal-ok"; // Reusing style
-    toggleAllBtn.style.marginBottom = "10px";
-    toggleAllBtn.style.alignSelf = "flex-start";
+      // Check if majority are currently compact to decide initial toggle direction
+      const compactCount = candidates.filter((s) =>
+        s.classList.contains("be-compact-mode"),
+      ).length;
+      const allCompact = compactCount === candidates.length;
 
-    // Check if majority are currently compact to decide initial toggle direction
-    const compactCount = candidates.filter((s) =>
-      s.classList.contains("be-compact-mode"),
-    ).length;
-    const allCompact = compactCount === candidates.length;
+      toggleAllBtn.onclick = async () => {
+        // Phase 2e: `compact` is persisted per section (scanLayout writes
+        // `classList.contains("be-compact-mode")`), so this toggle is a layout mutation.
+        // The NON-DEFERRING pair: the dialog's caller closes and asserts immediately, so
+        // the mutation must not wait on the scan.
+        const mut = window.beginMutation
+          ? window.beginMutation(window.snapshotSectionFlags())
+          : null;
+        const newState = !allCompact; // If all are on, turn off. Otherwise turn on.
+        candidates.forEach((section) => {
+          // Update class
+          if (newState) section.classList.add("be-compact-mode");
+          else section.classList.remove("be-compact-mode");
 
-    toggleAllBtn.onclick = () => {
-      const newState = !allCompact; // If all are on, turn off. Otherwise turn on.
-      candidates.forEach((section) => {
-        // Update class
-        if (newState) section.classList.add("be-compact-mode");
-        else section.classList.remove("be-compact-mode");
-
-        // Sync button style if present
-        const btn = section.querySelector(".be-compact-button");
-        if (btn) {
-          btn.style.backgroundColor = newState
-            ? "var(--btn-color)"
-            : "var(--btn-color-highlight)";
-        }
-      });
-      updateLayoutBounds();
-      overlay.remove();
-      showFeedback(
-        newState ? "All sections compacted" : "All sections expanded",
-      );
-    };
-    modal.appendChild(toggleAllBtn);
-
-    const list = document.createElement("div");
-    list.style.maxHeight = "300px";
-    list.style.overflowY = "auto";
-    list.style.display = "flex";
-    list.style.flexDirection = "column";
-    list.style.gap = "8px";
-
-    candidates.forEach((section) => {
-      const item = document.createElement("div");
-      item.style.display = "flex";
-      item.style.justifyContent = "space-between";
-      item.style.alignItems = "center";
-      item.style.padding = "8px";
-      item.style.background = "#333";
-      item.style.borderRadius = "4px";
-
-      const titleSpan = section.querySelector(
-        ".print-section-header span, .ct-subsection__header, .ct-section__header",
-      );
-      const name = titleSpan
-        ? titleSpan.textContent.trim()
-        : section.id || "Unnamed";
-
-      const nameLabel = document.createElement("span");
-      nameLabel.textContent = name;
-      item.appendChild(nameLabel);
-
-      const toggleBtn = document.createElement("button");
-      const isCompact = section.classList.contains("be-compact-mode");
-      toggleBtn.textContent = isCompact ? "ON" : "OFF";
-      toggleBtn.style.backgroundColor = isCompact ? "#4CAF50" : "#f44336";
-      toggleBtn.style.color = "white";
-      toggleBtn.style.border = "none";
-      toggleBtn.style.padding = "4px 8px";
-      toggleBtn.style.borderRadius = "4px";
-      toggleBtn.style.cursor = "pointer";
-
-      toggleBtn.onclick = () => {
-        const newState = section.classList.toggle("be-compact-mode");
-        toggleBtn.textContent = newState ? "ON" : "OFF";
-        toggleBtn.style.backgroundColor = newState ? "#4CAF50" : "#f44336";
-
-        // Sync the manual button on the section if it exists
-        const manualBtn = section.querySelector(".be-compact-button");
-        if (manualBtn) {
-          manualBtn.style.backgroundColor = newState
-            ? "var(--btn-color)"
-            : "var(--btn-color-highlight)";
-        }
+          // Sync button style if present
+          const btn = section.querySelector(".be-compact-button");
+          if (btn) {
+            btn.style.backgroundColor = newState
+              ? "var(--btn-color)"
+              : "var(--btn-color-highlight)";
+          }
+        });
         updateLayoutBounds();
-      };
-
-      item.appendChild(toggleBtn);
-      list.appendChild(item);
-    });
-
-    modal.appendChild(list);
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Close";
-    closeBtn.className = "be-modal-ok";
-    closeBtn.style.marginTop = "10px";
-    closeBtn.onclick = () => overlay.remove();
-    modal.appendChild(closeBtn);
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-  }
-
-  /**
-   * Handles saving the layout to IndexedDB.
-   */
-  async function handleSaveBrowser() {
-    safeLog("log", "[DDB Print] handleSaveBrowser: starting...");
-    try {
-      await Storage.init();
-      const layout = await scanLayout();
-      safeLog("log", "[DDB Print] handleSaveBrowser: layout captured");
-      await Storage.saveGlobalLayout(layout);
-
-      // Also save for specific character for the "revert to character" feature later
-      const characterId = getCharacterId();
-      if (characterId) {
-        safeLog(
-          "log",
-          "[DDB Print] handleSaveBrowser: saving for character:",
-          characterId,
-        );
-        await Storage.saveLayout(characterId, layout);
-      }
-
-      safeLog("log", "[DDB Print] handleSaveBrowser: success");
-      showFeedback("Saved to browser!");
-    } catch (err) {
-      safeLog("error", "[DDB Print] Save failed", err);
-      alert("Failed to save layout to browser.");
-    }
-  }
-
-  /**
-   * Handles saving to PC.
-   */
-  async function handleSavePC() {
-    safeLog("log", "[DDB Print] handleSavePC: capturing layout...");
-    const layout = await scanLayout();
-    const data = JSON.stringify(layout, null, 2);
-    const filename = `ddb-layout-${new Date().toISOString().split("T")[0]}.json`;
-
-    try {
-      safeLog("log", "[DDB Print] handleSavePC: generating file...");
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      safeLog("log", "[DDB Print] handleSavePC: clicking link...");
-      a.click();
-
-      setTimeout(() => {
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      }, 0);
-
-      showFeedback("Download started!");
-    } catch (err) {
-      safeLog("error", "[DDB Print] Download failed, showing modal", err);
-      showFallbackModal(data);
-    }
-  }
-  /**
-   * Applies the default layout using the Archer template.
-   */
-  async function applyDefaultLayout() {
-    safeLog("log", "[DDB Print] Applying Default Layouts (Archer Template)...");
-
-    // Remove all shapes before applying the template
-    document.querySelectorAll(".be-shape-wrapper").forEach((el) => {
-      el.remove();
-    });
-
-    if (
-      typeof CatalogService !== "undefined" &&
-      typeof CatalogService.applyTemplate === "function"
-    ) {
-      try {
-        await CatalogService.applyTemplate("archer", true);
-        safeLog(
-          "log",
-          "[DDB Print] Default Archer template applied successfully.",
-        );
-      } catch (err) {
-        safeLog(
-          "error",
-          "[DDB Print] Failed to apply default Archer template:",
-          err,
-        );
-      }
-    } else {
-      safeLog(
-        "error",
-        "[DDB Print] CatalogService not found. Cannot apply default layout.",
-      );
-    }
-
-    if (typeof updateLayoutBounds === "function") updateLayoutBounds();
-
-    // Refresh print styles after applying default template
-    if (typeof updatePrintStyles === "function") {
-      updatePrintStyles();
-    }
-  }
-  /**
-   * Handles loading default layout.
-   */
-  async function handleLoadDefault() {
-    if (!confirm("This will reset your layout to defaults. Are you sure?"))
-      return;
-
-    try {
-      const database = await Storage.init();
-
-      // Remove from IndexedDB
-      const transaction = database.transaction([STORE_NAME], "readwrite");
-      const store = transaction.objectStore(STORE_NAME);
-      store.delete("GLOBAL");
-
-      const characterId = getCharacterId();
-      if (characterId) {
-        store.delete(characterId);
-      }
-
-      // Reset styles in DOM
-      document
-        .querySelectorAll(".print-section-container")
-        .forEach((container) => {
-          const wrapper = container.closest(".be-section-wrapper") || container;
-          container.style.width = "";
-          container.style.height = "";
-          wrapper.style.left = "";
-          wrapper.style.top = "";
-          wrapper.style.zIndex = "10";
-          container.dataset.minimized = "false";
-
-          const content = container.querySelector(".print-section-content");
-          if (content) content.style.display = "flex";
-
-          // Reset inner widths
-          const inners = container.querySelectorAll(
-            'div[class$="-row-header"], div[class$="-content"] div',
-          );
-          inners.forEach((el) => {
-            if (el.tagName === "DIV") {
-              el.style.width = "";
-              el.style.minWidth = "";
-            }
-          });
-        });
-
-      // Trigger default layout
-      await applyDefaultLayout();
-
-      // Reposition clones in front of their parents
-      document
-        .querySelectorAll(".print-section-container.be-clone")
-        .forEach((clone) => {
-          const originalId = clone.dataset.originalId;
-          const original = document.getElementById(originalId);
-          if (original) {
-            const cloneWrapper = clone.closest(".be-section-wrapper") || clone;
-            const originalWrapper =
-              original.closest(".be-section-wrapper") || original;
-
-            const x = (parseInt(originalWrapper.style.left) || 0) + 32;
-            const y = (parseInt(originalWrapper.style.top) || 0) + 32;
-            cloneWrapper.style.setProperty("left", `${x}px`, "important");
-            cloneWrapper.style.setProperty("top", `${y}px`, "important");
-
-            // Maintain current dimensions if they exist, otherwise they might be reset by the global query
-            const currentWidth = clone.style.width;
-            const currentHeight = clone.style.height;
-            if (currentWidth)
-              clone.style.setProperty("width", currentWidth, "important");
-            if (currentHeight)
-              clone.style.setProperty("height", currentHeight, "important");
-
-            cloneWrapper.style.zIndex =
-              (parseInt(originalWrapper.style.zIndex) || 10) + 1;
-          }
-        });
-
-      // Handle merged sections: Rollback groups and prepare spells for recreation
-      const mergedSpells = Array.from(
-        document.querySelectorAll("[data-be-spell-merge]"),
-      );
-      const spellNamesToRecreate = [
-        ...new Set(
-          mergedSpells.map((el) => el.getAttribute("data-be-spell-merge")),
-        ),
-      ];
-
-      document.querySelectorAll(".be-merge-wrapper").forEach((wrapper) => {
-        const groupMergeId = wrapper.getAttribute("data-be-group-merge");
-        if (groupMergeId) {
-          const original = document.getElementById(groupMergeId);
-          if (original) original.style.setProperty("display", "", "important");
+        if (window.pushMutation) {
+          window.pushMutation(mut, "Toggle all compact", window.MUTATION_CLASSES.COMPACT,
+            (layout, snap) => window.repairSectionFlags(layout, snap));
         }
-        wrapper.remove();
-      });
-
-      // Recreate merged spells as floating sections
-      for (const spellName of spellNamesToRecreate) {
-        await createSpellDetailSection(spellName, { x: 0, y: 0 });
-      }
-
-      // Reposition all spell detail sections to the Y of their original spell label, at left: 1200px
-      document
-        .querySelectorAll(".print-section-container.be-spell-detail")
-        .forEach((detail) => {
-          const detailWrapper = detail.closest(".be-section-wrapper") || detail;
-          const spellName =
-            detailWrapper.dataset.title ||
-            detailWrapper
-              .querySelector(".print-section-header span")
-              ?.textContent.trim();
-          if (spellName) {
-            // Find the original spell label in the DOM (searching for exact text match)
-            const labels = Array.from(
-              document.querySelectorAll(".ct-spells-spell__label"),
-            );
-            const originalLabel = labels.find(
-              (l) => l.textContent.trim() === spellName,
-            );
-
-            if (originalLabel) {
-              const layoutRoot = document.getElementById(
-                "print-layout-wrapper",
-              );
-              const rootRect = layoutRoot.getBoundingClientRect();
-              const labelRect = originalLabel.getBoundingClientRect();
-
-              // Calculate Y relative to the layout wrapper
-              const y = labelRect.top - rootRect.top;
-              detailWrapper.style.left = "1200px";
-              detailWrapper.style.top = `${y}px`;
-              detail.style.width = "300px";
-              detail.style.height = "auto";
-            } else {
-              // Fallback: move to the right edge
-              detailWrapper.style.left = "1200px";
-              detail.style.width = "300px";
-              detail.style.height = "auto";
-            }
-          }
-        });
-
-      // Rollback all OTHER extractions
-      document
-        .querySelectorAll(
-          ".print-section-container.be-extracted-section:not(.be-spell-detail)",
-        )
-        .forEach((container) => {
-          // Use rollbackSection logic but avoiding multiple feedbacks/bounds updates
-          const originalId = container.dataset.originalId;
-          const associatedIds = container.dataset.associatedIds
-            ? JSON.parse(container.dataset.associatedIds)
-            : [];
-          const allIds = [originalId, ...associatedIds].filter((id) => id);
-
-          allIds.forEach((id) => {
-            const original = document.getElementById(id);
-            if (original) {
-              original.style.setProperty("display", "", "important");
-            }
-          });
-          const wrapper = container.closest(".be-section-wrapper") || container;
-          wrapper.remove();
-        });
-
-      updateLayoutBounds();
-      showFeedback("Layout reset to defaults!");
-    } catch (err) {
-      safeLog("error", "[DDB Print] Reset failed", err);
-      alert("Failed to reset layout.");
-    }
-  }
-
-  /**
-   * Handles loading from file.
-   */
-  function handleLoadFile() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json";
-
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const layout = JSON.parse(event.target.result);
-          if (Storage.validateLayout(layout)) {
-            // Check version compatibility
-            if (layout.version !== Storage.SCHEMA_VERSION) {
-              alert(
-                `Warning: The loaded layout version (${layout.version}) is older than the current version (${Storage.SCHEMA_VERSION}). Some newer features might not be present. It is recommended to save your layout again to upgrade the file.`,
-              );
-            }
-            await applyLayout(layout);
-            showFeedback("Layout loaded!");
-          } else {
-            alert("Invalid layout file format.");
-          }
-        } catch (err) {
-          safeLog("error", "[DDB Print] Load failed", err);
-          alert("Failed to parse layout file.");
-        }
+        ctx.close(null);
+        showFeedback(
+          newState ? "All sections compacted" : "All sections expanded",
+        );
       };
-      reader.readAsText(file);
-    };
+      ctx.bodyEl.appendChild(toggleAllBtn);
 
-    input.click();
-  }
+      const list = document.createElement("div");
+      list.style.maxHeight = "300px";
+      list.style.overflowY = "auto";
+      list.style.display = "flex";
+      list.style.flexDirection = "column";
+      list.style.gap = "8px";
 
-  /**
-   * Handles restoring the layout from IndexedDB.
-   */
-  async function restoreLayout() {
-    try {
-      await Storage.init();
+      candidates.forEach((section) => {
+        const item = document.createElement("div");
+        item.style.display = "flex";
+        item.style.justifyContent = "space-between";
+        item.style.alignItems = "center";
+        item.style.padding = "8px";
+        item.style.background = "#333";
+        item.style.borderRadius = "4px";
 
-      // Strategy: Load character-specific first, fallback to global
-      const characterId = getCharacterId();
-      let layout = null;
+        const titleSpan = section.querySelector(
+          ".print-section-header span, .ct-subsection__header, .ct-section__header",
+        );
+        const name = titleSpan
+          ? titleSpan.textContent.trim()
+          : section.id || "Unnamed";
 
-      if (characterId) {
-        layout = await Storage.loadLayout(characterId);
-      }
+        const nameLabel = document.createElement("span");
+        nameLabel.textContent = name;
+        item.appendChild(nameLabel);
 
-      if (!layout) {
-        layout = await Storage.loadGlobalLayout();
-      }
+        const toggleBtn = document.createElement("button");
+        const isCompact = section.classList.contains("be-compact-mode");
+        toggleBtn.textContent = isCompact ? "ON" : "OFF";
+        // AC-6: locked palette tokens. The Material green/red that used to sit
+        // here were not in this product's palette at all.
+        toggleBtn.style.backgroundColor = isCompact
+          ? "var(--be-gold)"
+          : "var(--be-taupe)";
+        toggleBtn.style.color = "white";
+        toggleBtn.style.border = "none";
+        toggleBtn.style.padding = "4px 8px";
+        toggleBtn.style.borderRadius = "4px";
+        toggleBtn.style.cursor = "pointer";
 
-      if (layout && Storage.validateLayout(layout)) {
-        safeLog("log", "[DDB Print] Restoring saved layout...");
-        await applyLayout(layout);
-        return true;
-      }
-    } catch (err) {
-      safeLog("error", "[DDB Print] Restore failed", err);
-    }
-    return false;
-  }
+        toggleBtn.onclick = () => {
+          // Phase 2e: `compact` is persisted per section, so this is a layout mutation.
+          const mut = window.beginMutation
+            ? window.beginMutation(window.snapshotSectionFlags())
+            : null;
+          const newState = section.classList.toggle("be-compact-mode");
+          if (window.pushMutation) {
+            window.pushMutation(mut, `Toggle "${name}"`, window.MUTATION_CLASSES.COMPACT,
+              (layout, snap) => window.repairSectionFlags(layout, snap));
+          }
+          toggleBtn.textContent = newState ? "ON" : "OFF";
+          toggleBtn.style.backgroundColor = newState
+            ? "var(--be-gold)"
+            : "var(--be-taupe)";
 
-  /**
-   * Shows a temporary feedback message.
-   */
-  function showFeedback(msg) {
-    const feedback = document.createElement("div");
-    feedback.className = "be-feedback";
-    feedback.textContent = msg;
-    feedback.style.position = "fixed";
-    feedback.style.top = "20px";
-    feedback.style.left = "50%";
-    feedback.style.transform = "translateX(-50%)";
-    feedback.style.backgroundColor = "#333";
-    feedback.style.color = "white";
-    feedback.style.padding = "10px 20px";
-    feedback.style.borderRadius = "5px";
-    feedback.style.zIndex = "10001";
-    feedback.style.boxShadow = "0 2px 10px rgba(0,0,0,0.5)";
-    feedback.style.transition = "opacity 0.5s";
-
-    document.body.appendChild(feedback);
-
-    setTimeout(() => {
-      feedback.style.opacity = "0";
-      setTimeout(() => feedback.remove(), 500);
-    }, 2000);
-  }
-  /**
-   * Shows a modal with layout data for manual copying.
-   * @param {string} jsonData
-   */
-  function showFallbackModal(jsonData) {
-    // Overlay
-    const overlay = document.createElement("div");
-    overlay.id = "print-enhance-overlay";
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100%";
-    overlay.style.height = "100%";
-    overlay.style.backgroundColor = "rgba(0,0,0,0.8)";
-    overlay.style.zIndex = "20000";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.backdropFilter = "blur(4px)";
-
-    // Modal
-    const modal = document.createElement("div");
-    modal.style.backgroundColor = "#222";
-    modal.style.color = "white";
-    modal.style.padding = "20px";
-    modal.style.borderRadius = "12px";
-    modal.style.width = "80%";
-    modal.style.maxWidth = "600px";
-    modal.style.display = "flex";
-    modal.style.flexDirection = "column";
-    modal.style.gap = "15px";
-    modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.5)";
-    modal.style.border = "1px solid #444";
-
-    const title = document.createElement("h3");
-    title.textContent = "Layout JSON Data";
-    title.style.margin = "0";
-    modal.appendChild(title);
-
-    const info = document.createElement("p");
-    info.textContent = "Copy the layout data below to save it manually.";
-    info.style.fontSize = "14px";
-    modal.appendChild(info);
-
-    const textarea = document.createElement("textarea");
-    textarea.value = jsonData;
-    textarea.readOnly = true;
-    textarea.style.height = "200px";
-    textarea.style.backgroundColor = "#111";
-    textarea.style.color = "#0f0";
-    textarea.style.border = "1px solid #333";
-    textarea.style.padding = "10px";
-    textarea.style.fontFamily = "monospace";
-    textarea.style.borderRadius = "4px";
-    modal.appendChild(textarea);
-
-    const btnGroup = document.createElement("div");
-    btnGroup.style.display = "flex";
-    btnGroup.style.justifyContent = "flex-end";
-    btnGroup.style.gap = "10px";
-
-    const copyBtn = document.createElement("button");
-    copyBtn.textContent = "Copy to Clipboard";
-    copyBtn.style.padding = "8px 16px";
-    copyBtn.style.cursor = "pointer";
-    copyBtn.onclick = () => {
-      textarea.select();
-      document.execCommand("copy");
-      copyBtn.textContent = "Copied!";
-      setTimeout(() => (copyBtn.textContent = "Copy to Clipboard"), 2000);
-    };
-    btnGroup.appendChild(copyBtn);
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Close";
-    closeBtn.style.padding = "8px 16px";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.onclick = () => overlay.remove();
-    btnGroup.appendChild(closeBtn);
-
-    modal.appendChild(btnGroup);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-  }
-
-  /**
-   * Scans the current DOM for layout information.
-   * @returns {object} Layout data following the schema.
-   */
-  /**
-   * Scans the current DOM for layout information.
-   * @returns {object} Layout data following the schema.
-   */
-  async function scanLayout() {
-    const peDom = typeof PeDom !== "undefined" ? PeDom() : null;
-    const layerManager = peDom ? peDom.getLayerManager() : null;
-
-    const layout = {
-      version: Storage.SCHEMA_VERSION,
-      skillsSplit: window.skillsSplit || false,
-      sections: {},
-      clones: [],
-      extractions: [],
-      shapes: [], // Legacy shapes array
-      shapeLayers: [], // New multi-layer format
-      spell_details: [],
-      merges: [],
-      spell_cache: [],
-    };
-
-    // Capture shape layers state
-    const layerStates = {};
-    if (layerManager) {
-      layerManager.shapeLayers.forEach((layer) => {
-        const layerData = {
-          id: layer.id,
-          name: layer.label,
-          isLocked: layer.isLocked,
-          isHidden: layer.isHidden,
-          isDisabledOnPrint: layer.isDisabledOnPrint,
-          elements: [],
+          // Sync the manual button on the section if it exists
+          const manualBtn = section.querySelector(".be-compact-button");
+          if (manualBtn) {
+            manualBtn.style.backgroundColor = newState
+              ? "var(--btn-color)"
+              : "var(--btn-color-highlight)";
+          }
+          updateLayoutBounds();
         };
 
-        const layerEl = document.getElementById(layer.layerId);
-        if (layerEl) {
-          const shapes = layerEl.querySelectorAll(".be-shape-wrapper");
-          shapes.forEach((wrapper) => {
-            const container = wrapper.querySelector(".be-shape-container");
-            if (!container) return;
-
-            layerData.elements.push({
-              id: container.id,
-              assetPath: container.dataset.assetPath,
-              left: wrapper.style.left,
-              top: wrapper.style.top,
-              width: container.style.width,
-              height: container.style.height,
-              zIndex: wrapper.style.zIndex,
-              printZIndex: wrapper.dataset.printZ,
-              rotation: wrapper.dataset.rotation || "0",
-            });
-          });
-        }
-        layout.shapeLayers.push(layerData);
-
-        layerStates[layer.id] = {
-          isLocked: layer.isLocked,
-          isHidden: layer.isHidden,
-          isDisabledOnPrint: layer.isDisabledOnPrint,
-        };
+        item.appendChild(toggleBtn);
+        list.appendChild(item);
       });
 
-      // Capture sections layer state
-      const secLayer = layerManager.sectionsLayer;
-      if (secLayer) {
-        layerStates[secLayer.id] = {
-          isLocked: secLayer.isLocked,
-          isHidden: secLayer.isHidden,
-          isDisabledOnPrint: secLayer.isDisabledOnPrint,
-        };
-      }
-    }
+      ctx.bodyEl.appendChild(list);
 
-    layout.layers = {
-      ...layerStates,
-      activeLayerId: layerManager?.activeLayerId || null,
-    };
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "Close";
+      closeBtn.className = "be-modal-ok";
+      closeBtn.style.marginTop = "10px";
+      closeBtn.onclick = () => ctx.close(null);
 
-    // Include cached spells
-    try {
-      await Storage.init();
-      layout.spell_cache = await Storage.getAllSpells();
-    } catch (err) {
-      safeLog("error", "[DDB Print] Could not scan spell cache", err);
-    }
-
-    // 1. Scan for standard sections and floating containers
-    const sections = document.querySelectorAll(".print-section-container");
-    sections.forEach((section) => {
-      const id = section.id;
-      if (!id) return;
-
-      const wrapper = section.closest(".be-section-wrapper") || section;
-      const header = wrapper.querySelector(".print-section-header span");
-      const title =
-        wrapper.dataset.title || (header ? header.textContent.trim() : null);
-      const content = section.querySelector(".print-section-content");
-
-      const getBorderStyle = (el) => {
-        return (
-          ALL_BORDER_STYLES.find((style) => el.classList.contains(style)) ||
-          null
-        );
-      };
-
-      if (section.classList.contains("be-clone")) {
-        const sanitizedHtml = content
-          ? getSanitizedContent(content).innerHTML
-          : "";
-        layout.clones.push({
-          id: id,
-          title: title || "Clone",
-          html: sanitizedHtml,
-          left: wrapper.style.left,
-          top: wrapper.style.top,
-          width: section.style.width,
-          height: section.style.height,
-          zIndex: wrapper.style.zIndex || "10",
-          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
-          fontSize: wrapper.style.fontSize,
-          minimized: section.dataset.minimized === "true",
-          compact: section.classList.contains("be-compact-mode"),
-          borderStyle: getBorderStyle(section),
-        });
-        return;
-      }
-
-      if (section.classList.contains("be-spell-detail")) {
-        layout.spell_details.push({
-          id: id,
-          spellName: title || "Spell",
-          left: wrapper.style.left,
-          top: wrapper.style.top,
-          width: section.style.width,
-          height: section.style.height,
-          zIndex: wrapper.style.zIndex || "10",
-          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
-          fontSize: wrapper.style.fontSize,
-          minimized: section.dataset.minimized === "true",
-          borderStyle: getBorderStyle(section),
-        });
-        return;
-      }
-
-      if (section.classList.contains("be-shape")) {
-        layout.shapes.push({
-          id: id,
-          assetPath: section.dataset.assetPath,
-          left: wrapper.style.left,
-          top: wrapper.style.top,
-          width: section.style.width,
-          height: section.style.height,
-          zIndex: wrapper.style.zIndex || "110",
-          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "110",
-          rotation: wrapper.dataset.rotation || "0",
-          fontSize: wrapper.style.fontSize,
-          minimized: section.dataset.minimized === "true",
-        });
-        return;
-      }
-
-      if (section.classList.contains("be-extracted-section")) {
-        const originalId = section.dataset.originalId;
-        const original = document.getElementById(originalId);
-
-        const extractionData = {
-          id: id,
-          originalId: originalId,
-          parentSectionId: section.dataset.parentSectionId,
-          title: title || "Extracted",
-          left: wrapper.style.left,
-          top: wrapper.style.top,
-          width: section.style.width,
-          height: section.style.height,
-          zIndex: wrapper.style.zIndex || "10",
-          printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
-          fontSize: wrapper.style.fontSize,
-          minimized: section.dataset.minimized === "true",
-          compact: section.classList.contains("be-compact-mode"),
-          borderStyle: getBorderStyle(section),
-        };
-
-        if (original) {
-          const resolution = getExtractionSelector(original, true);
-          if (resolution) {
-            extractionData.selector = resolution.selector;
-            extractionData.index = resolution.index;
-          }
-        }
-
-        layout.extractions.push(extractionData);
-        return;
-      }
-
-      layout.sections[id] = {
-        left: wrapper.style.left,
-        top: wrapper.style.top,
-        width: section.style.width,
-        height: section.style.height,
-        zIndex: wrapper.style.zIndex || "10",
-        printZIndex: wrapper.dataset.printZ || wrapper.style.zIndex || "10",
-        fontSize: wrapper.style.fontSize,
-        minimized: section.dataset.minimized === "true",
-        compact: section.classList.contains("be-compact-mode"),
-        borderStyle: getBorderStyle(section),
-        innerWidths: {},
-      };
-
-      const innerContainers = section.querySelectorAll(
-        'div[class$="-row-header"], div[class$="-content"]',
-      );
-      innerContainers.forEach((container, cIdx) => {
-        Array.from(container.children).forEach((child, dIdx) => {
-          if (child.tagName === "DIV" && child.style.width) {
-            const key = `${cIdx}-${dIdx}`;
-            layout.sections[id].innerWidths[key] = child.style.width;
-          }
-        });
-      });
+        ctx.actionsRow.appendChild(closeBtn);
+      },
     });
-
-    // 2. Scan for Merges (systematic approach using stored attributes)
-    document.querySelectorAll(".be-merge-wrapper").forEach((wrapper) => {
-      const groupId = wrapper.getAttribute("data-be-group-merge");
-      const spellMergeChild = wrapper.querySelector("[data-be-spell-merge]");
-      const spellName = spellMergeChild
-        ? spellMergeChild.getAttribute("data-be-spell-merge")
-        : null;
-
-      if (!groupId && !spellName) return;
-
-      // Retrieve target metadata stored during merge
-      const targetType = wrapper.getAttribute("data-be-target-type");
-      const targetId = wrapper.getAttribute("data-be-target-id");
-      const targetSelector = wrapper.getAttribute("data-be-target-selector");
-      const targetIndex = wrapper.getAttribute("data-be-target-index");
-      const targetName = wrapper.getAttribute("data-be-target-name");
-
-      if (!targetType) return;
-
-      const mergeEntry = {
-        source: spellName
-          ? { type: "spell", spellName }
-          : { type: "group", originalId: groupId },
-        target: {
-          type: targetType,
-          id: targetId,
-          selector: targetSelector,
-          index: targetIndex !== null ? parseInt(targetIndex) : undefined,
-          name: targetName,
-        },
-      };
-
-      // Source details for groups
-      if (mergeEntry.source.type === "group") {
-        const orig = document.getElementById(groupId);
-        if (orig) {
-          const res = getExtractionSelector(orig, true);
-          if (res) {
-            mergeEntry.source.selector = res.selector;
-            mergeEntry.source.index = res.index;
-            mergeEntry.source.title =
-              findSectionTitle(orig) || "Merged Content";
-          }
-        }
-      }
-
-      layout.merges.push(mergeEntry);
-    });
-
-    return layout;
   }
 
-  /**
-   * Migrates layout data from older versions to the current schema.
-   * @param {object} data
-   * @returns {object} Migrated data.
-   */
-  function migrateLayout(data) {
-    if (!data || typeof data !== "object") return data;
-
-    // 1. Handle wrapped templates (Catalog/PREMADE format)
-    if (data.data && typeof data.data === "object" && !data.sections) {
-      const templateData = data.data;
-      // Merge template data into the main object
-      for (const key in templateData) {
-        if (Object.prototype.hasOwnProperty.call(templateData, key)) {
-          data[key] = templateData[key];
-        }
-      }
-      delete data.data;
-    }
-
-    // 2. Version-based Migrations
-    const version = data.version || "1.0.0";
-
-    // Legacy to 1.4.0 (GIF to WebP migration)
-    if (version < "1.4.0") {
-      safeLog(
-        "log",
-        `[DDB Print] Migrating layout from ${version} to 1.4.0...`,
-      );
-
-      const migratePath = (path) => {
-        if (typeof path === "string" && path.endsWith(".gif")) {
-          return path.replace(".gif", ".webp");
-        }
-        return path;
-      };
-
-      // Migrate Shapes
-      if (data.shapes && Array.isArray(data.shapes)) {
-        data.shapes.forEach((shape) => {
-          shape.assetPath = migratePath(shape.assetPath);
-        });
-      }
-
-      // Migrate Borders in standard sections
-      if (data.sections) {
-        Object.values(data.sections).forEach((sect) => {
-          if (sect.borderStyle && typeof sect.borderStyle === "string") {
-            // Border styles are classes, but some might have embedded paths in newer versions
-            // (Though currently they are just class names like 'spikes_border')
-          }
-        });
-      }
-
-      data.version = "1.4.0";
-    }
-
-    // Initialize merges array if missing
-    if (!data.merges) data.merges = [];
-
-    // Helper to extract merges from legacy associatedExtractions
-    const extractLegacyMerges = (containerId, associated) => {
-      if (!Array.isArray(associated)) return;
-      associated.forEach((aEx) => {
-        // Avoid duplicates if already migrated
-        const exists = data.merges.some(
-          (m) =>
-            m.target.id === containerId &&
-            (m.source.originalId === aEx.originalId ||
-              m.source.spellName === aEx.spellName),
-        );
-        if (exists) return;
-
-        data.merges.push({
-          source: aEx, // Structure matches (type, originalId, spellName, etc)
-          target: {
-            type: "section",
-            id: containerId,
-          },
-        });
-      });
-    };
-
-    // Scan extractions
-    if (data.extractions) {
-      data.extractions.forEach((ex) => {
-        if (ex.associatedExtractions) {
-          extractLegacyMerges(ex.id, ex.associatedExtractions);
-          delete ex.associatedExtractions;
-        }
-      });
-    }
-
-    // Scan clones
-    if (data.clones) {
-      data.clones.forEach((cl) => {
-        if (cl.associatedExtractions) {
-          extractLegacyMerges(cl.id, cl.associatedExtractions);
-          delete cl.associatedExtractions;
-        }
-      });
-    }
-
-    // Scan standard sections
-    if (data.sections) {
-      Object.entries(data.sections).forEach(([id, sect]) => {
-        if (sect.associatedExtractions) {
-          extractLegacyMerges(id, sect.associatedExtractions);
-          delete sect.associatedExtractions;
-        }
-      });
-    }
-
-    return data;
-  }
-
-  /**
-   * Applies layout information to the current DOM.
-   * @param {object} layout
-   */
-  async function applyLayout(layout) {
-    layout = Storage.migrateLayout(layout);
-    if (!layout) return;
-
-    // Restore skillsSplit flag
-    window.skillsSplit = layout.skillsSplit || false;
-
-    // Trigger auto-split if the flag is set and we have the original box
-    if (window.skillsSplit) {
-      setTimeout(() => {
-        if (typeof window.splitSkillsBox === "function") {
-          window.splitSkillsBox(true);
-        }
-      }, 500);
-    }
-
-    const peDom = typeof PeDom !== "undefined" ? PeDom() : null;
-    const layerManager = peDom ? peDom.getLayerManager() : null;
-
-    // Restore shape layers state
-    if (layerManager && layout.shapeLayers) {
-      // Reset shapeLayers in LayerManager
-      layerManager.shapeLayers = [];
-      layout.shapeLayers.forEach((savedLayer) => {
-        const layer = layerManager.addShapeLayer(savedLayer.name, savedLayer);
-        layer.id = savedLayer.id; // Preserve ID
-        layer.layerId = savedLayer.layerId || `print-enhance-layer-${layer.id}`;
-      });
-
-      // Restore active layer ID if present
-      if (layout.layers && layout.layers.activeLayerId) {
-        layerManager.activeLayerId = layout.layers.activeLayerId;
-        // Sync lock state of the active layer
-        const active = layerManager.getLayerById(layerManager.activeLayerId);
-        if (active) active.isLocked = false;
-      }
-
-      layerManager.refreshUI();
-      if (window.updateControlsState) window.updateControlsState();
-    }
-
-    if (layerManager && layout.layers?.sections) {
-      const layer = layerManager.sectionsLayer;
-      const saved = layout.layers.sections;
-      if (layer) {
-        layer.isLocked = saved.isLocked || false;
-        layer.isHidden = saved.isHidden || false;
-        layer.isDisabledOnPrint = saved.isDisabledOnPrint || false;
-      }
-      layerManager.refreshUI();
-    }
-
-    // 0. Ensure elements are flagged (crucial for selector-based restoration)
-    flagExtractableElements();
-
-    // Save spells to cache if present
-    if (layout.spell_cache && Array.isArray(layout.spell_cache)) {
-      try {
-        await Storage.init();
-        await Storage.saveSpells(layout.spell_cache);
-      } catch (err) {
-        safeLog("error", "[DDB Print] Could not restore spell cache", err);
-      }
-    }
-
-    // Remove existing clones to avoid duplicates on re-apply
-    document
-      .querySelectorAll(".print-section-container.be-clone")
-      .forEach((el) => el.remove());
-    // Remove existing extractions to avoid duplicates
-    document
-      .querySelectorAll(".print-section-container.be-extracted-section")
-      .forEach((el) => {
-        const originalId = el.dataset.originalId;
-        const original = document.getElementById(originalId);
-        if (original) original.style.display = "";
-        el.remove();
-      });
-
-    // Restore clones
-    if (layout.clones && Array.isArray(layout.clones)) {
-      layout.clones.forEach((cloneData) => {
-        renderClonedSection(cloneData);
-      });
-    }
-
-    // Restore extractions
-    if (layout.extractions && Array.isArray(layout.extractions)) {
-      const deferredExtractions = [];
-      layout.extractions.forEach((exData) => {
-        const success = renderExtractedSection(exData);
-        if (!success) deferredExtractions.push(exData);
-      });
-
-      // Retry deferred extractions once after a delay (React lazy-load buffer)
-      if (deferredExtractions.length > 0) {
-        setTimeout(() => {
-          // Re-flag elements just in case new ones appeared
-          flagExtractableElements();
-          deferredExtractions.forEach((exData) => {
-            renderExtractedSection(exData);
-          });
-          if (typeof window.updatePrintStyles === "function") {
-            window.updatePrintStyles();
-          }
-        }, 1000);
-      }
-    }
-
-    // Restore spell details
-    if (layout.spell_details && Array.isArray(layout.spell_details)) {
-      for (const spellData of layout.spell_details) {
-        const container = await createSpellDetailSection(
-          spellData.spellName,
-          null,
-          spellData,
-        );
-        if (container && spellData.borderStyle) {
-          container.classList.add(spellData.borderStyle);
-        }
-      }
-    }
-
-    // Restore shapes from multi-layer format
-    if (
-      layerManager &&
-      layout.shapeLayers &&
-      Array.isArray(layout.shapeLayers)
-    ) {
-      // Remove existing shape wrappers to avoid duplicates and ID conflicts
-      document
-        .querySelectorAll(".be-shape-wrapper")
-        .forEach((el) => el.remove());
-
-      // Restore each layer and its elements
-      layout.shapeLayers.forEach((layerData) => {
-        const layer =
-          layerManager.getLayerById(layerData.id) ||
-          layerManager.addShapeLayer(layerData.name, layerData);
-        if (layer) {
-          // Ensure correct state
-          layer.id = layerData.id;
-          layer.isLocked = layerData.isLocked;
-          layer.isHidden = layerData.isHidden;
-          layer.isDisabledOnPrint = layerData.isDisabledOnPrint;
-
-          if (Array.isArray(layerData.elements)) {
-            layerData.elements.forEach((elementData) => {
-              createShape(elementData.assetPath, elementData, layer.layerId);
-            });
-          }
-        }
-      });
-      layerManager.refreshUI();
-    } else if (layout.shapes && Array.isArray(layout.shapes)) {
-      // Fallback to legacy single layer shapes if shapeLayers not present
-      // Remove existing shapes to avoid duplicates
-      document
-        .querySelectorAll(".print-section-container.be-shape")
-        .forEach((el) => el.remove());
-      layout.shapes.forEach((shapeData) => {
-        createShape(shapeData.assetPath, shapeData);
-      });
-    }
-
-    for (const [id, styles] of Object.entries(layout.sections)) {
-      const section = document.getElementById(id);
-      if (!section) continue;
-
-      const wrapper = section.closest(".be-section-wrapper") || section;
-
-      // Apply border style
-      clearBorderStyles(section);
-      if (styles.borderStyle) {
-        section.classList.add(styles.borderStyle);
-      }
-
-      // Apply main styles
-      if (styles.left) wrapper.style.left = styles.left;
-      if (styles.top) wrapper.style.top = styles.top;
-      if (styles.width) section.style.width = styles.width;
-      if (styles.height) section.style.height = styles.height;
-      if (styles.zIndex) wrapper.style.zIndex = styles.zIndex;
-      if (styles.printZIndex) wrapper.dataset.printZ = styles.printZIndex;
-      if (styles.fontSize) applyFontSize(wrapper, styles.fontSize);
-
-      // Ensure container doesn't have duplicate positioning
-      section.style.left = "";
-      section.style.top = "";
-
-      // Handle minimization
-      if (styles.minimized) {
-        section.dataset.minimized = "true";
-        const content = section.querySelector(".print-section-content");
-        if (content) content.style.display = "none";
-      } else {
-        section.dataset.minimized = "false";
-        const content = section.querySelector(".print-section-content");
-        if (content) content.style.display = "flex";
-      }
-
-      // Handle compact mode restoration
-      if (styles.compact) {
-        section.classList.add("be-compact-mode");
-        const btn = section.querySelector(".be-compact-button");
-        if (btn) btn.style.backgroundColor = "var(--btn-color)";
-      } else {
-        section.classList.remove("be-compact-mode");
-        const btn = section.querySelector(".be-compact-button");
-        if (btn) btn.style.backgroundColor = "var(--btn-color-highlight)";
-      }
-
-      // Apply inner widths
-      if (styles.innerWidths) {
-        const innerContainers = section.querySelectorAll(
-          'div[class$="-row-header"], div[class$="-content"]',
-        );
-        for (const [key, width] of Object.entries(styles.innerWidths)) {
-          const [cIdx, dIdx] = key.split("-").map(Number);
-          const container = innerContainers[cIdx];
-          if (container) {
-            const child = container.children[dIdx];
-            if (child && child.tagName === "DIV") {
-              child.style.width = width;
-              child.style.minWidth = width;
-            }
-          }
-        }
-      }
-    }
-
-    // 5. Restore Systematic Merges
-    if (layout.merges && Array.isArray(layout.merges)) {
-      for (const merge of layout.merges) {
-        try {
-          let sourceContainer = null;
-
-          // 5.1 Resolve or Create Source
-          if (merge.source.type === "spell") {
-            sourceContainer = await createSpellDetailSection(
-              merge.source.spellName,
-              { x: 0, y: 0 },
-            );
-          } else if (merge.source.type === "group") {
-            // Re-extract the group
-            let original = document.getElementById(merge.source.originalId);
-            if (!original && merge.source.selector) {
-              const matches = document.querySelectorAll(merge.source.selector);
-              original = matches[merge.source.index];
-              if (original) original.id = merge.source.originalId;
-            }
-            if (original) {
-              sourceContainer = await handleElementExtraction(original);
-            }
-          }
-
-          if (!sourceContainer) continue;
-
-          // 5.2 Resolve Target
-          let targetInfo = null;
-          if (merge.target.type === "section") {
-            const tEl = document.getElementById(merge.target.id);
-            if (tEl) {
-              targetInfo = {
-                type: "section",
-                id: merge.target.id,
-                element: tEl,
-                name: merge.target.id,
-              };
-            }
-          } else if (merge.target.type === "sheet") {
-            let tEl = document.getElementById(merge.target.id);
-            if (!tEl && merge.target.selector) {
-              const matches = document.querySelectorAll(merge.target.selector);
-              tEl = matches[merge.target.index];
-            }
-            if (tEl) {
-              targetInfo = {
-                type: "sheet",
-                id: merge.target.id,
-                element: tEl,
-                name: merge.target.name || "Sheet Target",
-              };
-            }
-          }
-
-          // 5.3 Execute Merge
-          if (targetInfo && sourceContainer) {
-            // safeLog('log', `[DDB Print] Restoring merge: ${sourceContainer.id} -> ${targetInfo.name || targetInfo.id}`);
-            handleMergeSections(sourceContainer, targetInfo);
-          } else {
-            safeLog(
-              "warn",
-              "[DDB Print] Could not resolve merge target or source",
-              merge.target,
-              !!sourceContainer,
-            );
-          }
-        } catch (err) {
-          safeLog("error", "[DDB Print] Failed to process merge", merge, err);
-        }
-      }
-    }
-
-    updateLayoutBounds();
-    refreshLayers();
-    if (typeof updatePrintStyles === "function") {
-      updatePrintStyles();
-    }
-  }
-
-  /**
-   * Draws visual page separators to indicate print boundaries.
-   * Scales the "page height" based on how much the content needs to shrink to fit 8.5in width.
-   */
-  function drawPageSeparators(totalHeight, totalWidth) {
-    const container = document.getElementById("print-layout-wrapper");
-    if (!container) return;
-
-    // Remove existing separators
-    container
-      .querySelectorAll(".print-page-separator")
-      .forEach((el) => el.remove());
-
-    // Constants for Letter Portrait at 96 DPI
-    // Standard Letter is 8.5in x 11in.
-    // However, most browsers apply margins (approx 0.4-0.5in).
-    // Printable Area ≈ 8in x 10in.
-    // Width: 8in * 96 = 768px (safe area)
-    // Height: 10in * 96 = 960px (safe area)
-    const PAGE_WIDTH_PX = 816; // 8.5in full width for scaling calc
-    const PAGE_HEIGHT_PX = 960; // 10in height (excludes ~0.5in margins top/bottom)
-
-    // Calculate effective page height if scaled to fit
-    // If content is wider than 816px, the browser shrinks it.
-    // Scale Factor = 816 / totalWidth (e.g. 0.68)
-    // Effective Pixel Height = 1056 / Scale Factor
-    // Example: 1200px wide content. Scale = 0.68.
-    // Effective Height = 1056 / 0.68 = 1552px.
-
-    // Default scale is 1 if content fits or is smaller
-    let effectivePageHeight = PAGE_HEIGHT_PX;
-    let scaleLabel = "100%";
-
-    if (totalWidth > PAGE_WIDTH_PX) {
-      const scale = PAGE_WIDTH_PX / totalWidth;
-      effectivePageHeight = PAGE_HEIGHT_PX / scale;
-      scaleLabel = `${Math.round(scale * 100)}%`;
-    }
-
-    safeLog(
-      "log",
-      `[DDB Print] Separators: Content Width ${totalWidth}px. Scale ${scaleLabel}. Page Height ${Math.round(effectivePageHeight)}px`,
-    );
-
-    let currentY = effectivePageHeight;
-    let pageNum = 1;
-
-    while (currentY < totalHeight) {
-      const separator = document.createElement("div");
-      separator.className = "print-page-separator";
-      separator.style.position = "absolute";
-      separator.style.left = "0";
-      separator.style.top = `${currentY}px`;
-      separator.style.width = `${totalWidth}px`;
-      separator.style.height = "2px";
-      separator.style.borderTop = "2px dashed red";
-      separator.style.zIndex = "99995";
-      separator.style.pointerEvents = "none";
-      separator.style.opacity = "0.5";
-
-      // Label
-      const label = document.createElement("span");
-      label.textContent = `Page ${pageNum} END (Scale: ${scaleLabel})`;
-      label.style.position = "absolute";
-      label.style.right = "5px";
-      label.style.top = "-15px";
-      label.style.color = "red";
-      label.style.fontSize = "12px";
-      label.style.fontWeight = "bold";
-      label.style.backgroundColor = "rgba(255,255,255,0.8)";
-
-      separator.appendChild(label);
-      container.appendChild(separator);
-
-      currentY += effectivePageHeight;
-      pageNum++;
-    }
-  }
 
   /**
    * Gets or creates a container for section-level action buttons (Clone, Compact, Append, Delete).
@@ -8004,7 +2509,7 @@ Licensed under Blue Oak Model License 1.0.0
       container = document.createElement("div");
       container.className = "be-section-actions";
       // Ensure buttons are reachable
-      container.style.zIndex = "1000000";
+      container.style.zIndex = window.Z.ACTIONS_BAR; // AC-5 (was "1000000")
       container.style.pointerEvents = "all";
       wrapper.appendChild(container);
     }
@@ -8079,6 +2584,9 @@ Licensed under Blue Oak Model License 1.0.0
     }
 
     // Delete the original section
+    // (The AC-1 gate is at this action's USER entry point — see the Split
+    // button — because the layout-apply path also calls this function, with
+    // `isSilent = true`.)
     if (wrapper) {
       wrapper.remove();
     }
@@ -8148,8 +2656,28 @@ Licensed under Blue Oak Model License 1.0.0
 
         const btn = document.createElement("button");
         btn.className = className;
-        btn.innerHTML = icon;
+        // ui_ux_overhaul Phase 5: in-sheet action glyphs -> 16px SVG icons
+        // (fail-open: falls back to the emoji when the icon set is absent).
+        const ACTION_ICONS = {
+          "be-select-section-button": "select",
+          "be-clone-button": "clone",
+          "be-compact-button": "compact",
+          "be-border-button": "border",
+          "be-split-skills-button": "split",
+          "be-clone-delete": "trash",
+          "be-shape-delete": "trash",
+          "be-shape-rotate": "rotate",
+          "be-shape-switch": "switchArrows",
+          "be-shape-clone": "clone",
+        };
+        const svgIcon = ACTION_ICONS[className];
+        btn.innerHTML = svgIcon && window.Icons && window.Icons.svg
+          ? window.Icons.svg(svgIcon, 14)
+          : icon;
         btn.title = title;
+        if (/delete/i.test(title) && className.indexOf("delete") !== -1) {
+          btn.dataset.danger = "true";
+        }
 
         const log = (msg) =>
           safeLog(
@@ -8214,6 +2742,9 @@ Licensed under Blue Oak Model License 1.0.0
             );
 
             if (title) {
+              // Phase 2f: a clone is a STRUCTURAL addition (scanLayout records clones[]),
+              // so it is recorded before it is created — the inverse removes it.
+              await captureMutationNow(`Clone "${title}"`, window.MUTATION_CLASSES.STRUCTURAL);
               const snapshot = captureSectionSnapshot(id);
               if (snapshot) {
                 snapshot.id = `clone-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -8253,7 +2784,20 @@ Licensed under Blue Oak Model License 1.0.0
                   : null);
 
               if (container) {
+                // Phase 2e: persisted per section (scanLayout reads the class), so this
+                // in-sheet toggle is recorded like the dialog's — and, like the dialog's,
+                // through the NON-DEFERRING pair: this case's test clicks and asserts
+                // immediately, which a deferred mutation would break.
+                const compactLabel =
+                  `Toggle "${(wrapper.dataset && wrapper.dataset.title) || container.id}"`;
+                const mut = window.beginMutation
+                  ? window.beginMutation(window.snapshotSectionFlags())
+                  : null;
                 const isCompact = container.classList.toggle("be-compact-mode");
+                if (window.pushMutation) {
+                  window.pushMutation(mut, compactLabel, window.MUTATION_CLASSES.COMPACT,
+                    (layout, snap) => window.repairSectionFlags(layout, snap));
+                }
                 btn.innerHTML = isCompact ? "📐" : "📏";
                 showFeedback(
                   isCompact ? "Compact mode ON" : "Compact mode OFF",
@@ -8264,16 +2808,46 @@ Licensed under Blue Oak Model License 1.0.0
           );
         }
 
-        // 3. Border Style Button (Menu)
+        // 3. Border Style Button (Menu) — unified picker, style mode
+        // (border_shape_picker_ux_20260909, B-1: the legacy section-style
+        // modal is gone; its surface now lives in showAssetPickerModal).
         addRobustButton(
           "be-border-button",
           "🖼️",
           "Change Border Style",
           async () => {
-            const style = await showBorderPickerModal();
+            const current =
+              (window.AssetCatalog.ALL_BORDER_STYLES || ["no-border"]).find(
+                (s) => section.classList.contains(s),
+              ) || "default-border";
+            const style = await showAssetPickerModal({
+              mode: "style",
+              current,
+              target: section,
+            });
             if (style !== null) {
+              // Phase 2e: `borderStyle` is persisted per section, so a border change is a
+              // layout mutation. The NON-DEFERRING pair: the border tests click and assert
+              // in the same turn, and three of them went red when this awaited instead.
+              const borderMut = window.beginMutation
+                ? window.beginMutation(window.snapshotSectionFlags())
+                : null;
+              // `wrapper` is NOT in scope in this handler (it is declared inside the clone
+              // and compact callbacks above), so referring to it threw a ReferenceError
+              // HERE — after the border had been applied but before the record was pushed.
+              // `addRobustButton` swallows callback errors by design, so the visible result
+              // was a border change with NO undo and no error. Found by the real-browser
+              // per-class verification; `section` is the in-scope element.
+              const borderLabel =
+                `Border "${(section.dataset && section.dataset.title) || section.id}"`;
               applyBorderStyle(section, style);
-              showFeedback(`Border applied: ${style || "None"}`);
+              if (window.pushMutation) {
+                window.pushMutation(borderMut, borderLabel, window.MUTATION_CLASSES.BORDER,
+                  (layout, snap) => window.repairSectionFlags(layout, snap));
+              }
+              showFeedback(
+                `Border applied: ${style && style.style ? style.style : "None"}`,
+              );
             }
           },
           menu,
@@ -8289,7 +2863,20 @@ Licensed under Blue Oak Model License 1.0.0
             "🔪",
             "Split Skills into Individual Stats",
             async () => {
+              // AC-1: snapshot first — splitting DELETES the original section.
+              // Gated at this USER entry point, not inside splitSkillsBox: the
+              // layout-apply path calls that function with `isSilent = true`
+              // (js/layout_apply.js), and a gate there would spam backups and could
+              // block an apply when storage was tight.
+              const splitGate = await destructiveGate(
+                `Split skills box "${(section.dataset && section.dataset.title) || "section"}"`,
+              );
+              if (!splitGate.ok) return;
               await splitSkillsBox();
+              // AC-3: the snapshot just taken IS the undo.
+              window.offerUndo && window.offerUndo(splitGate.record,
+                `Split skills box "${(section.dataset && section.dataset.title) || "section"}"`,
+              );
             },
             menu,
           );
@@ -8301,14 +2888,26 @@ Licensed under Blue Oak Model License 1.0.0
             "be-clone-delete",
             "🗑️",
             "Delete this Clone",
-            () => {
+            async () => {
               const wrapper = section.closest(".be-section-wrapper") || section;
-              if (
-                confirm("Are you sure you want to delete this cloned section?")
-              ) {
+              const okToDelete = await askConfirm({
+                title: "Delete cloned section",
+                message: "Delete this cloned section? This cannot be undone.",
+                confirmLabel: "Delete",
+                danger: true,
+              });
+              if (okToDelete) {
+                const sectionGate = await destructiveGate(
+                  `Delete cloned section "${(wrapper && wrapper.dataset.title) || "section"}"`,
+                );
+                if (!sectionGate.ok) return;
                 wrapper.remove();
                 updateLayoutBounds();
                 showFeedback("Clone deleted");
+                // AC-3: the snapshot just taken IS the undo.
+                window.offerUndo && window.offerUndo(sectionGate.record,
+                  `Deleted cloned section "${(wrapper.dataset && wrapper.dataset.title) || "section"}"`,
+                );
               }
             },
           );
@@ -8317,13 +2916,23 @@ Licensed under Blue Oak Model License 1.0.0
         // --- SHAPE ACTIONS ---
 
         // 1. Delete Shape (Visible)
-        addRobustButton("be-shape-delete", "🗑️", "Delete Shape", () => {
+        addRobustButton("be-shape-delete", "🗑️", "Delete Shape", async () => {
           const wrapper = section.closest(".be-shape-wrapper");
           if (wrapper) {
-            if (confirm("Are you sure you want to delete this shape?")) {
+            const okToDelete = await askConfirm({
+              title: "Delete shape",
+              message: "Delete this shape? This cannot be undone.",
+              confirmLabel: "Delete",
+              danger: true,
+            });
+            if (okToDelete) {
+              const shapeGate = await destructiveGate(`Delete shape`);
+              if (!shapeGate.ok) return;
               wrapper.remove();
               updateLayoutBounds();
               refreshLayers();
+              // AC-3: the snapshot just taken IS the undo.
+              window.offerUndo && window.offerUndo(shapeGate.record, "Deleted shape");
             }
           }
         });
@@ -8344,11 +2953,18 @@ Licensed under Blue Oak Model License 1.0.0
             const folder = currentAsset.includes("assets/shapes/")
               ? "assets/shapes/"
               : "assets/";
-            const result = await showShapePickerModal(currentAsset, folder);
+            // B-5: pass the live shape container as the hover-swap target.
+            const result = await showShapePickerModal(currentAsset, folder, section);
             if (result) {
               // result should be {assetPath: '...'}
               const newPath = result.assetPath || result; // Handle both object and raw string
               if (typeof newPath === "string") {
+                // MEASURED DEFECT, found by the coverage audit: the capture used to be
+                // awaited AFTER this assignment, so the record held the NEW asset path and
+                // the undo left the shape with the new path but the OLD visual classes — an
+                // inconsistent state, not a revert. `scanLayout` reads
+                // `container.dataset.assetPath`, so the capture must come FIRST.
+                await captureMutationNow("Switch shape asset", window.MUTATION_CLASSES.ASSET);
                 section.dataset.assetPath = newPath;
                 applyShapeAsset(section, newPath);
                 showFeedback(
@@ -8371,9 +2987,13 @@ Licensed under Blue Oak Model License 1.0.0
           "be-shape-clone",
           "📋",
           "Clone Shape",
-          () => {
+          async () => {
             const wrapper = section.closest(".be-shape-wrapper");
             if (wrapper) {
+              // Phase 2f: a shape clone is a structural addition (scanLayout records the
+              // layer's elements), so it is recorded before the node is created — the
+              // inverse removes it.
+              await captureMutationNow("Clone shape", window.MUTATION_CLASSES.STRUCTURAL);
               const clone = wrapper.cloneNode(true);
               // Update ID to avoid duplicates
               const newId = `shape-clone-${Date.now()}`;
@@ -8399,228 +3019,6 @@ Licensed under Blue Oak Model License 1.0.0
     });
   }
 
-  /**
-   * Applies font size and proportional scale variable to a section wrapper.
-   */
-  function applyFontSize(wrapper, sizeStr) {
-    if (!wrapper || !sizeStr) return;
-
-    wrapper.style.setProperty("font-size", sizeStr, "important");
-
-    // Extract scale relative to 10px base
-    let numericValue = 10;
-    const match = sizeStr.match(/^(\d+(?:\.\d+)?)(px|em|rem|%)$/);
-    if (match) {
-      numericValue = parseFloat(match[1]);
-      const unit = match[2];
-      if (unit === "%") numericValue = (numericValue / 100) * 10;
-      // em/rem are tricky without root context, but we'll assume they are relative to 16px
-      if (unit === "em" || unit === "rem") numericValue = numericValue * 16;
-
-      const scale = numericValue / 10;
-      wrapper.style.setProperty(
-        "--be-font-scale",
-        scale.toString(),
-        "important",
-      );
-    }
-  }
-
-  /**
-   * Injects CSS for Compact Mode.
-   */
-  function injectCompactStyles() {
-    if (document.getElementById("ddb-print-compact-style")) return;
-
-    // Ensure all keys exist to prevent template error if fallback was partial
-    const style = document.createElement("style");
-    style.id = "ddb-print-compact-style";
-    style.textContent = `
-        .print-section-container.be-compact-mode {
-            --reduce-height-by: 0px;
-            --reduce-width-by: 0px;
-        }
-        .print-section-container.be-compact-mode [class^="styles_tableHeader__"],
-        .print-section-container.be-compact-mode [class$="__header"] {
-            margin-top: 10px !important;
-            margin-bottom: 5px !important;
-            padding-bottom: 2px !important;
-            border-bottom: 1px solid #ccc !important;
-        }
-        .print-section-container.be-compact-mode [class$="__heading"] {
-            margin: 0px !important;
-        }
-        .print-section-container.be-compact-mode [class$="-row"] {
-            padding: 2px 0px !important;
-        }
-        .print-section-container.be-compact-mode [class$="__row-header"] [class$="--primary"],
-        .print-section-container.be-compact-mode [class$="-row"] [class$="-row__primary"] {
-            max-width: 80px !important;
-        }
-        .print-section-container.be-compact-mode [class$="-content"] > div {
-            padding: 0 !important;
-            min-height: auto !important;
-            border-bottom: 1px dashed #eee !important;
-        }
-        
-        /* Hide or shrink icons */
-        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode [class$="__range-icon"],
-        .print-section-container.be-compact-mode [class$="__casting-time-icon"],
-        .print-section-container.be-compact-mode [class$="__attack-save-icon"],
-        .print-section-container.be-compact-mode [class$="__damage-effect-icon"]{
-            transform: scale(0.8);
-            margin: 0 !important;
-        }
-        
-        .print-section-container.be-compact-mode .ddbc-file-icon {
-            width: 16px !important;
-            height: 16px !important;
-        }
-        
-        /* Hide previews for extras */
-        .print-section-container.be-compact-mode .ct-extras [class$="--preview"],
-        .print-section-container.be-compact-mode .ct-extras [class$="__preview"] {
-            display: none !important;
-        }
-
-        /* Tighten text */
-        .print-section-container.be-compact-mode [class$="__label"],
-        .print-section-container.be-compact-mode [class$="__header"],
-        .print-section-container.be-compact-mode [class$="__notes"] {
-            font-size: 11px !important;
-            line-height: 1.2 !important;
-        }
-        
-        .print-section-container.be-compact-mode [class$="__activation"],
-        .print-section-container.be-compact-mode [class$="__range"],
-        .print-section-container.be-compact-mode [class$="__hit-dc"],
-        .print-section-container.be-compact-mode [class$="__effect"] {
-            font-size: 11px !important;
-            padding: 0 2px !important;
-            vertical-align: middle !important;
-        }
-
-        /* Buttons (Cast, At Will, etc) */
-        .print-section-container.be-compact-mode button[class$="__container"],
-        .print-section-container.be-compact-mode .ct-button {
-            height: 20px !important;
-            line-height: 20px !important;
-            padding: 0!important;
-            font-size: 10px !important;
-            min-height: 0 !important;
-        }
-
-        /* Slots Checkboxes - Align to immediate left of "SLOTS" label if possible, or just left align container */
-        .print-section-container.be-compact-mode [class$="__slots"] {
-            margin-left: 10px !important;
-            margin-right: auto !important; /* Push to left */
-            transform: scale(0.9);
-            transform-origin: left center;
-        }
-        
-        .print-section-container.be-compact-mode [class$="__header-content"] {
-            flex: 0 0 auto !important; /* Stop taking full width */
-            margin-right: 10px !important;
-        }
-        
-        .print-section-container.be-compact-mode [class$="__header"] {
-            justify-content: flex-start !important; /* Align content to start */
-        }
-
-        /* General width reductions for columns */
-        .print-section-container.be-compact-mode [class$="__action"],
-        .print-section-container.be-compact-mode [class$="__distance"],
-        .print-section-container.be-compact-mode [class$="__meta"] {
-            width: auto !important;
-            max-width: none !important;
-        }
-
-        /* Spell Details Trigger Button */
-        .ct-spells-spell {
-            position: relative;
-        }
-        .be-spell-details-button {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            display: none;
-            background: #242528;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 11px;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-        .ct-spells-spell:hover .be-spell-details-button {
-            display: block;
-        }
-        .be-spell-details-button:hover {
-            background: #333;
-            border-color: #666;
-        }
-
-        /* Loading Spinner */
-        .be-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #EC2127;
-            animation: be-spin 1s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes be-spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Error UI Buttons */
-        .be-error-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            justify-content: center;
-        }
-        .be-retry-button { background: #4CAF50 !important; color: white !important; }
-        .be-delete-button { background: #f44336 !important; color: white !important; }
-
-        /* Dynamic Extraction Trigger */
-        .be-extractable {
-            transition: outline 0.1s ease-in-out;
-            margin: 2px;
-        }
-        .be-extractable:hover {
-            outline: 2px dashed black !important;
-            position: relative;
-        }
-        .be-extractable:hover:before {
-            content: "Extract content with double click";
-            position: absolute;
-            top: -25px;
-            left: 0;
-            background: black;
-            color: white;
-            padding: 2px 8px;
-            font-size: 12px;
-            border-radius: 4px;
-            white-space: nowrap;
-            z-index: 10001;
-            pointer-events: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        /*Minumum sizes*/
-        .ddbc-armor-class-box {
-            min-height: 100px;
-        }
-    `;
-    document.head.appendChild(style);
-  }
 
   // Expose for testing synchronously
 
@@ -8659,9 +3057,10 @@ Licensed under Blue Oak Model License 1.0.0
   window.createControls = createControls;
   window.showFallbackModal = showFallbackModal;
   window.showInputModal = showInputModal;
-  window.showBorderPickerModal = showBorderPickerModal;
+  window.showAssetPickerModal = showAssetPickerModal;
   window.showShapePickerModal = showShapePickerModal;
   window.handleManageClones = handleManageClones;
+  window.handleManageCompact = handleManageCompact;
   window.getOrCreateActionContainer = getOrCreateActionContainer;
   window.captureSectionSnapshot = captureSectionSnapshot;
   window.renderClonedSection = renderClonedSection;
@@ -8703,7 +3102,12 @@ Licensed under Blue Oak Model License 1.0.0
     const existingWrapper = document.getElementById("print-layout-wrapper");
     if (existingWrapper) {
       // User Request: Confirmation for re-run
-      if (confirm("You need to reload to apply changes again, are you sure?")) {
+      const okToReload = await askConfirm({
+        title: "Reload page",
+        message: "You need to reload to apply changes again. Reload now?",
+        confirmLabel: "Continue",
+      });
+      if (okToReload) {
         window.location.reload();
         return;
       } else {
@@ -8725,6 +3129,12 @@ Licensed under Blue Oak Model License 1.0.0
     injectCloneButtons();
     flagExtractableElements();
     initDragAndDrop();
+    // AC-8 (undo_stack_20260911): the keyboard path. Bound once at boot; inert while a
+    // text field has focus and a no-op when the stack is empty (both asserted).
+    if (typeof window.installUndoShortcut === "function") {
+      window.installUndoShortcut();
+      safeLog("log", "[DDB Print] Undo shortcut bound (Ctrl/Cmd+Z)");
+    }
     if (window.injectDnDStyles) {
       window.injectDnDStyles();
       safeLog("log", "[DDB Print] DnD Styles Injected");
@@ -8736,13 +3146,45 @@ Licensed under Blue Oak Model License 1.0.0
     // UI Controls
     createControls();
 
-    let layoutRestored = false;
-    layoutRestored = await restoreLayout();
-    if (layoutRestored) updateLayoutBounds();
+    // AC-4 (first_run_and_panel_20260911): tell the extension's own service worker that the
+    // enhancer is RUNNING on this page, so the toolbar icon can say so.
+    //
+    // WHY THIS IS A MESSAGE RATHER THAN WORK DONE IN `chrome.action.onClicked`. The first version
+    // set the badge from the click handler, and the browser suite measured it reporting "" instead
+    // of "ON" — because a click handler knows an injection was REQUESTED, not that it happened, and
+    // the test harness (like any other programmatic injection) never goes through that handler at
+    // all. Announcing from the content script ties the badge to the one fact it is supposed to
+    // report — this script actually booted in this tab — and it makes every injection path
+    // equivalent, which is what lets the suite verify the real thing instead of a parallel copy.
+    //
+    // Fenced and best-effort: a page with no extension runtime (jsdom, a standalone boot) must still
+    // run the whole init sequence.
+    try {
+      window.chrome?.runtime?.sendMessage?.({ type: "DDB_IS_ON" });
+    } catch {
+      /* no runtime to tell: the enhancer still works */
+    }
 
-    if (!layoutRestored) {
+    // AC-1/Edge 4: restoreLayout returns a RESULT OBJECT. A layout that
+    // exists but FAILED to load must surface an error card — never silently
+    // downgrade to the default template (which looked like data loss).
+    const restoreResult = await restoreLayout();
+    if (restoreResult && restoreResult.restored) {
+      updateLayoutBounds();
+    } else if (restoreResult && restoreResult.reason && restoreResult.reason !== "empty") {
+      // Consultant risk #3: never leave a blank sheet. Establish a usable,
+      // printable default and THEN explain what happened — the saved layout is
+      // untouched (nothing re-persists it) and the card offers recovery.
+      await applyDefaultLayout();
+      showRestoreFailureCard(restoreResult);
+    } else {
       await applyDefaultLayout();
     }
+    // AC-2 (U-15): one confirmation of which layout the sheet is showing —
+    // "restored" and "there was nothing to restore, here is the default" must
+    // not look the same. Silent on the failure branch above, which the recovery
+    // card owns.
+    if (typeof announceBootRestore === "function") announceBootRestore(restoreResult);
 
     // Default to Shapes Mode OFF
     toggleShapesMode(false);

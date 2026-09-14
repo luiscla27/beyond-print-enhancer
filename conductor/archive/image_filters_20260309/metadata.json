@@ -1,8 +1,0 @@
-{
-  "track_id": "image_filters_20260309",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-03-09T13:00:00Z",
-  "updated_at": "2026-03-09T13:00:00Z",
-  "description": "similar to the HUE settings, add the same but for CONTRAST, GREYSCALE, SATURATE and SEPIA. Also the menu shouldnt be affected by the changes (and netiher by the new settings)"
-}

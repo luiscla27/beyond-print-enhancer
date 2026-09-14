@@ -1,8 +1,0 @@
-{
-  "track_id": "shape_decoration_20260223",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-23T21:16:00Z",
-  "updated_at": "2026-02-23T21:16:00Z",
-  "description": "Add a new button called 'shape' at the print-enhance-controls panel to allow adding decorative floating resizable DIVs with border assets."
-}

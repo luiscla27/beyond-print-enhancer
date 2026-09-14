@@ -1,8 +1,0 @@
-{
-  "track_id": "ability_separation_20260219",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-19T23:30:00Z",
-  "updated_at": "2026-02-19T23:30:00Z",
-  "description": "Lets separate all .ct-quick-info__ability into individual sections, for those, use the borderStyle "ability" as default."
-}

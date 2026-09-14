@@ -1,8 +1,0 @@
-{
-  "track_id": "layer_management_20260407",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-04-07T12:00:00Z",
-  "updated_at": "2026-04-07T12:00:00Z",
-  "description": "currently this extension has \"two layers\", being both the \"shapes mode\" layer, and the \"sections\" layers. Add a panel at the top right corner, to manage them. The panel should contain a div per layer, and an icon of an eye to hide/show each layer. Also, remove the existing \"shapes mode\" in favor of the \"shapes mode\" layer"
-}

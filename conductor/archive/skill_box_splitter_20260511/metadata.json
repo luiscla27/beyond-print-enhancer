@@ -1,8 +1,0 @@
-{
-  "track_id": "skill_box_splitter_20260511",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-05-11T14:00:00Z",
-  "updated_at": "2026-05-11T14:00:00Z",
-  "description": "Currently the section named `ct-skills-box` has ALL the skill generated at that single box. Create a button at `be-section-actions` specifically available only for that section. The new button should be an \"splitter\" and when clicked FIVE new sections MUST be created using the existing CLONE functionallity. Getting a total of 6 \"skills\" sections will now be visible (5 clones and 1 original), then delete the original. The FIVE clones titles must be the following ENUM: STR, INT, WIS, CHA, DEX. Lastly, scan each per row items of `.ct-skills__item` and remove all of them expect for their ENUM value its the same as the `.ct-skills__item--stat`"
-}

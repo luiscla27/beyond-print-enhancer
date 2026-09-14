@@ -1,8 +1,0 @@
-{
-  "track_id": "ui_actions_revamp_20260518",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-05-18T21:37:00Z",
-  "updated_at": "2026-05-18T21:37:00Z",
-  "description": "Revamp of the .be-section-actions buttons layout to use a new context menu for secondary actions."
-}
