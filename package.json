@@ -16,6 +16,7 @@
     "test:e2e:layer": "mocha test/browser_e2e/print_per_layer.spec.js --timeout 900000",
     "test:e2e:font": "mocha test/browser_e2e/properties_panel.spec.js --timeout 900000",
     "test:e2e:glow": "mocha test/browser_e2e/drag_glow_layers.spec.js --timeout 900000",
+    "test:e2e:affordances": "mocha test/browser_e2e/affordance_drag_hover_shadows.spec.js --timeout 900000",
     "test:e2e:autoscroll": "mocha test/browser_e2e/sheet_autoscroll.spec.js --timeout 900000",
     "test:e2e:deletes": "mocha test/browser_e2e/layer_delete_constraints.spec.js --timeout 900000",
     "test:e2e:upload": "mocha test/browser_e2e/custom_shapes_upload.spec.js --timeout 900000",

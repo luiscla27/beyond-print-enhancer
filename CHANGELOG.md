@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2026-09-14
+
+### Fixed
+- **Grip on a short section is grabbable again.** On very small sections, the hover-revealed action bar
+  (z-index 1000000, written inline at build time) covered the centred drag grip (z-index 700002), so the
+  only thing a user's press could reach was the bar's first button. `KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`
+  in the new e2e case records the one live demo-sheet section that still fails and prints its id; if a
+  second section starts losing the hit test the browser gate goes red.
+
+### Internal
+- **Browser coverage for all three 2.0.1 affordances.**
+  `test/browser_e2e/affordance_drag_hover_shadows.spec.js` drives a real MV3 extension in Chromium at
+  the pinned `SHEET_VIEWPORT` 1920×1080 and covers everything the unit suite structurally cannot — the
+  compose-side reach of `box-shadow`, the real-pointer reach of a revealed grip, and the
+  `:hover`/`:focus-within` behaviour of the action bar. The hue-shift case uses the product's own seam
+  through `contentCall(ctx, "setGlobalFilters", …)`, because `window.applyGlobalFilters` lives in the
+  isolated world and is invisible to `page.evaluate`. No case asserts against an inline selector string;
+  every case reads a COMPUTED style. Its provenance is committed at
+  `docs/sheet-affordances-20260914/FIX_REPORT.md`.
+
+### Notes
+- **`ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md`** is filed for the one remaining
+  hit-test miss (`temp/issues/`). The same issue carries three concrete fix options and the ratchet
+  constant the test uses so the count does not silently grow.
+
 ## [2.0.1] - 2026-09-14
 
 ### Changed

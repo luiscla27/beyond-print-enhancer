@@ -44,6 +44,9 @@ const CONTENT_PROBE_NAMES = [
   "undoRead",
   "undoInvoke",
   "undoClear",
+  // affordance e2e (2026-09-14): drive the product's own filter entry point, which lives
+  // in the ISOLATED world and is therefore invisible to page.evaluate.
+  "setGlobalFilters",
   "moveShapeToLayer",
   "addShapeLayer",
   "layerSnapshot",
@@ -643,6 +646,32 @@ async function contentCall(ctx, name, args = []) {
             activeLayerRows: rows,
             insertionRows,
             markers: Array.from(document.querySelectorAll(".be-active-target")).length,
+          };
+        },
+        /**
+         * Drive the product's OWN filter entry point with a filter set, in the
+         * isolated world where `window.applyGlobalFilters` lives, and report what the
+         * sheet computed afterwards.
+         *
+         * WHY A PROBE AND NOT `page.evaluate`: the enhancer is injected with
+         * `chrome.scripting`'s default ISOLATED world, so its globals are invisible to
+         * the page's MAIN world — MEASURED, a `page.evaluate` call to
+         * `window.applyGlobalFilters({hue:120,…})` silently no-opped (`typeof` read
+         * "undefined") and the affordance case then failed on its own vacuity guard
+         * while the product was correct. `js/controls.js:474` is the real call site —
+         * the hue slider's `oninput` — and it passes the whole `currentFilters`
+         * object, which is why this takes a full filter set, not one number.
+         */
+        setGlobalFilters: (filters) => {
+          if (typeof window.applyGlobalFilters !== "function") {
+            return { ok: false, why: "no window.applyGlobalFilters in this world" };
+          }
+          window.applyGlobalFilters(filters);
+          const root = getComputedStyle(document.documentElement);
+          return {
+            ok: true,
+            hueVar: root.getPropertyValue("--be-hue-filter").trim(),
+            decorationVar: root.getPropertyValue("--be-decoration-filter").trim(),
           };
         },
       };
