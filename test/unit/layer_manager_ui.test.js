@@ -72,11 +72,11 @@ describe('LayerManager UI Enhancements', function() {
     it('should inject printer toggle buttons in the panel', function() {
         const lm = new LayerManager();
         const panel = lm.createPanel();
-        const printButtons = panel.querySelectorAll('button[title="Toggle Print Visibility"]');
+        const printButtons = panel.querySelectorAll('button[title="Skip when printing"]');
         assert.strictEqual(printButtons.length, 2, 'Should have 2 printer toggle buttons');
         
         printButtons.forEach(btn => {
-            assert.strictEqual(btn.innerHTML, '🖨️', 'Initial state should be enabled printer icon');
+            assert.strictEqual(btn.dataset.state, 'on', 'Initial state should be enabled printer icon');
         });
     });
 
@@ -91,13 +91,13 @@ describe('LayerManager UI Enhancements', function() {
         lm.refreshUI();
 
         const row = panel.querySelector(`[data-layer-id="shapes-default"]`);
-        const printBtn = row.querySelector('button[title="Toggle Print Visibility"]');
-        const viewBtn = row.querySelector('button[title="Toggle Layer Visibility"]');
+        const printBtn = row.querySelector('button[title="Skip when printing"]');
+        const viewBtn = row.querySelector('button[title="Hide on sheet"]');
         const lockBtn = row.querySelector('button[title="Toggle Edit Mode"]');
 
-        assert.strictEqual(printBtn.innerHTML, '🖨️❌', 'Print button should reflect disabled state');
-        assert.strictEqual(viewBtn.innerHTML, '🙈', 'View button should reflect hidden state');
-        assert.strictEqual(lockBtn.innerHTML, '🔒', 'Lock button should reflect locked state');
+        assert.strictEqual(printBtn.dataset.state, 'off', 'Print button should reflect disabled state');
+        assert.strictEqual(viewBtn.dataset.state, 'hidden', 'View button should reflect hidden state');
+        assert.strictEqual(lockBtn.dataset.state, 'locked', 'Lock button should reflect locked state');
     });
 
     it('should toggle minimized state when toggleMinimize is called', function() {
@@ -109,18 +109,25 @@ describe('LayerManager UI Enhancements', function() {
 
         const minBtn = lm.panel.querySelector('button[title="Minimize"]');
         assert.ok(minBtn, 'Minimize button should exist');
-        assert.strictEqual(minBtn.innerHTML, '_', 'Minimize button icon should be _');
+        // DELIBERATELY UPDATED (AC-10): the control is the panel's way back from
+        // the narrow-viewport rail, so it is WORDED rather than a bare glyph — the
+        // phase-3 gate measured that a glyph was not identifiable as a way back.
+        assert.strictEqual(minBtn.textContent, 'Minimize', 'Minimize control is worded');
 
         // Minimize
         lm.toggleMinimize();
         assert.strictEqual(lm.isMinimized, true, 'State should be minimized');
         assert.ok(lm.panel.classList.contains('minimized'), 'Panel should have minimized class');
-        assert.strictEqual(lm.panel.querySelector('button').innerHTML, '□', 'Button should show restore icon');
-        
+        assert.strictEqual(
+            lm.panel.querySelector('button[title="Restore"]').textContent,
+            'Restore',
+            'Button should read Restore',
+        );
+
         // Restore
         lm.toggleMinimize();
         assert.strictEqual(lm.isMinimized, false, 'State should be restored');
         assert.ok(!lm.panel.classList.contains('minimized'), 'Panel should not have minimized class');
-        assert.strictEqual(lm.panel.querySelector('button').innerHTML, '_', 'Button should show minimize icon');
+        assert.strictEqual(minBtn.textContent, 'Minimize', 'Button should read Minimize again');
     });
 });

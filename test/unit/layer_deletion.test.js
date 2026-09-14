@@ -1,7 +1,5 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
-const path = require('path');
-const fs = require('fs');
 
 describe('Layer Deletion & Shape Context Menu (Failing Tests)', function() {
     let window, document, LayerManager, lm;

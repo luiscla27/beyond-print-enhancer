@@ -4,7 +4,7 @@ const fs = require('fs');
 const { JSDOM } = require('jsdom');
 
 describe('Shape Layers Persistence', function() {
-    let window, document, Storage, scanLayout, applyLayout, migrateLayout;
+    let window, document, Storage, applyLayout, migrateLayout;
 
     before(function() {
         const html = '<!DOCTYPE html><html><head></head><body><div id="print-layout-wrapper"><div id="print-enhance-shapes-layer"></div></div></body></html>';
@@ -76,6 +76,25 @@ describe('Shape Layers Persistence', function() {
         };
 
         // Load main.js content
+        const contextMenuPath = path.resolve(__dirname, '../../js/context_menu.js');
+        eval(fs.readFileSync(contextMenuPath, 'utf8'));
+        const assetCatalogPath = path.resolve(__dirname, '../../js/asset_catalog.js');
+        eval(fs.readFileSync(assetCatalogPath, 'utf8'));
+        const storagePath = path.resolve(__dirname, '../../js/storage.js');
+        eval(fs.readFileSync(storagePath, 'utf8'));
+        const imageProcessorPath = path.resolve(__dirname, '../../js/image_processor.js');
+        eval(fs.readFileSync(imageProcessorPath, 'utf8'));
+        const sectionUtilsPath = path.resolve(__dirname, '../../js/section_utils.js');
+        eval(fs.readFileSync(sectionUtilsPath, 'utf8'));
+        const printStylesPath = path.resolve(__dirname, '../../js/print_styles.js');
+        eval(fs.readFileSync(printStylesPath, 'utf8'));
+        const layoutScanPath = path.resolve(__dirname, '../../js/layout_scan.js');
+        eval(fs.readFileSync(layoutScanPath, 'utf8'));
+        const layoutApplyPath = path.resolve(__dirname, '../../js/layout_apply.js');
+        eval(fs.readFileSync(layoutApplyPath, 'utf8'));
+        const persistencePath = path.resolve(__dirname, '../../js/persistence.js');
+        eval(fs.readFileSync(persistencePath, 'utf8'));
+
         const scriptPath = path.resolve(__dirname, '../../js/main.js');
         const scriptContent = fs.readFileSync(scriptPath, 'utf8');
         
@@ -96,7 +115,6 @@ describe('Shape Layers Persistence', function() {
         global.flagExtractableElements = window.flagExtractableElements;
 
         Storage = window.Storage;
-        scanLayout = window.scanLayout;
         applyLayout = window.applyLayout;
         migrateLayout = Storage.migrateLayout;
     });

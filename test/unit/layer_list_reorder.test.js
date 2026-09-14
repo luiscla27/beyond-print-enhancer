@@ -43,7 +43,7 @@ describe('Layer List Reorder Functionality', function() {
 
         // Create 3 mock sections
         const ids = ['sec-1', 'sec-2', 'sec-3'];
-        ids.forEach((id, index) => {
+        ids.forEach((id) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'be-section-wrapper';
             wrapper.id = `${id}-wrapper`;
