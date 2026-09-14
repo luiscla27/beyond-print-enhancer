@@ -1,21 +1,24 @@
 const assert = require('assert');
 const { JSDOM } = require('jsdom');
 require("fake-indexeddb/auto");
-// Mock Storage
-global.Storage = {
-    init: async () => {},
-    saveLayout: async () => {},
-    loadLayout: async () => ({ sectionOrder: ['section-actions', 'section-spells'] })
-};
 
-// Mock local logic - we can't easily load the full extension context in Node 
-// without a headless browser like Puppeteer/Playwright, which is out of scope 
+// Mock local logic - we can't easily load the full extension context in Node
+// without a headless browser like Puppeteer/Playwright, which is out of scope
 // for this environment. We will simulate the restoration flow logic unit-style.
 
 describe('End-to-End Simulation', function() {
   let window, document;
 
   beforeEach(function() {
+    // The mock must be (re)installed here, not at module top level: other
+    // suites that run before this file (test/unit runs first per the mocha
+    // arg order) delete `global.Storage` in their afterEach cleanup, which
+    // would otherwise leave this test with `global.Storage === undefined`.
+    global.Storage = {
+        init: async () => {},
+        saveLayout: async () => {},
+        loadLayout: async () => ({ sectionOrder: ['section-actions', 'section-spells'] })
+    };
     const dom = new JSDOM(`
       <!DOCTYPE html>
       <html>

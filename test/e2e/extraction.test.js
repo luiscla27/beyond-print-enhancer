@@ -46,6 +46,12 @@ describe('DOM Extraction Logic (Integration)', function() {
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
     let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
     let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
+    // Encapsulated modules (encapsulation_functionality_20260907) — must be
+    // present before main.js in the page, mirroring the production load list.
+    const moduleSources = [
+        'storage.js', 'image_processor.js', 'section_utils.js', 'print_styles.js',
+        'asset_catalog.js', 'context_menu.js', 'section_cloning.js', 'layout_ops.js', 'filters.js', 'spells_ui.js', 'modals.js', 'shape_picker.js', 'properties_panel.js', 'controls.js',
+    ].map((m) => fs.readFileSync(path.resolve(__dirname, `../../js/${m}`), 'utf8')).join('\n');
     
     // HACK: To test private functions inside the IIFE, we intentionally modify the code string 
     // to attach them to window before the IIFE closes.
@@ -62,7 +68,7 @@ describe('DOM Extraction Logic (Integration)', function() {
     
     // Execute the modified script in the JSDOM window
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
+    scriptEl.textContent = moduleSources + '\n' + elementWrapper + '\n' + domManager + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     
     // Allow script to run
@@ -75,14 +81,12 @@ describe('DOM Extraction Logic (Integration)', function() {
     // Poll for the INJECTED CLONES (Actions/Inventory) to appear in the DOM.
     // They are distinguished by class .print-section-container.
     let actionsClone;
-    let inventoryClone;
     let spellsNode;
     
     for (let i = 0; i < 100; i++) {
         const containers = document.querySelectorAll('.print-section-container');
         if (containers.length > 0) {
             actionsClone = Array.from(containers).find(el => el.textContent.includes('Unique Actions Content'));
-            inventoryClone = Array.from(containers).find(el => el.textContent.includes('Unique Inventory Content'));
         }
         
         // Find the live Spells node (Actionable Anchor)

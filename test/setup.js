@@ -15,7 +15,6 @@ console.log = (...args) => {
   if (msg.includes('[DDB Print Enhance] Navigating to:')) return;
   if (msg.includes('[DDB Print Enhance] Could not find tab for section:')) return;
   
-  const originalConsoleLog = console.log.original || console.log;
   // We need to be careful with recursion if we were to use the original
   // But since we are replacing the global one, we should use a backup
   if (console.log.original) {

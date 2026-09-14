@@ -1,0 +1,229 @@
+{
+  "_comment": "The pending expectation, read from a REAL run — a dry run cannot see these, because the flag-gated specs skip at runtime (this.skip() in the body). `case_count` is asserted so a spec that STOPS skipping (and starts running, or fails) shows up as a change rather than a quieter gate, and so does one that starts skipping for a new reason.",
+  "provenance": {
+    "produced_by": "node scripts/gen_spec_inventory.js --pending <results.json>",
+    "read_from": "dnde2e-baseline-clean.json",
+    "measured_at": "2026-09-13",
+    "tracked_by": "conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)"
+  },
+  "expected": {
+    "case_count": 94,
+    "stats": {
+      "tests": 273,
+      "passes": 178,
+      "pending": 94,
+      "failures": 1
+    }
+  },
+  "by_spec_file": {
+    "custom_templates_visual_capture.spec.js": {
+      "cases": 6,
+      "titles": [
+        "Custom upload + templates visual captures phase 0 baseline (current behaviors) captures the Custom tab upload affordance (pre-fix)",
+        "Custom upload + templates visual captures phase 0 baseline (current behaviors) captures the current stacked Templates catalog (grid) + detail double-overlay",
+        "Custom upload + templates visual captures phase 1 upload keeps the modal open captures the custom tab after a real upload (grid refreshed, new shape selected, OK enabled)",
+        "Custom upload + templates visual captures phase 2 templates shell captures the in-modal detail view (no stacked overlay) + apply confirm",
+        "Custom upload + templates visual captures phase 2 templates shell captures the upgraded templates grid (single overlay, cards)",
+        "Custom upload + templates visual captures phase 3 thumbnails captures the Basic template card with its real thumbnail + a placeholder card"
+      ]
+    },
+    "destructive_recovery_visual_capture.spec.js": {
+      "cases": 1,
+      "titles": [
+        "Destructive-recovery visual captures (phase 2) captures the undo offer, the undone state and the restore surfaces"
+      ]
+    },
+    "drag_ux_visual_capture.spec.js": {
+      "cases": 10,
+      "titles": [
+        "Drag UX visual captures phase 0 baseline (native-HTML5 drag behavior) captures the sheet layout and a wrapper rest/hover state",
+        "Drag UX visual captures phase 1 pointer engine captures a committed pointer drag with the custom ghost (mouse)",
+        "Drag UX visual captures phase 1 pointer engine captures a touch-pointer drag mid-gesture (pointerType touch)",
+        "Drag UX visual captures phase 1 pointer engine captures the same-session before/after pair (source restored, wrapper moved)",
+        "Drag UX visual captures phase 2 live snap + guides captures a live-snapped drag with gold alignment guides and the zero-jump drop",
+        "Drag UX visual captures phase 2 live snap + guides captures the locked-layer state (no drag affordance, dimmed)",
+        "Drag UX visual captures phase 3 bounds + autosave captures a drop clamped to the sheet origin (never negative)",
+        "Drag UX visual captures phase 3 bounds + autosave captures the post-drop autosave toast after release",
+        "Drag UX visual captures phase 4 precision nudge + position inputs captures the selected section, the Position inputs, and a nudged delta",
+        "Drag UX visual captures phase 5 layer reorder polish captures the resting chips, the custom ghost and the gold insertion marker"
+      ]
+    },
+    "encoding_classify.spec.js": {
+      "cases": 3,
+      "titles": [
+        "encoding classification — what actually reaches the DOM (AC-1a) classifies the OFF-PANEL surfaces: the restore list, a modal close, the layer menu",
+        "encoding classification — what actually reaches the DOM (AC-1a) measures U+2026 itself (the exact character the original claim was about) and the CSS glyph",
+        "encoding classification — what actually reaches the DOM (AC-1a) reads the rendered text of every glyph site and classifies it"
+      ]
+    },
+    "feedback_visual_capture.spec.js": {
+      "cases": 2,
+      "titles": [
+        "feedback lifecycle visual captures phase 1 — toast lane: dismissal affordance, retained error, new copy (AC-1..AC-3)",
+        "feedback lifecycle visual captures phase 2 — persistent empty state, keyboard menu, clamped menu (AC-5..AC-7)"
+      ]
+    },
+    "first_run_card_verify.spec.js": {
+      "cases": 4,
+      "titles": [
+        "Phase 1 — the gesture surfaces converge in the real product (AC-1) AC-1a/b: the card renders in the real panel carrying its three gestures and a path to the reference",
+        "Phase 1 — the gesture surfaces converge in the real product (AC-1) AC-1b: opening the reference does NOT dismiss the card",
+        "Phase 1 — the gesture surfaces converge in the real product (AC-1) AC-1b: the keyboard — not the mouse — can open the reference from the card",
+        "Phase 1 — the gesture surfaces converge in the real product (AC-1) GATE 3 D2: after a RELOAD the card stays dismissed, and the reference route still exists"
+      ]
+    },
+    "funding_placement_verify.spec.js": {
+      "cases": 3,
+      "titles": [
+        "Phase 3 — the funding asks moved, and nothing was lost (AC-3) AC-3a: the live panel carries no fundraising row, and no empty HELP tray",
+        "Phase 3 — the funding asks moved, and nothing was lost (AC-3) AC-3b/d: every destination is still REACHABLE — asserted at runtime, not from source",
+        "Phase 3 — the funding asks moved, and nothing was lost (AC-3) AC-3c: the number of asks did not increase"
+      ]
+    },
+    "help_surface_verify.spec.js": {
+      "cases": 3,
+      "titles": [
+        "Phase 2 — every feature is discoverable from the real UI (AC-2) opening it in the REAL product teaches all six committed gestures (AC-2c)",
+        "Phase 2 — every feature is discoverable from the real UI (AC-2) the panel header exposes the help control in the real panel",
+        "Phase 2 — every feature is discoverable from the real UI (AC-2) the undo control names its keyboard route in the live panel (AC-2b)"
+      ]
+    },
+    "modal_primitive_visual_capture.spec.js": {
+      "cases": 1,
+      "titles": [
+        "modal primitive visual captures captures the migrated dialog, the untouched dialogs, and probes affordances"
+      ]
+    },
+    "ornament_symmetry_visual_capture.spec.js": {
+      "cases": 2,
+      "titles": [
+        "ornament + symmetry visual captures phase 1 — golden double hairline + corner terminations captures and measures the ornamented, quiet and plain surfaces",
+        "ornament + symmetry visual captures phase 2 — fixed clickable-height tiers measures every audited clickable and captures the tier frames"
+      ]
+    },
+    "panel_measure.spec.js": {
+      "cases": 1,
+      "titles": [
+        "Phase 5 — measurement of the panel's default surface (AC-5) measures what the panel actually shows at the pinned viewport"
+      ]
+    },
+    "picker_ux_visual_capture.spec.js": {
+      "cases": 18,
+      "titles": [
+        "Picker UX visual captures phase 0 baseline (two separate picker surfaces) captures the Add Shape modal — Borders/Shapes/Custom tabs (pre-merge tabs+tags grid)",
+        "Picker UX visual captures phase 0 baseline (two separate picker surfaces) captures the Switch Shape Asset picker (pre-filtered to Shapes)",
+        "Picker UX visual captures phase 0 baseline (two separate picker surfaces) captures the separate Select Section Border modal (20 hard-coded styles)",
+        "Picker UX visual captures phase 1 unified shell (one picker, three modes) captures add mode (Add Shape → Borders/Shapes/Custom tabs)",
+        "Picker UX visual captures phase 1 unified shell (one picker, three modes) captures style mode (Change Border Style → Section Styles surface)",
+        "Picker UX visual captures phase 1 unified shell (one picker, three modes) captures switch mode (Switch Shape Asset → folder-filtered picker)",
+        "Picker UX visual captures phase 2 mode-driven OK state (disabled → enabled) captures add mode OK disabled (no fabricated default) + enabled on first choice",
+        "Picker UX visual captures phase 2 mode-driven OK state (disabled → enabled) captures style mode OK disabled at open + enabled after a different pick",
+        "Picker UX visual captures phase 2 mode-driven OK state (disabled → enabled) captures switch mode OK disabled at open (current preselected) + enabled on change",
+        "Picker UX visual captures phase 3 keyboard/cancel + a11y states captures a keyboard-focused option cell with its visible focus ring",
+        "Picker UX visual captures phase 3 keyboard/cancel + a11y states captures the sheet after Escape closes the modal (cancel path)",
+        "Picker UX visual captures phase 3 keyboard/cancel + a11y states captures the style modal with its close ✕ affordance",
+        "Picker UX visual captures phase 4 grouped grid + live search captures a live search query mid-type on the Shapes tab",
+        "Picker UX visual captures phase 4 grouped grid + live search captures the empty state for a no-match query",
+        "Picker UX visual captures phase 4 grouped grid + live search captures the grouped Borders grid with family headers",
+        "Picker UX visual captures phase 5 hover-swap preview frames captures a style-mode hover-swap on a real section + the restored state",
+        "Picker UX visual captures phase 5 hover-swap preview frames captures a switch-mode asset hover-swap on a real shape",
+        "Picker UX visual captures phase 5 hover-swap preview frames captures the add-mode magnified hover strip (no sheet mutation)"
+      ]
+    },
+    "print_filter_identity_probe.spec.js": {
+      "cases": 4,
+      "titles": [
+        "print filter identity probe — what the rasterisation fix decided (issue print_sheet_rasterised_20260911) a real hue is emitted again rather than neutralised, and the defaults come back byte-identical",
+        "print filter identity probe — what the rasterisation fix decided (issue print_sheet_rasterised_20260911) a user's own setting still reaches the paper: Greyscale 0% through the panel's own slider",
+        "print filter identity probe — what the rasterisation fix decided (issue print_sheet_rasterised_20260911) the rule that shipped: the identity chains are `none` and the sheet's own type reaches the paper",
+        "print filter identity probe — what the rasterisation fix decided (issue print_sheet_rasterised_20260911) the rule that was REJECTED: all sliders at their defaults is not neutral, and it costs colour"
+      ]
+    },
+    "print_output_audit.spec.js": {
+      "cases": 5,
+      "titles": [
+        "PRINT OUTPUT audit — the printed sheet, measured (issue print_output_never_assessed_20260911) none of the tool's own chrome reaches the paper — with all of it provably on screen",
+        "PRINT OUTPUT audit — the printed sheet, measured (issue print_output_never_assessed_20260911) records what the printer actually receives, and that the sheet's own type is TEXT",
+        "PRINT OUTPUT audit — the printed sheet, measured (issue print_output_never_assessed_20260911) the four documented settings each still do something to the PAGE (not just to the byte size)",
+        "PRINT OUTPUT audit — the printed sheet, measured (issue print_output_never_assessed_20260911) the margins claim is confirmed on the page regions, with a control that proves the method is sensitive",
+        "PRINT OUTPUT audit — the printed sheet, measured (issue print_output_never_assessed_20260911) the sheet prints at all: four Letter pages, every one of them carrying ink"
+      ]
+    },
+    "print_settings_verify.spec.js": {
+      "cases": 3,
+      "titles": [
+        "Phase 2 — print settings at the moment of printing (AC-2) it is re-openable without a reload — a dialog that stays, not a toast that expires",
+        "Phase 2 — print settings at the moment of printing (AC-2) opening it does NOT sit in front of the print dialog, and it names the settings",
+        "Phase 2 — print settings at the moment of printing (AC-2) the control is rendered in the OUTPUT tray, immediately after Print"
+      ]
+    },
+    "recovery_depth_verify.spec.js": {
+      "cases": 4,
+      "titles": [
+        "Phase 3 — the recovery models are distinguishable in the REAL product (AC-3) a backup can be written through the product's own path, then the surface names the depth and contrasts undo",
+        "Phase 3 — the recovery models are distinguishable in the REAL product (AC-3) the depth the LIVE product enforces is the raised one (O-3)",
+        "Phase 3 — the recovery models are distinguishable in the REAL product (AC-3) the restore surface is REACHABLE from the panel and its empty state is honest",
+        "Phase 3 — the recovery models are distinguishable in the REAL product (AC-3) the undo control names its session scope in the real panel, and stays short on screen"
+      ]
+    },
+    "reducible_panel_verify.spec.js": {
+      "cases": 4,
+      "titles": [
+        "Phase 5 — the panel reduced, every control reachable (AC-5) AC-5 entry condition 4: where `Restore backup...` sits now, reported honestly",
+        "Phase 5 — the panel reduced, every control reachable (AC-5) AC-5: EVERY control is still reachable in the reduced state, by KEYBOARD — and a failure names it",
+        "Phase 5 — the panel reduced, every control reachable (AC-5) AC-5: a folded group unfolds again, and its controls are the SAME nodes (live)",
+        "Phase 5 — the panel reduced, every control reachable (AC-5) measures the panel BEFORE, and folds every group — geometry falls"
+      ]
+    },
+    "refusal_copy_verify.spec.js": {
+      "cases": 2,
+      "titles": [
+        "Phase 4 — the refusal copy as the user meets it (AC-4) the SHORT toast appears, fits its window, and the long form opens in a dialog that stays",
+        "Phase 4 — the refusal copy as the user meets it (AC-4) the long form is reachable in the product, in the shared dialog shell"
+      ]
+    },
+    "selection_visual_capture.spec.js": {
+      "cases": 3,
+      "titles": [
+        "Selection-model visual captures (phase 1) captures the four states of the unified selection language",
+        "Selection-model visual captures (phase 2 — discoverability) captures the fresh hint, the dismissed state, and its persistence",
+        "Selection-model visual captures (phase 3 — consistency) captures the narrow viewport and the resolved layer controls"
+      ]
+    },
+    "shape_layer_ps_visual_capture.spec.js": {
+      "cases": 7,
+      "titles": [
+        "Shape Layers PS visual captures phase 0 baseline (current panel) captures a newly added (empty, unnamed) shape layer row",
+        "Shape Layers PS visual captures phase 0 baseline (current panel) captures the layer panel with the default giant shape layer",
+        "Shape Layers PS visual captures phase 1 identity + counts + empty affordance captures a renamed layer + an empty layer affordance",
+        "Shape Layers PS visual captures phase 1 identity + counts + empty affordance captures the default layer with captioned chips + a live count badge",
+        "Shape Layers PS visual captures phase 2 split/move flows captures the chip context menu + the split result (zoomed)",
+        "Shape Layers PS visual captures phase 3 layer-row restack captures a mid-row-drag (gold ghost + insertion marker) and the after-drop order",
+        "Shape Layers PS visual captures phase 4 chip multi-select + batch captures multi-selected chips, the batch menu, and a split-each result"
+      ]
+    },
+    "turn_off_verify.spec.js": {
+      "cases": 3,
+      "titles": [
+        "Phase 4 — turn off, and read the state (AC-4) AC-4: clicking the toolbar icon brings it back, and the badge says ON again",
+        "Phase 4 — turn off, and read the state (AC-4) AC-4: turning off leaves NOTHING behind — the reloaded page carries none of the extension",
+        "Phase 4 — turn off, and read the state (AC-4) the extension is ON: injected surface present, and the badge says so"
+      ]
+    },
+    "ui_ux_audit_visual_capture.spec.js": {
+      "cases": 4,
+      "titles": [
+        "UI/UX audit visual captures captures the boot restore-failure card (corrupt saved layout, real boot path)",
+        "UI/UX audit visual captures phase 1 trust primitive captures a success toast, then a REAL error toast from a failed backup write",
+        "UI/UX audit visual captures phase 1 trust primitive captures the Reset confirm (backup copy, in-app dialog) + the restore-failure card",
+        "UI/UX audit visual captures phase 2 editor fixes captures a locked layer that stays reachable, and the themed rotation handle"
+      ]
+    },
+    "undo_stack_visual_capture.spec.js": {
+      "cases": 1,
+      "titles": [
+        "Undo-stack visual captures (AC-V1) captures the idle, named, applied and keyboard states of the undo affordance"
+      ]
+    }
+  }
+}
