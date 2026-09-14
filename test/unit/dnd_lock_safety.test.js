@@ -3,7 +3,14 @@ const { JSDOM } = require('jsdom');
 const path = require('path');
 const fs = require('fs');
 
-describe('DnD Lock Safety', () => {
+/**
+ * Pointer-engine lock-safety tests (track drag_ux_overhaul_20260909, Phase 1).
+ * Locked layers must never arm a pointer drag (AC-1); unlocked wrappers drag
+ * normally. Replaces the native `mousedown -> draggable` arm/unarm contract —
+ * the wrapper is no longer a native drag source, so the assertion is on
+ * movement/ghost state instead of the draggable attribute.
+ */
+describe('DnD Pointer Engine - Lock Safety', () => {
     let dom;
     let window;
     let document;
@@ -23,7 +30,7 @@ describe('DnD Lock Safety', () => {
         global.Node = window.Node;
         global.HTMLElement = window.HTMLElement;
 
-        // Mock DomManager and LayerManager
+        // Mock DomManager and LayerManager (locked by wrapper id).
         const mockLayerManager = {
             getLayerForElement: (id) => {
                 if (id === 'locked-wrapper') return { isLocked: true };
@@ -40,6 +47,7 @@ describe('DnD Lock Safety', () => {
                 getLayerManager: () => mockLayerManager
             })
         };
+        window.getComputedStyle = () => ({ transform: 'none' });
 
         // Load DnD logic
         const dndCode = fs.readFileSync(path.join(__dirname, '../../js/dnd.js'), 'utf8');
@@ -57,46 +65,72 @@ describe('DnD Lock Safety', () => {
         delete global.HTMLElement;
     });
 
-    function createMouseEvent(type, target) {
+    function createPointerEvent(type, target, x, y) {
         const event = new window.MouseEvent(type, {
             bubbles: true,
             cancelable: true,
-            clientX: 10,
-            clientY: 10
+            clientX: x,
+            clientY: y
         });
         Object.defineProperty(event, 'target', { value: target, enumerable: true });
         return event;
     }
 
-    it('should NOT allow dragging a locked element (via mousedown -> draggable=false)', () => {
+    function makeWrapper(id) {
         const wrapper = document.createElement('div');
         wrapper.className = 'be-section-wrapper';
-        wrapper.id = 'locked-wrapper';
-        wrapper.draggable = true; // Initial state
+        wrapper.id = id;
         document.getElementById('layout-root').appendChild(wrapper);
+        return wrapper;
+    }
 
+    function dragSequence(target, fromX, fromY, midX, midY, toX, toY) {
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointerdown', target, fromX, fromY)
+        );
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointermove', target, midX, midY)
+        );
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointerup', target, toX, toY)
+        );
+    }
+
+    it('should NOT drag a locked layer (never arms, never moves)', () => {
+        const wrapper = makeWrapper('locked-wrapper');
         dnd.initDragAndDrop();
 
-        // Simulate mousedown
-        const mousedown = createMouseEvent('mousedown', wrapper);
-        document.getElementById('layout-root').dispatchEvent(mousedown);
-        
-        assert.strictEqual(wrapper.draggable, false, 'Draggable should be set to false for locked layer on mousedown');
+        dragSequence(wrapper, 10, 10, 40, 40, 60, 60);
+
+        assert.ok(!wrapper.classList.contains('dragging'), 'Locked wrapper must not enter dragging state');
+        assert.strictEqual(wrapper.style.left, '', 'Locked wrapper must not be moved');
+        assert.strictEqual(wrapper.style.top, '', 'Locked wrapper must not be moved');
+        assert.strictEqual(document.querySelectorAll('.be-drag-ghost').length, 0);
     });
 
-    it('should allow dragging an unlocked element', () => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'be-section-wrapper';
-        wrapper.id = 'unlocked-wrapper';
-        wrapper.draggable = false; // Initial state
-        document.getElementById('layout-root').appendChild(wrapper);
-
+    it('should drag an unlocked layer (commits, moves, cleans up)', () => {
+        const wrapper = makeWrapper('unlocked-wrapper');
         dnd.initDragAndDrop();
 
-        // Simulate mousedown
-        const mousedown = createMouseEvent('mousedown', wrapper);
-        document.getElementById('layout-root').dispatchEvent(mousedown);
-        
-        assert.strictEqual(wrapper.draggable, true, 'Draggable should be set to true for unlocked layer on mousedown');
+        // rect is 0,0 in jsdom -> grab offset = pointerdown coords (10,10).
+        // Last move at (40,40): x = 40 - 0 - 10 = 30 -> grid snap 32.
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointerdown', wrapper, 10, 10)
+        );
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointermove', wrapper, 30, 30)
+        );
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointermove', wrapper, 40, 40)
+        );
+        document.getElementById('layout-root').dispatchEvent(
+            createPointerEvent('pointerup', wrapper, 40, 40)
+        );
+
+        assert.strictEqual(wrapper.style.left, '32px', 'Unlocked wrapper moves on drop');
+        assert.strictEqual(wrapper.style.top, '32px');
+        assert.ok(!wrapper.classList.contains('dragging'), 'dragging class cleared on release');
+        assert.strictEqual(wrapper.style.opacity, '1', 'Source opacity restored');
+        assert.strictEqual(document.querySelectorAll('.be-drag-ghost').length, 0);
     });
 });
