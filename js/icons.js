@@ -52,6 +52,20 @@ const ICON_PATHS = {
   grid: '<rect x="2.5" y="2.5" width="11" height="11" rx="1"></rect><path d="M8 2.5v11M2.5 8h11"></path>',
   expand: '<path d="M3.5 6.5v-3h3M12.5 6.5v-3h-3M3.5 9.5v3h3M12.5 9.5v3h-3"></path>',
   grip: '<circle cx="5.5" cy="8" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="8" r="0.9" fill="currentColor" stroke="none"></circle>',
+  // The centred nine-dot drag handle (ISSUE_drag_and_drop, 2026-09-14). The existing `grip`
+  // is a THREE-dot horizontal strip — the same dot family, in the layout a centred
+  // move-target affordance cannot use. NINE dots on a 3x3 grid (5/8/11 x 4/8/12 on the
+  // 16px viewBox); filled, stroke-free, so a 12px render reads as dots and not rings.
+  gripVertical:
+    '<circle cx="5" cy="4" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="8" cy="4" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="11" cy="4" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="5" cy="8" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="11" cy="8" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="8" cy="12" r="1" fill="currentColor" stroke="none"></circle>' +
+    '<circle cx="11" cy="12" r="1" fill="currentColor" stroke="none"></circle>',
   sparkle:
     '<path d="M8 1.8l1.1 3.4 3.4 1.1-3.4 1.1L8 10.8 6.9 7.4 3.5 6.3l3.4-1.1z"></path>' +
     '<path d="M12.5 10l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"></path>',

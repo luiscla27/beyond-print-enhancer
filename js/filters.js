@@ -184,6 +184,15 @@ function applyGlobalFilters(filters) {
       #print-enhance-controls * {
           filter: none !important;
       }
+
+      /* …and the centred drag handle (ISSUE_drag_and_drop.md): it is chrome
+         painted over the sheet, not sheet content, so a hue-rotate on the
+         section must not travel the 300px up into it. It shares the exclusion
+         .be-section-actions already gets for the same reason. */
+      .be-drag-handle,
+      .be-drag-handle * {
+          filter: none !important;
+      }
   `;
 }
 

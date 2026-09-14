@@ -109,7 +109,15 @@ function createControls() {
   container.style.flexDirection = "column";
   container.style.gap = "8px";
   container.style.borderRadius = "8px";
-  container.style.boxShadow = "0 4px 15px rgba(0,0,0,0.5)";
+  /* ISSUE_shadows.md (2026-09-14): no box-shadow here. This inline
+     `0 4px 15px rgba(0,0,0,0.5)` was the WORST of the three shadows the panel
+     carried, because an INLINE declaration outranks every stylesheet rule that
+     is not also `!important` — so it survived each later attempt to calm the
+     panel down from the theme layer and kept painting a 15px smudge on the bone
+     sheet. The panel is docked to the viewport edge over an opaque page; it does
+     not need a lift to read as floating. The theme layer (js/ui_theme.js) owns
+     its surface language and now declares `box-shadow: none !important` for it;
+     this line is deleted rather than zeroed so there is exactly one writer. */
   container.style.transition = "opacity 0.3s, transform 0.3s";
 
   // Hover logic

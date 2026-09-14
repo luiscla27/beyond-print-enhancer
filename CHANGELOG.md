@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-14
+
+### Changed
+- **Hovering a section no longer washes it in green.** A hovered, draggable section used to carry
+  `filter: drop-shadow(0 0 15px #28a745)` twice, animated over 300ms. A `filter` on the wrapper
+  repaints the whole subtree — every border, background and piece of artwork in the section — so it
+  did not decorate the section, it washed it. The rule is deleted; the stacking raise it shared a
+  block with (`z-index: 700000`) stays, because that is the part other rules depend on and it costs
+  nothing to paint.
+- **Dragging is now done from a handle, not from anywhere.** `button.be-drag-handle` — a nine-dot
+  grip (`Icons.svg("gripVertical", 12)`, a new entry in the existing 16px icon set, filled circles so
+  a 12px render reads as dots and not rings) — sits at the **centre of each section**, is revealed
+  only on the active layer, and is the one control the drag engine accepts as a grab target
+  (`isInteractiveTarget` would otherwise have refused it as a `button`; the exemption is checked
+  first, so there is exactly one statement of which control is the handle). Invisible *and*
+  unhittable at rest — `visibility`, not `opacity`, so it cannot be tabbed to, clicked through, or
+  read out by assistive tech — hidden on locked layers, hidden while a drag is held, hidden in print,
+  and excluded from the sheet's hue-rotate filters so a recoloured section cannot carry the grip off
+  palette.
+- **`#print-enhance-controls` casts no shadow.** Four separate declarations piled blurred black onto
+  that one panel, each `!important`, so the last one in the sheet won and calming any earlier one
+  changed nothing — including an inline `boxShadow` in `js/controls.js` that outranked everything the
+  theme layer tried to do about it. All four are gone for this panel. What it keeps is not shadow:
+  a `box-shadow` with zero offset-blur is a **frame**, so the blind-tool ring, the leather border, the
+  inner hairline and the corner marks of the ornament treatment all stand. The layer manager keeps
+  its lift — it was not part of the complaint, and a fix aimed at one tray must not re-tier the pair.
+
+### Fixed
+- **Section action buttons appear on the ACTIVE layer only.** `be-section-actions` used to reveal on
+  hover for *every* section, "regardless of their status": two of the three reveal rules keyed off the
+  LOCK state (`.be-layer-locked`, and `body[class*="be-lock-"]` which is true whenever any layer is
+  locked — and this product keeps every layer but one locked), so between them they matched almost
+  everywhere. Both are deleted and `.be-active-layer` is now the single mechanism. Because that class
+  is written independently of `isLocked`, an active-and-locked layer still reveals its bar, so the
+  reachability the deleted rules were written for (a locked layer's own unlock control) is preserved.
+- **…and a hidden action bar is no longer clickable.** The bar is created with an inline
+  `pointerEvents = "all"`, which outranks a *non-important* stylesheet rule at any specificity, so the
+  rest-state `pointer-events: none` did nothing: every inactive section carried invisible 25×32px dead
+  buttons over its content, eating clicks. The rest-state rule is now `!important`.
+
+### Internal
+- **The backtick-in-a-CSS-comment trap now has a guard that covers every module, not one.** Three of
+  this project's files were simultaneously broken by the same mistake while this work was in
+  progress: a backtick inside a CSS comment inside the template literal that emits the stylesheet
+  *terminates the literal*, so the module throws a `SyntaxError` at load in the browser, with a
+  message pointing at prose. `scripts/check_theme_backticks.js` already existed for that hazard but
+  only for `js/ui_theme.js`. `test/unit/js_source_syntax.test.js` compiles every file under `js/`
+  (parse-only, so no boot code runs), asserts the four stylesheet-injecting modules it exists for are
+  actually in the walk so it cannot pass vacuously, and carries a planted copy of the defect to prove
+  it reports it.
+
 ## [2.0.0] - 2026-09-14
 
 ### Added

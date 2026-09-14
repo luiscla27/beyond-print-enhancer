@@ -71,6 +71,19 @@ function isElementLocked(el) {
 }
 
 /**
+ * The wrapper's own centred nine-dot MOVE handle (ISSUE_drag_and_drop.md).
+ * @param {EventTarget|null} target
+ * @returns {boolean}
+ */
+function isDragHandle(target) {
+  return Boolean(
+    target &&
+      typeof target.closest === 'function' &&
+      target.closest('.be-drag-handle'),
+  );
+}
+
+/**
  * True when the pointer target is interactive content that must never arm a
  * drag: the section action bar and native controls/links (spec.md I-1).
  * @param {EventTarget|null} target
@@ -78,6 +91,14 @@ function isElementLocked(el) {
  */
 function isInteractiveTarget(target) {
   if (!target || typeof target.closest !== 'function') return true;
+  // THE ONE EXCEPTION, ASSERTED FIRST (ISSUE_drag_and_drop.md): the centred
+  // nine-dot handle is a <button> that sits inside a wrapper, and every rule
+  // below would exempt it (`button`, and `.be-section-actions` once the
+  // section bars became pointer-transparent at rest). It is the ONLY thing on
+  // a section the user is meant to grab, so the exemption is checked BEFORE
+  // them rather than added to their selector list — a `:not()` on the broad
+  // `button` term would be one more place the same fact has to be spelled out.
+  if (isDragHandle(target)) return false;
   return Boolean(
     target.closest(
       // AC-4/U-6 (ui_ux_review_20260910): the rotation and resize handles are
@@ -90,9 +111,170 @@ function isInteractiveTarget(target) {
   );
 }
 
+/**
+ * THE CENTRED NINE-DOT MOVE HANDLE (ISSUE_drag_and_drop.md).
+ *
+ * WHAT CHANGED: the green `drop-shadow` that used to appear over a hovered
+ * section ("Theres a 'green' shadow filter displayed when hovering a section
+ * thats allowed to be dragged … The UX of that is extremely bad") is gone, and
+ * the affordance is now a handle with NINE dots, sitting at the CENTRE of the
+ * section, from which the section is dragged.
+ *
+ * WHY IT LIVES IN THIS MODULE: `dnd.js` owns the drag gesture, so it owns the
+ * thing you grab — one owner for the node, its cursor, its reveal and its
+ * exemption from the interactive-target rule. It is a DIRECT CHILD of the
+ * wrapper (a sibling of `.print-section-container`), so it is centred on the
+ * wrapper box itself rather than on whatever content a section happens to hold,
+ * and no section re-render (compact / border / responsive scale all paint INTO
+ * `.print-section-container`) can remove it.
+ *
+ * WHY A <button>: keyboard/AT reachable (it is focusable, and
+ * `:focus-within` reveals it exactly like `:hover`), and the product's whole
+ * tiered-control convention (track ornament_symmetry_20260910, spec.md AC-4) is
+ * that a clickable control IS a button, so the sheet's own `button` element
+ * rules — including "never a native drag source" and the focus-ring recipe —
+ * apply to it for free rather than needing a third copy.
+ *
+ * WHY IT IS EXEMPT, NOT ABSENT FROM THE RULES: `isInteractiveTarget` would
+ * otherwise refuse it twice over (`button`, and `.be-section-actions` once the
+ * action bar became pointer-transparent at rest), and `isDragHandle` is checked
+ * FIRST so there is exactly one place that states which control is the grab
+ * target.
+ *
+ * WHY NO CLICK HANDLER: the drag engine starts on `pointerdown` and commits
+ * after 4px, so the click that follows a plain press-release (click-to-select,
+ * click-to-front) must still reach the wrapper untouched — the same reason
+ * `handlePointerDown` deliberately does not `preventDefault`. This is NOT HTML5
+ * drag-and-drop: wrappers are not native drag sources (the pointer engine's
+ * AC-1, pinned by the `draggable="true"` query in
+ * test/browser_e2e/drag_glow_layers.spec.js), and `initDragAndDrop` cancels
+ * stray `dragstart` events.
+ *
+ * @param {HTMLElement} wrapper
+ * @returns {HTMLElement|null} the wrapper's handle
+ */
+function ensureDragHandle(wrapper) {
+  if (!wrapper || typeof wrapper.querySelector !== 'function') return null;
+  let handle = wrapper.querySelector(':scope > .be-drag-handle');
+  if (!handle) {
+    handle = document.createElement('button');
+    handle.type = 'button';
+    handle.className = 'be-drag-handle';
+    handle.title = 'Drag to move this section';
+    handle.setAttribute('aria-label', handle.title);
+    // THE GRID OF NINE. `Icons.svg` is the 16px single-weight set every other
+    // in-sheet control uses; `gripVertical` is its nine-dot entry (filled
+    // circles, stroke-free, so a 12px render reads as dots and not rings). It
+    // is built through the SAME primitive instead of a hand-written <svg>, and
+    // fails open to the U+22EE9 character when the icon module has not been
+    // evaluated in this host.
+    if (
+      typeof window !== 'undefined' &&
+      window.Icons &&
+      typeof window.Icons.svg === 'function'
+    ) {
+      handle.innerHTML = window.Icons.svg('gripVertical', 12);
+    } else {
+      handle.textContent = '\u22EE9';
+    }
+    wrapper.appendChild(handle);
+  }
+  return handle;
+}
+
+/**
+ * Give every wrapper the sheet currently holds its handle. The boot pass:
+ * sections are (re)built after `initDragAndDrop()` in some flows and a
+ * MutationObserver covers the rest (see `watchDragHandles`), so this is
+ * deliberately idempotent.
+ * @returns {number} how many wrappers were visited
+ */
+function syncDragHandles() {
+  if (typeof document === 'undefined') return 0;
+  const wrappers = document.querySelectorAll('.be-section-wrapper');
+  Array.prototype.forEach.call(wrappers, ensureDragHandle);
+  return wrappers.length;
+}
+
+/**
+ * Keep the handles in the document as sections come and go.
+ *
+ * WHY AN OBSERVER AND NOT A CALL IN THE SECTION FACTORY: wrappers are created
+ * in SEVEN places (the extraction pass, `createShape`, clones, skill split,
+ * ability/extraction loads, spell cards, layout apply) and every one of them
+ * goes through an insertion into the sheet, so one observer covers all seven
+ * where seven call sites would each be a new thing to forget. Records are
+ * coalesced into a microtask flush, and only the wrapper an added/removed node
+ * belongs to is visited — the observer never walks the document.
+ *
+ * @param {Node} [target] what to observe (defaults to the document element)
+ * @returns {MutationObserver|null}
+ */
+function watchDragHandles(target) {
+  if (typeof MutationObserver !== 'function') return null;
+  const host =
+    target ||
+    (typeof document !== 'undefined' ? document.documentElement : null);
+  if (!host || typeof host.addEventListener !== 'function') return null;
+
+  const pending = new Set();
+  let flushQueued = false;
+
+  const collect = (node) => {
+    if (!node || node.nodeType !== 1) return;
+    if (node.classList && node.classList.contains('be-section-wrapper')) {
+      pending.add(node);
+    }
+    if (node.closest && node.closest('.be-section-wrapper')) {
+      pending.add(node.closest('.be-section-wrapper'));
+    }
+  };
+
+  const flush = () => {
+    flushQueued = false;
+    for (const wrapper of pending) {
+      if (wrapper.isConnected === false) continue; // removed again before we looked
+      ensureDragHandle(wrapper);
+    }
+    pending.clear();
+  };
+
+  const observer = new MutationObserver((records) => {
+    for (const record of records) {
+      record.addedNodes && record.addedNodes.forEach(collect);
+      // A REMOVED wrapper needs nothing: its handle went with it. A removed
+      // HANDLE is what this arm exists for — a section rebuilt in place keeps
+      // its wrapper, so the added arm above would never see it again.
+      record.removedNodes &&
+        record.removedNodes.forEach((node) => {
+          if (
+            node &&
+            node.nodeType === 1 &&
+            node.classList &&
+            node.classList.contains('be-drag-handle') &&
+            node.parentNode
+          ) {
+            pending.add(node.parentNode);
+          }
+        });
+    }
+    if (pending.size && !flushQueued) {
+      flushQueued = true;
+      Promise.resolve().then(flush).catch(() => {
+        flushQueued = false;
+      });
+    }
+  });
+
+  observer.observe(host, { childList: true, subtree: true });
+  return observer;
+}
+
+
 // ---------------------------------------------------------------------------
 // Phase 2 helpers: grid snap + alignment guides (pure, unit-tested)
 // ---------------------------------------------------------------------------
+
 
 /**
  * Snap a container-space coordinate to the 16px grid.
@@ -992,6 +1174,13 @@ function initDragAndDrop() {
     }
   });
 
+  // THE CENTRED HANDLE (ISSUE_drag_and_drop.md): the sheet may already be
+  // populated when the engine boots, so give every existing wrapper its handle
+  // now, then keep it true as sections come and go. Both are guarded so a host
+  // without a live DOM (unit harness) still gets a working engine.
+  syncDragHandles();
+  watchDragHandles();
+
   initialized = true;
   safeLog('log', '[DDB Print] Pointer Drag Engine Initialized on:', container.id);
 }
@@ -1054,6 +1243,145 @@ function injectDnDStyles() {
           filter: none !important;
           -webkit-filter: none !important;
       }
+
+      /* =====================================================================
+         THE CENTRED NINE-DOT MOVE HANDLE (ISSUE_drag_and_drop.md)
+         =====================================================================
+         The owner's words: "There's a 'green' shadow filter displayed when
+         hovering a section that's allowed to be dragged and dropped. The UX of
+         that is extremely bad, let's replace it for a 'drag area', a '9 points
+         button' should be displayed on the center on any section on the ACTIVE
+         layer, and the user should be able to drag the section from there."
+
+         So the glow is gone and this is the affordance instead. Three rules
+         carry that sentence, and each is stated in ONE place:
+
+           REST        invisible AND untouchable. 'visibility' (not 'opacity')
+                       because it takes the node out of the hit-testing AND the
+                       accessibility tree at once, so a hidden handle cannot be
+                       tabbed to, clicked through, or read out — and unlike
+                       'display:none' it still animates, so the reveal is a fade.
+                       'opacity' alone would have left a 26px dead square in the
+                       middle of every section swallowing clicks on the content
+                       beneath it (the exact class of bug the action bars already
+                       hit: js/main.js:2513 pins 'pointerEvents = "all"' inline).
+           REVEAL      only inside '.be-active-layer', on hover AND on
+                       focus-within. Same scope the action bars now use
+                       (js/print_styles.js:1060) — one definition of "the layer
+                       you're working on", two consumers.
+           NEVER       locked layer, locked body-mode, print. A locked section
+                       shows 'cursor: not-allowed' above; a grab handle there
+                       would contradict it. */
+      .be-drag-handle {
+          position: absolute !important;
+          /* THE CENTRE of the WRAPPER box. Being a direct child of the wrapper
+             (not of .print-section-container) is what makes "centred" mean the
+             section rather than whatever content it happens to hold, and
+             margin:auto + inset:0 does it without knowing either size — no
+             transform, so the wrapper's own transforms (responsive scale) stay
+             untouched. */
+          inset: 0 !important;
+          margin: auto !important;
+          width: 34px !important;
+          height: 26px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          /* Square, not a pill: it reads as a tool handle, matching the tier
+             geometry the rest of the chrome uses. */
+          border-radius: 4px !important;
+          padding: 0 !important;
+          background: #0C0907 !important;
+          border: 1px solid #4A3E2B !important;
+          color: #C6A15B !important;
+          /* THE GRAB CURSOR — the sentence's "the user should be able to drag
+             the section from there". 'grab' arms, 'grabbing' is the held state
+             (the body-level rule below wins while a drag is committed). */
+          cursor: grab !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transition: opacity 0.12s ease-in-out, visibility 0.12s !important;
+          /* The handle is chrome, not sheet content: it must sit above the
+             section's own text (wrappers stack at z-index 10, action bars at 20)
+             and above the wrapper the hover raised to 700000 — hence above that. */
+          z-index: 700002 !important;
+          /* No box-shadow, and that is deliberate (ISSUE_shadows.md): the whole
+             complaint about the old affordance was a *shadow filter* painted over
+             the section. A drop-shadow here would re-introduce the same class of
+             artifact at the centre of the page. */
+          box-shadow: none !important;
+          filter: none !important;
+          line-height: 0 !important;
+      }
+      .be-drag-handle svg {
+          display: block;
+          pointer-events: none;
+      }
+
+      /* REVEAL: active layer only, on hover or keyboard focus. */
+      .be-active-layer .be-section-wrapper:hover .be-drag-handle,
+      .be-active-layer .be-shape-wrapper:hover .be-drag-handle,
+      .be-active-layer .be-section-wrapper:focus-within .be-drag-handle,
+      .be-active-layer .be-shape-wrapper:focus-within .be-drag-handle {
+          visibility: visible !important;
+          opacity: 1 !important;
+          /* The one place the handle is clickable. 'auto' (not 'all'): it is not
+             a stacking-context question, and 'auto' keeps the hit-test on the
+             normal path so the pointerdown reaches the delegated drag engine. */
+          pointer-events: auto !important;
+      }
+
+      /* NEVER: locked layers and locked body modes. Listed explicitly rather
+         than left to the rest state because a locked wrapper can still be
+         :hover and still contain focus; the ':not()' form would need one guard on
+         every arm above instead of one block here. */
+      body.be-lock-sections .be-drag-handle,
+      body.be-lock-shapes .be-drag-handle,
+      .be-layer-locked .be-drag-handle {
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+      }
+
+      /* HELD STATE: while a drag is committed, the handle goes away.
+         The source wrapper is STILL :hover under the pointer, so without this
+         its handle rides along in the middle of the dimmed source — one grip
+         left behind on a section that is already being carried. The cursor fact
+         is stated here too, so "grab arms / grab holds" lives in one block.
+
+         THE SELECTOR LIST IS NOT COSMETIC. The reveal rule above is
+         .be-active-layer .be-section-wrapper:hover .be-drag-handle — four
+         class-level selectors, specificity (0,4,0) — and BOTH rules are
+         !important, so a shorter held-state rule loses the cascade and the
+         handle simply stays visible: html body.be-dragging .be-drag-handle is
+         (0,2,2) and even html body.be-dragging .be-section-wrapper
+         .be-drag-handle is (0,3,2). Each arm below therefore repeats the
+         reveal rule's own class chain and ADDS body.be-dragging, giving
+         (0,5,2) — the reveal it overrides, plus one. The ghost needs no arm: it
+         is appended to document.body, so no .be-active-layer ancestor matches
+         it and the base hidden state already applies to its cloned handle. */
+      html body.be-dragging .be-active-layer .be-section-wrapper:hover .be-drag-handle,
+      html body.be-dragging .be-active-layer .be-shape-wrapper:hover .be-drag-handle,
+      html body.be-dragging .be-active-layer .be-section-wrapper:focus-within .be-drag-handle,
+      html body.be-dragging .be-active-layer .be-shape-wrapper:focus-within .be-drag-handle {
+          cursor: grabbing !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+      }
+
+      /* Print: never on the page. Also carried by the sheet's own print hide
+         list (js/print_styles.js) — belt and braces, because this stylesheet is
+         injected by dnd.js and a page that skips it must still not print the
+         handle. */
+      @media print {
+          .be-drag-handle {
+              display: none !important;
+              visibility: hidden !important;
+              opacity: 0 !important;
+          }
+      }
   `;
   document.head.appendChild(style);
 }
@@ -1074,6 +1402,10 @@ if (typeof module !== 'undefined' && module.exports) {
     stopAutoScroll,
     isElementLocked,
     isInteractiveTarget,
+    isDragHandle,
+    ensureDragHandle,
+    syncDragHandles,
+    watchDragHandles,
     snapToGrid,
     findAlignmentGuides,
     scheduleAutosave,
@@ -1084,6 +1416,13 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
   window.initDragAndDrop = initDragAndDrop;
   window.injectDnDStyles = injectDnDStyles;
+  /* The handle helpers (isDragHandle / ensureDragHandle / syncDragHandles /
+     watchDragHandles) are deliberately NOT published on `window`: the drag
+     engine consumes them itself (initDragAndDrop), the unit suite reaches them
+     through module.exports, and this module's own predicates
+     (isElementLocked, isInteractiveTarget) follow the same rule. Four
+     zero-caller globals is exactly the re-rot the dead_exports_20260910 guard
+     exists to refuse. */
   window.snapToGrid = snapToGrid;
   window.findAlignmentGuides = findAlignmentGuides;
   window.scheduleAutosave = scheduleAutosave;

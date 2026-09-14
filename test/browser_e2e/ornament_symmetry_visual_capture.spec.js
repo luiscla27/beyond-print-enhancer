@@ -87,6 +87,11 @@ const ORNAMENT_SURFACES_JS = {
   plain: [
     ".be-feedback",
     ".be-section-actions",
+    // the centred drag handle is in-sheet chrome (ISSUE_drag_and_drop.md) and is
+    // classified here exactly as the action bar beside it is; the mirror drifts if
+    // js/ui_theme.js's ORNAMENT_SURFACES.plain changes without this list (see the
+    // note on this object).
+    ".be-drag-handle",
     ".be-more-options-button",
     ".be-layer-item-card",
     ".be-modal-tags",
@@ -637,7 +642,7 @@ describe("ornament + symmetry visual captures", function () {
           };
           const groups = [
             ["in-sheet section actions", "#print-layout-wrapper .be-section-actions button"],
-            ["in-sheet more-options", ".be-more-options-button"],
+            ["in-sheet more-options", ".be-more-options-button"],            ["in-sheet drag handle", ".be-drag-handle"],
             ["in-sheet section wrappers", ".print-section-container"],
             ["modal tag pills", ".be-modal-tags button"],
             ["modal tabs", ".be-modal-tabs button"],

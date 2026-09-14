@@ -63,6 +63,12 @@ describe('AC-5 — lock semantics are honest (U-7)', function () {
 
   it('the injected chrome keeps a locked layer\'s controls reachable', function () {
     const css = read('print_styles.js');
+    // Negative assertions run against the CSS with comments stripped: this file
+    // EXPLAINS the removed rules by naming their selectors, and a source-text
+    // check cannot tell a rule from a sentence about one.
+    const cssRulesOnly = css
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
     // Rotate/resize affordances are hidden while THEIR OWN layer is locked …
     //
     // This assertion used to require the selector `body[class*="be-lock-"] …`, which is
@@ -89,10 +95,41 @@ describe('AC-5 — lock semantics are honest (U-7)', function () {
       'the handle rules must NOT key off the BODY lock state: any layer being locked would ' +
         'then hide every wrapper\'s handles — the defect this test previously pinned',
     );
-    // … but the action bar stays visible and clickable.
+    // … but the action bar is NOT revealed by the lock classes any more.
+    //
+    // This assertion used to require `body[class*="be-lock-"] … .be-section-actions
+    // { opacity: 1 !important }` — i.e. it Pinned the defect ISSUE_hover.md reports:
+    // that selector matches when ANY layer is locked, and the product keeps every
+    // layer but one locked, so hovering ANY section revealed its buttons, "on ALL
+    // sections regardless of their status". The reachability it was written for
+    // (U-7/U-11: a locked layer whose bar was unreachable) is preserved differently:
+    // `.be-active-layer` is set on the layer container (js/dom/layer_manager.js
+    // applyInsertionTarget) independently of `isLocked`, so the layer you are
+    // working on always reveals — locked or not — while inactive layers do not.
     assert.ok(
-      /body\[class\*="be-lock-"[^{]*\.be-section-actions[\s\S]{0,120}opacity:\s*1 !important/.test(css),
-      'locked layers keep their action bar visible',
+      !/body\[class\*="be-lock-"[^{]*\.be-section-actions/.test(cssRulesOnly),
+      'no body-lock class may reveal an action bar: it names "any layer locked", ' +
+        'which is always true, so it showed buttons on inactive layers (ISSUE_hover.md)',
+    );
+    assert.ok(
+      !/\.be-layer-locked[^{]*\.be-section-actions/.test(cssRulesOnly),
+      'a locked layer no longer gets its own reveal rule — the active-layer rule is the ONE mechanism',
+    );
+    assert.ok(
+      /\.be-active-layer \.be-section-wrapper:hover \.be-section-actions,[\s\S]{0,160}?opacity:\s*1[\s\S]{0,80}?pointer-events:\s*auto !important/.test(
+        css,
+      ),
+      'the ACTIVE layer reveals its action bar on hover',
+    );
+    // … and the hidden bar must be UNHITTABLE, not merely transparent: the bar is
+    // built with an inline pointerEvents="all" (js/main.js:2513), which outranks a
+    // non-important stylesheet rule, so a non-important `none` would leave dead
+    // buttons over the section.
+    assert.ok(
+      /\.be-section-wrapper:hover \.be-section-actions,[\s\S]{0,80}?opacity:\s*0;[\s\S]{0,80}?pointer-events:\s*none !important/.test(
+        css,
+      ),
+      'a non-active layer\'s bar is transparent AND out of the hit-test',
     );
     // … and the layer must not be made inert (that was the U-7 root cause:
     // an inline pointer-events:none killed hover, making the lock unescapable).

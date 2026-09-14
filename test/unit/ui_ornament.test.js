@@ -125,6 +125,12 @@ describe("AC-1 — double hairline with a leather gap, per full surface", functi
       buffer: ["12px 0 0 #120D0A", "13px 0 0 #4A3E2B"],
       inner: "#4A3E2B",
       after: "#print-enhance-controls::before",
+      // ISSUE_shadows.md (2026-09-14): the owner asked for the panel's shadows
+      // to go. What goes is the BLURRED LIFT (`0 6px 24px`, TOKENS.shadowPanel);
+      // what stays is the frame, which only looks like a shadow because
+      // box-shadow is how a zero-blur ring is painted. Pinned here rather than
+      // in a chrome-only test because this is the file that knows the difference.
+      noLift: true,
     },
     {
       name: "layer manager",
@@ -132,6 +138,7 @@ describe("AC-1 — double hairline with a leather gap, per full surface", functi
       buffer: ["-12px 0 0 #120D0A", "-13px 0 0 #4A3E2B"],
       inner: "#4A3E2B",
       after: "#print-enhance-layer-manager::before",
+      lift: "0 6px 24px rgba(0,0,0,0.55)",
     },
     {
       name: "modal shell",
@@ -139,6 +146,7 @@ describe("AC-1 — double hairline with a leather gap, per full surface", functi
       buffer: [],
       inner: "#6B5A36",
       after: ".be-modal::before",
+      lift: "0 6px 24px rgba(0,0,0,0.55)",
     },
   ];
 
@@ -159,7 +167,123 @@ describe("AC-1 — double hairline with a leather gap, per full surface", functi
       for (const b of s.buffer) {
         assert.ok(block.includes(b), s.name + " keeps its workbench buffer entry " + b);
       }
+      // ISSUE_shadows.md: the frame survives, the LIFT does not — and only for
+      // the surface the owner named. Asserted per surface from the SAME data
+      // table so a future re-add of shadowPanel to the control panel fails here
+      // instead of silently passing a "three surfaces, one string" count test.
+      if (s.noLift) {
+        assert.ok(
+          !/0 6px 24px/.test(block),
+          s.name + " casts NO blurred lift (ISSUE_shadows.md): " + block,
+        );
+        assert.ok(
+          !/rgba\(0,\s*0,\s*0/.test(block),
+          s.name + " box-shadow list holds no translucent black at all (ISSUE_shadows.md)",
+        );
+      }
+      if (s.lift) {
+        assert.ok(
+          block.includes(s.lift),
+          s.name + " keeps its lift — the complaint named only the control panel",
+        );
+      }
     }
+  });
+
+  it("leaves no blurred shadow on the control panel ANYWHERE in the sheet (ISSUE_shadows.md)", function () {
+    // The frame test above reads the ornament block. This one is the whole
+    // cascade: the panel used to be written by FOUR separate declarations
+    // (inline in js/controls.js, the shared chrome surface, the workbench
+    // buffer, the ornament ring stack), so checking one of them proves nothing.
+    const controls = require("../../js/controls.js");
+    assert.ok(controls, "js/controls.js still loads");
+    // Comments are allowed to name the deleted value; code is not. And the
+    // check is aimed at the PANEL, not at every boxShadow in the file: the
+    // floating colour-picker popup keeps its own inline lift (js/controls.js
+    // ~:521) — that is a different surface, it is tiered `quiet` by the ornament
+    // track, and the complaint named `#print-enhance-controls`.
+    const src = require("fs").readFileSync(
+      require("path").resolve(__dirname, "../../js/controls.js"),
+      "utf8",
+    );
+    // Comments are allowed to name the deleted value; code is not.
+    const codeOnly = src
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    const panelBuild = codeOnly.slice(
+      codeOnly.indexOf('container.id = "print-enhance-controls"'),
+    );
+    const panelBody = panelBuild.slice(0, panelBuild.indexOf("mouseenter"));
+    assert.ok(
+      panelBody.length > 100,
+      "the panel's construction block was found (test must not pass vacuously)",
+    );
+    assert.ok(
+      !/boxShadow/.test(panelBody),
+      "js/controls.js sets no inline boxShadow on the panel — an inline value " +
+        "outranks every non-important rule in the theme sheet",
+    );
+
+    const re = /([^{}]*#print-enhance-controls[^{}]*)\{([^}]*)\}/g;
+    // A control-panel `box-shadow` entry is legal here ONLY if it paints no
+    // blur: a zero-blur box-shadow is a FRAME (rule A's 1px blind-tool ring and
+    // the zero-blur workbench buffer, both pinned by this track), while a blurred
+    // one is a cast shadow — the thing ISSUE_shadows.md asks removed. Grammar:
+    // <x> <y> [blur] [spread] <color>, with blur/spread omitted-able.
+    const LEN = /^[+-]?\d+(px)?$/;
+    const ZERO = /^[+-]?0(px)?$/;
+    const splitEntries = (text) => {
+      const out = [];
+      let depth = 0;
+      let cur = "";
+      for (const ch of text) {
+        if (ch === "(") depth += 1;
+        if (ch === ")") depth -= 1;
+        if (ch === "," && depth === 0) {
+          out.push(cur);
+          cur = "";
+        } else cur += ch;
+      }
+      out.push(cur);
+      return out.map((s) => s.trim()).filter(Boolean);
+    };
+    let m;
+    let entries = 0;
+    while ((m = re.exec(CSS))) {
+      const decls = m[2].replace(/\/\*[\s\S]*?\*\//g, "");
+      const shadow = decls.match(/box-shadow:\s*([^;]+)/);
+      if (!shadow) continue;
+      const list = shadow[1].replace(/\s*!\s*important\s*$/, "");
+      for (const entry of splitEntries(list)) {
+        assert.notStrictEqual(
+          entry,
+          "none",
+          "the panel must keep its frame rings — `none` would delete the " +
+            "ornament track pins this file exists for",
+        );
+        const tokens = entry.split(/\s+/).filter(Boolean);
+        const lengths = tokens.filter(
+          (t) => LEN.test(t) && !/^rgba?\(/.test(t),
+        );
+        assert.ok(
+          lengths.length >= 2,
+          "unparsable control-panel shadow entry: '" + entry + "'",
+        );
+        const blur = lengths.length >= 3 ? lengths[2] : "0";
+        assert.ok(
+          ZERO.test(blur),
+          "control-panel shadow entry has ZERO blur (a frame, not a cast " +
+            "shadow) — ISSUE_shadows.md: '" + entry + "'",
+        );
+        entries += 1;
+      }
+    }
+    assert.ok(entries >= 3, "the panel still declares its frame rings, so this test cannot pass vacuously (saw " + entries + ")");
+    assert.strictEqual(
+      (CSS.match(/#print-enhance-controls/g) || []).length > 0,
+      true,
+      "the panel is still themed at all — this test must not pass vacuously",
+    );
   });
 
   it("insets rule C 6px from the border box (inset 5px of the 1px-bordered padding box)", function () {

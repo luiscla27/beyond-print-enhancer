@@ -884,18 +884,32 @@ function enforceFullHeight() {
       body.be-lock-shapes .be-shape-wrapper .print-section-resize-handle {
           display: none !important;
       }
-      /* …and its action bar stays reachable while locked. */
-      .be-layer-locked .be-section-wrapper:hover .be-section-actions,
-      .be-layer-locked .be-shape-wrapper:hover .be-section-actions {
-          opacity: 1 !important;
-          pointer-events: auto !important;
-      }
+      /* …and the lock's state is signalled on the wrapper itself (opacity +
+         not-allowed cursor above). The action bar is NOT revealed here:
+         ISSUE_hover.md — hover-revealed actions belong to the ACTIVE layer
+         ONLY, for every layer state, so the one reveal rule below (scoped to
+         .be-active-layer) is the only mechanism. */
 
+      /* ISSUE_drag_and_drop.md (2026-09-14): the GREEN HOVER GLOW is gone. This rule
+         used to paint filter: drop-shadow(0 0 15px #28a745) twice over the hovered
+         section — a filter repaints the whole subtree (every border, background and
+         piece of artwork in the section), which is what the report is about: "the UX
+         of that is extremely bad". The affordance is now a CENTRED NINE-DOT DRAG
+         HANDLE on the active layer's sections, and the handle itself — its box, skin,
+         cursor and reveal — lives with the drag engine that consumes it
+         (js/dnd.js injectDnDStyles), one owner for one component.
+
+         What stays HERE is the part only this file can own: the WRAPPER STACKING. A
+         handle can only sit above the sheet's other sections if the hovered wrapper is
+         raised, and this is the one cascade slot that reliably beats the wrapper's own
+         z-index: 10 / .be-active-wrapper { z-index: 100004 } above it. The raise
+         therefore keeps the removed glow's exact value and selector list — the
+         ordering behaviour is unchanged, only the painted effect is different. The
+         glow's transition: filter 0.3s ease-in-out is deliberately NOT replaced:
+         animating a filter animates the whole subtree, the cost this issue is about. */
       .be-active-layer .be-section-wrapper:hover,
       .be-active-layer .be-shape-wrapper:hover,
       .be-focus-highlight-hover {
-          filter: drop-shadow(0 0 15px #28a745) drop-shadow(0 0 15px #28a745) !important;
-          transition: filter 0.3s ease-in-out;
           z-index: 700000 !important;
       }
 
@@ -941,12 +955,12 @@ function enforceFullHeight() {
       body[class*="be-lock-"] .be-section-wrapper {
           cursor: not-allowed;
       }
-      /* The action bars stay reachable on a locked layer. */
-      body[class*="be-lock-"] .be-shape-wrapper:hover .be-section-actions,
-      body[class*="be-lock-"] .be-section-wrapper:hover .be-section-actions {
-          opacity: 1 !important;
-          pointer-events: auto !important;
-      }
+      /* The action bar is NOT revealed on a locked layer (ISSUE_hover.md):
+         hover-revealed actions belong to the ACTIVE layer only — the single
+         .be-active-layer rule is the ONE mechanism, and these body-level
+         lock classes name "ANY layer is locked" (the product keeps every
+         layer but one locked), so an arm here would reveal actions on
+         inactive layers again. */
       /* Locked state cue: dim the layer element itself. */
       .be-layer-locked {
           opacity: 0.5;
@@ -1037,12 +1051,37 @@ function enforceFullHeight() {
       .be-section-wrapper * {
           cursor: auto;
       }
+      /* Rest state: NO bar, and NOT CLICKABLE. !important is load-bearing
+         here, not decoration: the bar is created with an inline
+         pointerEvents = "all" (js/main.js:2513) to win back clicks from the
+         wrapper's own pointer handling, and an inline declaration outranks a
+         NON-important stylesheet rule at any specificity. Without it, an
+         inactive layer's bar is invisible (opacity 0) yet fully hittable —
+         25×32px dead buttons floating over the section, which is precisely the
+         "buttons on sections regardless of their status" complaint
+         (ISSUE_hover.md) answered halfway. */
       .be-section-wrapper:hover .be-section-actions,
       .be-shape-wrapper:hover .be-section-actions {
           opacity: 0;
-          pointer-events: none;
+          pointer-events: none !important;
       }
 
+      /* THE REVEAL IS SCOPED TO THE ACTIVE LAYER, AND ONLY HERE.
+         (ISSUE_hover.md: "the hover event of the mouse should show the
+         class="be-section-actions" that are on the ACTIVE layer, currently the
+         buttons are being displayed on ALL sections regardless of their
+         status.")
+
+         Two other rules used to reveal the bar — .be-layer-locked …:hover and
+         body[class*="be-lock-"] …:hover — and both are GONE rather than
+         narrowed. They were written for a different complaint (the locked-layer
+         bar being unreachable, ui_ux_audit AC/U-11), but between them they made
+         the bar appear on every layer, because a locked layer is either the
+         active one (first rule) or the body is in that class's lock mode (the
+         other). .be-active-layer is the ONE writer of "the layer you're
+         working on" (js/dom/layer_manager.js:1329 applyInsertionTarget), so it
+         is the only scope the reveal may use. The same class scopes the drag
+         handle (js/dnd.js) — one definition, two consumers. */
       .be-active-layer .be-section-wrapper:hover .be-section-actions,
       .be-active-layer .be-shape-wrapper:hover .be-section-actions {
           opacity: 1;
@@ -1616,6 +1655,7 @@ function enforceFullHeight() {
              test/unit/print_hides_own_surfaces.test.js. */
           .print-section-header, 
           .be-section-actions, 
+          .be-drag-handle,
           .print-section-resize-handle,
           .be-rotation-handle,
           .be-shapes-mode-btn,

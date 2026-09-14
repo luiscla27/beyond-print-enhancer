@@ -182,6 +182,11 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
    layout auto-saves ~1s after the last drop ("Layout saved" toast). Arrow
    keys nudge the selected section (1px; `Shift` = one 16px step) and the
    properties panel shows numeric Position X/Y inputs. **What is selected is one thing**: picking a section on the sheet, picking it from the layer panel, or picking a shape all move the same selection, so the outline, the layer row and the properties panel cannot disagree — and clearing clears all three. See `docs/selection-model-ia-20260910/` for this track's visual-gate record and `docs/drag-ux-20260909/` for the drag engine's.
+   Since 2.0.1 the move affordance is **shown, not guessed**: hovering a section
+   on the active layer puts a nine-dot grip at its centre, and the section drags
+   from there. It replaces a green `drop-shadow` that washed the whole section
+   when you hovered it (`docs/sheet-affordances-20260914/`). Dragging the section
+   body itself still works exactly as before.
 2. **Resizable Sections**: Adjust section width and height to fit your custom layout.
 3. **Properties Panel**: A centralized panel to manage the active section's font size, compact mode, and border style in real-time.
 4. **Pixel-based Font Scaling**: Granular control over section font sizes (8px to 30px) with proportional scaling for headers and icons.

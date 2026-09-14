@@ -118,6 +118,12 @@ const ORNAMENT_SURFACES = {
   plain: [
     ".be-feedback",
     ".be-section-actions",
+    // The centred drag handle is in-sheet chrome, in the same rank as the
+    // section action bar it sits beside (ISSUE_drag_and_drop.md). Declared here
+    // so the ornament hierarchy names it rather than leaving it unclassified:
+    // ornamenting a node that floats over the CONTENT would be the "fractal
+    // framing" failure muse_review_2 step 2 named.
+    ".be-drag-handle",
     ".be-more-options-button",
     ".be-layer-item-card",
     ".be-modal-tags",
@@ -273,7 +279,20 @@ const THEME_CSS = `
 }
 
 /* ---------- shared chrome surface language (leather grounds + seams) ---------- */
-#print-enhance-controls,
+#print-enhance-controls {
+  background: ${TOKENS.groundPanel} !important;
+  border: 1px solid ${TOKENS.seamDeep} !important;
+  border-radius: 12px !important;
+  /* ISSUE_shadows.md: NO box-shadow at all — the shared block used to carry
+     TOKENS.shadowPanel here for all three panels; the two that were not
+     complained about keep it, this one does not. */
+  font-family: ${TOKENS.fontTool};
+  max-height: calc(100vh - 20px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: ${TOKENS.goldShadow} transparent;
+}
 #print-enhance-layer-manager,
 .be-layer-panel {
   background: ${TOKENS.groundPanel} !important;
@@ -293,6 +312,32 @@ const THEME_CSS = `
   scrollbar-width: thin;
   scrollbar-color: ${TOKENS.goldShadow} transparent;
 }
+/* ---------- ISSUE_shadows.md: the control panel casts NO shadow ----------
+ * The owner's words: "The shadows on #print-enhance-controls look bad, remove
+ * them. they aren't necessary." FOUR declarations piled blurred black onto this
+ * one element, which is why calming just one of them never worked: each is
+ * !important and the LAST one in the sheet wins, so touching an earlier one
+ * only lets a later one show through.
+ *   1. an INLINE 0 4px 15px rgba(0,0,0,0.5) set in js/controls.js — deleted AT
+ *      THE SOURCE, because an inline declaration outranks anything that is not
+ *      also !important and was therefore invisible to every previous attempt;
+ *   2. the shared chrome lift shadowPanel (0 6px 24px) directly
+ *      above — the only surface that keeps it is the layer manager / layer
+ *      panel, so the entry is now inert for this id (3 and 4 both name it later
+ *      and outrank it);
+ *   3. the same lift again inside the sheet-edge workbench buffer below;
+ *   4. the same lift a third time inside the ornament ring stack emitted by
+ *      ornamentSurface() — the one that actually painted.
+ * shadowPanel is now ABSENT from every box-shadow list naming this panel
+ * rather than being overridden with none: a final box-shadow: none would
+ * have looked tidier but would also have deleted the panel's ornament frame,
+ * which is the thing track ornament_symmetry_20260910 exists to pin.
+ * WHAT SURVIVES is not shadow: a box-shadow with zero offset-blur is a frame.
+ * The panel still gets 0 0 0 1px #0C0907 (rule A, the blind tool), the
+ * 12px 0 0 / 13px 0 0 solid workbench buffer, rule B (its 1px hairGold border)
+ * and rule C / the corner Ls. background, border, border-radius and the
+ * hover transform are untouched. Net effect: the leather tray keeps its tooled
+ * edge and stops floating a black smudge over the bone sheet. */
 .be-layer-panel::-webkit-scrollbar,
 .be-ctl-scroll::-webkit-scrollbar {
   width: 8px;
@@ -316,9 +361,33 @@ const THEME_CSS = `
  * ground-well strip + 1px gold hairline on its sheet-facing side, so the
  * visible order is leather > dark well > hairline > bone sheet. The sheets
  * sit exactly at the tray edges (measured: sheet bone starts at the panel
- * right edge and ends at the layer-manager left edge). */
+ * right edge and ends at the layer-manager left edge).
+ *
+ * ISSUE_shadows.md (2026-09-14) — the control panel's entry lost its
+ * shadowPanel lift and now carries ONLY the buffer. FOUR blurred
+ * declarations used to pile up on #print-enhance-controls, each !important,
+ * so the last one in the sheet won and calming any single earlier one changed
+ * nothing:
+ *   1. an INLINE 0 4px 15px rgba(0,0,0,0.5) in js/controls.js — deleted AT THE
+ *      SOURCE, an inline declaration outranks anything not also !important and
+ *      was therefore invisible to every previous attempt;
+ *   2. the shared chrome lift in the surface block above (removed here too);
+ *   3. this buffer rule;
+ *   4. the ornament ring stack emitted by ornamentSurface() — the one that
+ *      actually painted.
+ * shadowPanel is now absent from every list naming this panel rather than
+ * overridden with box-shadow: none: a final none would have looked tidier
+ * and would also have deleted the panel's ornament frame, which is exactly what
+ * track ornament_symmetry_20260910 exists to pin. What survives here is NOT a
+ * shadow — a box-shadow with zero offset-blur is a frame: rule A (the 1px
+ * #0C0907 blind tool), rules B and C (the hairlines) and the corner Ls all
+ * stand, background / border / border-radius / the hover transform are
+ * untouched. Net effect: the leather tray keeps its tooled edge and stops
+ * floating a black smudge over the bone sheet. The layer manager keeps its
+ * lift — it was not part of the complaint, and the two trays must not be
+ * silently re-tiered by a fix aimed at one of them. */
 #print-enhance-controls {
-  box-shadow: ${TOKENS.shadowPanel}, 12px 0 0 ${TOKENS.groundWell}, 13px 0 0 ${TOKENS.hairGold} !important;
+  box-shadow: 12px 0 0 ${TOKENS.groundWell}, 13px 0 0 ${TOKENS.hairGold} !important;
 }
 #print-enhance-layer-manager {
   box-shadow: ${TOKENS.shadowPanel}, -12px 0 0 ${TOKENS.groundWell}, -13px 0 0 ${TOKENS.hairGold} !important;
@@ -1751,7 +1820,14 @@ div[style*="z-index: 20000"] label {
 
 ${ornamentSurface(
   ORNAMENT_SURFACES.full[0],
-  `${TOKENS.shadowPanel}, 12px 0 0 ${TOKENS.groundWell}, 13px 0 0 ${TOKENS.hairGold}`,
+  // ISSUE_shadows.md: `${TOKENS.shadowPanel}` is NOT in this list. The
+  // ornament's own ring stack was the LAST of the four declarations and
+  // therefore the one that actually painted, which is why removing it anywhere
+  // else in the sheet changed nothing. Rules A (the 1px #0C0907 blind tool
+  // `0 0 0 1px`, emitted by ornamentSurface itself) and the zero-blur workbench
+  // buffer stay: a shadow with no blur is the frame, and the frame is what this
+  // track exists to pin. The other two full surfaces keep their lift.
+  `12px 0 0 ${TOKENS.groundWell}, 13px 0 0 ${TOKENS.hairGold}`,
   ORNAMENT_CORNERS.top,
   ORNAMENT.innerPanel,
 )}

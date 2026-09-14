@@ -14,8 +14,10 @@
  *      be-layer-locked + dimmed, body lock class applied; wrappers inside a
  *      locked layer are not armed for dragging).
  *   4. The active-section / hover glow highlight styles are injected
- *      (green hover drop-shadow, red active-wrapper glow) and the print CSS
- *      strips them.
+ *      (DELIBERATELY CHANGED by ISSUE_drag_and_drop.md: the green hover
+ *      drop-shadow is asserted GONE and its replacement, the centred nine-dot
+ *      drag handle, is asserted live instead; the gold active-wrapper selection
+ *      glow stays) and the print CSS strips them.
  *   5. The Layer Management panel is minimizable/restorable via its header
  *      button.
  *
@@ -206,14 +208,199 @@ describe("PR #33 Shape glow / wrapper dragging + layer safety (Playwright e2e)",
         css.includes(".be-active-layer .be-section-wrapper:hover"),
         "scoped hover rule present",
       );
+      // DELIBERATELY REVERSED (ISSUE_drag_and_drop.md, 2026-09-14): this test
+      // used to REQUIRE the green hover glow. The owner rejected it — "There's a
+      // 'green' shadow filter displayed when hovering a section that's allowed to
+      // be dragged and dropped. The UX of that is extremely bad" — because a
+      // `filter` on the hovered wrapper repaints the whole subtree. It is asserted
+      // GONE here, against the live composed stylesheet rather than the source
+      // text, so no rule from any injection point can bring it back unnoticed.
       assert.ok(
-        css.includes("drop-shadow(0 0 15px #28a745)"),
-        "green hover glow present",
+        !/filter:[^;}]*drop-shadow\(0 0 15px #28a745\)/.test(
+          css.replace(/\/\*[\s\S]*?\*\//g, ""),
+        ),
+        "no rule paints the green hover glow any more",
+      );
+      // …and its replacement is live on the page: one centred nine-dot handle per
+      // section, invisible at rest, revealed only by the active layer.
+      const atRest = await page.evaluate(() => {
+        const sec = document.querySelector(
+          ".be-active-layer .be-section-wrapper:not(.be-shape-wrapper)",
+        );
+        const h = sec && sec.querySelector(":scope > .be-drag-handle");
+        if (!h) return { present: false };
+        const cs = getComputedStyle(h);
+        const r = h.getBoundingClientRect();
+        const w = sec.getBoundingClientRect();
+        const countHandles = () =>
+          document.querySelectorAll(".be-section-wrapper > .be-drag-handle").length;
+        return {
+          present: true,
+          dots: h.querySelectorAll("circle").length,
+          // centred on the WRAPPER box, not on whatever content it holds
+          offCentreX: Math.abs(r.left + r.width / 2 - (w.left + w.width / 2)),
+          offCentreY: Math.abs(r.top + r.height / 2 - (w.top + w.height / 2)),
+          directChildOfWrapper: h.parentElement === sec,
+          visibility: cs.visibility,
+          pointerEvents: cs.pointerEvents,
+          boxShadow: cs.boxShadow,
+          filter: cs.filter,
+          handles: countHandles(),
+          wrappers: document.querySelectorAll(".be-section-wrapper").length,
+        };
+      });
+      assert.ok(atRest.present, "the active layer's section carries a drag handle");
+      assert.strictEqual(atRest.dots, 9, "the handle is the NINE-dot grip");
+      assert.ok(atRest.directChildOfWrapper, "it is a direct child of the wrapper");
+      assert.ok(
+        atRest.offCentreX < 2 && atRest.offCentreY < 2,
+        `the handle sits at the CENTRE of the section (off by ${atRest.offCentreX},${atRest.offCentreY})`,
+      );
+      assert.strictEqual(atRest.visibility, "hidden", "invisible at rest");
+      assert.strictEqual(atRest.pointerEvents, "none", "and unhittable at rest");
+      assert.ok(
+        atRest.boxShadow === "none" || !/rgba?\(/.test(atRest.boxShadow),
+        "the handle casts no shadow (ISSUE_shadows.md): " + atRest.boxShadow,
+      );
+      assert.ok(
+        atRest.filter === "none" || !/drop-shadow/.test(atRest.filter),
+        "the handle paints no glow: " + atRest.filter,
+      );
+      assert.strictEqual(
+        atRest.handles,
+        atRest.wrappers,
+        "one handle per section wrapper — none missing, none doubled",
+      );
+
+      /* ---- THE REVEAL, measured with a REAL pointer hover -----------------
+         Synthetic PointerEvents (the other tests in this file) do NOT move the
+         browser's :hover state, so a reveal assertion cannot be faked in-page.
+         `pickTopMost` marks its chosen wrapper with data-be-probe so every later
+         evaluate() reads THE SAME element it hovered — and returns the top-most
+         candidate at its own centre point, so the mouse really lands on it rather
+         than on whatever section overlaps it. ---- */
+      const probeHover = async (predicate) => {
+        const picked = await page.evaluate((pred) => {
+          const all = Array.from(
+            document.querySelectorAll(".be-section-wrapper"),
+          ).filter(
+            pred === "active"
+              ? (el) =>
+                  el.closest(".be-active-layer") &&
+                  !el.classList.contains("be-shape-wrapper")
+              : // A layer can be BOTH the insertion target and locked (the two
+                // are independent concepts — js/dom/layer_manager.js
+                // applyInsertionTarget vs toggleLayerLock), so the "inactive"
+                // probe must exclude the active layer or it would assert the
+                // reveal rule and its negation on the same element.
+                (el) => el.closest(".be-layer-locked") && !el.closest(".be-active-layer"),
+          );
+          for (const el of all) {
+            const r = el.getBoundingClientRect();
+            if (r.width < 40 || r.height < 40) continue;
+            if (r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) continue;
+            const hit = document.elementFromPoint(
+              r.left + r.width / 2,
+              r.top + r.height / 2,
+            );
+            if (!hit || !(hit === el || el.contains(hit))) continue;
+            document
+              .querySelectorAll("[data-be-probe]")
+              .forEach((n) => n.removeAttribute("data-be-probe"));
+            el.setAttribute("data-be-probe", pred);
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          }
+          return null;
+        }, predicate);
+        if (!picked) return null;
+        await page.mouse.move(picked.x, picked.y);
+        await page.waitForTimeout(250);
+        return page.evaluate(() => {
+          const sec = document.querySelector("[data-be-probe]");
+          if (!sec) return null;
+          const read = (node) => {
+            if (!node) return null;
+            const cs = getComputedStyle(node);
+            return {
+              visibility: cs.visibility,
+              opacity: cs.opacity,
+              pointerEvents: cs.pointerEvents,
+              cursor: cs.cursor,
+              boxShadow: cs.boxShadow,
+            };
+          };
+          return {
+            hovered: sec.matches(":hover"),
+            handle: read(sec.querySelector(":scope > .be-drag-handle")),
+            bar: read(sec.querySelector(":scope > .be-section-actions")),
+          };
+        });
+      };
+
+      const onActive = await probeHover("active", "active layer");
+      if (onActive) {
+        assert.ok(
+          onActive.hovered,
+          "the pointer really hovered the active-layer wrapper (otherwise the " +
+            "assertions below prove nothing)",
+        );
+        assert.ok(onActive.handle, "the handle exists to be revealed");
+        assert.strictEqual(onActive.handle.visibility, "visible", "hovering the ACTIVE layer reveals the handle");
+        assert.strictEqual(onActive.handle.opacity, "1", "fully, not a ghost");
+        assert.strictEqual(onActive.handle.pointerEvents, "auto", "and it is grabbable");
+        assert.strictEqual(onActive.handle.cursor, "grab", "with a grab cursor");
+        // ISSUE_hover.md, the positive half: the active layer's bar reveals too.
+        if (onActive.bar) {
+          assert.strictEqual(onActive.bar.opacity, "1", "the active layer's action bar reveals on hover");
+          assert.strictEqual(onActive.bar.pointerEvents, "auto", "and is clickable");
+        }
+      }
+
+      // ISSUE_hover.md, the negative half: hovering an INACTIVE (locked) layer's
+      // section reveals NOTHING. Buttons used to appear "on ALL sections
+      // regardless of their status".
+      const onLocked = await probeHover("locked", "locked layer");
+      if (onLocked) {
+        assert.ok(onLocked.hovered, "the pointer really hovered the locked wrapper");
+        if (onLocked.handle) {
+          assert.strictEqual(
+            onLocked.handle.visibility,
+            "hidden",
+            "an INACTIVE layer shows no handle even while hovered",
+          );
+          assert.strictEqual(onLocked.handle.pointerEvents, "none", "and it is not grabbable");
+        }
+        if (onLocked.bar) {
+          assert.strictEqual(onLocked.bar.opacity, "0", "an INACTIVE layer shows no action bar while hovered");
+          assert.strictEqual(
+            onLocked.bar.pointerEvents,
+            "none",
+            "and the hidden bar is OUT OF THE HIT-TEST — the inline " +
+              "pointerEvents=\"all\" at build time (js/main.js:2513) must not win",
+          );
+        }
+      }
+      await page.mouse.move(4, 400); // leave the sheet before the next probe
+
+      // DELIBERATELY UPDATED (ISSUE_shadows.md): the control panel's shadows are
+      // removed by request. The tooled FRAME survives (a zero-blur box-shadow is
+      // a border, and track ornament_symmetry_20260910 pins it); the blurred
+      // black lift does not, so nothing blurred-black may appear in the panel's
+      // composed shadow list.
+      const panel = await page.evaluate(() => {
+        const el = document.getElementById("print-enhance-controls");
+        return el ? getComputedStyle(el).boxShadow : null;
+      });
+      assert.ok(panel !== null, "the control panel exists");
+      assert.ok(
+        panel === "none" || !/rgba?\([^)]*\)\s+0px\s+[1-9]\d*px/.test(panel),
+        "#print-enhance-controls casts no blurred shadow: " + panel,
       );
       // DELIBERATELY UPDATED (selection_model_ia_20260910, AC-2): the
       // active-wrapper glow used to be the off-palette #c53131 spelled out in
       // this stylesheet; the selection visuals are now a locked palette token so
-      // a selected shape and a selected section share one language.
+      // a selected shape and a selected section share one language. Selection is
+      // NOT the hover the owner complained about, so this stays.
       assert.ok(
         css.includes(".be-active-wrapper") &&
           css.includes("drop-shadow(0 0 8px var(--be-gold))"),
