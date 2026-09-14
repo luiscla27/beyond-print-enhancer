@@ -14,6 +14,7 @@ describe('Asset Migration (GIF to WebP)', function() {
 
     it('js/main.js should not have .png references for internal assets', function() {
         const mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+
         // We look for chrome.runtime.getURL('assets/.*\.png')
         const pngRegex = /chrome\.runtime\.getURL\(['"]assets\/.*?\.png['"]\)/g;
         const matches = mainJs.match(pngRegex);
@@ -46,9 +47,12 @@ describe('Asset Migration (GIF to WebP)', function() {
         const elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
         const domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
         const mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+        const sectionUtils = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+        const printStyles = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
+        const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.js'), 'utf8');
 
         const scriptEl = document.createElement('script');
-        scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
+        scriptEl.textContent = printStyles + '\n' + sectionUtils + '\n' + elementWrapper + '\n' + domManager + '\n' + layoutOps + '\n' + mainJs;
         document.body.appendChild(scriptEl);
 
         // Wait for script execution

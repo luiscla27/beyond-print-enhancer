@@ -27,9 +27,35 @@ describe('Layout Stabilization', () => {
         global.navigator = window.navigator;
 
         const mainJsCode = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+        const sectionUtilsCode = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+        const printStylesCode = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
+        const sectionCloningCode = fs.readFileSync(path.resolve(__dirname, '../../js/section_cloning.js'), 'utf8');
+        const layoutOpsCode = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.js'), 'utf8');
+        const filtersCode = fs.readFileSync(path.resolve(__dirname, '../../js/filters.js'), 'utf8');
+        const spellsUiCode = fs.readFileSync(path.resolve(__dirname, '../../js/spells_ui.js'), 'utf8');
+        const modalsCode = fs.readFileSync(path.resolve(__dirname, '../../js/modals.js'), 'utf8');
+        const shapePickerCode = fs.readFileSync(path.resolve(__dirname, '../../js/shape_picker.js'), 'utf8');
+        const propertiesPanelCode = fs.readFileSync(path.resolve(__dirname, '../../js/properties_panel.js'), 'utf8');
+        const controlsCode = fs.readFileSync(path.resolve(__dirname, '../../js/controls.js'), 'utf8');
+        const layoutScanCode = fs.readFileSync(path.resolve(__dirname, '../../js/layout_scan.js'), 'utf8');
+        const layoutApplyCode = fs.readFileSync(path.resolve(__dirname, '../../js/layout_apply.js'), 'utf8');
+        const persistenceCode = fs.readFileSync(path.resolve(__dirname, '../../js/persistence.js'), 'utf8');
         const scriptEl = document.createElement('script');
         scriptEl.textContent = `
             window.__DDB_TEST_MODE__ = true;
+            ${modalsCode}
+            ${propertiesPanelCode}
+            ${layoutScanCode}
+            ${layoutApplyCode}
+            ${persistenceCode}
+            ${controlsCode}
+            ${shapePickerCode}
+            ${spellsUiCode}
+            ${filtersCode}
+            ${layoutOpsCode}
+            ${sectionCloningCode}
+            ${sectionUtilsCode}
+            ${printStylesCode}
             ${mainJsCode}
         `;
         document.body.appendChild(scriptEl);

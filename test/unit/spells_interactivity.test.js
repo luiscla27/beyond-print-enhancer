@@ -5,7 +5,6 @@ require("fake-indexeddb/auto");
 describe('Spells Interactivity Regression', () => {
     let document;
     let window;
-    let runStep;
 
     beforeEach(() => {
         // Mock DOM with the critical structure provided by user
@@ -65,7 +64,7 @@ describe('Spells Interactivity Regression', () => {
             for (const selector of selectors) {
                 try {
                     results = results.concat(Array.from(context.querySelectorAll(selector)));
-                } catch (e) {}
+                } catch { /* a selector that matches nothing is not a failure */ }
             }
             return results;
         };
@@ -87,48 +86,8 @@ describe('Spells Interactivity Regression', () => {
         });
     });
 
-    const checkManageSpells = (stepName) => {
-        const manageBtn = document.querySelector('.manage-spells-btn');
-        assert.ok(manageBtn, `[${stepName}] Manage Spells button should exist`);
-        
-        const filterContainer = document.querySelector('.ct-spells-filter');
-        assert.ok(filterContainer, `[${stepName}] .ct-spells-filter container should exist`);
-        
-        // Check visibility (style.display)
-        if (manageBtn.style.display === 'none') assert.fail(`[${stepName}] Manage Spells button is hidden via style`);
-        if (filterContainer.style.display === 'none') assert.fail(`[${stepName}] .ct-spells-filter is hidden via style`);
-        
-        // Check if it's detached (not in document body)
-        assert.ok(document.body.contains(manageBtn), `[${stepName}] Manage Spells button should be in the document`);
-
-        // Check event listener (by simulating click)
-        manageBtn.click();
-        assert.strictEqual(manageBtn.dataset.clicked, 'true', `[${stepName}] Click event should still fire`);
-        manageBtn.dataset.clicked = 'false'; // Reset
-    };
 
     // Replicate logic from main.js
-    const removeSearchBoxes = () => {
-        const searchSelectors = [
-            '.header-wrapper',
-            '.ct-spells-filter',
-            '.ct-inventory__filter',
-            '.ct-equipment__filter',
-            '.ct-extras__filter',
-            '.ct-features__management-link',
-            '.ct-filter-box', 
-            'input[type="search"]',
-            '[class*="filter"]',
-            '.ct-application-group__filter'
-        ];
-
-        global.safeQueryAll(searchSelectors).forEach(el => {
-            if (el.closest('.ct-spells') || el.closest('[data-testid="SPELLS"]')) {
-                return;
-            }
-            el.remove();
-        });
-    };
 
     const tweakStyles = () => {
         global.safeQueryAll([
@@ -140,30 +99,7 @@ describe('Spells Interactivity Regression', () => {
         });
     };
 
-    const movePortrait = () => {
-        const portrait = document.querySelector('.ddbc-character-avatar__portrait');
-        const target = document.querySelector('.ct-subsection.ct-subsection--primary-box');
-        if (portrait && target) {
-            target.appendChild(portrait);
-        }
-    };
 
-    const moveQuickInfo = () => {
-        const quickInfo = document.querySelector('.ct-quick-info');
-        if (quickInfo) {
-            const layoutRoot = document.getElementById('print-layout-wrapper');
-            if (layoutRoot) {
-                 // Mock createDraggableContainer behavior (basic)
-                 const container = document.createElement('div');
-                 container.className = 'print-section-container';
-                 const content = document.createElement('div');
-                 content.className = 'print-section-content';
-                 content.appendChild(quickInfo);
-                 container.appendChild(content);
-                 layoutRoot.appendChild(container);
-            }
-        }
-    };
 
     it('should survive full post-processing sequence', () => {
         // ... (existing checks)

@@ -35,10 +35,14 @@ describe('Custom Resize Logic with Snapping', function() {
     // Inject main.js logic
     window.__DDB_TEST_MODE__ = true;
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+    const sectionUtils = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.js'), 'utf8');
+
+    const printStyles = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
     let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
     let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + mainJs;
+    scriptEl.textContent = printStyles + '\n' + sectionUtils + '\n' + elementWrapper + '\n' + domManager + '\n' + layoutOps + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     
     // Mock getComputedStyle for JSDOM

@@ -42,11 +42,15 @@ describe('Drag-and-Drop Reordering Logic', function() {
     // Inject main.js logic
     window.__DDB_TEST_MODE__ = true;
     let mainJs = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+    const sectionUtils = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.js'), 'utf8');
+
+    const printStyles = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
     let elementWrapper = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
     let domManager = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
     let dndJs = fs.readFileSync(path.resolve(__dirname, '../../js/dnd.js'), 'utf8');
     const scriptEl = document.createElement('script');
-    scriptEl.textContent = elementWrapper + '\n' + domManager + '\n' + dndJs + '\n' + mainJs;
+    scriptEl.textContent = printStyles + '\n' + sectionUtils + '\n' + elementWrapper + '\n' + domManager + '\n' + dndJs + '\n' + layoutOps + '\n' + mainJs;
     document.body.appendChild(scriptEl);
     
     // Initialize DND
@@ -62,19 +66,22 @@ describe('Drag-and-Drop Reordering Logic', function() {
       container.getBoundingClientRect = () => ({ left: 0, top: 0, right: 1000, bottom: 1000 });
       wrapper1.getBoundingClientRect = () => ({ left: 10, top: 10, right: 110, bottom: 110 });
       
-      // Simulate Drag Start on Item 1 Wrapper (click at 15, 15 - offset 5, 5)
-      const startEvent = new window.MouseEvent('dragstart', { bubbles: true, clientX: 15, clientY: 15 });
-      startEvent.dataTransfer = { effectAllowed: '', setData: () => {} };
-      wrapper1.dispatchEvent(startEvent);
-      
-      // Simulate Drop at 205, 205
-      // New position: 205 - 0 - 5 = 200
-      const dropEvent = new window.MouseEvent('drop', { 
-          bubbles: true,
-          clientX: 205,
-          clientY: 205
-      });
-      container.dispatchEvent(dropEvent);
+      // Pointer sequence: down on Item 1 Wrapper (15,15 - offset 5,5),
+      // commit via a threshold move, then release at (205,205).
+      // New position: 205 - 0 - 5 = 200 -> grid snap 208.
+      const down = new window.MouseEvent('pointerdown', { bubbles: true, clientX: 15, clientY: 15 });
+      wrapper1.dispatchEvent(down);
+
+      const move = new window.MouseEvent('pointermove', { bubbles: true, clientX: 60, clientY: 60 });
+      wrapper1.dispatchEvent(move);
+
+      // Last move sets the snapped slot (zero-jump): move to the final
+      // coordinates, then release from there.
+      const lastMove = new window.MouseEvent('pointermove', { bubbles: true, clientX: 205, clientY: 205 });
+      wrapper1.dispatchEvent(lastMove);
+
+      const up = new window.MouseEvent('pointerup', { bubbles: true, clientX: 205, clientY: 205 });
+      wrapper1.dispatchEvent(up);
       
       // Verification: wrapper1 should have new coordinates
       assert.strictEqual(wrapper1.style.left, '208px');

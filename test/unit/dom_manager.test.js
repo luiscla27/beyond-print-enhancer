@@ -190,7 +190,6 @@ describe('DomManager & ElementWrapper', () => {
 
         describe('UI Selectors', () => {
             it('should correctly target dialog siblings while excluding site-main', () => {
-                const manager = DomManager.getInstance();
                 document.body.innerHTML = `
                     <div role="banner" class="header-wrapper">...</div>
                     <div id="site-main" class="ct-character-sheet-desktop">Main Sheet</div>

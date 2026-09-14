@@ -15,7 +15,7 @@ describe('Query Utilities', function() {
       try {
         const element = context.querySelector(selector);
         if (element) return element;
-      } catch (e) {} // eslint-disable-line no-empty
+      } catch { /* a selector that matches nothing is not a failure */ }
     }
     return null;
   }

@@ -43,7 +43,6 @@ describe('Scrollbar Removal Logic', function() {
       clone.style.overflow = 'visible';
             
       clone.querySelectorAll('*').forEach(el => {
-            const style = window.getComputedStyle(el);
              // Note: JSDOM computed style might default to some values, checking explicitly set inline styles for this test setup
              // or calculating. In JSDOM, getComputedStyle usually reflects style attribute if no stylesheets.
              if (el.style.overflow === 'auto' || el.style.overflow === 'scroll' || (el.style.overflowY === 'scroll') || el.style.maxHeight !== 'none') {

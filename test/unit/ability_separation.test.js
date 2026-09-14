@@ -5,7 +5,7 @@ const path = require('path');
 require("fake-indexeddb/auto");
 
 describe('Ability Separation', () => {
-    let window, document, domManager;
+    let window, document;
 
     before(() => {
         const dom = new JSDOM(`<!DOCTYPE html>
@@ -55,20 +55,45 @@ describe('Ability Separation', () => {
         const wrapperCode = fs.readFileSync(path.resolve(__dirname, '../../js/dom/element_wrapper.js'), 'utf8');
         const managerCode = fs.readFileSync(path.resolve(__dirname, '../../js/dom/dom_manager.js'), 'utf8');
         const mainCode = fs.readFileSync(path.resolve(__dirname, '../../js/main.js'), 'utf8');
+        const sectionUtils = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+        const printStyles = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
+        const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.js'), 'utf8');
+        const filters = fs.readFileSync(path.resolve(__dirname, '../../js/filters.js'), 'utf8');
+        const spellsUi = fs.readFileSync(path.resolve(__dirname, '../../js/spells_ui.js'), 'utf8');
+        const modals = fs.readFileSync(path.resolve(__dirname, '../../js/modals.js'), 'utf8');
+        const shapePicker = fs.readFileSync(path.resolve(__dirname, '../../js/shape_picker.js'), 'utf8');
+        const propertiesPanel = fs.readFileSync(path.resolve(__dirname, '../../js/properties_panel.js'), 'utf8');
+        const controls = fs.readFileSync(path.resolve(__dirname, '../../js/controls.js'), 'utf8');
+        const layoutScan = fs.readFileSync(path.resolve(__dirname, '../../js/layout_scan.js'), 'utf8');
+        const layoutApply = fs.readFileSync(path.resolve(__dirname, '../../js/layout_apply.js'), 'utf8');
+        const persistence = fs.readFileSync(path.resolve(__dirname, '../../js/persistence.js'), 'utf8');
+        const sectionCloning = fs.readFileSync(path.resolve(__dirname, '../../js/section_cloning.js'), 'utf8');
 
         const script = document.createElement('script');
         script.textContent = `
             ${wrapperCode}
             ${managerCode}
+            ${printStyles}
+            ${modals}
+            ${propertiesPanel}
+            ${layoutScan}
+            ${layoutApply}
+            ${persistence}
+            ${controls}
+            ${shapePicker}
+            ${spellsUi}
+            ${filters}
+            ${layoutOps}
+            ${sectionCloning}
+            ${sectionUtils}
             ${mainCode}
         `;
         document.body.appendChild(script);
         
-        domManager = window.DomManager.getInstance();
     });
 
     it('should separate abilities and remove parent section', () => {
-        window.__MOCK_REMOVE_SPECIFIC_SVGS__ = (el) => {}; // No-op
+        window.__MOCK_REMOVE_SPECIFIC_SVGS__ = () => {}; // No-op
         
         // Execute the function
         window.separateAbilities();

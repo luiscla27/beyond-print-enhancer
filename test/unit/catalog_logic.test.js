@@ -98,6 +98,7 @@ describe('Catalog Service', function() {
         it('should apply border styles to matching sections', async function() {
             // Mock confirm
             global.confirm = () => true;
+            global.window.confirm = global.confirm;
 
             const success = await CatalogService.applyTemplate('archer');
             assert.ok(success);
@@ -108,6 +109,7 @@ describe('Catalog Service', function() {
 
         it('should prevent duplicate shapes if IDs match', async function() {
             global.confirm = () => true;
+            global.window.confirm = global.confirm;
             let shapeCreateCount = 0;
             global.createShape = () => { shapeCreateCount++; };
             
