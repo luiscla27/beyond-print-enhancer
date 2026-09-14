@@ -7,12 +7,44 @@ require("fake-indexeddb/auto");
 const mainJsPath = path.resolve(__dirname, '../../js/main.js');
 const mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
 
-const elementWrapperPath = path.resolve(__dirname, '../../js/dom/element_wrapper.js');
-const domManagerPath = path.resolve(__dirname, '../../js/dom/dom_manager.js');
-const layerManagerPath = path.resolve(__dirname, '../../js/dom/layer_manager.js');
-const elementWrapperContent = fs.readFileSync(elementWrapperPath, 'utf8');
-const domManagerContent = fs.readFileSync(domManagerPath, 'utf8');
-const layerManagerContent = fs.readFileSync(layerManagerPath, 'utf8');
+const contextMenuPath = path.resolve(__dirname, '../../js/context_menu.js');
+const contextMenuContent = fs.readFileSync(contextMenuPath, 'utf8');
+const assetCatalogPath = path.resolve(__dirname, '../../js/asset_catalog.js');
+const assetCatalogContent = fs.readFileSync(assetCatalogPath, 'utf8');
+const storagePath = path.resolve(__dirname, '../../js/storage.js');
+const storageContent = fs.readFileSync(storagePath, 'utf8');
+const imageProcessorPath = path.resolve(__dirname, '../../js/image_processor.js');
+const imageProcessorContent = fs.readFileSync(imageProcessorPath, 'utf8');
+const sectionUtilsPath = path.resolve(__dirname, '../../js/section_utils.js');
+const sectionUtilsContent = fs.readFileSync(sectionUtilsPath, 'utf8');
+const sectionCloningPath = path.resolve(__dirname, '../../js/section_cloning.js');
+const sectionCloningContent = fs.readFileSync(sectionCloningPath, 'utf8');
+const layoutOpsPath = path.resolve(__dirname, '../../js/layout_ops.js');
+const layoutOpsContent = fs.readFileSync(layoutOpsPath, 'utf8');
+const filtersPath = path.resolve(__dirname, '../../js/filters.js');
+const filtersContent = fs.readFileSync(filtersPath, 'utf8');
+const spellsUiPath = path.resolve(__dirname, '../../js/spells_ui.js');
+const spellsUiContent = fs.readFileSync(spellsUiPath, 'utf8');
+const modalsPath = path.resolve(__dirname, '../../js/modals.js');
+const modalsContent = fs.readFileSync(modalsPath, 'utf8');
+const shapePickerPath = path.resolve(__dirname, '../../js/shape_picker.js');
+const shapePickerContent = fs.readFileSync(shapePickerPath, 'utf8');
+const propertiesPanelPath = path.resolve(__dirname, '../../js/properties_panel.js');
+const propertiesPanelContent = fs.readFileSync(propertiesPanelPath, 'utf8');
+const controlsPath = path.resolve(__dirname, '../../js/controls.js');
+const controlsContent = fs.readFileSync(controlsPath, 'utf8');
+const layoutScanPath = path.resolve(__dirname, '../../js/layout_scan.js');
+const layoutScanContent = fs.readFileSync(layoutScanPath, 'utf8');
+const layoutApplyPath = path.resolve(__dirname, '../../js/layout_apply.js');
+const layoutApplyContent = fs.readFileSync(layoutApplyPath, 'utf8');
+const persistencePath = path.resolve(__dirname, '../../js/persistence.js');
+const persistenceContent = fs.readFileSync(persistencePath, 'utf8');
+
+const printStylesPath = path.resolve(__dirname, '../../js/print_styles.js');
+const printStylesContent = fs.readFileSync(printStylesPath, 'utf8');
+
+
+
 
 describe('Shape Logic', function() {
   let window, document;
@@ -66,6 +98,23 @@ describe('Shape Logic', function() {
     window.DomManager = require('../../js/dom/dom_manager.js');
     window.LayerManager = require('../../js/dom/layer_manager.js');
     
+    window.eval(contextMenuContent);
+    window.eval(assetCatalogContent);
+    window.eval(storageContent);
+window.eval(imageProcessorContent);
+window.eval(printStylesContent);
+window.eval(sectionUtilsContent);
+    window.eval(modalsContent);
+    window.eval(propertiesPanelContent);
+    window.eval(layoutScanContent);
+    window.eval(layoutApplyContent);
+    window.eval(persistenceContent);
+    window.eval(controlsContent);
+    window.eval(shapePickerContent);
+    window.eval(spellsUiContent);
+    window.eval(filtersContent);
+    window.eval(layoutOpsContent);
+    window.eval(sectionCloningContent);
     window.eval(mainJsContent);
   });
 
@@ -100,7 +149,6 @@ describe('Shape Logic', function() {
         const assetPath = 'assets/shapes/test-shape.webp';
         const wrapper = window.createShape(assetPath);
         
-        const layoutRoot = document.getElementById('print-layout-wrapper');
         const shapesLayer = document.getElementById('print-enhance-shapes-layer');
         assert.ok(shapesLayer, 'Shapes layer should exist');
         assert.strictEqual(wrapper.parentElement, shapesLayer, 'Wrapper should be child of shapes layer');
@@ -137,7 +185,7 @@ describe('Shape Logic', function() {
         assert.strictEqual(wrapper.style.zIndex, '200');
     });
 
-    it('should remove the shape when delete button is clicked and confirmed', function() {
+    it('should remove the shape when delete button is clicked and confirmed', async function() {
         // Mock confirm
         window.confirm = () => true;
         
@@ -147,7 +195,18 @@ describe('Shape Logic', function() {
         assert.ok(deleteBtn, 'Delete button missing');
         
         deleteBtn.click();
-        
+        // U-36: deletion now confirms through the in-app dialog; drive it.
+        await new Promise((r) => setTimeout(r, 0));
+        const dlgOk = document.querySelector('.be-modal-overlay .be-modal-ok');
+        assert.ok(dlgOk, 'a confirmation dialog should be shown');
+        dlgOk.click();
+        // DELIBERATELY UPDATED (AC-1): the delete writes a backup BEFORE removing, so
+        // the removal lands after a storage round-trip. Wait for the effect rather
+        // than for a fixed number of ticks.
+        const deadline = Date.now() + 2000;
+        while (wrapper.parentElement !== null && Date.now() < deadline) {
+            await new Promise((r) => setTimeout(r, 5));
+        }
         assert.strictEqual(wrapper.parentElement, null, 'Wrapper should be removed from DOM');
     });
   });
