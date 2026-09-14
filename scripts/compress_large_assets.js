@@ -2,7 +2,6 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const ASSETS_DIR = path.resolve(__dirname, '../assets');
 const MAX_DIMENSION = 512;
 const QUALITY = 80;
 

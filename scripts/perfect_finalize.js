@@ -1,5 +1,4 @@
 const sharp = require('sharp');
-const fs = require('fs');
 
 /**
  * Isolates black ink lines from a white background and recolors them.

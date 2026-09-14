@@ -1,5 +1,4 @@
 const sharp = require('sharp');
-const path = require('path');
 
 async function getMetadata() {
   const inputFile = process.argv[2] || 'demo/ignored/sheet_archer.png';

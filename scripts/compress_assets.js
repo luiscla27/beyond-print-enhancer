@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 const ASSETS_DIR = path.resolve(__dirname, '../assets');
-const SHAPES_DIR = path.resolve(ASSETS_DIR, 'shapes');
 const MAX_DIMENSION = 512;
 const QUALITY = 80;
 

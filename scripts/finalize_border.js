@@ -19,7 +19,7 @@ async function finalizeAsset(inputFile, outputFile) {
     // Or better: since we asked for red #e40712, we can isolate that.
     
     const image = sharp(inputFile);
-    const { width, height } = await image.metadata();
+    await image.metadata();
 
     // Create a version where we replace the background with transparency.
     // We'll use a threshold on the red channel or a color distance.
