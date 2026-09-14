@@ -3,19 +3,23 @@
   "provenance": {
     "produced_by": "node scripts/gen_spec_inventory.js",
     "collects_with": "mocha test/browser_e2e --recursive --dry-run --reporter json",
-    "measured_at": "2026-09-13",
+    "measured_at": "2026-09-14",
     "tracked_by": "conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
     "pending_is_runtime": "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME (this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending expectation lives beside this file in spec_pending.json, read from a REAL run."
   },
   "expected": {
-    "loaded_js_files": 73,
-    "spec_files": 68,
-    "tests_collected": 276
+    "loaded_js_files": 74,
+    "spec_files": 69,
+    "tests_collected": 289
   },
   "spec_files": [
     {
       "file": "absolute_positioning.spec.js",
       "tests": 4
+    },
+    {
+      "file": "affordance_drag_hover_shadows.spec.js",
+      "tests": 13
     },
     {
       "file": "border_picker_base.spec.js",

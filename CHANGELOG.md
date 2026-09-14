@@ -5,31 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.2] - 2026-09-14
-
-### Fixed
-- **Grip on a short section is grabbable again.** On very small sections, the hover-revealed action bar
-  (z-index 1000000, written inline at build time) covered the centred drag grip (z-index 700002), so the
-  only thing a user's press could reach was the bar's first button. `KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`
-  in the new e2e case records the one live demo-sheet section that still fails and prints its id; if a
-  second section starts losing the hit test the browser gate goes red.
-
-### Internal
-- **Browser coverage for all three 2.0.1 affordances.**
-  `test/browser_e2e/affordance_drag_hover_shadows.spec.js` drives a real MV3 extension in Chromium at
-  the pinned `SHEET_VIEWPORT` 1920×1080 and covers everything the unit suite structurally cannot — the
-  compose-side reach of `box-shadow`, the real-pointer reach of a revealed grip, and the
-  `:hover`/`:focus-within` behaviour of the action bar. The hue-shift case uses the product's own seam
-  through `contentCall(ctx, "setGlobalFilters", …)`, because `window.applyGlobalFilters` lives in the
-  isolated world and is invisible to `page.evaluate`. No case asserts against an inline selector string;
-  every case reads a COMPUTED style. Its provenance is committed at
-  `docs/sheet-affordances-20260914/FIX_REPORT.md`.
-
-### Notes
-- **`ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md`** is filed for the one remaining
-  hit-test miss (`temp/issues/`). The same issue carries three concrete fix options and the ratchet
-  constant the test uses so the count does not silently grow.
-
 ## [2.0.1] - 2026-09-14
 
 ### Changed
@@ -80,6 +55,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (parse-only, so no boot code runs), asserts the four stylesheet-injecting modules it exists for are
   actually in the walk so it cannot pass vacuously, and carries a planted copy of the defect to prove
   it reports it.
+- **Browser coverage for the three affordances above, added after the release (no version bump — it
+  changes no product code, so it belongs to 2.0.1's behaviour rather than to a new one).**
+  `test/browser_e2e/affordance_drag_hover_shadows.spec.js` drives a real MV3 extension in Chromium at
+  the pinned `SHEET_VIEWPORT` 1920×1080 and covers everything the unit suite structurally cannot: a
+  COMPUTED `box-shadow` on the composed page rather than a grep of the emitted CSS, a revealed grip
+  probed with a real pointer at its own pixel, and the `:hover` reveal of `.be-section-actions` on the
+  active layer versus its absence on a locked one. 13 cases, all green.
+  The hue-isolation case calls the product's own seam,
+  `test/browser_e2e/_helpers/inject.js` → `setGlobalFilters`, because `window.applyGlobalFilters`
+  lives in the extension's ISOLATED world and is invisible to `page.evaluate` — MEASURED: a direct
+  call there was `undefined` and the case failed on its own vacuity guard while the product was
+  correct. The suite is runnable by name as `npm run test:e2e:affordances`, which raises the pinned
+  per-file roster in `test/unit/e2e_plumbing_guard.test.js` from 37 to 38 (the reason is recorded
+  there: 13 cases at ~32 s is a 7-minute run worth naming while iterating on the affordances, exactly
+  like `test:e2e:glow` beside it). `test/browser_e2e/spec_inventory.json` is regenerated to match —
+  69 spec files / 289 collected tests (was 68 / 276) — verified collection-only, without executing a
+  browser case, since the gate runner diffs this manifest against the live enumeration.
+- **A grip-reachability CENSUS instead of a first-candidate assertion.** The suite walks every
+  active-layer section, hides the non-test layers through the panel's own "Hide on sheet" control, and
+  counts how many revealed grips win the hit test at their own centre: **21 of 22**. The one that does
+  not is recorded rather than hidden — see Known issues.
+  Four of the 13 cases carry a conditional `this.skip()` when the live host sheet offers no reachable
+  candidate for them (no locked-and-not-active section, no second layer row to flip); that is the
+  existing practice across 24 of this suite's spec files, and it is why the pending map
+  (`spec_pending.json`) is deliberately untouched — those skips are runtime host conditions, not
+  flag-gated captures, so they never enter it.
+
+### Known issues
+- **On a section short enough for its action bar to reach the centre, the bar covers the grip —
+  filed, not fixed.** `section-extra-tidbits-wrapper` (151×62) fails the census above: the bar carries
+  an inline `z-index: 1000000` (`js/main.js:2512`, via `window.Z.ACTIONS_BAR`) and the grip 700002
+  (`js/dnd.js`), so on a small section the revealed buttons sit ON the drag area and a press there
+  lands on `be-select-section-button` instead of the grip. This is a real regression in reachability
+  introduced by the 2.0.1 grip — the grip's pixel used to be section content, which drags — so it is
+  recorded honestly rather than asserted away:
+  `temp/issues/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (three concrete fix
+  options, all re-stacking, none attempted here). The census assertion is a **ratchet on the count**
+  (`KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`) with the miss list printed, so a stacking regression that makes
+  ordinary section content beat the grip blows far past the bound and goes red.
+
 
 ## [2.0.0] - 2026-09-14
 

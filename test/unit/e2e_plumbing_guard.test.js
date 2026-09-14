@@ -141,7 +141,13 @@ describe("AC-6 — the capture plumbing is shared and the roster stopped growing
     // The phase retired FIVE aliases (verify0..verify4) and added NONE. The remaining per-file
     // scripts are the curated `test:e2e:<topic>` runs this repo has carried for many tracks; the
     // assertion is that the roster did not GROW in this phase, which is what the criterion asks.
-    const ROSTER_AFTER = 37;
+    //
+    // 37 -> 38, sheet-affordances 20260914: `test:e2e:affordances` is the one addition, and it is
+    // the roster's existing shape (a curated run per topic, beside `test:e2e:glow` etc.), not a
+    // duplicate of the glob. `--grep` was considered and rejected on cost: that suite is 13 real
+    // browser cases at ~32 s each (about 7 minutes), so it is the run a developer wants to be able
+    // to invoke by NAME while iterating on the affordances, exactly like the glow suite above it.
+    const ROSTER_AFTER = 38;
     assert.strictEqual(
       perSpec.length,
       ROSTER_AFTER,
