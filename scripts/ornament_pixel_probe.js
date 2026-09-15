@@ -24,7 +24,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
-const DOCS = path.join(ROOT, "docs", "ornament-symmetry-20260910");
+const DOCS = path.join(ROOT, "vendor", "docs", "ornament-symmetry-20260910");
 const SRC = path.join(DOCS, "shots-phase1");
 
 // The hexes the ornament is allowed to use, and what each means.

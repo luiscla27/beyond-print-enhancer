@@ -204,7 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   surface (`1.4.10`, 75 specs) turned into a collection-bound, cause-bound gate that refuses to
   overlap, alongside the lint, unit and print-output gates.
 - **Evidence, not opinions.** Every criterion above is gated on captured frames or measurements,
-  committed under `docs/` per track.
+  committed under `vendor/docs/` per track.
 
 ### Changed
 - **`js/main.js` is no longer the application.** Twenty-one modules now own what used to be one
@@ -254,7 +254,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   overflowed**, the worst being Spells — 1,661 px of content in a 736 px box. Now **about 1,600 px of
   content that used to be cut off is scaled into view instead** (summed over those 8 sections), and the
   printed sheet carries **11,632 → 11,884 characters** of text. Still four US-Letter pages, still a
-  real text layer, page count unchanged (`docs/responsive-scaling-wiring-20260913/`, with the
+  real text layer, page count unchanged (`vendor/docs/responsive-scaling-wiring-20260913/`, with the
   before/after rasters of every page).
 - **…and it keeps working as the sheet changes.** Sections do not exist when the extension boots —
   they are built afterwards, by the layout pass — so watching only what is on the page at startup
@@ -359,7 +359,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 - Also fixed while verifying: running the print-audit suite *without* its flag overwrote its own
-  committed evidence (`docs/print-output-audit-20260911/measurements.json`) with `{}`, because mocha
+  committed evidence (`vendor/docs/print-output-audit-20260911/measurements.json`) with `{}`, because mocha
   still runs an `after` hook for a skipped suite. The write is guarded now, and a skipped run is
   proven to leave the file untouched.
 - The print audit's last case used to *record* the sheet's operator inventory and deliberately not
@@ -371,7 +371,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   slider at its DEFAULT value is really neutral, and whether a setting the user makes still reaches
   the paper. It drives the panel's own sliders and asserts both:
   `PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec.js`.
-- `docs/print-sheet-text-layer-20260911/FIX_REPORT.md` carries the before/after numbers, the two
+- `vendor/docs/print-sheet-text-layer-20260911/FIX_REPORT.md` carries the before/after numbers, the two
   candidate rules measured against each other, and the limits this fix states rather than hides
   (the file is *bigger* now — 5.98 MB → 8.08 MB — and a filtered sheet is still rasterised).
 - **The one item the gate track left to the operator is now assigned in writing, to the project that
@@ -385,7 +385,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reports a green first run** (verified in both places: `LastTaskResult` *and* a
   `green`/`collection.status: ok`/`execution.status: pass` artifact, with a documented fallback to the
   interactive logon type if session 0 cannot launch Chromium). The annotation in
-  `conductor/archive/gate_coverage_20260912/final_report.md` §6.1 records this against the open item it
+  `vendor/conductor/archive/gate_coverage_20260912/final_report.md` §6.1 records this against the open item it
   leaves standing, and `temp/scratch/probe_handoff_claims.py` checks every request-side fact the
   handoff asserts (26 checks, all pass).
 
@@ -416,7 +416,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with a control proving the measurement can see a margin at all. The earlier track's "noise floor"
   of 37,200 bytes is corrected: that was the boot notice disappearing between two renders, not PDF
   metadata noise.
-- `docs/print-output-audit-20260911/audit_report.md` carries the method, the page-by-page numbers,
+- `vendor/docs/print-output-audit-20260911/audit_report.md` carries the method, the page-by-page numbers,
   the two visual-gate verdicts and the limits this audit states rather than hides.
 
 ## [1.15.1] - 2026-09-11
@@ -472,7 +472,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   visual capture. Measuring it in a real browser through the real injection path — the ellipsis
   itself, the degree sign, the emoji, the close glyph — showed every one of them rendering
   **correctly**, so the claim is retracted and nothing was changed for it. The record is in
-  `conductor/tracks/ux_gaps_20260911/phase1_classification.md`.
+  `vendor/conductor/tracks/ux_gaps_20260911/phase1_classification.md`.
 - **The panel's layout was measured and deliberately left alone.** Print, both Save controls,
   Undo and Restore backup are already above the fold at the standard window size, and the
   occasional-use colour filters are below it. No control was moved.
@@ -502,7 +502,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   four settings stay, because the measurement showed they still change what prints (scale 18×, and
   background graphics 8×, the render-to-render noise floor). Headers and footers were kept too: their
   effect was *below* that noise floor, and a setting is only dropped on a measurement that resolves
-  it. Method, numbers and limits: `docs/first-run-and-panel-20260911/phase2_print_settings.md`.
+  it. Method, numbers and limits: `vendor/docs/first-run-and-panel-20260911/phase2_print_settings.md`.
   *Cost, measured:* one more control takes the panel to 24 controls and its content 1210 → 1246px.
 - **The funding and feedback links moved out of the panel, into the extension's own menu.** The
   panel used to carry **Feedback** (a bug-report link) and **Contribute** (a fundraising link) as two
@@ -533,7 +533,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing was dropped and nothing was retracted: every criterion was measured rather than assumed, and
 two produced *corrections* to the claims that motivated them. Each phase's GATE 3 record is beside
-its plan (`conductor/archive/first_run_and_panel_20260911/`).
+its plan (`vendor/conductor/archive/first_run_and_panel_20260911/`).
 
 | Criterion | Disposition |
 |---|---|
@@ -599,7 +599,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
   stays the job of the automatic backups behind **Restore backup...**, which are
   unchanged (and are written before every destructive action exactly as before).
 - Canvas filters (hue / contrast / saturation) are **not** part of the saved layout, so
-  they are not on the undo stack; see `docs/undo-stack-20260911/` for the measurement.
+  they are not on the undo stack; see `vendor/docs/undo-stack-20260911/` for the measurement.
 
 ## [1.14.0] - 2026-09-11
 
@@ -742,7 +742,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
 - Full suite 853 → 852 passing, 0 failing (−10 cases that existed only to drive
   the retired dialog, +9 for the audit, the annotation rule and the new guard);
   encapsulation debt oracle unchanged at 299. See
-  `docs/dead-exports-20260910/notes.md`.
+  `vendor/docs/dead-exports-20260910/notes.md`.
 
 ## [1.13.0] - 2026-09-10
 
@@ -950,7 +950,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
   layer list you build by splitting, instead of one giant "Shapes (Default)".
   Gated on the full mocha suite (737/0), the 299-test debt oracle, touched
   Playwright e2e, and a per-phase visual-model gate (MiniMax-M3 verdicts under
-  `docs/shape-layer-ps-ux-20260909/`).
+  `vendor/docs/shape-layer-ps-ux-20260909/`).
   - **Split & move** (`js/dom/layer_manager.js`): a shape's right-click menu
     gains **Move to New Layer…** (the new layer is named after the shape) and
     **Move to Layer…** (a chooser listing every other layer). Moving reparents
@@ -976,7 +976,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
   `custom_upload_templates_ux_20260909`) — two deferred picker-track
   follow-ups, gated on the full mocha suite (711/0), the 299-test debt
   oracle, touched Playwright e2e, and per-phase visual-model gates
-  (MiniMax-M3 verdicts under `docs/custom-upload-templates-ux-20260909/`).
+  (MiniMax-M3 verdicts under `vendor/docs/custom-upload-templates-ux-20260909/`).
   - **Custom-tab upload no longer closes the picker or drops a shape**
     (`js/shape_picker.js`): uploading saves the shape to your library and
     the picker stays open with the uploaded shape preselected — OK (Add
@@ -1002,7 +1002,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
   phase gated on the full mocha suite (697/0), the 299-test debt oracle,
   touched Playwright e2e, and a per-phase visual-model gate (screenshots →
   collage design doc → MiniMax-M3 verdicts under
-  `docs/border-shape-picker-ux-20260909/`).
+  `vendor/docs/border-shape-picker-ux-20260909/`).
   - **One picker shell** (`showAssetPickerModal`, `js/shape_picker.js`): the
     separate section-border modal is gone (its 20 hard-coded styles moved to
     the single `SECTION_BORDER_STYLES` catalog in `js/asset_catalog.js`);
@@ -1036,7 +1036,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
   end, with every phase gated on the full mocha suite, the 299-test debt
   oracle, touched Playwright e2e, and a per-phase visual-model gate
   (screenshots → collage design doc → MiniMax-M3 verdicts under
-  `docs/drag-ux-20260909/`).
+  `vendor/docs/drag-ux-20260909/`).
   - **Pointer drag engine** (`js/dnd.js`): native HTML5 DnD replaced by a
     pointer-events engine — mouse/touch/pen unified, ~4px movement
     threshold keeps click/text selection intact, locked layers and
@@ -1069,7 +1069,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
 - **"3.5 Codex on the Workbench" visual identity** — second-generation
   chrome identity evoking D&D 3.5 nostalgia (2003–07 core-rulebook warmth)
   without cosplay. Implements the design system locked by the 3-round art
-  direction consult (`docs/dnd35-nostalgia-20260908/consult`). Visual chrome
+  direction consult (`vendor/docs/dnd35-nostalgia-20260908/consult`). Visual chrome
   only; no behavior change (AC-0), gated on the 626-test full suite +
   299-test debt oracle + 3-round Muse visual gate on live captures.
   - Design tokens: `js/ui_theme.js` now injects the leather-and-bone set —
@@ -1095,7 +1095,7 @@ its plan (`conductor/archive/first_run_and_panel_20260911/`).
 ### Changed
 - **UI/UX overhaul (fantasy print-shop design system)** — implements the
   design system locked by the 6-round UI/UX consultant iteration
-  (`docs/ui-ux-review-20260908/consult`). Visual chrome only; no behavior
+  (`vendor/docs/ui-ux-review-20260908/consult`). Visual chrome only; no behavior
   change (AC-0), gated on the 626-test full suite + 299-test debt oracle.
   - Design tokens: `js/ui_theme.js` injects the charcoal/parchment/brass/
     oxblood palette as CSS custom properties + a component skin for the

@@ -6,7 +6,7 @@
 - **Collaborative Tone:** Prefer collaborative and descriptive language over rigid, authoritative, or "high-pressure" terms (e.g., use "We aim to" or "Please verify" instead of "MUST" or "CRITICAL").
 
 ## Workflow
-- Follow the guidelines in `conductor/workflow.md`.
+- Follow the guidelines in `vendor/conductor/workflow.md`.
 - Keep the implementation plan (`plan.md`) updated.
 - Maintain tests for all new features and bug fixes.
 - **CRITICAL MANDATE - Commit Safety:** You MUST NEVER perform a `git commit` unless you have JUST executed all `mocha` tests and verified that they pass. Committing broken or unverified code is strictly prohibited.

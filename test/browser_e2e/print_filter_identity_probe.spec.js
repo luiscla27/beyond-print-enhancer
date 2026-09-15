@@ -23,7 +23,7 @@
  * is how a wrong "measured" number gets committed.
  *
  * Run:  PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec.js --timeout 1800000
- * Evidence: docs/print-sheet-text-layer-20260911/ (FIX_REPORT.md, evidence/*.txt)
+ * Evidence: vendor/docs/print-sheet-text-layer-20260911/ (FIX_REPORT.md, evidence/*.txt)
  *
  * `page.emulateMedia` is NEVER called (see the landmine note in `print_output_audit.spec.js`): pinning
  * the media type makes `page.pdf()` skip the `@media print` stylesheet and the SCREEN layout prints,
@@ -38,7 +38,7 @@ const { launchExtensionContext, bootPage } = require("./_helpers.js");
 const { measurePdf, startStaticServer, EXT_ROOT } = require("./_helpers/pdf.js");
 
 const ENABLED = process.env.PRINT_FILTER_PROBE === "1";
-const ART = path.resolve(EXT_ROOT, process.env.PRINT_FILTER_PROBE_DIR || "docs/print-sheet-text-layer-20260911");
+const ART = path.resolve(EXT_ROOT, process.env.PRINT_FILTER_PROBE_DIR || "vendor/docs/print-sheet-text-layer-20260911");
 const WORK = path.resolve(EXT_ROOT, "temp/print-filter-probe");
 const PDFJS = "/node_modules/pdfjs-dist/legacy/build";
 

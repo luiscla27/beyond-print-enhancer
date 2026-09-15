@@ -2,7 +2,7 @@
  * Manual Verification — Phase 1 (one selection model, AC-1..AC-4) — AUTOMATED.
  *
  * The automated form of "Conductor - User Manual Verification 'Phase 1'". Per
- * conductor/workflow.md §3.1 a checkpoint is a user-facing walkthrough with
+ * vendor/conductor/workflow.md §3.1 a checkpoint is a user-facing walkthrough with
  * expected results; the walkthrough below is asserted instead of eyeballed.
  *
  * HOW THE STEPS ARE DRIVEN. Every step that a user can reach is driven the way a

@@ -2,7 +2,7 @@
  * UI theme: design-token layer for the extension chrome — "3.5 Codex on the
  * Workbench" identity (D&D 3.5 nostalgia look, dnd35_nostalgia_look_20260908,
  * ratified by the 3-round Muse Spark art-direction consultation in
- * docs/dnd35-nostalgia-20260908/).
+ * vendor/docs/dnd35-nostalgia-20260908/).
  *
  * Replaces the 1.7.0 fantasy print-shop tokens (charcoal/parchment/brass)
  * with the locked leather-and-bone set: leather-black grounds, bone as text
@@ -161,7 +161,7 @@ function cornerLayers(corners) {
 }
 
 /** Emit one ornamented surface. The rule stack, verified by a raw-pixel
- *  scanline probe (docs/ornament-symmetry-20260910/pixel-probe.json, produced
+ *  scanline probe (vendor/docs/ornament-symmetry-20260910/pixel-probe.json, produced
  *  by temp/ornament_pixel_probe.js) and measured from the BORDER BOX edge:
  *
  *    [-1, 0]px  rule A  1px #0C0907  the outer BLIND TOOL (a box-shadow ring)
@@ -1807,7 +1807,7 @@ div[style*="z-index: 20000"] label {
  * ORNAMENT LAYER (track ornament_symmetry_20260910) — three FULL surfaces only
  *
  * Rule stack per surface, measured from the BORDER BOX edge and verified with
- * a raw-pixel scanline probe (docs/ornament-symmetry-20260910/pixel-probe.json):
+ * a raw-pixel scanline probe (vendor/docs/ornament-symmetry-20260910/pixel-probe.json):
  *   A blind tool  1px #0C0907  at [-1, 0]px  (a box-shadow ring, OUTERMOST)
  *   B outer hair  1px #4A3E2B  at [ 0, 1]px  (the CSS border)
  *   C inner hair  1px          at [ 6, 7]px  (::before, inset 5px of the padding box)

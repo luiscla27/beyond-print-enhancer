@@ -58,7 +58,7 @@ function applyGlobalFilters(filters) {
   // is NOT an identity — it is what makes the ornaments grey on purpose. Treating "defaults" as
   // neutral would silently un-grey them (measured: 5,458 -> 66,740 saturated pixels on page 1
   // alone), which is a behaviour change nobody asked for. Evidence and both measurements:
-  // docs/print-sheet-text-layer-20260911/.
+  // vendor/docs/print-sheet-text-layer-20260911/.
   const hueIsIdentity = isIdentityHue(filterNumber(hue));
   const decorationIsIdentity = isIdentityDecoration({
     contrast: filterNumber(contrast),

@@ -19,7 +19,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage, reinject } = require("./_helpers.js");
 
 const ENABLED = process.env.CARD_SHOTS === "1";
-const ART_ROOT = process.env.CARD_SHOTS_DIR || "docs/first-run-and-panel-20260911";
+const ART_ROOT = process.env.CARD_SHOTS_DIR || "vendor/docs/first-run-and-panel-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase1");
 
 describe("Phase 1 — the gesture surfaces converge in the real product (AC-1)", function () {

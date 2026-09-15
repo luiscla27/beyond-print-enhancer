@@ -39,7 +39,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: "AFFORDANCE_SHOTS",
   dirVar: "AFFORDANCE_SHOTS_DIR",
-  defaultDir: "docs/sheet-affordances-20260914",
+  defaultDir: "vendor/docs/sheet-affordances-20260914",
   subdir: "shots",
 });
 

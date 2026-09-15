@@ -4,7 +4,7 @@
  * Scope: the STACK itself and the ten destructive sites that already produce a
  * (record, label) pair. Phase 2 (the non-destructive mutation classes) is separate.
  *
- * The assertions here follow `conductor/tracks/undo_stack_20260911/contract.md` §2.1,
+ * The assertions here follow `vendor/conductor/tracks/undo_stack_20260911/contract.md` §2.1,
  * which fixed them AFTER the Muse gate. The rules that matter:
  *   - the inverse is UNIFORM (applyLayout(entry.before)), so the interesting assertions
  *     are about the RECORD and the ORDER, not about per-class inverse code;

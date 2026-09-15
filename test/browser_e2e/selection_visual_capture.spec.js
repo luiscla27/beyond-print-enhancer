@@ -49,7 +49,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'SELECTION_SHOTS',
   dirVar: 'SELECTION_SHOTS_DIR',
-  defaultDir: 'docs/selection-model-ia-20260910',
+  defaultDir: 'vendor/docs/selection-model-ia-20260910',
   subdir: 'shots-phase1',
 });
 const ART_ROOT = cap.artRoot;

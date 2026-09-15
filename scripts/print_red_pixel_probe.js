@@ -3,7 +3,7 @@
  * Counts STRONGLY-RED pixels in each printed-page raster and reports their bounding box, so a claim
  * about a red mark on paper is a measurement rather than a reading. Built to check what the visual
  * gate flagged on page 4 of the responsive-scaling comparison (issue
- * responsive_scaling_observer_never_observed_20260912 -> docs/responsive-scaling-wiring-20260913).
+ * responsive_scaling_observer_never_observed_20260912 -> vendor/docs/responsive-scaling-wiring-20260913).
  *
  *   node scripts/print_red_pixel_probe.js <raster.png> [...]
  */

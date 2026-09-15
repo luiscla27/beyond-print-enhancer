@@ -2,7 +2,7 @@
  * UI/UX audit visual-gate capture harness (track ui_ux_review_20260910).
  *
  * Boots the unpacked MV3 extension on the demo sheet at 1440px and saves named
- * frames under docs/ui-ux-review-20260910/shots-phaseN/ for the per-phase
+ * frames under vendor/docs/ui-ux-review-20260910/shots-phaseN/ for the per-phase
  * visual gates (spec.md AC-V1 / visual_gate_protocol.md).
  *
  * Gating (graceful-skip — a normal e2e run never captures and never fails):
@@ -31,7 +31,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'UI_UX_AUDIT_SHOTS',
   dirVar: 'UI_UX_AUDIT_SHOTS_DIR',
-  defaultDir: 'docs/ui-ux-review-20260910',
+  defaultDir: 'vendor/docs/ui-ux-review-20260910',
   phaseVar: 'UI_UX_AUDIT_PHASE',
   defaultPhase: "",
 });

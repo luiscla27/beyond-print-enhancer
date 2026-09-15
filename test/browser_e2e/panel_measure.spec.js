@@ -18,7 +18,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage } = require("./_helpers.js");
 
 const ENABLED = process.env.PANEL_MEASURE === "1";
-const ART_ROOT = process.env.PANEL_MEASURE_DIR || "docs/ux-gaps-20260911";
+const ART_ROOT = process.env.PANEL_MEASURE_DIR || "vendor/docs/ux-gaps-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase5");
 
 describe("Phase 5 — measurement of the panel's default surface (AC-5)", function () {

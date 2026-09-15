@@ -13,7 +13,7 @@
  * Usage:
  *   node scripts/feedback_collage.js <phase 1|2> [--cols N]
  *
- * Output: docs/feedback-lifecycle-a11y-20260910/collage-phase<N>.png
+ * Output: vendor/docs/feedback-lifecycle-a11y-20260910/collage-phase<N>.png
  */
 "use strict";
 
@@ -22,7 +22,7 @@ const path = require("path");
 const sharp = require("sharp");
 
 const ROOT = path.resolve(__dirname, "..");
-const ART = path.join(ROOT, "docs", "feedback-lifecycle-a11y-20260910");
+const ART = path.join(ROOT, "vendor", "docs", "feedback-lifecycle-a11y-20260910");
 
 /**
  * Per-phase composition plan. `window` is the crop applied to EVERY frame of the

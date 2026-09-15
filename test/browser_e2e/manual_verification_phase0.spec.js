@@ -4,7 +4,7 @@
  *
  * This is the automated form of the checkpoint the plan called
  * "Conductor - User Manual Verification 'Phase 0'". The conductor workflow
- * (conductor/workflow.md §3.1) defines such a checkpoint as a step-by-step plan of
+ * (vendor/conductor/workflow.md §3.1) defines such a checkpoint as a step-by-step plan of
  * user-facing actions with expected results; the steps below are that walkthrough,
  * in the same order, asserted instead of eyeballed. Each step's human wording is in
  * the comment above its assertions.
@@ -31,7 +31,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const { launchExtensionContext, bootPage, EXT_ROOT } = require("./_helpers.js");
 
-const TRACK_DIR = path.join(EXT_ROOT, "conductor", "archive", "selection_model_ia_20260910");
+const TRACK_DIR = path.join(EXT_ROOT, "vendor", "conductor", "archive", "selection_model_ia_20260910");
 const read = (p) => fs.readFileSync(path.join(TRACK_DIR, p), "utf8");
 const readJs = (p) => fs.readFileSync(path.join(EXT_ROOT, "js", p), "utf8");
 

@@ -16,7 +16,7 @@
  *                            after the undo (the equality claim: the offer is gone)
  *
  * Usage: node scripts/recovery_collage.js
- * Output: docs/destructive-recovery-20260911/collage-phase2{,-zoom}.png
+ * Output: vendor/docs/destructive-recovery-20260911/collage-phase2{,-zoom}.png
  */
 "use strict";
 
@@ -24,7 +24,7 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 
-const ART = path.join(__dirname, "..", "docs", "destructive-recovery-20260911");
+const ART = path.join(__dirname, "..", "vendor", "docs", "destructive-recovery-20260911");
 const SHOTS = path.join(ART, "shots-phase2");
 
 const FRAMES = [

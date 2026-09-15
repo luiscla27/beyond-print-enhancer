@@ -20,7 +20,7 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
-const DOCS = path.join(ROOT, "docs", "ornament-symmetry-20260910");
+const DOCS = path.join(ROOT, "vendor", "docs", "ornament-symmetry-20260910");
 const GUTTER = 10;
 const GROUND = { r: 26, g: 26, b: 26, alpha: 1 };
 

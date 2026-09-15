@@ -25,7 +25,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage, contentCall } = require("./_helpers.js");
 
 const ENABLED = process.env.RECOVERY_DEPTH_SHOTS === "1";
-const ART_ROOT = process.env.RECOVERY_DEPTH_SHOTS_DIR || "docs/ux-gaps-20260911";
+const ART_ROOT = process.env.RECOVERY_DEPTH_SHOTS_DIR || "vendor/docs/ux-gaps-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase3");
 
 describe("Phase 3 — the recovery models are distinguishable in the REAL product (AC-3)", function () {

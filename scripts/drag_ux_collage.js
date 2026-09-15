@@ -11,8 +11,8 @@
  *   node scripts/drag_ux_collage.js <dir> <out.png> [cell1.png cell2.png ...]
  *
  * Examples:
- *   node scripts/drag_ux_collage.js docs/drag-ux-20260909/shots-phase1 \
- *     docs/drag-ux-20260909/collage-phase1.png
+ *   node scripts/drag_ux_collage.js vendor/docs/drag-ux-20260909/shots-phase1 \
+ *     vendor/docs/drag-ux-20260909/collage-phase1.png
  *   node scripts/drag_ux_collage.js .../shots-phase2 .../collage-phase2.png \
  *     20-mid-drag-snapped.png 21-alignment-guides.png 22-locked-hover.png
  */

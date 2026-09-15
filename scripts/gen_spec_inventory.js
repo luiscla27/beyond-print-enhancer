@@ -107,7 +107,7 @@ function main() {
       produced_by: "node scripts/gen_spec_inventory.js",
       collects_with: "mocha test/browser_e2e --recursive --dry-run --reporter json",
       measured_at: new Date().toISOString().slice(0, 10),
-      tracked_by: "conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
+      tracked_by: "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
       pending_is_runtime:
         "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME " +
         "(this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending " +
@@ -154,7 +154,7 @@ function main() {
         produced_by: "node scripts/gen_spec_inventory.js --pending <results.json>",
         read_from: path.basename(pendingPath),
         measured_at: new Date().toISOString().slice(0, 10),
-        tracked_by: "conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
+        tracked_by: "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
       },
       expected: {
         case_count: pending.length,

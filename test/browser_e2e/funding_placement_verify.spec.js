@@ -19,7 +19,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage } = require("./_helpers.js");
 
 const ENABLED = process.env.FUNDING_SHOTS === "1";
-const ART_ROOT = process.env.FUNDING_SHOTS_DIR || "docs/first-run-and-panel-20260911";
+const ART_ROOT = process.env.FUNDING_SHOTS_DIR || "vendor/docs/first-run-and-panel-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase3");
 
 /** The five destinations AC-3 must not lose: 3 funding channels + the bug tracker + the project page. */

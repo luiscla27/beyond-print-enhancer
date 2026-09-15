@@ -35,7 +35,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'MODAL_SHOTS',
   dirVar: 'MODAL_SHOTS_DIR',
-  defaultDir: 'docs/modal-primitive-20260910',
+  defaultDir: 'vendor/docs/modal-primitive-20260910',
 });
 const ART_ROOT = cap.artRoot;
 const CAPTURING = cap.enabled;

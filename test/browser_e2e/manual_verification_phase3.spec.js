@@ -2,7 +2,7 @@
  * Manual Verification — Phase 3 (IA & token consistency, AC-6..AC-10) — AUTOMATED.
  *
  * The automated form of "Conductor - User Manual Verification 'Phase 3'". Per
- * conductor/workflow.md §3.1 a checkpoint is a user-facing walkthrough with
+ * vendor/conductor/workflow.md §3.1 a checkpoint is a user-facing walkthrough with
  * expected results; the walkthrough below is asserted instead of eyeballed.
  *
  * The walkthrough:

@@ -134,10 +134,10 @@ FEEDBACK_SHOTS=1  npx mocha test/browser_e2e/feedback_visual_capture.spec.js
 Some of these are **probes rather than gates**: they measure something and print it, so they
 self-skip unless their flag is set (`ENCODING_SHOTS`, `RECOVERY_DEPTH_SHOTS`,
 `REFUSAL_COPY_SHOTS`, `HELP_SHOTS`, `PANEL_MEASURE`) and never fail a normal run. Their
-outputs are committed under `docs/ux-gaps-20260911/`.
+outputs are committed under `vendor/docs/ux-gaps-20260911/`.
 
 Their committed evidence and the deterministic checks over it live under
-`docs/selection-model-ia-20260910/` and `docs/feedback-lifecycle-a11y-20260910/`
+`vendor/docs/selection-model-ia-20260910/` and `vendor/docs/feedback-lifecycle-a11y-20260910/`
 (`scripts/selection_visual_diff.js` re-measures the selection frames; the collage
 composers refuse to write a collage whose cells differ in size or scale).
 
@@ -150,10 +150,10 @@ page so it can be looked at and gated. It self-skips without its flag, like the 
 PRINT_AUDIT=1 npx mocha test/browser_e2e/print_output_audit.spec.js --timeout 1800000
 ```
 
-Its evidence is committed under `docs/print-output-audit-20260911/` (page rasters,
+Its evidence is committed under `vendor/docs/print-output-audit-20260911/` (page rasters,
 `measurements.json`, the visual-gate briefs and verdicts); the audit's findings are in
-`docs/print-output-audit-20260911/audit_report.md`. The sheet's missing text layer, which that
-audit handed on, is fixed and re-measured in `docs/print-sheet-text-layer-20260911/` (its
+`vendor/docs/print-output-audit-20260911/audit_report.md`. The sheet's missing text layer, which that
+audit handed on, is fixed and re-measured in `vendor/docs/print-sheet-text-layer-20260911/` (its
 post-fix artifacts are committed alongside, and the suite's last case now REQUIRES the text layer
 instead of only recording it).
 
@@ -162,7 +162,7 @@ the feature once sat inert for its whole life because its only test copied the a
 exercising the wiring, so the browser case asserts the effect on the real sheet — a section scaled down,
 its drawn box inside its container, and no `ResizeObserver loop` page error. Its before/after evidence
 (page rasters, print measurements, the visual-gate brief and verdicts) is committed under
-`docs/responsive-scaling-wiring-20260913/`.
+`vendor/docs/responsive-scaling-wiring-20260913/`.
 
 A second, self-skipping probe measures the one thing the audit cannot — whether a chain with every
 filter slider at its DEFAULT value is really neutral, and whether a setting the user makes still
@@ -181,11 +181,11 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
    alignment guides, drops always complete (clamped to the sheet), and the
    layout auto-saves ~1s after the last drop ("Layout saved" toast). Arrow
    keys nudge the selected section (1px; `Shift` = one 16px step) and the
-   properties panel shows numeric Position X/Y inputs. **What is selected is one thing**: picking a section on the sheet, picking it from the layer panel, or picking a shape all move the same selection, so the outline, the layer row and the properties panel cannot disagree — and clearing clears all three. See `docs/selection-model-ia-20260910/` for this track's visual-gate record and `docs/drag-ux-20260909/` for the drag engine's.
+   properties panel shows numeric Position X/Y inputs. **What is selected is one thing**: picking a section on the sheet, picking it from the layer panel, or picking a shape all move the same selection, so the outline, the layer row and the properties panel cannot disagree — and clearing clears all three. See `vendor/docs/selection-model-ia-20260910/` for this track's visual-gate record and `vendor/docs/drag-ux-20260909/` for the drag engine's.
    Since 2.0.1 the move affordance is **shown, not guessed**: hovering a section
    on the active layer puts a nine-dot grip at its centre, and the section drags
    from there. It replaces a green `drop-shadow` that washed the whole section
-   when you hovered it (`docs/sheet-affordances-20260914/`). Dragging the section
+   when you hovered it (`vendor/docs/sheet-affordances-20260914/`). Dragging the section
    body itself still works exactly as before.
 2. **Resizable Sections**: Adjust section width and height to fit your custom layout.
 3. **Properties Panel**: A centralized panel to manage the active section's font size, compact mode, and border style in real-time.
@@ -327,7 +327,7 @@ arrow-key navigation), assets show curated names under family-group headers
 with live search, and hovering a style or asset tile **tries it live on the
 real section/shape** (dashed-gold outline) with an exact restore when you
 leave — no more blind commits. Add mode shows an enlarged in-modal preview
-instead. See `docs/border-shape-picker-ux-20260909/` for the per-phase
+instead. See `vendor/docs/border-shape-picker-ux-20260909/` for the per-phase
 visual-gate record.
 
 ### Custom upload & templates (since 1.9.2)
@@ -338,7 +338,7 @@ open with the new shape preselected — **Add Shape / Switch Asset** places
 it, **Cancel** is save-to-library only. The **Templates** catalog is now a
 single, keyboard-safe modal (Esc/✕/backdrop, focusable cards, in-modal
 detail and an apply-confirm), and the Basic + Archer template cards show
-real captured thumbnails. See `docs/custom-upload-templates-ux-20260909/`
+real captured thumbnails. See `vendor/docs/custom-upload-templates-ux-20260909/`
 for the per-phase visual-gate record.
 
 ### Shape layers (since 1.10.0)
@@ -352,11 +352,11 @@ drag while their layer is unlocked. Chips show curated names, rows show live
 counts, empty layers say "Empty — drag a shape here", and **Ctrl/Shift-click**
 multi-selects shapes for batch **Split each into its own layer / Move
 selected / Delete selected** (atomic with rollback). See
-`docs/shape-layer-ps-ux-20260909/` for the per-phase visual-gate record.
+`vendor/docs/shape-layer-ps-ux-20260909/` for the per-phase visual-gate record.
 
 ### Trust & editor fixes (since 1.10.1)
 
-A full-surface UX audit (35 findings, `conductor/archive/ui_ux_review_20260910/`)
+A full-surface UX audit (35 findings, `vendor/conductor/archive/ui_ux_review_20260910/`)
 produced this patch set, scoped against the *"click once, then print"*
 contract:
 
@@ -393,7 +393,7 @@ boot sequence and the `window.*` test surface.
 Design system (v1.8.0 "3.5 Codex on the Workbench"): `js/ui_theme.js`
 injects the leather-and-bone token set (leather-black grounds, bone text,
 antique gold as light, oxblood/ember semantics — see
-`docs/dnd35-nostalgia-20260908/` for the art-direction contract) and the
+`vendor/docs/dnd35-nostalgia-20260908/` for the art-direction contract) and the
 chrome component skin; `js/icons.js` provides the 16px SVG line-icon set
 used by the panel,
 in-sheet action bars and the layer manager (semantic `data-state`).
@@ -426,7 +426,7 @@ in-sheet action bars and the layer manager (semantic `data-state`).
   live 16px grid snap, gold alignment guides, debounced auto-save).
 - `js/main.js` — orchestrator: init guard, boot sequence, resize/scroll interception, remaining interactive glue, `window.*` export table.
 
-Encapsulation history is tracked in `conductor/tracks/encapsulation_functionality_20260907/`.
+Encapsulation history is tracked in `vendor/conductor/tracks/encapsulation_functionality_20260907/`.
 
 ## Instructions for use
 
@@ -442,7 +442,7 @@ Encapsulation history is tracked in `conductor/tracks/encapsulation_functionalit
   - **Margins: you do not need to set these.** The extension sets its own margins in
     its print stylesheet, which overrides the print dialog's margin setting — so changing
     it has no effect. Measured, with the method and its control, in
-    `docs/first-run-and-panel-20260911/phase2_print_settings.md`.
+    `vendor/docs/first-run-and-panel-20260911/phase2_print_settings.md`.
 5. Review the print preview.
 6. Print!
 

@@ -17,7 +17,7 @@
  *   const cap = captureHarness({
  *     flag: "UNDO_SHOTS",            // the enable env var
  *     dirVar: "UNDO_SHOTS_DIR",      // the override env var
- *     defaultDir: "docs/undo-stack-20260911",
+ *     defaultDir: "vendor/docs/undo-stack-20260911",
  *     subdir: "shots",               // joined onto the root, or "" for the root itself
  *   });
  *   // cap.enabled / cap.artRoot / cap.shots / cap.viewport / cap.phase / cap.provenance(page, name)

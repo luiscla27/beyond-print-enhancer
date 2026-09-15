@@ -18,7 +18,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage } = require("./_helpers.js");
 
 const ENABLED = process.env.PRINT_SHOTS === "1";
-const ART_ROOT = process.env.PRINT_SHOTS_DIR || "docs/first-run-and-panel-20260911";
+const ART_ROOT = process.env.PRINT_SHOTS_DIR || "vendor/docs/first-run-and-panel-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase2");
 
 describe("Phase 2 — print settings at the moment of printing (AC-2)", function () {

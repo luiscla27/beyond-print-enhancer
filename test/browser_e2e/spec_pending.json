@@ -4,7 +4,7 @@
     "produced_by": "node scripts/gen_spec_inventory.js --pending <results.json>",
     "read_from": "dnde2e-baseline-clean.json",
     "measured_at": "2026-09-13",
-    "tracked_by": "conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)"
+    "tracked_by": "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)"
   },
   "expected": {
     "case_count": 94,

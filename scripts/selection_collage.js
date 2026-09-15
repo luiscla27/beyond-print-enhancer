@@ -22,7 +22,7 @@
  * Usage:
  *   node scripts/selection_collage.js [--phase 1] [--zoom-width 560] [--zoom-height 380]
  *
- * Output: docs/selection-model-ia-20260910/collage-phase1{,-zoom}.png
+ * Output: vendor/docs/selection-model-ia-20260910/collage-phase1{,-zoom}.png
  */
 "use strict";
 
@@ -31,7 +31,7 @@ const path = require("path");
 const sharp = require("sharp");
 
 const ROOT = path.resolve(__dirname, "..");
-const ART = path.join(ROOT, "docs", "selection-model-ia-20260910");
+const ART = path.join(ROOT, "vendor", "docs", "selection-model-ia-20260910");
 const SHOTS = path.join(ART, "shots-phase1");
 const PROBE = path.join(SHOTS, "selection-probe.json");
 

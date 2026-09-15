@@ -16,7 +16,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage, contentCall } = require("./_helpers.js");
 
 const ENABLED = process.env.HELP_SHOTS === "1";
-const ART_ROOT = process.env.HELP_SHOTS_DIR || "docs/ux-gaps-20260911";
+const ART_ROOT = process.env.HELP_SHOTS_DIR || "vendor/docs/ux-gaps-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase2");
 
 describe("Phase 2 — every feature is discoverable from the real UI (AC-2)", function () {

@@ -17,7 +17,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage} = require("./_helpers.js");
 
 const ENABLED = process.env.ENCODING_SHOTS === "1";
-const ART_ROOT = process.env.ENCODING_SHOTS_DIR || "docs/ux-gaps-20260911";
+const ART_ROOT = process.env.ENCODING_SHOTS_DIR || "vendor/docs/ux-gaps-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase1");
 
 /** The sites to classify: glyph -> where the product renders it. */

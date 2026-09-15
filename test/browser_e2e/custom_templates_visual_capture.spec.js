@@ -3,7 +3,7 @@
  * (track custom_upload_templates_ux_20260909).
  *
  * Boots the unpacked MV3 extension on the demo sheet at 1440px and saves
- * named frames under docs/custom-upload-templates-ux-20260909/shots-phaseN/
+ * named frames under vendor/docs/custom-upload-templates-ux-20260909/shots-phaseN/
  * for the per-phase visual gates (spec.md AC-V1 / visual_gate_protocol.md).
  *
  * Gating (graceful-skip — a normal e2e run never captures and never fails):
@@ -35,7 +35,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'CUSTOM_TEMPLATES_SHOTS',
   dirVar: 'CUSTOM_TEMPLATES_SHOTS_DIR',
-  defaultDir: 'docs/custom-upload-templates-ux-20260909',
+  defaultDir: 'vendor/docs/custom-upload-templates-ux-20260909',
   phaseVar: 'CUSTOM_TEMPLATES_PHASE',
   defaultPhase: "",
 });

@@ -18,7 +18,7 @@ OVER-inclusive: it prints every short lowercase literal inside every capture cal
 so the classification is done by reading the output rather than by matching a guess.
 
 Consumers:
-  * `conductor/tracks/refactor_surface_20260911/phase0_reverification.md` — the Phase 0 record.
+  * `vendor/conductor/tracks/refactor_surface_20260911/phase0_reverification.md` — the Phase 0 record.
   * Phase 3 of that track — the declaration (`MUTATION_CLASSES`) must be DERIVED from this
     output, and the guard test asserts the declaration still matches it. That is what makes a
     miss LOUD rather than silent. (This script is not infallible -- see KNOWN LIMITS below; the

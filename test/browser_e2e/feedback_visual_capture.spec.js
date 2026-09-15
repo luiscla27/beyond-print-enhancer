@@ -63,7 +63,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'FEEDBACK_SHOTS',
   dirVar: 'FEEDBACK_SHOTS_DIR',
-  defaultDir: 'docs/feedback-lifecycle-a11y-20260910',
+  defaultDir: 'vendor/docs/feedback-lifecycle-a11y-20260910',
   phaseVar: 'FEEDBACK_SHOTS_PHASE',
   defaultPhase: "both",
 });

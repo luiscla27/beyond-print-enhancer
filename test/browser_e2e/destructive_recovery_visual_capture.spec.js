@@ -45,7 +45,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'RECOVERY_SHOTS',
   dirVar: 'RECOVERY_SHOTS_DIR',
-  defaultDir: 'docs/destructive-recovery-20260911',
+  defaultDir: 'vendor/docs/destructive-recovery-20260911',
   subdir: 'shots-phase2',
 });
 const CAPTURING = cap.enabled;

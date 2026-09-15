@@ -3,7 +3,7 @@
  * AUTOMATED.
  *
  * The automated form of "Conductor - User Manual Verification 'Phase 4'". Per
- * conductor/workflow.md §3.1 a checkpoint is a step-by-step walkthrough with
+ * vendor/conductor/workflow.md §3.1 a checkpoint is a step-by-step walkthrough with
  * expected results; here it is asserted. The human steps and their automation:
  *
  *   1. "Open the parent issue and read the dispositions"
@@ -136,8 +136,8 @@ describe("Manual verification — Phase 4 (docs, issue, release, close-out)", fu
     );
 
     /* Step 4 — "The track is archived and the registry points there." */
-    const archiveDir = path.join(EXT_ROOT, "conductor", "archive", TRACK);
-    assert.ok(fs.existsSync(archiveDir), "the track lives in conductor/archive/");
+    const archiveDir = path.join(EXT_ROOT, "vendor", "conductor", "archive", TRACK);
+    assert.ok(fs.existsSync(archiveDir), "the track lives in vendor/conductor/archive/");
     ["final_report.md", "plan.md", "spec.md", "metadata.json"].forEach((f) => {
       assert.ok(
         fs.existsSync(path.join(archiveDir, f)),
@@ -145,10 +145,10 @@ describe("Manual verification — Phase 4 (docs, issue, release, close-out)", fu
       );
     });
     assert.ok(
-      !fs.existsSync(path.join(EXT_ROOT, "conductor", "tracks", TRACK)),
-      "nothing is left behind in conductor/tracks/",
+      !fs.existsSync(path.join(EXT_ROOT, "vendor", "conductor", "tracks", TRACK)),
+      "nothing is left behind in vendor/conductor/tracks/",
     );
-    const registry = read(path.join("conductor", "tracks.md"));
+    const registry = read(path.join("vendor", "conductor", "tracks.md"));
     assert.ok(
       new RegExp(`archive/${TRACK}`).test(registry),
       "the registry repoints to the archived track",

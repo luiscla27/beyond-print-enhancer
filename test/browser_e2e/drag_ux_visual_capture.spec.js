@@ -2,7 +2,7 @@
  * Drag & Drop UX visual-gate capture harness (track drag_ux_overhaul_20260909).
  *
  * Boots the unpacked MV3 extension on the demo sheet at 1440px and saves
- * named frames under docs/drag-ux-20260909/shots-phaseN/ for the per-phase
+ * named frames under vendor/docs/drag-ux-20260909/shots-phaseN/ for the per-phase
  * visual gates (spec.md AC-V1 / visual_gate_protocol.md).
  *
  * Gating (graceful-skip pattern — a normal `npm run test:e2e:*` run never
@@ -10,7 +10,7 @@
  *   DRAG_UX_SHOTS=1        enable capturing (otherwise every test skips)
  *   DRAG_UX_PHASE=N        only run the describe block for phase N
  *   DRAG_UX_SHOTS_DIR=...  override the artifact root (default
- *                          docs/drag-ux-20260909)
+ *                          vendor/docs/drag-ux-20260909)
  *
  * The synth drag helper drives the pointer-events engine (Phase 1+): pointer
  * down -> move in steps (so the movement threshold is crossed and the ghost
@@ -41,7 +41,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'DRAG_UX_SHOTS',
   dirVar: 'DRAG_UX_SHOTS_DIR',
-  defaultDir: 'docs/drag-ux-20260909',
+  defaultDir: 'vendor/docs/drag-ux-20260909',
   phaseVar: 'DRAG_UX_PHASE',
   defaultPhase: "",
 });

@@ -31,7 +31,7 @@
  *    the fix, on all four pages.
  *
  * Run:  PRINT_AUDIT=1 npx mocha test/browser_e2e/print_output_audit.spec.js --timeout 1800000
- * Artifacts: docs/print-output-audit-20260911/  (page rasters + measurements.json)
+ * Artifacts: vendor/docs/print-output-audit-20260911/  (page rasters + measurements.json)
  */
 "use strict";
 
@@ -42,7 +42,7 @@ const { launchExtensionContext, bootPage, reinject } = require("./_helpers.js");
 const { measurePdf, startStaticServer, EXT_ROOT } = require("./_helpers/pdf.js");
 
 const ENABLED = process.env.PRINT_AUDIT === "1";
-const ART = path.resolve(EXT_ROOT, process.env.PRINT_AUDIT_DIR || "docs/print-output-audit-20260911");
+const ART = path.resolve(EXT_ROOT, process.env.PRINT_AUDIT_DIR || "vendor/docs/print-output-audit-20260911");
 const WORK = path.resolve(EXT_ROOT, "temp/print-audit"); // PDFs the static server must reach
 const PDFJS = "/node_modules/pdfjs-dist/legacy/build";
 
@@ -287,7 +287,7 @@ window.__factsReady = true;
   });
 
   it("the four documented settings each still do something to the PAGE (not just to the byte size)", async function () {
-    // Phase 2 (docs/first-run-and-panel-20260911/phase2_print_settings.md) measured these by BYTE
+    // Phase 2 (vendor/docs/first-run-and-panel-20260911/phase2_print_settings.md) measured these by BYTE
     // SIZE with a null render, because byte size was the strongest probe available at the time. This
     // test re-takes the same measurements on the page REGIONS, which is what a user sees.
     const base = measurements.sheet;
@@ -374,11 +374,11 @@ window.__factsReady = true;
       // settled separately, by printing with the filters neutralised and comparing the renders: mean
       // 3.7-4.3/255, at most 4.1% of pixels differing by more than 32/255, so the type was on the
       // paper either way and only its ENCODING differed.
-      // See docs/print-output-audit-20260911/evidence/type_present_but_encoded_as_images.txt.
+      // See vendor/docs/print-output-audit-20260911/evidence/type_present_but_encoded_as_images.txt.
       // POST-FIX (issue print_sheet_rasterised_20260911, closed): the identity chains collapse to
       // `none` (js/filters.js), so the sheet's own text and vectors reach the paper again. Numbers
       // and the two measurements behind the per-chain rule:
-      // docs/print-sheet-text-layer-20260911/FIX_REPORT.md.
+      // vendor/docs/print-sheet-text-layer-20260911/FIX_REPORT.md.
       imagesAt300dpiPreFix: 118,
       note:
         "the sheet's type reaches the paper as TEXT. Until the rasterisation fix it did not: the " +

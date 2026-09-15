@@ -62,7 +62,12 @@ const PRODUCT_WINDOW_SEAMS = {
 
 module.exports = [
   {
-    ignores: ["eslint.config.js", "conductor/", "vendor/"],
+    // `eslint js/ test/ scripts/` never traverses the overlay anyway, but the ignore is the
+    // belt-and-braces half of "the framework's files are not this project's lint surface". The
+    // vendored layout (track `vendor_root_consolidation_20260914`) puts EVERYTHING framework-
+    // supplied under `vendor/` — the overlay (`vendor/conductor/`, the old root pattern this
+    // replaces) and the pinned unit alike — so one pattern covers both.
+    ignores: ["eslint.config.js", "vendor/"],
   },
   {
     files: ["**/*.js"],

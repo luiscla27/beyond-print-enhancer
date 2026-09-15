@@ -25,7 +25,7 @@
  *   C4  every frame pair differs SOMEWHERE (no two states are indistinguishable)
  *
  * Usage:
- *   node scripts/selection_visual_diff.js [--dir docs/selection-model-ia-20260910/shots-phase1]
+ *   node scripts/selection_visual_diff.js [--dir vendor/docs/selection-model-ia-20260910/shots-phase1]
  *                                        [--json <out.json>]
  *
  * Exit 1 when any claim fails. Output: one line per pair per region with the
@@ -45,7 +45,7 @@ const arg = (name, dflt) => {
 
 const DIR = path.resolve(
   ROOT,
-  arg("dir", "docs/selection-model-ia-20260910/shots-phase1"),
+  arg("dir", "vendor/docs/selection-model-ia-20260910/shots-phase1"),
 );
 const PROBE = path.join(DIR, "selection-probe.json");
 const FRAMES = {

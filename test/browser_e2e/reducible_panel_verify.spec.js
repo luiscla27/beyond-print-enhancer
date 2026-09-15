@@ -22,7 +22,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage } = require("./_helpers.js");
 
 const ENABLED = process.env.REDUCIBLE_SHOTS === "1";
-const ART_ROOT = process.env.REDUCIBLE_SHOTS_DIR || "docs/first-run-and-panel-20260911";
+const ART_ROOT = process.env.REDUCIBLE_SHOTS_DIR || "vendor/docs/first-run-and-panel-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase5");
 
 /** The groups, and the control labels inside each that must stay reachable once folded. */

@@ -46,7 +46,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'UNDO_SHOTS',
   dirVar: 'UNDO_SHOTS_DIR',
-  defaultDir: 'docs/undo-stack-20260911',
+  defaultDir: 'vendor/docs/undo-stack-20260911',
   subdir: 'shots',
 });
 const CAPTURING = cap.enabled;

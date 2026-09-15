@@ -23,7 +23,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage, reinject } = require("./_helpers.js");
 
 const ENABLED = process.env.TURNOFF_SHOTS === "1";
-const ART_ROOT = process.env.TURNOFF_SHOTS_DIR || "docs/first-run-and-panel-20260911";
+const ART_ROOT = process.env.TURNOFF_SHOTS_DIR || "vendor/docs/first-run-and-panel-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase4");
 
 /** The seven stylesheets the injection adds — read from the live page, not listed by hand. */

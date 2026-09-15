@@ -16,7 +16,7 @@ const path = require("path");
 const { launchExtensionContext, bootPage, contentCall } = require("./_helpers.js");
 
 const ENABLED = process.env.REFUSAL_COPY_SHOTS === "1";
-const ART_ROOT = process.env.REFUSAL_COPY_SHOTS_DIR || "docs/ux-gaps-20260911";
+const ART_ROOT = process.env.REFUSAL_COPY_SHOTS_DIR || "vendor/docs/ux-gaps-20260911";
 const SHOTS = path.join(ART_ROOT, "shots-phase4");
 
 describe("Phase 4 — the refusal copy as the user meets it (AC-4)", function () {

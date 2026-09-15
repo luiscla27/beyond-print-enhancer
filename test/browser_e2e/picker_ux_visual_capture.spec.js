@@ -3,7 +3,7 @@
  * (track border_shape_picker_ux_20260909).
  *
  * Boots the unpacked MV3 extension on the demo sheet at 1440px and saves
- * named frames under docs/border-shape-picker-ux-20260909/shots-phaseN/ for
+ * named frames under vendor/docs/border-shape-picker-ux-20260909/shots-phaseN/ for
  * the per-phase visual gates (spec.md AC-V1 / visual_gate_protocol.md).
  *
  * Gating (graceful-skip pattern — a normal `npm run test:e2e:*` run never
@@ -11,7 +11,7 @@
  *   PICKER_UX_SHOTS=1        enable capturing (otherwise every test skips)
  *   PICKER_UX_PHASE=N        only run the describe block for phase N
  *   PICKER_UX_SHOTS_DIR=...  override the artifact root (default
- *                            docs/border-shape-picker-ux-20260909)
+ *                            vendor/docs/border-shape-picker-ux-20260909)
  *
  * Interactions mirror the authoritative selectors of the existing e2e
  * suites (border_picker_base.spec.js, quick_switch_print.spec.js): section
@@ -42,7 +42,7 @@ const { captureHarness } = require("./_capture.js");
 const cap = captureHarness({
   flag: 'PICKER_UX_SHOTS',
   dirVar: 'PICKER_UX_SHOTS_DIR',
-  defaultDir: 'docs/border-shape-picker-ux-20260909',
+  defaultDir: 'vendor/docs/border-shape-picker-ux-20260909',
   phaseVar: 'PICKER_UX_PHASE',
   defaultPhase: "",
 });
