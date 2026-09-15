@@ -81,6 +81,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (smaller) centre and staying inside its wrapper — and the census stays at 22/22. Reported and
   resolved in `temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md`.
 
+### Internal
+- **The fold budget moved to `150,000 / 240,000`, and the gate that blessed the old number got a new
+  floor model — the sizing tool was printing `OK` for a configuration whose folds cannot land.**
+  `python scripts/input_budget_report.py` priced the smallest view a fold can produce as
+  `fixed prefix + verbatim tail` (44,846 as the issue recorded it; 44,857 on today's store) and so blessed
+  `context_budget_soft_tokens = 90000`; but three terms a fold never folds away were missing — the
+  digest it writes in, the hoisted user turns (≤ 8,192, `compact.go:38-39`) and the **active turn**,
+  which `planFoldRegion` deliberately clamps the fold *before* (`compact_projection.go:557-568`).
+  Measured on this lane's own relay telemetry (prefix 12,089 + digest 1,018 + kept 8,192 + tail
+  32,768 + active turn 47,786 = **101,853**), and the incident's candidate landed at 95,080 — i.e.
+  *at its floor*, 5,080 above the trigger that judged it, so the mandatory fold was discarded and
+  the turn died with `context exceeds provider limit and compaction failed`. `fold_floor()` now
+  sums all five terms and names each one's source, so an estimate can never be read as a
+  measurement; F4 asserts against it; two new findings come from the same arithmetic — **F7** (no
+  fold chains measurable ⇒ the dominant term is a fallback and the F4 verdict is WEAK: this is the
+  blind spot that produced the 90,000) and **F8** (floor above the `0.50 x window` checkpoint
+  ceiling ⇒ no non-forced candidate can ever land, at any soft point — the fix is a smaller
+  window). The soft point is 150,000 rather than the issue's suggested 120,000 because the
+  active-turn term swings (p75 47,786 / p90 140,382 across 499 measured fold-chains): 120,000 leaves
+  17.8% margin, so ordinary lane drift would turn the gate red — 150,000 absorbs a 2x growth in it,
+  and it still folds at half of the 303k mean the 2026-09-13 alignment was written to remove. Two
+  caveats recorded rather than smoothed: the value sits ABOVE the checkpoint ceiling (131,072), so
+  a *non-forced* fold is bounded by the ceiling before the trigger — the budget's remaining job is
+  starting folds early and bounding the fatal mandatory case; and **the fatality itself is only
+  half-fixed here**, because the gateway binary this bot runs (2026-09-13 10:01) predates the
+  upstream commit `64d826a` that lets a mandatory fold answer to the hard ceiling, so a rebuild +
+  fleet rollout is still owed by the operator (never a manual deploy). Fold chains are attributed by
+  time adjacency (≤ 120 s) because the relay stamps ONE `session_id` on every row of every consumer
+  (measured: 14,957 rows, one id) — an attribution of a shared log, not a proof. `reasonix.toml` +
+  `reasonix.toml.example` and `test/unit/input_budget_alignment.test.js` (8 → 9 cases) move
+  together; the F4/F7/F8 and active-turn cases are falsified against the pre-fix model, and the
+  live repo passes `--check` on the new floor.
+
 ### Known issues
 - **The per-section "Auto-scale to fit" switch does nothing until the section is resized, and two
   scaling cases still pin the pre-floor scale — filed, not fixed, and PRE-EXISTING (unrelated to the
