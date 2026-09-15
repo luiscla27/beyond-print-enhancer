@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **On a short section the action bar no longer covers the centred grip — the bar yields.**
+  `section-extra-tidbits-wrapper` (151×62) was the 2.0.1 census failure recorded under Known issues
+  below: the bar carries an inline `z-index: 1000000` (`js/main.js:2512`, via `window.Z.ACTIONS_BAR`)
+  against the grip's 700002, so on a section short enough for the bar's band to reach the vertical
+  centre the revealed buttons sat ON the drag area and a press there landed on
+  `be-select-section-button` instead of the grip. `js/print_styles.js` now drops the bar to
+  `700001` on exactly the arms that reveal the grip (`.be-active-layer` + `:hover` /
+  `:focus-within` on the wrapper, `!important` because an inline level outranks a non-important
+  stylesheet rule), so inside the hovered wrapper's own stacking context the ladder reads
+  hover-raise 700000 < yielded bar 700001 < grip 700002: the grip wins its own pixel, the bar stays
+  fully revealed and usable, and with the grip off screen nothing has moved at all. Two
+  alternatives were implemented and MEASURED on the live sheet before this one was kept — hoisting
+  the grip over the bar also reaches 22/22 but covers 60% of the Select button including its own
+  centre, and nudging the grip clear of the bar puts it 10px off the literal centre the grip was
+  promised at. The census assertion no longer allows any exception (it asserts
+  `grabbed === probeable`, and `KNOWN_BAR_OVERLAP_EXCEPTIONS` is deleted), and its follow-up block
+  checks what the yield must NOT cost: the bar still revealed, `barZ < gripZ`, the Select button
+  still reachable at a point of its own box. `test/unit/hover_refactor.test.js` pins the ladder
+  (falsified against the pre-fix pair) and adds a LOCKSTEP case that parses the grip reveal's
+  selector arms out of `js/dnd.js` and the yield's out of `js/print_styles.js` and requires the two
+  sets to be EQUAL — the one check that keeps "the grip is shown" and "the bar has yielded" from
+  ever becoming two definitions of one fact. Measured: census 21/22 → **22/22**; the three
+  Option-3 browser suites (`affordance_drag_hover_shadows`, `lock_handle_visibility`,
+  `drag_glow_layers`) **19 passing / 0 failing**. Reported and resolved in
+  `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (option 3 chosen
+  by the operator; Muse consulted on the loop, all five of his suggestions dispositioned there).
+
+### Known issues
+- **On the shortest sections the grip's box physically overlaps a bar button's centre — filed, and
+  not fixable by stacking.** After the yield, the grip and the 🎯 Select button on
+  `section-extra-tidbits-wrapper` have centres 7px apart (grip box (58.8,18) 34×26 centre (75.8,31);
+  Select box (55,8) 39×32 centre (74.5,24)), so their boxes overlap over 34×22 = 60% of the button
+  and whoever is stacked on top takes the other's centre pixel: the button no longer owns its own
+  centre, though it stays reachable at the points the grip does not cover (asserted). Every
+  stacking option has the identical residual — this is geometry, not cascade — and only a
+  hit-area/position change separates the two. Measured and handed on:
+  `temp/issues/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md`.
+- **The per-section "Auto-scale to fit" switch does nothing until the section is resized, and two
+  scaling cases still pin the pre-floor scale — filed, not fixed, and PRE-EXISTING (unrelated to the
+  affordances above; found by running the whole suite).** `initResponsiveScaling()` is idempotent
+  and `updateLayoutBounds()` does not change a section's content box, so the properties panel's
+  toggle never schedules the re-measure that the observer's size record then suppresses
+  (`js/main.js:1884,1958`, `js/properties_panel.js:467-475`); and
+  `test/unit/responsive_scaling.test.js` expects `scale(0.5)` / `scale(0.25)` where the shipped
+  `MIN_SCALE_FLOOR = 0.60` returns `0.6` — **6 passing / 3 failing** on a clean HEAD, reproducible
+  with one mocha command and proven pre-existing by stashing this diff. Fix options, and why the
+  third failure is a real defect rather than a stale number:
+  `temp/issues/ISSUE_scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914.md`.
+
 ## [2.0.1] - 2026-09-14
 
 ### Changed
@@ -90,8 +142,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lands on `be-select-section-button` instead of the grip. This is a real regression in reachability
   introduced by the 2.0.1 grip — the grip's pixel used to be section content, which drags — so it is
   recorded honestly rather than asserted away:
-  `temp/issues/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (three concrete fix
-  options, all re-stacking, none attempted here). The census assertion is a **ratchet on the count**
+  `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (three concrete fix
+  options, all re-stacking, none attempted here — **option 3 was taken after this release; see
+  [Unreleased]**). The census assertion is a **ratchet on the count**
   (`KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`) with the miss list printed, so a stacking regression that makes
   ordinary section content beat the grip blows far past the bound and goes red.
 

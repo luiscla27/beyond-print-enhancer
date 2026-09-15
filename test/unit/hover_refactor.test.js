@@ -108,6 +108,161 @@ describe('Hover Logic Refactor (TDD)', function() {
     );
   });
 
+  it('makes the action bar YIELD while the grip is revealed, on a short section (ISSUE_grip_covered_by_actions_bar_20260914)', function () {
+    // WHY A UNIT CASE FOR A STACKING FIX: who wins one pixel is only visible to a real
+    // pointer, and the browser case measures exactly that. What the browser cannot see is
+    // WHY it went red. This case pins the three numbers and the one keyword the whole fix
+    // rests on, so a regression names itself instead of just losing a grip.
+    //
+    // THE LADDER (operator chose option 3 — the bar yields — because hoisting the grip over
+    // the bar covers 60% of the Select button on `section-extra-tidbits-wrapper`, measured):
+    //   hovered wrapper 700000  < yielded bar 700001  < the grip 700002
+    const css = fs
+      .readFileSync(cssSourcePath, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, ''); // prose names other numbers; strip it first
+    const dnd = require(path.resolve(__dirname, '../../js/dnd.js'));
+    dnd.injectDnDStyles();
+    const handleCss = global.document
+      .getElementById('ddb-print-dnd-style').textContent.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    const gripZ = Number(/\.be-drag-handle\s*\{[\s\S]*?z-index:\s*(\d+)/.exec(handleCss)[1]);
+    assert.ok(gripZ > 0, 'the grip declares a numeric z-index: ' + gripZ);
+    // The bar's RESTING level in this same stylesheet — what puts it above the section's
+    // own content. The yield may not sink it under the thing it was raised for. Matched at
+    // line start so the bare resting rule is found, not any descendant selector that happens
+    // to END in `.be-section-actions` (the yield itself comes earlier in the sheet).
+    const restZ = Number(
+      /(?:^|\n)\s*\.be-section-actions\s*\{[^}]*?z-index:\s*(\d+)/.exec(css)[1],
+    );
+
+    // THE YIELD RULE ITSELF, found by what it does rather than by a remembered selector: a
+    // rule that re-levels the bar from a CONDITIONAL selector (the resting
+    // `.be-section-actions { z-index: 20 }` is the baseline above, not a yield).
+    const barRules = [...css.matchAll(/([^{}]*\.be-section-actions)\s*\{([^}]*)\}/g)]
+      .map((m) => ({ sel: m[1].trim().replace(/\s+/g, " "), body: m[2] }))
+      .filter((r) => /z-index:\s*\d+/.test(r.body));
+    const yieldRules = barRules.filter((r) => /:hover|:focus-within/.test(r.sel));
+    assert.strictEqual(
+      yieldRules.length,
+      1,
+      'exactly ONE conditional rule re-levels the action bar, and it is the yield (found: ' +
+        JSON.stringify(barRules.map((r) => r.sel)) + ")",
+    );
+    const yieldRule = yieldRules[0];
+    const barZ = Number(/z-index:\s*(\d+)/.exec(yieldRule.body)[1]);
+
+    // THE LADDER, both bounds: inside a wrapper's stacking context the bar competes only
+    // with the section's content and with the grip, so it must stay ABOVE the resting level
+    // and BELOW the grip. That gap is the whole fix.
+    const ladder = (rest, bar, grip) => rest < bar && bar < grip;
+    assert.ok(
+      ladder(restZ, barZ, gripZ),
+      `the yielded bar ${barZ} must sit between the bar's resting level ${restZ} and the ` +
+        `grip's ${gripZ}. At or under the resting level the bar sinks into the section's own ` +
+        'content; at or over the grip the collision is unfixed ' +
+        '(temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md)',
+    );
+    // The level the bar is BUILT with, read from the ONE map js/main.js writes it from —
+    // not restated as a literal here.
+    const mapSrc = fs.readFileSync(path.resolve(__dirname, '../../js/section_utils.js'), 'utf8');
+    const builtZ = Number(/ACTIONS_BAR:\s*"(\d+)"/.exec(mapSrc)[1]);
+    // FALSIFIED BOTH WAYS: the SAME predicate with the pre-fix pair (the bar left at the
+    // inline level it is built with, grip 700002) must be FALSE — that pair is precisely
+    // what let the buttons sit on the grip, so this case cannot pass vacuously.
+    assert.ok(
+      !ladder(restZ, builtZ, gripZ),
+      'the pre-fix ladder FAILS — the check is load-bearing',
+    );
+    assert.ok(
+      barZ < builtZ,
+      `the yielded ${barZ} must be LOWER than the bar's built level ${builtZ} — that is the yield`,
+    );
+    assert.ok(
+      /!important/.test(yieldRule.body),
+      'the yield MUST be !important: the bar carries an INLINE level (js/main.js ' +
+        'getOrCreateActionContainer) and inline outranks a non-important stylesheet rule at ' +
+        'any specificity — without it the yield silently does nothing',
+    );
+    // The yield fires on the grip's OWN trigger, so the two can never disagree about when
+    // the grip is on screen. The reveal in js/dnd.js is `.be-active-layer … :hover /
+    // :focus-within .be-drag-handle` — same scope, both arms, or a keyboard-revealed grip
+    // still collides.
+    assert.ok(
+      yieldRule.sel.includes('.be-active-layer'),
+      'the yield is scoped to the active layer, like the grip reveal: ' + yieldRule.sel,
+    );
+    for (const arm of [':hover', ':focus-within']) {
+      assert.ok(
+        yieldRule.sel.includes(arm),
+        `the yield covers the ${arm} arm of the grip's reveal: ${yieldRule.sel}`,
+      );
+    }
+  });
+
+  it('keeps the bar yield in LOCKSTEP with the grip reveal — arm for arm (Muse GATE-5 audit)', function () {
+    // WHY THIS CASE EXISTS: the yield only protects the grip while the CONDITION that
+    // revealed the grip is also the condition that lowered the bar. The whole safety of
+    // option 3 is therefore set equality between two selector lists written in two
+    // different files (js/dnd.js owns the reveal, js/print_styles.js owns the yield). If
+    // the reveal ever gains an arm that the yield does not carry — a state class, a
+    // :focus-visible, a second wrapper type — there is a reachable state where the grip is
+    // on screen and the bar is still at its inline built level, i.e. the original bug.
+    // Comparing the parsed sets is the only check that cannot rot into a comment.
+    const arms = (css) => {
+      const strip = css.replace(/\/\*[\s\S]*?\*\//g, "");
+      const grab = (re) => {
+        const m = re.exec(strip);
+        if (!m) return null;
+        return m[1]
+          .split(",")
+          .map((s) => s.trim().replace(/\s+/g, " "))
+          .filter(Boolean)
+          // Drop the thing each rule is ABOUT: the reveal names the handle, the yield names
+          // the bar. Everything else (scope, wrapper, pseudo-class) is what must agree.
+          .map((sel) => sel.replace(/\s*\.be-(drag-handle|section-actions)\b/g, ""))
+          .sort();
+      };
+      return {
+        reveal: grab(/([^{}]*\.be-drag-handle)\s*\{[^}]*opacity:\s*1\s*!important/),
+        yield: grab(
+          /([^{}]*\.be-section-actions)\s*\{[^}]*z-index:\s*700001[^}]*\}/,
+        ),
+      };
+    };
+    const dnd = require(path.resolve(__dirname, '../../js/dnd.js'));
+    dnd.injectDnDStyles();
+    const revealCss = global.document
+      .getElementById('ddb-print-dnd-style').textContent;
+    const yieldCss = fs.readFileSync(cssSourcePath, 'utf8');
+    const { reveal, yield: yielded } = arms(revealCss + "\n" + yieldCss);
+
+    assert.ok(reveal, 'the grip reveal rule is found in js/dnd.js');
+    assert.ok(yielded, 'the bar yield rule is found in js/print_styles.js');
+    // NON-VACUITY: two empty lists would compare equal, so the arms themselves are named.
+    assert.ok(
+      reveal.length >= 2 &&
+        reveal.some((s) => s.includes(":hover")) &&
+        reveal.some((s) => s.includes(":focus-within")),
+      'the reveal list is real and carries both arms: ' + JSON.stringify(reveal),
+    );
+    assert.deepStrictEqual(
+      yielded,
+      reveal,
+      "the yield must fire on EXACTLY the arms that reveal the grip — any arm present on " +
+        "one side and not the other is a state where the grip is shown and the bar has not " +
+        "yielded (the collision of " +
+        "temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md). " +
+        "reveal=" + JSON.stringify(reveal) + " yield=" + JSON.stringify(yielded),
+    );
+    // AND THE COMPARISON IS NOT VACUOUS: a yield that loses its focus arm, or reaches a
+    // wrapper type the reveal does not, must break the equality above.
+    const mutated = arms(revealCss + "\n" + yieldCss.replace(/:focus-within/g, ":hover"));
+    assert.ok(
+      JSON.stringify(mutated.yield) !== JSON.stringify(mutated.reveal),
+      'dropping the focus arm from the yield is DETECTED — the check is load-bearing',
+    );
+  });
+
   it('creates one centred handle per wrapper and lets it arm a drag (ISSUE_drag_and_drop.md)', function() {
     const dnd = require(path.resolve(__dirname, '../../js/dnd.js'));
     const wrapper = document.createElement('div');

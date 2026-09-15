@@ -1304,7 +1304,31 @@ function injectDnDStyles() {
           transition: opacity 0.12s ease-in-out, visibility 0.12s !important;
           /* The handle is chrome, not sheet content: it must sit above the
              section's own text (wrappers stack at z-index 10, action bars at 20)
-             and above the wrapper the hover raised to 700000 — hence above that. */
+             and above the wrapper the hover raised to 700000 — hence above that.
+
+             IT MUST ALSO WIN THE PIXEL IT IS REVEALED FOR, and that ordering is the
+             whole of ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md.
+             The action bar is built with an INLINE z-index: 1000000 (js/main.js
+             getOrCreateActionContainer, reading ACTIONS_BAR from the ONE map in
+             js/section_utils.js) and is anchored at
+             top: 8px; left: 8px with 39x32 buttons, so on a section short enough for
+             that band to reach the vertical centre the bar's buttons landed ON the
+             grip's own pixel — and they become hittable at exactly the moment the
+             grip is revealed, so the two affordances the user is shown at the same
+             instant fought over the same ~26x26px. MEASURED on the live demo sheet
+             (1920x1080, decorative layers hidden through their own control):
+             section-extra-tidbits-wrapper (151.5x62px) reported
+             BUTTON|be-select-section-button at the grip's centre — "drag from the
+             centre" silently degraded to "drag from the lower edge". 700002 < 1000000
+             is the whole cause.
+
+             THE FIX MOVED THE BAR, NOT THIS NUMBER (operator chose option 3: the bar
+             yields while the grip is revealed). js/print_styles.js drops the bar to
+             700001 on the SAME hover that reveals this handle, so the order is
+             hovered wrapper 700000 < bar 700001 < grip 700002, both controls stay
+             fully usable, and the grip never has to be pushed off centre or cover a
+             button. This file stays the single owner of the grip's level; the bar's
+             yielded level and its reason live with the bar. */
           z-index: 700002 !important;
           /* No box-shadow, and that is deliberate (ISSUE_shadows.md): the whole
              complaint about the old affordance was a *shadow filter* painted over

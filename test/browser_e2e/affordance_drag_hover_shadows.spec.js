@@ -60,7 +60,8 @@ const cap = captureHarness({
  *   1440x900  0 of 22
  *   1920x1080 4 of 22                (the shapes still cross most section centres)
  *   1920x1080 + the shapes layer hidden through its own panel control
- *             21 of 22
+ *             21 of 22 BEFORE ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md
+ *             was fixed, 22 of 22 after (the bar now yields to the grip — js/print_styles.js)
  *
  * So: a viewport wide enough that the default sheet really does expose grabbable
  * grips, plus a case that hides the decorative layer through the product's own control
@@ -626,9 +627,13 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       // the reveal cases above can only assert THAT a grip is grabbable. Hiding the
       // decoration through the product's own layer-panel control ("Hide on sheet")
       // removes that unrelated competitor and lets this case assert the promise
-      // itself: a revealed grip is grabbable on ESSENTIALLY EVERY section. If the
-      // grip's stacking (z-index 700002, above the 700000 the hover raises the wrapper
-      // to) ever regressed, this is the case that counts and notices.
+      // itself: a revealed grip is grabbable on EVERY section the field is cleared for.
+      // If the grip's stacking ever regressed, this is the case that counts and notices:
+      // it is grabbable above BOTH the hover raise (700000, js/print_styles.js) and the
+      // action bar's inline level (1000000 from window.Z.ACTIONS_BAR, set in
+      // js/main.js getOrCreateActionContainer) — the second is what
+      // ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md was about, and
+      // the assertion below allows NO exception.
       const hidden = await page.evaluate(() => {
         const rows = Array.from(
           document.querySelectorAll("#print-enhance-layer-manager .be-layer-row"),
@@ -728,23 +733,108 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         probeable >= 10,
         "the cleared sheet exposes enough sections to make the count mean anything: " + probeable,
       );
-      // WHY NOT "ALL OF THEM": exactly one section fails this on the live sheet, and it
-      // is a REAL stacking collision rather than noise — MEASURED: on
-      // `section-extra-tidbits-wrapper` (151×62px) the revealed action bar wins the
-      // grip's own pixel. The bar carries an INLINE `z-index: 1000000`
-      // (js/main.js:2512 via window.Z.ACTIONS_BAR) and the grip carries 700002
-      // (js/dnd.js), so on a section short enough for the top-left bar to reach the
-      // centre, the buttons sit ON the drag area. Filed as
-      // temp/issues/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md
-      // — the assertion below is a RATCHET on the count, not a shrug: the miss list is
-      // printed, and a stacking regression (grip losing to ordinary section content,
-      // which is 700002 vs z-index 0) would blow far past this bound.
-      const KNOWN_BAR_OVERLAP_EXCEPTIONS = 1;
+      // NO EXCEPTIONS ANY MORE, and the count is the whole point: on the pre-fix build
+      // exactly one section lost this — `section-extra-tidbits-wrapper` (151.5x62px), where
+      // the revealed action bar won the grip's own pixel because the bar carries an INLINE
+      // level of 1000000 (js/main.js getOrCreateActionContainer) against the grip's 700002
+      // (js/dnd.js). On a section short enough for the top-left bar to reach the vertical
+      // centre, the buttons sat ON the drag area: "drag from the centre" silently degraded to
+      // "drag from the lower edge". The bar now YIELDS while the grip is revealed
+      // (js/print_styles.js), so every revealed grip wins and this equality is what keeps it
+      // true — the miss list is printed, and a single lost grip (to the bar or to ordinary
+      // section content) fails the case.
       assert.ok(
-        grabbed >= probeable - KNOWN_BAR_OVERLAP_EXCEPTIONS,
-        `revealed grips must win the hit test at their OWN pixel (${grabbed}/${probeable} did, ` +
-          "and only a section whose action bar reaches its centre may lose). Missed: " +
-          JSON.stringify(missed),
+        grabbed === probeable,
+        `revealed grips must win the hit test at their OWN pixel (${grabbed}/${probeable} did). ` +
+          "Missed: " + JSON.stringify(missed),
+      );
+      // AND THE YIELD MUST COST THE BAR NOTHING IT COULD STILL HAVE: it drops the bar BELOW
+      // the grip, it does not hide or disable the bar. Re-checking THE section that used to
+      // collide — its bar must still be fully revealed, and its Select button must still be
+      // HITTABLE. The point is re-scanned with the SAME walk (the scroll state has moved
+      // since), and the scan failing is a failure, not a skip: this is the section whose grip
+      // the fix exists for.
+      //
+      // WHAT THIS CASE DELIBERATELY DOES *NOT* ASSERT, because pixels say it is not
+      // obtainable by any stacking option: that the Select button keeps the pixel AT ITS OWN
+      // CENTRE. Measured on this section after the yield — grip box (58.8, 18) 34x26 with its
+      // centre at (75.8, 31); Select button box (55, 8) 39x32 with its centre at (74.5, 24).
+      // The two CENTRES are 1.3px apart across and 7px down, so the boxes overlap in a region
+      // 34 x 22 = 60% of the button, and whoever is on top takes the other one's centre. That
+      // is a geometry collision, not a stacking one, which is why raising the grip (option 1)
+      // and yielding the bar (option 3) have the SAME residual: the operator chose option 3,
+      // whose contract is that the GRIP wins the shared pixel. The button is not dead — the
+      // assertion below proves a point of its own box still reaches it — and the residual is
+      // filed as temp/issues/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md
+      // so the number cannot drift silently.
+      const collision = "section-extra-tidbits-wrapper";
+      await page.evaluate((wid) => {
+        const el = document.getElementById(wid);
+        if (el) el.scrollIntoView({ block: "center" });
+      }, collision);
+      await page.waitForTimeout(350);
+      const pt = await page.evaluate((wid) => {
+        const el = document.getElementById(wid);
+        const r = el.getBoundingClientRect();
+        for (const [fx, fy] of [
+          [0.5, 0.5], [0.5, 0.3], [0.5, 0.7], [0.3, 0.5], [0.7, 0.5],
+          [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75],
+        ]) {
+          const x = r.left + r.width * fx;
+          const y = r.top + r.height * fy;
+          if (x < 4 || y < 4 || x > innerWidth - 4 || y > innerHeight - 4) continue;
+          if (window.__beUnderChrome(x, y)) continue;
+          const t = document.elementFromPoint(x, y);
+          if (t && (t === el || el.contains(t))) return { x, y };
+        }
+        return null;
+      }, collision);
+      assert.ok(
+        pt,
+        "the colliding section still offers a hover point, so the checks below are real",
+      );
+      await page.mouse.move(pt.x, pt.y);
+      await page.waitForTimeout(250);
+      const after = await page.evaluate((wid) => {
+        const el = document.getElementById(wid);
+        const bar = el.querySelector(":scope > .be-section-actions");
+        const btn = bar && bar.querySelector(".be-select-section-button");
+        const grip = el.querySelector(":scope > .be-drag-handle");
+        const bcs = getComputedStyle(bar);
+        const hcs = getComputedStyle(grip);
+        const bRect = btn.getBoundingClientRect();
+        const centre = document.elementFromPoint(
+          bRect.left + bRect.width / 2, bRect.top + bRect.height / 2,
+        );
+        // A point of the button's OWN box chosen away from the grip: its top band, 4px
+        // inside each edge. This is what "still hittable" means here — the user can reach
+        // the control, even though the grip (being on top of the overlap) owns the centre.
+        const away = document.elementFromPoint(bRect.left + 4, bRect.top + 4);
+        const isBtn = (t) => !!t && (t === btn || btn.contains(t));
+        return {
+          opacity: bcs.opacity,
+          barZ: bcs.zIndex,
+          gripZ: hcs.zIndex,
+          buttonHittableSomewhere: isBtn(away),
+          buttonOwnsItsCentre: isBtn(centre),
+          centreOwner: centre ? centre.tagName + "|" + String(centre.className).slice(0, 44) : null,
+        };
+      }, collision);
+      await page.mouse.move(4, 4);
+      log("the colliding section, with the grip revealed:", JSON.stringify(after));
+      assert.ok(
+        parseFloat(after.opacity) > 0.9,
+        "yielding must not hide the bar — it is still revealed: " + after.opacity,
+      );
+      assert.ok(
+        Number(after.barZ) < Number(after.gripZ),
+        `the bar must sit BELOW the grip while it is revealed (bar ${after.barZ} vs ` +
+          `grip ${after.gripZ}) — that gap IS the fix`,
+      );
+      assert.ok(
+        after.buttonHittableSomewhere,
+        "the Select button must still be reachable — the yield moved the bar, it did not " +
+          "mute it (no point of its own box reaches it)",
       );
     } finally {
       await page.close();

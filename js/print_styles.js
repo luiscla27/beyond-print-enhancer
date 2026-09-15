@@ -1088,6 +1088,43 @@ function enforceFullHeight() {
           pointer-events: auto !important;
       }
 
+      /* THE BAR YIELDS TO THE GRIP WHILE THE GRIP IS REVEALED — option 3 of
+         temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md, chosen
+         over raising the grip above the bar because raising it STEALS A BUTTON: measured on
+         the live sheet, a grip hoisted over the bar covers 60% of the top-row Select button
+         on section-extra-tidbits-wrapper (151.5x62px) INCLUDING that button's own centre,
+         so "grabbable everywhere" would have been bought with "unselectable there".
+
+         WHY ONE NUMBER MOVES AND NOT TWO: a positioned wrapper with a z-index is its own
+         STACKING CONTEXT (be-section-wrapper carries z-index 10, and on the same hover that
+         reveals the grip the raise above gives it 700000), so the bar's level is scoped INSIDE
+         the hovered wrapper — it never has to out-rank the sheet, only its own siblings: the
+         section's content (print-section-container, z-index 0) and the grip. Both bounds are
+         therefore real: below the grip's 700002 (js/dnd.js — the collision being fixed) and
+         above the content the bar must sit on (the stylesheet's own be-section-actions
+         already uses 20 for that). 700001 sits in that gap and reads as "just under the grip"
+         beside the 700000/700002 pair this cascade already uses.
+
+         The bar keeps its inline built level (js/main.js getOrCreateActionContainer, which
+         reads ACTIONS_BAR from the ONE map in js/section_utils.js) whenever the grip is NOT on
+         screen, so the reachability that level was added for is untouched; and !important is
+         load-bearing here for the same reason the two rules above carry it — inline outranks a
+         NON-important stylesheet rule at any specificity, so a yield without it would silently
+         do nothing.
+
+         THE CONDITION IS THE GRIP'S OWN REVEAL, ARM FOR ARM — be-active-layer plus
+         :hover and :focus-within on the wrapper. That is deliberate: a second, hand-written
+         notion of "the grip is showing" (a state class, a timer) would be a second definition
+         of the same fact and could disagree with js/dnd.js. Same scope, same triggers, one
+         definition — which is also why the yield is inert on a locked or inactive layer, where
+         there is no grip to make room for. */
+      .be-active-layer .be-section-wrapper:hover .be-section-actions,
+      .be-active-layer .be-shape-wrapper:hover .be-section-actions,
+      .be-active-layer .be-section-wrapper:focus-within .be-section-actions,
+      .be-active-layer .be-shape-wrapper:focus-within .be-section-actions {
+          z-index: 700001 !important;
+      }
+
       .print-section-container {
           --reduce-height-by: 0px;
           --reduce-width-by: 0px;
