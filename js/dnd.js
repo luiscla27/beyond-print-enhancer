@@ -393,27 +393,40 @@ function measureGripBands(root) {
     wrappers.unshift(scope);
   }
   let banded = 0;
+  // Every box THIS pass reads, so the pass can also stop watching what it no longer
+  // reads (see `watchGripBand` / `reconcileGripBandWatch`).
+  const read = new Set();
   for (const wrapper of wrappers) {
     if (wrapper.isConnected === false) continue;
     const handle = ensureDragHandle(wrapper);
     if (!handle) continue;
     const wr = wrapper.getBoundingClientRect();
     watchGripBand(wrapper);
+    read.add(wrapper);
     const controls = [];
     for (const node of wrapper.querySelectorAll(
       '.be-section-actions button, .be-rotation-handle, .print-section-resize-handle',
     )) {
-      // Locked chrome hides its handles display-only (see the lock block in
-      // js/print_styles.js and ISSUE_lock_rule_hides_all_resize_rotate_handles_20260911
-      // .md): an invisible control is not one the user can aim at, so it is not a
-      // reason to move the grip. Honoured as the cascade states it, not re-derived.
+      // EVERY control this selector matches is watched, visible or not, and the reason is
+      // the lock toggle: `.be-layer-locked .be-rotation-handle` and friends hide chrome
+      // `display:none` (js/print_styles.js, and
+      // ISSUE_lock_rule_hides_all_resize_rotate_handles_20260911.md), so a control that
+      // was hidden during this pass has no box to change later — an observer subscribed
+      // only to what it measured would never be told when unlocking brings that handle
+      // BACK over the wrapper's centre. A `display:none` element that starts being
+      // rendered IS a resize notification, so watching the hidden one is what makes the
+      // pass hear about it. The lock's own opacity change on the wrapper is not.
+      watchGripBand(node);
+      read.add(node);
+      // Locked chrome hides its handles display-only: an invisible control is not one the
+      // user can aim at, so it is not a REASON TO MOVE THE GRIP either. Honoured as the
+      // cascade states it, not re-derived.
       const cs = getComputedStyle(node);
       if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') {
         continue;
       }
       const r = node.getBoundingClientRect();
       controls.push({ x: r.left - wr.left, y: r.top - wr.top, w: r.width, h: r.height });
-      watchGripBand(node);
     }
     const band = gripBandFor({ w: wr.width, h: wr.height, controls });
     if (band) {
@@ -427,10 +440,17 @@ function measureGripBands(root) {
       handle.style.removeProperty('--be-grip-shift');
     }
   }
+  reconcileGripBandWatch(read, !root);
   return banded;
 }
 
 let gripBandObserver = null;
+/** The nodes handed to that observer. The observer is only one side of a subscription:
+ *  this Set is what lets a later pass know what it already holds and release it — an
+ *  element stays in a `ResizeObserver` until somebody calls `unobserve`, no matter what
+ *  happened to it in the document (see `reconcileGripBandWatch`). */
+const gripBandWatched = new Set();
+
 /** The ONE ResizeObserver the placement pass subscribes its boxes to, or null in a host
  *  without one (a bare unit harness) — same failure shape as `watchDragHandles`.
  *
@@ -445,6 +465,9 @@ function ensureGripBandObserver() {
   if (gripBandObserver || typeof ResizeObserver !== 'function') return gripBandObserver;
   try {
     gripBandObserver = new ResizeObserver(() => scheduleGripBands());
+    // A fresh observer has no targets: whatever the Set remembers from an earlier one
+    // (a host that tore this down, a test harness) would never be released by `unobserve`.
+    gripBandWatched.clear();
   } catch {
     gripBandObserver = null;
   }
@@ -454,13 +477,48 @@ function ensureGripBandObserver() {
 function watchGripBand(node) {
   const ro = ensureGripBandObserver();
   if (!ro || !node) return;
+  if (gripBandWatched.has(node)) return; // already subscribed; no second observe call
   try {
-    // Re-observing a target an observer already holds updates its settings; it does NOT
-    // add a second subscription, so calling this every pass is free.
     ro.observe(node, { box: 'border-box' });
+    gripBandWatched.add(node);
   } catch {
     /* a harness whose observer cannot take this target */
   }
+}
+
+/**
+ * Stop watching the boxes this pass did not read.
+ *
+ * A `ResizeObserver` holds its targets STRONGLY: a subscription does not expire when the
+ * element leaves the document, it pins the element. Without this release, every section
+ * the sheet ever built — and every button in every action bar it ever repainted, since
+ * `main.js` rebuilds those — stayed reachable for the lifetime of the tab, in proportion
+ * to how much the user edited. It is also the difference between "watch what the
+ * placement reads" and "watch everything the sheet ever had", the same argument
+ * `forgetContainer` makes for the scaling observer in js/main.js.
+ *
+ * @param {Set<Node>} read        every box the current pass measured
+ * @param {boolean} exhaustive    true when the pass walked the WHOLE document, so anything
+ *        not in `read` is stale; false for a scoped pass, which may only release what has
+ *        provably left the document — a scoped walk cannot judge the rest of the sheet.
+ * @returns {number} how many nodes were released
+ */
+function reconcileGripBandWatch(read, exhaustive) {
+  const ro = gripBandObserver;
+  if (!ro) return 0;
+  let released = 0;
+  for (const node of Array.from(gripBandWatched)) {
+    if (read.has(node)) continue;
+    if (!exhaustive && node.isConnected !== false) continue;
+    gripBandWatched.delete(node);
+    try {
+      ro.unobserve(node);
+      released += 1;
+    } catch {
+      /* a mock observer without unobserve: dropping our own reference still ends the leak */
+    }
+  }
+  return released;
 }
 
 /**

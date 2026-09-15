@@ -53,6 +53,90 @@ function handleCss() {
 
 const baseBlock = (css) => css.match(/\.be-drag-handle\s*\{[\s\S]*?\}/)[0];
 
+/**
+ * Build a sheet the placement pass can actually walk, run `body` against it, restore.
+ *
+ * WHAT THIS BUYS OVER THE BROWSER SUITE: a fake observer that RECORDS every
+ * `observe`/`unobserve`. Both facts below are INVISIBLE to geometry — an
+ * over-subscribed observer still places the grip correctly, and a subscription taken out
+ * on a hidden control changes nothing on screen — so only a counter can assert them.
+ * jsdom gives every element a 0x0 rect, which is exactly right here (a wrapper is
+ * watched even though nothing about its box moved) and is why the PLACEMENT arithmetic
+ * stays in the pure `gripBandFor` cases above rather than being asserted on rects.
+ *
+ * @param {{hiddenControl?: boolean}} opts
+ * @param {(ctx: object) => void} body
+ */
+function withSheet(opts, body) {
+  const { JSDOM } = require("jsdom");
+  const dom = new JSDOM("<!doctype html><html><body></body></html>");
+  const doc = dom.window.document;
+  const prev = {
+    document: global.document,
+    window: global.window,
+    ResizeObserver: global.ResizeObserver,
+    getComputedStyle: global.getComputedStyle,
+  };
+  const watched = new Set();
+  const released = [];
+  global.ResizeObserver = class {
+    observe(node) {
+      watched.add(node);
+    }
+    unobserve(node) {
+      watched.delete(node);
+      released.push(node);
+    }
+    disconnect() {
+      watched.clear();
+    }
+  };
+  global.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
+  global.document = doc;
+  global.window = {}; // no requestAnimationFrame here, so a scheduled pass flushes inline
+  try {
+    delete require.cache[require.resolve(dndPath)];
+    const dnd2 = require(dndPath);
+    /** A wrapper with an action bar, as the sheet builds them. */
+    const mkWrapper = () => {
+      const wrap = doc.createElement("div");
+      wrap.className = "be-section-wrapper";
+      const bar = doc.createElement("div");
+      bar.className = "be-section-actions";
+      const btn = doc.createElement("button");
+      btn.type = "button";
+      bar.appendChild(btn);
+      wrap.appendChild(bar);
+      doc.body.appendChild(wrap);
+      return { wrap, btn };
+    };
+    const a = mkWrapper();
+    const b = mkWrapper();
+    let rot = null;
+    if (opts && opts.hiddenControl) {
+      rot = doc.createElement("div");
+      rot.className = "be-rotation-handle";
+      rot.style.cssText = "display:none"; // how a layer lock hides the chrome
+      a.wrap.appendChild(rot);
+    }
+    body({
+      dnd: dnd2,
+      dom,
+      doc,
+      watched,
+      released,
+      keep: a.wrap,
+      keepBtn: a.btn,
+      doomed: b.wrap,
+      doomedBtn: b.btn,
+      rot,
+    });
+  } finally {
+    Object.assign(global, prev);
+    delete require.cache[require.resolve(dndPath)];
+  }
+}
+
 describe("Grip geometry — the trimmed plate and the nudge (ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914)", function () {
   const dnd = freshModule();
   const { gripBandFor, GRIP_PLATE_W, GRIP_PLATE_H, GRIP_DOT_PLATE_PX } = dnd;
@@ -206,6 +290,50 @@ describe("Grip geometry — the trimmed plate and the nudge (ISSUE_grip_box_over
     // A 1px border adding 2px to both dimensions would eat that margin of error on any
     // host that does not set border-box for us.
     assert.match(baseBlock(handleCss()), /box-sizing:\s*border-box\s*!important;/);
+  });
+
+  it("keeps its subscriptions bounded: a deleted wrapper is released, a live one is not", function () {
+    // WHY A UNIT CASE AND NOT A BROWSER ONE: the leak never shows up in the placement —
+    // an over-subscribed observer delivers the right geometry. A subscription does NOT
+    // expire when the element leaves the document, so without a release every section the
+    // sheet ever built (and every button of every bar it ever repainted) stayed reachable
+    // for the life of the tab. js/main.js makes the same argument for `forgetContainer`.
+    withSheet({}, (c) => {
+      assert.ok(c.dnd.measureGripBands() >= 0);
+      assert.ok(c.watched.has(c.keep) && c.watched.has(c.doomed), "both wrappers are watched");
+      assert.ok(c.watched.has(c.doomedBtn), "and its button, since the pass reads it");
+
+      c.doomed.remove();
+      c.dnd.measureGripBands();
+      assert.ok(!c.watched.has(c.doomed), "a deleted wrapper is released, not pinned");
+      assert.ok(!c.watched.has(c.doomedBtn), "...and so is its button");
+      assert.ok(c.watched.has(c.keep), "the live section keeps its subscription");
+      assert.ok(c.released.includes(c.doomed), "via unobserve, not by dropping the observer");
+
+      // A SCOPED pass must not judge boxes it never walked: measuring one wrapper may
+      // only release what has provably left the document.
+      const before = c.watched.size;
+      c.dnd.measureGripBands(c.keep);
+      assert.strictEqual(c.watched.size, before, "a scoped pass releases nothing live");
+    });
+  });
+
+  it("watches a locked (display:none) control it cannot measure, and ignores it for placement", function () {
+    // Two halves, both needed. A layer lock hides the rotation/resize chrome
+    // `display:none` (js/print_styles.js), so while locked that control has no box the
+    // user can aim at and must NOT move the grip. But it comes BACK when the user
+    // unlocks, and the only way the pass hears about it is a subscription taken out while
+    // hidden — a `display:none` element that starts rendering IS a resize notification,
+    // MEASURED in Chromium (observing a hidden handle delivered 0x0, then 4x14 on unlock).
+    withSheet({ hiddenControl: true }, (c) => {
+      assert.strictEqual(
+        c.dnd.measureGripBands(),
+        0,
+        "a hidden control is not a reason to band (nothing of it is on screen)",
+      );
+      assert.ok(c.watched.has(c.rot), "...but it IS watched, so unlocking re-places the grip");
+      assert.ok(c.watched.has(c.keep), "and so is the wrapper that holds it");
+    });
   });
 
   it("re-measures on every box the placement reads, and never during a drag", function () {

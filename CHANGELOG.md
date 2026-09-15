@@ -55,17 +55,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   what 2.0.1 painted. The decision follows the geometry rather than a call site — a `ResizeObserver`
   is subscribed to every box the pass reads (the layout root's own size does not change when one
   section resizes, and an absolutely-positioned bar that wraps to a second row does not grow its
-  wrapper), the pass is coalesced into a frame because `fitContainer` writes a transform inside the
-  boxes it watches, and it is re-armed by `cleanupDrag` because it refuses to run while
-  `body.be-dragging` is up. The offset rides on `translate`, not `top`: with `inset:0; margin:auto`
+  wrapper), including a control the cascade hides with `display:none` — a locked layer's rotate/resize
+  handle has no box to reason about but is exactly what appears over the centre when the user unlocks,
+  and starting to render is the only notification such an element can send (measured in Chromium:
+  `0x0` while hidden, then a real box on unlock). The pass is coalesced into a frame because
+  `fitContainer` writes a transform inside the boxes it watches, it is re-armed by `cleanupDrag`
+  because it refuses to run while `body.be-dragging` is up, and it RELEASES whatever a pass no longer
+  reads (`unobserve`) because an observer pins its targets for the life of the tab — otherwise every
+  section deleted from the sheet, and every button of every bar the paints rebuild, would leak.
+  The offset rides on `translate`, not `top`: with `inset:0; margin:auto`
   both edges are pinned, so a written `top` is split with the leftover space (measured: `top:
   calc(50% + 9px)` rendered at y 38, not 40). Options ruled out with pixels before this was written:
   a transparent `::after` over the dots takes hits but the plate still wins `elementFromPoint`
   THROUGH it, so it buys the button nothing; `clip-path` trims honestly but only a clipped element's
   own border-box, i.e. it is exactly "shrink the plate" — which is what this is.
-  `test/unit/grip_geometry.test.js` (8 cases) pins the rule and the cascade, starting from a case that
+  `test/unit/grip_geometry.test.js` (10 cases) pins the rule and the cascade, starting from a case that
   reproduces the reported collision from the issue's own numbers so the fixture cannot rot, and
-  falsifying the 80px-height estimate with a 104px two-row bar that an 80px rule calls safe.
+  falsifying the 80px-height estimate with a 104px two-row bar that an 80px rule calls safe. Two of
+  them run against a fake observer that counts subscriptions — the only way to see that a deleted
+  section releases its boxes, or that a hidden control is watched without being counted — and both
+  were falsified (a short-circuited release, and moving the two watch calls below the hidden-skip)
+  before being reverted.
   `test/browser_e2e/affordance_drag_hover_shadows.spec.js` now ASSERTS the pixel it previously
   documented as unobtainable — `buttonOwnsItsCentre`, alongside the grip still winning its own
   (smaller) centre and staying inside its wrapper — and the census stays at 22/22. Reported and
