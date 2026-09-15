@@ -563,6 +563,9 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
             offCentreY: Math.abs(hr.top + hr.height / 2 - (wr.top + wr.height / 2)),
             width: hr.width,
             height: hr.height,
+            // Is THIS wrapper one the geometry pass re-placed? See the assertion below —
+            // a banded grip is 18x18 (the dots' box) and may sit a few px off the middle.
+            banded: Math.abs(hr.width - 18) < 0.6 && Math.abs(hr.height - 18) < 0.6,
           };
         },
         pick.id,
@@ -572,10 +575,19 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       assert.ok(st.hovered, "the section is genuinely in :hover (else the assertions below are vacuous)");
       assert.ok(st.direct, "the handle is a direct child of the wrapper");
       assert.strictEqual(st.dots, 9, "the nine-dot grip");
+      // "ON THE CENTER on any section" — the sentence the grip exists to satisfy, asserted
+      // to within 2px. The ONE sanctioned exception is a wrapper the geometry pass re-placed
+      // (temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md): on
+      // the MEASURED sheet exactly 1 of 22 sections is banded (`section-extra-tidbits-wrapper`,
+      // 4px of shift in exchange for the Select button's centre), and the census case above
+      // proves a banded grip still wins its own pixel. So this case cannot flake onto that one
+      // section silently — the exception is TIED to the trim it describes, and an unbanded
+      // grip that wanders off centre still fails.
       assert.ok(
-        st.offCentreX < 2 && st.offCentreY < 2,
+        st.offCentreX < 2 && (st.offCentreY < 2 || st.banded),
         `it sits at the CENTRE of the section (off by ${st.offCentreX},${st.offCentreY}) — ` +
-          "the report asked for the grip in the middle of the section",
+          "the report asked for the grip in the middle of the section" +
+          (st.banded ? " (a banded wrapper may sit off the middle vertically, never across)" : ""),
       );
       assert.ok(st.width >= 18 && st.height >= 18, `a real hit target, not a speck: ${st.width}x${st.height}`);
       assert.strictEqual(st.visibility, "visible", "revealed by the active-layer hover");
@@ -755,18 +767,18 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       // since), and the scan failing is a failure, not a skip: this is the section whose grip
       // the fix exists for.
       //
-      // WHAT THIS CASE DELIBERATELY DOES *NOT* ASSERT, because pixels say it is not
-      // obtainable by any stacking option: that the Select button keeps the pixel AT ITS OWN
-      // CENTRE. Measured on this section after the yield — grip box (58.8, 18) 34x26 with its
-      // centre at (75.8, 31); Select button box (55, 8) 39x32 with its centre at (74.5, 24).
-      // The two CENTRES are 1.3px apart across and 7px down, so the boxes overlap in a region
-      // 34 x 22 = 60% of the button, and whoever is on top takes the other one's centre. That
-      // is a geometry collision, not a stacking one, which is why raising the grip (option 1)
-      // and yielding the bar (option 3) have the SAME residual: the operator chose option 3,
-      // whose contract is that the GRIP wins the shared pixel. The button is not dead — the
-      // assertion below proves a point of its own box still reaches it — and the residual is
-      // filed as temp/issues/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md
-      // so the number cannot drift silently.
+      // THE PIXEL THE YIELD COULD NOT BUY IS ASSERTED NOW, and it took geometry to earn it.
+      // This block used to read "WHAT THIS CASE DELIBERATELY DOES *NOT* ASSERT, because pixels
+      // say it is not obtainable by any stacking option: that the Select button keeps the pixel
+      // AT ITS OWN CENTRE" — which was true, OF STACKING. Grip box (58.8, 18) 34x26 centred at (75.8, 31) against a
+      // Select button at (55, 8) 39x32 centred at (74.5, 24): centres 1.3px apart across and
+      // 7px down, a 34x22 overlap = 60% of the button, so whoever is on top takes the other
+      // one's centre and options 1 and 3 had the SAME residual. It was never a cascade problem,
+      // which is why it took geometry: the grip's plate shrinks to the dots' box and steps off
+      // any control centre it would swallow (gripBandFor / measureGripBands in js/dnd.js,
+      // temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md). So
+      // BOTH affordances now own their own pixel, and the two assertions below are what that
+      // means — the grip winning its centre (the census above) and the button winning its.
       const collision = "section-extra-tidbits-wrapper";
       await page.evaluate((wid) => {
         const el = document.getElementById(wid);
@@ -811,13 +823,26 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         // the control, even though the grip (being on top of the overlap) owns the centre.
         const away = document.elementFromPoint(bRect.left + 4, bRect.top + 4);
         const isBtn = (t) => !!t && (t === btn || btn.contains(t));
+        const gRect = grip.getBoundingClientRect();
+        const gripCentre = document.elementFromPoint(
+          gRect.left + gRect.width / 2, gRect.top + gRect.height / 2,
+        );
+        const wr = el.getBoundingClientRect();
+        const name = (t) => (t ? t.tagName + "|" + String(t.className.baseVal ?? t.className).slice(0, 44) : null);
         return {
           opacity: bcs.opacity,
           barZ: bcs.zIndex,
           gripZ: hcs.zIndex,
           buttonHittableSomewhere: isBtn(away),
           buttonOwnsItsCentre: isBtn(centre),
-          centreOwner: centre ? centre.tagName + "|" + String(centre.className).slice(0, 44) : null,
+          centreOwner: name(centre),
+          gripOwnsItsCentre: !!gripCentre && (gripCentre === grip || grip.contains(gripCentre)),
+          gripCentreOwner: name(gripCentre),
+          gripWidth: Math.round(gRect.width),
+          gripHeight: Math.round(gRect.height),
+          gripInsideWrapper:
+            gRect.top >= wr.top - 0.5 && gRect.bottom <= wr.bottom + 0.5 &&
+            gRect.left >= wr.left - 0.5 && gRect.right <= wr.right + 0.5,
         };
       }, collision);
       await page.mouse.move(4, 4);
@@ -835,6 +860,31 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         after.buttonHittableSomewhere,
         "the Select button must still be reachable — the yield moved the bar, it did not " +
           "mute it (no point of its own box reaches it)",
+      );
+      // THE RESIDUAL IS GONE, and it is asserted as a pixel rather than described: the
+      // button owns the point every user aims at. On the pre-fix build this reads
+      // `BUTTON|be-drag-handle` — the grip sat ON the button's centre — and the geometry
+      // pass cannot be re-broken silently.
+      assert.ok(
+        after.buttonOwnsItsCentre,
+        "the Select button must own its OWN CENTRE, not merely some point of its box — the " +
+          "grip is shrunk to its dots and stepped clear of it: " + after.centreOwner,
+      );
+      // …and the move must not have cost the GRAB: the plate is now the dots' box, so its
+      // own centre is a smaller target than it was, and it must still be the grip.
+      assert.ok(
+        after.gripOwnsItsCentre,
+        "the grip still wins the hit test at its own (now smaller) centre: " +
+          after.gripCentreOwner,
+      );
+      assert.ok(
+        after.gripWidth >= 18 && after.gripHeight >= 18,
+        `the trimmed plate stays a real target, not a speck: ${after.gripWidth}x${after.gripHeight}`,
+      );
+      assert.ok(
+        after.gripInsideWrapper,
+        "and it stays INSIDE its wrapper — a grip clipped by the section's own overflow is " +
+          "a half-painted affordance (the clamp in gripBandFor is what guarantees this)",
       );
     } finally {
       await page.close();

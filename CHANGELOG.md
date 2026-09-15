@@ -34,17 +34,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `drag_glow_layers`) **19 passing / 0 failing**. Reported and resolved in
   `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (option 3 chosen
   by the operator; Muse consulted on the loop, all five of his suggestions dispositioned there).
+- **The grip no longer sits on top of a short section's action-bar button.** The residual the entry
+  above left behind — the yield fixed the stacking and nothing else could — was pure geometry: on
+  `section-extra-tidbits-wrapper` (151×62) the grip's 34×26 plate is centred at (75.8, 31) and the
+  🎯 Select button's 39×32 box at (74.5, 24), so the two centres are 1.3px apart across and 7px down
+  and the boxes overlap over 34×22 = 60% of the button, INCLUDING its centre. Whoever is stacked on
+  top takes the other one's centre pixel, which is why hoisting the grip and yielding the bar produced
+  the same residual. The fix shrinks the grip's plate to the box its nine dots actually paint
+  (18×18 — a 12px `gripVertical` glyph plus a 3px ring, so the pointer never reaches further than the
+  user can see) and steps it off any control centre it would swallow. Both come from a MEASUREMENT,
+  not a constant: `gripBandFor` in `js/dnd.js` is handed the wrapper's box and the boxes of the
+  controls inside it (the action bar's buttons, the rotation handle, the resize handle — exactly the
+  nodes `isInteractiveTarget` refuses) and scores its candidates (1) no control loses its centre,
+  (2) the smallest step from the wrapper's middle, (3) the least box area covered; on the measured
+  section that pays **4px of shift, not 22**, and the plate lands at (66.75, 26) 18×18 — the button's
+  centre comes back to the button and 20% of its bottom edge stays the grip's.
+  `measureGripBands` runs it per wrapper and writes the answer as three custom properties on the
+  handle, with the shipped 34×26/zero-shift as the stylesheet's FALLBACKS, so a wrapper that never
+  collides is not touched at all: on the live sheet **1 of 22 sections bands** and 21 paint exactly
+  what 2.0.1 painted. The decision follows the geometry rather than a call site — a `ResizeObserver`
+  is subscribed to every box the pass reads (the layout root's own size does not change when one
+  section resizes, and an absolutely-positioned bar that wraps to a second row does not grow its
+  wrapper), the pass is coalesced into a frame because `fitContainer` writes a transform inside the
+  boxes it watches, and it is re-armed by `cleanupDrag` because it refuses to run while
+  `body.be-dragging` is up. The offset rides on `translate`, not `top`: with `inset:0; margin:auto`
+  both edges are pinned, so a written `top` is split with the leftover space (measured: `top:
+  calc(50% + 9px)` rendered at y 38, not 40). Options ruled out with pixels before this was written:
+  a transparent `::after` over the dots takes hits but the plate still wins `elementFromPoint`
+  THROUGH it, so it buys the button nothing; `clip-path` trims honestly but only a clipped element's
+  own border-box, i.e. it is exactly "shrink the plate" — which is what this is.
+  `test/unit/grip_geometry.test.js` (8 cases) pins the rule and the cascade, starting from a case that
+  reproduces the reported collision from the issue's own numbers so the fixture cannot rot, and
+  falsifying the 80px-height estimate with a 104px two-row bar that an 80px rule calls safe.
+  `test/browser_e2e/affordance_drag_hover_shadows.spec.js` now ASSERTS the pixel it previously
+  documented as unobtainable — `buttonOwnsItsCentre`, alongside the grip still winning its own
+  (smaller) centre and staying inside its wrapper — and the census stays at 22/22. Reported and
+  resolved in `temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md`.
 
 ### Known issues
-- **On the shortest sections the grip's box physically overlaps a bar button's centre — filed, and
-  not fixable by stacking.** After the yield, the grip and the 🎯 Select button on
-  `section-extra-tidbits-wrapper` have centres 7px apart (grip box (58.8,18) 34×26 centre (75.8,31);
-  Select box (55,8) 39×32 centre (74.5,24)), so their boxes overlap over 34×22 = 60% of the button
-  and whoever is stacked on top takes the other's centre pixel: the button no longer owns its own
-  centre, though it stays reachable at the points the grip does not cover (asserted). Every
-  stacking option has the identical residual — this is geometry, not cascade — and only a
-  hit-area/position change separates the two. Measured and handed on:
-  `temp/issues/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md`.
 - **The per-section "Auto-scale to fit" switch does nothing until the section is resized, and two
   scaling cases still pin the pre-floor scale — filed, not fixed, and PRE-EXISTING (unrelated to the
   affordances above; found by running the whole suite).** `initResponsiveScaling()` is idempotent
