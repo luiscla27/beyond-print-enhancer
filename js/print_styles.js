@@ -1251,6 +1251,45 @@ function enforceFullHeight() {
           transform-origin: top left;
           min-width: calc(100% / var(--be-scale, 1)) !important;
       }
+      /* THE FLOOR'S COST, MADE VISIBLE. fitContainer (js/main.js) never scales below
+         MIN_SCALE_FLOOR = 0.60, so a section that would need less than that keeps its tail
+         cut off by .print-section-content's own overflow: hidden — the pre-1.17.3 failure,
+         in a bounded dose. A silent clip is what issue
+         scaling_floor_spells_0443_20260913 objected to (its option 1: "the honest form is
+         then 'shrink to fit, but never below a readable size', with the clip made *visible*
+         somehow (a marker, a panel warning) rather than silent"), so the pass stamps
+         data-scaling-clipped="true" when the scale it applied does NOT fit, and this paints
+         it: a red fade + hairline at the bottom edge of the content box, i.e. exactly the
+         edge where the text stops.
+
+         NOTE THE ABSENCE OF BACKTICKS AND DOLLAR-BRACES HERE, ON PURPOSE: this stylesheet is
+         emitted from a JS template literal, and a backtick inside a CSS comment TERMINATES
+         the literal (test/unit/js_source_syntax.test.js exists for exactly that failure
+         class, and a dollar-brace would be read as a substitution). Style this comment in
+         plain text.
+
+         SCREEN-ONLY, AND THAT IS LOAD-BEARING: on paper nothing changes — the marker is not
+         part of the document, @media print is what the user's PDF is made of, and a warning
+         band printed onto the sheet would be the tool's own notice reaching the paper (the
+         failure class print_output_audit.spec.js was written to catch). The pseudo-element
+         hangs off .print-section-content, which is already position: relative, so it needs
+         no new stacking or layout of its own, and pointer-events: none keeps it from eating
+         a click on the content underneath. It is a pseudo-child, so no "> div" selector and
+         no children walk (js/layout_scan.js, js/undo.js) can mistake it for content. */
+      @media screen {
+          .print-section-container[data-scaling-clipped="true"] .print-section-content::after {
+              content: "";
+              position: absolute;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              height: 14px;
+              pointer-events: none;
+              background: linear-gradient(to bottom, rgba(198, 40, 40, 0), rgba(198, 40, 40, 0.38));
+              outline: 1px dashed rgba(198, 40, 40, 0.65);
+              outline-offset: -1px;
+          }
+      }
       .print-section-container div[class$="-row-header"] > div, 
       .print-section-container div[class$="-content"] > div > div {
           min-width: 38px;

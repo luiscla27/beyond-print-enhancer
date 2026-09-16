@@ -1861,7 +1861,7 @@ Licensed under Blue Oak Model License 1.0.0
    * dead callback). The one test for the feature COPIED the algorithm instead of exercising the
    * wiring, which is how an inert feature kept a green suite.
    *
-   * HOW IT WORKS NOW — three parts, each of which the old code lacked:
+   * HOW IT WORKS NOW — four parts, each of which the old code lacked:
    *   1. `observe()` every `.print-section-container` that exists at boot, so each gets its
    *      guaranteed first delivery (ResizeObserver reports every newly observed element).
    *   2. A MutationObserver on the document keeps that true as sections are CREATED (which is the
@@ -1874,6 +1874,17 @@ Licensed under Blue Oak Model License 1.0.0
    *      SECOND notification for the same logical measurement. Without the record the feature writes
    *      styles in a loop and Chromium reports it as an observer loop; with it, the second pass is a
    *      no-op and the sheet settles.
+   *   4. The same MutationObserver also watches `data-no-auto-scale` (issue
+   *      `scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914`).
+   *      `fitContainer` keys on TWO inputs — the overflow ratio and that per-section switch — and
+   *      parts 2 and 3 could only ever see the first: both
+   *      observers watched for SIZE, and switching the feature off on a section changes no size at
+   *      all, so the write went unnoticed and the scale stayed on until something else happened to
+   *      resize the section. The one call the panel made to fix this, `initResponsiveScaling()`,
+   *      returns at its `installed` guard, which is the same no-op for every caller. The observation
+   *      lives HERE instead of behind a re-check seam the caller has to remember, because this is the
+   *      code that reads the attribute — and it also covers `js/layout_apply.js`, which writes the
+   *      attribute for every restored section and never asked for a re-measure either.
    *
    * The scale is applied to `.print-section-content > div` and its origin is pinned to top-left by
    * the (now reachable) `data-scaling` rule, so a scaled section keeps its width and its left edge.
@@ -1901,16 +1912,53 @@ Licensed under Blue Oak Model License 1.0.0
       inner.style.transform = "";
       inner.style.removeProperty("--be-scale");
       container.removeAttribute("data-scaling");
+      // The clip marker rides with the scale it belongs to. Its attribute is NOT cleared
+      // here — the next `fitContainer` pass re-reads the overflow after the reset, and only
+      // a genuine out-of-box clip sets it again.
+      container.removeAttribute("data-scaling-clipped");
     }
 
     /** Applying the minimum scale currently permitted for automatic fit-to-container. */
     const MIN_SCALE_FLOOR = 0.60;
 
+    /**
+     * How much a floored section may stick out of its box before the pass marks it as
+     * CLIPPED, in px. The content is measured at `scale`, so one layout pixel is 0.6 drawn
+     * pixels; the slack absorbs the 2px rounding on `scrollHeight` and the sub-pixel error
+     * of a fractional scale — the `misfit` measure in
+     * `test/browser_e2e/responsive_scaling.spec.js` (`readSheet`) uses the same 1px-per-edge order.
+     */
+    const CLIP_SLACK_PX = 4;
+
+    /**
+     * The per-section off-switch, as the ATTRIBUTE name — `fitContainer` reads it right here and
+     * the MutationObserver below filters on it, so the two cannot drift apart. Naming it is the
+     * cheap half of the fix; `attributeFilter` is what keeps it affordable: without the filter
+     * every attribute write anywhere in the sheet (React re-rendering classes, styles, ids)
+     * would reach this callback.
+     */
+    const NO_AUTO_SCALE_ATTRIBUTE = "data-no-auto-scale";
+
+    /**
+     * Mark a section whose scaled content STILL does not fit — i.e. the floor, not the
+     * arithmetic, decided the scale, and the tail of the content is cut off by the content
+     * box's own `overflow: hidden`. An attribute only: the paint lives in the stylesheet
+     * (`js/print_styles.js`, `@media screen`), so this stays out of the print output and out
+     * of every inline-style scan the layout record performs.
+     */
+    function setClipMarker(container, clipped) {
+      if (clipped) {
+        container.setAttribute("data-scaling-clipped", "true");
+      } else {
+        container.removeAttribute("data-scaling-clipped");
+      }
+    }
+
     function fitContainer(container) {
       const content = container.querySelector(".print-section-content");
       const inner = content ? content.firstElementChild : null;
 
-      if (container.dataset.noAutoScale === "true") {
+      if (container.getAttribute(NO_AUTO_SCALE_ATTRIBUTE) === "true") {
         clearScaling(container, inner);
         return;
       }
@@ -1944,6 +1992,19 @@ Licensed under Blue Oak Model License 1.0.0
           // The compensation travels as a custom property, NOT as `inner.style.width`.
           inner.style.setProperty("--be-scale", String(scale));
           container.setAttribute("data-scaling", "true");
+          // FITTED, OR JUST SMALLER? The floor can stop the scale above the size the box
+          // needs, and then the tail is still cut off by the content box's own
+          // `overflow: hidden` — the pre-1.17.3 failure, back in a bounded dose. Option 1
+          // of the floor issue is explicit that this must not be silent, so mark it: the pass
+          // compares the DRAWN size (natural size x the applied scale) against the box, and the
+          // stylesheet paints the result. The natural size is used (transform is `none` at the
+          // top of this pass, and `fitContainer` is never called mid-transform), so both axes
+          // are checked at the scale that was actually applied.
+          setClipMarker(
+            container,
+            contentHeight * scale > containerHeight + CLIP_SLACK_PX ||
+              contentWidth * scale > containerWidth + CLIP_SLACK_PX,
+          );
         } else {
           clearScaling(container, inner);
         }
@@ -2003,8 +2064,30 @@ Licensed under Blue Oak Model License 1.0.0
       }
     }
 
-    /** The containers a mutation touches: added ones, and the section a change happened inside of. */
+    /** The containers a mutation touches: added ones, the section a change happened inside of,
+     *  and the section an off-switch write belongs to (see part 4 of the header above). */
     function recheckFor(record) {
+      if (record.type === "attributes") {
+        // The per-section off-switch (issue
+        // scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914). Switching the
+        // feature off changes NO SIZE at all, so no ResizeObserver notification will ever
+        // arrive to carry it — queueing a recheck here would mark a pending pass that nothing
+        // triggers. Apply the change now, recording the box it was measured at in the same order
+        // the observer callback uses, so the layout pass this write causes cannot be mistaken for
+        // a fresh measurement and re-applied in a loop.
+        const target = record.target;
+        const owner = target.closest
+          ? target.closest(".print-section-container")
+          : null;
+        if (owner && observed.has(owner)) {
+          const box = measuredBox(owner);
+          pendingRecheck.delete(owner);
+          lastMeasured.set(owner, box);
+          fitContainer(owner);
+        }
+        return;
+      }
+
       let touched = false;
       for (const node of record.addedNodes) {
         for (const container of containersIn(node)) {
@@ -2045,6 +2128,8 @@ Licensed under Blue Oak Model License 1.0.0
       mutationObserver.observe(document.documentElement, {
         childList: true,
         subtree: true,
+        attributes: true,
+        attributeFilter: [NO_AUTO_SCALE_ATTRIBUTE],
       });
     }
 

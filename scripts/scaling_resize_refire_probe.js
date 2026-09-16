@@ -1,7 +1,7 @@
 "use strict";
 /**
  * Does a RESIZE of a section re-fire the fit-to-container measure? (Option 4 of
- * temp/issues/ISSUE_scaling_floor_spells_0443_20260913.md claims a user who dislikes a
+ * temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md claims a user who dislikes a
  * shrunken section can drag it taller. This measures that instead of asserting it.)
  *
  *   node scripts/scaling_resize_refire_probe.js

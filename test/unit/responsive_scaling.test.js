@@ -181,18 +181,34 @@ const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.j
     const observer = productObserver();
     assert.ok(observer, 'no observer constructed by the product');
 
-    // Mock dimensions: content (200x200) into container (100x100)
+    // Mock dimensions: content (160x160) into container (100x100).
+    //
+    // The ratio lands at 0.625 — ABOVE `MIN_SCALE_FLOOR` (0.60) — on purpose. This case is the
+    // arithmetic proof: it asserts the exact quotient, so it fails if `scaleX/scaleY` are
+    // swapped, dropped, or replaced by a constant. It was 200x200 (a raw 0.5) until
+    // issue scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914: the
+    //    floor shipped and silently turned this into a second assertion of the clamp, which the
+    //    FLOOR case below already makes.
+    // Pair the two: a value above the floor must pass through untouched here, a value below
+    // it must be raised to it there. Collapse them and the floor stops being pinned.
     Object.defineProperty(content, 'clientWidth', { value: 100, configurable: true });
     Object.defineProperty(content, 'clientHeight', { value: 100, configurable: true });
-    Object.defineProperty(inner, 'scrollWidth', { value: 200, configurable: true });
-    Object.defineProperty(inner, 'scrollHeight', { value: 200, configurable: true });
+    Object.defineProperty(inner, 'scrollWidth', { value: 160, configurable: true });
+    Object.defineProperty(inner, 'scrollHeight', { value: 160, configurable: true });
 
     observer.trigger([{ target: container }]);
 
-    assert.strictEqual(inner.style.transform, 'scale(0.5)');
-    assert.strictEqual(inner.style.getPropertyValue('--be-scale'), '0.5');
+    assert.strictEqual(inner.style.transform, 'scale(0.625)');
+    assert.strictEqual(inner.style.getPropertyValue('--be-scale'), '0.625');
     assert.strictEqual(inner.style.width, '');
     assert.strictEqual(container.getAttribute('data-scaling'), 'true');
+    // Not marked clipped: 0.625 is what the ARITHMETIC asked for, so the content fits at it.
+    // This half of the pair is what stops the marker being "any section that shrank".
+    assert.strictEqual(
+      container.getAttribute('data-scaling-clipped'),
+      null,
+      'a section that FITS at its applied scale was marked as clipped',
+    );
   });
 
   it('should not scale if content fits', function() {
@@ -289,10 +305,14 @@ const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.j
 
     const content = container.querySelector('.print-section-content');
     const inner = content.firstElementChild;
+    // Deliberately NOT extreme: width is the binding axis (100/160 = 0.625) while height fits,
+    // so the asserted transform is the quotient itself. The 400x200 this case used to measure
+    // needs clamping after `MIN_SCALE_FLOOR`, and a clamped value proves nothing about which
+    // axis bound or what the record saw — the FLOOR case below owns that instead.
     Object.defineProperty(content, 'clientWidth', { value: 100, configurable: true });
     Object.defineProperty(content, 'clientHeight', { value: 100, configurable: true });
-    Object.defineProperty(inner, 'scrollWidth', { value: 400, configurable: true });
-    Object.defineProperty(inner, 'scrollHeight', { value: 200, configurable: true });
+    Object.defineProperty(inner, 'scrollWidth', { value: 160, configurable: true });
+    Object.defineProperty(inner, 'scrollHeight', { value: 100, configurable: true });
 
     // Same selector + same keying as js/layout_scan.js / js/undo.js.
     const record = (el) => {
@@ -311,9 +331,9 @@ const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.j
     assert.deepStrictEqual(record(container), {}, 'precondition: an un-scaled section records no widths');
     productObserver().trigger([{ target: container }]);
     assert.strictEqual(container.getAttribute('data-scaling'), 'true', 'the section scaled');
-    // 400x200 of content in a 100x100 box: the binding axis is width, 100/400.
-    assert.strictEqual(inner.style.transform, 'scale(0.25)');
-    assert.strictEqual(inner.style.getPropertyValue('--be-scale'), '0.25');
+    // 160x100 of content in a 100x100 box: the binding axis is width, 100/160.
+    assert.strictEqual(inner.style.transform, 'scale(0.625)');
+    assert.strictEqual(inner.style.getPropertyValue('--be-scale'), '0.625');
     assert.deepStrictEqual(
       record(container),
       {},
@@ -321,7 +341,7 @@ const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.j
     );
   });
 
-  it('FLOOR + TOGGLE: extreme overflow is clamped and can be disabled per section', function() {
+  it('FLOOR + TOGGLE: extreme overflow is clamped and can be disabled per section', async function() {
     const container = document.getElementById('section-1');
     const content = container.querySelector('.print-section-content');
     const inner = container.querySelector('.content-inner');
@@ -336,12 +356,144 @@ const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.j
     assert.strictEqual(container.getAttribute('data-scaling'), 'true');
     assert.strictEqual(inner.style.transform, 'scale(0.6)');
     assert.strictEqual(inner.style.getPropertyValue('--be-scale'), '0.6');
+    // THE FLOOR'S COST IS MARKED. 400 of content in a 100 box needs 0.25; the floor answers 0.6,
+    // and 400 x 0.6 = 240 of drawn content in a 100 box that clips — so this section is NOT
+    // fitted, merely smaller, and issue scaling_floor_spells_0443_20260913 requires that to be
+    // visible rather than silent. A `data-scaling` value alone cannot tell the two apart.
+    assert.strictEqual(
+      container.getAttribute('data-scaling-clipped'),
+      'true',
+      'a section floored into a still-clipped box was not marked — the clip is silent again',
+    );
 
+    // THE OFF-SWITCH. issue
+    //    scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914: this write
+    //    used to be invisible to the feature. Both observers watched for SIZE, and scaling a section off
+    // changes no size, so the scale stayed on until something else happened to resize the
+    // section — and the `initResponsiveScaling()` the panel called returns at its `installed`
+    // guard. Assert the clear WITHOUT triggering the observer: the only thing that may have
+    // acted here is the attribute observation. A trigger afterwards must then be a no-op, or
+    // this write is what starts the loop the STABILITY case guards the other direction.
     container.dataset.noAutoScale = 'true';
-    productObserver().trigger([{ target: container }]);
-    assert.notStrictEqual(container.getAttribute('data-scaling'), 'true');
+    await settle();
+    assert.notStrictEqual(
+      container.getAttribute('data-scaling'),
+      'true',
+      'writing data-no-auto-scale did not take effect — the switch is inert until the next resize',
+    );
     assert.strictEqual(inner.style.transform, '');
     assert.strictEqual(inner.style.getPropertyValue('--be-scale'), '');
+    // The marker goes with the scale it belonged to: with the feature off, this section is
+    // clipped by the user's OWN choice, and a tool warning about that would be noise.
+    assert.strictEqual(
+      container.getAttribute('data-scaling-clipped'),
+      null,
+      'the clip marker survived turning auto-scale off — it now blames the feature for a user choice',
+    );
+
+    productObserver().trigger([{ target: container }]);
+    assert.notStrictEqual(
+      container.getAttribute('data-scaling'),
+      'true',
+      'the size pass the switch caused re-measured the section and put the scale back',
+    );
+
+    // And back on: the same observation must carry the reverse write, which is the half a
+    // one-directional fix (clear only when "true") would get wrong.
+    delete container.dataset.noAutoScale;
+    await settle();
+    assert.strictEqual(
+      container.getAttribute('data-scaling'),
+      'true',
+      'removing data-no-auto-scale did not restore scaling',
+    );
+    assert.strictEqual(inner.style.transform, 'scale(0.6)');
+  });
+
+  it('CLIP MARKER: a scale AT the floor that still fits is not marked', async function() {
+    // The boundary the marker must NOT cross. 166.67 of content in a 100 box needs exactly
+    // 0.600006 — the floor answers 0.6, which leaves ~1px of the tail outside the box, well
+    // inside CLIP_SLACK_PX. A rule that fired on "scale === MIN_SCALE_FLOOR" would light this
+    // section up and the marker would mean "hit the floor" instead of "content is missing".
+    const container = document.createElement('div');
+    container.className = 'print-section-container';
+    container.id = 'section-at-floor';
+    container.innerHTML =
+      '<div class="print-section-content"><div class="content-inner">tall</div></div>';
+    document.getElementById('print-enhance-sections-layer').appendChild(container);
+    await settle();
+
+    const content = container.querySelector('.print-section-content');
+    const inner = content.firstElementChild;
+    Object.defineProperty(content, 'clientWidth', { value: 100, configurable: true });
+    Object.defineProperty(content, 'clientHeight', { value: 100, configurable: true });
+    Object.defineProperty(inner, 'scrollWidth', { value: 100, configurable: true });
+    Object.defineProperty(inner, 'scrollHeight', { value: 166.67, configurable: true });
+
+    productObserver().trigger([{ target: container }]);
+    assert.strictEqual(inner.style.transform, 'scale(0.6)', 'the floor clamped this section');
+    assert.strictEqual(container.getAttribute('data-scaling'), 'true');
+    assert.strictEqual(
+      container.getAttribute('data-scaling-clipped'),
+      null,
+      'a section whose clipped tail is sub-pixel was marked — the marker now means "floored"',
+    );
+
+    // Grow the overflow past the slack and the SAME section is genuinely clipped.
+    Object.defineProperty(inner, 'scrollHeight', { value: 400, configurable: true });
+    content.appendChild(document.createElement('p'));
+    await settle();
+    productObserver().trigger([{ target: container }]);
+    assert.strictEqual(
+      container.getAttribute('data-scaling-clipped'),
+      'true',
+      'a real clip on a previously-clean section was never marked',
+    );
+    container.remove();
+  });
+
+  it('TOGGLE SCOPE: the switch is read on the section, not only on the mutated node', async function() {
+    // The attribute is written on the container by js/properties_panel.js and by
+    // js/layout_apply.js. Observing the document subtree means any matching write inside a
+    // section reaches this callback, so the owner lookup is what keeps a nested element from
+    // being scaled as if it were the section — and what keeps an unrelated node (the panel
+    // itself, the document root) from being touched at all.
+    const container = document.createElement('div');
+    container.className = 'print-section-container';
+    container.id = 'section-nested';
+    container.innerHTML =
+      '<div class="print-section-content"><div class="content-inner">long</div></div>';
+    document.getElementById('print-enhance-sections-layer').appendChild(container);
+    await settle();
+
+    const content = container.querySelector('.print-section-content');
+    const inner = content.firstElementChild;
+    Object.defineProperty(content, 'clientWidth', { value: 100, configurable: true });
+    Object.defineProperty(content, 'clientHeight', { value: 100, configurable: true });
+    Object.defineProperty(inner, 'scrollWidth', { value: 160, configurable: true });
+    Object.defineProperty(inner, 'scrollHeight', { value: 100, configurable: true });
+
+    container.dataset.noAutoScale = 'true';
+    await settle();
+    assert.notStrictEqual(
+      container.getAttribute('data-scaling'),
+      'true',
+      'a section restored with auto-scale off is scaled anyway on arrival',
+    );
+
+    delete container.dataset.noAutoScale;
+    await settle();
+    assert.strictEqual(inner.style.transform, 'scale(0.625)');
+
+    // An unrelated element carrying the attribute must not be mistaken for a section.
+    const stranger = document.createElement('div');
+    stranger.id = 'stranger';
+    document.body.appendChild(stranger);
+    stranger.dataset.noAutoScale = 'true';
+    await settle();
+    assert.ok(!stranger.hasAttribute('data-scaling'), 'a non-section element was scaled');
+    stranger.remove();
+    container.remove();
   });
 
   it('the data-scaling rule that the attribute drives still exists', function() {
@@ -353,5 +505,60 @@ const layoutOps = fs.readFileSync(path.resolve(__dirname, '../../js/layout_ops.j
       css.includes('.print-section-container[data-scaling="true"] .print-section-content > div'),
       'the scaling helper rule was removed from js/print_styles.js',
     );
+  });
+
+  it('the clip marker paints, on screen ONLY', function() {
+    // THE OTHER HALF OF THE MARKER. js/main.js stamps data-scaling-clipped on a section the
+    // floor left short of its box; if nothing paints it, the stamp is a no-op flag and the
+    // clip is silent again — which is precisely what issue scaling_floor_spells_0443_20260913
+    // forbids ("with the clip made *visible* somehow (a marker, a panel warning)"). And it
+    // must be SCREEN-ONLY: a warning band that reaches the paper would be the tool's own
+    // notice printed onto the user's PDF, the failure class print_output_audit.spec.js exists
+    // for. So assert both directions against the media blocks as they are actually emitted —
+    // textually, since jsdom's CSSOM drops nested at-rules (see the extractor below).
+    const src = fs.readFileSync(path.resolve(__dirname, '../../js/print_styles.js'), 'utf8');
+    const SELECTOR = '.print-section-container[data-scaling-clipped="true"]';
+
+    /** Every block of the named @media query, brace-matched (a nested rule would end a
+     *  non-greedy regex at its first inner closing brace and the scan would see nothing). */
+    function mediaBlocks(css, media) {
+      const out = [];
+      const re = new RegExp('@media\\s+' + media + '\\s*\\{', 'g');
+      let m;
+      while ((m = re.exec(css))) {
+        let depth = 0;
+        let i = m.index + m[0].length - 1;
+        const start = i;
+        for (; i < css.length; i++) {
+          if (css[i] === '{') depth++;
+          else if (css[i] === '}') {
+            depth--;
+            if (depth === 0) break;
+          }
+        }
+        out.push(css.slice(start, i + 1));
+      }
+      return out;
+    }
+
+    const screen = mediaBlocks(src, 'screen');
+    const print = mediaBlocks(src, 'print');
+    // Guard the extractor itself: a scan of zero blocks passes every "not found" below.
+    assert.ok(screen.length >= 1 && print.length >= 1, 'the media scan found nothing to scan');
+    assert.ok(
+      src.includes(SELECTOR),
+      'the clip-marker rule is gone — data-scaling-clipped is set by js/main.js and painted by nobody',
+    );
+    assert.ok(
+      screen.some((b) => b.includes(SELECTOR)),
+      'the clip-marker rule is not inside a @media screen block',
+    );
+    assert.ok(
+      !print.some((b) => b.includes(SELECTOR)),
+      'the clip marker prints: the tool\'s own warning band would land on the user\'s paper',
+    );
+    // pointer-events: none, so the band cannot eat a click on the content under it.
+    const painted = screen.find((b) => b.includes(SELECTOR)) || '';
+    assert.ok(/pointer-events:\s*none/.test(painted), 'the marker can steal clicks from content');
   });
 });

@@ -469,15 +469,91 @@ function updatePropertiesPanel(panelElement = null) {
       activeTarget.dataset.noAutoScale = "true";
     }
 
+    // This call does NOT apply the change — it only guarantees the scaling feature is
+    // installed (it returns at its `installed` guard otherwise), and it is kept for the host
+    // where the boot-time call found no ResizeObserver. What carries the switch is the
+    // attribute write itself: js/main.js observes `data-no-auto-scale` and re-fits that
+    // section (issue scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914).
+    // Do not "fix" anything here by adding a re-measure call — that is the seam the observation replaced.
     if (typeof window.initResponsiveScaling === "function") {
       window.initResponsiveScaling();
     }
 
     window.updateLayoutBounds();
+
+    // Re-read the MARKER once the observer has answered the write, so this panel cannot
+    // disagree with the band on the sheet. The ordering is load-bearing: the MutationObserver
+    // callback is a microtask and it clears/stamps `data-scaling-clipped` there, while a zero
+    // timer cannot run until that queue has drained. Syncing synchronously here would read the
+    // marker as it was BEFORE the switch. And a synced note, deliberately, rather than a whole
+    // `updatePropertiesPanel()` re-render — the re-render would replace the checkbox the user
+    // just activated and drop their focus.
+    window.setTimeout(() => syncClipNote(), 0);
   };
 
   scalingContainer.appendChild(scalingToggle);
   panel.appendChild(scalingContainer);
+
+  /** The note for the CURRENT target, or null while the floor costs nothing. */
+  function makeClipNote() {
+    const note = document.createElement("div");
+    note.className = "be-prop-panel-note";
+    note.textContent =
+      "Auto-scale hit its readability floor: this section still overflows and its " +
+      "bottom is cut off (marked in red on the sheet). Drag it taller to show more, " +
+      "or turn Auto-scale off.";
+    // A token, not a literal: AC-7 of issue ia_consistency_kept_promises_20260910 locks
+    // `properties_panel.js` at ZERO 6-digit hex, and `--be-ember-dim` is the palette's
+    // error-hairline colour (js/ui_theme.js).
+    note.style.color = "var(--be-ember-dim)";
+    note.style.fontSize = "11px";
+    note.style.lineHeight = "1.4";
+    note.style.padding = "2px 0 6px 0";
+    return note;
+  }
+
+  // 3b. WHAT THE FLOOR COSTS ON THIS SECTION. Option 1 of issue
+  // scaling_floor_spells_0443_20260913 asks for a floored clip to be visible "somehow (a
+  // marker, a panel warning)" instead of silent as it was pre-1.17.3. js/print_styles.js
+  // paints the marker as a red band at the clipped edge; this is the half that says WHY and
+  // WHAT TO DO, because a coloured strip proves something is missing without telling the user
+  // which lever to pull. The two surfaces must never disagree about the FACT, so this reads
+  // the SAME attribute the stylesheet keys on rather than recomputing a ratio: one
+  // measurement, two renderings. A DIV on purpose — the panel's first SPAN is the debt-pinned
+  // font-size readout (see the position-group comment above), and a leading span would
+  // silently move what every debt test reads.
+  let clipNote =
+    activeTarget.getAttribute("data-scaling-clipped") === "true"
+      ? makeClipNote()
+      : null;
+  if (clipNote) panel.appendChild(clipNote);
+
+  /** Bring the note in line with the sheet's marker without rebuilding the panel. */
+  function syncClipNote() {
+    const host =
+      document.getElementById("print-enhance-properties-panel") || panel;
+    // `clipNote` is a PER-BUILD closure and this runs on a timer: if the panel was rebuilt in
+    // between, this build's note is detached and the CURRENT build owns the panel. Adopt what is
+    // actually in the host, so a stale closure can never append a second copy of the same warning.
+    if (clipNote && !host.contains(clipNote)) clipNote = null;
+    const live =
+      clipNote ||
+      Array.from(host.querySelectorAll(".be-prop-panel-note")).find((el) =>
+        /auto-scale/i.test(el.textContent),
+      ) ||
+      null;
+    const clipped = !!(
+      activeTarget &&
+      activeTarget.getAttribute("data-scaling-clipped") === "true"
+    );
+    if (clipped && !live) {
+      clipNote = makeClipNote();
+      host.appendChild(clipNote);
+    } else if (!clipped && live) {
+      live.remove();
+      clipNote = null;
+    }
+  }
 
   // 4. Border Style Button
   const borderContainer = document.createElement("div");

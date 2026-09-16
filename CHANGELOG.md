@@ -81,6 +81,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (smaller) centre and staying inside its wrapper — and the census stays at 22/22. Reported and
   resolved in `temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md`.
 
+- **The per-section "Auto-scale to fit" switch now takes effect the moment it is pressed, and a
+  section the FLOOR cannot fit says so on the sheet and in the panel.** `fitContainer` keys on two
+  inputs — the overflow ratio and `data-no-auto-scale` — and the wiring could only ever see the
+  first: both observers watched for SIZE (`js/main.js`), switching the feature off changes no size
+  at all, and the one call the panel made to force a re-measure, `initResponsiveScaling()`, returns
+  at its `installed` guard. So the checkbox flipped, the attribute landed, and the section kept its
+  scale until something else resized it — the control was a no-op in both directions on a static
+  sheet. Fixed with the issue's option 2 (operator choice): the existing `MutationObserver` now
+  also filters on `data-no-auto-scale` and `recheckFor` re-fits the OWNING container straight away,
+  which additionally fixes `js/layout_apply.js` writing the flag for every restored section (that
+  only ever worked because an apply happens to resize things). The observation lives in the scaling
+  feature rather than behind a `requestScalingRecheck` seam the caller has to remember, because
+  this is the code that reads the attribute.
+  The same pass now stamps **`data-scaling-clipped="true"`** when the scale it applied still leaves
+  content outside the box — i.e. when `MIN_SCALE_FLOOR = 0.60`, not the arithmetic, decided — and
+  two surfaces render that one fact: `js/print_styles.js` paints a red fade + dashed hairline at
+  the clipped edge under `@media screen` (never in print, and as a pseudo-element so no
+  children-walk or `> div` selector in the layout record can see it), and the properties panel
+  adds a note naming the cause and the two ways out (drag taller, or turn Auto-scale off). This is
+  option 1 of the floor issue — *"shrink to fit, but never below a readable size", with the clip made
+  visible rather than silent* — closing the decision `56ab1b7` had already implemented in code while
+  its issue stayed open. The note re-reads the marker on the microtask-after-the-write rather than
+  re-rendering the panel, so it cannot contradict the band and does not steal the checkbox's focus.
+  Also closed here: the two scaling cases that pinned the PRE-FLOOR scale (`0.5`, `0.25`) now mock
+  overflows whose arithmetic lands ABOVE the floor and assert `scale(0.625)` — so they still prove
+  the clamp exists rather than being moved onto it — and the browser spec's `misfit === 0`, which had
+  been red on a clean HEAD since the floor shipped, now asserts that the pixels and the sheet's own
+  `data-scaling-clipped` claim AGREE in both directions, over a non-empty set.
+  Measured: `npx mocha test/unit/responsive_scaling.test.js` went **6 passing / 3 failing → 12/0**
+  (9 cases → 12), the new `test/unit/properties_panel_scaling_note.test.js` is **4/0** (its third
+  case found a second defect on the way: the re-read is a zero timer and `clipNote` is a per-build
+  closure, so a panel rebuilt in that gap made the stale closure add its note BESIDE the fresh one —
+  two identical warnings from one checkbox press; `syncClipNote` now adopts what is actually in the
+  host, and the case is falsified by removing that step), the browser
+  `responsive_scaling.spec.js` is **3/0** (`section-Spells` the one floored-and-marked section, at
+  0.60, +260px), and `npm test` (lint + unit + integration + manifest) is **1167 passing / 0
+  failing**. The screen-only clip paint was then checked WHERE it could do damage rather than assumed
+  harmless: `PRINT_AUDIT=1 npx mocha test/browser_e2e/print_output_audit.spec.js` → **5 passing** on
+  the live pipeline — still 4 Letter pages, still a real text layer (3,341 text-showing operators /
+  11,979 characters), and none of the tool's own chrome on the paper with the forced-toast control
+  still landing on all four pages. Recorded as §9 of
+  `vendor/docs/responsive-scaling-wiring-20260913/FIX_REPORT.md`. Reported and
+  resolved in `temp/archived/ISSUE_scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914.md`
+  and `temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md`.
+
 ### Internal
 - **The fold budget moved to `150,000 / 240,000`, and the gate that blessed the old number got a new
   floor model — the sizing tool was printing `OK` for a configuration whose folds cannot land.**
@@ -113,19 +158,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `reasonix.toml.example` and `test/unit/input_budget_alignment.test.js` (8 → 9 cases) move
   together; the F4/F7/F8 and active-turn cases are falsified against the pre-fix model, and the
   live repo passes `--check` on the new floor.
-
-### Known issues
-- **The per-section "Auto-scale to fit" switch does nothing until the section is resized, and two
-  scaling cases still pin the pre-floor scale — filed, not fixed, and PRE-EXISTING (unrelated to the
-  affordances above; found by running the whole suite).** `initResponsiveScaling()` is idempotent
-  and `updateLayoutBounds()` does not change a section's content box, so the properties panel's
-  toggle never schedules the re-measure that the observer's size record then suppresses
-  (`js/main.js:1884,1958`, `js/properties_panel.js:467-475`); and
-  `test/unit/responsive_scaling.test.js` expects `scale(0.5)` / `scale(0.25)` where the shipped
-  `MIN_SCALE_FLOOR = 0.60` returns `0.6` — **6 passing / 3 failing** on a clean HEAD, reproducible
-  with one mocha command and proven pre-existing by stashing this diff. Fix options, and why the
-  third failure is a real defect rather than a stale number:
-  `temp/issues/ISSUE_scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914.md`.
 
 ## [2.0.1] - 2026-09-14
 
@@ -327,7 +359,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   layout — it fits, and it is small on paper. A floor on the scale, or a per-section switch, is a
   product call that needs a legibility measurement rather than a hunch; the committed page rasters are
   the material for it. Filed as its own decision, with the measurements and the four options:
-  `temp/issues/ISSUE_scaling_floor_spells_0443_20260913.md`. See §5 of the fix report.
+  `temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md` (path as filed; the decision was taken
+  in `[Unreleased]` above — options 1 + 2 together). See §5 of the fix report.
 
 ## [1.17.2] - 2026-09-12
 
