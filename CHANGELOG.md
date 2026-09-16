@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Internal
+- **This project's model seat is `px-dndb-flash`, and the fleet `/inventory` command was handed the
+  reason it cannot see this project's tracks.** Two findings from a layout audit on 2026-09-16, asked
+  as "is this project scoped and on the standard framework layout?" — the answer to the layout half
+  is YES (measured against the framework's own seam, below), and the two real defects the audit found
+  are the ones that changed here.
+  1. *Seat name (fixed here).* `reasonix.toml` and `reasonix.toml.example` named the provider
+     `msf-flash` — that is modelstack_framework's OWN seat name, and its copy of that name points at
+     `https://api.deepseek.com/anthropic` while this project's points at its own relay
+     `http://127.0.0.1:38116`. Routing was never wrong (the relay keys off `--project` plus the bare
+     model id — `vendor/relay/reasonix_proxy.py:664` takes `(model).split("/")[-1]`, and 0 of the
+     42,450 rows in `temp/modelstack/telemetry.jsonl` carry the string), but attribution was:
+     `telegram_orchestrator/tools/relay_perleg_report.py:33-45` keys its per-seat `PROJECTS` map on the
+     prefix, and this project is absent from it. Both files now use the fleet convention
+     `px-<project>-flash` (`px-upper-flash`, `px-map-flash`, `px-ue-flash`), matching the `[bot] model`
+     line whose comment already asked for a project-scoped name. Both copies stay byte-aligned —
+     `context_window 262144 / soft 150000 / hard 240000 / [skills] paths / [bot.control] 37918`
+     unchanged, `tomllib` parses both, `python scripts/input_budget_report.py --check` still passes
+     (including on the `.example` fallback), `python scripts/verify_lanes.py` OK (4 lanes), and the 4
+     layout/budget/guard/lanes unit files pass 26 assertions. **Delivery:** a config edit is a deploy —
+     the seat is read once per gateway build, so the running bot keeps `msf-flash` until
+     `deploy_all.ps1` reloads it (the fleet rule learned in
+     `ISSUE_config_edit_does_not_reach_live_sessions_20260915`); verify the live process, not the file.
+  2. *`/inventory` reports `0 tracks` for a project that has 62 (filed, NOT patched here).* The
+     generator composes overlay paths by concatenation on the project root
+     (`telegram_orchestrator/tools/inventory_report.py:94-98` → `root/conductor/tracks`), so it never
+     enters `vendor/conductor/`, and a missing scan directory degrades to zeros
+     (`_md_files_under` returns `[]` for an absent dir) — which makes "did not look" indistinguishable
+     from "nothing here". DND is the only project that trips it because it is the only PUBLIC one:
+     the fleet splits 5 root-`conductor/` / 1 vendored, and the other five carry no
+     `public_project` flag in their lock. Reproduced 3× (`0 archived · 0 active · 0 not-started`
+     against `vendor/conductor/archive` = 61 dirs and `vendor/conductor/tracks/byok_ai_layout_20260915`
+     holding a `plan.md`). Handed off as
+     `ISSUE_orch_inventory_conductor_home_contract_20260916` in ORCH's own `temp/issues/` — a
+     layout CONTRACT (resolve through the seam, print `UNKNOWN` where no home exists, accept an
+     explicit override, same model for fixed-issue homes, generate the stale `--all` hint from
+     discovery, 4 layout fixtures), with the minimal acceptable subset named. The seam it should use
+     already ships inside ORCH's pinned unit (`vendor/runtime/vendor_layout.py`, importable as
+     `vendor.runtime.vendor_layout`) and answers correctly for both layouts, verified live — no
+     new framework work needed. Because both `temp/` trees are gitignored, the handoff is a worktree
+     artifact that can vanish (its 2026-09-15 predecessor did, untraceably in either repo); the
+     regeneration copy lives with this project's overlay in
+     `vendor/docs/inventory-layout-blindness-20260916/REPORT.md`.
+- **Standard-layout verdict, recorded so nobody re-migrates this project.** Verified against
+  `modelstack_framework/framework/runtime/vendor_layout.py`: `is_vendored(".") = True` and
+  `resolve_home(root, "conductor/tracks")` → `vendor/conductor/tracks`;
+  `msf public --status` → PUBLIC (lock flag + generated `/vendor/` block), `msf validate --all` →
+  `PASS: 0 error(s), 12 warning(s)`, `drift_check` OK at unit `6279ba75430c`,
+  `core.hooksPath = vendor/hooks`, `[skills] paths = ["vendor/.reasonix/skills"]`, root `.reasonix/`
+  holds only the client's hardcoded `tasks/`. So the layout is the framework's own definition of
+  correct for a public project and reverting it is not the fix for finding 2 — `AGENTS.md`'s "Path
+  corrections" section now states that, with the measurement. One stale-citation class was found on
+  the way and documented instead of mass-edited: `vendor/conductor/tracks.md` cites its own artifacts
+  as `docs/<track>/…` (10 rows) because the migration's §6.4 literal rewrite covered only TRACKED
+  files and that registry lives under `/vendor/`; no root `docs/` exists, so they resolve to
+  `vendor/docs/<track>/…`.
+
 ### Fixed
 - **On a short section the action bar no longer covers the centred grip — the bar yields.**
   `section-extra-tidbits-wrapper` (151×62) was the 2.0.1 census failure recorded under Known issues
