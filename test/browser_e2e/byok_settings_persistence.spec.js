@@ -17,9 +17,8 @@
 "use strict";
 
 const assert = require("assert");
-const { bootPage, reinject } = require("./_helpers.js");
+const { bootPage, reinject, launchExtensionContext } = require("./_helpers.js");
 const { contentCall } = require("./_helpers/inject.js");
-const { stageManifestVariant, launchStagedContext } = require("./_helpers/variant.js");
 
 const KEY = "sk-real-shaped-material-0123456789abcdef";
 const SETTINGS_ENTRY = "be.ai";

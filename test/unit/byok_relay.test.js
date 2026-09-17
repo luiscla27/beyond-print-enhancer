@@ -30,7 +30,6 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..", "..");
 const BACKGROUND = fs.readFileSync(path.join(ROOT, "js", "background.js"), "utf8");
 const SETTINGS = fs.readFileSync(path.join(ROOT, "js", "ai_settings.js"), "utf8");
-const LAYOUT = fs.readFileSync(path.join(ROOT, "js/ai_layout.js"), "utf8");
 
 const countMatches = (re, text) => (text.match(re) || []).length;
 
