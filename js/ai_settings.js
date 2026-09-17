@@ -116,8 +116,16 @@ const AI_PROVIDERS = Object.freeze(
  */
 const AI_COMPAT_BASE_ORIGINS = Object.freeze([]);
 
-/** A compatible base URL must be https, carry no credentials, and be a real origin. */
+/** A compatible base URL must be https, carry no credentials, and a bounded length. */
 const AI_BASE_URL_MAX = 200;
+
+/** The local deadline on the content-script side of a ping, in ms. The worker enforces its own
+ * (BYOK_REQUEST_TIMEOUT_MS = 45 s) and answers `aborted`; this shorter one is the same shape of
+ * refusal for the case where no worker is alive to answer — a suspended service worker that never
+ * restarts, which is a real MV3 state and the shape of a hung dialog. Must exceed the worker's
+ * round-trip but not hang the dialog: 5 s.
+ */
+const AI_PING_TIMEOUT_MS = 5000;
 
 /** Provider defaults for the model field — a hint the user may overwrite. */
 const AI_MODEL_DEFAULTS = Object.freeze({
@@ -794,13 +802,94 @@ function aiPingMessage(errorClass) {
 }
 
 /**
- * The default 1-token ping, as of Phase 2: it REFUSES. Phase 3 owns the `BYOK_CHAT`
- * relay, and shipping a second, ungated fetch here would be the exact pattern trap the
- * spec's L-3 correction exists to warn about. The button therefore says
- * "not available yet" rather than pretending to have tested something.
+ * The default 1-token ping: it asks the WORKER to dial, and never dials itself.
+ *
+ * Phase 2 shipped this as a refusal, deliberately — a second, ungated `fetch` in a content
+ * script is the pattern trap the spec's L-3 correction exists to warn about. Phase 3 owns the
+ * `BYOK_CHAT` relay (`js/background.js`), so the honest default is now the real question, asked
+ * through the only transport this extension has for it.
+ *
+ * WHAT IS SENT, and what is NOT: the provider id, the model id, and ONE user message worth a
+ * token. The credential is not in the payload — `byokRelay` refuses a body that carries one
+ * (`request_smuggling`), because the worker reads storage itself. That asymmetry is the whole
+ * point of the relay and mutation-probed from both ends: `temp/scratch/phase3_falsify.js`'s
+ * P-SWAP (a ping that passes the key in the body) turns the unit case red, and the worker's own
+ * P-SMUGGLE turns its smuggling guard red.
+ *
+ * WHY IT STILL CAN SAY "unavailable": this file is loaded TWICE — as a content script, where
+ * `chrome.runtime.sendMessage` reaches the worker, and by the worker's own `importScripts`,
+ * where it does not need to reach itself. There, and in any context with no runtime at all, the
+ * answer is a refusal rather than a hang: `chrome.runtime.sendMessage` never resolves when
+ * nothing is listening, and a settings dialog that never answers is indistinguishable from a
+ * dead extension.
  */
 function aiDefaultPing() {
-  return () => Promise.resolve({ ok: false, errorClass: "unavailable" });
+  return (provider, model) => {
+    // A service worker has no `document`; a content script does. That is the discriminator, and
+    // it matters because `chrome.runtime.sendMessage` EXISTS in the worker too — a ping issued
+    // from there would message the very handler that answers it and recurse. The worker never
+    // pings; only the dialog does.
+    if (typeof document === "undefined") {
+      return Promise.resolve({ ok: false, errorClass: "unavailable" });
+    }
+    let runtime = null;
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime) runtime = chrome.runtime;
+    } catch {
+      runtime = null;
+    }
+    if (!runtime || typeof runtime.sendMessage !== "function") {
+      return Promise.resolve({ ok: false, errorClass: "unavailable" });
+    }
+    const body = {
+      type: "BYOK_CHAT",
+      provider,
+      model: typeof model === "string" ? model : "",
+      maxTokens: 1,
+      messages: [{ role: "user", content: "ping" }],
+    };
+    return new Promise((resolve) => {
+      let settled = false;
+      const reply = (result) => {
+        if (settled) return;
+        settled = true;
+        resolve(result);
+      };
+      // A second, LOCAL deadline. The worker enforces its own (45 s) and answers `aborted` when
+      // it fires; this one covers the case where no worker is alive to answer at all — a
+      // suspended service worker that never restarts, which is a real MV3 state and the exact
+      // shape of a hung dialog. It returns the same shape as a typed failure, never a rejection,
+      // because the caller renders `result.errorClass` unconditionally.
+      const timer = setTimeout(
+        () => reply({ ok: false, errorClass: "transport_timeout" }),
+        AI_PING_TIMEOUT_MS,
+      );
+      try {
+        runtime.sendMessage(body, (result) => {
+          clearTimeout(timer);
+          const lastError = runtime.lastError;
+          if (lastError) {
+            reply({ ok: false, errorClass: "network" });
+            return;
+          }
+          if (!result || typeof result !== "object") {
+            reply({ ok: false, errorClass: "malformed" });
+            return;
+          }
+          reply({
+            ok: result.ok === true,
+            errorClass: result.ok ? null : result.errorClass || "unknown",
+            message: result.message || "",
+          });
+        });
+      } catch {
+        // A runtime that throws instead of calling back (no extension context, a port that is
+        // already closed) is the same user-visible answer as a refusal.
+        clearTimeout(timer);
+        reply({ ok: false, errorClass: "unavailable" });
+      }
+    });
+  };
 }
 
 // ---------------------------------------------------------------------------

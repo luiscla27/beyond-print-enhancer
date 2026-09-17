@@ -79,19 +79,18 @@ describe("BYOK settings store + dialog in the real extension (byok_ai_layout_202
       assert.ok(probe.keys.includes(fn), `${fn} is on the seam`);
     }
 
-    // THE PREMISE OF EVERY CASE BELOW, asserted rather than assumed. Granting `storage`
-    // (Phase 3) flips this to true, and then this file's no-permission assertions stop
-    // describing production — the exact rot that made hintStore()'s test worthless. It fails
-    // LOUDLY and says what to do.
+    // THE PREMISE OF EVERY CASE BELOW, asserted rather than assumed. Phase 3 granted `storage`
+    // (manifest.json now declares 5 permissions), so `chrome.storage` IS defined in a content
+    // script and `loadSettings()` reports `storage: true`. This is the production path as of
+    // Phase 3 — the no-permission path is now a regression, not the default.
     assert.strictEqual(
       probe.chromeStoragePresent,
-      false,
-      "manifest.json still declares 4 permissions and no `storage`, so chrome.storage is " +
-        "undefined in a content script. If Phase 3 granted it: change THIS assertion to " +
-        "true and replace the no-permission cases with the persist-and-reload round trip " +
-        "(set -> close -> reopen -> persists -> clear -> gone) the plan names.",
+      true,
+      "manifest.json declares 5 permissions including `storage`, so chrome.storage is " +
+        "defined in a content script. If a later change removes it: change THIS assertion " +
+        "back to false and re-introduce the no-permission cases the plan names.",
     );
-    assert.strictEqual(probe.settings.storage, false, "loadSettings reports the store is unavailable");
+    assert.strictEqual(probe.settings.storage, true, "loadSettings reports the store is available");
     assert.strictEqual(probe.settings.provider, "", "…and degrades to an empty record, not a guess");
     assert.strictEqual(probe.hasKey, false, "hasStoredKey is false, so the arrange control stays off (O-2)");
     assert.strictEqual(probe.key, "", "getApiKey returns \"\", and never a placeholder");

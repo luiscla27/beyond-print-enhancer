@@ -20,7 +20,8 @@ The Extension requests the minimum permissions necessary to function:
 *   `activeTab`: To analyze and modify the specific tab you are viewing when you click the extension action, enabling the print layout features.
 *   `scripting`: To execute the layout adjustment scripts on the page you are viewing.
 *   `contextMenus`: To provide a "Donate" link in the right-click menu. This only opens a URL and does not access page content.
-*   `host_permissions`: Required to fetch consolidated spell data from a subdomain on the same site. Spell details are not available on the primary character view, this is a new feature to enhance the printable layout
+*   `storage`: To save your AI arrangement settings — the provider you choose, the model id, and your API key — in this browser's extension storage (`chrome.storage.local`). **This data stays on your device. It is never synced, never sent to us, and never included in a layout save.** The API key is used only to relay requests from the browser extension's own service worker to the provider you picked (OpenAI or Anthropic); it is read from storage by that worker and never placed in a message body.
+*   `host_permissions`: Required to fetch consolidated spell data from a subdomain on the same site. Spell details are not available on the primary character view, this is a new feature to enhance the printable layout.
 
 ## 3. Third-Party Services
 

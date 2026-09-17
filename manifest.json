@@ -11,11 +11,14 @@
     "declarativeContent",
     "activeTab",
     "scripting",
-    "contextMenus"
+    "contextMenus",
+    "storage"
   ],
   "host_permissions": [
     "https://www.dndbeyond.com/characters/*",
-    "https://character-service.dndbeyond.com/character/v5/character/*"
+    "https://character-service.dndbeyond.com/character/v5/character/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*"
   ],
   "background": {
     "service_worker": "js/background.js"

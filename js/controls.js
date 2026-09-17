@@ -876,14 +876,20 @@ const ONBOARDING_HINT_LS_KEY = "ddbPrintEnhancer.onboardingHintDismissed";
 let onboardingHintDismissedInMemory = false;
 
 /**
- * The preferred store. NOTE (measured in the phase-2 capture): the manifest does
- * NOT request the `storage` permission — PRIVACY_POLICY.md commits the extension
- * to "the minimum permissions necessary to function" — so `chrome.storage` is
- * UNDEFINED in a real content script. The first version of this feature relied on
- * it and its unit test passed only because the test STUBBED chrome.storage: the
- * hint then reappeared on every boot in the real product. The chain below is the
- * fix, and the test now covers the host-origin path that production actually
- * takes.
+ * The preferred store. Phase 3 granted the `storage` permission (the AC-V0 option (i)
+ * answer), so `chrome.storage` is now defined in a real content script and this is the
+ * flag's home. The host-origin `localStorage` entry is the LEGACY half of that change:
+ * every user who dismissed the hint before Phase 3 did so under localStorage, because the
+ * store did not exist for content scripts then. `hintDismissed()` therefore reads storage
+ * first and falls back to the host flag, and `rememberHintDismissed()` writes to storage
+ * and clears the now-superseded host entry — which is what stops the dismissal flag from
+ * being "stored in localStorage and ignored" the moment storage is granted, the exact rot
+ * that made hintStore()'s first version re-show the hint on every boot.
+ *
+ * Why localStorage is still WRITTEN (not just read): a future commit could revoke the
+ * permission, and the product degrades to the host-origin path in that case (the same
+ * fallback `hintStore()` already returns `null` for). Keeping both in sync means the
+ * dismissal holds across either permission state without a second migration later.
  */
 function hintStore() {
   try {

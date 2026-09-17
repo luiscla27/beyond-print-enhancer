@@ -7,6 +7,12 @@
  * it does not reappear after a later boot. The "reload" is simulated the way the
  * product actually sees one: a fresh window whose chrome.storage.local already
  * holds the dismissal flag, booted through the same createControls() path.
+ *
+ * Phase 3 granted the `storage` permission, so this test's chromeStorage=true case is now
+ * the production path. The chromeStorage=false case still runs — it is the fallback path
+ * (a future commit revoking the permission would bring it back as production) AND the
+ * regression guard that catches the hint re-appearing on every boot, which was the exact
+ * failure that shipped once before.
  */
 "use strict";
 
@@ -64,9 +70,12 @@ const SHEET = `<!DOCTYPE html><html><body>
 /**
  * Boot a window the way the extension does. `storedDismissal` seeds
  * chrome.storage.local, which is the persistence a real reload would carry.
- * `chromeStorage: false` boots WITHOUT chrome.storage at all — which is what a
- * real content script sees, because the manifest does not request the `storage`
- * permission (measured in the phase-2 browser capture).
+ * `chromeStorage: false` boots WITHOUT chrome.storage at all — the LEGACY path: every
+ * existing user who dismissed the hint before Phase 3 did so under localStorage, so this
+ * case reads the fallback path and asserts a dismissal made before the permission grant
+ * still holds after it. It is also the regression guard that catches the hint re-appearing
+ * on every boot (the failure that shipped once before), because the same code path is what
+ * a future commit revoking the permission would bring back as production.
  */
 function boot({ storedDismissal = undefined, chromeStorage = true, hostFlag = null } = {}) {
   const dom = new JSDOM(SHEET, {

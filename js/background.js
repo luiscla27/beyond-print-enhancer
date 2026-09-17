@@ -1,3 +1,17 @@
+// Track byok_ai_layout_20260915 (Phase 3): the worker owns the credential and the only
+// outbound AI request. MV3 service workers load their dependencies with `importScripts`, and
+// BOTH files below are written to be loadable two ways — the content-script injection list
+// evaluates them into the isolated world, and the worker's own global scope gets their
+// top-level bindings here. Which names each one declares was checked for collision against
+// this file's before wiring it (`markOn` / `clearState`): the three sets are disjoint.
+//
+// `js/ai_layout.js` is the pure core (request builder + response parser, no `chrome.*`, no
+// `document`), and `js/ai_settings.js` is the store — which is how the key is read HERE and
+// only here: `getApiKey()` resolves `chrome.storage.local`, and a service worker has that
+// API whether or not a content script does. Nothing in the message body carries a credential
+// or a URL, so the two origins the manifest hosts are the only places a request can go.
+importScripts("js/ai_layout.js", "js/ai_settings.js");
+
 // When the extension is installed or upgraded ...
 chrome.runtime.onInstalled.addListener(function() {
   // Replace all rules ...
@@ -209,3 +223,291 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // Keep channel open for async response
   }
 });
+
+// ---------------------------------------------------------------------------
+// BYOK_CHAT — the AI relay (track byok_ai_layout_20260915, Phase 3, AC-5).
+//
+// WHAT THIS IS. The arrange flow needs a provider request, and MV3 says the request must be
+// made from the worker (a content script's fetch is bound by the page's CORS). So the content
+// script asks the worker, the worker reads the credential OUT OF STORAGE ITSELF, and the only
+// thing that crosses the message boundary is a provider, a model id, and the messages the pure
+// core already built. AC-5's whole claim is about that direction of travel: the key goes from
+// storage to one `fetch`, never from a message body to anywhere.
+//
+// WHY IT COPIES `FETCH_CHARACTER_DATA`'S SHAPE AND NOT ITS GATE. `:195-204` above is the
+// async shape that works — `fetch` → `sendResponse`, `return true` to keep the channel open.
+// Its URL handling is the thing NOT to copy: it dials `request.url`, whatever the caller
+// supplied, with no sender check at all. Phase 0 measured that there is no sender gate
+// anywhere in this worker (`chrome.runtime.id` 0 hits) and that no hostile page can reach the
+// existing handler today (no `content_scripts` entry, no `externally_connectable`, no
+// `world: "MAIN"`), so the existing relay is a pattern trap rather than a live hole. This
+// handler is the moment the trap would snap shut — a handler attached to a stored credential —
+// so the gate is written here, from scratch, and the URL is NEVER taken from the body. The
+// cross-project handoff for the pre-existing pattern lives in telegram_orchestrator's
+// temp/issues/ISSUE_dndb_relay_un_gated_arbitrary_url_byok_20260915.md; fixing THAT is not
+// this track's business and this handler does not depend on it.
+//
+// WHAT IS REFUSED, and each refusal is a named probe rather than a comment:
+//   * a sender that is not this extension's own content script on dndbeyond.com
+//     (`sender_identity`, `sender_origin`) — probe `no_sender_check_inheritance`;
+//   * a body that smuggles its own `apiKey`, `url`, `baseUrl` or `allowedBaseOrigins`
+//     (`request_smuggling`) — probe `key_shape`. It is refused rather than IGNORED on
+//     purpose: silently dropping a smuggled key would let a caller believe it had sent one,
+//     and the field would rot into "optional" in someone's head;
+//   * a target origin that the manifest does not host (`provider_origin_lock`) — probe of the
+//     same name. `buildRequest` already resolves the base through `resolveBase`; the check
+//     below runs AGAINST THE FINISHED URL, because the property worth pinning is "the string
+//     we are about to hand to fetch has an approved origin", which is the last moment it is
+//     still checkable.
+//
+// NOTHING HERE LOGS A REQUEST. There is no `console` in this file and no `safeLog` (that sink
+// lives in the content script), and the refusal/telemetry payloads are built from an explicit
+// field list rather than from `...request`, so an unexpected body key cannot ride out of the
+// worker in a response. The one counter that does accumulate (`byokRelayStats`) counts
+// decisions and records origins, never a header, a body, or a key.
+// ---------------------------------------------------------------------------
+
+/** The one page origin this relay answers. Trailing slash is part of the prefix. */
+const BYOK_PAGE_ORIGIN_PREFIX = "https://www.dndbeyond.com/";
+
+/** The fields a legitimate body may carry. Anything else is a smuggling attempt. */
+const BYOK_ALLOWED_REQUEST_KEYS = Object.freeze([
+  "type",
+  "provider",
+  "model",
+  "messages",
+  "maxTokens",
+]);
+
+/** The names whose presence in a body is itself the refusal reason. */
+const BYOK_SMUGGLED_KEYS = Object.freeze([
+  "apikey",
+  "api_key",
+  "key",
+  "token",
+  "url",
+  "baseurl",
+  "base_url",
+  "allowedbaseorigins",
+  "headers",
+  "host",
+  "origin",
+]);
+
+/**
+ * Per-decision counts, kept in the worker for the browser probes to read. Deliberately NOT
+ * a log: an origin string and a tally, and no request content of any kind.
+ */
+const byokRelayStats = {
+  handled: 0,
+  refused: { sender_identity: 0, sender_origin: 0, request_smuggling: 0, provider_origin_lock: 0 },
+  lastTargetOrigin: "",
+};
+
+/** A stable error shape. `message` is user-facing copy and never contains a credential. */
+function byokRefusal(code, message) {
+  return { ok: false, transport: code, errorClass: code, message: message || "" };
+}
+
+/**
+ * THE SENDER GATE, written from scratch (see the header: there is no sibling to imitate).
+ * Two independent conditions, both required:
+ *   1. `sender.id` is THIS extension. The badge listener above does not check it, because a
+ *      wrong answer there costs a stale icon; a wrong answer here costs a drained account.
+ *   2. the tab's URL is a dndbeyond.com page. A worker can be reached from a popup or an
+ *      options page eventually; an AI request must not ride in from one of those.
+ */
+function byokSenderProblem(sender) {
+  if (!sender || sender.id !== chrome.runtime.id) return "sender_identity";
+  const url = sender.tab && typeof sender.tab.url === "string" ? sender.tab.url : "";
+  if (url.indexOf(BYOK_PAGE_ORIGIN_PREFIX) !== 0) return "sender_origin";
+  return "";
+}
+
+/**
+ * The body gate. Case-folded suffix match, so `apiKey`, `API_KEY` and `api_key` are the same
+ * attempt, and the check runs over the TOP-LEVEL keys only — the messages themselves are
+ * opaque strings this worker must not parse, and a provider payload inside `messages` is the
+ * content script's business, not an instruction to the transport.
+ */
+function byokSmuggledKeys(request) {
+  const found = [];
+  for (const key of Object.keys(request)) {
+    const flat = String(key).toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (BYOK_SMUGGLED_KEYS.includes(flat)) found.push(String(key));
+    else if (!BYOK_ALLOWED_REQUEST_KEYS.includes(String(key))) found.push(String(key));
+  }
+  return found;
+}
+
+/** The origin of a built target, or "" — one parse site so the tally and the lock agree. */
+function byokOriginOf(rawUrl) {
+  try {
+    return new URL(String(rawUrl)).origin;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * The origin lock — the indirect-leak case. A relayed request whose FINISHED url is not an
+ * origin the manifest hosts would let an attacker-driven POST carry an `Authorization` header
+ * built from the stored key to a host of theirs: the key never transits the boundary and the
+ * account is still drained. `buildRequest` refuses an unapproved base URL upstream, and this
+ * is the second check, on the string that is actually about to leave.
+ */
+function byokTargetProblem(target) {
+  const url = target && typeof target.url === "string" ? target.url : "";
+  const origin = byokOriginOf(url);
+  if (!origin) return "the relayed target is not a URL";
+  const published = Object.keys(PROVIDERS).map((id) => byokOriginOf(PROVIDERS[id].base));
+  const listed = (Array.isArray(AI_COMPAT_BASE_ORIGINS) ? AI_COMPAT_BASE_ORIGINS : []).map(
+    byokOriginOf,
+  );
+  if (published.includes(origin) || listed.includes(origin)) return "";
+  return "refused: " + origin + " is not an origin this extension hosts";
+}
+
+/**
+ * `chrome.runtime.sendMessage` never resolves when the worker closes or the handler forgets to
+ * answer, and a settings dialog cannot hang on that. The timeout is a refusal, not a crash:
+ * the caller gets `transport_timeout` and says so.
+ */
+const BYOK_REQUEST_TIMEOUT_MS = 45000;
+
+function byokChatReply(request) {
+  const senderProblem = byokSenderProblem(byokChatReply._sender);
+  if (senderProblem) {
+    byokRelayStats.refused[senderProblem] += 1;
+    return Promise.resolve(
+      byokRefusal(
+        senderProblem,
+        senderProblem === "sender_identity"
+          ? "The request did not come from this extension."
+          : "AI arrange only runs on a dndbeyond.com character sheet.",
+      ),
+    );
+  }
+  if (!request || typeof request !== "object") {
+    return Promise.resolve(byokRefusal("request_shape", "The request carries no settings."));
+  }
+  const smuggled = byokSmuggledKeys(request);
+  if (smuggled.length) {
+    byokRelayStats.refused.request_smuggling += 1;
+    // The refusal names the FIELDS, never their values: echoing a smuggled key would be the
+    // one way for this handler to put a credential in a response body.
+    return Promise.resolve(
+      byokRefusal(
+        "request_smuggling",
+        "The request must not carry " + smuggled.join(", ") + " — the worker reads storage itself.",
+      ),
+    );
+  }
+
+  const provider = typeof request.provider === "string" ? request.provider : "";
+  // The credential and the stored base URL are read from STORAGE, in the worker, in one go.
+  // O-1's sentence — "the URL may be read only from stored config, never from a message body" —
+  // is satisfied structurally here: the body's only keys are the four the gate allows, and the
+  // two values that decide WHERE the request goes are both storage-side.
+  return Promise.all([getApiKey(), loadSettings()]).then(([apiKey, settings]) => {
+    if (!apiKey) {
+      // Not an error to invent copy for: the arrange flow gates on hasStoredKey() before it
+      // gets here (O-2), so this path answers "no key" honestly instead of dialing a provider
+      // with an empty Authorization header.
+      return byokRefusal("api_key_required", ERROR_CLASSES.unknown);
+    }
+    let target;
+    try {
+      target = buildRequest({
+        provider,
+        model: request.model,
+        messages: request.messages,
+        maxTokens: request.maxTokens,
+        apiKey,
+        baseUrl: settings.baseUrl,
+        // The published compatible list, from the CODE — never from the body.
+        allowedBaseOrigins: AI_COMPAT_BASE_ORIGINS,
+      });
+    } catch (err) {
+      // `buildRequest` throws TYPED errors (unknown_provider / api_key_required /
+      // base_url_not_allowed / …). The message is redacted because a provider-shaped value
+      // could otherwise be echoed back.
+      const code = err && err.code ? String(err.code) : "request_shape";
+      return byokRefusal(code, redactCredentials(err && err.message ? err.message : ""));
+    }
+
+    const lockProblem = byokTargetProblem(target);
+    if (lockProblem) {
+      byokRelayStats.refused.provider_origin_lock += 1;
+      return byokRefusal("provider_origin_lock", lockProblem);
+    }
+    byokRelayStats.handled += 1;
+    byokRelayStats.lastTargetOrigin = byokOriginOf(target.url);
+
+    const dialed = fetch(target.url, {
+      method: target.method,
+      headers: target.headers,
+      body: JSON.stringify(target.body),
+    })
+      .then((response) =>
+        response
+          .text()
+          .then((text) => ({ status: response.status, body: text, headers: response.headers })),
+      )
+      // ONE decode site, and it is the pure core's: `parseResponse` accepts a parsed object OR
+      // a string, so this worker never hand-rolls a `.json()` that could throw.
+      .then((raw) => parseResponse(provider, raw))
+      .catch((err) => parseResponse(provider, err));
+
+    // The timeout is a REFUSAL with its own class, not a crash and not a silent hang: a
+    // settings dialog or an arrange bar that never gets an answer is indistinguishable from a
+    // dead extension from the user's side. `parseResponse` already types an AbortError as
+    // `aborted`, so the copy is consistent with a user cancelling.
+    let timer = null;
+    const deadline = new Promise((resolve) => {
+      timer = setTimeout(
+        () => resolve(byokRefusal("aborted", ERROR_CLASSES.aborted)),
+        BYOK_REQUEST_TIMEOUT_MS,
+      );
+    });
+    return Promise.race([dialed, deadline]).then((reply) => {
+      clearTimeout(timer);
+      return reply;
+    });
+  });
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (!request || request.type !== "BYOK_CHAT") return;
+  // The sender is threaded through the call rather than passed down every layer: the value must
+  // come from the runtime's own `sender` argument and nowhere else, so a body cannot carry one.
+  byokChatReply._sender = sender;
+  const settle = (reply) => {
+    // Never hand back the request's own shape — build the reply from the verdict's fields.
+    const out = {
+      ok: reply && reply.ok === true,
+      transport: (reply && reply.transport) || "",
+      errorClass: (reply && reply.errorClass) || "",
+      message: reply && reply.message ? redactCredentials(reply.message) : "",
+    };
+    if (out.ok) out.text = String(reply.text || "");
+    if (reply && typeof reply.status === "number") out.status = reply.status;
+    if (reply && typeof reply.retryAfterSeconds === "number") {
+      out.retryAfterSeconds = reply.retryAfterSeconds;
+    }
+    sendResponse(out);
+  };
+  Promise.resolve()
+    .then(() => byokChatReply(request))
+    .then(settle)
+    .catch((err) =>
+      settle({
+        ok: false,
+        transport: "worker_failure",
+        errorClass: "unknown",
+        message: redactCredentials(err && err.message ? err.message : ""),
+      }),
+    );
+  return true; // Keep channel open for async response — the shape `:195` proved works.
+});
+

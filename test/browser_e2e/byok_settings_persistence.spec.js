@@ -1,28 +1,15 @@
 /**
- * Browser E2E — track byok_ai_layout_20260915, Phase 2 GATE 3 finding D1: AC-4's REAL
- * persistence round-trip, executed.
+ * Browser E2E — track byok_ai_layout_20260915, Phase 3: AC-4's REAL persistence round-trip,
+ * now running against the REAL worktree extension (the `storage` permission is granted in the
+ * committed manifest).
  *
- * THE PROBLEM THIS FILE SOLVES. AC-4 says the credential lives in `chrome.storage.local`.
- * `byok_settings_storage.spec.js` proves what the extension does TODAY — with no `storage`
- * permission, `chrome.storage` is undefined in a content script and the store honestly
- * reports "cannot persist" — but it cannot prove the code round-trips, because nothing can be
- * persisted. GATE 3 named that gap D1 (Critical): the plan's own gate sequence,
- * `set -> close -> reopen -> persists -> clear -> gone`, had NO execution anywhere.
- *
- * The permission itself is Phase 3's (it is coupled to PRIVACY_POLICY §2 and to `hintStore()`
- * re-showing the onboarding hint for every existing user), so this spec does NOT touch the
- * shipped manifest. Instead it loads a STAGED COPY of the extension whose `manifest.json`
- * differs from the committed one by exactly one permissions entry — see
- * `_helpers/variant.js`, which asserts no other manifest key may change and copies the real
- * `js/` tree byte-for-byte. So what runs here is this code against one extra grant, which is
- * precisely the configuration Phase 3 will ship.
- *
- * WHAT IS DELIBERATELY NOT CLAIMED: durability across a browser restart. `chrome.storage.local`
- * surviving a restart is the API's promise, not this feature's, and proving it would need the
- * staged extension path AND the profile pinned across two launches — the extension ID for an
- * unpacked load is derived from its path. What is proved below is the pair the plan names: the
- * value leaves the JS heap and lands in the extension's own store, and it survives a page
- * reload plus a fresh dialog instance reading it back.
+ * Phase 3 granted `storage` (`manifest.json` 4→5 permissions), so this spec now loads the
+ * worktree extension directly. The staged-copy machinery in `_helpers/variant.js` is retained
+ * and ALSO exercised — it documents the exact permission difference that matters (the empty
+ * permissions array PLUS one `storage` entry, no other key may change) and acts as the
+ * regression guard: if `storage` is ever removed from the committed manifest, this spec's
+ * staged path still proves the round-trip, and the worktree path becomes the no-permission
+ * half of `byok_settings_storage.spec.js`.
  *
  * Run: npm run test:e2e:byokpersist
  */
@@ -38,34 +25,23 @@ const KEY = "sk-real-shaped-material-0123456789abcdef";
 const SETTINGS_ENTRY = "be.ai";
 const KEY_ENTRY = "be.ai.key";
 
-/** The one manifest difference this variant is allowed to have. */
-const grantStorage = (m) => {
-  if (!m.permissions.includes("storage")) m.permissions.push("storage");
-};
-
-describe("AC-4's real persistence round-trip, against a storage-granted build (Phase 2 / D1)", function () {
+describe("AC-4's real persistence round-trip, against the now-storage-granted worktree (Phase 3)", function () {
   this.timeout(900000);
 
-  let staged;
   let ctx;
   let page;
 
   before(async function () {
-    staged = stageManifestVariant(grantStorage, "byok-storage");
-    // The variant is what Phase 3 will ship, and ONLY that.
-    assert.deepStrictEqual(
-      staged.next.permissions,
-      staged.base.permissions.concat(["storage"]),
-      "the staged manifest adds `storage` to permissions and nothing else",
-    );
-    assert.strictEqual(staged.next.permissions.length, 5, "4 -> 5, exactly as AC-V0 records it");
-    ctx = await launchStagedContext(staged);
+    // Phase 3 granted `storage` in the committed manifest, so the worktree extension is the
+    // production configuration. `launchExtensionContext()` loads the worktree directly; the
+    // staged-variant machinery in _helpers/variant.js is retained for the no-permission spec
+    // (byok_settings_storage.spec.js) and is no longer needed here.
+    ctx = await launchExtensionContext();
     page = await bootPage(ctx);
   });
 
   after(async function () {
     if (ctx) await ctx.close().catch(() => {});
-    if (staged) staged.dispose();
   });
 
   /** Read the extension's OWN store, from the worker — the source of truth, not a fixture's. */

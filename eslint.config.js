@@ -101,6 +101,36 @@ module.exports = [
     },
   },
   {
+    // The service worker: `js/background.js` is a CLASSIC worker script (the manifest declares
+    // `background.service_worker` with no `type: "module"`), so `importScripts` is available and
+    // every file it imports shares ONE global scope with it.
+    //
+    // The declaration list below is the same CLASS of declaration as PRODUCT_WINDOW_SEAMS above,
+    // not a relaxation of `no-undef`: `js/ai_layout.js` and `js/ai_settings.js` are pulled in at
+    // `js/background.js:13`, and a top-level `const`/`function` in a classic script lands in the
+    // global LEXICAL environment — visible to later scripts by bare name, and NOT a property of
+    // `self`, so no `window.`/`self.` seam is involved and the re-rot guard does not see them.
+    // Declaring each name with the file it comes from is what keeps the rule able to tell "cross-
+    // file binding the architecture established" from "typo". MEASURED: without this block,
+    // `npx eslint js/background.js` reported 16 `no-undef` — 1 for `importScripts` and 15 for the
+    // imported bindings, i.e. the rule was reporting the wiring, exactly as it did for `js/`'s
+    // `window.*` seams before PRODUCT_WINDOW_SEAMS existed.
+    files: ["js/background.js"],
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker, // importScripts, self, fetch-in-worker, skipWaiting, …
+        PROVIDERS: "readonly", // js/ai_layout.js:136 — the adapter table (origin + header + scheme)
+        ERROR_CLASSES: "readonly", // js/ai_layout.js:895 — AC-6's typed-error copy
+        buildRequest: "readonly", // js/ai_layout.js:797 — config -> {url, method, headers, body}
+        parseResponse: "readonly", // js/ai_layout.js:927 — the single provider-body decode site
+        redactCredentials: "readonly", // js/ai_layout.js:907 — strips key-shaped text from copy
+        AI_COMPAT_BASE_ORIGINS: "readonly", // js/ai_settings.js:117 — the published compatible hosts
+        loadSettings: "readonly", // js/ai_settings.js:263 — the SAFE record, never the credential
+        getApiKey: "readonly", // js/ai_settings.js:276 — the one credential accessor, worker-side
+      },
+    },
+  },
+  {
     // The test tree: CommonJS mocha specs, half of them jsdom (so the browser globals from the base
     // block must stay) and half of them driving a real browser through Playwright.
     //
