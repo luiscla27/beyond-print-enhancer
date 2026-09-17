@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Internal
+- **The fleet `/inventory` command can now see this project's tracks — the handoff was executed in
+  ORCH under an explicit operator waiver (2026-09-17, ORCH commit `3d58b6d`).** `byok_ai_layout_20260915`
+  is now listed where the command previously reported `tracks: 0 archived · 0 active · 0 not-started`
+  (finding 2 below, filed 2026-09-16; its §6 now carries the fix record). What landed is the handoff's
+  *minimal acceptable* pair: `tools/inventory_report.py` resolves the conductor home through BOTH
+  spellings (`conductor/`, `vendor/conductor/`) instead of concatenating one onto the project root,
+  merging and deduping by `realpath` so even a half-migrated tree reports its real content, and
+  `_count_block` names the home it read — `tracks: 61 archived · 1 active · 0 not-started   (conductor:
+  vendor/conductor)` — falling back to `tracks: UNKNOWN (no conductor home found under <root> …)` when
+  there is none, so a scan miss can never again be rendered as the business fact "0 tracks". The layout
+  seam (`vendor_layout.py`) was copied permissively rather than imported: `tools/` imports nothing from
+  any project's overlay, and binding a fleet-wide report to one project's pin is its own hazard.
+  Verified: `python tools/test_inventory_report.py` 7/7 (3 new cases, **falsified both ways** — the pre-fix
+  generator fails all 3), this project's live re-scan matches the handoff's §3 expectation exactly, and
+  the five root-layout projects render identically apart from the new label (uppercore 168/1/0,
+  uppercore-map 138/5/0, HighResUppercore 105/5/0, modelstack_framework 11/7/0, telegram_orchestrator
+  30/3/1). **No rebuild needed** — the Go side spawns the script per call (`slash_inventory.go:106`), so
+  the next `/inventory` anywhere reads it; this is the config-edit-is-a-deploy class resolved the cheap
+  way. **Items 3-6 of that handoff stay open** (declared `--conductor-root` override, the same model for
+  `FIXED_HOME_DIRS`, the stale hardcoded fleet list in `slash_inventory.go:48` +
+  `scripts/housekeeping_issues.py:38`, and a mixed-fleet `--all` fixture); the Go half of item 5 is the
+  one that needs the build + deploy tick. The layout-blindness CLASS is not closed by this — `msf
+  validate` (F-1) and the guard's single-root inference (F-4) are its other instances.
 - **This project's model seat is `px-dndb-flash`, and the fleet `/inventory` command was handed the
   reason it cannot see this project's tracks.** Two findings from a layout audit on 2026-09-16, asked
   as "is this project scoped and on the standard framework layout?" — the answer to the layout half
@@ -30,7 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
      the seat is read once per gateway build, so the running bot keeps `msf-flash` until
      `deploy_all.ps1` reloads it (the fleet rule learned in
      `ISSUE_config_edit_does_not_reach_live_sessions_20260915`); verify the live process, not the file.
-  2. *`/inventory` reports `0 tracks` for a project that has 62 (filed, NOT patched here).* The
+  2. *`/inventory` reported `0 tracks` for a project that has 62 (filed 2026-09-16; FIXED 2026-09-17
+     in ORCH `3d58b6d` — see the entry above).* The
      generator composes overlay paths by concatenation on the project root
      (`telegram_orchestrator/tools/inventory_report.py:94-98` → `root/conductor/tracks`), so it never
      enters `vendor/conductor/`, and a missing scan directory degrades to zeros
