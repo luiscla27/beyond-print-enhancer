@@ -101,7 +101,43 @@ function createModal(opts) {
 
   overlay.appendChild(modal);
 
-  const ctx = { overlay, modal, title: h3, bodyEl, actionsRow, closeBtn, message, close };
+  // setMessage/clearMessage are bound LAZILY to the handle below: `body(ctx)` runs during
+  // construction, before `handle` exists, so a dialog whose body builder wants the shell's
+  // message API (rather than reaching outside its own arguments for the handle, which is
+  // what js/modals.js's own dialogs do from their event handlers) needs the indirection.
+  // Without it a body builder hand-rolls the message node and drifts from the error style.
+  const ctx = {
+    overlay,
+    modal,
+    title: h3,
+    bodyEl,
+    actionsRow,
+    closeBtn,
+    message,
+    close,
+    // The `typeof handle` test is the TDZ guard: `handle` is declared below this object,
+    // so a body builder that called setMessage SYNCHRONOUSLY would hit the temporal dead
+    // zone. Such a call writes the node directly instead, which is the same thing the
+    // handle does before any of its own state exists.
+    setMessage(text, isError, field) {
+      if (typeof handle === "undefined") {
+        message.textContent = text || "";
+        message.classList.toggle("be-modal-message-error", !!isError);
+        message.style.display = text ? "" : "none";
+        return;
+      }
+      handle.setMessage(text, isError, field);
+    },
+    clearMessage() {
+      if (typeof handle === "undefined") {
+        message.textContent = "";
+        message.classList.remove("be-modal-message-error");
+        message.style.display = "none";
+        return;
+      }
+      handle.clearMessage();
+    },
+  };
   if (body) body(ctx);
   if (actions) actions(ctx);
 
@@ -208,18 +244,34 @@ function createModal(opts) {
     overlay,
     modal,
     close,
-    setMessage(text, isError) {
+    setMessage(text, isError, field) {
       message.textContent = text || "";
       message.classList.toggle("be-modal-message-error", !!isError);
       message.style.display = text ? "" : "none";
       // Mark the field, not just the message: aria-invalid is both the
       // accessible signal and the style hook (.be-modal [aria-invalid="true"]),
       // so an error is announced and seen through the same attribute.
-      const field = modal.querySelector("input, textarea");
-      if (field) {
-        if (isError) field.setAttribute("aria-invalid", "true");
-        else field.removeAttribute("aria-invalid");
+      //
+      // WHICH field is the caller's business, so it can be named: `undefined` keeps the
+      // original rule (the dialog's first input), which is right for every single-field
+      // dialog in this file and was wrong the moment a dialog grew three of them — the AI
+      // settings form's "this base URL is not https" marked its MODEL input, an
+      // accessible lie. `null` means NO field is at fault (a blocked store is not the
+      // user's typo), and an Element or selector marks that one.
+      let target;
+      if (field === null) target = null;
+      else if (field && typeof field === "object" && field.nodeType === 1) target = field;
+      else if (typeof field === "string") target = modal.querySelector(field);
+      else target = modal.querySelector("input, textarea");
+      if (!target) {
+        // Nothing was marked before, and a stale aria-invalid from the previous error
+        // would keep being announced: clear unconditionally.
+        modal.querySelectorAll("[aria-invalid]").forEach((el) => el.removeAttribute("aria-invalid"));
+        return;
       }
+      modal.querySelectorAll("[aria-invalid]").forEach((el) => el.removeAttribute("aria-invalid"));
+      if (isError) target.setAttribute("aria-invalid", "true");
+      else target.removeAttribute("aria-invalid");
     },
     clearMessage() {
       message.textContent = "";

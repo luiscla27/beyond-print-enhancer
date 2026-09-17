@@ -51,6 +51,12 @@ const CONTENT_PROBE_NAMES = [
   "addShapeLayer",
   "layerSnapshot",
   "closeOverlays",
+  // byok_ai_layout_20260915 Phase 2 — the BYOK store + dialog, read from the ISOLATED world
+  // (AC-4's runtime half: the credential's visibility is a property of which world can see it).
+  "aiSettingsWorldRead",
+  "aiSettingsDialogProbe",
+  "aiSettingsRemoveKeyProbe",
+  "aiLayoutRecordRead",
 ];
 
 /**
@@ -481,6 +487,200 @@ async function contentCall(ctx, name, args = []) {
           if (typeof window.clearUndoStack === "function") window.clearUndoStack();
           return { depth: typeof window.undoDepth === "function" ? window.undoDepth() : null };
         },
+        /**
+         * AC-4 in the world the store actually lives in. Returns the module's shape plus
+         * what the REAL permission set allows, so the spec can assert the no-permission path
+         * instead of a fixture's idea of it.
+         *
+         * WHY A PROBE AND NOT `page.evaluate`: `window.AiSettings` is a content-script
+         * global, invisible to the MAIN world (`js/modals.js`'s overlay has the same
+         * property, documented at this file's header). A `page.evaluate` read of it is
+         * UNDEFINED for a reason unrelated to whether the module loaded, so an assertion
+         * written that way cannot fail — the class of vacuity `contentCall` exists to stop.
+         */
+        aiSettingsWorldRead: async () => {
+          const api = window.AiSettings || null;
+          const out = {
+            moduleType: typeof api,
+            keys: api ? Object.keys(api) : null,
+            chromeStoragePresent: !!(
+              typeof chrome !== "undefined" && chrome.storage && chrome.storage.local
+            ),
+          };
+          if (api) {
+            out.settings = await api.loadSettings();
+            out.hasKey = await api.hasStoredKey();
+            out.key = await api.getApiKey();
+            out.layoutHasApi = null;
+          }
+          return out;
+        },
+
+        /**
+         * Drive the REAL dialog and read the accessibility state a user's screen reader
+         * would get: the masked input's `type` at first paint (flipping it later leaves the
+         * value in the a11y tree as plain text), the reveal toggle's labels, the shell's
+         * message node and whether it is actually shown, and what a save attempt leaves
+         * behind. `opts.trySave`/`opts.tryBadBaseUrl`/`opts.typeKey` exercise the paths
+         * without reaching the network.
+         */
+        aiSettingsDialogProbe: async (opts) => {
+          const o = opts || {};
+          const api = window.AiSettings;
+          if (!api) return { ok: false, why: "no window.AiSettings" };
+          const handle = api.showAiSettingsModal();
+          if (!handle) return { ok: false, why: "showAiSettingsModal returned null" };
+          await new Promise((r) => setTimeout(r, 80)); // the body's loadSettings() is async
+          const m = handle.modal;
+          const msg = m.querySelector(".be-modal-message");
+          const keyInput = m.querySelector(".be-ai-key");
+          const read = () => ({
+            text: msg.textContent,
+            display: getComputedStyle(msg).display,
+            isError: msg.classList.contains("be-modal-message-error"),
+            ariaInvalid: Array.from(m.querySelectorAll("[aria-invalid]")).map((e) => e.className),
+          });
+          const out = {
+            ok: true,
+            title: m.querySelector("h3").textContent,
+            role: m.getAttribute("role"),
+            ariaModal: m.getAttribute("aria-modal"),
+            accessibleName: (document.getElementById(m.getAttribute("aria-labelledby")) || {}).textContent,
+            keyFieldTypeAtFirstPaint: keyInput.type,
+            keyFieldValueAtFirstPaint: keyInput.value,
+            message: read(),
+            buttons: Array.from(m.querySelectorAll(".be-modal-actions button")).map((b) => ({
+              label: b.textContent,
+              disabled: b.disabled,
+              className: b.className,
+            })),
+            bodyChildClasses: Array.from(m.querySelectorAll(".be-modal-body > *")).map(
+              (e) => e.tagName + "." + e.className,
+            ),
+          };
+
+          // The reveal toggle — AC-4's mask is made of this attribute. The capture harness
+          // passes `skipRevealCycles`: it wants the field MASKED in the frame, and this probe
+          // ends its click pair on "masked" anyway — but a capture that toggled the live
+          // dialog twice would photograph an animation mid-flight for no benefit.
+          const reveal = m.querySelector(".be-ai-key-reveal");
+          out.reveal = { className: reveal.className, label: reveal.textContent, pressed: reveal.getAttribute("aria-pressed"), type: keyInput.type };
+          if (!o.skipRevealCycles) {
+            reveal.click();
+            out.reveal.afterFirstClick = { label: reveal.textContent, type: keyInput.type, pressed: reveal.getAttribute("aria-pressed") };
+            reveal.click();
+            out.reveal.afterSecondClick = { label: reveal.textContent, type: keyInput.type, pressed: reveal.getAttribute("aria-pressed") };
+          }
+
+          // O-2's gating, read off the real controls.
+          out.disabledWithoutProvider = out.buttons
+            .filter((b) => /Save|Test connection/.test(b.label))
+            .every((b) => b.disabled);
+
+          const provider = m.querySelector(".be-ai-provider");
+          const save = m.querySelector(".be-ai-save");
+          if (o.trySave || o.tryBadBaseUrl || o.typeKey) {
+            provider.value = "openai";
+            provider.dispatchEvent(new Event("change"));
+          }
+          if (o.tryBadBaseUrl) {
+            m.querySelector(".be-ai-baseurl").value = o.tryBadBaseUrl;
+          }
+          if (o.typeKey) {
+            keyInput.value = o.typeKey;
+          }
+          // `noSave` leaves the populated form on screen WITHOUT submitting it — the capture
+          // harness needs a frame of the filled state, and clicking Save against a store the
+          // manifest cannot grant would photograph the error state instead of the form.
+          const clicksSave =
+            (o.trySave || o.tryBadBaseUrl || o.typeKey) && !o.noSave;
+          if (clicksSave) {
+            save.click();
+            await new Promise((r) => setTimeout(r, 150));
+            out.afterSave = {
+              message: read(),
+              status: m.querySelector(".be-ai-status").textContent,
+              keyFieldValue: keyInput.value,
+              storedKey: await api.getApiKey(),
+              settings: await api.loadSettings(),
+              hasKey: await api.hasStoredKey(),
+            };
+          }
+
+          // `leaveOpen` keeps the dialog mounted so a caller can read it from the OTHER
+          // world afterwards — the shared-DOM residual case, which needs the field live in
+          // the page world at assertion time.
+          if (!o.leaveOpen) {
+            handle.close(null);
+            out.closedAndRemoved = !document.body.contains(handle.overlay);
+          } else {
+            out.leftOpen = true;
+          }
+          return out;
+        },
+
+        /**
+         * Click the dialog's OWN "Remove key" control and report what the store says
+         * afterwards. A probe rather than a direct `clearApiKey()` call because the button's
+         * disabled state IS the product's behaviour: if `keyPresent` were wrong the control
+         * would not be clickable, and the round-trip would be testing an API instead of the
+         * action a user takes.
+         */
+        aiSettingsRemoveKeyProbe: async () => {
+          const api = window.AiSettings;
+          if (!api) return { ok: false, why: "no window.AiSettings" };
+          const handle = api.showAiSettingsModal();
+          if (!handle) return { ok: false, why: "the dialog did not open" };
+          await new Promise((r) => setTimeout(r, 80));
+          const btn = handle.modal.querySelector(".be-ai-remove-key");
+          if (!btn) return { ok: false, why: "no .be-ai-remove-key in the dialog" };
+          if (btn.disabled) {
+            return { ok: false, why: "Remove key is disabled, so a key was not really stored" };
+          }
+          btn.click();
+          await new Promise((r) => setTimeout(r, 150));
+          const out = {
+            ok: true,
+            status: handle.modal.querySelector(".be-ai-status").textContent,
+            key: await api.getApiKey(),
+            hasKey: await api.hasStoredKey(),
+            settings: await api.loadSettings(),
+            // The status copy must not echo anything credential-shaped.
+            statusHasKeyShape: /sk-[A-Za-z0-9_-]{8,}/.test(
+              handle.modal.querySelector(".be-ai-status").textContent || "",
+            ),
+          };
+          handle.close(null);
+          return out;
+        },
+
+        /**
+         * The LIVE layout record, through the product's own scanner, plus everything the
+         * real layout store (IndexedDB `layouts`) holds for this sheet. AC-4's "never
+         * persisted into a layout record" checked against the actual record shape rather
+         * than a fixture's copy of it.
+         */
+        aiLayoutRecordRead: async () => {
+          const out = { scan: null, stored: null, error: null };
+          try {
+            if (typeof window.scanLayout === "function") {
+              const L = await window.scanLayout();
+              delete L.spell_cache;
+              out.scan = JSON.stringify(L);
+            }
+            const store = window.Storage || window.__DDBStorage;
+            if (store && typeof store.loadLayout === "function") {
+              // The sheet's own id, from the URL the page is on.
+              const id = (location.pathname.match(/\/characters\/(\d+)/) || [])[1] || "GLOBAL";
+              const rec = await store.loadLayout(id);
+              out.stored = rec ? JSON.stringify(rec) : null;
+            }
+          } catch (err) {
+            out.error = String(err && err.message ? err.message : err);
+          }
+          return out;
+        },
+
         /**
          * Reparenting's real entry point is a chooser chain, and its capture point lives
          * INSIDE this method — so calling it drives the product path rather than shortcutting

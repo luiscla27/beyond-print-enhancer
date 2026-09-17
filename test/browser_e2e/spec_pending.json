@@ -7,7 +7,8 @@
     "tracked_by": "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)"
   },
   "expected": {
-    "case_count": 94,
+    "case_count": 95,
+    "_case_count_note": "94 as read from the 2026-09-13 real run, +1 on 2026-09-17 for byok_ai_layout_20260915 Phase 2's AC-V1-lite capture spec (BYOK_SHOTS). `stats` below is the 2026-09-13 snapshot of THAT run and is not asserted by scripts/browser_gate.js — only `case_count` and the per-file map are — so it stays as recorded rather than being back-filled with numbers this change did not measure.",
     "stats": {
       "tests": 273,
       "passes": 178,
@@ -16,6 +17,12 @@
     }
   },
   "by_spec_file": {
+    "byok_settings_visual_capture.spec.js": {
+      "cases": 1,
+      "titles": [
+        "byok_ai_layout Phase 2 — AI settings dialog visual captures (AC-V1-lite) captures the new dialog in three states and two existing dialogs for comparison"
+      ]
+    },
     "custom_templates_visual_capture.spec.js": {
       "cases": 6,
       "titles": [

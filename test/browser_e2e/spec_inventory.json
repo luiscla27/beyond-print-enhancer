@@ -3,14 +3,14 @@
   "provenance": {
     "produced_by": "node scripts/gen_spec_inventory.js",
     "collects_with": "mocha test/browser_e2e --recursive --dry-run --reporter json",
-    "measured_at": "2026-09-14",
+    "measured_at": "2026-09-17",
     "tracked_by": "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
     "pending_is_runtime": "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME (this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending expectation lives beside this file in spec_pending.json, read from a REAL run."
   },
   "expected": {
-    "loaded_js_files": 74,
-    "spec_files": 69,
-    "tests_collected": 289
+    "loaded_js_files": 78,
+    "spec_files": 72,
+    "tests_collected": 304
   },
   "spec_files": [
     {
@@ -28,6 +28,18 @@
     {
       "file": "border_render_refine.spec.js",
       "tests": 3
+    },
+    {
+      "file": "byok_settings_persistence.spec.js",
+      "tests": 6
+    },
+    {
+      "file": "byok_settings_storage.spec.js",
+      "tests": 8
+    },
+    {
+      "file": "byok_settings_visual_capture.spec.js",
+      "tests": 1
     },
     {
       "file": "character_name_templates.spec.js",
@@ -295,6 +307,7 @@
     "_helpers.js",
     "_helpers/dom.js",
     "_helpers/inject.js",
-    "_helpers/pdf.js"
+    "_helpers/pdf.js",
+    "_helpers/variant.js"
   ]
 }

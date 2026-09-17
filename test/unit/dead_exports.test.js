@@ -135,8 +135,14 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // (`showTurnOffSurface`), so the panel's power control and the AC-4 suite open the SAME dialog.
     // Its reader is `test/unit/turn_off_state.test.js`, which asserts the save-then-deactivate
     // order.
-    assert.strictEqual(SUMMARY.directExports, 159, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 158, "of which module exports");
+    // +1 (159 -> 160): AC-4 of byok_ai_layout_20260915 Phase 2 adds `window.AiSettings` — the BYOK
+    // config store (`js/ai_settings.js`), injected by js/background.js right after js/modals.js so
+    // the dialog can resolve `Modals.__createModal`. It is a TEST-SEAM namespace, not a product one
+    // yet: its only `js/` reader is Phase 4's panel button, and the guard's annotation on the
+    // namespace is what keeps that honest. `js/ai_layout.js` (Phase 1's pure core) adds NOTHING
+    // here — it publishes no `window.*` at all until Phase 4 gives it a caller.
+    assert.strictEqual(SUMMARY.directExports, 160, "direct `window.*` assignments");
+    assert.strictEqual(SUMMARY.moduleExports, 159, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

@@ -40,6 +40,14 @@ chrome.action.onClicked.addListener(function(tab) {
       'js/filters.js',
       'js/spells_ui.js',
       'js/modals.js',
+      // Track byok_ai_layout_20260915 (Phase 2): the BYOK config store and its dialog. Placed
+      // AFTER js/modals.js because the dialog resolves the `Modals.__createModal` seam — at CALL
+      // time, not at load — so this is tidiness, not a correctness constraint. The other new AI
+      // module, js/ai_layout.js, is deliberately NOT listed: it is the pure core (no DOM, no
+      // chrome.*) with no `window.*` seam yet, and Phase 4 adds that seam in the same commit that
+      // gives it its first product caller, which is also when it joins this list. Shipping it
+      // here now would inject bytes nothing can reach.
+      'js/ai_settings.js',
       'js/shape_picker.js',
       'js/properties_panel.js',
       'js/controls.js',

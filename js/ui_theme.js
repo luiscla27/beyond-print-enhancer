@@ -1357,6 +1357,65 @@ div[style*="z-index: 20000"] label {
   background: ${TOKENS.goldHi} !important;
   border-color: ${TOKENS.gold} !important;
 }
+/* ------------------------------------------------------------------------- *
+ * BYOK settings dialog (track byok_ai_layout_20260915, Phase 2) — the form
+ * primitives. This is the first modal body in the extension with more than one
+ * field: showInputModal renders a bare input and puts its prompt in the shell's
+ * message area, so there was no row/label rule to inherit and these are new.
+ *
+ * Why the credential field is named explicitly: the block above styles
+ * input[type="text"], [type="number"], [type="search"] and textarea, and AC-4
+ * requires the key field to be type=password from its first render — which that
+ * selector list does NOT match. Left alone it renders as the browser-default white
+ * box on the leather ground (the same cross-origin-sheet failure the comment above
+ * the input block records for the migrated dialogs), so it is declared here rather
+ * than left to the cascade. Heights carry !important for that same reason and
+ * take T4 — a labelled row in a dialog is not a fifth tier.
+ * ------------------------------------------------------------------------- */
+.be-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.be-field-label {
+  color: ${TOKENS.taupe};
+  font-family: ${TOKENS.fontTool};
+  font-size: 13px;
+}
+.be-modal select,
+.be-modal input[type="password"] {
+  background: ${TOKENS.groundTray} !important;
+  border: 1px solid ${TOKENS.hairBone} !important;
+  color: ${TOKENS.bone} !important;
+  border-radius: ${TOKENS.radiusInner};
+  height: ${TIERS.input}px; /* T4 (AC-4) — the same tier as the other modal inputs */
+  flex: 0 0 auto;
+  padding: 0 9px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+/* Key field + its reveal toggle in one line. min-width: 0 is not decoration: a
+ * flex item's content box cannot shrink below its text, so without it a long
+ * pasted key pushes the reveal button out of the dialog. */
+.be-ai-key-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.be-ai-key-row .be-modal-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* The hint text used to be reachable only as a <p> (.be-modal p), which is why
+ * it never needed a rule. The dialog's key-state line is a span inside a row, and
+ * a status line is a live region — both must read as secondary text, not as the
+ * modal's default 16px bone. */
+.be-modal-hint {
+  color: ${TOKENS.taupe};
+  font-size: 13px;
+}
+
 .be-modal-tabs button {
   background: transparent !important;
   border: none !important;
