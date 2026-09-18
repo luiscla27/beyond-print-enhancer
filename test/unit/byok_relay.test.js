@@ -34,13 +34,52 @@ const SETTINGS = fs.readFileSync(path.join(ROOT, "js", "ai_settings.js"), "utf8"
 const countMatches = (re, text) => (text.match(re) || []).length;
 
 describe("AC-5 (BYOK relay) — worker source-level shape", function () {
-  it("imports the pure core and the store, and nothing else", function () {
+  it("imports the pure core and the store, ROOT-ABSOLUTELY, and nothing else", function () {
     // The TWO files whose top-level bindings become visible in the worker scope. Declared
     // in `eslint.config.js` as read-only globals for that file, which is what makes this an
     // architectural assertion rather than a name list.
-    assert.match(BACKGROUND, /importScripts\(\s*"js\/ai_layout\.js"\s*,\s*"js\/ai_settings\.js"\s*\)/);
+    //
+    // THE LEADING SLASH IS THE ASSERTION, and this case used to pin the WRONG STRING. An earlier
+    // version of this test asserted `importScripts("js/ai_layout.js", …)` — no slash — and a real
+    // browser then spent an entire AC-5 run failing three ways at once, because `importScripts`
+    // resolves RELATIVE TO THE WORKER SCRIPT, and the worker is `js/background.js`. So that path
+    // asked for `/js/js/ai_layout.js`. A failed `importScripts` throws at top level, which means
+    // every statement below it never ran: hoisted `function`s still resolved (so the worker LOOKED
+    // alive) while `byokRelayStats` stayed uninitialized and the `BYOK_CHAT` listener at the
+    // bottom of the file was never registered — so each `sendMessage` hung. Source-text assertions
+    // cannot see that class of defect at all; the resolution rule is re-derived HERE, from this
+    // repo's own manifest, so the pin cannot be restored to a form that only looks valid.
+    assert.match(
+      BACKGROUND,
+      /importScripts\(\s*"\/js\/ai_layout\.js"\s*,\s*"\/js\/ai_settings\.js"\s*\)/,
+    );
     // No other importScripts, and no `<script>` tag (there's nothing to tag).
     assert.strictEqual(countMatches(/importScripts\(/g, BACKGROUND), 1);
+  });
+
+  it("every importScripts specifier resolves to a real file, computed like Chrome computes it", function () {
+    // The falsifiable half of the box above: parse the worker's specifiers and resolve them
+    // against the worker's OWN directory exactly the way `importScripts` does, then require the
+    // target to exist in this repo. With the old relative form this case names
+    // `js/js/ai_layout.js` and fails; with any future typo it fails too, and it never needs a
+    // browser to learn the difference.
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(ROOT, "manifest.json"), "utf8"),
+    );
+    const workerRel = manifest.background.service_worker;
+    assert.ok(workerRel.includes("/"), "the worker lives in a subdirectory, so specifiers are relative to it");
+    const specifiers = [...BACKGROUND.matchAll(/importScripts\(([^)]*)\)/g)]
+      .flatMap((m) => [...m[1].matchAll(/["']([^"']+)["']/g)].map((x) => x[1]));
+    assert.ok(specifiers.length >= 2, "the worker imports its dependencies");
+    const base = new URL("chrome-extension://id/" + workerRel);
+    for (const spec of specifiers) {
+      const resolved = new URL(spec, base).pathname.replace(/^\/+/, "");
+      assert.ok(
+        fs.existsSync(path.join(ROOT, ...resolved.split("/"))),
+        `importScripts(${JSON.stringify(spec)}) resolves to ${resolved}, which is not a file in this repo ` +
+          `(the worker is at ${workerRel}, so a bare "js/…" specifier doubles the directory)`,
+      );
+    }
   });
 
   it("is the ONLY onMessage listener that answers BYOK_CHAT", function () {

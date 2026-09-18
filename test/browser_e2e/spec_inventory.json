@@ -8,9 +8,9 @@
     "pending_is_runtime": "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME (this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending expectation lives beside this file in spec_pending.json, read from a REAL run."
   },
   "expected": {
-    "loaded_js_files": 78,
-    "spec_files": 72,
-    "tests_collected": 304
+    "loaded_js_files": 79,
+    "spec_files": 73,
+    "tests_collected": 318
   },
   "spec_files": [
     {
@@ -30,12 +30,16 @@
       "tests": 3
     },
     {
+      "file": "byok_relay.spec.js",
+      "tests": 11
+    },
+    {
       "file": "byok_settings_persistence.spec.js",
       "tests": 6
     },
     {
       "file": "byok_settings_storage.spec.js",
-      "tests": 8
+      "tests": 11
     },
     {
       "file": "byok_settings_visual_capture.spec.js",

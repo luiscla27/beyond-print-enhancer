@@ -881,10 +881,10 @@ let onboardingHintDismissedInMemory = false;
  * flag's home. The host-origin `localStorage` entry is the LEGACY half of that change:
  * every user who dismissed the hint before Phase 3 did so under localStorage, because the
  * store did not exist for content scripts then. `hintDismissed()` therefore reads storage
- * first and falls back to the host flag, and `rememberHintDismissed()` writes to storage
- * and clears the now-superseded host entry — which is what stops the dismissal flag from
- * being "stored in localStorage and ignored" the moment storage is granted, the exact rot
- * that made hintStore()'s first version re-show the hint on every boot.
+ * first and FALLS THROUGH to the host flag when the store answers empty, and
+ * `rememberHintDismissed()` writes BOTH — which is what stops the dismissal flag from being
+ * "stored in localStorage and ignored" the moment storage is granted, the exact rot that made
+ * hintStore()'s first version re-show the hint on every boot.
  *
  * Why localStorage is still WRITTEN (not just read): a future commit could revoke the
  * permission, and the product degrades to the host-origin path in that case (the same
@@ -915,6 +915,14 @@ function hintLocalStorage() {
 /**
  * Read the dismissal flag. An unreadable store reads as "not dismissed", i.e.
  * the hint shows, which is the safe direction for an onboarding affordance.
+ *
+ * THE READ-THROUGH IS THE POINT (Phase 3, the `storage` grant's side effect). A store that
+ * answers successfully and EMPTY is different from a store that cannot be read: before this
+ * commit every dismissal was recorded under the host-origin key, so "no key in
+ * chrome.storage.local" is the normal state of every EXISTING user, not evidence they never
+ * dismissed anything. Returning `false` there re-shows a card the user already closed — which
+ * is why the store's negative answer falls through to `hintLocalStorage()` instead of ending
+ * the lookup. An unparseable or unreachable store also lands there.
  */
 function hintDismissed() {
   const store = hintStore();
@@ -922,21 +930,35 @@ function hintDismissed() {
     try {
       const maybe = store.get(ONBOARDING_HINT_KEY);
       if (maybe && typeof maybe.then === "function") {
-        return maybe.then((res) => !!(res && res[ONBOARDING_HINT_KEY]));
+        return maybe.then(
+          (res) => !!(res && res[ONBOARDING_HINT_KEY]) || legacyHintDismissed(),
+          () => legacyHintDismissed(),
+        );
       }
       return new Promise((resolve) => {
         try {
           store.get(ONBOARDING_HINT_KEY, (res) =>
-            resolve(!!(res && res[ONBOARDING_HINT_KEY])),
+            resolve(!!(res && res[ONBOARDING_HINT_KEY]) || legacyHintDismissed()),
           );
         } catch {
-          resolve(onboardingHintDismissedInMemory);
+          resolve(legacyHintDismissed() || onboardingHintDismissedInMemory);
         }
       });
     } catch {
       /* fall through to the host-origin store */
     }
   }
+  return legacyHintDismissed().then(
+    (legacy) => legacy || onboardingHintDismissedInMemory,
+  );
+}
+
+/**
+ * The legacy half of the lookup, as its own function because THREE paths reach it: the store
+ * answering empty, the store rejecting, and no store at all. Reads "not dismissed" as `false`
+ * so the caller's in-memory fallback still applies.
+ */
+function legacyHintDismissed() {
   const ls = hintLocalStorage();
   if (ls) {
     try {
@@ -945,9 +967,14 @@ function hintDismissed() {
       /* fall through */
     }
   }
-  return Promise.resolve(onboardingHintDismissedInMemory);
+  return Promise.resolve(false);
 }
 
+/**
+ * Record the dismissal in BOTH stores, so it holds whichever way the permission is set on the
+ * next boot. The `localStorage` write is not a legacy relic: it is what keeps the promise true
+ * if `storage` is ever revoked, and `hintDismissed()` reads the same key.
+ */
 function rememberHintDismissed() {
   onboardingHintDismissedInMemory = true;
   const store = hintStore();

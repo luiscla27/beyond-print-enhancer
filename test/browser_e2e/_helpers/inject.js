@@ -57,6 +57,9 @@ const CONTENT_PROBE_NAMES = [
   "aiSettingsDialogProbe",
   "aiSettingsRemoveKeyProbe",
   "aiLayoutRecordRead",
+  // byok_ai_layout_20260915 Phase 3 — the BYOK relay, driven from the ISOLATED world (the only
+  // world whose sender passes the worker's own gate), plus the worker's decision counters.
+  "byokRelayProbe",
 ];
 
 /**
@@ -679,6 +682,48 @@ async function contentCall(ctx, name, args = []) {
             out.error = String(err && err.message ? err.message : err);
           }
           return out;
+        },
+
+        /**
+         * Drive the worker's BYOK relay FROM THE ISOLATED WORLD — the only world whose sender
+         * passes the gate the relay writes from scratch. Returns the worker's own reply verbatim
+         * so the spec can assert on `transport`, and never on a re-implementation of it.
+         *
+         * `opts.extra` merges smuggle-shaped fields into an otherwise legitimate body; `opts.verbatim`
+         * replaces the body outright; `opts.readCompatList` answers with the shipped compatible
+         * allow-list instead of sending anything.
+         */
+        byokRelayProbe: async (opts) => {
+          const o = opts || {};
+          if (o.readCompatList) {
+            const api = window.AiSettings || null;
+            const list = api && api.AI_COMPAT_BASE_ORIGINS;
+            return {
+              compatList: Array.isArray(list) ? list.slice() : null,
+              seamPresent: !!api,
+            };
+          }
+          const body = {
+            type: "BYOK_CHAT",
+            provider: typeof o.provider === "string" ? o.provider : "openai",
+            model: "model" in o ? o.model : "gpt-4o-mini",
+            maxTokens: "maxTokens" in o ? o.maxTokens : 1,
+            messages: [{ role: "user", content: "ping" }],
+          };
+          if (o.extra && typeof o.extra === "object") Object.assign(body, o.extra);
+          const wire = "verbatim" in o ? o.verbatim : body;
+          try {
+            const reply = await chrome.runtime.sendMessage(wire);
+            // A closed channel answers `undefined`; report it as its own shape rather than
+            // letting the spec assert against a bare undefined.
+            return reply || { ok: false, transport: "no_reply", message: "" };
+          } catch (err) {
+            return {
+              ok: false,
+              transport: "channel_error",
+              message: String((err && err.message) || err),
+            };
+          }
         },
 
         /**

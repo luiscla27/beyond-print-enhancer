@@ -155,6 +155,27 @@ module.exports = [
     },
   },
   {
+    // The BYOK relay's browser probes (track byok_ai_layout_20260915, Phase 3). Same CLASS of
+    // declaration as the `js/background.js` block above — a name defined in one scope and read by
+    // bare identifier from another — with one difference worth stating because it is the reason
+    // this is a file-scoped block rather than an addition to the `test/**` globals: Playwright's
+    // `serviceWorker.evaluate(fn)` serializes `fn` and runs it INSIDE the extension's worker, so
+    // these two identifiers resolve there, not in the Node/mocha scope every other test global
+    // lives in. Declaring them for all of `test/` would silence `no-undef` for a typo in 60
+    // unrelated specs; scoped to this file, the only place the worker's own globals are reached,
+    // the rule stays live everywhere else. `chrome.storage` needs no entry (it is in
+    // `globals.webextensions`, already applied to every file).
+    files: ["test/browser_e2e/byok_relay.spec.js"],
+    languageOptions: {
+      globals: {
+        byokRelaySnapshot: "readonly", // js/background.js — the counters' read-only accessor
+        byokTargetProblem: "readonly", // js/background.js:359 — the origin lock's own predicate
+        byokSenderProblem: "readonly", // js/background.js — the sender gate's own predicate
+        byokChatReply: "readonly", // js/background.js — the relay, called with a test-supplied sender
+      },
+    },
+  },
+  {
     // The tooling tree: small Node CLIs that write their result to stdout. Same rationale as
     // `test/` (O-7), and it was never linted by anything before this track (§R-7).
     files: ["scripts/**/*.js"],

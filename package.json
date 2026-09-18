@@ -19,6 +19,7 @@
     "test:e2e:affordances": "mocha test/browser_e2e/affordance_drag_hover_shadows.spec.js --timeout 900000",
     "test:e2e:byoksettings": "mocha test/browser_e2e/byok_settings_storage.spec.js --timeout 900000",
     "test:e2e:byokpersist": "mocha test/browser_e2e/byok_settings_persistence.spec.js --timeout 900000",
+    "test:e2e:byokrelay": "mocha test/browser_e2e/byok_relay.spec.js --timeout 900000",
     "test:e2e:autoscroll": "mocha test/browser_e2e/sheet_autoscroll.spec.js --timeout 900000",
     "test:e2e:deletes": "mocha test/browser_e2e/layer_delete_constraints.spec.js --timeout 900000",
     "test:e2e:upload": "mocha test/browser_e2e/custom_shapes_upload.spec.js --timeout 900000",

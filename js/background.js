@@ -5,12 +5,35 @@
 // top-level bindings here. Which names each one declares was checked for collision against
 // this file's before wiring it (`markOn` / `clearState`): the three sets are disjoint.
 //
+// THE LEADING SLASHES ARE LOAD-BEARING, AND THE FIRST REAL-BROWSER RUN PROVED IT.
+// `importScripts` resolves against the WORKER SCRIPT'S OWN DIRECTORY, not the extension root
+// (MDN: the URL is relative to the base URL of the worker script), and this worker lives at
+// `js/background.js`. A relative `"js/ai_layout.js"` therefore asked for `/js/js/ai_layout.js`
+// and failed to load. MEASURED, verbatim, from inside a live worker of this build:
+// `DOMException: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at
+// 'chrome-extension://…/js/js/ai_layout.js' failed to load.` (the arithmetic is checkable
+// without a browser: `new URL("js/ai_layout.js", "chrome-extension://x/js/background.js")` →
+// `/js/js/…`, with a leading slash → `/js/…`).
+//
+// WHY IT LOOKED LIKE EVERYTHING ELSE, AND WHY THIS IS THE ONE FACT WORTH KNOWING. A failed
+// `importScripts` is a TOP-LEVEL EXCEPTION in the worker script: every statement after line 13
+// never runs. Hoisted `function` declarations are already installed, so `byokChatReply`,
+// `byokSenderProblem` and `byokTargetProblem` all resolve and read as "the worker is fine" —
+// while `buildRequest` (from the file that failed to load) is `undefined` and background.js's
+// OWN top-level `const`s (`byokRelayStats`, `BYOK_PAGE_ORIGIN_PREFIX`) stay permanently
+// uninitialized, which is why they answered `Cannot access 'X' before initialization` rather
+// than `X is not defined`. The consequence that mattered: the `BYOK_CHAT` listener at the bottom
+// of this file was never registered, so every `chrome.runtime.sendMessage` from the content
+// world had no responder and hung until its caller's deadline. A unit suite that reads this
+// file as TEXT cannot see any of that — the path string is valid JS either way — which is
+// precisely why AC-5 demands a real browser.
+//
 // `js/ai_layout.js` is the pure core (request builder + response parser, no `chrome.*`, no
 // `document`), and `js/ai_settings.js` is the store — which is how the key is read HERE and
 // only here: `getApiKey()` resolves `chrome.storage.local`, and a service worker has that
 // API whether or not a content script does. Nothing in the message body carries a credential
 // or a URL, so the two origins the manifest hosts are the only places a request can go.
-importScripts("js/ai_layout.js", "js/ai_settings.js");
+importScripts("/js/ai_layout.js", "/js/ai_settings.js");
 
 // When the extension is installed or upgraded ...
 chrome.runtime.onInstalled.addListener(function() {
@@ -303,6 +326,38 @@ const byokRelayStats = {
   refused: { sender_identity: 0, sender_origin: 0, request_smuggling: 0, provider_origin_lock: 0 },
   lastTargetOrigin: "",
 };
+
+/**
+ * The read-only view of the counters above, for `test/browser_e2e/byok_relay.spec.js`.
+ *
+ * WHY A FUNCTION AND NOT THE OBJECT ITSELF — measured, not guessed: Playwright's
+ * `serviceWorker.evaluate(fn)` can call the worker's top-level `function` declarations
+ * (`byokSenderProblem`, `byokTargetProblem`, …) but a bare `const` declared by `background.js`
+ * resolves to nothing there (`byokRelayStats is not defined`, `BYOK_PAGE_ORIGIN_PREFIX` likewise)
+ * while a `const` from an `importScripts`-loaded file DOES resolve (`PROVIDERS`,
+ * `AI_COMPAT_BASE_ORIGINS`). So a test that wants the tally needs a function to reach it through.
+ *
+ * It is a TEST SEAM, not a message type: nothing in the request vocabulary answers it, no page or
+ * content script can call it (only the worker's own scope has the binding), and it copies out
+ * exactly the three fields above — never a body, a header, or a credential.
+ */
+// The only caller is a `serviceWorker.evaluate` body in byok_relay.spec.js, which eslint cannot
+// see because it runs in the worker's scope from a serialized function expression — a call site in
+// a different realm, the same reason PRODUCT_WINDOW_SEAMS exists for the `window.*` seams. Scoped
+// to this declaration so `no-unused-vars` stays live for the other ~30 helpers in this file.
+// eslint-disable-next-line no-unused-vars
+function byokRelaySnapshot() {
+  return {
+    handled: byokRelayStats.handled,
+    refused: {
+      sender_identity: byokRelayStats.refused.sender_identity,
+      sender_origin: byokRelayStats.refused.sender_origin,
+      request_smuggling: byokRelayStats.refused.request_smuggling,
+      provider_origin_lock: byokRelayStats.refused.provider_origin_lock,
+    },
+    lastTargetOrigin: byokRelayStats.lastTargetOrigin,
+  };
+}
 
 /** A stable error shape. `message` is user-facing copy and never contains a credential. */
 function byokRefusal(code, message) {

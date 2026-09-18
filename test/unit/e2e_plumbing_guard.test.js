@@ -162,7 +162,14 @@ describe("AC-6 — the capture plumbing is shared and the roster stopped growing
     // grant. It cannot ride the recursive run: `test:e2e` loads the worktree extension, and this
     // file needs its own context pointed at `temp/.pw-ext-*`, so it has to be invocable on its
     // own. Two files, two curated runs, one per premise.
-    const ROSTER_AFTER = 40;
+    // 40 -> 41, byok_ai_layout_20260915 Phase 3 (2026-09-17): `test:e2e:byokrelay`, the same
+    // shape again and for the same reason as the two above it. AC-5's gate is THREE NAMED probes
+    // run against the REAL extension worker, and the plan says all three must be seen before the
+    // box ticks — which means being able to invoke exactly this file by name. A `--grep` over the
+    // recursive run cannot express it either: the probes plant `chrome.storage.local` in
+    // `beforeEach` and clear it in `afterEach`, so they must not interleave with another file's
+    // store assertions in the same context.
+    const ROSTER_AFTER = 41;
     assert.strictEqual(
       perSpec.length,
       ROSTER_AFTER,
