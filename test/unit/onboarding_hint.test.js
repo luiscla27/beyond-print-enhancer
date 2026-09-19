@@ -468,7 +468,12 @@ describe("first-run discoverability hint (AC-5, O-1)", function () {
       "the hint is listed in the print hide rules",
     );
     const idx = src.indexOf("#be-onboarding-hint");
-    const surroundings = src.slice(idx, idx + 200);
+    // Anchor the assertion on the DECLARATION BLOCK the selector belongs to, not on a
+    // fixed character window: the hint shares its rule with 13 other selectors, so adding
+    // one more to that list (Phase 4's `.be-ai-ghost`) pushed `display: none` past any
+    // constant budget and turned a correct rule into a red test.
+    const brace = src.indexOf("{", idx);
+    const surroundings = src.slice(brace, src.indexOf("}", brace) + 1);
     assert.ok(
       /display: none !important/.test(surroundings),
       "…where it is hidden",
