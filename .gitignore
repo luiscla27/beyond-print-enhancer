@@ -171,6 +171,8 @@ Thumbs.db
 /scripts/input_budget_report.py
 /scripts/verify_lanes.py
 /scripts/muse_gate.py
+/scripts/utility_telemetry.py
+/test/unit/utility_telemetry.test.js
 /test/unit/housekeeping_guard.test.js
 /test/unit/lanes_aliases.test.js
 /test/unit/input_budget_alignment.test.js

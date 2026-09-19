@@ -8,6 +8,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Internal
+- **Utility telemetry: this project can now say whether its paid-Qwen spend bought anything (2026-09-19,
+  MSF handoff `temp/issues/HANDOFF_DNDBEYOND_PRINTENHANCE_POST_MSF_TELEMETRY_20260918.md` §3/§4 — the two
+  P0 items executed here).** `scripts/utility_telemetry.py` (project-authored harness, R3 class beside
+  `input_budget_report.py`) turns deterministic verification into `model_call_evaluated` (schema 2.1) rows
+  written THROUGH the vendored contract (`build_evaluation_record` + `append_telemetry_event`, same store,
+  same lock — the tool spells no envelope of its own, which is a pinned assertion), and reports cost-to-useful
+  per (role, model family). The judgment policy is the project's and is ENFORCED, not documented: `useful`
+  requires an acceptance evidence ref naming what passed (`test_run_id`, `commit_sha`, `render_gate`, …) so
+  `--evidence model_outcome=valid` is REFUSED — literally the handoff's "valid ≠ useful"; `unknown` is not
+  selectable (it is what the store means when nobody judged); a verdict targeting a call row that does not
+  exist is refused rather than appended (an orphan would inflate coverage while proving nothing); below §4's
+  8-judged-calls-per-cell a cell publishes NO useful rate and prints `INSUFFICIENT EVIDENCE`; and `report`
+  EXITs 1 at zero verdicts, so "no data" can never read as "nothing to fix". Store join MEASURED first:
+  22,184 call rows, `invocation_id` 22,184/22,184 distinct, `root_task_id` on 21,967, `session_id`/`run_id`
+  on 0 — so `invocation_id`/`request_uid` are the join keys and no second task identity was created (§4's
+  own requirement). The paid-Qwen position after this work: 7,218 completed calls, ~$1.19 of the store's
+  $1.27 recorded cost, **0 judgments** — the question is now ASKABLE and still UNANSWERED, and the tool
+  refuses to let that be mistaken for a result. **No route, lane, model or weight changed** (§2 of the
+  handoff), and the 8-call threshold makes a premature comparison impossible by construction. Other-project
+  items filed, not patched (fleet rule): §6 deadline propagation →
+  `telegram_orchestrator/temp/issues/ISSUE_relay_deadline_header_only_reaches_recover_and_summarize_20260919.md`
+  (`X-Relay-Deadline` reaches **70 of 22,184 calls, 0.32%, all recover/verify/summarize — execute/plan carry
+  NO deadline**, latency tail still p99.9 339,592 ms / max **776,391 ms**; root cause is the correctly-guarded
+  `ctx.Deadline()` emission at `internal/provider/retry.go:312-316` plus the absence of any provider request
+  timeout key in `internal/config/config.go`). §5 admission compaction is BLOCKED, not skipped:
+  `admission_summary` exists in 0 files under `vendor/` AND 0 files under MSF's live `framework/` + `tools/`,
+  so the tool MEASURES (7,803 `context_limit` rows over 4 providers, 0.35x the call count) and emits nothing —
+  it is the before/after yardstick for the sync that brings the type. §7's semantic-vs-transport separation
+  verified clean (0 of 80 transport failures carry `semantic_failure_count > 0`). §5's human lane needed no
+  code: `/useful` is already live in the RUNNING binary (`internal/bot/slash_useful.go`, reply →
+  `request_uid` → call row → `POST /evaluate`, `evaluation_source=human`). Verified: `selftest` 14/14
+  properties, `test/unit/utility_telemetry.test.js` **14/14** (every rule asserted in BOTH directions — the
+  `INSUFFICIENT EVIDENCE` guard is flipped by `--min-judged 1` to prove it is the sample size and not a
+  constant, and a REFUSED record is proven to write zero bytes), eslint clean, housekeeping guard OK on both
+  roots, `vendor/` byte-untouched. **`npm test` is 1,428 passing / 1 failing and the failure is NOT this
+  work:** `onboarding_hint.test.js` "never prints" windows `slice(idx, idx+200)` after the onboarding-hint
+  selector, and the uncommitted BYOK change adds `.be-ai-ghost,` to that list, moving `display: none
+  !important` from 151 px to **181 px** — 19 px past a brittle assertion's edge. Left for the BYOK track that
+  owns the selector; recorded here so the red is never read as a regression from telemetry work.
+- **§4's metric set was NOT fully wired the first time, and the gap was a real one (2026-09-19 close-out
+  verification, handoff §15.1).** Counting §4's six named figures in `scripts/utility_telemetry.py` found
+  five present and two absent — `calls_to_first_useful` / `cost_to_first_useful_usd` (the pair that
+  instruments §4's "repair cycles before acceptance"), so the report published a per-call average but never
+  how many calls and how much money it took to reach the FIRST useful answer. They are now computed under
+  exactly the names the vendored contract uses (`build_task_utility_record`,
+  `vendor/relay/telemetry/__init__.py:634`) rather than invented locally: the cell's calls are walked in
+  start order with transport failures INCLUDED, because a retried attempt is real spend before the useful
+  answer, and with nothing judged useful the pair stays ABSENT — never `1` (reads as "first try") and never
+  `$0` (reads as "free"). The selftest's `cost_is_summed_per_cell` moved `0.070 → 0.100` in the same change
+  because its failure row was given a real cost ($0.030) and a distinct timestamp, so the new
+  `first_useful_counts_attempts_before_it` assertion cannot pass vacuously on a $0 retry. Three properties
+  and three mocha cases added (11 → 14 each). Re-measured in the same pass: §5's blocker is unchanged
+  (`admission_summary` in 0 vendor files, 0 MSF `framework/`+`tools/` files, 16 unchecked Phase-5 items,
+  8,132 rejection rows / 8,132 carrying `context_band`, 0 duplicated context keys in the engine configs);
+  §6's store shape is unchanged (deadline on 72 of 22,459 call rows, 0 of them `execute`/`plan`, p99 140 s,
+  max 776 s) and its phase key is **`reasonix_phase`**, not `phase` (`phase` present-but-null on all 52,888
+  rows — a check written against `phase` reports `None` for everything and reads as "no recover calls");
+  §7 unchanged. §2's decision preserved with the number that preserves it: $1.3011 of $1.3947 on qwen,
+  22,459 calls, **0 judgments**, so no routing weight moved.
+- **The idle-gate debt this project owed is now a filed handoff (2026-09-19).**
+  `temp/archived/ISSUE_idle_gate_enabled_by_orch_session_20260918.md` recorded that this project's vendored
+  layout makes the gate's P1 track half inert and that "a filed follow-up would be the fix handoff"; it is
+  filed at `telegram_orchestrator/temp/issues/ISSUE_idle_gate_p1_conductor_home_blindness_vendored_layout_20260919.md`.
+  MEASURED there: `housekeeping.go` concatenates `<root>/conductor` at :113/:367/:462 and `ScanTracks` returns
+  a bare `nil` when the directory is missing, so "no debt" and "no home" share one return value — the third
+  instance of the class after `ISSUE_housekeeping_guard_vacuous_root_20260910` (this repo) and
+  `ISSUE_orch_inventory_conductor_home_contract_20260916` (fixed in `3d58b6d`), and the only one on a SPEND
+  path: `executors.go:805` hardcodes `under conductor/tracks/` into the P3/P4 builder prompt, so a fire here
+  would create a root `conductor/` beside `vendor/conductor/` — the split home
+  `vendor_root_consolidation_20260914` exists to prevent, in the fleet's only PUBLIC bot, under
+  `builder_est_usd = 0.75` × 6 runs/day. Four fix options, no code touched in another project.
 - **The fleet `/inventory` command can now see this project's tracks — the handoff was executed in
   ORCH under an explicit operator waiver (2026-09-17, ORCH commit `3d58b6d`).** `byok_ai_layout_20260915`
   is now listed where the command previously reported `tracks: 0 archived · 0 active · 0 not-started`
