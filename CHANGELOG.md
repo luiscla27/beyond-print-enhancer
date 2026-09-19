@@ -67,6 +67,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rows — a check written against `phase` reports `None` for everything and reads as "no recover calls");
   §7 unchanged. §2's decision preserved with the number that preserves it: $1.3011 of $1.3947 on qwen,
   22,459 calls, **0 judgments**, so no routing weight moved.
+- **§4 is now COMPLETE, the §5 "distinct requests" figure was an over-claim, and one MSF bug fell
+  out of wiring them together (2026-09-19 session 3, handoff §15.1b/§15.2).** Three things:
+  (a) **§4's sixth figure.** §15.1's first-useful pair only *implied* "repair cycles before
+  acceptance", so `report` now also publishes `repair_cycles_before_first_useful` and
+  `latency_to_first_useful_ms` over the SAME window as the pair (call rows in `started_at_utc`
+  order, transport failures included) — 4 calls / 1 failed attempt / 20 s is now three numbers that
+  cannot describe three different spans. Both are `null` when nothing in the cell was useful, and
+  `0` (not null) when the cell got there first try: a clean run is a knowable best case, and
+  hiding it would bias the metric toward repair. Falsified by injection, both directions:
+  `repairs := calls - 1` breaks 3 selftest properties and 2 mocha cases, `latency := 0` breaks 4.
+  Text mode states the absent case for ALL FOUR first-useful figures on one line, so a reader never
+  sees two dashes and assumes the other two measured zero — the same padding defect, moved into the
+  render layer; that line shape is asserted too.
+  (b) **§5's compaction target was mis-stated by this project's own resolution record.** It printed
+  per-provider `rows / N distinct requests`, each 1:1 with that provider's rows, which reads as "8,132
+  rejections = 8,132 unhappy requests". Measured across the store, **8,132 rows are 4,317
+  requests** (histogram `{1: 1283, 2: 2322, 3: 643, 4: 69}`; a request is refused once per provider as
+  it walks the fallback ladder, never twice by the same one), and **4,315 of 4,317 still reached a
+  terminal call** — so rejections are ladder steps, not turn deaths, and the honest ask is
+  `8,132 → 4,317 summaries`, never `→ 1` and never a deletion. The counting is now a pure function
+  (`admission_ladder(rows, calls)`) so it can be asserted rather than eyeballed in a `print`, and
+  `admission` prints the target and the recovery ratio. The original record was annotated, not
+  rewritten. (c) **One MSF finding.** The selftest now cross-checks the three figures against the
+  contract's own join, `rp.utility_metrics_from_rows` (`vendor/relay/telemetry/__init__.py:536`), so
+  a framework redefinition goes red here instead of drifting silently — and it deliberately EXCLUDES
+  the two cost metrics, because the helper sums `billed_cost_usd` only while the row writer documents
+  that estimate-priced legs keep that field `None` (`:587-597`) and the fleet's own reader falls back
+  to `effective_estimated_cost_usd` (`telemetry_report.py:2218`). Measured on this store: **0 of
+  22,545** call rows carry billed cost, so the helper prints `cost_to_first_useful_usd = 0.0` over
+  **$1.4196** of real spend (`relay_estimate_bai_now_billed` 3,412 rows; `relay_estimate_free` 12,713
+  and `relay_unpriced` 6,443 at $0) — a fabricated zero, contradicting that helper's own "absent,
+  never a fabricated zero" docstring. Filed as
+  `modelstack_framework/temp/issues/ISSUE_msf_utility_metrics_cost_field_blind_on_estimated_cost_rows_20260919.md`
+  with a repro and four fixtures (incl. the `$0.0` free-leg trap for a naive `or`-chain). MSF took
+  it the same day as its reporter's preferred option — commit `2875444`, unit `5b8e0a59eefb` — so
+  `_cost()` in this tool was brought to the SAME `is not None` ladder (an explicit `billed_cost_usd`
+  `$0.0` is a FREE leg, a missing one is a gap to read through to the estimate; the old truthiness
+  chain collapsed the two). Pinned by selftest `cost_ladder_keeps_an_explicit_zero_free` —
+  falsified by reverting the ladder and watching exactly that property go red — and by a mocha case
+  that writes the store's real row shape (billed=None, estimate=$0.06, which today's DND helper
+  would print as `$0.000000`). The fix is NOT in this project's pin (`vendor/relay/telemetry/
+  __init__.py:596` is still `billed or 0.0`, 0 `cost_metrics_unavailable` hits), so the two cost
+  fields STAY excluded from the cross-check until `modelstack sync`; on this store the ladder reads
+  $1.4334 across 22,616 calls (a 2026-09-19 snapshot — the store is a live tail, so the call count
+  moves by tens of rows between reads; the ratios and the zero-judgment fact are what matter). The same exercise surfaced a second, still-live divergence in that
+  helper — `calls_to_first_useful` is a positional index into whatever order the caller passed while
+  its four siblings use a `started_at_utc` window, so the same two rows measured `1` chronologically
+  and `2` file-reversed (reproduced against MSF live, post-fix). Filed as
+  `ISSUE_msf_calls_to_first_useful_is_file_order_dependent_20260919.md`; DND sorts its cell before
+  walking, which is why the cross-check feeds the contract a time-sorted slice. **No `vendor/` file
+  was patched**, so `drift_check` stays green. Verified: `selftest` **23/23** (11 at session start,
+  14 after the entry above, 23 after this one), mocha **19/19** (same 11 → 14 → 19 path), eslint
+  clean, housekeeping guard OK on both roots.
 - **The idle-gate debt this project owed is now a filed handoff (2026-09-19).**
   `temp/archived/ISSUE_idle_gate_enabled_by_orch_session_20260918.md` recorded that this project's vendored
   layout makes the gate's P1 track half inert and that "a filed follow-up would be the fix handoff"; it is
