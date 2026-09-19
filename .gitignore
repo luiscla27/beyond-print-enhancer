@@ -120,6 +120,8 @@ Thumbs.db
 # `/test/unit/vendored_overlay.test.js` layout pin the migration itself added, plus
 # `/governance.yaml` — needed because the gate reads that declaration at the ROOT only
 # (`framework/runtime/governance.py:96`) and `/vendor/` cannot reach it.
+# It is 26 since 2026-09-19: `msf sync` began writing `governance.stamps.json` (the received-stamp
+# record), beside this project's `governance.yaml`, i.e. at the root — see the line for it below.
 #
 # Consequence, unchanged from 2026-09-14: `AGENTS.md`'s older rule — "commit `vendor/` beside
 # `modelstack.lock`" — does not hold here. The pin is provenance in the worktree; a rollback
@@ -155,6 +157,17 @@ Thumbs.db
 # the `AGENTS.md` pointer above; `/vendor/` cannot reach it, so it is named here. The fleet's other
 # vendored consumers place it at the root for the same reason (MEASURED 2026-09-15).
 /governance.yaml
+
+# The received-stamp record the framework writes at delivery
+# (`framework/runtime/governance.py::write_stamps`), which places it BESIDE the project's
+# `governance.yaml` — so for this tree, at the ROOT. Same class as the line above: framework-supplied,
+# root-resident because of where its sibling lives, and a public clone must not carry it. `sync` created
+# this file on 2026-09-19 (unit `4c6bafc49903`). The generated block below does NOT name it — the
+# framework's census declares it an OVERLAY member (`cli/modelstack/scaffold.py:165`), so the two
+# positions disagree; the durable fix belongs in
+# `templates/self-maintenance/gitignore-public-block.tmpl`, not here. Filed upstream; until then this
+# line is what stops a `git add -A` from putting framework content into this repo's history.
+/governance.stamps.json
 
 # The operator-provided agent binary, not project source.
 /reasonix
