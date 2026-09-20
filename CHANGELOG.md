@@ -53,8 +53,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   first-useful layer, and no second task identity was invented. Verified: `selftest` **33/33** properties
   (was 24), `test/unit/utility_telemetry.test.js` **24/24** (was 19), `npx mocha test/unit` **1,141
   passing / 0 failing**, eslint clean, guard OK (both roots), `report --days 7` exit 1 (0 verdicts —
-  still fails closed). Post-commit re-verification: `npm test` → **1,448 passing / 0 failing**. **No route, lane, model or weight changed; no `vendor/` byte touched; no other project's code
-  modified** (the MSF handoff landed as an issue file, per the fleet rule).
+  still fails closed). Post-commit re-verification: `npm test` → **1,448 passing / 0 failing**. **No route, lane, model or weight
+  changed; no `vendor/` byte touched; no other project's code modified** (the MSF handoff landed as an
+  issue file, per the fleet rule).
+- **Pre-sync readiness audit for the telemetry handoff (2026-09-20, handoff §19) — measurement only,
+  no code changed.** The next action on that handoff is one `modelstack sync --target .`; this audit
+  made it a measured decision instead of a hopeful one and falsified one of its own prior claims.
+  **(a)** The sync is **14 files of 180** (relay `adapters`/`policy`/`reasonix_proxy`/`telemetry`/
+  `telemetry_report`/`test_reasonix_proxy` + 5 `runtime/` modules + 4 `runtime/tests/`), taken from a
+  framework tree that is **clean** at `6735ec6` (so the lock records `framework_revision`), and
+  `modelstack drift_check --lock modelstack.lock` is **green at the current pin** — an upgrade, not a
+  repair. `588b542` (phase 5) is ancestral to MSF HEAD but not to this pin; `02ee7f2`/`2875444`
+  (§15's fixes) are already local, confirmed rather than assumed. A re-runnable read-only probe prints
+  the same table before and after (`temp/scratch/preview_sync_and_blockers_20260920.py`).
+  **(b) §6 splits three ways, and §17.3's "0 hits in the serving relay tree" was FALSE.** Grepped
+  identically across MSF live / DND's `vendor/relay` / ORCH's serving `vendor/relay`:
+  `caller_timeout_ms` (the deadline **input**) is present in **all three** — so the 78 live rows that
+  carry it are the vendored relay already doing its job, and the 0.33% is a *caller-side* gap that
+  **no sync changes**; `deadline_fired`/`provider_timer_ms` (the AC-16 **output**) are in *neither*
+  consumer tree and in 0 rows — that half, plus §5's `admission_summary`, is genuinely sync-blocked.
+  Consequence recorded so nobody chases the wrong tree after the sync: **`admission --days 0` should
+  flip to `ADMISSION SUMMARIES`, while §6's 0.33% is EXPECTED to stay put.** Also corrected a number
+  carried in the session notes: the lock holds **180** file entries, not 192 (185 = 180 + the nine
+  top-level fields, counted by a key-grep). Verified the live writer is ORCH's tree (PID 11004,
+  `deploy_all.ps1:129` → port 38116), so both consumer trees plus a reload must be current before any
+  post-sync claim is checkable — verify the process, not the file. No `vendor/` byte, no
+  `modelstack.lock`, and no other project's file was written; `modelstack sync` was deliberately NOT
+  invoked (its engine-version guard reads a gitignored parity record inside MSF).
 - **Utility telemetry: this project can now say whether its paid-Qwen spend bought anything (2026-09-19,
   MSF handoff `temp/issues/HANDOFF_DNDBEYOND_PRINTENHANCE_POST_MSF_TELEMETRY_20260918.md` §3/§4 — the two
   P0 items executed here).** `scripts/utility_telemetry.py` (project-authored harness, R3 class beside
