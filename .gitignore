@@ -229,5 +229,12 @@ __pycache__/
 # <why: this project is declared public; everything the framework supplies lives in vendor/>
 /vendor/
 /modelstack.lock
-/reasonix.toml*
+/reasonix.toml
+# G-1: the RUNNING config is the framework's and stays out of history; its `.example`
+# MIRROR is the project's committed template (`init`/`sync` stamp both). The pattern
+# above is therefore the exact name, never `/reasonix.toml*` — the prefix form swallowed
+# the mirror too, so a public clone carried no config template at all
+# (`ISSUE_msf_public_gitignore_block_has_no_row_for_governance_stamps_json_20260919`
+# Addendum A). The negation is kept so the intent survives a future prefix pattern.
+!/reasonix.toml.example
 # <<< modelstack vendor overlay (generated) <<<

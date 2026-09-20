@@ -1,0 +1,119 @@
+# reasonix-bot.fragment.toml — self-maintenance scaffold (AC-17)
+#
+# Real Telegram bot/gateway config fragment, stamped by `modelstack init` into a
+# consumer project's reasonix.toml. Mirror of the fleet reference shape
+# (telegram_orchestrator reasonix.toml, 2026-08-13+). Placeholders are replaced
+# at scaffold time; see MAINTENANCE_MANIFEST.md.
+#
+# dndbeyond-printenhance      project name        e.g. my_project
+# 37918      free control port   e.g. 3792x (never colliding)
+# TELEGRAM_DNDBEYOND_PRINTENHANCE_BOT         token env name      e.g. TELEGRAM_MY_PROJECT_BOT
+# 8747671286  operator chat id    e.g. "8747671286"
+
+# Gateway-format bot config. Read by `reasonix bot start --channels telegram`
+# from the project root. Same allowlist/control pattern as every fleet bot.
+[bot]
+enabled = false        # flip to true ONLY after the operator supplies the token (see below)
+language = "en"
+model = "px-dndb-flash/deepseek-v4-flash"   # project-scoped default, e.g. "px-dndb-flash/deepseek-v4-flash"
+tool_approval_mode = "yolo"
+max_steps = 0
+ignore_self_messages = true
+
+# --- Agent skills discovery (AC-8) ---
+# This project is on the VENDORED overlay layout (`vendor_root_consolidation_20260914`): the stamped
+# skill set lives under the overlay root at `vendor/.reasonix/skills/`, which is NOT one of the
+# convention discovery roots (`reasonix-upstream/internal/config/paths.go:537` -> `.reasonix`,
+# `.agents`, `.agent`, `.claude` under the project root). A nested `vendor/.reasonix/skills` is
+# therefore invisible unless this file declares it: `paths` are "custom"-scope roots resolved
+# relative to the project root (`internal/skill/skill.go:1384-1404`, wired at
+# `internal/boot/boot.go:676`). The root `reasonix.toml` is exactly the file that cannot move, so the
+# declaration belongs here. `test/unit/input_budget_alignment.test.js` pins the two copies of this
+# file against each other, so keep them aligned.
+[skills]
+paths = ["vendor/.reasonix/skills"]
+
+[bot.control]
+enabled = true
+addr = "127.0.0.1:37918"
+token_env = "REASONIX_BOT_CONTROL_TOKEN"   # e.g. REASONIX_BOT_CONTROL_TOKEN
+
+[bot.allowlist]
+enabled = true
+allow_all = false
+telegram_users = ["PASTE_YOUR_TELEGRAM_USER_ID"]
+telegram_admins = ["PASTE_YOUR_TELEGRAM_USER_ID"]
+telegram_approvers = ["PASTE_YOUR_TELEGRAM_USER_ID"]
+
+[bot.telegram]
+enabled = true
+# Operator step (BotFather): create the bot, then supply its token — either as
+# the environment variable TELEGRAM_DNDBEYOND_PRINTENHANCE_BOT (registry env on Windows) or a literal
+# `token = "..."` line here. NEVER commit a literal token. With no token the
+# gateway cannot start; keep [bot] enabled = false until then (inert, no fleet
+# noise). After activation the bot joins the fleet /monitor /health /telemetry
+# discovery and its lifecycle is operator-run (scripts\telegram-bots.bat).
+# token = "PASTE_AFTER_BOTFATHER"
+# token_env = "TELEGRAM_DNDBEYOND_PRINTENHANCE_BOT"  # alt: env-var token
+
+# Model providers — direct DeepSeek path (fleet pattern; api key from the
+# Machine env DEEPSEEK_API_KEY, never stored here). [bot] model above is
+# provider-scoped to this entry.
+# --- Absolute prompt-token budget + window alignment -------------------------
+# Shipped value, not a suggestion: `temp/archived/ISSUE_input_context_ideal_50k_compaction_20260913.md` (S6)
+# measured this project's agent lane at mean ~347k / median ~318k INPUT tokens per call
+# for ~618 of output — 94% past the relay's 50,000-token ideal, ~248 median NEW tokens,
+# the rest already-seen history re-read (and cache-billed) every turn. The client's ONLY
+# automatic fold trigger is compact_ratio (0.85) x context_window, so a 1,000,000 window
+# meant nothing folded before ~850,000. The two levers below travel together (the
+# live `reasonix.toml` carries the same pair plus the full rationale, and
+# `test/unit/input_budget_alignment.test.js` pins both copies).
+#   * `context_window` is the input-size knob the ratios are computed from: fold =
+#     0.85 x W, checkpoint ceiling = 0.50 x W, verbatim recent tail =
+#     clamp(0.10 x W, 32768, 98304). 262,144 = the `context_limit` of the lane this
+#     project dials (`python scripts/verify_lanes.py` prints the route); it is NOT a
+#     claim about the route and narrows nothing — the relay reports the route's real
+#     enforced ceiling per response as `X-Relay-Effective-Limit` and never reads this.
+#   * `context_budget_soft_tokens` folds at an ABSOLUTE count, honoured as
+#     min(ratio x W, soft). 150,000 is sized against the floor a fold can ACTUALLY land
+#     on, which is FIVE terms, not the two (`prefix + tail`) this comment used to count:
+#     fixed prefix (~12k measured here) + the digest the fold writes in + the hoisted
+#     user turns (<= 8,192, compact.go:38-39) + the verbatim tail + the ACTIVE TURN,
+#     which `planFoldRegion` deliberately clamps the fold before
+#     (compact_projection.go:557-568) so it is never folded away. On this project's lane
+#     that floor measures ~102k, and an earlier 90,000 sat BELOW it — every candidate
+#     the fold produced was rejected (`forced candidate 95080 still at or above trigger
+#     90000`) and the turn died. Margin is what keeps a budget usable, and the
+#     active-turn term swings (p75 47.8k / p90 140k here), so 120k is too tight to be a
+#     default; `python scripts/input_budget_report.py` prints the live floor and its
+#     parts. The client REFUSES a checkpoint whose fixed prefix reaches the trigger — a
+#     budget at or below the prefix is silently DISARMED — and the 50% ceiling bounds
+#     acceptance for a non-forced fold whatever the soft point says.
+#     `hard` (< the window, > soft or the pair is rejected by name) makes a runaway
+#     turn fold instead of answering 413.
+# Verify after changing the budget, the window, or the size of AGENTS.md /
+# .reasonix/skills:
+#   python scripts/input_budget_report.py            # measured shape + derived math
+#   python scripts/input_budget_report.py --check     # exit 1 = disarmed / incoherent
+#   /context                                          # in a session: fold · ceilings · tail
+[agent]
+context_budget_soft_tokens = 150000
+context_budget_hard_tokens = 240000
+
+# Model providers — RELAY-ROUTED via the project's local modelstack relay
+# (port 38116): the relay forwards /v1/* to the real upstream and writes ONE
+# schema-v2 telemetry row per model call into temp/modelstack/telemetry.jsonl
+# (framework AC-19 telemetry obligation — the whole point of the pilot).
+[[providers]]
+name = "px-dndb-flash"
+kind = "anthropic"
+base_url = "http://127.0.0.1:38116"
+no_proxy = true
+api_key_env = "DEEPSEEK_API_KEY"
+model = "deepseek-v4-flash"
+# See the [agent] block above: the lane's own context_limit, not 1,000,000.
+context_window = 262144
+thinking = "enabled"
+web_search = true
+supported_efforts = ["disabled", "low", "high", "max"]
+default_effort = "high"
