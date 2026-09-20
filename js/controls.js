@@ -153,6 +153,55 @@ function createControls() {
     },
     { label: "Manage Compact", iconKey: "compact", tray: "layout", action: () => window.handleManageCompact() },
     {
+      // AI arrange (track byok_ai_layout_20260915, Phase 4 / O-2). PRESENT AND DISABLED until a key
+      // exists: the plan's answer to "should there be a control before consent" was yes, greyed,
+      // with the hint in its tooltip — because an absent control is undiscoverable while a disabled
+      // one is a question the user can ask. Nothing here reaches the network: the row opens a
+      // prompt, and `js/ai_arrange.js` re-reads the store as its own second gate (`arrangeWithAi`
+      // step 1) before a single byte leaves, so a stale `disabled` cannot smuggle a request out.
+      //
+      // WHY THE PROMPT IS A DIALOG AND NOT AN INPUT IN THIS ROW: the tray is 232px wide and its
+      // labels already ellipsize at ~28 characters (see refreshUndoControl below), so free text has
+      // nowhere to be typed. The row is the entry point; `showAiArrangeSurface` owns the field.
+      label: "AI Arrange",
+      title: "Ask your AI to arrange the sheet - needs your own API key",
+      iconKey: "sparkle",
+      tray: "layout",
+      id: "be-btn-ai-arrange",
+      action: () => {
+        // ONE seam, ONE route: `js/ai_arrange.js` publishes `window.AiArrange` and nothing else, so
+        // the namespace lookup below is the only way in. A missing namespace means the module was
+        // not injected (a page booted before this file shipped, or a partial injection), and the
+        // refusal says so instead of throwing.
+        const api = window.AiArrange;
+        if (api && typeof api.showAiArrangeSurface === "function") {
+          return api.showAiArrangeSurface();
+        }
+        window.showFeedback?.("AI arrange is not available on this page.", "error");
+        return undefined;
+      },
+    },
+    {
+      // The key lives behind its own row rather than being collected inside the arrange dialog, so
+      // that the credential and the instruction never share a submit button: the arrange path reads
+      // the store and never receives a key argument (AC-4's "the modal is not a transport"). This
+      // is also `showAiSettingsModal`'s first PRODUCT caller — it existed since Phase 2 with test
+      // readers only.
+      label: "AI Settings",
+      title: "Choose your AI provider and store your key on this device",
+      iconKey: "lock",
+      tray: "layout",
+      id: "be-btn-ai-settings",
+      action: () => {
+        const api = window.AiSettings;
+        if (api && typeof api.showAiSettingsModal === "function") {
+          return api.showAiSettingsModal();
+        }
+        window.showFeedback?.("AI settings are not available on this page.", "error");
+        return undefined;
+      },
+    },
+    {
       label: "Print",
       iconKey: "printer",
       tray: "output",
@@ -852,6 +901,62 @@ function createControls() {
   }
   window.addEventListener("be-undo-stack-changed", refreshUndoControl);
   refreshUndoControl();
+
+  /**
+   * Keep the AI arrange control in step with the credential (O-2, track byok_ai_layout_20260915).
+   *
+   * Same shape as `refreshUndoControl` directly above, deliberately: an event-driven read of the
+   * authority, run once at build time and again on every change, with the meaning that does not fit
+   * the label carried by the tooltip and the accessible name. The authority is `AiSettings`'s
+   * `hasStoredKey()` — the credential store itself — never the `keyPresent` flag a record happens
+   * to carry, for the reason `saveSettings` documents (a caller-shaped record once could have
+   * claimed a key that was never written).
+   *
+   * `hasStoredKey()` is async, so a guard keeps a slow read from overwriting a newer one: if the
+   * user removes the key while this is in flight, the second run wins. Without it the control could
+   * end up ENABLED with no credential — which is exactly the stale-button state this exists to
+   * prevent, so the race is closed rather than assumed away.
+   */
+  let aiKeyReadSeq = 0;
+  function refreshAiControls() {
+    const btn = container.querySelector("#be-btn-ai-arrange");
+    const settingsBtn = container.querySelector("#be-btn-ai-settings");
+    if (!btn && !settingsBtn) return;
+    const api = window.AiSettings;
+    const seq = ++aiKeyReadSeq;
+    const has = api && typeof api.hasStoredKey === "function"
+      ? Promise.resolve(api.hasStoredKey())
+      : Promise.resolve(false);
+    has.then((keyPresent) => {
+      if (seq !== aiKeyReadSeq) return undefined;
+      if (btn) {
+        btn.disabled = !keyPresent;
+        const span = btn.querySelector(".be-ctl-label");
+        if (span) span.textContent = "AI Arrange";
+        const hint = keyPresent
+          ? "Ask your AI to arrange the sheet"
+          : "AI arrange is off until you add your own API key in AI Settings";
+        btn.title = hint;
+        btn.setAttribute("aria-label", hint);
+        btn.classList.toggle("be-ctl-ai-off", !keyPresent);
+      }
+      // The settings row is ALWAYS enabled — it is how a user gets out of the disabled state. Its
+      // tooltip says which way the key currently stands, read from the same single source.
+      if (settingsBtn) {
+        const s = keyPresent ? "your key is stored on this device" : "no key stored yet";
+        settingsBtn.title = "Choose your AI provider and model - " + s;
+        settingsBtn.setAttribute("aria-label", settingsBtn.title);
+      }
+      return undefined;
+    }).catch(() => {
+      // A store that cannot answer leaves the control DISABLED, which is the safe direction:
+      // a disabled row with a hint is a question, an enabled row with no key is a failed request.
+      if (seq === aiKeyReadSeq && btn) btn.disabled = true;
+    });
+    return undefined;
+  }
+  window.addEventListener("be-ai-key-changed", refreshAiControls);
+  refreshAiControls();
 
   // Ensure print styles (opacity overrides, manager hiding) are generated on initialization
   if (typeof window.updatePrintStyles === "function") {

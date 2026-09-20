@@ -436,6 +436,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   together; the F4/F7/F8 and active-turn cases are falsified against the pre-fix model, and the
   live repo passes `--check` on the new floor.
 
+## [2.1.0] - 2026-09-20
+
+### Added
+- **AI Arrange — a layout proposal from your own AI, that cannot change anything until you say so**
+  (track `byok_ai_layout_20260915`, five phases, AC-1..AC-7 + AC-V0/AC-V1 + AC-D1). Two new rows in
+  the layout tray:
+  - **AI Settings** stores the provider (OpenAI or Anthropic), the model id, and **your API key — in
+    `chrome.storage.local`, on this device**. The key is never written to a file, never included in a
+    layout save, and never placed in a message body: the content script asks the extension's own
+    service worker to make the call and the worker reads the key from storage itself
+    (`js/ai_settings.js`, `js/background.js`). A request to an origin other than the one you
+    configured is refused by the worker before it leaves (`provider_origin_lock`).
+  - **AI Arrange** takes one line of instruction and asks the model for a **patch**, not a page:
+    `{moves: {id: {left, top, width, zIndex}}, hide: [id]}` over the sections a live `scanLayout`
+    actually reported. `js/ai_layout.js` (pure, no DOM, no `chrome.*`) builds the prompt, parses the
+    answer and validates it; a fenced block or a prose reply is *refused*, not unwrapped.
+  - **The AI proposes, the code disposes** is the track's one-line design, and AC-2 is what makes it
+    more than a slogan: every reject class — unknown id, duplicated id, non-numeric geometry,
+    out-of-range value, a width the sheet derives itself, smuggled keys, prose — is tested with six
+    probes, not one verdict: the record is byte-identical before and after, `undoDepth()` does not
+    move, zero saves, zero apply calls, and a distinct toast. A validator that returns `false` *and
+    mutates* fails, which is the failure mode a "rejected" log line hides.
+  - **A valid patch is shown before it is applied**: dashed gold ghost outlines over where each
+    section would land (and over the section that would disappear), the live sheet untouched,
+    Accept/Cancel. Cancel leaves nothing behind, including no undo entry.
+  - **Accept is an ordinary edit** (AC-3): `beginMutation`/`pushMutation` → `applyLayout` → the
+    normal save path. Ctrl+Z restores the pre-AI arrangement byte for byte, asserted in the real page
+    against a `scanLayout`-sourced snapshot (`A != B`, `A == C`, `B != C`, depth +1 then back).
+  - **The feature is off until you store a key** (operator decision O-2): the row is present and
+    visibly disabled, its tooltip says why, and the flow re-reads the store as its own second gate —
+    so a stale button cannot dial a request. Storing a key enables it on an event, no reload.
+  - **Every failure has its own sentence** (AC-6): 401, 429, provider-down, offline, aborted,
+    malformed JSON, prose-instead-of-patch, and no-worker are eight distinct toasts, and a unit case
+    asserts the copy table is exhaustive over the core's error classes so a new class cannot ship
+    without one.
+  - What leaves your machine is the section **headings, positions and sizes** (O-3). Headings are
+    included, so the privacy copy says "position and size plus the section's heading" and never
+    "no text" — on a live sheet a heading can carry a monster's or an NPC's name.
+- **The visual gate for it** (`AC-V1`): `npm run test:e2e:byokarrange` photographs one real
+  arrangement *before / preview / after* plus the disabled panel, `node scripts/byok_acv1_collage.js`
+  composes the strip from the measured geometry, and Muse scores seven criteria. It took three rounds:
+  round 1 failed G1/G5 because the fixture moved the section **24px**, which is real in the record and
+  invisible in the pixels under a modal backdrop — the brief had asserted a displacement nobody had
+  measured. The frames are now chosen by `aiArrangeEvidenceTarget` (an unobstructed section, a
+  destination ≥300px away, clear of the tool's own opaque surfaces and of the dialog's footprint), the
+  crop is *derived* from `acv1-geometry.json` that the case itself writes, and the pass is corroborated
+  by a gold-pixel count rather than the verdict alone. Record:
+  `vendor/docs/byok-ai-layout-20260915/acv1-provenance.json`.
+- **`PRIVACY_POLICY.md` §2 is now checked against the manifest, both directions**
+  (`test/unit/privacy_policy_manifest_parity.test.js`). §2 promises "the minimum permissions
+  necessary to function" and the fifth permission (`storage`) plus the two provider origins had been
+  added without anything verifying the doc followed. The new case fails if the manifest grants what
+  the policy does not name, *and* if the policy names what the manifest no longer grants.
+
+### Internal
+- `manifest.json` grants `storage` (the operator chose the wider surface over worker-only) and
+  publishes `api.openai.com` / `api.anthropic.com` as `host_permissions`; nothing else can be dialed.
+- The `test/browser_e2e/_helpers/inject.js` isolated-world harness gained the arrange probes
+  (`aiArrangeModuleRead`, `aiArrangeFirstSection`, `aiArrangeEvidenceTarget`, `aiArrangeProbe`,
+  `aiArrangePanelRead`, `aiArrangePanelClick`) and `e2e_plumbing_guard` / `capture_protocol_guard` /
+  `dead_exports` were widened to keep counting the new seams rather than waving at them.
+- Baseline for the track (AC-7): `npm test` **1167/0 → 1448/0**, the encapsulation oracle unmoved at
+  **299/0**, lint clean, browser collection **71 spec files** (was 69) with
+  `node scripts/browser_gate.js` green.
+
 ## [2.0.1] - 2026-09-14
 
 ### Changed

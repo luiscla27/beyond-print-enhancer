@@ -31,6 +31,13 @@
     const disabledLayers = document.querySelectorAll(
       '[data-print-disabled="true"]',
     );
+    // Track byok_ai_layout_20260915 (AC-1's `hide`): a single SECTION hidden from print, written
+    // from `layout.sections[id].printHidden` by js/layout_apply.js — the one writer, so this is the
+    // one reader. It joins the layer-level `data-print-disabled` rule above rather than replacing
+    // it: a whole layer and one section of a layer are different asks.
+    const hiddenSections = document.querySelectorAll(
+      '[data-print-hidden="true"]',
+    );
 
     let css = "@media print {\n";
 
@@ -53,6 +60,17 @@
     disabledLayers.forEach((layer) => {
       if (layer.id) {
         css += `  #${layer.id} { display: none !important; }\n`;
+      }
+    });
+
+    // Hide single sections the AI arrange patch (or any future writer of the flag) marked. The
+    // flag sits on the CONTAINER (that is where `minimized`, `compact` and `noAutoScale` live, and
+    // where scanLayout reads from), so this rule names that element. The wrapper stays behind as an
+    // empty absolutely-positioned box — it carries no ink, and leaving it is what keeps the sheet's
+    // other sections exactly where the user put them instead of reflowing the page.
+    hiddenSections.forEach((section) => {
+      if (section.id) {
+        css += `  #${section.id} { display: none !important; }\n`;
       }
     });
 
@@ -1742,6 +1760,7 @@ function enforceFullHeight() {
           .be-feedback,
           #be-feedback-announcer,
           .be-modal-overlay,
+          .be-ai-ghost,
           .be-context-menu {
               display: none !important;
               visibility: hidden !important;

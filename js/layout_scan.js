@@ -23,12 +23,16 @@
  * z-index) instead of the section's own value.
  *
  * A drag ghost is not layout — it is a temporary visual mirror — so it is excluded here
- * rather than being papered over at each scan site. The autosave path could reach the
- * same state whenever a persist fires while a drag is in flight.
+ * rather than being papered over at each scan site. The same reasoning now covers the AI
+ * arrange PREVIEW's ghost layer (`js/ai_arrange.js`'s `.be-ai-ghost`): it is a positioned
+ * copy of where sections WOULD go, drawn while the sheet is live, and a save or an undo
+ * capture that fires while the preview is open must not see it. All three transient classes
+ * are matched by the ONE selector below, so a fourth one has to be added HERE rather than
+ * discovered as a corrupted save.
  */
 function isTransientDragNode(el) {
   if (!el || !el.closest) return false;
-  return Boolean(el.closest(".be-drag-ghost, .be-drag-guides"));
+  return Boolean(el.closest(".be-drag-ghost, .be-drag-guides, .be-ai-ghost"));
 }
 
 async function scanLayout() {
@@ -235,6 +239,12 @@ async function scanLayout() {
       minimized: section.dataset.minimized === "true",
       compact: section.classList.contains("be-compact-mode"),
       noAutoScale: section.dataset.noAutoScale === "true",
+      // AC-1's `hide` lands HERE, as one persisted flag on the section record, for the same reason
+      // `noAutoScale` does: it is a per-section print property, so it survives save/load and an
+      // undo capture without a new collection in the record. The DOM contract is
+      // `data-print-hidden` read by js/print_styles.js's print block; the attribute is only ever
+      // written by js/layout_apply.js from this field, so there is one writer and one reader.
+      printHidden: section.dataset.printHidden === "true",
       borderStyle: getBorderStyle(section),
       innerWidths: {},
     };

@@ -21,7 +21,9 @@ The Extension requests the minimum permissions necessary to function:
 *   `scripting`: To execute the layout adjustment scripts on the page you are viewing.
 *   `contextMenus`: To provide a "Donate" link in the right-click menu. This only opens a URL and does not access page content.
 *   `storage`: To save your AI arrangement settings — the provider you choose, the model id, and your API key — in this browser's extension storage (`chrome.storage.local`). **This data stays on your device. It is never synced, never sent to us, and never included in a layout save.** The API key is used only to relay requests from the browser extension's own service worker to the provider you picked (OpenAI or Anthropic); it is read from storage by that worker and never placed in a message body.
-*   `host_permissions`: Required to fetch consolidated spell data from a subdomain on the same site. Spell details are not available on the primary character view, this is a new feature to enhance the printable layout.
+*   `host_permissions`: Host permissions let the Extension send requests to specific sites. It declares four origins, and each one exists for a named feature:
+    *   `https://www.dndbeyond.com/characters/*` and `https://character-service.dndbeyond.com/character/v5/character/*` — to read the character sheet you are viewing and to fetch consolidated spell data, which is not available on the primary character view. Spell details are read for the printable layout only.
+    *   `https://api.openai.com/*` and `https://api.anthropic.com/*` — ONLY for the AI arrange feature, and only when you turn it on. These are the two providers you can pick, and the requests go **directly from this extension on your machine to that provider**: there is no server of ours in the path, and we cannot see the request or the answer. The provider receives the API key **you** stored (that is what "bring your own key" means) plus the section titles, positions and sizes needed to propose a layout. Requests to any origin other than the one you configured are refused by the Extension itself.
 
 ## 3. Third-Party Services
 

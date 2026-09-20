@@ -135,12 +135,14 @@ const MAX_INSTRUCTION_CHARS = 4000;
  */
 const PROVIDERS = Object.freeze({
   openai: {
+    label: "OpenAI",
     base: "https://api.openai.com/v1",
     path: "/chat/completions",
     header: "Authorization",
     scheme: "Bearer ",
   },
   anthropic: {
+    label: "Anthropic",
     base: "https://api.anthropic.com/v1",
     path: "/messages",
     header: "x-api-key",
@@ -1105,6 +1107,12 @@ const AiLayout = {
   DEFAULT_MAX_TOKENS,
   MAX_GEOMETRY_PX,
   MAX_INSTRUCTION_CHARS,
+  // Test seam (track byok_ai_layout_20260915 — KEEP): the exact line the prompt uses to open the
+  // table of legal section ids. `test/unit/ai_layout_schema.test.js` asserts the built prompt
+  // carries THIS constant followed by every live id, which is the only way that check can compare
+  // the prompt against the enum without re-typing the string (a re-typed copy drifts silently and
+  // the test keeps passing while the prompt says something else). No product module reads it —
+  // `buildMessages` is its only writer — so it is annotated rather than pretending to be used.
   SECTION_TABLE_MARKER,
   Z_ORDER_MIN,
   Z_ORDER_MAX,
@@ -1122,6 +1130,12 @@ const AiLayout = {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = AiLayout;
 }
-// NO `window.AiLayout` yet, deliberately — see the header. Phase 4 adds the seam in the
-// same commit as its first product caller, and bumps the pinned export count in
-// test/unit/dead_exports.test.js at the same moment.
+// `window.AiLayout` — added by Phase 4 (track byok_ai_layout_20260915) in the SAME commit as its
+// first product caller, `js/ai_arrange.js` (which reads `buildMessages`, `parseModelOutput`,
+// `validatePatch` and `summarizePatch` off it). Until that commit this file published NO `window.*`
+// seam, deliberately: the re-rot guard (`scripts/check_dead_exports.js`) fails a published seam
+// with no reader, and Phase 1 had none. The page loads it through `js/background.js`'s
+// `executeScript` file list; the worker reaches the same symbols through `importScripts`.
+if (typeof window !== "undefined") {
+  window.AiLayout = AiLayout;
+}

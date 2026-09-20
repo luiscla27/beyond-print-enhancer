@@ -424,7 +424,13 @@ describe("AC-2 layer 3 — the SURVIVING implementation repairs a settled captur
 describe("AC-2 layer 4 — no routed site introduced a NEW tag literal", function () {
   this.timeout(20000);
 
-  it("every tag the inventory sees is one of the 14 recorded in Phase 0 (22 sites, 7 files)", function () {
+  // Site/file counts are stated in the title and asserted below, and BOTH moved when track
+  // byok_ai_layout_20260915 Phase 4 added `js/ai_arrange.js:737` as a `position` push site: 22 -> 23
+  // sites, 7 -> 8 files. That is the guard working, not a regression — the case's claim is about the
+  // VOCABULARY (14 tags, no new one, none dead) and it still holds. A count edit like this must
+  // therefore be made by the phase that adds a site, in the same commit, never by widening the
+  // vocabulary or by dropping the assertion.
+  it("every tag the inventory sees is one of the 14 recorded in Phase 0 (23 sites, 8 files)", function () {
     const inv = inventory();
     const recorded = [
       "asset",
@@ -454,7 +460,7 @@ describe("AC-2 layer 4 — no routed site introduced a NEW tag literal", functio
       [],
       "a recorded class lost its last site (a tag that no site pushes is a dead class)",
     );
-    assert.strictEqual(inv.file_count, 7, "the vocabulary still spans the recorded 7 files");
+    assert.strictEqual(inv.file_count, 8, "the vocabulary spans 8 files since Phase 4 of byok_ai_layout added a `position` site in js/ai_arrange.js");
     // The extractor's own blind spot, read rather than trusted: an unclassifiable call would
     // appear here. Phase 2 added none.
     const today = inv.unclassified_calls || [];

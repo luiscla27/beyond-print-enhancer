@@ -1133,14 +1133,37 @@ describe("ai_layout — module surface discipline (AC-7, spec L-6)", function ()
     }
   });
 
-  it("publishes NO `window.*` seam in Phase 1, and records why (the re-rot guard)", function () {
-    // scripts/check_dead_exports.js fails a seam with no caller in js/ — Phase 1 has none,
-    // so `window.AiLayout` arrives in Phase 4 beside its first product caller (the fleet has
-    // deleted two write-it-now seams for exactly this reason: __refreshUndoControl,
-    // UNDO_LABEL_MAX). `require` is this suite's route, as it is for js/ui_theme.js.
+  it("publishes exactly ONE window seam, and only because Phase 4 gave it a product caller", function () {
+    // THE HISTORY THIS CASE PINS. Phase 1 shipped NO `window.*` at all: the re-rot guard
+    // (`scripts/check_dead_exports.js`) fails a seam with no caller in `js/`, and there was
+    // none — the fleet has deleted two write-it-now seams for exactly that reason
+    // (`__refreshUndoControl`, `UNDO_LABEL_MAX`). Phase 4 of this track added `js/ai_arrange.js`,
+    // which is a real product reader, and the seam arrived in the same change.
+    //
+    // So the assertion is now about the SHAPE of that publication rather than its absence, and
+    // both halves still bite: the code assigns `window.AiLayout` ONCE, with no other seam
+    // smuggled in beside it, and it is the module object — not a hand-listed subset that could
+    // drift from `module.exports`.
+    const assignments = src.match(/^\s*window\.[A-Za-z_$][\w$]*\s*=/gm) || [];
+    assert.deepStrictEqual(
+      assignments.map((s) => s.trim()),
+      ["window.AiLayout ="],
+      "the pure core publishes ONE seam, named, and no more",
+    );
+    assert.ok(
+      /window\.AiLayout = AiLayout;/.test(src),
+      "the seam is the same object `module.exports` hands the suites — one surface, two readers",
+    );
     assert.strictEqual(typeof aiLayout.validatePatch, "function");
-    assert.ok(!/^\s*window\./m.test(src), "no window assignment in the code");
-    assert.strictEqual(typeof global.AiLayout, "undefined");
+    assert.strictEqual(typeof global.AiLayout, "undefined", "loading it in Node publishes nothing");
+    // And the reader exists, in product source, not in a test: this is the claim the seam was
+    // added for. If `js/ai_arrange.js` ever stops reading the core, the guard fails too — but
+    // failing HERE as well means the two files cannot drift apart silently.
+    const arrange = require("fs").readFileSync(
+      require.resolve("../../js/ai_arrange.js"),
+      "utf8",
+    );
+    assert.ok(/window\.AiLayout/.test(arrange), "js/ai_arrange.js is the caller");
   });
 
   it("summarizes a patch for the preview diff and the undo label", function () {

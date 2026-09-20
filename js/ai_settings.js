@@ -320,6 +320,30 @@ function saveSettings(settings) {
   });
 }
 
+/**
+ * Announce that the credential state may have changed.
+ *
+ * WHY THIS EXISTS: O-2 makes the panel's AI control disabled until a key exists, and a stale
+ * button is the failure mode that follows from a state nobody re-reads. The panel's own Undo
+ * control solved the identical problem with an event (`js/undo.js` dispatches
+ * `be-undo-stack-changed`, `js/controls.js:853` listens), so this uses the same mechanism rather
+ * than a polling read or a captured reference. It is dispatched AFTER the write resolves, never
+ * before, so a listener that re-reads `hasStoredKey()` cannot observe the pre-write value — which
+ * is the whole difference between a refresh and a race.
+ *
+ * Fire-and-forget by design: a listener that throws must not turn a SUCCESSFUL key write into a
+ * failed one, hence the try/catch rather than a bare dispatch.
+ */
+function announceKeyChange() {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") return;
+  try {
+    window.dispatchEvent(new CustomEvent("be-ai-key-changed"));
+  } catch {
+    // A host page with no CustomEvent, or a listener that threw on the way out: the write already
+    // landed, and the button's next real click re-reads the store anyway.
+  }
+}
+
 /** The record shape `saveSettings` reports back (before a reload, so the UI is not async). */
 function loadSettingsFrom(settings) {
   const out = Object.assign({}, settings);
@@ -350,7 +374,11 @@ function setApiKey(key) {
           flagWrite().then((settings) => aiStorageSet(AI_SETTINGS_STORE_KEY, settings))
         : Promise.resolve(false),
     )
-    .then((wrote) => (wrote ? { ok: true } : { ok: false, error: "storage_unavailable" }));
+    .then((wrote) => {
+      if (!wrote) return { ok: false, error: "storage_unavailable" };
+      announceKeyChange();
+      return { ok: true };
+    });
 }
 
 /**
@@ -360,7 +388,15 @@ function setApiKey(key) {
  * user re-enters provider/model/key together — an explicit removal must not be half-done.
  */
 function clearApiKey() {
-  return aiStorageRemove(AI_KEY_STORE_KEY).then(() => aiStorageRemove(AI_SETTINGS_STORE_KEY));
+  return aiStorageRemove(AI_KEY_STORE_KEY)
+    .then(() => aiStorageRemove(AI_SETTINGS_STORE_KEY))
+    .then(() => {
+      // After BOTH removals, for the reason in `announceKeyChange`: the panel's AI control
+      // re-reads the store on this event, and a refresh fired between the two writes would see
+      // a credential that is about to stop existing.
+      announceKeyChange();
+      return true;
+    });
 }
 
 /** The minimal flag-only merge used by setApiKey: preserve what is configured, flip the flag. */
@@ -921,10 +957,10 @@ const AiSettings = {
   setApiKey,
   clearApiKey,
   aiBaseUrlProblem,
-  // Test seam (track byok_ai_layout_20260915 Phase 2 — KEEP): Phase 4's panel button opens this
-  // dialog. Nothing in `js/` calls it yet, which is the honest state of a feature whose transport
-  // lands later; its readers today are test/unit/byok_ai_settings.test.js and Phase 4's browser
-  // probe. Delete this line only by deleting the dialog.
+  // Phase 4's panel button opens this dialog (js/controls.js's "AI Settings" row, via
+  // `window.AiSettings.showAiSettingsModal`), which is what `check_dead_exports.js` wants to see:
+  // a product reader, not just a suite. It stayed annotated-free in Phase 2 because there was
+  // none then. Delete this line only by deleting the dialog.
   showAiSettingsModal,
 };
 if (typeof module !== "undefined" && module.exports) {

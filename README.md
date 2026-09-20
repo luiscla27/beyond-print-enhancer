@@ -228,6 +228,21 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
     taller or wider than its box used to have that overflow silently clipped; the content is now scaled
     down to fit the box instead, on screen and in the printout, and it re-fits when you resize the
     section or change what is inside it.
+21. **AI Arrange — bring your own key** (since 2.1.0). In the layout tray, **AI Settings** stores a
+    provider (OpenAI or Anthropic), a model id and **your own API key, on this device only**;
+    **AI Arrange** then takes one line of instruction ("move the combat box down by itself, hide the
+    utility column") and proposes a layout. **The AI proposes, the code disposes**: the model is only
+    allowed to answer with a small JSON patch — move a section, resize its width, change stacking
+    order, or hide a section from the printout — over sections the sheet actually reported. Anything
+    else is refused and **nothing changes at all**: no layout write, no save, no undo entry. A patch
+    that passes is shown first as a **dashed gold outline over where the section would land** — the
+    sheet itself is untouched while you look — with an **Apply** that behaves like any other edit, so
+    **Ctrl+Z restores the pre-AI arrangement byte for byte**. The row stays visibly **disabled until
+    you store a key**, and no network call happens before you do. Nothing reaches our servers,
+    because there are none: the request goes from the extension on your machine straight to the
+    provider you picked, with your key. The only things that leave are the section headings,
+    positions and sizes — and on a live sheet a heading can carry a monster's or an NPC's name, so
+    "no text ever leaves" would be a lie; see `PRIVACY_POLICY.md` §2.
 
 ### The tool's own chrome (since 1.8.0, ornamented in 1.11.0)
 

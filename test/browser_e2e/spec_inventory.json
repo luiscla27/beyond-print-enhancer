@@ -3,14 +3,14 @@
   "provenance": {
     "produced_by": "node scripts/gen_spec_inventory.js",
     "collects_with": "mocha test/browser_e2e --recursive --dry-run --reporter json",
-    "measured_at": "2026-09-17",
+    "measured_at": "2026-09-20",
     "tracked_by": "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
     "pending_is_runtime": "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME (this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending expectation lives beside this file in spec_pending.json, read from a REAL run."
   },
   "expected": {
-    "loaded_js_files": 79,
-    "spec_files": 73,
-    "tests_collected": 318
+    "loaded_js_files": 80,
+    "spec_files": 74,
+    "tests_collected": 325
   },
   "spec_files": [
     {
@@ -28,6 +28,10 @@
     {
       "file": "border_render_refine.spec.js",
       "tests": 3
+    },
+    {
+      "file": "byok_arrange_roundtrip.spec.js",
+      "tests": 7
     },
     {
       "file": "byok_relay.spec.js",

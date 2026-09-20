@@ -79,12 +79,19 @@ chrome.action.onClicked.addListener(function(tab) {
       'js/modals.js',
       // Track byok_ai_layout_20260915 (Phase 2): the BYOK config store and its dialog. Placed
       // AFTER js/modals.js because the dialog resolves the `Modals.__createModal` seam — at CALL
-      // time, not at load — so this is tidiness, not a correctness constraint. The other new AI
-      // module, js/ai_layout.js, is deliberately NOT listed: it is the pure core (no DOM, no
-      // chrome.*) with no `window.*` seam yet, and Phase 4 adds that seam in the same commit that
-      // gives it its first product caller, which is also when it joins this list. Shipping it
-      // here now would inject bytes nothing can reach.
+      // time, not at load — so this is tidiness, not a correctness constraint.
       'js/ai_settings.js',
+      // Track byok_ai_layout_20260915 (Phase 4): the pure core and the flow that consumes it.
+      // `js/ai_layout.js` was deliberately NOT listed in Phases 1-3 — it published no `window.*`
+      // seam then, so the page could not have reached it and the bytes would have been dead
+      // weight. Phase 4 added the seam in the same commit as `js/ai_arrange.js`, its first product
+      // caller, and both join the list at that moment. Order within the two is not a correctness
+      // constraint either (every cross-module read in `js/ai_arrange.js` goes through `window.*`
+      // at CALL time), but core-then-flow keeps the list reading like the dependency graph.
+      // The worker does NOT need either file in this list — it reaches the same symbols through
+      // `importScripts` at the top of this file.
+      'js/ai_layout.js',
+      'js/ai_arrange.js',
       'js/shape_picker.js',
       'js/properties_panel.js',
       'js/controls.js',

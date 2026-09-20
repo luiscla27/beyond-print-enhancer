@@ -169,7 +169,15 @@ describe("AC-6 — the capture plumbing is shared and the roster stopped growing
     // recursive run cannot express it either: the probes plant `chrome.storage.local` in
     // `beforeEach` and clear it in `afterEach`, so they must not interleave with another file's
     // store assertions in the same context.
-    const ROSTER_AFTER = 41;
+    // 41 -> 42, byok_ai_layout_20260915 Phase 4 (2026-09-18): `test:e2e:byokarrange`, the same
+    // shape and for the same reason as the three above it. AC-V1's evidence is produced by THIS
+    // file's last case (the `BYOK_SHOTS=1` frame capture), and the gate that consumes it is the
+    // Muse visual loop — so obtaining the artifact means invoking exactly this file, repeatedly,
+    // while the verdict is argued over. A `--grep` over the recursive run cannot serve that: the
+    // suite stubs `fetch` inside the MV3 SERVICE WORKER (`serviceWorker.evaluate`) and plants a
+    // test key in `beforeEach`, so its cases must not interleave with another file's store or
+    // relay assertions in the same context.
+    const ROSTER_AFTER = 42;
     assert.strictEqual(
       perSpec.length,
       ROSTER_AFTER,

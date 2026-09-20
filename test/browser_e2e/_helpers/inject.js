@@ -60,6 +60,14 @@ const CONTENT_PROBE_NAMES = [
   // byok_ai_layout_20260915 Phase 3 — the BYOK relay, driven from the ISOLATED world (the only
   // world whose sender passes the worker's own gate), plus the worker's decision counters.
   "byokRelayProbe",
+  // byok_ai_layout_20260915 Phase 4 — the arrange flow, its panel row, and the counters that make
+  // "zero applies" / "exactly one save" observable in the REAL page.
+  "aiArrangeModuleRead",
+  "aiArrangeFirstSection",
+  "aiArrangeEvidenceTarget",
+  "aiArrangeProbe",
+  "aiArrangePanelRead",
+  "aiArrangePanelClick",
 ];
 
 /**
@@ -724,6 +732,379 @@ async function contentCall(ctx, name, args = []) {
               message: String((err && err.message) || err),
             };
           }
+        },
+
+        /**
+         * Phase 4's arrange flow, driven in the ISOLATED world (where `window.AiArrange`,
+         * `window.scanLayout` and the undo stack actually live).
+         *
+         * WHY STATE LIVES ON `window.__AI_E2E`: `contentCall` injects a FRESH function per call,
+         * but the world it runs in PERSISTS — so the in-flight flow promise and the two spies below
+         * survive between calls. That is what lets a spec hold a preview OPEN, take an `undoRead` of
+         * the live layout while the ghosts are on screen, and then answer the dialog — which is the
+         * only way AC-2's "a reject changes nothing" and the ghost-invisibility claim can be observed
+         * in a real page rather than in a jsdom.
+         *
+         * `applyLayout` and `handleSaveBrowser` are WRAPPED (count + forward), never replaced:
+         * "zero applies on a refusal" and "exactly one save on an accept" are AC-2/AC-3 probes, and a
+         * stubbed apply makes the first one unfalsifiable. Seeding goes through the module's OWN
+         * `setApiKey`/`saveSettings`, so a case cannot pass on a hand-built store record.
+         */
+        aiArrangeProbe: async (opts) => {
+          const o = opts || {};
+          const api = window.AiArrange;
+          const S = window.AiSettings;
+          if (!api || !S) return { ok: false, why: "no window.AiArrange/AiSettings" };
+          const st = (window.__AI_E2E = window.__AI_E2E || {});
+          st.applies = st.applies || 0;
+          st.saves = st.saves || 0;
+          if (!st.spyInstalled) {
+            st.spyInstalled = true;
+            const realApply = window.applyLayout;
+            window.applyLayout = function (layout) {
+              st.applies += 1;
+              return realApply.call(window, layout);
+            };
+            const realSave = window.handleSaveBrowser;
+            window.handleSaveBrowser = function () {
+              st.saves += 1;
+              return realSave.apply(window, arguments);
+            };
+          }
+          const count = () => ({
+            ghosts: document.querySelectorAll(".be-ai-ghost").length,
+            ghostBoxes: document.querySelectorAll(".be-ai-ghost-box").length,
+            dialogs: document.querySelectorAll(".be-modal-overlay").length,
+            previewOpen: Boolean(document.querySelector(".be-ai-preview-accept")),
+            refusalText: (document.querySelector(".be-ai-refusal") || {}).textContent || "",
+            toast: Array.from(document.querySelectorAll(".be-feedback"))
+              .map((n) => n.textContent)
+              .join(" / "),
+            applies: st.applies,
+            saves: st.saves,
+            depth: typeof window.undoDepth === "function" ? window.undoDepth() : null,
+          });
+          // The flow's own promise, polled rather than slept on: the undo record is repaired from a
+          // capture that settles asynchronously, so a fixed wait here would be the timing assumption
+          // plan.md told this spec not to copy from undo_stack_class_verification.
+          const settleOut = (ms) =>
+            new Promise((resolve) => {
+              const t0 = Date.now();
+              const tick = () => {
+                if (st.out !== undefined) return resolve(st.out);
+                if (Date.now() - t0 > ms) return resolve(undefined);
+                setTimeout(tick, 40);
+              };
+              tick();
+            });
+
+          if (o.action === "start") {
+            await S.setApiKey(o.key);
+            await S.saveSettings({ provider: "openai", model: o.model || "gpt-4o-mini" });
+            st.applies = 0;
+            st.saves = 0;
+            st.out = undefined;
+            st.running = api.arrangeWithAi(o.instruction);
+            st.running.then(
+              (r) => {
+                st.out = r;
+              },
+              (err) => {
+                st.out = { ok: false, stage: "threw", code: String((err && err.message) || err) };
+              },
+            );
+            const seen = await new Promise((resolve) => {
+              const t0 = Date.now();
+              const tick = () => {
+                if (document.querySelector(".be-ai-preview-accept")) return resolve("preview");
+                if (st.out !== undefined) return resolve("returned");
+                if (Date.now() - t0 > (o.timeoutMs || 30000)) return resolve("timeout");
+                setTimeout(tick, 40);
+              };
+              tick();
+            });
+            return Object.assign({ ok: true, seen, out: st.out }, count());
+          }
+
+          if (o.action === "answer") {
+            const sel = o.accept ? ".be-ai-preview-accept" : ".be-ai-preview-cancel";
+            const node = document.querySelector(sel);
+            if (!node) {
+              const missing = { ok: false, why: "no " + sel + " to click" };
+              return Object.assign(missing, count());
+            }
+            node.click();
+            const out = await settleOut(o.timeoutMs || 20000);
+            return Object.assign({ ok: true, out }, count());
+          }
+
+          if (o.action === "await") {
+            return Object.assign({ ok: true, out: await settleOut(o.timeoutMs || 30000) }, count());
+          }
+
+          if (o.action === "clear") {
+            // Close whatever is left through the shell's OWN close control where one exists, so a
+            // leaked dialog cannot make the next case's selector match the wrong node — the exact
+            // failure undo_stack_class_verification.spec.js documents for its own beforeEach.
+            Array.from(document.querySelectorAll(".be-modal-close")).forEach((b) => b.click());
+            Array.from(document.querySelectorAll(".be-modal-overlay")).forEach((n) => n.remove());
+            document.querySelectorAll(".be-ai-ghost").forEach((n) => n.remove());
+            document.querySelectorAll(".be-feedback").forEach((n) => n.remove());
+            st.out = undefined;
+            return Object.assign({ ok: true }, count());
+          }
+
+          if (o.action === "unseed") {
+            await S.clearApiKey();
+            return { ok: true, hasKey: await S.hasStoredKey() };
+          }
+
+          // Store a key WITHOUT running the flow — the half O-2's panel case needs, because
+          // `saveSettings` alone cannot enable the row: it re-derives `keyPresent` from the
+          // credential store (`js/ai_settings.js:313`), so a settings-only write honestly reports
+          // "no key". Using `start` here would have made the request instead.
+          if (o.action === "seed") {
+            await S.setApiKey(o.key);
+            await S.saveSettings({ provider: "openai", model: o.model || "gpt-4o-mini" });
+            return { ok: true, hasKey: await S.hasStoredKey(), settings: await S.loadSettings() };
+          }
+
+          if (o.action === "settings") {
+            await S.saveSettings({ provider: "openai", model: o.model || "gpt-4o-mini" });
+            return { ok: true, settings: await S.loadSettings() };
+          }
+
+          return { ok: false, why: "unknown action " + o.action };
+        },
+
+        /**
+         * The live sheet's own arrangeable section, as `collectSections` sees it — numbers, not
+         * "200px". A spec that hard-coded a section id would name a node this sheet may not have
+         * (the demo character's ids are `section-Section-1`…), and `section_id_unknown` is exactly
+         * the refusal the reject case wants to produce, so the two cases could not tell each other
+         * apart. `innerWidths` is reported too: the derived-width guard reads it, and a section
+         * whose recorded inner width equals the patched width would be refused for the wrong reason.
+         */
+        aiArrangeFirstSection: async () => {
+          const api = window.AiArrange;
+          if (!api || typeof window.scanLayout !== "function") {
+            return { ok: false, why: "no AiArrange or scanLayout in this world" };
+          }
+          const layout = await window.scanLayout();
+          const collected = api.collectSections(layout);
+          const pick =
+            collected.rows.find(
+              (r) =>
+                r.width >= 100 &&
+                Number.isFinite(r.left) &&
+                Number.isFinite(r.top) &&
+                Boolean(document.getElementById(r.id)),
+            ) || null;
+          const rec = pick ? layout.sections[pick.id] : null;
+          return {
+            ok: Boolean(pick),
+            id: pick ? pick.id : null,
+            left: pick ? pick.left : null,
+            top: pick ? pick.top : null,
+            width: pick ? pick.width : null,
+            innerWidths: rec ? JSON.stringify(rec.innerWidths || {}) : null,
+            rowCount: collected.rows.length,
+            ids: collected.ids.slice(0, 12),
+          };
+        },
+
+        /**
+         * AC-V1's target, CHOSEN BY MEASUREMENT rather than by hand.
+         *
+         * WHY THIS EXISTS (the defect it fixes): the first AC-V1 run photographed a `+24px` nudge of
+         * `section-Section-1`, and Muse marked G1 and G5 NOT MET. The pixels say the reviewer was
+         * RIGHT about the frame and wrong about the product — the ghost drew 1,254 gold pixels and the
+         * record really moved 16→40 / 160→184 (`temp/scratch/acv1_apply.json`) — but the evidence was
+         * unreadable for two measurable reasons:
+         *   1. that section sits at record x 16..240, and the tool's OWN control panel is
+         *      `position: fixed` at viewport x 10..258 with `z-index: 10000` (the sheet's sections are
+         *      z-index 10), so the section being moved was BEHIND the panel;
+         *   2. a 24px shift of a 224×144 box inside a 1247×709 frame is below what a reviewer can see.
+         * This probe therefore picks a row that is (a) unobstructed at its CURRENT position, (b) has a
+         * free destination at least `minDist` away, and (c) keeps both boxes clear of every fixed
+         * surface, of every other section, and of the area the preview dialog will occupy. It returns
+         * the numbers the spec asserts against, so the choice is falsifiable instead of curated.
+         *
+         * All coordinates are RETURNED IN RECORD SPACE (`#print-layout-wrapper`'s own space, which is
+         * what a patch speaks), and `wrapperOrigin` lets the caller convert to viewport/frame space.
+         */
+        aiArrangeEvidenceTarget: async (opts) => {
+          const o = opts || {};
+          const minDist = Number.isFinite(o.minDist) ? o.minDist : 100;
+          const api = window.AiArrange;
+          if (!api || typeof window.scanLayout !== "function") {
+            return { ok: false, why: "no AiArrange or scanLayout in this world" };
+          }
+          const layout = await window.scanLayout();
+          const rows = api.collectSections(layout).rows.filter(
+            (r) => r.width > 40 && r.height > 40 && document.getElementById(r.id),
+          );
+          const wrapRect = document
+            .getElementById("print-layout-wrapper")
+            .getBoundingClientRect();
+          // Record space -> viewport space is a translation by the wrapper's origin.
+          const toRec = (x, y) => [x - wrapRect.x, y - wrapRect.y];
+          // Every OPAQUE fixed surface of the tool itself: it paints over the sheet (z 10000/31000 vs
+          // a section's 10), so a change under it is invisible in a screenshot.
+          const chrome = Array.from(document.body.children)
+            .filter((el) => {
+              const s = getComputedStyle(el);
+              return (
+                s.position === "fixed" &&
+                el.offsetWidth > 40 &&
+                el.offsetHeight > 40 &&
+                !el.classList.contains("be-ai-ghost")
+              );
+            })
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              const p = toRec(r.x, r.y);
+              return { cls: (el.id || el.className || el.tagName).toString().slice(0, 40), x0: p[0], y0: p[1], x1: p[0] + r.width, y1: p[1] + r.height };
+            });
+          // The preview dialog's OWN footprint, modelled generously: `js/modals.js` builds
+          // `.be-modal` (`max-width: 640px; width: 92%; max-height: 86vh`) centred by the overlay's
+          // flex rules. Measured for this dialog at 400×199 in a 1280×720 viewport, so 640×260 centred
+          // is a superset that cannot be caught out by a longer patch list.
+          const dlgW = Math.min(640, window.innerWidth * 0.92);
+          const dlgH = window.innerHeight * 0.4;
+          const dl = toRec((window.innerWidth - dlgW) / 2, (window.innerHeight - dlgH) / 2);
+          const dialog = { x0: dl[0], y0: dl[1], x1: dl[0] + dlgW, y1: dl[1] + dlgH };
+          const zones = chrome.concat([dialog]);
+          const boxes = rows.map((r) => ({ id: r.id, x0: r.left, y0: r.top, x1: r.left + r.width, y1: r.top + r.height }));
+          const hits = (b, list) => list.some((z) => b.x0 < z.x1 && b.x1 > z.x0 && b.y0 < z.y1 && b.y1 > z.y0);
+          // The visible page area in record space: a destination outside the viewport cannot be
+          // photographed at all (the clip is capped at the viewport, not at the 5,458px wrapper).
+          const view = { x0: 0, y0: 0, x1: toRec(window.innerWidth, 0)[0], y1: toRec(0, window.innerHeight)[1] };
+          const inside = (b) => b.x0 >= view.x0 + 4 && b.y0 >= view.y0 + 4 && b.x1 <= view.x1 - 4 && b.y1 <= view.y1 - 4;
+          const ranked = [];
+          for (const src of boxes) {
+            if (hits(src, zones) || !inside(src)) continue;
+            const others = boxes.filter((b) => b !== src);
+            let best = null;
+            for (let dy = -640; dy <= 640; dy += 8) {
+              for (let dx = -640; dx <= 640; dx += 8) {
+                const d = { id: src.id, x0: src.x0 + dx, y0: src.y0 + dy, x1: src.x1 + dx, y1: src.y1 + dy };
+                if (!inside(d) || hits(d, zones) || hits(d, others)) continue;
+                const dist = Math.abs(dx) + Math.abs(dy);
+                if (dist < minDist) continue;
+                if (!best || dist > best.dist) best = { dist, dx, dy, dest: d };
+              }
+            }
+            if (!best) continue;
+            // RANK by how visible the section itself is (the shorter side, then area), then by how
+            // far it travels. A 80×96 ability box that flies 960px is a WORSE subject than a 224×176
+            // section that moves 300px: the detail crop has to cover the whole path, so a big travel
+            // with a small box buys a big frame and a tiny subject.
+            ranked.push({
+              id: src.id,
+              shortSide: Math.min(src.x1 - src.x0, src.y1 - src.y0),
+              area: (src.x1 - src.x0) * (src.y1 - src.y0),
+              dist: best.dist,
+              src,
+              dest: best.dest,
+            });
+          }
+          const score = (a) => a.shortSide * 1e6 + a.area * 1e3 + a.dist;
+          ranked.sort((a, b) => score(b) - score(a));
+          const pick = ranked[0] || null;
+          if (!pick) {
+            return { ok: false, why: "no unobstructed section has a free destination >= " + minDist + "px", chrome, dialog, rows: rows.length };
+          }
+          // A SECOND subject for the strip: a section the patch only HIDES. It gets no move, so its
+          // ghost is the ember-dashed "will disappear" box drawn ON TOP of itself — the only place the
+          // two ghost KINDS are told apart on screen, which is what G2 asks to see. It never moves, so
+          // all that is required is that its current position is unobstructed.
+          const hideCandidate = boxes
+            .filter((b) => b.id !== pick.id && inside(b) && !hits(b, zones))
+            .sort((a, b) => Math.min(b.x1 - b.x0, b.y1 - b.y0) - Math.min(a.x1 - a.x0, a.y1 - a.y0))[0];
+          return {
+            ok: true,
+            id: pick.id,
+            hideId: hideCandidate ? hideCandidate.id : null,
+            // The hide subject's box, so the artifact composer can crop to include BOTH ghost kinds
+            // instead of guessing a window. Without it the second subject can fall outside the frame
+            // and a brief that claims "two ghost styles are visible" is unfalsifiable.
+            hideBox: hideCandidate
+              ? { left: hideCandidate.x0, top: hideCandidate.y0, width: hideCandidate.x1 - hideCandidate.x0, height: hideCandidate.y1 - hideCandidate.y0 }
+              : null,
+            from: { left: pick.src.x0, top: pick.src.y0 },
+            to: { left: Math.round(pick.dest.x0), top: Math.round(pick.dest.y0) },
+            size: { width: Math.round(pick.src.x1 - pick.src.x0), height: Math.round(pick.src.y1 - pick.src.y0) },
+            dist: pick.dist,
+            alternatives: ranked
+              .slice()
+              .sort((a, b) => b.shortSide - a.shortSide || b.dist - a.dist)
+              .slice(0, 8)
+              .map((r) => ({ id: r.id, shortSide: r.shortSide, dist: r.dist })),
+            wrapperOrigin: { x: wrapRect.x, y: wrapRect.y },
+            viewport: { w: window.innerWidth, h: window.innerHeight },
+            clip: { x: Math.max(0, wrapRect.x), y: Math.max(0, wrapRect.y), width: Math.min(1400, window.innerWidth - Math.max(0, wrapRect.x)), height: Math.min(1100, window.innerHeight - Math.max(0, wrapRect.y)) },
+            chrome,
+            dialog,
+            rowCount: rows.length,
+          };
+        },
+
+        /** Are Phase 4's modules on the live page, with the seams the flow needs? */
+        aiArrangeModuleRead: async () => {
+          const api = window.AiArrange || null;
+          return {
+            ok: true,
+            aiLayout: Boolean(window.AiLayout),
+            aiArrange: Boolean(api),
+            arrangeFn: api ? typeof api.arrangeWithAi : null,
+            surfaceFn: api ? typeof api.showAiArrangeSurface : null,
+            keys: api ? Object.keys(api) : null,
+            applyLayout: typeof window.applyLayout,
+            beginMutation: typeof window.beginMutation,
+            pushMutation: typeof window.pushMutation,
+            handleSaveBrowser: typeof window.handleSaveBrowser,
+            mutationClasses: window.MUTATION_CLASSES ? Object.keys(window.MUTATION_CLASSES) : null,
+          };
+        },
+
+        /**
+         * O-2 in the real panel: the row exists, and its disabled state + tooltip come from the
+         * STORE, read the way the product reads them. The settings row must stay clickable — a
+         * disabled way out of a disabled state is a dead end, not a gate.
+         */
+        aiArrangePanelRead: async () => {
+          const row = document.getElementById("be-btn-ai-arrange");
+          const settings = document.getElementById("be-btn-ai-settings");
+          return {
+            ok: true,
+            rowExists: Boolean(row),
+            disabled: row ? row.disabled === true : null,
+            title: row ? row.title : null,
+            ariaLabel: row ? row.getAttribute("aria-label") : null,
+            className: row ? row.className : null,
+            settingsExists: Boolean(settings),
+            settingsEnabled: settings ? settings.disabled !== true : null,
+          };
+        },
+
+        /** Press the real row. jsdom fires clicks on disabled buttons; a real browser does not. */
+        aiArrangePanelClick: async () => {
+          const row = document.getElementById("be-btn-ai-arrange");
+          if (!row) return { ok: false, why: "no #be-btn-ai-arrange" };
+          const before = document.querySelectorAll(".be-modal-overlay").length;
+          row.click();
+          await new Promise((r) => setTimeout(r, 400));
+          return {
+            ok: true,
+            disabled: row.disabled === true,
+            dialogsBefore: before,
+            dialogsAfter: document.querySelectorAll(".be-modal-overlay").length,
+            promptOpen: Boolean(document.getElementById("be-ai-instruction")),
+            toast: Array.from(document.querySelectorAll(".be-feedback"))
+              .map((n) => n.textContent)
+              .join(" / "),
+          };
         },
 
         /**

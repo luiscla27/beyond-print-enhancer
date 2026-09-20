@@ -1407,6 +1407,110 @@ div[style*="z-index: 20000"] label {
   flex: 1 1 auto;
   min-width: 0;
 }
+/* ---- track byok_ai_layout_20260915, Phase 4: the arrange surface ------------------
+ * All four rules sit in the theme layer rather than inline at the call sites for the reason
+ * controls.js documents for the panel's own shadow: an inline declaration outranks every
+ * stylesheet rule, and the theme layer is the single writer of this product's surface language.
+ * No color literal appears below - TOKENS only - which is what keeps the AI dialogs from being
+ * the place the palette leaks.
+ * (NOTE: this is CSS inside a template literal. A backtick here closes the stylesheet, so prose
+ * in this region quotes with apostrophes like everyone else in the file.) */
+/* The prompt is a textarea, so it needs the input chrome the '.be-modal input[type=...]' selector
+ * does NOT match, plus resize:vertical - 'resize: both' lets a user drag the box wider than the
+ * 400px dialog and break the shell's own measurement. */
+.be-modal textarea.be-ai-instruction {
+  background: ${TOKENS.groundTray} !important;
+  border: 1px solid ${TOKENS.hairBone} !important;
+  color: ${TOKENS.bone} !important;
+  border-radius: ${TOKENS.radiusInner};
+  padding: 8px 9px;
+  font-size: 13px;
+  font-family: ${TOKENS.fontTool};
+  line-height: 1.45;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: ${TIERS.input}px;
+  resize: vertical;
+}
+.be-ai-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* The disabled AI Arrange row. The control is PRESENT and greyed rather than hidden (O-2), and a
+   greyed button that still looks clickable is the trap, so the label dims to the icon tick colour
+   and the cursor says "not this". */
+.be-ctl-btn.be-ctl-ai-off {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* The preview's ghost layer. 'pointer-events: none' is set on the node inline too - belt and
+   braces on purpose: a ghost you can click would sit over the real sheet and swallow a drag. */
+.be-ai-ghost {
+  pointer-events: none;
+}
+.be-ai-ghost-box {
+  /* 3px + translucent fill: a 2px dashed line on the dimmed, blurred sheet under the modal overlay
+     was too subtle to read as a proposal — the AC-V1 review could not discern it against the
+     backdrop (Muse: "no ghost-box geometry discernible"). The fill makes the affected region read
+     as "this will change" without duplicating the content: at 0.18 opacity the section's own text
+     stays fully legible THROUGH it (it is not a second copy, so it neither prints nor scans). */
+  border: 3px dashed ${TOKENS.gold} !important;
+  border-radius: ${TOKENS.radiusInner};
+  background: rgba(198, 161, 91, 0.18) !important;
+  box-shadow: none !important;
+  opacity: 0.95;
+}
+.be-ai-ghost-box-hidden {
+  border-color: ${TOKENS.emberDim} !important;
+}
+.be-ai-ghost-label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-family: ${TOKENS.fontTool};
+  font-size: 11px;
+  color: ${TOKENS.goldHi};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 8px);
+}
+/* The in-flight marker. It must outlast the toast (~3.5 s) because a provider round trip does, and
+   it sits at the top of the stack where the panel already draws - never centred, which would cover
+   the section the user is watching. The literal below is the theme's own top rung, deliberately
+   ABOVE the toast's 800 and above the panel's band (the map in js/section_utils.js puts it at
+   10000): the
+   busy marker has to be readable while the panel is open. It is a literal rather than a template
+   of that map because js/ui_theme.js renders this stylesheet as a string and cannot read a seam
+   that only exists on a page (the same reason .be-feedback above carries 800 outright). */
+.be-ai-busy {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  background: ${TOKENS.groundModal};
+  border: 1px solid ${TOKENS.hairGold};
+  border-radius: ${TOKENS.radius};
+  color: ${TOKENS.boneDim};
+  font-family: ${TOKENS.fontTool};
+  font-size: 12px;
+  padding: 6px 12px;
+  box-shadow: none !important;
+}
+.be-ai-preview-counts {
+  font-weight: 600;
+}
+.be-ai-preview-list {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: ${TOKENS.boneDim};
+}
+.be-ai-preview-note {
+  font-style: italic;
+}
 /* The hint text used to be reachable only as a <p> (.be-modal p), which is why
  * it never needed a rule. The dialog's key-state line is a span inside a row, and
  * a status line is a live region — both must read as secondary text, not as the

@@ -239,6 +239,23 @@ async function applyLayout(layout) {
       if (btn) btn.style.backgroundColor = "var(--btn-color-highlight)";
     }
 
+    // AC-1's `hide` (track byok_ai_layout_20260915, Phase 4): the ONE DOM writer for
+    // `data-print-hidden`, which js/print_styles.js's print block turns into
+    // `display: none !important`. Written from the record and cleared from it, exactly like
+    // `noAutoScale` directly above, so an undo that restores `printHidden: false` genuinely
+    // re-enables the section instead of leaving the attribute behind.
+    //
+    // It sits OUTSIDE the `has(k)` group because it is a FLAG, not a value: the scan always
+    // records a boolean, so the only question is which of the two states to write.
+    if (styles.printHidden === true) {
+      section.dataset.printHidden = "true";
+    } else {
+      delete section.dataset.printHidden;
+    }
+    // NO `updatePrintStyles()` here, deliberately: it regenerates the whole print block from a
+    // DOM query, and the end of this function already calls it once for every section (see the
+    // tail of `applyLayout`). Calling it per section would be O(n) rebuilds of the same stylesheet.
+
     // Apply inner widths
     if (styles.innerWidths) {
       const innerContainers = section.querySelectorAll(
