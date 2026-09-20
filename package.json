@@ -7,6 +7,7 @@
     "lint": "eslint js/ test/ scripts/",
     "pretest": "npm run lint",
     "test": "mocha --recursive test/unit test/e2e test/manifest.test.js",
+    "release:check": "node scripts/release_gate.js",
     "test:browser-gate": "node scripts/browser_gate.js",
     "test:browser-gate:sharded": "node scripts/browser_gate.js --shards 4",
     "test:e2e": "mocha test/browser_e2e --recursive --timeout 900000",

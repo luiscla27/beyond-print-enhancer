@@ -8,6 +8,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Internal
+- **A release step that cannot be skipped: `npm run release:check` links the nightly browser gate to a
+  version bump (2026-09-20).** The `2.1.0` bump is the evidence for why this existed: it landed 9 h 48 m
+  after a nightly that reported `collection mismatch / execution skipped` — the run never executed a
+  single case, so `byok_arrange_roundtrip`, the suite that *is* that release's evidence, contributed
+  zero — and the nightlies before it were no better: 09-17 failed `manual_verification_phase0` and
+  09-18 died with 59 failures and an empty `cases[]`. The schedule and the runner were both fine
+  (`gate_coverage_20260912`); **the link was missing**. `scripts/release_gate.js` is the link, and it
+  checks only what `browser_gate.js` is structurally blind to, because each fact lives OUTSIDE a single
+  run: freshness against *two* clocks (the artifact's own `started_at` under `--max-age-hours`, default
+  26 h, AND newer than the last commit touching `js/` — a green run cannot be evidence about bytes
+  written after it began), the release surface case-by-case (`byok_arrange_roundtrip` +
+  `manual_verification_phase0..4`; `--require-spec` extends it), the committed
+  `test/browser_e2e/spec_inventory.json` as the per-file witness rather than a number re-typed here (so
+  a case deleted from a required spec fails the check even if the nightly stayed green), and
+  uncommitted `js/` changes. It **fails closed** — no artifact, unparseable artifact, an artifact with
+  no `cases[]` (exactly the shape a pre-execution death writes), an unreadable inventory and a `git`
+  that cannot answer are all findings `R0`…`R10`, never skips. Deliberately NOT wired into `npm test`:
+  that would make the fast gate require an 88-minute browser run to exist, turning every fresh clone
+  and offline box red. `test/unit/release_gate.test.js` pins the link (script + `package.json` +
+  README) and proves every marker `R0`…`R10` fires on a synthetic artifact **and** that a fresh,
+  complete, green one passes — the pass side is what stops the fail side from being decorative — plus
+  newest-RUN-not-newest-file selection, `--require-spec`, and a refusal against this repo's real
+  nightly artifact while it holds the 09-20 shape. **The first run it ever certified was a real one**:
+  `temp/browser_gate/release_wiring/artifact.json` — `sharded:4`, started 2026-09-20T20:02:28Z, 1886 s,
+  74/74 spec files and 325/325 tests collected, 230 passing / 95 pending / 0 failing, all 325 cases in
+  `cases[]`, and every required spec at its inventoried count with every case `pass`
+  (`byok_arrange_roundtrip` 7/7; `manual_verification_phase0..4` 2/1/1/1/2) — so 2.1.0's product bytes
+  are covered after the fact by evidence, even though they shipped without a gate that would have asked
+  for it. No version bump here: this entry is the gate's own first subject, and the next release is the
+  first one allowed to quote it.
 - **Utility telemetry §4b/§6/§7a: the first-useful metric is now TWO CLOCKS, this project's `useful`
   rows were failing the framework's own evidence predicate, and route tax is separated from
   uselessness (2026-09-20, handoff §18).** Three fixes, all found by measuring:

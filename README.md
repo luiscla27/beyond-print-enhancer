@@ -106,6 +106,49 @@ One warning worth repeating: a killed run leaves `temp/browser_gate.lock` behind
 guard whose pid is dead (recording the restart in the artifact) — do not add a second guard at the
 scheduler level, because two guards drift and the unwatched one is the one that gets it wrong.
 
+### Cutting a release: the gate refuses a bump the browser suite has not certified
+
+```bash
+npm run release:check          # node scripts/release_gate.js — reads the nightly's artifact, runs in ms
+```
+
+**A release step nobody can skip.** The nightly above *runs* the browser gate; nothing used to compare
+its verdict with a version bump. `2.1.0` shipped on 2026-09-20 with the two most recent nightlies
+reporting `collection mismatch / execution skipped` (the run never executed a single case, so the
+`byok_arrange_roundtrip` suite that *is* that release's evidence contributed zero), the four before
+them each failing `manual_verification_phase0`, and `js/` last changed 9 h 48 m AFTER the newest run
+started. The schedule existed; the **link** did not. `scripts/release_gate.js` is the link, and it
+checks what a runner structurally cannot see about itself:
+
+* **Freshness** — the artifact must be under 26 h old (`--max-age-hours N`) AND newer than the last
+  commit touching `js/`. A green run cannot be evidence about code written after it began.
+* **Coverage of the release surface** — every spec a release depends on (`byok_arrange_roundtrip` plus
+  `manual_verification_phase0..4`; add yours with `--require-spec path/to/x.spec.js`) must have
+  contributed cases, at the count `test/browser_e2e/spec_inventory.json` pins, and every one must be
+  `pass`. The inventory is the witness rather than a number typed into this script, so a case deleted
+  from a required spec fails the release check even if the nightly stayed green.
+* **The worktree** — uncommitted `js/` changes fail it: no artifact can have run bytes that are not
+  committed.
+* **It fails closed.** No artifact, unparseable artifact, an artifact with no `cases[]` (exactly the
+  shape a pre-execution death writes), an unreadable inventory and a `git` that cannot answer are all
+  findings with their own marker (`R0`…`R10`), never skips.
+
+The release step is then: gate green (`npm run test:browser-gate` or tonight's task) → `npm run
+release:check` → bump `package.json` **and** `manifest.json` together (`manual_verification_phase4.spec.js`
+asserts they agree) → `CHANGELOG.md`, quoting the artifact path and its `started_at` the check prints.
+A run written outside the two default directories is read with `--artifact <path>`; the first thing
+this gate ever certified was exactly such a run — `temp/browser_gate/release_wiring/artifact.json`,
+`sharded:4`, started 2026-09-20T20:02:28Z, 1886 s, 230 passing / 95 pending / 0 failing, all 325
+collected cases recorded, every one of the six required specs present at its inventoried count
+(`byok_arrange_roundtrip` 7/7 and `manual_verification_phase0..4` 2/1/1/1/2) and every one `pass`.
+It is also why `--artifact` exists rather than a recursive scan: the scheduled directory still holds
+the *nightly's* verdict, and pointing the gate at some other directory's green is a deliberate act.
+This is deliberately **not** wired into `npm test`: the fast gate would then require an 88-minute browser
+run to exist, which breaks every fresh clone and every offline box. `test/unit/release_gate.test.js`
+pins the link instead (`release:check` → the script, the README's mention of it) and proves every one
+of the eleven markers `R0`…`R10` fires on a synthetic artifact **and** that a fresh, complete, green
+one passes — so the check cannot be decorative in either direction.
+
 Two harness behaviours are worth knowing when reading a run's output:
 
 * `bootPage` tolerates ONE class of page error — a network failure of the demo **host's** own
