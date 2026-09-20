@@ -8,6 +8,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Internal
+- **Utility telemetry §4b/§6/§7a: the first-useful metric is now TWO CLOCKS, this project's `useful`
+  rows were failing the framework's own evidence predicate, and route tax is separated from
+  uselessness (2026-09-20, handoff §18).** Three fixes, all found by measuring:
+  **(1) The ambiguity §15 left as "pending a semantic decision" is settled by publishing both sides.**
+  A cell's walk to its first useful answer can stop at the useful call's START (a serial queue: how
+  many dispatches the lane made) or at its END (the vendored contract's window: everything in flight
+  while that answer was produced). `temp/scratch/probe_overlap_window_20260919.py` proved the two
+  readers disagree — one cell, one useful call, one retry starting inside its flight: `$0.01 / 0
+  repairs` vs `$0.04 / 1`. Neither is wrong, so `report` now emits the close-window stop as
+  `first_useful_close_window` plus `first_useful_overlap_calls` (0 = serial = the two agree), and the
+  parity property became a positive statement — `the_contract_is_a_hybrid_of_both_stops` — because the
+  helper takes its `calls_to_first_useful` from the serial index and its cost/repair/latency from the
+  close window while its own comment claims they agree "BY CONSTRUCTION". Live-shape MEASURED, not
+  assumed: **124 of 23,356 call rows (0.53%) start inside an earlier row's window**, all in
+  `reasonix-agent/qwen` — the paid lane's own retry behaviour. Filed upstream as
+  `ISSUE_msf_first_useful_index_and_priced_window_are_two_different_cuts_20260920` (option 1
+  recommended: charge the index over the window; DND's new assertion is the detector that makes a
+  silent redefinition impossible).
+  **(2) A real defect in this project's own writer:** §3's acceptance vocabulary (`test_run_id`,
+  `commit_sha`, …) shares no key with `telemetry.relay_may_judge_useful` — the vendored §6 anti-pattern
+  guard, tested at `test_reasonix_proxy.py:5335`, which reads only `deterministic_verification_linked`
+  / `human_feedback_linked` / `project_judge_linked`. MEASURED before the fix: a perfectly valid §3 row
+  returned **False** from that guard, so every verdict this tool wrote would have been stored as a
+  `useful` the fleet's own helper calls unevidenced. `_contract_links()` maps ours onto theirs by kind
+  (additively — the §3 refs stay; the link value is the ref, never a bare `True`; a human verdict links
+  as HUMAN so §20's authority ranking reads the right kind; nothing is synthesised from no evidence),
+  and `record` now refuses against BOTH predicates.
+  **(3) §7a route tax:** with 0 evaluation rows the report had nothing to say about $1.63 of spend, so
+  it now states the one fact needing no verdict on its own axis — `route_tax.transport_failed_calls` /
+  `transport_failed_cost_usd` (and per cell), `None` rather than `$0` when unpriced, identical with and
+  without a verdict present (the AC-14 direction). Live: 49 of 10,111 calls, $0.00 — retry tax on this
+  lane is latency, not money.
+  Also: `admission` was taught to read its OWN success — it printed "no `admission_rejected` rows" for
+  the post-sync store, reporting §5's reduction as missing data; it now recognises `admission_summary`
+  rows, prints the preserved candidate counts and says `§5 is SATISFIED`, while a truly empty store still
+  says so (that matters because §5/§6's relay half SHIPPED upstream in MSF `588b542` on 2026-09-19 with
+  plan step 5.4 `[x]`, retiring §17.2's "exists nowhere in the fleet"; the blocker is now this project's
+  sync, not another team's build). And the task-ledger proposal was probed and REJECTED with evidence
+  (`temp/scratch/probe_task_ledger_20260919.py`, `probe_failure_tasks_20260919.py`): `model_attempt_count`
+  is not a repair counter (42 failed tasks average 9.12 joined call rows while the field sums to ~1;
+  one 11-retry task reports `0`), 13 roots carry >1 `task_completed` row and 4 disagree with themselves
+  on `task_outcome`, and 138 call rows carry an empty `root_task_id` — so it stays a cohort axis, not a
+  first-useful layer, and no second task identity was invented. Verified: `selftest` **33/33** properties
+  (was 24), `test/unit/utility_telemetry.test.js` **24/24** (was 19), `npx mocha test/unit` **1,141
+  passing / 0 failing**, eslint clean, guard OK (both roots), `report --days 7` exit 1 (0 verdicts —
+  still fails closed). Post-commit re-verification: `npm test` → **1,448 passing / 0 failing**. **No route, lane, model or weight changed; no `vendor/` byte touched; no other project's code
+  modified** (the MSF handoff landed as an issue file, per the fleet rule).
 - **Utility telemetry: this project can now say whether its paid-Qwen spend bought anything (2026-09-19,
   MSF handoff `temp/issues/HANDOFF_DNDBEYOND_PRINTENHANCE_POST_MSF_TELEMETRY_20260918.md` §3/§4 — the two
   P0 items executed here).** `scripts/utility_telemetry.py` (project-authored harness, R3 class beside
