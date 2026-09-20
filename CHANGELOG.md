@@ -8,6 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Internal
+- **Telemetry handoff §20: the store's first honest verdicts (0 → 6 `model_call_evaluated`), the sync
+  delta re-measured at 15, and §18.5 FIXED upstream (2026-09-20, session 8).**
+  **(1) §15.7 action 1 happened.** Six commits have both a unique commit→call anchor (0.2–36.1 s, the
+  rule + probe in `temp/scratch/correlate_commits_to_invocations_20260920.py` — every candidate is
+  printed with its gap, no recency guess) and a named acceptance artifact, and all six got
+  `--source deterministic` `useful` rows through the vendored contract: `c6b5fd0`/`9d47fcb`
+  (selftest 33/33 checkpoint re-attesting them), `be8bbb4` (the pre-sync audit output IS the commit's
+  claims), `c3f41b1` (14/0 block+guard re-run as `gitignore_block_gate_20260920.json`; its row says
+  out loud that the call classifies as `summarizer` on mimo — attribution-or-classifier, unresolved),
+  `2c37561` + `9dcb0cd` (the real green browser artifact + 64/64 and 18/18 mocha JSONs). The
+  re-attestation rows state that their checkpoints postdate the commit. `report --days 7` reads
+  9,724 calls / 6 rows, every cell still `INSUFFICIENT EVIDENCE` at judged < 8 — §2's routing question
+  stays unasked, no weight moved, `selftest` 33/33 after the writes.
+  **(2) §19.1's 14 is now 15 of 180** — and the re-runnable pre-flight caught it, which is what it is
+  for: `relay/gen_relay_roles.py` joined the changed set when MSF advanced through the role-map wave
+  `a593ccb` (MEASURED: the pin's hash equals that file at §19's HEAD `6735ec6`, differs at current
+  HEAD). The drift half works through its wrapper (`presync_drift_20260920.cmd` sets
+  `PYTHONPATH=<MSF>\cli`; a bare `python -m modelstack` is what died with "No module named
+  modelstack") and re-confirms `drift_check OK` + the `runtime/verdict_rules.py` BEHIND-note at the
+  current pin. The framework tree is NOT static (another MSF session holds 2 paths uncommitted); the
+  clean-tree test is a gate for the sync's own moment, not a permanent state.
+  **(3) MSF fixed §18.5** (`1cbb14c`, the issue is FIXED-framework-half) — NOT via the recommended
+  close-window mirror: the engine and the helper's own store path already walk the START-ORDER
+  PREFIX, so the money/latency/repairs now share the index's span and
+  `calls_to_first_useful == 1 + repairs`. The fix is NOT at this pin: it rides the pending sync, where
+  `the_contract_is_a_hybrid_of_both_stops` will go RED — by design, that is its acceptance signal —
+  and the reconciliation to perform then is written in §20.3 (assert the new invariant; demote
+  `first_useful_close_window` to a concurrency diagnostic). The repro probe needed fixing to see this:
+  its verdict line tested only the close-window cut, so it mislabelled the FIXED helper DIVERGENT —
+  a probe that can misdate its own evidence; it now identifies WHICH cut the money matches per tree
+  (pin → CLOSE WINDOW, live → START PREFIX, measured).
+  No `vendor/` byte, no `modelstack.lock`, no other project's file was written; `modelstack sync` was
+  again deliberately NOT invoked.
 - **A release step that cannot be skipped: `npm run release:check` links the nightly browser gate to a
   version bump (2026-09-20).** The `2.1.0` bump is the evidence for why this existed: it landed 9 h 48 m
   after a nightly that reported `collection mismatch / execution skipped` — the run never executed a
