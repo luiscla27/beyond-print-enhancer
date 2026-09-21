@@ -23,6 +23,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PASS**, eslint clean.
 
 ### Internal
+- **`ISSUE_framework_bump_relay_verdict_lane_20260920` RESOLVED-FOR-THIS-PROJECT and archived
+  (2026-09-21, session 12): the framework's verdict-lane re-sync handoff is re-attested against live
+  state, and its second action turns out not to belong to this project at all.** The issue (filed by
+  MSF 2026-09-20, track `telemetry_outcome_hardening_20260918` box 3.9) asked for two consumer
+  actions — re-sync the vendored pin, then have the OPERATOR restart this project's relay. Re-measured
+  both instead of inheriting session 10's word: **(1)** the sync is DONE and byte-proven — `drift_check
+  OK` at unit `e2084dd93869` / framework `a457f4974a44`, and `vendor/relay/reasonix_proxy.py` is
+  **27,744 B / sha `f86c5f4ff3b7`** with the fix's `_verdict_rules` marker (1 hit in `reasonix_proxy.py`,
+  3 in `adapters/__init__.py`), exactly the canonical size+hash the issue names as post-change (its
+  pre-change measurement was 27,088 B / `6f20fa44f041`) — so the AC-7 hardening (a failing verdict
+  refused with HTTP **400** writing NOTHING; **503** `rules_unavailable` if the rules can't import) is
+  IN this unit. **(2)** the restart delivers nothing from this side: ORCH is still on unit
+  `5b8e0a59eefb` where `_verdict_rules` = **0** hits (re-measured, unchanged from session 10 — no deploy
+  tick advanced it), and port 38116 is served by ORCH's copy, so a DND-side restart swaps in a process
+  that no longer owns the port; the residual TRANSFERS to
+  `telegram_orchestrator/temp/issues/ISSUE_dnd_serving_relay_orch_unit_behind_verdict_admission_20260921.md`
+  — one ORCH sync closes this endpoint half AND §5's `admission_summary` AND the deadline-phase gap.
+  **(3)** the "not a caller" finding re-confirms from source and is what makes the residual
+  zero-impact: `scripts/utility_telemetry.py` has **0 HTTP-client imports** and mentions `/evaluate`
+  only in a comment, so its verdicts go through the vendored WRITER (JSONL append), never the HTTP lane
+  — the 400/503 contract is future ingestion surface, documented and not exercised. The endpoints did not invent a rule either: they run the same `relay_may_judge_useful` predicate this project's `cmd_record` already calls (`scripts/utility_telemetry.py:414`; `vendor/relay/telemetry/__init__.py:1438` names the same rejection set), so §23.5's refusal test already demonstrates the contract on the lane in use. **No `vendor/` byte
+  touched** (the issue's own rule: hand-patching trips `drift_check` and the next sync overwrites it).
+  Flipping the status to `RESOLVED` then made the commit gate block on it verbatim
+  (`DONE-state but not archived under temp/archived/`, `housekeeping_guard.py:27-28` matches
+  `RESOLVED`), so the file moved to `temp/archived/` with an `ARCHIVE_INDEX.md` row — and that tidy-up
+  knocked out §23.4's own pointer to it (`…:73` → `…:76` after the status block grew +3 lines), which is
+  corrected here and in the handoff rather than silently: this session reproduced the exact dangling-path
+  class §23.4 complains about. Verification: `drift_check OK` (181/181 pins), byte+marker probe
+  `temp/scratch/s12_verify_verdict_lane.py`, guard **FAILED with that 1 debt item then OK/OK on both
+  roots** after the move. CLI note for the next reader: `drift_check` takes `--lock <path>`, NOT
+  `--root`, and `modelstack` is not pip-installed — it needs `PYTHONPATH=<framework>/cli`.
 - **Telemetry handoff §23 (2026-09-21, session 11): §5's blocker is the SERVING relay, not this
   project's pin — the yardstick's own explanation of its output was stale and is fixed — and §22
   cited an ORCH handoff that was never filed.** (1) `admission --days 7` was re-run against the
@@ -55,7 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file that exists nowhere (`find` for `*e2084dd*`: no hits, not in ORCH's `temp/issues/` or
   `temp/archived/`); it is corrected in place to the real
   `ISSUE_dnd_serving_relay_orch_unit_behind_verdict_admission_20260921.md` (OPEN, independently
-  cited from `ISSUE_framework_bump_relay_verdict_lane_20260920.md:73`) — a dangling handoff name is
+  cited from `temp/archived/ISSUE_framework_bump_relay_verdict_lane_20260920.md:76`, archived under
+  session 12) — a dangling handoff name is
   how a filed dep silently loses its owner. Verification: selftest **exit 0, 33 properties**,
   `record --evidence model_outcome=valid` still **REFUSED with exit 1** and 0 rows appended,
   `test/unit/utility_telemetry.test.js` **24 passing**, full suite **1470 passing / 1 pending**,
