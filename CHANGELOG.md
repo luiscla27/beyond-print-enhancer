@@ -8,6 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Internal
+- **Telemetry handoff §21: the sync was TAKEN (2026-09-20, session 9) — the designed red arrived,
+  was reconciled, and 334/334 of the vendored relay suite is green at the new unit.**
+  **(1) The sync.** Preconditions re-measured, not assumed: MSF HEAD `a457f49` was dirty in 5
+  paths, but `uncommitted_unit_paths()` = `[]` (none of the 5 is a unit member — probe
+  `unit_member_check_20260920.py`), so the CLI's own WIP gate passed without `--allow-dirty`.
+  `sync OK — vendored 181 files (unit e2084dd93869, framework a457f4974a44)`; the changed set is
+  EXACTLY §20.2's predicted 15 plus `runtime/verdict_rules.py` as an ADDITION (180 → 181), which
+  closes §19's drift BEHIND-note; `drift_check OK` at the new pair and the re-run pre-flight
+  prints `WOULD CHANGE 0`. AC-16 (`deadline_fired` mandatory on timeout rows), AC-13
+  (`circuit_state` without reason/counters is now unrepresentable), the verdict-row `event_id` +
+  `evaluation_scope` + non-empty-`evidence_refs` defaults, and the one-cut start-prefix
+  first-useful pair all arrived in this tree's `vendor/`. Pre-sync snapshot kept at
+  `temp/scratch/prevendor_snapshot_20260920/`; rollback is `sync --from 4c6bafc4…`.
+  **(2) The designed red fired and was reconciled per §20.3**: `the_contract_is_a_hybrid_of_both_stops`
+  went RED at the new pin; the property is now `the_contract_is_one_cut_the_serial_prefix` (all
+  four contract figures agree with the serial stop, `calls == repairs + 1` on the contract's own
+  payload, and the fixture's two stops still differ so the agreement can't pass vacuously);
+  §4b's end-cut walk stays as the CONCURRENCY diagnostic — `policy: close_window_legacy`, the
+  text report labels it `NOT what the contract charges`, and the JS suite pins both. Verification:
+  `selftest` 33/33, `npm test` 1471/0, utility tests 24/24, `verify_lanes` OK, both guard roots
+  OK, and `python -m pytest vendor/relay/test_reasonix_proxy.py` **334 passed** — §19's three
+  catalog-fact reds are GREEN at this pin (the catalog card matches the live canonical again).
+  **(3) New finding, measured (§21.3)**: to the FLEET reader the six §20 verdict rows resolve for
+  the join but land 6/6 in `identity_gaps`' `unknown` bucket — no `event_id`, no
+  `evaluation_scope`, no §27 identity fields — because the OLD pinned builder predates all four
+  stamps. The rows stay (append-only, honest, artifacts exist); they are LOCAL evidence until
+  the fleet's Phase-F gate counts consumer-written verdicts, and any new row written through the
+  synced builder carries `event_id`+scope (verified by `record --dry-run`). Producer-stamping on
+  the writer side is named in §21.3, not patched into the unit.
+  Nothing pushed (fleet rule); `vendor/` + lock stay gitignored per the 2026-09-14 posture —
+  provenance is the lock in the worktree.
 - **Telemetry handoff §20: the store's first honest verdicts (0 → 6 `model_call_evaluated`), the sync
   delta re-measured at 15, and §18.5 FIXED upstream (2026-09-20, session 8).**
   **(1) §15.7 action 1 happened.** Six commits have both a unique commit→call anchor (0.2–36.1 s, the
