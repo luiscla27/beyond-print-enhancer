@@ -93,6 +93,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `test/unit/utility_telemetry.test.js` **24 passing**, full suite **1470 passing / 1 pending**,
   `housekeeping_guard check` green on both roots. Probes: `temp/scratch/s11_remeasure_20260921.py`,
   `report_s11_20260921.txt`, `admission_d7_s11_20260921.txt`.
+- **Handoff §24.6 (2026-09-21): the citation audit's full re-run caught a second, older dangling
+  pointer a scoped pass had missed — §4's acceptance-surface list cited
+  `test/e2e/gate0_manifest_surface.py`, which has NEVER existed here (find + `git log --all` empty).
+  Corrected to the real manifest surface `test/browser_e2e/manifest_surface.spec.js`
+  (`npm run test:e2e:manifest`), with the old path named as history (so the audit keeps flagging
+  that mention — correct by §24.5's own rule). Lesson recorded: a scoped re-run is not a full
+  re-audit.
 - **Telemetry handoff §25 (2026-09-21, session 13): the fleet delivery wave landed MID-RECORD —
   pin `245490672957` / framework `d93534bdcd33` (`msf verify --strict` OK all five checks +
   `drift_check OK`), ORCH synced 10:48:10 and the OPERATOR restarted the serving relay (PID 18096
