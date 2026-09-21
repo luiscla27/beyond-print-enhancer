@@ -93,6 +93,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `test/unit/utility_telemetry.test.js` **24 passing**, full suite **1470 passing / 1 pending**,
   `housekeeping_guard check` green on both roots. Probes: `temp/scratch/s11_remeasure_20260921.py`,
   `report_s11_20260921.txt`, `admission_d7_s11_20260921.txt`.
+- **Telemetry handoff §25 (2026-09-21, session 13): the fleet delivery wave landed MID-RECORD —
+  pin `245490672957` / framework `d93534bdcd33` (`msf verify --strict` OK all five checks +
+  `drift_check OK`), ORCH synced 10:48:10 and the OPERATOR restarted the serving relay (PID 18096
+  @ 10:51:11, verified by reading the RUNNING process's command line + CIM CreationDate per the
+  AGENTS.md delivery lesson), so the ORCH blocker §23.1/§24.1 measured is SUPERSEDED: the
+  verdict-lane issue's transferred action-2 is DONE and §5 flips from BLOCKED-on-ORCH to
+  DELIVERED-awaiting-first-event — 0 `admission_summary` rows post-restart is a quiet store, not a
+  missing writer (census: 72 post-reload rows, 36 completions, 0 admissions of either shape; last
+  `admission_rejected` anywhere 12:39:31Z, pre-restart). `cmd_admission`'s prose got the same
+  opposite-direction fix §23.1 gave it (it still blamed `5b8e0a59eefb`); selftest 33/33 + 24 tests
+  green after the edit. `ISSUE_unit_delivery_wave_245490672957` → DONE-FOR-THIS-PROJECT + archived;
+  no re-sync run here (obeying its own "Do NOT re-run the sync"), no vendored byte, no routing
+  weight moved. Probes: `temp/scratch/s25_after_restart.py`, `s25_post_reload_census.py`.
 - **Telemetry handoff §22 (2026-09-21, session 10): the qwen cell CLEARS the ≥8 bar (6 → 18 verdicts),
   the browser-gate debt 2.1.0 carried is CLOSED end-to-end, and §5's blocker is formally handed to
   ORCH.** (1) Twelve more commits got uniquely-anchored (`≤ 40 s gap`, no second candidate)
