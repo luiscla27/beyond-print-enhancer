@@ -23,6 +23,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PASS**, eslint clean.
 
 ### Internal
+- **Telemetry handoff §23 (2026-09-21, session 11): §5's blocker is the SERVING relay, not this
+  project's pin — the yardstick's own explanation of its output was stale and is fixed — and §22
+  cited an ORCH handoff that was never filed.** (1) `admission --days 7` was re-run against the
+  post-`e2084dd93869` store and still prints `ADMISSION REJECTIONS`: **8,150 rows / 9,710 terminal
+  calls (0.84×), 4,518 distinct requests → compaction target 8,150 → 4,518 summaries, 4,518/4,518
+  still reached a terminal call** (muse 4,518, bai-deepseek-flash 2,998, bai-hy3 565, nous 69, all
+  `context_limit`). The reason is now measured rather than assumed: this pin DOES carry the writer
+  (`vendor/relay/adapters/__init__.py:232, 698, 5757, 5798`) while the store holds
+  `admission_rejected=9,334 / admission_summary=0`, because the relay writing this store is
+  ORCH's copy at unit `5b8e0a59eefb`, where `admission_summary` is absent. `cmd_admission`'s
+  docstring and trailing note still said "absent from THIS project's pinned unit (MEASURED
+  2026-09-18: 0 hits under `vendor/`)" — true two syncs ago, false now — and both were corrected to
+  name the serving tree as the blocker, along with the same sentence in the test's "must not emit"
+  assertion message. Both files are in the R3 ignored class, so this entry plus handoff §23 is the
+  record. §12/§15.7's "re-run after the next `modelstack sync`" is therefore DONE as a
+  measurement and §5 stays OPEN on a cross-project dep.
+  (2) §4's qwen cell PUBLISHES on fresh numbers (24,796 calls / 18 evaluations; qwen judged=15,
+  `useful_response_rate` 100 %, `cost_per_useful_call` $0.000431, coverage 0.1 %) and the
+  `cost_to_first_useful=$0.000000` §17.3/§20 flagged is confirmed a store fact, not a metric bug:
+  all 3,083 rows of that one-cut window are PRICED and every one spells `relay_estimate_free`, with
+  the first nonzero cost at index 4,365 (`relay_estimate_bai_now_billed`) — 1,283 rows after the
+  first kept answer. No `cost_metrics_unavailable` was added (that guard is for UNPRICED windows);
+  recording 0 as unavailable would erase when paid traffic started paying. No routing weight moved:
+  15 judged rows of 9,842 is reportable, not actionable, and no second cell clears 8 to compare.
+  (3) §6's caller-timeout coverage measures **89 / 24,811 = 0.36%** with the phase 100% unknown
+  (`{'?': 89}`), confirming §19.2's 0.33% post-sync prediction to within 0.03 points; latency tail
+  p50 7,266 / p99 154,844 / p99.9 377,781 / max 776,391 ms, 46 calls > 300 s. The deadline INPUT
+  half is ORCH/client instrumentation and stays handed off.
+  (4) §22.4(c)'s citation `ISSUE_dnd_serving_relay_orch_unit_behind_e2084dd_20260921.md` names a
+  file that exists nowhere (`find` for `*e2084dd*`: no hits, not in ORCH's `temp/issues/` or
+  `temp/archived/`); it is corrected in place to the real
+  `ISSUE_dnd_serving_relay_orch_unit_behind_verdict_admission_20260921.md` (OPEN, independently
+  cited from `ISSUE_framework_bump_relay_verdict_lane_20260920.md:73`) — a dangling handoff name is
+  how a filed dep silently loses its owner. Verification: selftest **exit 0, 33 properties**,
+  `record --evidence model_outcome=valid` still **REFUSED with exit 1** and 0 rows appended,
+  `test/unit/utility_telemetry.test.js` **24 passing**, full suite **1470 passing / 1 pending**,
+  `housekeeping_guard check` green on both roots. Probes: `temp/scratch/s11_remeasure_20260921.py`,
+  `report_s11_20260921.txt`, `admission_d7_s11_20260921.txt`.
 - **Telemetry handoff §22 (2026-09-21, session 10): the qwen cell CLEARS the ≥8 bar (6 → 18 verdicts),
   the browser-gate debt 2.1.0 carried is CLOSED end-to-end, and §5's blocker is formally handed to
   ORCH.** (1) Twelve more commits got uniquely-anchored (`≤ 40 s gap`, no second candidate)
