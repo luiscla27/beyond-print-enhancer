@@ -119,6 +119,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (option 1: sync ORCH to `e2084dd…`, tick reloads). The mimo timeout circuit re-measured
   live-but-unexercised (596 rows, 0 `circuit_reason`, 0 timeouts) and stays OPEN as passive monitoring;
   the verdict-lane issue's "restart the relay" action transferred to the same ORCH handoff.
+  (4) **Citation self-audit added to §24 (§24.5).** §24.1 had cited the verdict-lane issue at
+  `temp/issues/…`, the path it held BEFORE §24.2 archived it in the same section — i.e. this handoff's
+  own fix for §22's dangling citation introduced a new one. Corrected in place to name both locations,
+  and `temp/scratch/s24_verify_pointers.py` now re-extracts every project-relative path cited in the
+  handoff/archived-issue/CHANGELOG and stats each, so a future session triages dangling pointers by
+  owner + lifetime (cross-project cites, framework-root-relative `conductor/archive/…` plans, and
+  `temp/scratch/*.js` one-shot receipts are correct-by-design) instead of bulk-renaming them.
 - **Telemetry handoff §21: the sync was TAKEN (2026-09-20, session 9) — the designed red arrived,
   was reconciled, and 334/334 of the vendored relay suite is green at the new unit.**
   **(1) The sync.** Preconditions re-measured, not assumed: MSF HEAD `a457f49` was dirty in 5
