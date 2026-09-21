@@ -300,14 +300,32 @@ describe("The release gate — the link, and the eleven findings it can name", f
 
   // --------------------------------------------------------------------------- the live tree
   it("the live tree's own artifact state is REFUSED on 2.1.0's facts (the gate is not decorative)", function () {
-    // Against THIS repo, right now: the newest nightly artifact is the 2026-09-20 run that never
+    // Against THIS repo, when written: the newest nightly artifact was the 2026-09-20 run that never
     // executed (collection mismatch over byok_arrange_roundtrip.spec.js) and js/ changed after it.
     // If a future green+fresh+complete run lands, this case's premise expires — so it asserts the
-    // SHAPE (a refusal that names R3 and R9 or R5) rather than a date. See the 2026-09-20 record in
+    // SHAPE (a refusal that names R3 or R6) rather than a date. See the 2026-09-20 record in
     // scripts/release_gate.js's header for the evidence it was written against.
-    const art = path.join(ROOT, "temp", "browser_gate", "scheduled", "artifact.json");
-    if (!fs.existsSync(art)) this.skip(); // a fresh clone has no run evidence; nothing to assert against
-    const a = JSON.parse(fs.readFileSync(art, "utf8"));
+    //
+    // THE PREMISE GUARD MUST ASK THE SAME QUESTION THE GATE ASKS. The first version read
+    // `scheduled/artifact.json` alone, but `pickArtifact` chooses the newest RUN across BOTH output
+    // directories (`temp/browser_gate/scheduled` and `temp/browser_gate`) — so the moment a green
+    // serial run lands in the default dir (measured 2026-09-21: the 98-minute manual run wrote
+    // `temp/browser_gate/artifact.json`, green, 325 cases), the guard still saw the stale RED nightly,
+    // refused to skip, and asserted a refusal from a gate that had just correctly PASSED. The
+    // assertion was not protecting anything; it was comparing the guard's eyes to the gate's.
+    // Reading the newest-by-`started_at` artifact across both dirs makes the premise expire exactly
+    // when the tree becomes releasable, which is what its own comment always claimed.
+    const dirs = [path.join(ROOT, "temp", "browser_gate", "scheduled"),
+                  path.join(ROOT, "temp", "browser_gate")];
+    const candidates = dirs.map((d) => path.join(d, "artifact.json")).filter((p) => fs.existsSync(p));
+    if (!candidates.length) this.skip(); // a fresh clone has no run evidence; nothing to assert against
+    const newest = candidates.map((p) => {
+      let a = null;
+      try { a = JSON.parse(fs.readFileSync(p, "utf8")); } catch { a = null; }
+      return { path: p, a, at: (a && Date.parse(a.started_at || "")) || fs.statSync(p).mtimeMs };
+    }).sort((x, y) => y.at - x.at)[0];
+    if (!newest.a) this.skip(); // unreadable JSON is the gate's R2 finding, not this case's premise
+    const a = newest.a;
     const stillTheRedRun = a.green !== true || (a.collection || {}).status !== "ok" || !(a.cases || []).length;
     if (!stillTheRedRun) this.skip();
     const r = outcome(run(ROOT, ["--skip-git-check"]));

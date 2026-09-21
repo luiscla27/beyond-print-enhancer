@@ -7,7 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **The release gate's own live-tree test went red the moment the tree became releasable — the TEST
+  was wrong, and it is fixed (`test/unit/release_gate.test.js`, 2026-09-21).** The case "the live
+  tree's own artifact state is REFUSED on 2.1.0's facts" decided whether to skip by reading
+  `temp/browser_gate/scheduled/artifact.json` alone, but `pickArtifact` chooses the newest RUN across
+  BOTH output dirs. When the manual serial run landed green in the default dir
+  (`temp/browser_gate/artifact.json`, started 2026-09-21T07:27Z, 230 passing / 95 pending / 0 failing
+  / 5915 s, collection ok 74/325), the gate correctly PASSED while the guard — staring at the stale
+  red nightly — asserted a refusal: `npm test` 1471 → 1470 + 1 FAIL. The premise check now resolves
+  the newest-by-`started_at` artifact across both dirs exactly like the gate and skips when that run
+  is green+complete, so it expires when (and only when) the tree becomes releasable. The refusal half
+  stays pinned by the ten synthetic R0–R10 fixtures. Verification: file 17 passing / 0 failing /
+  1 pending, `npm test` **1470 passing / 0 failing**, `npm run release:check` **exit 0 — RELEASE GATE
+  PASS**, eslint clean.
+
 ### Internal
+- **Telemetry handoff §22 (2026-09-21, session 10): the qwen cell CLEARS the ≥8 bar (6 → 18 verdicts),
+  the browser-gate debt 2.1.0 carried is CLOSED end-to-end, and §5's blocker is formally handed to
+  ORCH.** (1) Twelve more commits got uniquely-anchored (`≤ 40 s gap`, no second candidate)
+  `deterministic` `useful` verdicts through the synced builder, each against an acceptance artifact
+  that exists and was re-run or re-read the same day (checkpoints in `temp/scratch/checkpoint_*_20260921.txt`,
+  `verdict_gate_a_tr_20260921_001034.txt`, `budget_attest_20260921.txt`, `gitignore_rules_attest_20260921.txt`):
+  `ccb7076`, `f781785`, `4e2338d`, `9c02aab`, `c97f5ed`, `373ea74`, `b2bcefc`, `2d3f4ab`, `0327a83`,
+  `741f5c0`, `9ea2af6`, `255bf03`. All twelve carry `event_id`+`evaluation_scope` (§21.3's identity
+  fields — 6 legacy + 12 identified now). **`report`: qwen judged=15 ≥ 8 → the cell PUBLISHES**
+  (useful 15/15, `useful_response_rate` 100 %, cost_per_useful ≈ $0.00043); nous 2 / mimo 1 remain
+  INSUFFICIENT. The orphan guard earned its keep: a one-hex-digit typo from the attribution probe
+  (`…5f037` vs the store's `…5f03f`) was REFUSED as "no model-call row matches".
+  (2) §21.4(b)'s qwen half is DONE and 2.1.0's R9 debt ("the release's product edits have never been
+  through the browser gate") is CLOSED: the full serial suite ran green twice — the manual 98-minute
+  run and tonight's nightly (`temp/browser_gate/scheduled/artifact.json`, started 09:30:02Z,
+  green, exit 0, collection ok 74/325, 325 cases, 0 failures) — with `byok_arrange_roundtrip` 7/7,
+  `byok_relay` 11/11 and `manual_verification_phase0..4` all passing; `release:check` reads it PASS.
+  The 09-19/09-20 nightly reds were STALE-PREMISE (the 03:30-local nightly collected the
+  working tree against HEAD's pre-`2c37561` 73-row inventory), not a live detector defect.
+  (3) §5 stays BLOCKED and now has an owner: re-measured tonight, the serving relay (PID 11004,
+  port 38116) runs ORCH's unit `5b8e0a59eefb` with `_verdict_rules`/`admission_summary`/`deadline_fired`
+  all at 0 hits; DND's pin `e2084dd93869` carries all three. Handed off as
+  `telegram_orchestrator/temp/issues/ISSUE_dnd_serving_relay_orch_unit_behind_verdict_admission_20260921.md`
+  (option 1: sync ORCH to `e2084dd…`, tick reloads). The mimo timeout circuit re-measured
+  live-but-unexercised (596 rows, 0 `circuit_reason`, 0 timeouts) and stays OPEN as passive monitoring;
+  the verdict-lane issue's "restart the relay" action transferred to the same ORCH handoff.
 - **Telemetry handoff §21: the sync was TAKEN (2026-09-20, session 9) — the designed red arrived,
   was reconciled, and 334/334 of the vendored relay suite is green at the new unit.**
   **(1) The sync.** Preconditions re-measured, not assumed: MSF HEAD `a457f49` was dirty in 5
