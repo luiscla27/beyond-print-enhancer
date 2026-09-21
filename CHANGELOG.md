@@ -100,6 +100,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`npm run test:e2e:manifest`), with the old path named as history (so the audit keeps flagging
   that mention — correct by §24.5's own rule). Lesson recorded: a scoped re-run is not a full
   re-audit.
+- **Telemetry handoff §26 (2026-09-21, session 14): both "quiet gates" became PROOF-ON-DEMAND,
+  and a cross-project defect I filed was FALSIFIED and retracted.** (1) §5's wait for the first
+  `admission_summary` was never necessary: `temp/scratch/admission_canary_20260921.py` forces the
+  same reject class (`_catalog_context_limit -> 4096`, so every candidate is impossible) through
+  the vendored `_stack_relay` and gets ONE `admission_summary` with `rejected_candidates_count=2`,
+  both `error_code=context_limit`, 0 per-candidate rows by default and 2 with
+  `REASONIX_PROXY_ADMISSION_DETAIL=1` — AC-15 holds for the class that wrote 7,694 rows in 7 days.
+  (2) I had already written
+  `ISSUE_relay_admission_summary_misses_the_two_high_volume_reject_sites_20260922.md` into
+  `modelstack_framework/temp/issues/` claiming 2 of 4 reject sites bypass the writer; **deleted
+  before it could be acted on.** The count was of lines containing `rejects.append` — four
+  REASONS feeding ONE list, drained at `adapters/__init__.py:5798` — and "0 summaries in the
+  window" proves no such decision happened, not that the path is dead. Reachability of a writer is
+  a 30-second test; filing an issue is not a substitute for it. (3) What SURVIVES is measured
+  where the inference was: split at the restart instant (16:51Z), 09-21 carried 498 calls / 78
+  rejections BEFORE and 247 / 0 AFTER, with only 4 muse-mentioning rows post-restart — store-wide
+  muse has 5,113 rejections and exactly 1 completed call, so its noise is the consultant lane,
+  which is idle. `cmd_admission` now prints that split + the reproduction instead of only the
+  wait (selftest 33/33, its 24-test file green, the store-stays-2-rows assertion untouched).
+  (4) `ISSUE_bai_mimo_route_needs_the_timeout_circuit_sync_20260916` → **RESOLVED + archived**:
+  `mimo_circuit_canary_20260921.py` opens `("bai-mimo25","mimo-v2.5")` on the real path
+  (`circuit_state_changed`, `circuit_reason=timeout_burst`, `provider_request_sent=False`) and the
+  next decision reports `calls_skipped_due_to_circuit=2 / attempts_saved=2` with hung-upstream
+  requests 4→4 — suppression proven; synthetic by construction (`RelayServer` built directly skips
+  the durable-state seam at `adapters/__init__.py:7590`, so `temp/runtime_state/` stayed `closed`).
+  The issue's own bar was ALSO wrong: "two consecutive `upstream_timeout` rows with
+  `circuit_reason` null" is the FAILURE signature — the store's 11 mimo timeouts and 7 in-window
+  pairs are all 2026-09-14, pre-rule — and `mimo_census_20260921.py` is now the reopen check. New
+  live-process evidence: the mimo state file's write (19:24:20Z) follows the live mimo completions
+  (19:20:04Z/19:22:11Z) and the qwen file's mtime tracks traffic, while the vendored mimo unit test
+  leaves that mtime untouched — so the persistence belongs to PID 18096, not a test run.
+  (5) §6 re-measured, unchanged, and client-owned: 93/25,195 terminal calls carry a deadline
+  (0.37%) — `recover` 90 / `verify` 2 / `summarize` 1, and `execute` (18,937) / `plan` (1) carry
+  NONE; the key session 13 chased, `request_deadline_phase`, does not exist in the relay's output
+  at all (it was a DND reporter label), so the ask stays with ORCH's
+  `ISSUE_relay_deadline_header_only_reaches_recover_and_summarize_20260919` fix option 1.
+  `slow_success_burst` confirmed still unbuilt (0 hits in the vendored unit, `scripts/`, skills) and
+  now FILED as a contract ask: `modelstack_framework/temp/issues/
+  ISSUE_msf_slow_success_route_tax_signal_is_unrepresentable_20260921.md`, carrying the measurement
+  that motivates it — mimo-v2.5's successful calls sit at p50 16,016 / **p90 127,313** / max 367,953
+  against qwen38-flash's 16,905 / 72,983, i.e. the same median and a 1.7x tail, and since 09-19 mimo
+  has 80 rows of pure 200s so the schema calls it healthy. A route tax that only becomes visible when
+  it turns into timeouts is the lesson from 09-16, one step too late. No vendored byte touched, no routing weight moved, no
+  production telemetry or state file written by any canary.
 - **Telemetry handoff §25 (2026-09-21, session 13): the fleet delivery wave landed MID-RECORD —
   pin `245490672957` / framework `d93534bdcd33` (`msf verify --strict` OK all five checks +
   `drift_check OK`), ORCH synced 10:48:10 and the OPERATOR restarted the serving relay (PID 18096
