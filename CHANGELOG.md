@@ -8,6 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **The five "Cannot create item with duplicate id" errors are gone — the action menu is registered
+  once, from `onInstalled`.** `js/background.js` created its five action-menu entries (`sponsor`,
+  `donate`, `buy-me-a-coffee`, `contribute`, `feedback`) at the **top level** of the MV3 service
+  worker. Chrome persists context-menu items in the profile and MV3 re-runs the worker script on every
+  worker start, so from the second start onward every `create` asked for an id that already existed and
+  each call reported an unchecked `lastError` — the five lines the operator read off
+  `chrome://extensions`. The registration now lives in a named `createActionMenu()` invoked from the
+  **existing** `chrome.runtime.onInstalled` listener (Chrome's own documented pattern for this API);
+  ids, titles, order and the `onClicked` dispatch are unchanged, and the entries remain the five asks
+  AC-3 pinned (nothing deleted, no monetisation channel unreachable, no sixth ask). Measured over three
+  boots of ONE profile with `chrome.runtime.lastError` read inside the callback — the only channel that
+  reports this — the duplicate error is gone while all five ids stay `present`. `npm test` **1471
+  passing** / 0 failing, lint clean, and the AC-3 browser spec **3 passing** with all five destinations
+  `present` after the move.
+- **New guard: `test/browser_e2e/action_menu_registration.spec.js`** (4 cases), plus four helpers in
+  `test/browser_e2e/_helpers/dom.js` — `__profilePath` on the context, `launchProfileAgain`,
+  `serviceWorkerOf`, `probeActionMenu`. The helpers close the hole that made this class invisible:
+  every launcher in the harness handed out a **fresh** profile (deleted on close), i.e. exactly ONE
+  worker start per case, so a defect that only fires on the *second* start could not occur in any run.
+  Falsified against a reverted copy in `temp/` (never the worktree): the **structural** case fails
+  (all five creates must sit inside `createActionMenu()`, with **exactly one** call to it, after the
+  listener — verified against the hoisted-call revert), while the runtime cases deliberately do not
+  claim that half. **What the falsification corrected:** a duplicate `create` errors and removes
+  nothing, so after any number of starts all five ids are still present, and `contextMenus.update()`
+  cannot tell "created once" from "created and errored four times" — the same blindness that hid this
+  from AC-3. The only reporter is the `lastError` of a `create` call, and that call is itself a
+  mutation, so the spec asserts on it **only where the id already exists** (where a failing create is
+  provably inert) and asks the read-only question everywhere else; the first draft of the spec learned
+  this the hard way, going red on boots 2 and 3 because its own probe had registered the id.
+  Post-mortem, both blind spots and the falsification:
+  `temp/issues/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`.
 - **On a short section the action bar no longer covers the centred grip — the bar yields.**
   `section-extra-tidbits-wrapper` (151×62) was the 2.0.1 census failure recorded under Known issues
   below: the bar carries an inline `z-index: 1000000` (`js/main.js:2512`, via `window.Z.ACTIONS_BAR`)
