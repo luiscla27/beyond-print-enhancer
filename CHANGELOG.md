@@ -88,6 +88,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pytest vendor/relay/test_reasonix_proxy.py` **334/334 at pin 245490672957**
   (`temp/scratch/s28_relay_pytest.txt`), `drift_check OK`, guard OK on both roots. Handoff stays OPEN:
   §6's deadline is the last measurable §8 criterion and belongs to ORCH.
+- **Telemetry handoff §29 (session 16 close-out, 2026-09-22): BOTH MSF asks came back FIXED *inside
+  this session*, and NEITHER is in this project's pin — so the record says "closed upstream, zero
+  consumer-visible effect here", not "fixed".** `modelstack_framework` `da8a662` + lock re-cut
+  `8cc27a5` (unit `940d409ef28b`) answer both files DND filed, archived `2026-09-22 00:38Z`:
+  (a) identity — Finding 1 closed by **option 1** (`build_evaluation_record` +
+  `build_task_utility_record` now stamp `runtime_identity()` + `policy_instance_revision(project)`, so
+  the SPEC §27 triple is *reachable* from the verdict path instead of structurally absent), Finding 2
+  closed by **option 3** (degradation is no longer silent: reason-coded `identity_unavailable` travels
+  on the row, making `catalog_import_failed` vs the facade-rebinding nulls separable from the store),
+  and **option 2 documented** (`row_writer` gained a named `consumer_verdict` class, REPORTED but
+  deliberately not a zero-invariant — no consumer can rewrite history). (b) route tax — asks 1 + 3
+  built (`slow_success` derived at write time against an env -> policy-instance -> 60,000 ms ladder;
+  `p50`/`p90`/`slow` added to the report because avg + max are exactly what hid it); **ask 2 (a circuit
+  reason for slow successes) deliberately NOT built and pinned as absence by a test**, because
+  suppressing a slow-but-correct route is a ROUTING decision — the same rule this project applied to
+  itself at §28.2. **Measured, not assumed, that none of it is live here:** this pin's
+  `vendor/relay/telemetry/__init__.py` `build_evaluation_record` still calls neither helper (21 params,
+  unchanged) and `identity_unavailable` / `slow_success` / `consumer_verdict` score **0 hits** in
+  `vendor/`; ORCH pins the SAME unit and its 5 serving relay processes are all still the 09-21 10:49-10:51
+  wave restart, none postdating 00:38Z (§25's rule applied to my own issue: a fix existing in a repo is
+  not the fix being live). Falsifiable expectation written for the next sync: NEW verdict rows classify
+  `consumer_verdict` + carry the triple, and the **existing 18 must stay as they are** — if a future run
+  shows them changed, the store was edited (§29.3). ORCH's deadline handover done as the fleet rule
+  requires (NEW MD in their `temp/issues/`, their file untouched): their 09-19 criterion re-measured
+  09-22 from `temp/scratch/s29_deadline_census.py` — **98/25,669 = 0.38 %** `caller_timeout_ms`
+  coverage, `request_deadline_phase` null on **all** rows including those 98, p50/p90/p99/p99.9 =
+  7,609/37,343/156,170/378,202 ms, max 776,391 ms, **56 calls > 300 s** (2 > 600 s) vs their 46.
+  Record-integrity finds: the citation checker flagged two strings that exist ONLY inside §28.7's
+  explanation of its own false positive (`temp/modelstack/telemetry.json`,
+  `test/browser_e2e/spec_inventory.js`) — a quotation ABOUT a defect, a class it has no concept of;
+  named in `DOCUMENTED` rather than suppressed, and close-out re-run **200 paths / 0 undocumented
+  dangles / 0 stale `file:NNN` lines / exit 0**; `temp/scratch/s28_report_30d.json` is unparseable
+  (cp1252 stdout, a `§` broke the decode) — the usable copy is `s28_report30.json` written with
+  `PYTHONIOENCODING=utf-8`. §28.5's rows for §7, the fleet dependency and §28.4 annotated
+  `SUPERSEDED by §29` rather than rewritten. Gates re-run at close-out (not copied): `selftest` 37/37,
+  `admission --days 1` -> ADMISSION SUMMARIES, cutover `2026-09-21T20:14:05.299Z`, **0** per-candidate
+  rows at or after it, `report --days 30` re-read, guard OK on both roots, `git status` clean before
+  the edit. No `vendor/` byte touched, no sync run, no relay restarted, no row back-filled, no routing
+  weight/lane/seat/context limit changed, no `git push`.
 - **`ISSUE_framework_bump_relay_verdict_lane_20260920` RESOLVED-FOR-THIS-PROJECT and archived
   (2026-09-21, session 12): the framework's verdict-lane re-sync handoff is re-attested against live
   state, and its second action turns out not to belong to this project at all.** The issue (filed by
