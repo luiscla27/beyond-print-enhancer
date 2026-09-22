@@ -120,6 +120,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when their file says 70/22,184, 776,391 ms and 31 — their `0` is the execute/plan sub-population,
   and the 647,156 was invented from memory rather than read); caught by re-opening their file before
   delivery, corrected in both the delivered MD and §29.4, with the error named in the record.
+  **§28.6's own completion claim was also false, and only a grep caught it:** the bullet said session
+  12's AND session 14's open lists were both corrected off `nous 4/8`; `grep -n "nous.*4/8"` showed
+  session 14's §26 line still read 4/8 (only one of the two had been edited). Line fixed with the
+  correction named in it (§12's rule) and the bullet amended. The lesson is now this record's own:
+  **a sweep is not done until the grep is empty, and a bullet claiming a sweep is a claim, not a
+  receipt** — note that `temp/` is gitignored (`.gitignore:137`), so the handoff file itself carries
+  no diff: for every §27/§28/§29 correction THIS entry is the only tracked artifact, which is exactly
+  why §28.6 treats a missing mirror as a debt.
   Record-integrity finds: the citation checker flagged two strings that exist ONLY inside §28.7's
   explanation of its own false positive (`temp/modelstack/telemetry.json`,
   `test/browser_e2e/spec_inventory.js`) — a quotation ABOUT a defect, a class it has no concept of;
