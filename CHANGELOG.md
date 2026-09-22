@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **§5's own yardstick could not see §5 passing — `admission_cutover()` now splits by instant
+  (`scripts/utility_telemetry.py`, 2026-09-21, telemetry handoff §27).** The after-state landed at
+  **2026-09-21T20:14:05.299Z** (90 → 98 `admission_summary` decisions, **0** per-candidate rows at
+  or after it, 112 candidates carried inside the summaries, max 2 per decision, and the pre-cutover
+  baseline of 201 detail rows intact), yet `cmd_admission` kept printing the BEFORE report because
+  it chose its branch from `if not rows:` — "does the window hold any `admission_rejected` row" —
+  and a straddling rolling window always holds the old detail rows at its head. Four verdicts now,
+  each with its own wording: `compacted` (summaries + 0 detail after → §5 SATISFIED), `mixed`
+  (summaries AND later detail → **not** a pass, named as the double-writer defect the old code could
+  not express at all), `undated` (summaries with no parseable instant → refuse to invent a cutover,
+  the `min([])`-to-"compacted" vacuous-green class), `before_only`. The before-branch prose was also
+  rewritten: it asserted "the store carries 0 summary rows for ONE reason only" and "muse-lane
+  traffic stopped" as live facts against a store holding 90 summaries and 90 muse rejections in 9 h;
+  it now states the two readings the branch actually supports. Falsified, not asserted:
+  `temp/scratch/s27_falsify_cutover.py` swaps in the old predicate and turns 3 of the 4 new
+  properties red (the 4th holds under both rules — recorded, not rounded up). Verification:
+  `admission --days 1` → **ADMISSION SUMMARIES**; `selftest` 33 → **37 properties**; `mocha
+  test/unit/utility_telemetry.test.js` 24 → **25 passing**; full suite **1471 passing / 1 pending /
+  0 failing**; close-out guard OK on both roots. No `vendor/` byte touched.
 - **The release gate's own live-tree test went red the moment the tree became releasable — the TEST
   was wrong, and it is fixed (`test/unit/release_gate.test.js`, 2026-09-21).** The case "the live
   tree's own artifact state is REFUSED on 2.1.0's facts" decided whether to skip by reading
@@ -23,6 +42,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PASS**, eslint clean.
 
 ### Internal
+- **Telemetry handoff §28 (session 16, 2026-09-21/22): §2's deferred question is ANSWERED with the
+  row census, and the record's own debts are closed.** Census (`temp/scratch/s28_verdict_census.py`):
+  store 60,255 rows = 25,405 completed + 25,305 task_completed + 9,334 `admission_rejected` + 98
+  `admission_summary` + 84 failed + **18 verdicts** + 11 shutdown; per cell qwen 10,574 calls / 15
+  judged / $2.34120 (**93.6 % of store spend**), deepseek 13,935 / 0, mimo 598 / 1, nous 352 / 2,
+  glm 70 / 0. **Decision on §12's follow-up: NOT actionable, and the reason is the missing comparator
+  rather than the qwen data** — every cell but qwen sits under the ≥8 bar and they hold only 6.4 %
+  of spend together, so §4's "both samples or no comparison" rule decides. Also recorded plainly:
+  the 100 % `useful_response_rate` is an artifact of §20.1's anchor recipe (every verdict is anchored
+  to a commit whose acceptance artifact was GREEN — selected-by-success, so accrual cannot lower it,
+  only a different evidence source can), and `cost_to_first_useful=$0.000000` is a
+  **window-dependent earliest-prefix fact** — qwen's rows are 4,392 explicit `$0.0`
+  (`relay_estimate_free`, the free leg ending 09-16T21:05Z) + 6,160 positive
+  (`relay_estimate_bai_now_billed`) + 6 unpriced, and the same metric on `--days 1` prints
+  **$0.010491** for a different first-useful verdict, which proves the walk sums real money. §23.2's
+  "no code change, do not fix this figure" is CONFIRMED for the right reason. §6's tail re-measured
+  whole-store: max 776,391 ms, **55 calls > 300 s** (§23.3: 46), deadline coverage **97/25,521 =
+  0.38 %** with `request_deadline_phase` null on all 97. **§21.3's identity claim corrected:** all 18
+  verdict rows — including the 12 written through the synced builder — are still `unknown`-writer
+  with 3/3 SPEC §27 fields missing, because the unit's `runtime_identity()` /
+  `policy_instance_revision()` are called from `build_record` (`vendor/relay/telemetry/__init__.py:482`)
+  and NOT from `build_evaluation_record` (`:643`), which takes no identity kwargs; a consumer cannot
+  stamp its verdict rows through the contract endpoint. The fleet reader's store-wide pass over the
+  rows it actually consumes (`read_telemetry`, call rows only) puts this project's contribution in
+  the bucket whose docstring demands zero: **`relay`: 5,085 rows without identity**. Filed to MSF as
+  `ISSUE_msf_identity_stamp_reaches_neither_verdict_rows_nor_relay_call_rows_20260921.md` (new file
+  under that project's `temp/issues/`; its code untouched). Accrual ceiling stated with arithmetic
+  (§28.3): a verdict requires a commit made on that route's session — deepseek's 13,935 calls have
+  never carried one, so probing cannot raise it. Record debts closed: §27 was truncated mid-word at
+  line 2413 (session-15 disposition/verification/open list never existed) and had **no CHANGELOG
+  mirror** — both written; §10's "the DATA is 0 judged today" corrected; §8 line 4 checked with the
+  cutover instant; `AGENTS.md`'s pin bullet advanced from `e2084dd93869`/`a457f4974a44` to the live
+  lock (`245490672957`/`d93534bdcd33`, 181 files); session 12's and 14's unsupported `nous 4/8`
+  corrected to 2/8 with the anchor-vs-verdict vocabulary trap named (§27.4). §28.7 is this session's own citation audit
+  (`temp/scratch/s28_verify_pointers.py`): 186 paths across the handoff/CHANGELOG/AGENTS + 8
+  `file:NNN` pointers in the vendored unit re-verified -> **0 stale lines, 0 undocumented danglers**
+  (5 historical, 12 moved/foreign-resolved), exit 0 -- after the checker itself produced 30+ FALSE
+  danglings from an extension alternation that matched `.js` inside `.jsonl`, and after a
+  longest-first-ordering explanation this session had written was FALSIFIED by a 2x2 re-run
+  (§28.7: the `(?![\w])` guard alone fixes it). The audit also machine-checks §28.4's mechanism
+  claim (`build_evaluation_record`: 21 params, no `**kwargs`, no identity params). §28.8 hands ORCH
+  the 09-21 re-measure of their own pass criterion (0.38 % coverage, phase null on all 97, 55 calls
+  > 300 s). Gates: `selftest` 37 properties, `mocha test/unit/utility_telemetry.test.js` 25 passing,
+  `pytest vendor/relay/test_reasonix_proxy.py` **334/334 at pin 245490672957**
+  (`temp/scratch/s28_relay_pytest.txt`), `drift_check OK`, guard OK on both roots. Handoff stays OPEN:
+  §6's deadline is the last measurable §8 criterion and belongs to ORCH.
 - **`ISSUE_framework_bump_relay_verdict_lane_20260920` RESOLVED-FOR-THIS-PROJECT and archived
   (2026-09-21, session 12): the framework's verdict-lane re-sync handoff is re-attested against live
   state, and its second action turns out not to belong to this project at all.** The issue (filed by
