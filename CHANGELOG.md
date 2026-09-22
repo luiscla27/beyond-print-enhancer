@@ -112,9 +112,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `consumer_verdict` + carry the triple, and the **existing 18 must stay as they are** — if a future run
   shows them changed, the store was edited (§29.3). ORCH's deadline handover done as the fleet rule
   requires (NEW MD in their `temp/issues/`, their file untouched): their 09-19 criterion re-measured
-  09-22 from `temp/scratch/s29_deadline_census.py` — **98/25,669 = 0.38 %** `caller_timeout_ms`
-  coverage, `request_deadline_phase` null on **all** rows including those 98, p50/p90/p99/p99.9 =
-  7,609/37,343/156,170/378,202 ms, max 776,391 ms, **56 calls > 300 s** (2 > 600 s) vs their 46.
+  09-22 01:08Z from `temp/scratch/s29_deadline_census.py` — **98/25,725 = 0.38 %** `caller_timeout_ms`
+  coverage (every covered row `recover`; execute/plan still **0**), `request_deadline_phase` null on
+  **all** rows including those 98, p50/p90/p99/p99.9 = 7,625/37,312/156,170/378,202 ms, max
+  776,391 ms, **56 calls > 300 s** (2 > 600 s) vs their 31. **This handoff first MIS-STATED their
+  own figures** (attributed `0/22,114` coverage, a `647,156 ms` max and `46 calls > 300 s` to ORCH,
+  when their file says 70/22,184, 776,391 ms and 31 — their `0` is the execute/plan sub-population,
+  and the 647,156 was invented from memory rather than read); caught by re-opening their file before
+  delivery, corrected in both the delivered MD and §29.4, with the error named in the record.
   Record-integrity finds: the citation checker flagged two strings that exist ONLY inside §28.7's
   explanation of its own false positive (`temp/modelstack/telemetry.json`,
   `test/browser_e2e/spec_inventory.js`) — a quotation ABOUT a defect, a class it has no concept of;
