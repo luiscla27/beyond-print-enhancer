@@ -8,6 +8,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **The nine-dot grip is a CELL of the section's action row, so it can no longer land on a
+  button.** It had been moved out of the section's centre into the top-left corner
+  (`top:8px; left:8px`, absolute) — the operator's placement instruction — but the action bar is
+  anchored at the SAME corner with the SAME 39x32 cells, so the grip became coextensive with the
+  bar's first button: `elementFromPoint` over the grip's centre returned `be-select-section-button`
+  and the overlap measured 100% (1248px of a 39x32 box). Reported by
+  `temp/archived/ISSUE_corner_grip_lands_on_first_action_button_20260922.md`, which lists the three
+  options; option 1 was taken. `js/dnd.js` now inserts the handle as the rail's **first child**, and
+  the rail's own `display:flex; gap:8px` (js/print_styles.js) gives it a box no control can share —
+  the collision is unrepresentable rather than ranked away. The handle's rule sheds the placement it
+  no longer needs (`position:absolute`, `top`, `left`) and keeps the button tier at 39x32 with
+  `flex:0 0 auto` so a narrow section cannot squeeze the GRIP first. **`ensureDragHandle` asks the
+  section pass's own accessor for the rail** (`window.getOrCreateActionContainer`, falling back to a
+  local `div`) so the bar keeps the inline level from `Z.ACTIONS_BAR` and every other property it is
+  built with, migrates a grip left behind by the corner placement instead of stacking a second one,
+  and re-asserts slot zero on every pass — which is what makes it survive the builders that prepend
+  into the same container. Two consequences of the new position are fixed with it: the
+  removed-node arm of `watchDragHandles` resolved the handle's `parentNode`, which since the callback
+  is a microtask is `null` for a real removal (the one case that arm exists for never fired) and now
+  resolves the WRAPPER from the record, and the grip — being a `button` inside `.be-section-actions` —
+  fell to the sheet's and theme's `!important` button rules (pill radius, drop-shadow, white ink, and
+  green on shape sections), so the block carries a `(0,2,0)` arm that wins its own paint.
+- **Three placement rules became one, and the two dead ones are deleted.** The grip's history is the
+  argument for doing this structurally: a centred plate whose collision was MEASURED away
+  (`gripBandFor` / `measureGripBands`, a trimmed 18x18 plate, three `--be-grip-*` properties and a
+  `ResizeObserver` — the 2026-09-14 geometry pass), then a bar that "yielded" to the grip in the
+  stack (`z-index: 700001` against 700002), then the corner. Neither earlier mechanism survived:
+  the geometry subsystem was already deleted by the move to the corner (its own unit file,
+  `test/unit/grip_geometry.test.js`, is rewritten as the negative contract — that the machinery
+  STAYS gone, since a dead second placement rule is what produced round two), and the yield rule is
+  removed from `js/print_styles.js` because a level between two controls whose boxes are disjoint
+  decides nothing. That removal forced one real change: the bar's `:hover` reveal had no
+  `:focus-within` arm, and with the grip INSIDE the row the row's `opacity: 0` would hide a
+  keyboard-reached grip, so the reveal now carries both arms — exactly the arms js/dnd.js uses,
+  asserted as set equality. `test/unit/hover_refactor.test.js` replaces the ladder case with that
+  lockstep plus the slot contract, and adds a case that fails against the old `parentNode` lookup.
+  Verified: unit `1473 passing / 0 failing` (was 1457 / 9 at the recovered state), lint clean,
+  `affordance_drag_hover_shadows` 13 + `drag_glow_layers` 5 + `lock_handle_visibility` 1 = `19
+  passing` in Chromium, and the per-wrapper census
+  reports `buttonOverlapPx: 0` on every section with the Select button owning its own centre and the
+  grip owning its own. The 2.0.1 Known-issues entry about the bar covering the grip is closed below.
+- **The print hide needed the same arm as the base block, and the browser caught it.** The
+  grip's `display: flex !important` is (0,2,0) to beat the action buttons' rules, and a @media
+  rule does not outrank a higher-specificity declaration outside the media question, so the
+  lone `.be-drag-handle { display: none !important }` under `@media print` LOST and the handle
+  printed as a flex cell (measured: `{"display":"flex","visibility":"visible","opacity":"1"}`).
+  The print block now repeats the (0,2,0) arm, and the unit case asserts the block carries it.
+- **The hue-shift case was asserting the wrong half, and the move changed what is true.** A
+  filter on an ancestor is a group filter over its whole subtree and no `filter:none` on a
+  descendant undoes it, so the nine dots now travel with the row's inverse rotation. That is
+  accepted deliberately and recorded in js/filters.js: counter-rotating the handle would make it
+  the one cell in the row that does not shift, splitting the row apart visually, and the point
+  of the move is that the grip IS a cell of that row. The case now asserts the ANCESTOR CHAIN
+  (the rail carries `hue-rotate(-120deg)`, the handle is not counter-rotated on top of it),
+  which is the half that can still regress silently, and leaves the colour itself to the eye.
+
+- **New guard: `scripts/check_css_template_backticks.js` + `test/unit/css_template_backticks.test.js`.**
+  A backtick inside a CSS COMMENT terminates the template literal a stylesheet is emitted from, so the
+  module throws a SyntaxError at require time — and this change hit that in three files at once. The
+  existing guard (`scripts/check_theme_backticks.js`) is hard-wired to `THEME_CSS` in js/ui_theme.js and
+  could not see it, and the failure was loud but MISLEADING: measured while this was written, one
+  injected backtick in js/dnd.js's sheet took the unit suite from 1470 passing to **1341 passing / 84
+  failing**, every message reading `TypeError: dnd.initDragAndDrop is not a function`. The new check
+  scans every named sheet emitter (js/dnd.js, js/filters.js, js/print_styles.js, js/ui_theme.js), blanks
+  `${...}` (a nested template there is legitimate), refuses to scan past a one-line `css += …;`
+  terminator so it cannot read the source below a template as its body, and names `file:line`. It
+  asserts its own file list exists, so a stale list cannot pass vacuously, and js/ui_theme.js remains
+  covered by both guards — its own test is untouched.
+- **`test/browser_e2e/spec_inventory.json` regenerated** (75 spec files / 329 tests, was 74 / 325): the
+  manifest was stale by one file — `action_menu_registration.spec.js` was committed without a
+  regeneration, so the gate would have reported a drift this change does not own.
 - **The five "Cannot create item with duplicate id" errors are gone — the action menu is registered
   once, from `onInstalled`.** `js/background.js` created its five action-menu entries (`sponsor`,
   `donate`, `buy-me-a-coffee`, `contribute`, `feedback`) at the **top level** of the MV3 service
@@ -40,6 +111,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Post-mortem, both blind spots and the falsification:
   `temp/issues/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`.
 - **On a short section the action bar no longer covers the centred grip — the bar yields.**
+  **SUPERSEDED in this same cycle by the rail-cell fix above**, which deletes the yield rule: a
+  level between two controls whose boxes are now disjoint decides nothing. Kept because it is
+  the record of option 3 and of what was measured while it stood.
   `section-extra-tidbits-wrapper` (151×62) was the 2.0.1 census failure recorded under Known issues
   below: the bar carries an inline `z-index: 1000000` (`js/main.js:2512`, via `window.Z.ACTIONS_BAR`)
   against the grip's 700002, so on a section short enough for the bar's band to reach the vertical
@@ -65,7 +139,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `drag_glow_layers`) **19 passing / 0 failing**. Reported and resolved in
   `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (option 3 chosen
   by the operator; Muse consulted on the loop, all five of his suggestions dispositioned there).
-- **The grip no longer sits on top of a short section's action-bar button.** The residual the entry
+- **The grip no longer sits on top of a short section's action-bar button.**
+  **SUPERSEDED in this same cycle by the rail-cell fix above**: the geometry subsystem this entry
+  builds (`gripBandFor` / `measureGripBands` / `--be-grip-*` / the `ResizeObserver`) is DELETED,
+  because the grip is laid out by the action row now and has no collision left to measure out of.
+  `test/unit/grip_geometry.test.js` keeps the file's name but asserts the opposite — that the
+  machinery stays gone — and this entry stands as the record of what was tried and measured.
+  The original opening sentence continues:
   above left behind — the yield fixed the stacking and nothing else could — was pure geometry: on
   `section-extra-tidbits-wrapper` (151×62) the grip's 34×26 plate is centred at (75.8, 31) and the
   🎯 Select button's 39×32 box at (74.5, 24), so the two centres are 1.3px apart across and 7px down
@@ -271,7 +351,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recorded honestly rather than asserted away:
   `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (three concrete fix
   options, all re-stacking, none attempted here — **option 3 was taken after this release; see
-  [Unreleased]**). The census assertion is a **ratchet on the count**
+  [Unreleased], where it is SUPERSEDED: none of the three could fix this, because the overlap was
+  never a cascade question. It is CLOSED structurally — the grip is a cell of the action row, so
+  no button shares its box (measured `buttonOverlapPx: 0` on every section).**). The census assertion is a **ratchet on the count**
   (`KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`) with the miss list printed, so a stacking regression that makes
   ordinary section content beat the grip blows far past the bound and goes red.
 

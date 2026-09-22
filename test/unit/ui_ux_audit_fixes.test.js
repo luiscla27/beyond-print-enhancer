@@ -116,7 +116,7 @@ describe('AC-5 — lock semantics are honest (U-7)', function () {
       'a locked layer no longer gets its own reveal rule — the active-layer rule is the ONE mechanism',
     );
     assert.ok(
-      /\.be-active-layer \.be-section-wrapper:hover \.be-section-actions,[\s\S]{0,160}?opacity:\s*1[\s\S]{0,80}?pointer-events:\s*auto !important/.test(
+      /\.be-active-layer \.be-section-wrapper:hover \.be-section-actions[\s\S]{0,260}?opacity:\s*1[\s\S]{0,80}?pointer-events:\s*auto !important/.test(
         css,
       ),
       'the ACTIVE layer reveals its action bar on hover',

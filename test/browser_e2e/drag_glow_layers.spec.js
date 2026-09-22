@@ -221,25 +221,54 @@ describe("PR #33 Shape glow / wrapper dragging + layer safety (Playwright e2e)",
         ),
         "no rule paints the green hover glow any more",
       );
-      // …and its replacement is live on the page: one centred nine-dot handle per
-      // section, invisible at rest, revealed only by the active layer.
+      // …and its replacement is live on the page: one nine-dot handle per section,
+      // the FIRST CELL of that section's action rail, invisible at rest, revealed
+      // only by the active layer.
       const atRest = await page.evaluate(() => {
         const sec = document.querySelector(
           ".be-active-layer .be-section-wrapper:not(.be-shape-wrapper)",
         );
-        const h = sec && sec.querySelector(":scope > .be-drag-handle");
+        const h = sec && sec.querySelector(":scope > .be-section-actions > .be-drag-handle");
         if (!h) return { present: false };
         const cs = getComputedStyle(h);
         const r = h.getBoundingClientRect();
+        const rail = h.parentElement;
+        // THE INVARIANT THAT REPLACED CENTRING: the grip is a cell of the rail, so
+        // the row's own layout must give it a box DISJOINT from every button's. Two
+        // absolutely-positioned siblings pinned at top:8/left:8 were 100% coextensive
+        // (temp/issues/ISSUE_corner_grip_lands_on_first_action_button_20260922.md) —
+        // this measures the overlap directly rather than trusting a z-index.
+        const intersect = (a, b) => {
+          const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const hh = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          return w > 0.5 && hh > 0.5 ? w * hh : 0;
+        };
+        const worst = Array.from(rail.querySelectorAll("button, .be-more-options-button"))
+          .filter((b) => b !== h)
+          .reduce(
+            (acc, b) => {
+              const area = intersect(r, b.getBoundingClientRect());
+              return area > acc.area
+                ? { area, cls: String(b.className).slice(0, 44) }
+                : acc;
+            },
+            { area: 0, cls: null },
+          );
         const w = sec.getBoundingClientRect();
         const countHandles = () =>
-          document.querySelectorAll(".be-section-wrapper > .be-drag-handle").length;
+          document.querySelectorAll(
+            ".be-section-wrapper > .be-section-actions > .be-drag-handle",
+          ).length;
         return {
           present: true,
           dots: h.querySelectorAll("circle").length,
-          // centred on the WRAPPER box, not on whatever content it holds
-          offCentreX: Math.abs(r.left + r.width / 2 - (w.left + w.width / 2)),
-          offCentreY: Math.abs(r.top + r.height / 2 - (w.top + w.height / 2)),
+          // the rail is at the section's TOP-LEFT corner (js/print_styles.js), so
+          // the grip in slot zero is the corner control the operator asked for
+          inCorner: r.top >= w.top - 0.5 && r.left >= w.left - 0.5,
+          firstCell: rail.firstChild === h,
+          overlapsAButtonPx: Math.round(worst.area),
+          overlapsClass: worst.cls,
+          position: cs.position,
           directChildOfWrapper: h.parentElement === sec,
           visibility: cs.visibility,
           pointerEvents: cs.pointerEvents,
@@ -251,10 +280,27 @@ describe("PR #33 Shape glow / wrapper dragging + layer safety (Playwright e2e)",
       });
       assert.ok(atRest.present, "the active layer's section carries a drag handle");
       assert.strictEqual(atRest.dots, 9, "the handle is the NINE-dot grip");
-      assert.ok(atRest.directChildOfWrapper, "it is a direct child of the wrapper");
       assert.ok(
-        atRest.offCentreX < 2 && atRest.offCentreY < 2,
-        `the handle sits at the CENTRE of the section (off by ${atRest.offCentreX},${atRest.offCentreY})`,
+        !atRest.directChildOfWrapper,
+        "it is NOT a sibling of the action bar any more — that is what made them share a box",
+      );
+      assert.ok(atRest.firstCell, "it holds the action rail's FIRST slot");
+      assert.ok(atRest.inCorner, "which puts it in the section's top-left corner");
+      assert.strictEqual(
+        atRest.position,
+        "relative",
+        "in flow, not overlaid: the flex row owns its box (got " + atRest.position + ")",
+      );
+      // THE COLLISION, ASSERTED AS A PIXEL COUNT. Overlap with any sibling control
+      // must be ZERO area, and the check is not vacuous: the pre-fix corner grip
+      // reported 1248 px (100% of a 39x32 button) against the Select button.
+      assert.strictEqual(
+        atRest.overlapsAButtonPx,
+        0,
+        "the grip shares NO area with a button" +
+          (atRest.overlapsClass
+            ? ` — ${atRest.overlapsAButtonPx}px over ${atRest.overlapsClass}`
+            : ""),
       );
       assert.strictEqual(atRest.visibility, "hidden", "invisible at rest");
       assert.strictEqual(atRest.pointerEvents, "none", "and unhittable at rest");
