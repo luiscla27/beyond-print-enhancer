@@ -70,7 +70,7 @@ async function launchExtensionContext() {
   // user-data dir. The one thing the default shape cannot express is "boot this profile a SECOND
   // time" — which is what an MV3 service worker does in real use, and what a defect that only fires
   // on the second worker START needs in order to be observable at all (see
-  // `temp/issues/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`: the fresh-profile rule
+  // `temp/archived/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`: the fresh-profile rule
   // is exactly why the five duplicate-id errors were invisible to every gate). `close()` still
   // removes the dir, so a case that revisits it must drop that wrapper first — deliberately awkward,
   // and detailed at the call site in `action_menu_registration.spec.js`.

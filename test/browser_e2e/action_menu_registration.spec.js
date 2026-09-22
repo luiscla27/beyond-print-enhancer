@@ -1,6 +1,6 @@
 /**
  * The action menu is registered ONCE, and stays registered across worker starts
- * (defect: `temp/issues/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`).
+ * (defect: `temp/archived/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`).
  *
  * WHAT THIS GUARDS, AND WHY NO OTHER CASE COULD. The operator's five lines —
  * `Unchecked runtime.lastError: Cannot create item with duplicate id sponsor|donate|
