@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-22
+
 ### Fixed
 - **The nine-dot grip is a CELL of the section's action row, so it can no longer land on a
   button.** It had been moved out of the section's centre into the top-left corner
@@ -237,6 +239,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolved in `temp/archived/ISSUE_scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914.md`
   and `temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md`.
 
+### Internal
+- Release gate (`node scripts/release_gate.js`) — PASS at the cut. Its browser-suite witness is
+  `temp/browser_gate/artifact.json`: serial run started `2026-09-23T00:06:07.257Z`, 5907 s,
+  **329 tests collected across 75 spec files → 234 passing / 95 pending / 0 failing**, exit 0, host
+  canary `{"boot_tolerated":0}`; all six required surfaces green (`byok_arrange_roundtrip` 7/7,
+  `manual_verification_phase0` 2/2, `phase1` 1/1, `phase2` 1/1, `phase3` 1/1, `phase4` 2/2), with
+  `js/` last changed `2026-09-22T14:52:44-06:00`. `npm test` (lint + unit + integration + manifest)
+  is **1472 passing / 0 failing / 1 pending**, lint clean. No product code changed after the
+  artifact was recorded, so the gate covers exactly what ships in this release.
+- `package-lock.json`'s root `version` still reads `2.0.1`. It is NOT bumped: no gate or test asserts
+  that field (the version-parity contract in `manual_verification_phase4.spec.js` is
+  `package.json` = `manifest.json` = newest CHANGELOG heading), and rewriting the lock without a real
+  `npm install` would make its diff unreviewable. Recorded here so the next release either settles it
+  with an install or deletes the discrepancy deliberately.
+
 ## [2.1.0] - 2026-09-20
 
 ### Added
@@ -351,7 +368,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recorded honestly rather than asserted away:
   `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (three concrete fix
   options, all re-stacking, none attempted here — **option 3 was taken after this release; see
-  [Unreleased], where it is SUPERSEDED: none of the three could fix this, because the overlap was
+  `2.1.1`, where it is SUPERSEDED: none of the three could fix this, because the overlap was
   never a cascade question. It is CLOSED structurally — the grip is a cell of the action row, so
   no button shares its box (measured `buttonOverlapPx: 0` on every section).**). The census assertion is a **ratchet on the count**
   (`KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`) with the miss list printed, so a stacking regression that makes
@@ -467,7 +484,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   product call that needs a legibility measurement rather than a hunch; the committed page rasters are
   the material for it. Filed as its own decision, with the measurements and the four options:
   `temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md` (path as filed; the decision was taken
-  in `[Unreleased]` above — options 1 + 2 together). See §5 of the fix report.
+  in `2.1.1` above — options 1 + 2 together). See §5 of the fix report.
 
 ## [1.17.2] - 2026-09-12
 
