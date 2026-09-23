@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`package-lock.json`'s root `version` is synced to the package.** It had drifted to `2.0.1`
+  and stayed there across the 2.1.0 and 2.1.1 bumps — the 2.1.1 `### Internal` note records it was
+  deliberately left alone at the cut (no `npm install` review had been run, and changing a lockfile
+  blind makes the diff unreviewable). This closes that note: the bump was performed with
+  `npm install --package-lock-only`, which rewrites exactly the two root `version` fields (top-level
+  and `packages[""]`) and touches no dependency resolution — so the sync is reviewable line-for-line
+  and the lock can no longer claim a version the product does not ship. No gate asserts this parity
+  (`manual_verification_phase4.spec.js` checks `package.json` vs `manifest.json` vs the newest
+  CHANGELOG heading only), so this is hygiene, not a defect the release path would have caught.
+
 ## [2.1.1] - 2026-09-22
 
 ### Fixed
