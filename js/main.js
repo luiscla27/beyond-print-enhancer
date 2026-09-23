@@ -166,7 +166,7 @@ Licensed under Blue Oak Model License 1.0.0
   const { handleSaveBrowser, handleSavePC, handleLoadFile, restoreLayout, applyDefaultLayout, handleLoadDefault, restoreFailureCard: showRestoreFailureCard, announceBootRestore } = Persistence;
 
   const LayoutScan = window.LayoutScan || {};
-  const { scanLayout, migrateLayout } = LayoutScan;
+  const { scanLayout, migrateLayout, currentExtractionIds } = LayoutScan;
 
   const LayoutApply = window.LayoutApply || {};
   const { applyLayout } = LayoutApply;
@@ -774,6 +774,17 @@ Licensed under Blue Oak Model License 1.0.0
     const clone = sanitizedClone; // Alias for existing logic compliance
     clone.style.display = ""; // Ensure clone is visible
     clone.classList.remove("be-extractable"); // Avoid nested triggers in clone
+    // THE CLONE CANNOT KEEP THE SOURCE'S ID. `cloneNode(true)` copies it, and a document with two
+    // elements sharing an id resolves `getElementById` to whichever comes FIRST in document order
+    // — so after an extraction the id points at the CARD's copy, not at the live block. Every
+    // restore that has to reach the live one then writes to the wrong node, which is what made an
+    // undone extraction leave its source hidden: `applyLayout` cleared the `display` on the copy
+    // inside the card it was about to delete, and the sheet's block stayed `display: none
+    // !important`. The live original KEEPS the id (that is what `dataset.originalId` names, and
+    // what rollback and the selector fallback look up), so dropping it here costs nothing and
+    // makes every one of those lookups deterministic. MEASURED in the real browser: two matches
+    // before, one after, and the block visible again.
+    clone.removeAttribute("id");
 
     // Hide original header/title inside the clone to avoid duplication
     const originalHeader = clone.querySelector(
@@ -2390,29 +2401,61 @@ Licensed under Blue Oak Model License 1.0.0
   /**
    * EXTRACT, recorded — the USER entry point for extraction.
    *
-   * ATTEMPTED AND REVERTED 2026-09-11, and the reason is recorded because the GAP IS REAL and
-   * should not be mistaken for "handled": creating an extraction is a structural addition
-   * (`scanLayout` records `extractions[]`) with NO capture point, so "extract this" is not
-   * undoable while "roll the extraction back" is.
+   * THE HOLE THIS CLOSES (track undo_stack_20260911, left open deliberately and recorded
+   * here since 2026-09-11): creating an extraction is a structural ADDITION — `scanLayout`
+   * records `extractions[]` — and it had NO capture point, so "extract this" was not undoable
+   * while "roll the extraction back" was.
    *
-   * WHY IT IS NOT SIMPLY WIRED HERE. Awaiting the capture before the mutation defers the
-   * extraction by a microtask, and EIGHT existing tests dispatch a dblclick and then assert
-   * synchronously — they went red, which is the same tension Phase 2e hit for the border and
-   * compact sites. Wiring this class properly therefore needs the NON-DEFERRING pattern
-   * (start the capture, mutate synchronously, push afterwards) PLUS a repair, because this
-   * class ADDS an entry: a capture that finishes after the mutation INCLUDES the new
-   * extraction, so the record would be the post-state and the undo a no-op. The repair is
-   * straightforward but specific — snapshot the extraction ids synchronously before the
-   * mutation, then strip any entry the record gained — and it is left for its own change
-   * rather than half-landed here.
+   * WHY THE OBVIOUS WIRING COULD NOT BE USED. Awaiting `captureUndo` before the mutation
+   * defers the extraction by a microtask, and the dblclick tests (and the click bridge's
+   * other synchronous-asserting callers) dispatch the gesture and then read the DOM — the
+   * same tension Phase 2e hit for the border and compact sites. So this uses the
+   * NON-DEFERRING pair: start the capture on the pristine DOM, mutate synchronously, push
+   * afterwards.
    *
-   * The capture also cannot live inside `handleElementExtraction` itself:
-   * `js/layout_apply.js:278` AWAITS that function on the RESTORE path, so a record there would
-   * be pushed by every layout apply — the feedback loop the contract forbids. Same reason the
-   * destructive gate for `splitSkillsBox` sits at its user entry point, not inside it.
+   * AND WHY A REPAIR IS MANDATORY, not optional: this class ADDS an entry. `scanLayout`
+   * awaits storage BEFORE it walks the DOM, so the capture's reads land AFTER the mutation
+   * and the settled record CONTAINS the extraction the user is trying to undo — pushing it
+   * raw would make the undo restore the post-state, a no-op dressed as a record. The repair
+   * is `stripLateAdditions`: the extraction ids were snapshotted SYNCHRONOUSLY before the
+   * mutation, and any entry the record gained is removed from it. The id set comes from
+   * `currentExtractionIds` (js/layout_scan.js) — the serializer's OWN classifier — rather
+   * than a `querySelectorAll` of this file's, because the record and the reader must agree
+   * about which array an entry belongs in (a spell detail carries BOTH
+   * `be-spell-detail` and `be-extracted-section` and is recorded in `spell_details[]`).
+   *
+   * The capture lives HERE and not inside `handleElementExtraction` itself:
+   * `js/layout_apply.js` AWAITS that function on the RESTORE path, so a record there would
+   * be pushed by every layout apply — the feedback loop the contract forbids. Same reason
+   * the destructive gate for `splitSkillsBox` sits at its user entry point, not inside it.
+   *
+   * When the user CANCELS the title prompt there is no mutation and no record; that is why
+   * the push waits on the result rather than firing unconditionally.
    */
   async function extractElementRecorded(el) {
-    return handleElementExtraction(el);
+    const canRecord =
+      typeof window.beginMutation === "function" &&
+      typeof window.pushMutation === "function" &&
+      typeof currentExtractionIds === "function" &&
+      typeof window.repairLateExtractions === "function";
+    if (!canRecord) return handleElementExtraction(el);
+
+    const snap = { extractionIds: currentExtractionIds() };
+    const mut = window.beginMutation(snap);
+    const result = handleElementExtraction(el);
+
+    return Promise.resolve(result).then((wrapper) => {
+      if (wrapper) {
+        const title = wrapper.dataset.title || "Content";
+        window.pushMutation(
+          mut,
+          'Extract "' + title + '"',
+          window.MUTATION_CLASSES.STRUCTURAL,
+          window.repairLateExtractions,
+        );
+      }
+      return wrapper;
+    });
   }
 
   function handleManageCompact() {

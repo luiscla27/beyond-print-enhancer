@@ -35,6 +35,48 @@ function isTransientDragNode(el) {
   return Boolean(el.closest(".be-drag-ghost, .be-drag-guides, .be-ai-ghost"));
 }
 
+/**
+ * True when `scanLayout` would put this node in `layout.extractions`.
+ *
+ * The classifier is a PRECEDENCE chain, not a membership test: a spell-detail section carries
+ * BOTH `be-spell-detail` and `be-extracted-section` (`js/spells_ui.js:108`), and is recorded in
+ * `spell_details[]` because that branch runs first. Anything that asks "is this an extraction the
+ * layout record owns" has to reproduce the same order or it disagrees with the serializer.
+ */
+function isRecordedExtraction(section) {
+  if (!section || !section.classList) return false;
+  if (!section.classList.contains("be-extracted-section")) return false;
+  return (
+    !section.classList.contains("be-spell-detail") &&
+    !section.classList.contains("be-clone") &&
+    !section.classList.contains("be-shape")
+  );
+}
+
+/**
+ * The extraction ids the CURRENT DOM would serialise — read SYNCHRONOUSLY.
+ *
+ * WHY THIS EXISTS RATHER THAN LETTING THE CALLER QUERY: membership in `extractions[]` is decided
+ * by the precedence chain above plus `isTransientDragNode`, and `scanLayout` keeps both rules in
+ * ONE place. A caller that re-implemented the predicate would silently disagree with the
+ * serializer the moment either rule moved.
+ *
+ * It is deliberately NOT the full `scanLayout`, which awaits storage mid-scan
+ * (`__DDBStorage.getAllSpells` below) and therefore cannot be read at the synchronous moment a
+ * mutation is about to happen. That is the moment the undo stack's structural-addition sites need:
+ * `beginMutation`'s capture starts here and settles after them, so the record they push contains
+ * the node the user is trying to undo. See `js/undo.js`'s `stripLateAdditions`.
+ */
+function currentExtractionIds() {
+  const ids = [];
+  document.querySelectorAll(".print-section-container").forEach((section) => {
+    if (isTransientDragNode(section)) return; // the scan skips a ghost too
+    if (!section.id) return; // and an id-less node is not recorded
+    if (isRecordedExtraction(section)) ids.push(section.id);
+  });
+  return ids;
+}
+
 async function scanLayout() {
   const peDom = window.DomManager ? window.DomManager.getInstance() : null;
   const layerManager = peDom ? peDom.getLayerManager() : null;
@@ -195,7 +237,7 @@ async function scanLayout() {
       return;
     }
 
-    if (section.classList.contains("be-extracted-section")) {
+    if (isRecordedExtraction(section)) {
       const originalId = section.dataset.originalId;
       const original = document.getElementById(originalId);
 
@@ -429,6 +471,7 @@ function migrateLayout(data) {
 const LayoutScan = {
   scanLayout,
   migrateLayout,
+  currentExtractionIds,
 };
 if (typeof module !== "undefined" && module.exports) {
   module.exports = LayoutScan;

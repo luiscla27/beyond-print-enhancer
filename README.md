@@ -238,7 +238,7 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
 5. **Decorative Shapes**: Add resizable, rotatable graphical elements to your sheet. Includes a library of borders, corners, and accents.
 6. **Custom Asset Upload**: Upload your own image files (PNG, WebP, etc.) to use as custom shapes.
 7. **Section Cloning**: Create snapshots of sections like Spells to show different filtered lists (e.g., "Combat" vs "Social") simultaneously.
-8. **Dynamic Extraction**: Double-click any block of content (traits, features, actions) to extract it into its own floating, resizable card.
+8. **Dynamic Extraction**: Double-click any block of content (traits, features, actions) to extract it into its own floating, resizable card — and undo that too: it puts the block back on the sheet and removes the card.
 9. **Compact Mode**: One-click condensed view for complex sections to maximize information density.
 10. **Border Customization**: Choose from multiple themed border styles (Archer, Barbarian, Goth, etc.) for any section.
 11. **Templates**: Apply professional layouts (like the classic Archer theme) instantly.
@@ -250,7 +250,9 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
     cannot be written. But the stack goes further: **drag to move, resize, rotate,
     reorder layers, move a shape to another layer, toggle compact mode, change a border
     or a shape, flip a layer's lock / print / visibility, rename a layer, add and clone**
-    are all reversible too, newest first, one change at a time. Undo is reachable from
+    are all reversible too, newest first, one change at a time — and so is **extracting**
+    one (the double-click that turns a block into a floating section puts its section
+    back and removes the new one; that arm was the last one missing). Undo is reachable from
     the panel control — which names what it will undo ("Undo: Toggle \"Actions\"") and is
     disabled when there is nothing to undo — and from **Ctrl+Z / Cmd+Z**, which stays
     inert while you are typing in a text field so your typing keeps the browser's undo.

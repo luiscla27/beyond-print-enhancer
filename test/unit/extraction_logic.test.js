@@ -139,6 +139,36 @@ window.eval(sectionUtilsContent);
     assert.strictEqual(clonedHeader.style.display, 'none', 'Original header inside clone should be hidden');
   });
 
+  it('the extraction leaves exactly ONE element carrying the source id', function() {
+    // WHY THIS IS PINNED IN JS, NOT ONLY IN THE BROWSER. `getSanitizedContent` clones the source
+    // with `cloneNode(true)`, which COPIES ITS ID, so the card used to hold a second element with
+    // the same id as the live block it came from. `getElementById` answers with whichever match
+    // comes FIRST in document order, so after an extraction the id resolved to the COPY INSIDE THE
+    // CARD — and every restore that looks the original up by id then wrote to the wrong node.
+    // That is what made an undone extraction leave its source hidden: the undo cleared the display
+    // on a copy in a card it was about to delete. Measured in the real browser (2 matches,
+    // getElementById -> inCard: true), and invisible to every assertion written before it.
+    const target = document.getElementById('target-element');
+    target.dispatchEvent(new window.MouseEvent('dblclick', { bubbles: true }));
+
+    const matches = document.querySelectorAll('#target-element');
+    assert.strictEqual(
+      matches.length,
+      1,
+      'exactly one element carries the source id after an extraction',
+    );
+    assert.strictEqual(
+      matches[0],
+      target,
+      'and it is the LIVE source block — not the copy inside the extracted card',
+    );
+    // The card still exists and is findable by its own id (the record keeps working).
+    const card = document.querySelector('.print-section-container.be-extracted-section');
+    assert.ok(card, 'the extracted card was created');
+    assert.ok(card.id, 'and it has its own id');
+    assert.notStrictEqual(card.id, 'target-element', 'which is not the source id');
+  });
+
   it('should rollback extraction when section is closed', function() {
     const target = document.getElementById('target-element');
     const dblClickEvent = new window.MouseEvent('dblclick', { bubbles: true });

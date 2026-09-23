@@ -150,8 +150,15 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // the two bare aliases this file's draft also published (`arrangeWithAi`,
     // `showAiArrangeSurface`) were dropped for having no second reader, which is the guard's own
     // verdict recorded in js/ai_arrange.js.
-    assert.strictEqual(SUMMARY.directExports, 162, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 161, "of which module exports");
+    // +1 (162 -> 163): the extraction-undo repair adds `window.repairLateExtractions`, because its
+    // reader (the extraction site in js/main.js) is evaluated AFTER js/undo.js and every other
+    // capture primitive resolves through this seam for exactly that reason. The generic
+    // `stripLateAdditions` it wraps is deliberately NOT a seam — its only caller is in-module, and
+    // a seam with no outside reader is what the re-rot guard below deletes. `currentExtractionIds`
+    // is also NOT a `window.*` of its own; it joins the `LayoutScan` namespace (a member, counted
+    // below), which is the surface js/main.js already destructures.
+    assert.strictEqual(SUMMARY.directExports, 163, "direct `window.*` assignments");
+    assert.strictEqual(SUMMARY.moduleExports, 162, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

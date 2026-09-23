@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Extracting a section is now undoable.** Double-clicking a block into a floating card was the
+  LAST mutation in the product with no record behind it: rolling an extraction back was undoable
+  while making one was not, so `Ctrl+Z` after an extract reverted whatever you had done *before*
+  it. The gap was found during `undo_stack_20260911` and deliberately left open rather than
+  half-landed — awaiting the capture before the mutation defers the extraction by a microtask
+  (eight dblclick tests assert synchronously and went red), and a late capture *includes* the new
+  section, so the record would be the post-state and the undo a silent no-op. Both halves are now
+  built: the site uses the non-deferring pair (start the capture, mutate synchronously, push
+  afterwards), and `stripLateAdditions` repairs what that costs — the extraction ids are
+  snapshotted synchronously before the mutation and any entry the record gained is removed from
+  it, so the record is the pre-add layout. It strips ONLY what the gesture added: an extraction
+  you already had survives the repair (the over-reach arm is asserted separately, because
+  "empty the array" would pass the first case and destroy your sheet). The undo puts the original
+  block back on the page and removes the card, and the label names it (`Extract "Actions"`).
+- **An extracted card no longer carries a second copy of its source's `id`.** Found by MEASURING
+  the undo above in the real browser rather than by reading the code: the extraction hid its
+  source, the record was right, the restore ran — and the block stayed invisible. `cloneNode(true)`
+  copies the `id`, so the document held TWO elements with the source's id, and `getElementById`
+  answers with whichever comes FIRST in document order — after an extraction, that is the copy
+  INSIDE THE CARD. Every path that restores the source by id (`applyLayout`'s extraction teardown,
+  `rollbackSection`, the reset-to-defaults sweep, the clone-repositioning pass) was writing to a
+  node about to be deleted while the real block kept `display: none !important`. Measured: 2
+  matches for the id before, 1 after, and the source visible again. The live original keeps the id
+  — that is what the record's `originalId` names and what the selector fallback re-assigns — so
+  nothing that resolves the original changes. Pinned in `test/unit/extraction_logic.test.js`
+  (falsified: with the strip removed the assertion goes red) and asserted in the browser e2e.
 - **`package-lock.json`'s root `version` is synced to the package.** It had drifted to `2.0.1`
   and stayed there across the 2.1.0 and 2.1.1 bumps — the 2.1.1 `### Internal` note records it was
   deliberately left alone at the cut (no `npm install` review had been run, and changing a lockfile
