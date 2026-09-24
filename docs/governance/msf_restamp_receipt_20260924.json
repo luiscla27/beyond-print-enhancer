@@ -1,15 +1,22 @@
 {
   "type": "msf_restamp_receipt",
+  "schema_version": 1,
   "project": "dndbeyond-printenhance",
-  "generated_utc": "2026-09-24T21:04:00Z",
+  "generated_utc": "2026-09-24T23:34:30Z",
+  "local_paths_included": false,
+  "redaction_policy": "strip-user-home-and-absolute-drive-paths",
+  "receipt_is_public_safe": true,
   "lock": {
+    "path_token": "modelstack.lock",
     "unit_revision": "982956cc7eeb8f3af8688a581216694ae459c242563d7cc591040eea6793ba0b",
     "framework_revision": "dd3dcd72fc0a3ce4e64a71df3ceb2df171416787",
+    "catalog_revision": "6e4d31f3b033",
     "files": 183
   },
   "governance": {
     "stamped_utc": "2026-09-24T20:46:12Z",
-    "unit_count": 21
+    "unit_count": 21,
+    "declaration": "governance: enforced"
   },
   "verification": {
     "validate_all": {
@@ -23,67 +30,61 @@
       "unit_revision_prefix": "982956cc7eeb",
       "framework_revision_prefix": "dd3dcd72fc0a"
     },
-    "guard_roots": [
-      "C:\\luiscla27\\projects\\dndbeyond-printenhance",
-      "C:\\luiscla27\\projects\\dndbeyond-printenhance\\vendor"
-    ]
+    "guard": {
+      "roots": ["<project-root>", "<project-root>/vendor"],
+      "verdict": "HOUSEKEEPING GUARD OK",
+      "exit": 0
+    }
   },
   "tracked_hashes_only": true,
   "evidence_policy": {
-    "disk_authority": "modelstack.lock + governance.stamps.json",
-    "live_authority": "orchestrator startup attestation (preferred) or live PID + served-module attestation",
+    "disk_authority": "modelstack.lock + governance.stamps.json (worktree receipt truth)",
+    "live_authority": "process probe of the listening relay (scripts/relay_serving_identity.py) in the ledger docs/governance/msf_live_attestations.jsonl",
     "scratch_hash_verifier": "diagnostic_only_not_evidence",
-    "hash_mismatch_policy": "file_framework_defect_do_not_resolve_locally"
+    "hash_mismatch_policy": "file_framework_defect_do_not_resolve_locally",
+    "public_exclusion": "framework bodies are NOT committed; /vendor/ and /governance.stamps.json stay out of history by the generated public block"
   },
   "served_relay_probe": {
     "type": "served_relay_probe",
     "project": "dndbeyond-printenhance",
     "port": 38116,
-    "pid": 11352,
-    "creation_date": "2026-09-24T14:51:01-06:00",
-    "argv": [
-      "C:\\Users\\luisC\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe",
-      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\reasonix_proxy.py",
+    "pid": null,
+    "pid_in_receipt": false,
+    "pid_in_attestation": true,
+    "attestation_row": "docs/governance/msf_live_attestations.jsonl#dnd-relay-20260924",
+    "served_module_token": "orch:vendor/relay/reasonix_proxy.py",
+    "project_module_token": "dnd:vendor/relay/reasonix_proxy.py",
+    "argv_tokens": [
+      "<path>",
+      "orch:vendor/relay/reasonix_proxy.py",
       "--project",
       "dndbeyond-printenhance"
     ],
-    "served_module": "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\reasonix_proxy.py",
-    "checked_utc": "2026-09-24T21:04:00Z",
-    "files": {
-      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\reasonix_proxy.py": {
-        "sha256": "94b39874c422f48eb86f67818946b6dcafcfb69b1eb9fdd160517351185d5d34",
-        "dnd_vendor_sha256": "94b39874c422f48eb86f67818946b6dcafcfb69b1eb9fdd160517351185d5d34",
-        "match": true,
-        "mtime_utc": "2026-09-24T20:46:11.639049+00:00"
-      },
-      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\wire\\__init__.py": {
-        "sha256": "9ff5c2a40e4542c206032f17439eee973496de9e804369e12d6a0557036303c6",
-        "dnd_vendor_sha256": "9ff5c2a40e4542c206032f17439eee973496de9e804369e12d6a0557036303c6",
-        "match": true,
-        "mtime_utc": "2026-09-24T20:46:11.643058+00:00"
-      },
-      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\adapters\\__init__.py": {
-        "sha256": "388a5bb23ba416aa1a43d1f88c7819dd75e00a0103d645b6e73f40b570cd5298",
-        "dnd_vendor_sha256": "388a5bb23ba416aa1a43d1f88c7819dd75e00a0103d645b6e73f40b570cd5298",
-        "match": true,
-        "mtime_utc": "2026-09-24T20:46:11.637045+00:00"
-      },
-      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\gen_relay_roles.py": {
-        "sha256": "4681d57e3fa15cc4c154eeb337821c8fdec6f72f681762824da05dedc3ea0d88",
-        "dnd_vendor_sha256": "4681d57e3fa15cc4c154eeb337821c8fdec6f72f681762824da05dedc3ea0d88",
-        "match": true,
-        "mtime_utc": "2026-09-24T20:46:11.637045+00:00"
-      },
-      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\test_reasonix_proxy.py": {
-        "sha256": "d23e99ff05f9a0695badff8b12de31ef4a600dbb444bf99b5844584840dae94e",
-        "dnd_vendor_sha256": "d23e99ff05f9a0695badff8b12de31ef4a600dbb444bf99b5844584840dae94e",
-        "match": true,
-        "mtime_utc": "2026-09-24T20:46:11.641053+00:00"
-      }
+    "argv_sha256": "f97193839d622fa090a669bb56749315b792e25e9abfee9fb17f301f707c511c",
+    "checked_utc": "2026-09-24T23:34:30Z",
+    "process_created_utc": "2026-09-24T20:51:01Z",
+    "module_mtime_utc": "2026-09-24T20:46:11Z",
+    "relay_self_report": {
+      "schema": "msf.reload.v1",
+      "reachable": true,
+      "reported_pid_matches_listener": true,
+      "catalog_revision": "2026-09-18.1",
+      "draining": false
+    },
+    "relay_pins": {
+      "checked": 20,
+      "matched": 20,
+      "mismatches": []
+    },
+    "unit_pins": {
+      "checked": 183,
+      "matched": 183,
+      "mismatches": []
     },
     "hash_match": true,
     "billing_marker_present": true,
-    "verdict": "STALE-UNIT",
-    "notes": "Orchestrator vendor tree carries the fourth-pass unit (lock unit 982956cc7eeb), but the live process predates orchestrator receipt (PID created 2026-09-24 14:51:01 local vs file mtime 14:46:11 local). Verdict is STALE-UNIT until the orchestrator relay restarts."
+    "evidence_class": "process_probe",
+    "verdict": "PROVENANCE-OK",
+    "notes": "One relay pin set (20 files) and the whole pinned unit (183 files) match the SERVED overlay, and the listening process was created 2026-09-24T20:51:01Z, after the newest served source file at 2026-09-24T20:46:11Z — so it cannot be serving pre-restamp bytes. The relay's own reload surface corroborates: it reports the same pid the OS reports and catalog revision 2026-09-18.1. An earlier draft of this receipt recorded STALE-UNIT from a date comparison that ran the wrong way; the verdict was corrected against the measurements, not the other way round."
   }
 }
