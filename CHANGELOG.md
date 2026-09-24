@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **§5's own yardstick could not see §5 passing — `admission_cutover()` now splits by instant
+  (`scripts/utility_telemetry.py`, 2026-09-21, telemetry handoff §27).** The after-state landed at
+  **2026-09-21T20:14:05.299Z** (90 → 98 `admission_summary` decisions, **0** per-candidate rows at
+  or after it, 112 candidates carried inside the summaries, max 2 per decision, and the pre-cutover
+  baseline of 201 detail rows intact), yet `cmd_admission` kept printing the BEFORE report because
+  it chose its branch from `if not rows:` — "does the window hold any `admission_rejected` row" —
+  and a straddling rolling window always holds the old detail rows at its head. Four verdicts now,
+  each with its own wording: `compacted` (summaries + 0 detail after → §5 SATISFIED), `mixed`
+  (summaries AND later detail → **not** a pass, named as the double-writer defect the old code could
+  not express at all), `undated` (summaries with no parseable instant → refuse to invent a cutover,
+  the `min([])`-to-"compacted" vacuous-green class), `before_only`. The before-branch prose was also
+  rewritten: it asserted "the store carries 0 summary rows for ONE reason only" and "muse-lane
+  traffic stopped" as live facts against a store holding 90 summaries and 90 muse rejections in 9 h;
+  it now states the two readings the branch actually supports. Falsified, not asserted:
+  `temp/scratch/s27_falsify_cutover.py` swaps in the old predicate and turns 3 of the 4 new
+  properties red (the 4th holds under both rules — recorded, not rounded up). Verification:
+  `admission --days 1` → **ADMISSION SUMMARIES**; `selftest` 33 → **37 properties**; `mocha
+  test/unit/utility_telemetry.test.js` 24 → **25 passing**; full suite **1471 passing / 1 pending /
+  0 failing**; close-out guard OK on both roots. No `vendor/` byte touched.
 - **Extracting a section is now undoable.** Double-clicking a block into a floating card was the
   LAST mutation in the product with no record behind it: rolling an extraction back was undoable
   while making one was not, so `Ctrl+Z` after an extract reverted whatever you had done *before*
@@ -43,6 +62,141 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and the lock can no longer claim a version the product does not ship. No gate asserts this parity
   (`manual_verification_phase4.spec.js` checks `package.json` vs `manifest.json` vs the newest
   CHANGELOG heading only), so this is hygiene, not a defect the release path would have caught.
+
+### Internal
+- **Deliberation required as the default for every new track (operator fleet mandate 2026-09-23,
+  track `deliberation_default_mandate_20260923`).** The operator decided "Turn deliberation as
+  required on all projects." The convention is carried by `vendor/conductor/workflow.md` §"Track
+  Creation (default deliberation — operator mandate 2026-09-23, binding)" (three clauses:
+  creation-time declaration, single-answer decisions not exempt, no retro-declaration) and
+  `vendor/AGENTS.md` (working-rule bullet, lines 68–74). Three candidates deliberated: two
+  INADMISSIBLE (would edit a stamped body — the guard at hash `c5e8d8de7acc…` and the pre-commit
+  hook at `5bbb48a9a1c2…`), one SURVIVOR (the convention). Guard green on both roots,
+  `msf validate --all` 0 errors, `verify_lanes` OK, `input_budget` OK. Known limit: convention
+  lives under `vendor/` (gitignored); a fresh clone carries the floor but not the convention text.
+- **Telemetry handoff §28 (session 16, 2026-09-21/22): §2's deferred question is ANSWERED with the
+  row census, and the record's own debts are closed.** Census (`temp/scratch/s28_verdict_census.py`):
+  store 60,255 rows = 25,405 completed + 25,305 task_completed + 9,334 `admission_rejected` + 98
+  `admission_summary` + 84 failed + **18 verdicts** + 11 shutdown; per cell qwen 10,574 calls / 15
+  judged / $2.34120 (**93.6 % of store spend**), deepseek 13,935 / 0, mimo 598 / 1, nous 352 / 2,
+  glm 70 / 0. **Decision on §12's follow-up: NOT actionable, and the reason is the missing comparator
+  rather than the qwen data** — every cell but qwen sits under the ≥8 bar and they hold only 6.4 %
+  of spend together, so §4's "both samples or no comparison" rule decides. Also recorded plainly:
+  the 100 % `useful_response_rate` is an artifact of §20.1's anchor recipe (every verdict is anchored
+  to a commit whose acceptance artifact was GREEN — selected-by-success, so accrual cannot lower it,
+  only a different evidence source can), and `cost_to_first_useful=$0.000000` is a
+  **window-dependent earliest-prefix fact** — qwen's rows are 4,392 explicit `$0.0`
+  (`relay_estimate_free`, the free leg ending 09-16T21:05Z) + 6,160 positive
+  (`relay_estimate_bai_now_billed`) + 6 unpriced, and the same metric on `--days 1` prints
+  **$0.010491** for a different first-useful verdict, which proves the walk sums real money. §23.2's
+  "no code change, do not fix this figure" is CONFIRMED for the right reason. §6's tail re-measured
+  whole-store: max 776,391 ms, **55 calls > 300 s** (§23.3: 46), deadline coverage **97/25,521 =
+  0.38 %** with `request_deadline_phase` null on all 97. **§21.3's identity claim corrected:** all 18
+  verdict rows — including the 12 written through the synced builder — are still `unknown`-writer
+  with 3/3 SPEC §27 fields missing, because the unit's `runtime_identity()` /
+  `policy_instance_revision()` are called from `build_record` (`vendor/relay/telemetry/__init__.py:482`)
+  and NOT from `build_evaluation_record` (`:643`), which takes no identity kwargs; a consumer cannot
+  stamp its verdict rows through the contract endpoint. The fleet reader's store-wide pass over the
+  rows it actually consumes (`read_telemetry`, call rows only) puts this project's contribution in
+  the bucket whose docstring demands zero: **`relay`: 5,085 rows without identity**. Filed to MSF as
+  `ISSUE_msf_identity_stamp_reaches_neither_verdict_rows_nor_relay_call_rows_20260921.md` (new file
+  under that project's `temp/issues/`; its code untouched). Accrual ceiling stated with arithmetic
+  (§28.3): a verdict requires a commit made on that route's session — deepseek's 13,935 calls have
+  never carried one, so probing cannot raise it. Record debts closed: §27 was truncated mid-word at
+  line 2413 (session-15 disposition/verification/open list never existed) and had **no CHANGELOG
+  mirror** — both written; §10's "the DATA is 0 judged today" corrected; §8 line 4 checked with the
+  cutover instant; `AGENTS.md`'s pin bullet advanced from `e2084dd93869`/`a457f4974a44` to the live
+  lock (`245490672957`/`d93534bdcd33`, 181 files); session 12's and 14's unsupported `nous 4/8`
+  corrected to 2/8 with the anchor-vs-verdict vocabulary trap named (§27.4). §28.7 is this session's own citation audit
+  (`temp/scratch/s28_verify_pointers.py`): 186 paths across the handoff/CHANGELOG/AGENTS + 8
+  `file:NNN` pointers in the vendored unit re-verified -> **0 stale lines, 0 undocumented danglers**
+  (5 historical, 12 moved/foreign-resolved), exit 0 -- after the checker itself produced 30+ FALSE
+  danglings from an extension alternation that matched `.js` inside `.jsonl`, and after a
+  longest-first-ordering explanation this session had written was FALSIFIED by a 2x2 re-run
+  (§28.7: the `(?![\w])` guard alone fixes it). The audit also machine-checks §28.4's mechanism
+  claim (`build_evaluation_record`: 21 params, no `**kwargs`, no identity params). §28.8 hands ORCH
+  the 09-21 re-measure of their own pass criterion (0.38 % coverage, phase null on all 97, 55 calls
+  > 300 s). Gates: `selftest` 37 properties, `mocha test/unit/utility_telemetry.test.js` 25 passing,
+  `pytest vendor/relay/test_reasonix_proxy.py` **334/334 at pin 245490672957**
+  (`temp/scratch/s28_relay_pytest.txt`), `drift_check OK`, guard OK on both roots. Handoff stays OPEN:
+  §6's deadline is the last measurable §8 criterion and belongs to ORCH.
+
+- **Telemetry handoff §29/§30/§31 (sessions 16 close-out → 17, 2026-09-22/23): §6's owner turned out
+  to be THIS project, and the record's own mirror had been orphaned.** The three sessions are one
+  story, so they are mirrored together — and the reason they NEED mirroring is itself the finding:
+  `scripts/utility_telemetry.py` and its test are R3-ignored (`.gitignore:201-202`), so for that
+  harness the CHANGELOG **is** the durable artifact, and the §27/§28 mirror had been committed as
+  `c667a3b` (65 insertions) on a line that "Master Revamp (#40)"/"Huge Revamp (#41)" orphaned —
+  `c667a3b` is **not an ancestor of HEAD**, so it survived only on
+  `backup/master_revamp-prerebase-20260922` and every later session's notes were unrecoverable prose.
+  Both blocks were recovered verbatim from that branch (`git show c667a3b -- CHANGELOG.md`) and
+  restored here, beside these. Measured before the restore: `git show HEAD:CHANGELOG.md | grep -c
+  s27_falsify_cutover` = **0**.
+- **§6 is not ORCH's, and the box that says so was mis-worded.** The §8 criterion "Workflow deadline
+  is explicit and propagated to the relay/MSF path" has been the ONLY unmet box since session 13, and
+  the record carried two false premises about it. (1) The field it told a reader to check,
+  `request_deadline_phase`, has **0 hits in the pinned `vendor/` tree** — it was always a DND-side
+  reporter label; the real keys are `caller_timeout_ms` (execute/plan **0 of 28,176**; recover
+  115/3,018 = 3.81%, whose coverage predates this change and comes from `compact.go:633`'s own ctx)
+  plus `deadline_fired` (5 rows, all `provider_timeout`, all 504). (2) "HANDED OFF to ORCH / nothing
+  in this project can move it" was FALSE: ORCH's
+  `ISSUE_relay_deadline_header_only_reaches_recover_and_summarize_20260919` is FIXED and archived
+  (2026-09-21, fix option 1), but the fix is **opt-in per provider seat**, so the last mover is a
+  one-line decision here. `request_timeout_seconds = 900` is now set on `px-dndb-flash` (parses under
+  `tomllib`, lands on the right seat; no other fleet project is set, so the before/after is
+  uncontaminated). 900 s sits deliberately ABOVE the observed long-call tail (55 calls > 300 s, max
+  776,391 ms = 12.9 min) because §6 is about propagation, not cancellation — the relay then caps the
+  provider and reports WHICH layer fired (AC-16).
+- **The "we need a new binary" premise was retracted in the same session it was written, by a
+  `git log -S` probe.** The entire feature — the config field + its TOML tag,
+  `Agent.Options.RequestTimeout`, `requestTimeout`, and the `context.WithTimeout` arming in
+  `internal/agent/sampling_request.go` — lands in ONE commit, ORCH `cc1553c` (2026-09-21 19:17:26
+  -0600); only the pre-existing header emitter (`RelayDeadlineHeader`, `61fc3f6` 2026-09-04) is older,
+  and it is reused rather than replaced. The fleet's staged binary (ORCH's deploy staging,
+  md5 `086e4ff3a69fb366aa47dc6c5f7ed938`, built 2026-09-22 10:06 — about 15 h after the commit)
+  carries the feature's literals (`grep -c request_timeout_seconds reasonix.exe` = 1); negative
+  control: ORCH's Aug-21 build (`cba1e310…`) has 0. So the fix was present and SWITCHED OFF, not
+  absent and waiting for a build — which is what 0 of 28,176 `execute` rows with a deadline looks
+  like. The one remaining dependency is the gateway RELOADING the config:
+  `request_timeout_seconds` is read at boot (`internal/boot/boot.go:1087 → :1712`), and ORCH's own
+  `deploy_all.ps1` restarts the gateway on its `Test-GatewayConfigStale` check once the chat is idle
+  past the 900 s grace. The box stays **UNCHECKED** until the store shows `caller_timeout_ms` on
+  `execute`/`plan` rows.
+- **Four archived `metadata.json` files were repaired, and the OSD guard's own false positive was
+  filed rather than patched.** `vendor/conductor/archive/{ability_separation_20260219,
+  content_extraction_20260214, merge_sections_20260214, spell_details_20260214}/metadata.json` were
+  invalid JSON — all four carried unescaped `"` inside a single-line `description`, with 0
+  backslashes in any file, so the repair escaped the inner quotes rather than doubling existing
+  escapes and every other byte was preserved. Result: `scanned 60 unparseable 0`. The guard's four
+  `deliberation UNREADABLE (deliberation: required)` lines are gone too, and that line is a defect in
+  the OSD guard: the renderer asserts a declaration the predicate (`_declares_deliberation`) says it
+  cannot read, while the census line simultaneously counts the same files as `0 declare
+  deliberation`. Filed not-patched as
+  `modelstack_framework/temp/issues/ISSUE_osd_guard_asserts_deliberation_declaration_for_unreadable_metadata_20260923.md`
+  (three fix options, framework-side reproduction). No vendored byte touched.
+- **The OSD floor was received the hard way: the write half landed and the record half died with the
+  machine.** `msf governance stamp --target . --apply` copied its bodies (`vendor/.reasonix/skills/
+  subspace-deliberation/SKILL.md`, `vendor/housekeeping_guard.py`, `vendor/hooks/pre-commit`) and then
+  left `governance.stamps.json` as **3,024 NUL bytes** when the host was killed mid-write (Kernel-Power
+  event 41 at 12:50:08 + event 6008 "previous shutdown at 12:41:40 was unexpected"; the file's mtime,
+  12:49:41, sits inside that window). The root cause is framework-side and already handed off
+  (`modelstack_framework/temp/issues/ISSUE_received_record_written_non_atomically_20260923.md`:
+  `write_stamps()` is an in-place truncate-then-write at `framework/runtime/governance.py:272`). The
+  repair was the framework's own runbook — quarantine, never delete: the corpse is kept as
+  `temp/archived/governance.stamps.json.zero-filled-20260923` (the mirror row in `ARCHIVE_INDEX.md` is
+  named `ISSUE_governance_stamps_zero_filled_20260923.md`) and a re-stamp re-certified the tree
+  (`APPLIED: 21 unit(s) {'behind': 21}`, exit 0). Readings: `msf validate --all --root .` **PASS: 0
+  error(s), 11 warning(s)** (was exit 1, 1 error/14 warnings) and `msf governance status --scan-root
+  C:/luiscla27/projects` **CURRENT (exit 0)** with this project at OSD `current` / guard `current` /
+  hook `bound` / runs `yes`. The same crash also killed this project's own agent session mid-turn and
+  exposed two fleet defects worth fixing at the source: the deploy lock is wall-clock-scoped, so it
+  survived a reboot that killed its writer and stalled deploys for 15 min, and the idle gate arms
+  before Telegram is reachable (DNS is not up at boot), so it fired with no way to notify.
+- **Evidence for all of the above:** `temp/scratch/s31_sec6_check.py` (the §6 field census),
+  `temp/scratch/s31_archive_readiness.py` (the readiness gate), `temp/scratch/s31_verdict_cells.py`
+  (the chat-lane cell attribution), `temp/scratch/s30_fix_broken_metadata.py` (the JSON repair),
+  `temp/scratch/s28_verify_pointers.py` (the citation audit, **0 stale lines**, exit 0), and
+  `temp/scratch/s30_s293_check.py` (the §29.3 falsifiable check, `NEW-ROW EXPECTATION: MET`).
 
 ## [2.1.1] - 2026-09-22
 
