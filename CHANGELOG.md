@@ -74,6 +74,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hook at `5bbb48a9a1c2…`), one SURVIVOR (the convention). Guard green on both roots,
   `msf validate --all` 0 errors, `verify_lanes` OK, `input_budget` OK. Known limit: convention
   lives under `vendor/` (gitignored); a fresh clone carries the floor but not the convention text.
+  **Close-out completed 2026-09-24** (re-execution of the track's plan found the archive step had
+  left the LIVE folder `vendor/conductor/tracks/deliberation_default_mandate_20260923/` in place —
+  byte-identical to the archive copy, `diff -r` clean, so the guard census still read `1 in-flight`
+  and the completion was invisible to the gate that reports it). Removed per `workflow.md`
+  §Guidance Protocols → *Track Finalization*; census now `0 plan(s) — 0 in-flight — 0 complete`,
+  and the guard's archive half still measures the record (`1 declare "deliberation: required" and
+  ARE judged` + `deliberation ADMITTED`, 0 DEFECTIVE / 0 UNREADABLE). The plan's last two boxes
+  (CHANGELOG+suite+diff, `User Manual Verification 'Phase 2'`) were unticked and are now `[x]`;
+  `npm test` re-read **1476 passing / 1 pending / 0 failing** (the track's own close-out recorded
+  1470 — the +6 is `3a63dbf` product work landed after, not this track, whose entire git footprint
+  is this CHANGELOG insert). Stamped bodies re-hashed and unchanged: guard
+  `c5e8d8de7accd4f52929eb6ef739298f6ba8f18feb38cfba692cb7016c51f2f0`, hook
+  `5bbb48a9a1c27f193d5fa5cc90ff004cb4c77f32aeeee9950f782e9b5eb35fa9`. Verification record:
+  `vendor/conductor/archive/deliberation_default_mandate_20260923/final_report.md`
+  §"Manual verification".
 - **Telemetry handoff §28 (session 16, 2026-09-21/22): §2's deferred question is ANSWERED with the
   row census, and the record's own debts are closed.** Census (`temp/scratch/s28_verdict_census.py`):
   store 60,255 rows = 25,405 completed + 25,305 task_completed + 9,334 `admission_rejected` + 98
