@@ -1,0 +1,89 @@
+{
+  "type": "msf_restamp_receipt",
+  "project": "dndbeyond-printenhance",
+  "generated_utc": "2026-09-24T21:04:00Z",
+  "lock": {
+    "unit_revision": "982956cc7eeb8f3af8688a581216694ae459c242563d7cc591040eea6793ba0b",
+    "framework_revision": "dd3dcd72fc0a3ce4e64a71df3ceb2df171416787",
+    "files": 183
+  },
+  "governance": {
+    "stamped_utc": "2026-09-24T20:46:12Z",
+    "unit_count": 21
+  },
+  "verification": {
+    "validate_all": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 11,
+      "governance_lines": 0
+    },
+    "drift_check": {
+      "status": "OK",
+      "unit_revision_prefix": "982956cc7eeb",
+      "framework_revision_prefix": "dd3dcd72fc0a"
+    },
+    "guard_roots": [
+      "C:\\luiscla27\\projects\\dndbeyond-printenhance",
+      "C:\\luiscla27\\projects\\dndbeyond-printenhance\\vendor"
+    ]
+  },
+  "tracked_hashes_only": true,
+  "evidence_policy": {
+    "disk_authority": "modelstack.lock + governance.stamps.json",
+    "live_authority": "orchestrator startup attestation (preferred) or live PID + served-module attestation",
+    "scratch_hash_verifier": "diagnostic_only_not_evidence",
+    "hash_mismatch_policy": "file_framework_defect_do_not_resolve_locally"
+  },
+  "served_relay_probe": {
+    "type": "served_relay_probe",
+    "project": "dndbeyond-printenhance",
+    "port": 38116,
+    "pid": 11352,
+    "creation_date": "2026-09-24T14:51:01-06:00",
+    "argv": [
+      "C:\\Users\\luisC\\AppData\\Local\\Programs\\Python\\Python312\\pythonw.exe",
+      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\reasonix_proxy.py",
+      "--project",
+      "dndbeyond-printenhance"
+    ],
+    "served_module": "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\reasonix_proxy.py",
+    "checked_utc": "2026-09-24T21:04:00Z",
+    "files": {
+      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\reasonix_proxy.py": {
+        "sha256": "94b39874c422f48eb86f67818946b6dcafcfb69b1eb9fdd160517351185d5d34",
+        "dnd_vendor_sha256": "94b39874c422f48eb86f67818946b6dcafcfb69b1eb9fdd160517351185d5d34",
+        "match": true,
+        "mtime_utc": "2026-09-24T20:46:11.639049+00:00"
+      },
+      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\wire\\__init__.py": {
+        "sha256": "9ff5c2a40e4542c206032f17439eee973496de9e804369e12d6a0557036303c6",
+        "dnd_vendor_sha256": "9ff5c2a40e4542c206032f17439eee973496de9e804369e12d6a0557036303c6",
+        "match": true,
+        "mtime_utc": "2026-09-24T20:46:11.643058+00:00"
+      },
+      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\adapters\\__init__.py": {
+        "sha256": "388a5bb23ba416aa1a43d1f88c7819dd75e00a0103d645b6e73f40b570cd5298",
+        "dnd_vendor_sha256": "388a5bb23ba416aa1a43d1f88c7819dd75e00a0103d645b6e73f40b570cd5298",
+        "match": true,
+        "mtime_utc": "2026-09-24T20:46:11.637045+00:00"
+      },
+      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\gen_relay_roles.py": {
+        "sha256": "4681d57e3fa15cc4c154eeb337821c8fdec6f72f681762824da05dedc3ea0d88",
+        "dnd_vendor_sha256": "4681d57e3fa15cc4c154eeb337821c8fdec6f72f681762824da05dedc3ea0d88",
+        "match": true,
+        "mtime_utc": "2026-09-24T20:46:11.637045+00:00"
+      },
+      "C:\\luiscla27\\projects\\telegram_orchestrator\\vendor\\relay\\test_reasonix_proxy.py": {
+        "sha256": "d23e99ff05f9a0695badff8b12de31ef4a600dbb444bf99b5844584840dae94e",
+        "dnd_vendor_sha256": "d23e99ff05f9a0695badff8b12de31ef4a600dbb444bf99b5844584840dae94e",
+        "match": true,
+        "mtime_utc": "2026-09-24T20:46:11.641053+00:00"
+      }
+    },
+    "hash_match": true,
+    "billing_marker_present": true,
+    "verdict": "STALE-UNIT",
+    "notes": "Orchestrator vendor tree carries the fourth-pass unit (lock unit 982956cc7eeb), but the live process predates orchestrator receipt (PID created 2026-09-24 14:51:01 local vs file mtime 14:46:11 local). Verdict is STALE-UNIT until the orchestrator relay restarts."
+  }
+}
