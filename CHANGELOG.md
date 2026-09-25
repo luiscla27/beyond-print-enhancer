@@ -64,6 +64,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CHANGELOG heading only), so this is hygiene, not a defect the release path would have caught.
 
 ### Internal
+- **The 2026-09-24 framework restamp now has a durable, public-safe record and its own liveness
+  gate (issue `ISSUE_framework_restamp_governance_units_20260924`, archived).** The four
+  "AMENDED 2026-09-24" passes were process notes, not acceptance gates. Replaced by:
+  `docs/governance/msf_restamp_receipt_20260924.json` (tracked hashes-only receipt — no absolute
+  paths, no PID; `vendor/` is excluded from history by the generated public block, so the receipt
+  cannot live under the overlay), `docs/governance/msf_live_attestations.jsonl#dnd-relay-20260924`
+  (the append-only process-probe row, verdict `PROVENANCE-OK`), and
+  `scripts/relay_serving_identity.py` — a five-verdict gate (`PROVENANCE-OK / STALE-PROCESS /
+  STALE-UNIT / PATH-MISMATCH / UNKNOWN-PID`, exit 0 only on the first) that READS the process the OS
+  has on the relay port, never restarts it and never trusts the served tree's own lock as authority.
+  Measured 2026-09-24: listener PID `11352`, creation `20:51:01Z`, served module
+  `orch:vendor/relay/reasonix_proxy.py`, 20/20 relay + 183/183 unit pins matched, newest served
+  source `20:46:11Z` pre-dating the process start. The draft's `STALE-UNIT` came from a date
+  comparison that ran the wrong way; the verdict was corrected against the measurements, not the
+  other way round. `test/unit/vendored_overlay.test.js` now permits root `docs/` as a NARROWER second
+  exception after the `AGENTS.md` pointer (every file under it must be one the overlay does NOT
+  carry; a root `docs/governance/gates/` still fails), committed `6c3b009`.
+  **Addendum 2026-09-25:** two units advanced again the same evening (`policy/housekeeping-guard`,
+  `skill/subspace-deliberation`), so the live gate read 13 warnings / 2 `governance:` lines against
+  the receipt's frozen 11/0 — resolved with the documented `msf governance stamp --target . --apply`
+  (`APPLIED: 21 unit(s) {'behind': 2, 'current': 19}`, exit 0, nothing refused; both `next: written`),
+  after which `msf validate --all` returned to `PASS: 0 error(s), 11 warning(s)` with zero
+  `governance:` lines and the gate still read `PROVENANCE-OK`. The re-stamp touched the governance
+  surface, not `vendor/relay/**`, so no new ledger row was warranted. No `vendor/` byte was hand-edited
+  and no framework body was committed.
 - **Deliberation required as the default for every new track (operator fleet mandate 2026-09-23,
   track `deliberation_default_mandate_20260923`).** The operator decided "Turn deliberation as
   required on all projects." The convention is carried by `vendor/conductor/workflow.md` §"Track
