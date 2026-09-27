@@ -1099,49 +1099,53 @@ function enforceFullHeight() {
          other). .be-active-layer is the ONE writer of "the layer you're
          working on" (js/dom/layer_manager.js:1329 applyInsertionTarget), so it
          is the only scope the reveal may use. The same class scopes the drag
-         handle (js/dnd.js) — one definition, two consumers. */
-      .be-active-layer .be-section-wrapper:hover .be-section-actions,
-      .be-active-layer .be-shape-wrapper:hover .be-section-actions {
-          opacity: 1;
-          pointer-events: auto !important;
-      }
+         handle (js/dnd.js) — one definition, two consumers.
 
-      /* THE BAR YIELDS TO THE GRIP WHILE THE GRIP IS REVEALED — option 3 of
-         temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md, chosen
-         over raising the grip above the bar because raising it STEALS A BUTTON: measured on
-         the live sheet, a grip hoisted over the bar covers 60% of the top-row Select button
-         on section-extra-tidbits-wrapper (151.5x62px) INCLUDING that button's own centre,
-         so "grabbable everywhere" would have been bought with "unselectable there".
-
-         WHY ONE NUMBER MOVES AND NOT TWO: a positioned wrapper with a z-index is its own
-         STACKING CONTEXT (be-section-wrapper carries z-index 10, and on the same hover that
-         reveals the grip the raise above gives it 700000), so the bar's level is scoped INSIDE
-         the hovered wrapper — it never has to out-rank the sheet, only its own siblings: the
-         section's content (print-section-container, z-index 0) and the grip. Both bounds are
-         therefore real: below the grip's 700002 (js/dnd.js — the collision being fixed) and
-         above the content the bar must sit on (the stylesheet's own be-section-actions
-         already uses 20 for that). 700001 sits in that gap and reads as "just under the grip"
-         beside the 700000/700002 pair this cascade already uses.
-
-         The bar keeps its inline built level (js/main.js getOrCreateActionContainer, which
-         reads ACTIONS_BAR from the ONE map in js/section_utils.js) whenever the grip is NOT on
-         screen, so the reachability that level was added for is untouched; and !important is
-         load-bearing here for the same reason the two rules above carry it — inline outranks a
-         NON-important stylesheet rule at any specificity, so a yield without it would silently
-         do nothing.
-
-         THE CONDITION IS THE GRIP'S OWN REVEAL, ARM FOR ARM — be-active-layer plus
-         :hover and :focus-within on the wrapper. That is deliberate: a second, hand-written
-         notion of "the grip is showing" (a state class, a timer) would be a second definition
-         of the same fact and could disagree with js/dnd.js. Same scope, same triggers, one
-         definition — which is also why the yield is inert on a locked or inactive layer, where
-         there is no grip to make room for. */
+         :focus-within IS ONE OF THE TWO ARMS, and not only for the buttons: the
+         nine-dot grip is now a CELL OF THIS ROW (js/dnd.js ensureDragHandle), so
+         the row's opacity is the group opacity that governs whether the grip
+         can be seen at all — a child cannot undo its parent's transparency.
+         js/dnd.js reveals the grip on :hover AND :focus-within, so a bar that
+         revealed on :hover alone would keep a keyboard-reached grip invisible.
+         Same scope, same two triggers, one definition of "this section is the
+         one you're working on". */
       .be-active-layer .be-section-wrapper:hover .be-section-actions,
       .be-active-layer .be-shape-wrapper:hover .be-section-actions,
       .be-active-layer .be-section-wrapper:focus-within .be-section-actions,
       .be-active-layer .be-shape-wrapper:focus-within .be-section-actions {
-          z-index: 700001 !important;
+          opacity: 1;
+          pointer-events: auto !important;
       }
+
+      /* THE GRIP LIVES IN THIS ROW NOW, AND THE "BAR YIELDS TO THE GRIP" RULE IS
+         GONE — WHICH IS THE FIX, NOT A CLEANUP.
+
+         The yield (a conditional z-index: 700001 on this bar, lower than the
+         700002 the grip carried) was option 3 of
+         temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md:
+         a centred grip and a top-anchored bar shared the middle band of a short
+         section, so the bar stepped below the grip in the stack. It treated the
+         symptom. The two controls were still TWO PLACEMENTS OF THE SAME CORNER —
+         grip position:absolute; top:8; left:8, bar position:absolute;
+         top:8; left:8 — so they overlapped, and js/dnd.js's own note recorded
+         the cost: the grip covers 60% of the top-row Select button INCLUDING its
+         centre. That is now a measured hit on the live sheet, reported by
+         temp/issues/ISSUE_corner_grip_lands_on_first_action_button_20260922.md:
+         elementFromPoint over the grip centre returns be-select-section-button,
+         and every button's centre returns itself, so the overlap is not a
+         rendering artifact — the corner simply holds two boxes.
+
+         So the grip is now a CELL of this row (js/dnd.js ensureDragHandle
+         inserts it as the rail's first child, absolutely-positioned rules
+         removed), and display:flex; gap:8px — already declared here — is what
+         separates them. Two siblings in a flex row own disjoint boxes, so there
+         is no collision to rank away and no level to yield: a z-index between
+         two things that never overlap is a number that does nothing, and a rule
+         that does nothing beside the placement it replaced is exactly the
+         "second definition that can disagree" failure this file keeps naming.
+         The cascade is now: wrapper 700000 on hover (the raise) › this bar and
+         its cells › the section's content, and the grip keeps its own 700002
+         only to win its row-mates if the row ever wraps. */
 
       .print-section-container {
           --reduce-height-by: 0px;

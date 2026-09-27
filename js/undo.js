@@ -329,6 +329,55 @@ function patchCapturedFields(layout, id, fields) {
 }
 
 /**
+ * Strip from a captured layout the ARRAY entries the mutation ADDED — the repair for a
+ * STRUCTURAL ADDITION whose capture settled late.
+ *
+ * WHY THE EXISTING REPAIRS DO NOT COVER THIS CLASS. Every other routed site mutates something
+ * that ALREADY existed (a position, a size, an angle, a flag), so the repair overwrites fields
+ * with the synchronous pre-values. A structural addition creates a node: the scan's DOM reads
+ * happen after it, so the record CONTAINS what the user is trying to undo and the undo restores
+ * the post-state — a no-op. Removing exactly the entries the record gained turns it back into the
+ * pre-add layout, which is what an inverse is supposed to hold.
+ *
+ * The caller supplies the pre-mutation ids, read SYNCHRONOUSLY before the mutation, and it must
+ * come from the same classifier the serializer uses — otherwise the two disagree about which
+ * array an entry belongs in and the strip misses or over-reaches. That is why extraction sites
+ * pass `LayoutScan.currentExtractionIds()` rather than a `querySelectorAll` of their own.
+ *
+ * It is deliberately RESTRICTIVE: it only ever removes entries whose id is NOT in the
+ * pre-mutation set, so an entry that already existed is never touched, and a record that gained
+ * nothing is left alone. An array the layout does not carry is skipped, not created.
+ *
+ * Returns the number of entries removed, so a caller can tell "repaired" from "nothing to strip"
+ * — and so a test can assert the strip actually did the work instead of passing vacuously.
+ */
+function stripLateAdditions(layout, key, idsBefore) {
+  if (!layout || !Array.isArray(layout[key])) return 0;
+  const known = new Set(idsBefore || []);
+  const kept = layout[key].filter((entry) => known.has(entry && entry.id));
+  const removed = layout[key].length - kept.length;
+  if (removed > 0) layout[key] = kept;
+  return removed;
+}
+
+/**
+ * The extraction-specific arm of `stripLateAdditions` — the repair a structural-ADDITION site
+ * hands to `pushMutation`, mirroring `repairSectionFlags` for the flag sites.
+ *
+ * WHY THE ARRAY NAME IS NOT A CALL-SITE ARGUMENT. The layout record keeps each kind of floating
+ * node in its own array (`extractions[]`, `clones[]`, `spell_details[]`), and which one a node
+ * belongs to is the serializer's precedence decision, not the caller's. Spelling the key at each
+ * site would let the site and the scan disagree — and would put a bare structural word into
+ * every capture call's arguments, which is the shape AC-3's guard exists to refuse. So the
+ * vocabulary of "which array does this class own" lives here, beside the primitive.
+ */
+function repairLateExtractions(layout, snap) {
+  if (!layout || !snap || !Array.isArray(snap.extractionIds)) return layout;
+  stripLateAdditions(layout, "extractions", snap.extractionIds);
+  return layout;
+}
+
+/**
  * Begin a reversible record WITHOUT deferring the mutation (track undo_stack_20260911).
  *
  * WHY THIS EXISTS ALONGSIDE `captureUndo`: `captureUndo` awaits the scan before mutating,
@@ -566,7 +615,8 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     pushUndo, peekUndo, captureUndo, undoLabel, undoScreenLabel, installUndoShortcut,
     isTextEntryTarget, beginMutation, pushMutation, snapshotSectionFlags, repairSectionFlags,
-    patchCapturedFields, snapshotContainerGeometry, undoDepth, clearUndoStack, canUndo,
+    patchCapturedFields, stripLateAdditions, repairLateExtractions,
+    snapshotContainerGeometry, undoDepth, clearUndoStack, canUndo,
     captureLiveLayout, offerUndo, clearUndoOffer, hasUndoOffer, applyUndo,
     UNDO_STACK_MAX, MUTATION_CLASSES,
   };
@@ -587,6 +637,14 @@ if (typeof window !== "undefined") {
   window.snapshotSectionFlags = snapshotSectionFlags;
   window.repairSectionFlags = repairSectionFlags;
   window.patchCapturedFields = patchCapturedFields;
+  // The structural-ADDITION repair: what the extraction site in js/main.js hands to
+  // `pushMutation`. Its reader is evaluated AFTER this module, so the seam is mandatory — the
+  // same reason `patchCapturedFields` and `repairSectionFlags` are seams.
+  // `stripLateAdditions` deliberately has NO window seam of its own: its only caller is this
+  // module's `repairLateExtractions`, and the re-rot guard deletes a seam with no outside
+  // reader. It is still in `module.exports` above, which is the surface the export audit counts
+  // (every seam there is also a module export, and the two counts are pinned together).
+  window.repairLateExtractions = repairLateExtractions;
   window.snapshotContainerGeometry = snapshotContainerGeometry;
   window.undoDepth = undoDepth;
   window.clearUndoStack = clearUndoStack;

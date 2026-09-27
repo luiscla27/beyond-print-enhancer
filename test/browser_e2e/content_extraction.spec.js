@@ -189,4 +189,135 @@ describe("PR #12 Dynamic content extraction (Playwright e2e)", function () {
       await page.close();
     }
   });
+  /* ------------------------------------------------------------------ */
+  /* THE UNDO ARM OF EXTRACTION — the hole `undo_stack_20260911` found and */
+  /* left open deliberately, closed 2026-09-22: in the REAL page, an        */
+  /* extraction is reversible.                                             */
+  /* ------------------------------------------------------------------ */
+
+  /**
+   * The undo affordance and the sheet's extraction state, in one read.
+   *
+   * WHY "how many sources are hidden" IS COUNTED OVER `.be-extractable` RATHER THAN READ OFF
+   * ONE ELEMENT BY ID. `getSanitizedContent` clones the source with `cloneNode(true)` and never
+   * strips the `id`, so after ANY extraction the document holds TWO elements with the source's id
+   * — the hidden original and the copy inside the card — and `getElementById` returns whichever
+   * comes first in document order, which is not stable across layouts. Counting hidden
+   * `.be-extractable`s sidesteps that: the clone has the class REMOVED
+   * (`handleElementExtraction` strips `be-extractable` to avoid nested triggers), so the set is
+   * exactly the live sources and nothing else. The duplicate-id quirk is pre-existing and
+   * separate from this change; it is recorded here because it is what the naive read would have
+   * silently measured.
+   */
+  function readUndoState(page) {
+    return page.evaluate(() => {
+      const btn = document.querySelector("#be-btn-undo");
+      const sources = Array.from(document.querySelectorAll(".be-extractable"));
+      return {
+        sections: document.querySelectorAll(".be-extracted-section").length,
+        sourcesHidden: sources.filter((el) => el.style.display === "none").length,
+        visible: btn ? (btn.textContent || "").trim() : null,
+        // The control clamps its visible text to what the panel's 205px label fits
+        // (`undoScreenLabel`, measured in AC-V1) and keeps the whole string in `title` and
+        // `aria-label`, so the ACCESSIBLE name is the one that must name the action.
+        aria: btn ? btn.getAttribute("aria-label") : null,
+        title: btn ? btn.getAttribute("title") : null,
+      };
+    });
+  }
+
+  /**
+   * Double-click one NON-SPELL extractable.
+   *
+   * Why a second picker next to `dblclickExtractable`: a spell detail is not HIDDEN by an
+   * extraction, it is REMOVED (they are ephemeral and have no home on the sheet to roll back
+   * to), so counting hidden sources would move for the wrong reason. This takes an element the
+   * extraction can only hide.
+   */
+  function dblclickNonSpellExtractable(page) {
+    return page.evaluate(() => {
+      const pick = Array.from(document.querySelectorAll(".be-extractable")).find(
+        (el) =>
+          !el.classList.contains("be-spell-detail") &&
+          !/^spell-detail-/.test(el.id || "") &&
+          !el.querySelector("[data-be-spell-merge]") &&
+          el.style.display !== "none" &&
+          el.getBoundingClientRect().width > 40 &&
+          el.textContent.trim().length > 12,
+      );
+      if (!pick) return null;
+      const r = pick.getBoundingClientRect();
+      pick.dispatchEvent(
+        new MouseEvent("dblclick", {
+          bubbles: true,
+          cancelable: true,
+          clientX: r.left + 20,
+          clientY: r.top + 20,
+        }),
+      );
+      return { titleHint: pick.textContent.trim().slice(0, 24) };
+    });
+  }
+
+  it("undoing an extraction puts the block back on the sheet and removes the card", async function () {
+    const page = await bootPage(ctx);
+    try {
+      await enableExtraction(page);
+      const start = await readUndoState(page);
+
+      const pick = await dblclickNonSpellExtractable(page);
+      assert.ok(pick, "a non-spell extractable was double-clicked");
+      await page.waitForFunction(
+        (n) => document.querySelectorAll(".be-extracted-section").length > n,
+        start.sections,
+        { timeout: 20000 },
+      );
+      // The capture's push lands a tick AFTER the DOM write — that is the non-deferring
+      // protocol working (the mutation is synchronous; the record follows), not a race.
+      await page.waitForTimeout(1500);
+      const made = await readUndoState(page);
+      assert.strictEqual(made.sections, start.sections + 1, "the extraction was created");
+      // VACUITY for the restore arm below: the extraction really DID hide its source, so "back
+      // to the starting count" is a round trip rather than two equal numbers.
+      assert.strictEqual(
+        made.sourcesHidden,
+        start.sourcesHidden + 1,
+        "the extraction hid exactly one source block",
+      );
+
+      // AC-8's naming requirement, read off the accessible name.
+      assert.match(
+        String(made.aria),
+        /^Undo: Extract /,
+        "the affordance names EXTRACTION as what Ctrl+Z will revert: " + made.aria,
+      );
+      assert.strictEqual(made.title, made.aria, "and the hover carries the same string");
+      assert.match(
+        String(made.visible),
+        /Extract/,
+        "so does the visible text — the user-visible proof of the fix. Before it was wired, " +
+          "extracting pushed NO record at all, so the control named some EARLIER change and " +
+          "Ctrl+Z reverted THAT instead of the extraction.",
+      );
+
+      /* The keyboard route, because that is the arm the gap actually broke. */
+      await page.keyboard.press("Control+z");
+      await page.waitForTimeout(2000);
+      const undone = await readUndoState(page);
+      assert.strictEqual(
+        undone.sections,
+        start.sections,
+        "Ctrl+Z removed the extracted card — the ADDITION itself was reverted, not the record " +
+          "below it",
+      );
+      assert.strictEqual(
+        undone.sourcesHidden,
+        start.sourcesHidden,
+        "and the source block is visible again — the card gone AND the block back is the whole " +
+          "inverse of an extraction",
+      );
+    } finally {
+      await page.close();
+    }
+  });
 });

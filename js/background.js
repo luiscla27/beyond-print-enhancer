@@ -35,8 +35,74 @@
 // or a URL, so the two origins the manifest hosts are the only places a request can go.
 importScripts("/js/ai_layout.js", "/js/ai_settings.js");
 
+/**
+ * The five action-menu entries, created HERE (install/update) and not at the worker's top level.
+ *
+ * WHY THIS IS A FUNCTION, AND WHY IT IS NOT TOP-LEVEL. Chrome PERSISTS context-menu items in the
+ * profile, and an MV3 service worker re-runs its whole script on EVERY worker start. Registering at
+ * the top level therefore asks Chrome to create five ids that already exist from the second start
+ * onward, and each call reports an unchecked error — measured verbatim in a real worker of this
+ * build, on the second boot of one profile:
+ *   `Cannot create item with duplicate id sponsor` (and donate, buy-me-a-coffee, contribute,
+ *   feedback), i.e. exactly the five lines the operator read off chrome://extensions.
+ * It is a SURFACE defect, not a lost destination: `chrome.contextMenus.update(id, {})` resolves for
+ * all five either way, which is why a presence-only gate cannot see it and why the fix had to be
+ * idempotence rather than a swallow. This is Chrome's own documented pattern for the API — the
+ * extension service-worker lifecycle page registers menus from `chrome.runtime.onInstalled`.
+ *
+ * The ids, titles and ORDER are unchanged, and so is the reason they are in this order: the five
+ * asks are the panel's two HELP-tray rows (AC-3) joining the three funding destinations, and they
+ * are LAST so the funding entries stay grouped above them. This function is the single place all
+ * five are declared; the names are also what the regression suite reads.
+ */
+function createActionMenu() {
+  chrome.contextMenus.create({
+    id: "sponsor",
+    title: "Sponsor",
+    contexts: ["action"]
+  });
+  chrome.contextMenus.create({
+    id: "donate",
+    title: "Donate",
+    contexts: ["action"]
+  });
+  chrome.contextMenus.create({
+    id: "buy-me-a-coffee",
+    title: "Buy me a coffee",
+    contexts: ["action"]
+  });
+  // AC-3 (track first_run_and_panel_20260911): the panel's two HELP-tray rows moved HERE, to the
+  // extension's own action-icon menu, where the funding destinations already live.
+  //
+  // WHY THEY MOVED. The panel carried "Feedback" (a bug-report link) and "Contribute" (a fundraising
+  // link) in a tray labelled HELP, on equal footing with each other. The measurement that framed the
+  // finding is worth keeping: BOTH rows were already BELOW THE FOLD (tops 728 and 764 against a 586px
+  // scrollport), so they never crowded the working surface and no user cost was evidenced. The
+  // narrower complaint is the one this fixes — a tray named HELP whose second row raises money. The
+  // operator chose the move over AC-3's other legitimate outcome ("measured, no change").
+  //
+  // WHAT MUST STAY TRUE (AC-3b/c/d, each verified rather than asserted):
+  //   * nothing is DELETED — both destinations are still reachable, from here;
+  //   * no monetisation channel becomes unreachable — sponsor, donate and coffee were already here,
+  //     and "Contribute" (the project's repository page) joins them;
+  //   * the total number of ASKS does not increase: two rows left the panel and two entries arrived
+  //     here, so the count is unchanged at five.
+  // They are the LAST two entries on purpose: the funding destinations stay grouped above them.
+  chrome.contextMenus.create({
+    id: "contribute",
+    title: "Contribute",
+    contexts: ["action"]
+  });
+  chrome.contextMenus.create({
+    id: "feedback",
+    title: "Report a bug or request a feature",
+    contexts: ["action"]
+  });
+}
+
 // When the extension is installed or upgraded ...
 chrome.runtime.onInstalled.addListener(function() {
+  createActionMenu();
   // Replace all rules ...
   chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
     // With a new rule ...
@@ -163,52 +229,6 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
   const fromTab = sender && sender.tab && sender.tab.id;
   if (request.type === "DDB_IS_ON") markOn(fromTab);
   if (request.type === "DDB_TURNED_OFF") clearState(fromTab);
-});
-
-// Create the context menu
-chrome.contextMenus.create({
-  id: "sponsor",
-  title: "Sponsor",
-  contexts: ["action"]
-});
-// Create the context menu
-chrome.contextMenus.create({
-  id: "donate",
-  title: "Donate",
-  contexts: ["action"]
-});
-chrome.contextMenus.create({
-  id: "buy-me-a-coffee",
-  title: "Buy me a coffee",
-  contexts: ["action"]
-});
-
-// AC-3 (track first_run_and_panel_20260911): the panel's two HELP-tray rows moved HERE, to the
-// extension's own action-icon menu, where the funding destinations already live.
-//
-// WHY THEY MOVED. The panel carried "Feedback" (a bug-report link) and "Contribute" (a fundraising
-// link) in a tray labelled HELP, on equal footing with each other. The measurement that framed the
-// finding is worth keeping: BOTH rows were already BELOW THE FOLD (tops 728 and 764 against a 586px
-// scrollport), so they never crowded the working surface and no user cost was evidenced. The
-// narrower complaint is the one this fixes — a tray named HELP whose second row raises money. The
-// operator chose the move over AC-3's other legitimate outcome ("measured, no change").
-//
-// WHAT MUST STAY TRUE (AC-3b/c/d, each verified rather than asserted):
-//   * nothing is DELETED — both destinations are still reachable, from here;
-//   * no monetisation channel becomes unreachable — sponsor, donate and coffee were already here,
-//     and "Contribute" (the project's repository page) joins them;
-//   * the total number of ASKS does not increase: two rows left the panel and two entries arrived
-//     here, so the count is unchanged at five.
-// They are the LAST two entries on purpose: the funding destinations stay grouped above them.
-chrome.contextMenus.create({
-  id: "contribute",
-  title: "Contribute",
-  contexts: ["action"]
-});
-chrome.contextMenus.create({
-  id: "feedback",
-  title: "Report a bug or request a feature",
-  contexts: ["action"]
 });
 
 // Handle context menu clicks

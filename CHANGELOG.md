@@ -8,7 +8,345 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **§5's own yardstick could not see §5 passing — `admission_cutover()` now splits by instant
+  (`scripts/utility_telemetry.py`, 2026-09-21, telemetry handoff §27).** The after-state landed at
+  **2026-09-21T20:14:05.299Z** (90 → 98 `admission_summary` decisions, **0** per-candidate rows at
+  or after it, 112 candidates carried inside the summaries, max 2 per decision, and the pre-cutover
+  baseline of 201 detail rows intact), yet `cmd_admission` kept printing the BEFORE report because
+  it chose its branch from `if not rows:` — "does the window hold any `admission_rejected` row" —
+  and a straddling rolling window always holds the old detail rows at its head. Four verdicts now,
+  each with its own wording: `compacted` (summaries + 0 detail after → §5 SATISFIED), `mixed`
+  (summaries AND later detail → **not** a pass, named as the double-writer defect the old code could
+  not express at all), `undated` (summaries with no parseable instant → refuse to invent a cutover,
+  the `min([])`-to-"compacted" vacuous-green class), `before_only`. The before-branch prose was also
+  rewritten: it asserted "the store carries 0 summary rows for ONE reason only" and "muse-lane
+  traffic stopped" as live facts against a store holding 90 summaries and 90 muse rejections in 9 h;
+  it now states the two readings the branch actually supports. Falsified, not asserted:
+  `temp/scratch/s27_falsify_cutover.py` swaps in the old predicate and turns 3 of the 4 new
+  properties red (the 4th holds under both rules — recorded, not rounded up). Verification:
+  `admission --days 1` → **ADMISSION SUMMARIES**; `selftest` 33 → **37 properties**; `mocha
+  test/unit/utility_telemetry.test.js` 24 → **25 passing**; full suite **1471 passing / 1 pending /
+  0 failing**; close-out guard OK on both roots. No `vendor/` byte touched.
+- **Extracting a section is now undoable.** Double-clicking a block into a floating card was the
+  LAST mutation in the product with no record behind it: rolling an extraction back was undoable
+  while making one was not, so `Ctrl+Z` after an extract reverted whatever you had done *before*
+  it. The gap was found during `undo_stack_20260911` and deliberately left open rather than
+  half-landed — awaiting the capture before the mutation defers the extraction by a microtask
+  (eight dblclick tests assert synchronously and went red), and a late capture *includes* the new
+  section, so the record would be the post-state and the undo a silent no-op. Both halves are now
+  built: the site uses the non-deferring pair (start the capture, mutate synchronously, push
+  afterwards), and `stripLateAdditions` repairs what that costs — the extraction ids are
+  snapshotted synchronously before the mutation and any entry the record gained is removed from
+  it, so the record is the pre-add layout. It strips ONLY what the gesture added: an extraction
+  you already had survives the repair (the over-reach arm is asserted separately, because
+  "empty the array" would pass the first case and destroy your sheet). The undo puts the original
+  block back on the page and removes the card, and the label names it (`Extract "Actions"`).
+- **An extracted card no longer carries a second copy of its source's `id`.** Found by MEASURING
+  the undo above in the real browser rather than by reading the code: the extraction hid its
+  source, the record was right, the restore ran — and the block stayed invisible. `cloneNode(true)`
+  copies the `id`, so the document held TWO elements with the source's id, and `getElementById`
+  answers with whichever comes FIRST in document order — after an extraction, that is the copy
+  INSIDE THE CARD. Every path that restores the source by id (`applyLayout`'s extraction teardown,
+  `rollbackSection`, the reset-to-defaults sweep, the clone-repositioning pass) was writing to a
+  node about to be deleted while the real block kept `display: none !important`. Measured: 2
+  matches for the id before, 1 after, and the source visible again. The live original keeps the id
+  — that is what the record's `originalId` names and what the selector fallback re-assigns — so
+  nothing that resolves the original changes. Pinned in `test/unit/extraction_logic.test.js`
+  (falsified: with the strip removed the assertion goes red) and asserted in the browser e2e.
+- **`package-lock.json`'s root `version` is synced to the package.** It had drifted to `2.0.1`
+  and stayed there across the 2.1.0 and 2.1.1 bumps — the 2.1.1 `### Internal` note records it was
+  deliberately left alone at the cut (no `npm install` review had been run, and changing a lockfile
+  blind makes the diff unreviewable). This closes that note: the bump was performed with
+  `npm install --package-lock-only`, which rewrites exactly the two root `version` fields (top-level
+  and `packages[""]`) and touches no dependency resolution — so the sync is reviewable line-for-line
+  and the lock can no longer claim a version the product does not ship. No gate asserts this parity
+  (`manual_verification_phase4.spec.js` checks `package.json` vs `manifest.json` vs the newest
+  CHANGELOG heading only), so this is hygiene, not a defect the release path would have caught.
+
+### Internal
+- **The 2026-09-24 framework restamp now has a durable, public-safe record and its own liveness
+  gate (issue `ISSUE_framework_restamp_governance_units_20260924`, archived).** The four
+  "AMENDED 2026-09-24" passes were process notes, not acceptance gates. Replaced by:
+  `docs/governance/msf_restamp_receipt_20260924.json` (tracked hashes-only receipt — no absolute
+  paths, no PID; `vendor/` is excluded from history by the generated public block, so the receipt
+  cannot live under the overlay), `docs/governance/msf_live_attestations.jsonl#dnd-relay-20260924`
+  (the append-only process-probe row, verdict `PROVENANCE-OK`), and
+  `scripts/relay_serving_identity.py` — a five-verdict gate (`PROVENANCE-OK / STALE-PROCESS /
+  STALE-UNIT / PATH-MISMATCH / UNKNOWN-PID`, exit 0 only on the first) that READS the process the OS
+  has on the relay port, never restarts it and never trusts the served tree's own lock as authority.
+  Measured 2026-09-24: listener PID `11352`, creation `20:51:01Z`, served module
+  `orch:vendor/relay/reasonix_proxy.py`, 20/20 relay + 183/183 unit pins matched, newest served
+  source `20:46:11Z` pre-dating the process start. The draft's `STALE-UNIT` came from a date
+  comparison that ran the wrong way; the verdict was corrected against the measurements, not the
+  other way round. `test/unit/vendored_overlay.test.js` now permits root `docs/` as a NARROWER second
+  exception after the `AGENTS.md` pointer (every file under it must be one the overlay does NOT
+  carry; a root `docs/governance/gates/` still fails), committed `6c3b009`.
+  **Addendum 2026-09-25:** two units advanced again the same evening (`policy/housekeeping-guard`,
+  `skill/subspace-deliberation`), so the live gate read 13 warnings / 2 `governance:` lines against
+  the receipt's frozen 11/0 — resolved with the documented `msf governance stamp --target . --apply`
+  (`APPLIED: 21 unit(s) {'behind': 2, 'current': 19}`, exit 0, nothing refused; both `next: written`),
+  after which `msf validate --all` returned to `PASS: 0 error(s), 11 warning(s)` with zero
+  `governance:` lines and the gate still read `PROVENANCE-OK`. The re-stamp touched the governance
+  surface, not `vendor/relay/**`, so no new ledger row was warranted. No `vendor/` byte was hand-edited
+  and no framework body was committed.
+- **Deliberation required as the default for every new track (operator fleet mandate 2026-09-23,
+  track `deliberation_default_mandate_20260923`).** The operator decided "Turn deliberation as
+  required on all projects." The convention is carried by `vendor/conductor/workflow.md` §"Track
+  Creation (default deliberation — operator mandate 2026-09-23, binding)" (three clauses:
+  creation-time declaration, single-answer decisions not exempt, no retro-declaration) and
+  `vendor/AGENTS.md` (working-rule bullet, lines 68–74). Three candidates deliberated: two
+  INADMISSIBLE (would edit a stamped body — the guard at hash `c5e8d8de7acc…` and the pre-commit
+  hook at `5bbb48a9a1c2…`), one SURVIVOR (the convention). Guard green on both roots,
+  `msf validate --all` 0 errors, `verify_lanes` OK, `input_budget` OK. Known limit: convention
+  lives under `vendor/` (gitignored); a fresh clone carries the floor but not the convention text.
+  **Close-out completed 2026-09-24** (re-execution of the track's plan found the archive step had
+  left the LIVE folder `vendor/conductor/tracks/deliberation_default_mandate_20260923/` in place —
+  byte-identical to the archive copy, `diff -r` clean, so the guard census still read `1 in-flight`
+  and the completion was invisible to the gate that reports it). Removed per `workflow.md`
+  §Guidance Protocols → *Track Finalization*; census now `0 plan(s) — 0 in-flight — 0 complete`,
+  and the guard's archive half still measures the record (`1 declare "deliberation: required" and
+  ARE judged` + `deliberation ADMITTED`, 0 DEFECTIVE / 0 UNREADABLE). The plan's last two boxes
+  (CHANGELOG+suite+diff, `User Manual Verification 'Phase 2'`) were unticked and are now `[x]`;
+  `npm test` re-read **1476 passing / 1 pending / 0 failing** (the track's own close-out recorded
+  1470 — the +6 is `3a63dbf` product work landed after, not this track, whose entire git footprint
+  is this CHANGELOG insert). Stamped bodies re-hashed and unchanged: guard
+  `c5e8d8de7accd4f52929eb6ef739298f6ba8f18feb38cfba692cb7016c51f2f0`, hook
+  `5bbb48a9a1c27f193d5fa5cc90ff004cb4c77f32aeeee9950f782e9b5eb35fa9`. Verification record:
+  `vendor/conductor/archive/deliberation_default_mandate_20260923/final_report.md`
+  §"Manual verification".
+- **Telemetry handoff §28 (session 16, 2026-09-21/22): §2's deferred question is ANSWERED with the
+  row census, and the record's own debts are closed.** Census (`temp/scratch/s28_verdict_census.py`):
+  store 60,255 rows = 25,405 completed + 25,305 task_completed + 9,334 `admission_rejected` + 98
+  `admission_summary` + 84 failed + **18 verdicts** + 11 shutdown; per cell qwen 10,574 calls / 15
+  judged / $2.34120 (**93.6 % of store spend**), deepseek 13,935 / 0, mimo 598 / 1, nous 352 / 2,
+  glm 70 / 0. **Decision on §12's follow-up: NOT actionable, and the reason is the missing comparator
+  rather than the qwen data** — every cell but qwen sits under the ≥8 bar and they hold only 6.4 %
+  of spend together, so §4's "both samples or no comparison" rule decides. Also recorded plainly:
+  the 100 % `useful_response_rate` is an artifact of §20.1's anchor recipe (every verdict is anchored
+  to a commit whose acceptance artifact was GREEN — selected-by-success, so accrual cannot lower it,
+  only a different evidence source can), and `cost_to_first_useful=$0.000000` is a
+  **window-dependent earliest-prefix fact** — qwen's rows are 4,392 explicit `$0.0`
+  (`relay_estimate_free`, the free leg ending 09-16T21:05Z) + 6,160 positive
+  (`relay_estimate_bai_now_billed`) + 6 unpriced, and the same metric on `--days 1` prints
+  **$0.010491** for a different first-useful verdict, which proves the walk sums real money. §23.2's
+  "no code change, do not fix this figure" is CONFIRMED for the right reason. §6's tail re-measured
+  whole-store: max 776,391 ms, **55 calls > 300 s** (§23.3: 46), deadline coverage **97/25,521 =
+  0.38 %** with `request_deadline_phase` null on all 97. **§21.3's identity claim corrected:** all 18
+  verdict rows — including the 12 written through the synced builder — are still `unknown`-writer
+  with 3/3 SPEC §27 fields missing, because the unit's `runtime_identity()` /
+  `policy_instance_revision()` are called from `build_record` (`vendor/relay/telemetry/__init__.py:482`)
+  and NOT from `build_evaluation_record` (`:643`), which takes no identity kwargs; a consumer cannot
+  stamp its verdict rows through the contract endpoint. The fleet reader's store-wide pass over the
+  rows it actually consumes (`read_telemetry`, call rows only) puts this project's contribution in
+  the bucket whose docstring demands zero: **`relay`: 5,085 rows without identity**. Filed to MSF as
+  `ISSUE_msf_identity_stamp_reaches_neither_verdict_rows_nor_relay_call_rows_20260921.md` (new file
+  under that project's `temp/issues/`; its code untouched). Accrual ceiling stated with arithmetic
+  (§28.3): a verdict requires a commit made on that route's session — deepseek's 13,935 calls have
+  never carried one, so probing cannot raise it. Record debts closed: §27 was truncated mid-word at
+  line 2413 (session-15 disposition/verification/open list never existed) and had **no CHANGELOG
+  mirror** — both written; §10's "the DATA is 0 judged today" corrected; §8 line 4 checked with the
+  cutover instant; `AGENTS.md`'s pin bullet advanced from `e2084dd93869`/`a457f4974a44` to the live
+  lock (`245490672957`/`d93534bdcd33`, 181 files); session 12's and 14's unsupported `nous 4/8`
+  corrected to 2/8 with the anchor-vs-verdict vocabulary trap named (§27.4). §28.7 is this session's own citation audit
+  (`temp/scratch/s28_verify_pointers.py`): 186 paths across the handoff/CHANGELOG/AGENTS + 8
+  `file:NNN` pointers in the vendored unit re-verified -> **0 stale lines, 0 undocumented danglers**
+  (5 historical, 12 moved/foreign-resolved), exit 0 -- after the checker itself produced 30+ FALSE
+  danglings from an extension alternation that matched `.js` inside `.jsonl`, and after a
+  longest-first-ordering explanation this session had written was FALSIFIED by a 2x2 re-run
+  (§28.7: the `(?![\w])` guard alone fixes it). The audit also machine-checks §28.4's mechanism
+  claim (`build_evaluation_record`: 21 params, no `**kwargs`, no identity params). §28.8 hands ORCH
+  the 09-21 re-measure of their own pass criterion (0.38 % coverage, phase null on all 97, 55 calls
+  > 300 s). Gates: `selftest` 37 properties, `mocha test/unit/utility_telemetry.test.js` 25 passing,
+  `pytest vendor/relay/test_reasonix_proxy.py` **334/334 at pin 245490672957**
+  (`temp/scratch/s28_relay_pytest.txt`), `drift_check OK`, guard OK on both roots. Handoff stays OPEN:
+  §6's deadline is the last measurable §8 criterion and belongs to ORCH.
+
+- **Telemetry handoff §29/§30/§31 (sessions 16 close-out → 17, 2026-09-22/23): §6's owner turned out
+  to be THIS project, and the record's own mirror had been orphaned.** The three sessions are one
+  story, so they are mirrored together — and the reason they NEED mirroring is itself the finding:
+  `scripts/utility_telemetry.py` and its test are R3-ignored (`.gitignore:201-202`), so for that
+  harness the CHANGELOG **is** the durable artifact, and the §27/§28 mirror had been committed as
+  `c667a3b` (65 insertions) on a line that "Master Revamp (#40)"/"Huge Revamp (#41)" orphaned —
+  `c667a3b` is **not an ancestor of HEAD**, so it survived only on
+  `backup/master_revamp-prerebase-20260922` and every later session's notes were unrecoverable prose.
+  Both blocks were recovered verbatim from that branch (`git show c667a3b -- CHANGELOG.md`) and
+  restored here, beside these. Measured before the restore: `git show HEAD:CHANGELOG.md | grep -c
+  s27_falsify_cutover` = **0**.
+- **§6 is not ORCH's, and the box that says so was mis-worded.** The §8 criterion "Workflow deadline
+  is explicit and propagated to the relay/MSF path" has been the ONLY unmet box since session 13, and
+  the record carried two false premises about it. (1) The field it told a reader to check,
+  `request_deadline_phase`, has **0 hits in the pinned `vendor/` tree** — it was always a DND-side
+  reporter label; the real keys are `caller_timeout_ms` (execute/plan **0 of 28,176**; recover
+  115/3,018 = 3.81%, whose coverage predates this change and comes from `compact.go:633`'s own ctx)
+  plus `deadline_fired` (5 rows, all `provider_timeout`, all 504). (2) "HANDED OFF to ORCH / nothing
+  in this project can move it" was FALSE: ORCH's
+  `ISSUE_relay_deadline_header_only_reaches_recover_and_summarize_20260919` is FIXED and archived
+  (2026-09-21, fix option 1), but the fix is **opt-in per provider seat**, so the last mover is a
+  one-line decision here. `request_timeout_seconds = 900` is now set on `px-dndb-flash` (parses under
+  `tomllib`, lands on the right seat; no other fleet project is set, so the before/after is
+  uncontaminated). 900 s sits deliberately ABOVE the observed long-call tail (55 calls > 300 s, max
+  776,391 ms = 12.9 min) because §6 is about propagation, not cancellation — the relay then caps the
+  provider and reports WHICH layer fired (AC-16).
+- **The "we need a new binary" premise was retracted in the same session it was written, by a
+  `git log -S` probe.** The entire feature — the config field + its TOML tag,
+  `Agent.Options.RequestTimeout`, `requestTimeout`, and the `context.WithTimeout` arming in
+  `internal/agent/sampling_request.go` — lands in ONE commit, ORCH `cc1553c` (2026-09-21 19:17:26
+  -0600); only the pre-existing header emitter (`RelayDeadlineHeader`, `61fc3f6` 2026-09-04) is older,
+  and it is reused rather than replaced. The fleet's staged binary (ORCH's deploy staging,
+  md5 `086e4ff3a69fb366aa47dc6c5f7ed938`, built 2026-09-22 10:06 — about 15 h after the commit)
+  carries the feature's literals (`grep -c request_timeout_seconds reasonix.exe` = 1); negative
+  control: ORCH's Aug-21 build (`cba1e310…`) has 0. So the fix was present and SWITCHED OFF, not
+  absent and waiting for a build — which is what 0 of 28,176 `execute` rows with a deadline looks
+  like. The one remaining dependency is the gateway RELOADING the config:
+  `request_timeout_seconds` is read at boot (`internal/boot/boot.go:1087 → :1712`), and ORCH's own
+  `deploy_all.ps1` restarts the gateway on its `Test-GatewayConfigStale` check once the chat is idle
+  past the 900 s grace. The box stays **UNCHECKED** until the store shows `caller_timeout_ms` on
+  `execute`/`plan` rows.
+- **Four archived `metadata.json` files were repaired, and the OSD guard's own false positive was
+  filed rather than patched.** `vendor/conductor/archive/{ability_separation_20260219,
+  content_extraction_20260214, merge_sections_20260214, spell_details_20260214}/metadata.json` were
+  invalid JSON — all four carried unescaped `"` inside a single-line `description`, with 0
+  backslashes in any file, so the repair escaped the inner quotes rather than doubling existing
+  escapes and every other byte was preserved. Result: `scanned 60 unparseable 0`. The guard's four
+  `deliberation UNREADABLE (deliberation: required)` lines are gone too, and that line is a defect in
+  the OSD guard: the renderer asserts a declaration the predicate (`_declares_deliberation`) says it
+  cannot read, while the census line simultaneously counts the same files as `0 declare
+  deliberation`. Filed not-patched as
+  `modelstack_framework/temp/issues/ISSUE_osd_guard_asserts_deliberation_declaration_for_unreadable_metadata_20260923.md`
+  (three fix options, framework-side reproduction). No vendored byte touched.
+- **The OSD floor was received the hard way: the write half landed and the record half died with the
+  machine.** `msf governance stamp --target . --apply` copied its bodies (`vendor/.reasonix/skills/
+  subspace-deliberation/SKILL.md`, `vendor/housekeeping_guard.py`, `vendor/hooks/pre-commit`) and then
+  left `governance.stamps.json` as **3,024 NUL bytes** when the host was killed mid-write (Kernel-Power
+  event 41 at 12:50:08 + event 6008 "previous shutdown at 12:41:40 was unexpected"; the file's mtime,
+  12:49:41, sits inside that window). The root cause is framework-side and already handed off
+  (`modelstack_framework/temp/issues/ISSUE_received_record_written_non_atomically_20260923.md`:
+  `write_stamps()` is an in-place truncate-then-write at `framework/runtime/governance.py:272`). The
+  repair was the framework's own runbook — quarantine, never delete: the corpse is kept as
+  `temp/archived/governance.stamps.json.zero-filled-20260923` (the mirror row in `ARCHIVE_INDEX.md` is
+  named `ISSUE_governance_stamps_zero_filled_20260923.md`) and a re-stamp re-certified the tree
+  (`APPLIED: 21 unit(s) {'behind': 21}`, exit 0). Readings: `msf validate --all --root .` **PASS: 0
+  error(s), 11 warning(s)** (was exit 1, 1 error/14 warnings) and `msf governance status --scan-root
+  C:/luiscla27/projects` **CURRENT (exit 0)** with this project at OSD `current` / guard `current` /
+  hook `bound` / runs `yes`. The same crash also killed this project's own agent session mid-turn and
+  exposed two fleet defects worth fixing at the source: the deploy lock is wall-clock-scoped, so it
+  survived a reboot that killed its writer and stalled deploys for 15 min, and the idle gate arms
+  before Telegram is reachable (DNS is not up at boot), so it fired with no way to notify.
+- **Evidence for all of the above:** `temp/scratch/s31_sec6_check.py` (the §6 field census),
+  `temp/scratch/s31_archive_readiness.py` (the readiness gate), `temp/scratch/s31_verdict_cells.py`
+  (the chat-lane cell attribution), `temp/scratch/s30_fix_broken_metadata.py` (the JSON repair),
+  `temp/scratch/s28_verify_pointers.py` (the citation audit, **0 stale lines**, exit 0), and
+  `temp/scratch/s30_s293_check.py` (the §29.3 falsifiable check, `NEW-ROW EXPECTATION: MET`).
+
+## [2.1.1] - 2026-09-22
+
+### Fixed
+- **The nine-dot grip is a CELL of the section's action row, so it can no longer land on a
+  button.** It had been moved out of the section's centre into the top-left corner
+  (`top:8px; left:8px`, absolute) — the operator's placement instruction — but the action bar is
+  anchored at the SAME corner with the SAME 39x32 cells, so the grip became coextensive with the
+  bar's first button: `elementFromPoint` over the grip's centre returned `be-select-section-button`
+  and the overlap measured 100% (1248px of a 39x32 box). Reported by
+  `temp/archived/ISSUE_corner_grip_lands_on_first_action_button_20260922.md`, which lists the three
+  options; option 1 was taken. `js/dnd.js` now inserts the handle as the rail's **first child**, and
+  the rail's own `display:flex; gap:8px` (js/print_styles.js) gives it a box no control can share —
+  the collision is unrepresentable rather than ranked away. The handle's rule sheds the placement it
+  no longer needs (`position:absolute`, `top`, `left`) and keeps the button tier at 39x32 with
+  `flex:0 0 auto` so a narrow section cannot squeeze the GRIP first. **`ensureDragHandle` asks the
+  section pass's own accessor for the rail** (`window.getOrCreateActionContainer`, falling back to a
+  local `div`) so the bar keeps the inline level from `Z.ACTIONS_BAR` and every other property it is
+  built with, migrates a grip left behind by the corner placement instead of stacking a second one,
+  and re-asserts slot zero on every pass — which is what makes it survive the builders that prepend
+  into the same container. Two consequences of the new position are fixed with it: the
+  removed-node arm of `watchDragHandles` resolved the handle's `parentNode`, which since the callback
+  is a microtask is `null` for a real removal (the one case that arm exists for never fired) and now
+  resolves the WRAPPER from the record, and the grip — being a `button` inside `.be-section-actions` —
+  fell to the sheet's and theme's `!important` button rules (pill radius, drop-shadow, white ink, and
+  green on shape sections), so the block carries a `(0,2,0)` arm that wins its own paint.
+- **Three placement rules became one, and the two dead ones are deleted.** The grip's history is the
+  argument for doing this structurally: a centred plate whose collision was MEASURED away
+  (`gripBandFor` / `measureGripBands`, a trimmed 18x18 plate, three `--be-grip-*` properties and a
+  `ResizeObserver` — the 2026-09-14 geometry pass), then a bar that "yielded" to the grip in the
+  stack (`z-index: 700001` against 700002), then the corner. Neither earlier mechanism survived:
+  the geometry subsystem was already deleted by the move to the corner (its own unit file,
+  `test/unit/grip_geometry.test.js`, is rewritten as the negative contract — that the machinery
+  STAYS gone, since a dead second placement rule is what produced round two), and the yield rule is
+  removed from `js/print_styles.js` because a level between two controls whose boxes are disjoint
+  decides nothing. That removal forced one real change: the bar's `:hover` reveal had no
+  `:focus-within` arm, and with the grip INSIDE the row the row's `opacity: 0` would hide a
+  keyboard-reached grip, so the reveal now carries both arms — exactly the arms js/dnd.js uses,
+  asserted as set equality. `test/unit/hover_refactor.test.js` replaces the ladder case with that
+  lockstep plus the slot contract, and adds a case that fails against the old `parentNode` lookup.
+  Verified: unit `1473 passing / 0 failing` (was 1457 / 9 at the recovered state), lint clean,
+  `affordance_drag_hover_shadows` 13 + `drag_glow_layers` 5 + `lock_handle_visibility` 1 = `19
+  passing` in Chromium, and the per-wrapper census
+  reports `buttonOverlapPx: 0` on every section with the Select button owning its own centre and the
+  grip owning its own. The 2.0.1 Known-issues entry about the bar covering the grip is closed below.
+- **The print hide needed the same arm as the base block, and the browser caught it.** The
+  grip's `display: flex !important` is (0,2,0) to beat the action buttons' rules, and a @media
+  rule does not outrank a higher-specificity declaration outside the media question, so the
+  lone `.be-drag-handle { display: none !important }` under `@media print` LOST and the handle
+  printed as a flex cell (measured: `{"display":"flex","visibility":"visible","opacity":"1"}`).
+  The print block now repeats the (0,2,0) arm, and the unit case asserts the block carries it.
+- **The hue-shift case was asserting the wrong half, and the move changed what is true.** A
+  filter on an ancestor is a group filter over its whole subtree and no `filter:none` on a
+  descendant undoes it, so the nine dots now travel with the row's inverse rotation. That is
+  accepted deliberately and recorded in js/filters.js: counter-rotating the handle would make it
+  the one cell in the row that does not shift, splitting the row apart visually, and the point
+  of the move is that the grip IS a cell of that row. The case now asserts the ANCESTOR CHAIN
+  (the rail carries `hue-rotate(-120deg)`, the handle is not counter-rotated on top of it),
+  which is the half that can still regress silently, and leaves the colour itself to the eye.
+
+- **New guard: `scripts/check_css_template_backticks.js` + `test/unit/css_template_backticks.test.js`.**
+  A backtick inside a CSS COMMENT terminates the template literal a stylesheet is emitted from, so the
+  module throws a SyntaxError at require time — and this change hit that in three files at once. The
+  existing guard (`scripts/check_theme_backticks.js`) is hard-wired to `THEME_CSS` in js/ui_theme.js and
+  could not see it, and the failure was loud but MISLEADING: measured while this was written, one
+  injected backtick in js/dnd.js's sheet took the unit suite from 1470 passing to **1341 passing / 84
+  failing**, every message reading `TypeError: dnd.initDragAndDrop is not a function`. The new check
+  scans every named sheet emitter (js/dnd.js, js/filters.js, js/print_styles.js, js/ui_theme.js), blanks
+  `${...}` (a nested template there is legitimate), refuses to scan past a one-line `css += …;`
+  terminator so it cannot read the source below a template as its body, and names `file:line`. It
+  asserts its own file list exists, so a stale list cannot pass vacuously, and js/ui_theme.js remains
+  covered by both guards — its own test is untouched.
+- **`test/browser_e2e/spec_inventory.json` regenerated** (75 spec files / 329 tests, was 74 / 325): the
+  manifest was stale by one file — `action_menu_registration.spec.js` was committed without a
+  regeneration, so the gate would have reported a drift this change does not own.
+- **The five "Cannot create item with duplicate id" errors are gone — the action menu is registered
+  once, from `onInstalled`.** `js/background.js` created its five action-menu entries (`sponsor`,
+  `donate`, `buy-me-a-coffee`, `contribute`, `feedback`) at the **top level** of the MV3 service
+  worker. Chrome persists context-menu items in the profile and MV3 re-runs the worker script on every
+  worker start, so from the second start onward every `create` asked for an id that already existed and
+  each call reported an unchecked `lastError` — the five lines the operator read off
+  `chrome://extensions`. The registration now lives in a named `createActionMenu()` invoked from the
+  **existing** `chrome.runtime.onInstalled` listener (Chrome's own documented pattern for this API);
+  ids, titles, order and the `onClicked` dispatch are unchanged, and the entries remain the five asks
+  AC-3 pinned (nothing deleted, no monetisation channel unreachable, no sixth ask). Measured over three
+  boots of ONE profile with `chrome.runtime.lastError` read inside the callback — the only channel that
+  reports this — the duplicate error is gone while all five ids stay `present`. `npm test` **1471
+  passing** / 0 failing, lint clean, and the AC-3 browser spec **3 passing** with all five destinations
+  `present` after the move.
+- **New guard: `test/browser_e2e/action_menu_registration.spec.js`** (4 cases), plus four helpers in
+  `test/browser_e2e/_helpers/dom.js` — `__profilePath` on the context, `launchProfileAgain`,
+  `serviceWorkerOf`, `probeActionMenu`. The helpers close the hole that made this class invisible:
+  every launcher in the harness handed out a **fresh** profile (deleted on close), i.e. exactly ONE
+  worker start per case, so a defect that only fires on the *second* start could not occur in any run.
+  Falsified against a reverted copy in `temp/` (never the worktree): the **structural** case fails
+  (all five creates must sit inside `createActionMenu()`, with **exactly one** call to it, after the
+  listener — verified against the hoisted-call revert), while the runtime cases deliberately do not
+  claim that half. **What the falsification corrected:** a duplicate `create` errors and removes
+  nothing, so after any number of starts all five ids are still present, and `contextMenus.update()`
+  cannot tell "created once" from "created and errored four times" — the same blindness that hid this
+  from AC-3. The only reporter is the `lastError` of a `create` call, and that call is itself a
+  mutation, so the spec asserts on it **only where the id already exists** (where a failing create is
+  provably inert) and asks the read-only question everywhere else; the first draft of the spec learned
+  this the hard way, going red on boots 2 and 3 because its own probe had registered the id.
+  Post-mortem, both blind spots and the falsification:
+  `temp/issues/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`.
 - **On a short section the action bar no longer covers the centred grip — the bar yields.**
+  **SUPERSEDED in this same cycle by the rail-cell fix above**, which deletes the yield rule: a
+  level between two controls whose boxes are now disjoint decides nothing. Kept because it is
+  the record of option 3 and of what was measured while it stood.
   `section-extra-tidbits-wrapper` (151×62) was the 2.0.1 census failure recorded under Known issues
   below: the bar carries an inline `z-index: 1000000` (`js/main.js:2512`, via `window.Z.ACTIONS_BAR`)
   against the grip's 700002, so on a section short enough for the bar's band to reach the vertical
@@ -34,7 +372,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `drag_glow_layers`) **19 passing / 0 failing**. Reported and resolved in
   `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (option 3 chosen
   by the operator; Muse consulted on the loop, all five of his suggestions dispositioned there).
-- **The grip no longer sits on top of a short section's action-bar button.** The residual the entry
+- **The grip no longer sits on top of a short section's action-bar button.**
+  **SUPERSEDED in this same cycle by the rail-cell fix above**: the geometry subsystem this entry
+  builds (`gripBandFor` / `measureGripBands` / `--be-grip-*` / the `ResizeObserver`) is DELETED,
+  because the grip is laid out by the action row now and has no collision left to measure out of.
+  `test/unit/grip_geometry.test.js` keeps the file's name but asserts the opposite — that the
+  machinery stays gone — and this entry stands as the record of what was tried and measured.
+  The original opening sentence continues:
   above left behind — the yield fixed the stacking and nothing else could — was pure geometry: on
   `section-extra-tidbits-wrapper` (151×62) the grip's 34×26 plate is centred at (75.8, 31) and the
   🎯 Select button's 39×32 box at (74.5, 24), so the two centres are 1.3px apart across and 7px down
@@ -125,6 +469,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vendor/docs/responsive-scaling-wiring-20260913/FIX_REPORT.md`. Reported and
   resolved in `temp/archived/ISSUE_scaling_offswitch_no_remeasure_and_stale_floor_expectations_20260914.md`
   and `temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md`.
+
+### Internal
+- Release gate (`node scripts/release_gate.js`) — PASS at the cut. Its browser-suite witness is
+  `temp/browser_gate/artifact.json`: serial run started `2026-09-23T00:06:07.257Z`, 5907 s,
+  **329 tests collected across 75 spec files → 234 passing / 95 pending / 0 failing**, exit 0, host
+  canary `{"boot_tolerated":0}`; all six required surfaces green (`byok_arrange_roundtrip` 7/7,
+  `manual_verification_phase0` 2/2, `phase1` 1/1, `phase2` 1/1, `phase3` 1/1, `phase4` 2/2), with
+  `js/` last changed `2026-09-22T14:52:44-06:00`. `npm test` (lint + unit + integration + manifest)
+  is **1472 passing / 0 failing / 1 pending**, lint clean. No product code changed after the
+  artifact was recorded, so the gate covers exactly what ships in this release.
+- `package-lock.json`'s root `version` still reads `2.0.1`. It is NOT bumped: no gate or test asserts
+  that field (the version-parity contract in `manual_verification_phase4.spec.js` is
+  `package.json` = `manifest.json` = newest CHANGELOG heading), and rewriting the lock without a real
+  `npm install` would make its diff unreviewable. Recorded here so the next release either settles it
+  with an install or deletes the discrepancy deliberately.
 
 ## [2.1.0] - 2026-09-20
 
@@ -240,7 +599,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recorded honestly rather than asserted away:
   `temp/archived/ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md` (three concrete fix
   options, all re-stacking, none attempted here — **option 3 was taken after this release; see
-  [Unreleased]**). The census assertion is a **ratchet on the count**
+  `2.1.1`, where it is SUPERSEDED: none of the three could fix this, because the overlap was
+  never a cascade question. It is CLOSED structurally — the grip is a cell of the action row, so
+  no button shares its box (measured `buttonOverlapPx: 0` on every section).**). The census assertion is a **ratchet on the count**
   (`KNOWN_BAR_OVERLAP_EXCEPTIONS = 1`) with the miss list printed, so a stacking regression that makes
   ordinary section content beat the grip blows far past the bound and goes red.
 
@@ -354,7 +715,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   product call that needs a legibility measurement rather than a hunch; the committed page rasters are
   the material for it. Filed as its own decision, with the measurements and the four options:
   `temp/archived/ISSUE_scaling_floor_spells_0443_20260913.md` (path as filed; the decision was taken
-  in `[Unreleased]` above — options 1 + 2 together). See §5 of the fix report.
+  in `2.1.1` above — options 1 + 2 together). See §5 of the fix report.
 
 ## [1.17.2] - 2026-09-12
 

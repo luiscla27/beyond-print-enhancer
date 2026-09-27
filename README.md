@@ -226,9 +226,11 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
    keys nudge the selected section (1px; `Shift` = one 16px step) and the
    properties panel shows numeric Position X/Y inputs. **What is selected is one thing**: picking a section on the sheet, picking it from the layer panel, or picking a shape all move the same selection, so the outline, the layer row and the properties panel cannot disagree — and clearing clears all three. See `vendor/docs/selection-model-ia-20260910/` for this track's visual-gate record and `vendor/docs/drag-ux-20260909/` for the drag engine's.
    Since 2.0.1 the move affordance is **shown, not guessed**: hovering a section
-   on the active layer puts a nine-dot grip at its centre, and the section drags
+   on the active layer puts a nine-dot grip in the section's action row, and the section drags
    from there. It replaces a green `drop-shadow` that washed the whole section
-   when you hovered it (`vendor/docs/sheet-affordances-20260914/`). Dragging the section
+   when you hovered it (`vendor/docs/sheet-affordances-20260914/`). The grip is a **cell of that
+   row** (since 2.1.1), not an overlay on it, so it can never land on the row's buttons and every
+   button keeps its own pixel. Dragging the section
    body itself still works exactly as before.
 2. **Resizable Sections**: Adjust section width and height to fit your custom layout.
 3. **Properties Panel**: A centralized panel to manage the active section's font size, compact mode, and border style in real-time.
@@ -236,7 +238,7 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
 5. **Decorative Shapes**: Add resizable, rotatable graphical elements to your sheet. Includes a library of borders, corners, and accents.
 6. **Custom Asset Upload**: Upload your own image files (PNG, WebP, etc.) to use as custom shapes.
 7. **Section Cloning**: Create snapshots of sections like Spells to show different filtered lists (e.g., "Combat" vs "Social") simultaneously.
-8. **Dynamic Extraction**: Double-click any block of content (traits, features, actions) to extract it into its own floating, resizable card.
+8. **Dynamic Extraction**: Double-click any block of content (traits, features, actions) to extract it into its own floating, resizable card — and undo that too: it puts the block back on the sheet and removes the card.
 9. **Compact Mode**: One-click condensed view for complex sections to maximize information density.
 10. **Border Customization**: Choose from multiple themed border styles (Archer, Barbarian, Goth, etc.) for any section.
 11. **Templates**: Apply professional layouts (like the classic Archer theme) instantly.
@@ -248,7 +250,9 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
     cannot be written. But the stack goes further: **drag to move, resize, rotate,
     reorder layers, move a shape to another layer, toggle compact mode, change a border
     or a shape, flip a layer's lock / print / visibility, rename a layer, add and clone**
-    are all reversible too, newest first, one change at a time. Undo is reachable from
+    are all reversible too, newest first, one change at a time — and so is **extracting**
+    one (the double-click that turns a block into a floating section puts its section
+    back and removes the new one; that arm was the last one missing). Undo is reachable from
     the panel control — which names what it will undo ("Undo: Toggle \"Actions\"") and is
     disabled when there is nothing to undo — and from **Ctrl+Z / Cmd+Z**, which stays
     inert while you are typing in a text field so your typing keeps the browser's undo.
@@ -270,7 +274,12 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
 20. **Sections shrink to fit, so nothing is cut off** (since 1.17.3). A section whose content is
     taller or wider than its box used to have that overflow silently clipped; the content is now scaled
     down to fit the box instead, on screen and in the printout, and it re-fits when you resize the
-    section or change what is inside it.
+    section or change what is inside it. The properties panel's per-section **"Auto-scale to fit"**
+    switch takes effect **the moment it is pressed** (since 2.1.1) — no resize needed, in either
+    direction. When a section's content is too much even for the readability floor, the box now
+    **says so** (since 2.1.1) instead of cutting silently: a red fade with a dashed
+    hairline marks the clipped edge on screen (never in the printout) and the panel names the cause
+    plus the two ways out — drag the section taller, or turn Auto-scale off.
 21. **AI Arrange — bring your own key** (since 2.1.0). In the layout tray, **AI Settings** stores a
     provider (OpenAI or Anthropic), a model id and **your own API key, on this device only**;
     **AI Arrange** then takes one line of instruction ("move the combat box down by itself, hide the

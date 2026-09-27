@@ -1,29 +1,52 @@
 /**
- * The grip's GEOMETRY — the trimmed plate and the measured nudge.
- * (temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md)
+ * The grip's GEOMETRY CONTRACT — one placement rule, in one owner.
  *
- * WHY A UNIT CASE FOR SOMETHING SO VISUAL: the browser suite
- * (`test/browser_e2e/affordance_drag_hover_shadows.spec.js`) measures which control wins
- * one real pixel and cannot say WHY it lost. This file pins the placement RULE itself —
- * what the grip decides when its centred plate would swallow a control's centre — and
- * the cascade that carries that decision: three custom properties with the shipped values
- * as fallbacks, and a `translate` rather than a `top`.
+ * HISTORY THIS FILE NOW GUARDS, because it is the third placement in four days:
+ *   1. a centred plate (ISSUE_drag_and_drop.md) — collided with the bar on short
+ *      sections, so `gripBandFor` / `measureGripBands` were built to MEASURE the
+ *      collision away (ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md,
+ *      temp/archived/);
+ *   2. a z-index ladder so the bar "yielded" to the grip
+ *      (ISSUE_grip_covered_by_actions_bar_on_small_sections_20260914.md, archived) —
+ *      which never fixed the overlap, only ranked it, and js/dnd.js's own note
+ *      recorded the price: the grip covering 60% of the Select button;
+ *   3. a fixed top-left corner, absolute, beside the bar — coextensive with the
+ *      bar's first button, 100% (temp/issues/
+ *      ISSUE_corner_grip_lands_on_first_action_button_20260922.md).
  *
- * THE MEASURED SECTION IS THE FIXTURE. Every number below comes from the live demo sheet
- * at 1920x1080 with the decorative layers hidden through their own panel control
- * (`section-extra-tidbits-wrapper`, wrapper 151.5x62, action bar at top:8/left:8 with
- * 39x32 buttons, grip plate 34x26 centred). A unit test written against made-up geometry
- * would prove the algorithm follows a story nobody measured.
+ * The current answer is structural, not numerical: the grip is a CELL of the
+ * action rail, so `display:flex; gap` owns its box and NO second placement rule
+ * can exist beside it. That makes this file's job the negative one — proving the
+ * old machinery stayed deleted — plus the two positive rules the handle still
+ * carries. A measurement subsystem that survives as dead code is a second
+ * definition of placement waiting to disagree with the first, which is exactly
+ * how round 1 became round 2.
+ *
+ * The positive slot contract (`ensureDragHandle` puts the grip in slot zero, and
+ * keeps it there across a rebuild) lives with the rest of the handle's unit
+ * contract in test/unit/hover_refactor.test.js. Which control wins a real pixel
+ * is a browser question and is measured in
+ * test/browser_e2e/drag_glow_layers.spec.js and
+ * test/browser_e2e/affordance_drag_hover_shadows.spec.js.
  */
 "use strict";
 
 const assert = require("assert");
+const fs = require("fs");
 const path = require("path");
-const { JSDOM } = require("jsdom");
 
 const dndPath = path.resolve(__dirname, "..", "..", "js", "dnd.js");
+const dndSrc = fs.readFileSync(dndPath, "utf8");
+const printStylesSrc = fs.readFileSync(
+  path.resolve(__dirname, "..", "..", "js", "print_styles.js"),
+  "utf8",
+);
+/* The declarations only. Both files' prose deliberately NAMES the machinery that
+   was deleted (it is the record of why), so an identifier check that reads the
+   comments would fail on the history rather than on the code. */
+const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "");
 
-function freshModule() {
+function freshDnd() {
   delete require.cache[require.resolve(dndPath)];
   const prevWindow = global.window;
   global.window = {};
@@ -34,15 +57,15 @@ function freshModule() {
   }
 }
 
-/** `handleCss()` — the stylesheet the module installs, comments stripped so prose cannot
- *  satisfy an assertion about declarations. */
+/** The stylesheet the module installs, comments stripped so prose cannot satisfy
+ *  an assertion about declarations. */
 function handleCss() {
+  const { JSDOM } = require("jsdom");
   const prevDocument = global.document;
   const dom = new JSDOM("<!doctype html><html><body></body></html>");
   global.document = dom.window.document;
   try {
-    const dnd = freshModule();
-    dnd.injectDnDStyles();
+    freshDnd().injectDnDStyles();
     return global.document
       .getElementById("ddb-print-dnd-style")
       .textContent.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -53,309 +76,96 @@ function handleCss() {
 
 const baseBlock = (css) => css.match(/\.be-drag-handle\s*\{[\s\S]*?\}/)[0];
 
-/**
- * Build a sheet the placement pass can actually walk, run `body` against it, restore.
- *
- * WHAT THIS BUYS OVER THE BROWSER SUITE: a fake observer that RECORDS every
- * `observe`/`unobserve`. Both facts below are INVISIBLE to geometry — an
- * over-subscribed observer still places the grip correctly, and a subscription taken out
- * on a hidden control changes nothing on screen — so only a counter can assert them.
- * jsdom gives every element a 0x0 rect, which is exactly right here (a wrapper is
- * watched even though nothing about its box moved) and is why the PLACEMENT arithmetic
- * stays in the pure `gripBandFor` cases above rather than being asserted on rects.
- *
- * @param {{hiddenControl?: boolean}} opts
- * @param {(ctx: object) => void} body
- */
-function withSheet(opts, body) {
-  const { JSDOM } = require("jsdom");
-  const dom = new JSDOM("<!doctype html><html><body></body></html>");
-  const doc = dom.window.document;
-  const prev = {
-    document: global.document,
-    window: global.window,
-    ResizeObserver: global.ResizeObserver,
-    getComputedStyle: global.getComputedStyle,
-  };
-  const watched = new Set();
-  const released = [];
-  global.ResizeObserver = class {
-    observe(node) {
-      watched.add(node);
-    }
-    unobserve(node) {
-      watched.delete(node);
-      released.push(node);
-    }
-    disconnect() {
-      watched.clear();
-    }
-  };
-  global.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
-  global.document = doc;
-  global.window = {}; // no requestAnimationFrame here, so a scheduled pass flushes inline
-  try {
-    delete require.cache[require.resolve(dndPath)];
-    const dnd2 = require(dndPath);
-    /** A wrapper with an action bar, as the sheet builds them. */
-    const mkWrapper = () => {
-      const wrap = doc.createElement("div");
-      wrap.className = "be-section-wrapper";
-      const bar = doc.createElement("div");
-      bar.className = "be-section-actions";
-      const btn = doc.createElement("button");
-      btn.type = "button";
-      bar.appendChild(btn);
-      wrap.appendChild(bar);
-      doc.body.appendChild(wrap);
-      return { wrap, btn };
-    };
-    const a = mkWrapper();
-    const b = mkWrapper();
-    let rot = null;
-    if (opts && opts.hiddenControl) {
-      rot = doc.createElement("div");
-      rot.className = "be-rotation-handle";
-      rot.style.cssText = "display:none"; // how a layer lock hides the chrome
-      a.wrap.appendChild(rot);
-    }
-    body({
-      dnd: dnd2,
-      dom,
-      doc,
-      watched,
-      released,
-      keep: a.wrap,
-      keepBtn: a.btn,
-      doomed: b.wrap,
-      doomedBtn: b.btn,
-      rot,
-    });
-  } finally {
-    Object.assign(global, prev);
-    delete require.cache[require.resolve(dndPath)];
-  }
-}
-
-describe("Grip geometry — the trimmed plate and the nudge (ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914)", function () {
-  const dnd = freshModule();
-  const { gripBandFor, GRIP_PLATE_W, GRIP_PLATE_H, GRIP_DOT_PLATE_PX } = dnd;
-
-  // The MEASURED colliding wrapper and its bar, in the wrapper's own client coordinates.
-  const TIDBITS = { w: 151.5, h: 62 };
-  const BAR_BUTTONS = [
-    { x: 8, y: 8, w: 39, h: 32 }, // 🎯 Select  — centre (27.5, 24)
-    { x: 55, y: 8, w: 39, h: 32 }, // 👁 Toggle — centre (74.5, 24): THE swallowed one
-  ];
-  const centredPlateSwallows = (c) => {
-    const x = (TIDBITS.w - GRIP_PLATE_W) / 2;
-    const y = (TIDBITS.h - GRIP_PLATE_H) / 2;
-    const cx = c.x + c.w / 2;
-    const cy = c.y + c.h / 2;
-    return cx > x && cx < x + GRIP_PLATE_W && cy > y && cy < y + GRIP_PLATE_H;
-  };
-
-  it("the shipped centred plate really does swallow a bar button's centre (the fixture is the bug)", function () {
-    // NON-VACUITY FIRST: if the numbers below do not reproduce the reported collision, the
-    // rest of this file is testing a geometry that does not exist.
-    assert.ok(
-      centredPlateSwallows(BAR_BUTTONS[1]),
-      "the centred 34x26 plate covers the second button's centre — measured (74.5, 24)",
-    );
-    assert.ok(!centredPlateSwallows(BAR_BUTTONS[0]), "and not the first button's");
-  });
-
-  it("bands the plate to the dots' box and steps it clear of that centre, at the smallest shift", function () {
-    const band = gripBandFor({ ...TIDBITS, controls: BAR_BUTTONS });
-    assert.ok(band, "a colliding wrapper gets a band");
-    assert.strictEqual(band.width, GRIP_DOT_PLATE_PX, "the plate becomes the dots' box");
-    assert.strictEqual(band.height, GRIP_DOT_PLATE_PX);
-
-    // The plate the band produces, resolved the way the stylesheet resolves it: centred
-    // on both axes by `inset:0; margin:auto`, then displaced by `--be-grip-shift`.
-    const top = (TIDBITS.h - band.height) / 2 + band.shift;
-    const left = (TIDBITS.w - band.width) / 2;
-    const ownsCentre = (c) => {
-      const cx = c.x + c.w / 2;
-      const cy = c.y + c.h / 2;
-      return cx > left && cx < left + band.width && cy > top && cy < top + band.height;
-    };
-    for (const c of BAR_BUTTONS) {
-      assert.ok(!ownsCentre(c), `no control's centre is swallowed: ${JSON.stringify(c)}`);
-    }
-    // THE PRICE, pinned as a number rather than described: the promise is a CENTRED grip,
-    // so the shift is what this fix pays and it must be the SMALLEST shift that works.
-    // A candidate that cleared the row by going all the way below it costs 22px; 4 is the
-    // measured minimum for this wrapper (the plate's top edge lands 2px under the row's
-    // centre), and the ordering that puts NEAREST-TO-CENTRE before LEAST-COVERED is what
-    // buys it.
-    assert.strictEqual(band.shift, 4, "a 4px step, not a 22px move below the row");
-    // And the plate may not leave the wrapper: the sheet clips it there, and a
-    // half-painted affordance is worse than the collision (a real probe of a `top`-based
-    // version put the plate 2px past a 62px wrapper's bottom edge).
-    assert.ok(
-      top >= 0 && top + band.height <= TIDBITS.h,
-      `the banded plate stays inside the wrapper: y ${top}..${top + band.height} of ${TIDBITS.h}`,
-    );
-  });
-
-  it("leaves every wrapper that is NOT colliding exactly as it shipped", function () {
-    // The whole reason the trim is invisible in practice: a section whose centred plate
-    // reaches no control's centre is not touched at all.
-    assert.strictEqual(gripBandFor({ w: 400, h: 62, controls: BAR_BUTTONS }), null,
-      "a wide 62px section: the plate never reaches the top-left bar");
-    assert.strictEqual(gripBandFor({ ...TIDBITS, controls: [] }), null, "no controls at all");
-    assert.strictEqual(gripBandFor({ w: 500, h: 400, controls: [BAR_BUTTONS[0]] }), null,
-      "a document-sized section");
-    assert.strictEqual(gripBandFor({ w: 0, h: 0, controls: BAR_BUTTONS }), null,
-      "an unmeasurable wrapper is left alone, not banded to nonsense");
-    // FALSIFIED: the same call on the colliding fixture DOES band — so the four nulls
-    // above are a judgement about geometry, not a function that always returns null.
-    assert.ok(gripBandFor({ ...TIDBITS, controls: BAR_BUTTONS }), "the fixture still bands");
-  });
-
-  it("bands by what a control's CENTRE needs, not by a wrapper-height constant", function () {
-    // The issue's own estimate was "collides up to ~2*(8+32) = 80px". A 104px wrapper
-    // with a TWO-ROW bar breaks that rule in both directions at once: it is TALLER than
-    // 80px, and it still has two rows whose centres the plate reaches.
-    const twoRows = [
-      { x: 8, y: 8, w: 39, h: 32 },
-      { x: 55, y: 8, w: 39, h: 32 },
-      { x: 8, y: 48, w: 39, h: 32 },
-      { x: 55, y: 48, w: 39, h: 32 },
-    ];
-    const band = gripBandFor({ w: 151.5, h: 104, controls: twoRows });
-    assert.ok(band, "a 104px wrapper with a two-row bar is NOT assumed safe");
-    const top = (104 - band.height) / 2 + band.shift;
-    const left = (151.5 - band.width) / 2;
-    for (const c of twoRows) {
-      const cx = c.x + c.w / 2;
-      const cy = c.y + c.h / 2;
+describe("Grip geometry contract — one placement rule, no measurement subsystem", function () {
+  it("carries NO second placement: the geometry subsystem stays deleted", function () {
+    // Round 1's machinery. Every name here is a placement rule that could come
+    // back as a fallback beside the flex row; the browser is allowed exactly one.
+    for (const gone of [
+      "gripBandFor",
+      "measureGripBands",
+      "scheduleGripBands",
+      "flushGripBands",
+      "GRIP_PLATE_W",
+      "GRIP_PLATE_H",
+      "GRIP_DOT_PLATE_PX",
+      "GRIP_BAND_MIN_CLEARANCE",
+    ]) {
       assert.ok(
-        !(cx > left && cx < left + band.width && cy > top && cy < top + band.height),
-        `row button centre (${cx}, ${cy}) survives: plate y ${top}..${top + band.height}`,
+        !new RegExp("\\b" + gone + "\\b").test(stripComments(dndSrc)),
+        `${gone} must not come back: the grip is placed by the flex row, not measured out of a collision`,
       );
     }
-  });
-
-  it("carries the decision as custom properties whose fallbacks ARE the shipped plate", function () {
-    const css = handleCss();
-    const base = baseBlock(css);
-    assert.match(base, /width:\s*var\(--be-grip-w,\s*34px\)\s*!important;/,
-      "the plate's width reads the property, defaulting to the shipped 34px");
-    assert.match(base, /height:\s*var\(--be-grip-h,\s*26px\)\s*!important;/,
-      "…and its height, defaulting to 26px");
     assert.ok(
-      !/--be-grip-[wh]:/.test(css.replace(/var\([^)]*\)/g, "")),
-      "no rule SETS the sizes: only the placement pass does, so nothing can band a grip " +
-        "by hand and survive a sync",
+      !/--be-grip-/.test(stripComments(dndSrc)),
+      "no --be-grip-* custom property survives (the three carriers of the nudged plate)",
     );
-    // The offset: `translate`, NOT `top`. With `inset:0` + `margin:auto` both edges are
-    // pinned and a written `top` is SPLIT with the leftover space (measured: `top:
-    // calc(50% + 9px)` on a 62px wrapper rendered at y 38, not 40) — so a `top` here
-    // would silently misplace every banded grip by half its own shift.
-    const shiftRule = css.match(/\.be-drag-handle\s*\{[^}]*\}/g).find((r) => /translate:/.test(r));
-    assert.ok(shiftRule, "the offset is declared");
-    assert.match(shiftRule, /translate:\s*0 var\(--be-grip-shift,\s*0px\)\s*!important;/,
-      "…on the handle, defaulting to zero");
-    assert.ok(!/\btop:/.test(css.match(/\.be-drag-handle\s*\{[\s\S]*?\}/)[0]),
-      "the base rule writes no `top` at all");
-    // No state class exists: the properties are the state, so a stale marker cannot
-    // outlive the geometry it was written for.
-    assert.ok(!/\.be-grip-band/.test(css), "there is no band class in the cascade");
+    assert.ok(
+      !/--be-grip-|gripBand|measureGripBands/.test(stripComments(printStylesSrc)),
+      "and the sheet carries none of them either — one owner, in js/dnd.js",
+    );
   });
 
-  it("keeps the plate's own hit area honest at rest, on reveal, and while held", function () {
-    const css = handleCss();
-    const base = baseBlock(css);
-    // The trim is a SIZE, so `pointer-events` still needs no second mechanism: hidden
-    // means unhittable, revealed means hittable, and both are the shipped rules.
-    assert.match(base, /visibility:\s*hidden\s*!important;[\s\S]*pointer-events:\s*none\s*!important;/,
-      "at rest: invisible and out of the hit test, whatever its size");
-    const reveal = css.match(
-      /\.be-active-layer [^{]*:hover [^{]*\.be-drag-handle[\s\S]*?pointer-events:\s*auto\s*!important;\s*\}/,
+  it("does not observe layout to place the grip", function () {
+    // A ResizeObserver that exists to re-place an absolutely-positioned grip is
+    // round 1 again. The rail re-lays itself out; nothing here has to follow.
+    assert.ok(
+      !/new ResizeObserver/.test(stripComments(dndSrc)),
+      "js/dnd.js runs no ResizeObserver — there is no geometry left to re-measure",
     );
-    assert.ok(reveal, "the reveal still arms the pointer — the trim is a box, not a gate");
-    assert.match(reveal[0], /visibility:\s*visible\s*!important;/);
-    // The dots must never outgrow the trimmed plate: `ensureDragHandle` asks for a 12px
-    // glyph and a replaced flex child can be grown by its layout.
-    const svgRule = css.match(/\.be-drag-handle svg\s*\{[^}]*\}/)[0];
-    assert.match(svgRule, /max-width:\s*100%\s*!important;/, "the glyph is capped to the plate");
-    assert.match(svgRule, /max-height:\s*100%\s*!important;/);
-    assert.match(svgRule, /pointer-events:\s*none;/, "and the hits stay on the button itself");
+    // The observer it DOES run is the one that keeps the node alive per wrapper.
+    assert.ok(
+      /new MutationObserver/.test(dndSrc),
+      "the MutationObserver that re-inserts the grip after a section rebuild stays",
+    );
+  });
+
+  it("re-solves the collision by placement, not by a nudge or a level", function () {
+    // The handle block may not carry ANY of the three mechanisms that failed:
+    // an offset (round 3), a centring transform (round 1), or a written size
+    // that fights the row. What remains is the tier the buttons use.
+    const css = handleCss();
+    const block = baseBlock(css);
+    for (const forbidden of [
+      /--be-grip/,
+      /\btranslate\s*:/,
+      /\bscale\s*\(/,
+      /calc\(\s*50%/,
+    ]) {
+      assert.ok(
+        !forbidden.test(block),
+        `no displacement rule may return to the handle: ${forbidden}`,
+      );
+    }
+    assert.ok(
+      /width:\s*39px !important/.test(block) && /height:\s*32px !important/.test(block),
+      "it keeps the action row's own 39x32 tier",
+    );
+    assert.ok(
+      !/z-index:\s*700001/.test(css) &&
+        !/z-index:\s*700001/.test(printStylesSrc.replace(/\/\*[\s\S]*?\*\//g, "")),
+      "and the bar's yielded level (round 2) is gone from both files' declarations",
+    );
+  });
+
+  it("keeps its own hit area honest at rest, on reveal, and while held", function () {
+    // Survived every placement change: an invisible-but-hittable grip is a dead
+    // control over the section's content, and a grip left visible during a drag
+    // rides along in the source (the ghost is the copy the user sees).
+    const css = handleCss();
+    const block = baseBlock(css);
+    assert.ok(/visibility:\s*hidden !important/.test(block), "hidden at rest");
+    assert.ok(/pointer-events:\s*none !important/.test(block), "and unhittable at rest");
+    const reveal = css.match(
+      /\.be-active-layer[^{]*:hover[^{]*\.be-drag-handle[\s\S]{0,320}?\}/,
+    )[0];
+    assert.ok(/visibility:\s*visible !important/.test(reveal), "revealed by the active layer");
+    assert.ok(/pointer-events:\s*auto !important/.test(reveal), "and hittable then");
+    const held = css.match(/body\.be-dragging[^{]*\.be-drag-handle[\s\S]*?\}/)[0];
+    assert.ok(/visibility:\s*hidden !important/.test(held), "hidden again while held");
   });
 
   it("cements box-sizing so the declared size IS the rendered size", function () {
-    // The pass clamps the plate inside the wrapper and clears a centre by a couple of px.
-    // A 1px border adding 2px to both dimensions would eat that margin of error on any
-    // host that does not set border-box for us.
-    assert.match(baseBlock(handleCss()), /box-sizing:\s*border-box\s*!important;/);
-  });
-
-  it("keeps its subscriptions bounded: a deleted wrapper is released, a live one is not", function () {
-    // WHY A UNIT CASE AND NOT A BROWSER ONE: the leak never shows up in the placement —
-    // an over-subscribed observer delivers the right geometry. A subscription does NOT
-    // expire when the element leaves the document, so without a release every section the
-    // sheet ever built (and every button of every bar it ever repainted) stayed reachable
-    // for the life of the tab. js/main.js makes the same argument for `forgetContainer`.
-    withSheet({}, (c) => {
-      assert.ok(c.dnd.measureGripBands() >= 0);
-      assert.ok(c.watched.has(c.keep) && c.watched.has(c.doomed), "both wrappers are watched");
-      assert.ok(c.watched.has(c.doomedBtn), "and its button, since the pass reads it");
-
-      c.doomed.remove();
-      c.dnd.measureGripBands();
-      assert.ok(!c.watched.has(c.doomed), "a deleted wrapper is released, not pinned");
-      assert.ok(!c.watched.has(c.doomedBtn), "...and so is its button");
-      assert.ok(c.watched.has(c.keep), "the live section keeps its subscription");
-      assert.ok(c.released.includes(c.doomed), "via unobserve, not by dropping the observer");
-
-      // A SCOPED pass must not judge boxes it never walked: measuring one wrapper may
-      // only release what has provably left the document.
-      const before = c.watched.size;
-      c.dnd.measureGripBands(c.keep);
-      assert.strictEqual(c.watched.size, before, "a scoped pass releases nothing live");
-    });
-  });
-
-  it("watches a locked (display:none) control it cannot measure, and ignores it for placement", function () {
-    // Two halves, both needed. A layer lock hides the rotation/resize chrome
-    // `display:none` (js/print_styles.js), so while locked that control has no box the
-    // user can aim at and must NOT move the grip. But it comes BACK when the user
-    // unlocks, and the only way the pass hears about it is a subscription taken out while
-    // hidden — a `display:none` element that starts rendering IS a resize notification,
-    // MEASURED in Chromium (observing a hidden handle delivered 0x0, then 4x14 on unlock).
-    withSheet({ hiddenControl: true }, (c) => {
-      assert.strictEqual(
-        c.dnd.measureGripBands(),
-        0,
-        "a hidden control is not a reason to band (nothing of it is on screen)",
-      );
-      assert.ok(c.watched.has(c.rot), "...but it IS watched, so unlocking re-places the grip");
-      assert.ok(c.watched.has(c.keep), "and so is the wrapper that holds it");
-    });
-  });
-
-  it("re-measures on every box the placement reads, and never during a drag", function () {
-    const fs = require("fs");
-    const src = fs.readFileSync(dndPath, "utf8");
-    assert.ok(
-      /ro\.observe\(node,\s*\{ box: 'border-box' \}\)/.test(src),
-      "the observer subscribes to the nodes the pass reads (an observer on the layout " +
-        "root or on body would never be told about one section resizing)",
-    );
-    for (const selector of ["watchGripBand(wrapper)", "watchGripBand(node)"]) {
-      assert.ok(src.includes(selector), `${selector} — every wrapper AND every control`);
-    }
-    assert.ok(
-      /classList\.contains\('be-dragging'\)\)\s*return 0/.test(src),
-      "the pass refuses to run while a drag is committed",
-    );
-    const cleanup = src.match(/function cleanupDrag\(\)\s*\{[\s\S]*?\n\}/)[0];
-    assert.ok(
-      /classList\.remove\('be-dragging'\)/.test(cleanup) && /scheduleGripBands\(\)/.test(cleanup),
-      "…and the SAME function that clears the flag re-arms it, or the drop's own geometry " +
-        "change would be swallowed forever",
-    );
+    const block = baseBlock(handleCss());
+    assert.ok(/box-sizing:\s*border-box !important/.test(block));
   });
 });

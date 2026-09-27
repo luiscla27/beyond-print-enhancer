@@ -66,7 +66,91 @@ async function launchExtensionContext() {
       }
     }
   };
+  // The profile PATH is published on the context so a case can deliberately come back to the same
+  // user-data dir. The one thing the default shape cannot express is "boot this profile a SECOND
+  // time" — which is what an MV3 service worker does in real use, and what a defect that only fires
+  // on the second worker START needs in order to be observable at all (see
+  // `temp/archived/ISSUE_ctxmenu_duplicate_id_invisible_to_gates_20260921.md`: the fresh-profile rule
+  // is exactly why the five duplicate-id errors were invisible to every gate). `close()` still
+  // removes the dir, so a case that revisits it must drop that wrapper first — deliberately awkward,
+  // and detailed at the call site in `action_menu_registration.spec.js`.
+  ctx.__profilePath = profile;
   return ctx;
+}
+
+/**
+ * Boot the SAME extension profile a second time, as its own context.
+ *
+ * WHY THIS EXISTS. Every launcher in this harness hands out a fresh user-data dir, which means one
+ * service-worker START per case. Chrome persists context-menu items in the profile, so the calls a
+ * worker makes at its top level are the ones that only fail on the SECOND start — invisible to any
+ * single-boot case by construction. A guard for that class has to reuse a profile, and this is the
+ * narrowest way to do it that leaves every other spec's isolation untouched.
+ *
+ * The profile directory is NOT removed on close: the caller owns it and must remove it in its own
+ * teardown. Pass the same `profile` twice to boot it twice.
+ *
+ * @param {string} profile  an absolute user-data dir, typically a context's `__profilePath`
+ */
+async function launchProfileAgain(profile) {
+  return chromium.launchPersistentContext(profile, {
+    headless: true,
+    executablePath: chromium.executablePath(),
+    args: [
+      `--disable-extensions-except=${EXT_ROOT}`,
+      `--load-extension=${EXT_ROOT}`,
+      "--disable-blink-features=AutomationControlled",
+      "--headless=new",
+    ],
+  });
+}
+
+/** The extension's service worker in `ctx`, waiting for it if it has not started yet. */
+async function serviceWorkerOf(ctx) {
+  const found = () => ctx.serviceWorkers().find((w) => w.url().includes("background.js"));
+  let sw = found();
+  if (!sw) sw = await ctx.waitForEvent("serviceworker", { timeout: 60000 });
+  if (!sw.url().includes("background.js")) {
+    sw = ctx.serviceWorkers().find((w) => w.url().includes("background.js")) || sw;
+  }
+  return sw;
+}
+
+/**
+ * What the extension's OWN context-menu registrar says about `ids` right now.
+ *
+ * Reads `chrome.runtime.lastError` INSIDE each callback, which is the only way to see these errors:
+ * an unchecked `lastError` is otherwise reachable only as a console line. That is not a stylistic
+ * choice — it is the one channel that could be MEASURED to work. `chrome.developerPrivate` exposes
+ * no runtime-error getter in this Chromium, and `getExtensionsInfo().runtimeErrors` returned `[]`
+ * even with a duplicate `create` deliberately planted into a throwaway copy of the extension with
+ * Developer Mode on — so asserting on that surface would have been a gate that cannot fail.
+ *
+ * `created` reports what the CALL the probe made answered. For an id the worker has already
+ * registered it reads `Cannot create item with duplicate id <id>` — the operator's exact string, and
+ * precisely the condition the fix removed from the extension's own start-up path.
+ *
+ * @returns {Promise<{present: Record<string, boolean>, created: string}>}
+ */
+async function probeActionMenu(sw, ids) {
+  return sw.evaluate(async (wanted) => {
+    const ask = (fn) =>
+      new Promise((resolve) => {
+        try {
+          fn(() => resolve(String((chrome.runtime.lastError || {}).message || "")));
+        } catch (err) {
+          resolve("THREW " + ((err && err.message) || String(err)));
+        }
+      });
+    const present = {};
+    for (const id of wanted) {
+      present[id] = (await ask((cb) => chrome.contextMenus.update(id, {}, cb))) === "";
+    }
+    const control = await ask((cb) =>
+      chrome.contextMenus.create({ id: "sponsor", title: "Sponsor", contexts: ["action"] }, cb),
+    );
+    return { present, created: control };
+  }, ids);
 }
 
 /**
@@ -282,6 +366,9 @@ module.exports = {
   READY_SELECTOR,
   FILES,
   launchExtensionContext,
+  launchProfileAgain,
+  serviceWorkerOf,
+  probeActionMenu,
   bootPage,
   reinject,
   domClick,

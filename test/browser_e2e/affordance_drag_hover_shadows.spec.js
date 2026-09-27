@@ -272,7 +272,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
           filter: cs.filter,
         };
       };
-      const handle = sec.querySelector(":scope > .be-drag-handle");
+      const handle = sec.querySelector(":scope > .be-section-actions > .be-drag-handle");
       const hr = handle ? handle.getBoundingClientRect() : null;
       const wr = sec.getBoundingClientRect();
       return {
@@ -293,7 +293,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
               })(),
             }
           : null,
-        handleIsDirectChild: !!handle && handle.parentElement === sec,
+        handleIsRailCell: !!handle && handle.parentElement === sec.querySelector(":scope > .be-section-actions"),
         dots: handle ? handle.querySelectorAll("circle").length : 0,
         bar: styleOf(sec.querySelector(":scope > .be-section-actions")),
         topmostAtWrapperPoint: (() => {
@@ -393,7 +393,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       const verdict = await page.evaluate(
         (wid) => {
           const el = document.getElementById(wid);
-          const h = el.querySelector(":scope > .be-drag-handle");
+          const h = el.querySelector(":scope > .be-section-actions > .be-drag-handle");
           if (!h) return { why: "no handle" };
           const r = h.getBoundingClientRect();
           const cs = getComputedStyle(h);
@@ -477,7 +477,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
     }
   });
 
-  it("every section wrapper carries ONE centred nine-dot handle, hidden and unhittable at rest", async function () {
+  it("every section wrapper carries ONE nine-dot handle in its rail's first slot, hidden and unhittable at rest", async function () {
     const page = await bootSheet(ctx);
     try {
       const census = await page.evaluate(() => {
@@ -485,15 +485,36 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         const wrappers = Array.from(document.querySelectorAll(".be-section-wrapper"));
         const rows = [];
         for (const w of wrappers) {
-          const handles = Array.from(w.children).filter((c) => c.classList.contains("be-drag-handle"));
+          const handles = Array.from(w.children).flatMap((c) =>
+            c.classList.contains("be-section-actions")
+              ? Array.from(c.children).filter((g) =>
+                  g.classList.contains("be-drag-handle"),
+                )
+              : [],
+          );
           const h = handles[0] || null;
           const cs = h ? getComputedStyle(h) : null;
           rows.push({
             id: w.id,
             isShape: w.classList.contains("be-shape-wrapper"),
             direct: handles.length,
+            firstRailCell: (() => {
+              const rail = w.querySelector(":scope > .be-section-actions");
+              return !!rail && rail.firstChild === handles[0];
+            })(),
             totalInSubtree: w.querySelectorAll(".be-drag-handle").length,
             dots: h ? h.querySelectorAll("circle").length : 0,
+            // THE PAINT, not just the box. The grip is a `button` inside
+            // `.be-section-actions` now, and both js/print_styles.js and
+            // js/ui_theme.js dress that pair with !important (pill radius,
+            // drop-shadow, white 18px ink, and a GREEN background on shape
+            // sections). js/dnd.js answers with a (0,2,0) arm; if that arm ever
+            // is dropped, the geometry still passes and the affordance turns into
+            // an action pill — so the paint is asserted per wrapper here.
+            background: cs ? cs.backgroundColor : null,
+            radius: cs ? cs.borderTopLeftRadius : null,
+            ink: cs ? cs.color : null,
+            shadow: cs ? cs.boxShadow : null,
             tag: h ? h.tagName : null,
             type: h ? h.getAttribute("type") : null,
             label: h ? h.getAttribute("aria-label") : null,
@@ -507,13 +528,29 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
 
       assert.ok(census.count >= 20, "the demo sheet laid out its sections: " + census.count);
       for (const r of census.rows) {
-        assert.strictEqual(r.direct, 1, `wrapper ${r.id} has exactly ONE handle as a direct child`);
+        assert.strictEqual(r.direct, 1, `wrapper ${r.id} has exactly ONE handle as a cell of its action rail`);
         assert.strictEqual(r.totalInSubtree, 1, `wrapper ${r.id} has no duplicate handle deeper in its subtree`);
+        assert.ok(r.firstRailCell, `wrapper ${r.id} holds the grip in the rail's FIRST slot`);
         assert.strictEqual(r.tag, "BUTTON", "it is a real button (keyboard/AT reachable)");
         assert.strictEqual(r.type, "button", "type=button: it never submits anything");
         assert.ok(r.label && /drag/i.test(r.label), `the handle is labelled for AT: ${r.label}`);
         assert.strictEqual(r.dots, 9, `the grip is NINE dots on ${r.id}, not three: ${r.dots}`);
-        assert.strictEqual(r.position, "absolute", "it is positioned out of flow so it cannot reflow content");
+        assert.strictEqual(r.position, "relative", "it stays IN FLOW as a rail cell — an overlaid grip is what landed on a button");
+        // THE PAINT, per wrapper. Being a `button` inside `.be-section-actions`
+        // puts the grip in the range of the sheet's and theme's button rules, both
+        // of which are !important and both of which would dress it as an action
+        // pill (radius 32, drop-shadow, white ink) or, on a shape section, green.
+        // js/dnd.js answers with a (0,2,0) arm, and this is the only gate that can
+        // see the arm lost: geometry and hit-testing stay perfect while the
+        // affordance's identity — a dark plate of gold dots — disappears.
+        assert.strictEqual(
+          r.background,
+          "rgb(12, 9, 7)",
+          `the grip keeps its own plate, not an action button's fill, on ${r.id}: ${r.background}`,
+        );
+        assert.strictEqual(r.ink, "rgb(198, 161, 91)", `gold dots, not white ink: ${r.ink}`);
+        assert.strictEqual(r.radius, "4px", `a square handle, not a pill: ${r.radius}`);
+        assert.strictEqual(r.shadow, "none", `and no drop-shadow (ISSUE_shadows.md): ${r.shadow}`);
         // At rest the handle must be BOTH invisible and out of the hit test: an
         // invisible-but-clickable button in the middle of every section would eat
         // clicks meant for the section body.
@@ -525,7 +562,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
     }
   });
 
-  it("hovering the ACTIVE layer reveals the handle, centred and grabbable, with no glow", async function () {
+  it("hovering the ACTIVE layer reveals the handle in the rail's first slot, grabbable, with no glow", async function () {
     const page = await bootSheet(ctx);
     try {
       // The reachability walk picks a section whose grip really WINS the hit test at
@@ -545,13 +582,32 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       const st = await page.evaluate(
         (id) => {
           const w = document.getElementById(id);
-          const h = w.querySelector(":scope > .be-drag-handle");
+          const h = w.querySelector(":scope > .be-section-actions > .be-drag-handle");
+          const rail = h.parentElement;
           const cs = getComputedStyle(h);
           const hr = h.getBoundingClientRect();
           const wr = w.getBoundingClientRect();
+          const intersect = (a, b) => {
+            const ovW = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            const ovH = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+            return ovW > 0.5 && ovH > 0.5 ? Math.round(ovW * ovH) : 0;
+          };
+          const overlapWith = Array.from(rail.querySelectorAll("button"))
+            .filter((b) => b !== h)
+            .reduce(
+              (acc, b) => {
+                const area = intersect(hr, b.getBoundingClientRect());
+                return area > acc.px
+                  ? { px: area, cls: String(b.className).slice(0, 44) }
+                  : acc;
+              },
+              { px: 0, cls: null },
+            );
           return {
             hovered: w.matches(":hover"),
-            direct: h.parentElement === w,
+            railCell: rail.classList.contains("be-section-actions") && h.parentElement === rail,
+            firstCell: rail.firstChild === h,
+            position: cs.position,
             dots: h.querySelectorAll("circle").length,
             visibility: cs.visibility,
             opacity: cs.opacity,
@@ -559,13 +615,13 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
             cursor: cs.cursor,
             filter: cs.filter,
             boxShadow: cs.boxShadow,
-            offCentreX: Math.abs(hr.left + hr.width / 2 - (wr.left + wr.width / 2)),
-            offCentreY: Math.abs(hr.top + hr.height / 2 - (wr.top + wr.height / 2)),
+            // In the section's TOP-LEFT corner, which is where the operator moved
+            // it (and where the rail is anchored, js/print_styles.js).
+            inCorner: hr.top >= wr.top - 0.5 && hr.left >= wr.left - 0.5,
             width: hr.width,
             height: hr.height,
-            // Is THIS wrapper one the geometry pass re-placed? See the assertion below —
-            // a banded grip is 18x18 (the dots' box) and may sit a few px off the middle.
-            banded: Math.abs(hr.width - 18) < 0.6 && Math.abs(hr.height - 18) < 0.6,
+            buttonOverlapPx: overlapWith.px,
+            buttonOverlapClass: overlapWith.cls,
           };
         },
         pick.id,
@@ -573,21 +629,24 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       log("revealed handle:", JSON.stringify(st), "topmost at grip:", pick.verdict.topmost);
 
       assert.ok(st.hovered, "the section is genuinely in :hover (else the assertions below are vacuous)");
-      assert.ok(st.direct, "the handle is a direct child of the wrapper");
+      assert.ok(st.railCell, "the handle is a cell of the wrapper's action rail");
+      assert.ok(st.firstCell, "and it holds the rail's FIRST slot");
+      assert.strictEqual(st.position, "relative", "in flow — an overlaid grip is what shared a button's box");
       assert.strictEqual(st.dots, 9, "the nine-dot grip");
-      // "ON THE CENTER on any section" — the sentence the grip exists to satisfy, asserted
-      // to within 2px. The ONE sanctioned exception is a wrapper the geometry pass re-placed
-      // (temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md): on
-      // the MEASURED sheet exactly 1 of 22 sections is banded (`section-extra-tidbits-wrapper`,
-      // 4px of shift in exchange for the Select button's centre), and the census case above
-      // proves a banded grip still wins its own pixel. So this case cannot flake onto that one
-      // section silently — the exception is TIED to the trim it describes, and an unbanded
-      // grip that wanders off centre still fails.
-      assert.ok(
-        st.offCentreX < 2 && (st.offCentreY < 2 || st.banded),
-        `it sits at the CENTRE of the section (off by ${st.offCentreX},${st.offCentreY}) — ` +
-          "the report asked for the grip in the middle of the section" +
-          (st.banded ? " (a banded wrapper may sit off the middle vertically, never across)" : ""),
+      // THE PLACEMENT THE OPERATOR ASKED FOR, asserted where it actually lands: the
+      // top-left corner, in the same row as the section's buttons. This SUPERSEDES the
+      // old centre gate (`offCentreX/offCentreY < 2`), which measured the placement the
+      // report's first sentence asked for and which every fix since has argued about.
+      // What replaced it is the assertion below, and it is the one that matters: the
+      // corner row must give the grip a box NO control shares (temp/issues/
+      // ISSUE_corner_grip_lands_on_first_action_button_20260922.md measured 1248px —
+      // 100% of a 39x32 button — between two absolutely-placed siblings on one anchor).
+      assert.ok(st.inCorner, "it sits in the section's top-left corner");
+      assert.strictEqual(
+        st.buttonOverlapPx,
+        0,
+        "the grip shares NO area with a button in its own row (got " +
+          st.buttonOverlapPx + "px over " + st.buttonOverlapClass + ")",
       );
       assert.ok(st.width >= 18 && st.height >= 18, `a real hit target, not a speck: ${st.width}x${st.height}`);
       assert.strictEqual(st.visibility, "visible", "revealed by the active-layer hover");
@@ -685,7 +744,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
           ({ wid }) => {
             const el = document.getElementById(wid);
             if (!el) return null;
-            const h = el.querySelector(":scope > .be-drag-handle");
+            const h = el.querySelector(":scope > .be-section-actions > .be-drag-handle");
             if (!h) return null;
             const r = el.getBoundingClientRect();
             const hr = h.getBoundingClientRect();
@@ -721,7 +780,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         const clear = await page.evaluate(
           ({ wid, x, y }) => {
             const el = document.getElementById(wid);
-            const h = el.querySelector(":scope > .be-drag-handle");
+            const h = el.querySelector(":scope > .be-section-actions > .be-drag-handle");
             const cs = getComputedStyle(h);
             const t = document.elementFromPoint(x, y);
             return {
@@ -760,25 +819,25 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         `revealed grips must win the hit test at their OWN pixel (${grabbed}/${probeable} did). ` +
           "Missed: " + JSON.stringify(missed),
       );
-      // AND THE YIELD MUST COST THE BAR NOTHING IT COULD STILL HAVE: it drops the bar BELOW
-      // the grip, it does not hide or disable the bar. Re-checking THE section that used to
-      // collide — its bar must still be fully revealed, and its Select button must still be
-      // HITTABLE. The point is re-scanned with the SAME walk (the scroll state has moved
-      // since), and the scan failing is a failure, not a skip: this is the section whose grip
-      // the fix exists for.
+      // AND PUTTING THE GRIP IN THE ROW MUST COST THE ROW NOTHING. Re-checking THE
+      // section this collision was measured on — its bar must still be fully revealed,
+      // and BOTH controls must own their own centre. The point is re-scanned with the
+      // SAME walk (the scroll state has moved since), and the scan failing is a failure,
+      // not a skip: this is the section whose grip the fix exists for.
       //
-      // THE PIXEL THE YIELD COULD NOT BUY IS ASSERTED NOW, and it took geometry to earn it.
-      // This block used to read "WHAT THIS CASE DELIBERATELY DOES *NOT* ASSERT, because pixels
-      // say it is not obtainable by any stacking option: that the Select button keeps the pixel
-      // AT ITS OWN CENTRE" — which was true, OF STACKING. Grip box (58.8, 18) 34x26 centred at (75.8, 31) against a
-      // Select button at (55, 8) 39x32 centred at (74.5, 24): centres 1.3px apart across and
-      // 7px down, a 34x22 overlap = 60% of the button, so whoever is on top takes the other
-      // one's centre and options 1 and 3 had the SAME residual. It was never a cascade problem,
-      // which is why it took geometry: the grip's plate shrinks to the dots' box and steps off
-      // any control centre it would swallow (gripBandFor / measureGripBands in js/dnd.js,
-      // temp/archived/ISSUE_grip_box_overlaps_actions_bar_on_short_sections_20260914.md). So
-      // BOTH affordances now own their own pixel, and the two assertions below are what that
-      // means — the grip winning its centre (the census above) and the button winning its.
+      // WHAT THIS BLOCK USED TO CARRY, and why it is gone: a z-index ladder
+      // (`barZ < gripZ`, 700001 under 700002) plus a comment conceding that the
+      // button's own centre was "not obtainable by ANY stacking option". Both were
+      // artifacts of the same wrong premise — that the two controls are SIBLINGS whose
+      // boxes may coincide. Grip box (58.8,18) 34x26 centred at (75.8,31) against a
+      // Select button at (55,8) 39x32 centred at (74.5,24): 1.3px apart across, 7px
+      // down, 60% of the button, whoever-is-on-top takes the other's centre. That was
+      // never a cascade problem, so no cascade number could solve it; the geometry pass
+      // (gripBandFor / measureGripBands, since deleted) bought the centre back with a
+      // measured 4px nudge, and the corner placement then re-lost it at 100% overlap.
+      // A flex row makes BOTH readings false at once: the cells are disjoint, so
+      // `buttonOwnsItsCentre` and `gripOwnsItsCentre` are now asserted together, with no
+      // exception and no measurement to maintain.
       const collision = "section-extra-tidbits-wrapper";
       await page.evaluate((wid) => {
         const el = document.getElementById(wid);
@@ -811,7 +870,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         const el = document.getElementById(wid);
         const bar = el.querySelector(":scope > .be-section-actions");
         const btn = bar && bar.querySelector(".be-select-section-button");
-        const grip = el.querySelector(":scope > .be-drag-handle");
+        const grip = el.querySelector(":scope > .be-section-actions > .be-drag-handle");
         const bcs = getComputedStyle(bar);
         const hcs = getComputedStyle(grip);
         const bRect = btn.getBoundingClientRect();
@@ -849,42 +908,46 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       log("the colliding section, with the grip revealed:", JSON.stringify(after));
       assert.ok(
         parseFloat(after.opacity) > 0.9,
-        "yielding must not hide the bar — it is still revealed: " + after.opacity,
+        "putting the grip in the row must not hide the bar — it is still revealed: " + after.opacity,
       );
-      assert.ok(
-        Number(after.barZ) < Number(after.gripZ),
-        `the bar must sit BELOW the grip while it is revealed (bar ${after.barZ} vs ` +
-          `grip ${after.gripZ}) — that gap IS the fix`,
-      );
+      // NO LADDER IS ASSERTED ANY MORE, and that is the point. This block used to
+      // require `barZ < gripZ` (700001 under 700002) — a level difference between
+      // two controls whose boxes are now disjoint, which decides nothing. The
+      // measured truth on the current build: the bar still carries its inline
+      // built level (1000000 from window.Z.ACTIONS_BAR) and the grip 700002, i.e.
+      // the "wrong" way round for the old argument, and BOTH controls win their
+      // own centre anyway. What ranks them is the row, not the cascade, so the
+      // two centre assertions below are the whole contract.
       assert.ok(
         after.buttonHittableSomewhere,
-        "the Select button must still be reachable — the yield moved the bar, it did not " +
+        "the Select button is reachable — the grip shares its row, it does not " +
           "mute it (no point of its own box reaches it)",
       );
-      // THE RESIDUAL IS GONE, and it is asserted as a pixel rather than described: the
-      // button owns the point every user aims at. On the pre-fix build this reads
-      // `BUTTON|be-drag-handle` — the grip sat ON the button's centre — and the geometry
-      // pass cannot be re-broken silently.
+      // THE BUTTON OWNS ITS CENTRE, as a pixel rather than a description. On the
+      // corner build this read `BUTTON|be-drag-handle` at 100% overlap, on the
+      // centred build `BUTTON|be-drag-handle` at 60%, and on both the pre-fix
+      // options the comment here conceded the pixel was "not obtainable by any
+      // stacking option" — which was true, because it was never a cascade problem.
       assert.ok(
         after.buttonOwnsItsCentre,
-        "the Select button must own its OWN CENTRE, not merely some point of its box — the " +
-          "grip is shrunk to its dots and stepped clear of it: " + after.centreOwner,
+        "the Select button must own its OWN CENTRE — the grip is a cell beside it, " +
+          "not an overlay on it: " + after.centreOwner,
       );
-      // …and the move must not have cost the GRAB: the plate is now the dots' box, so its
-      // own centre is a smaller target than it was, and it must still be the grip.
+      // …and the row must not have cost the GRAB anything: slot zero is the
+      // section's top-left corner, and it still wins its own centre.
       assert.ok(
         after.gripOwnsItsCentre,
-        "the grip still wins the hit test at its own (now smaller) centre: " +
-          after.gripCentreOwner,
+        "the grip wins the hit test at its own centre: " + after.gripCentreOwner,
       );
       assert.ok(
         after.gripWidth >= 18 && after.gripHeight >= 18,
-        `the trimmed plate stays a real target, not a speck: ${after.gripWidth}x${after.gripHeight}`,
+        `the grip stays a real target, not a speck: ${after.gripWidth}x${after.gripHeight}`,
       );
       assert.ok(
         after.gripInsideWrapper,
         "and it stays INSIDE its wrapper — a grip clipped by the section's own overflow is " +
-          "a half-painted affordance (the clamp in gripBandFor is what guarantees this)",
+          "a half-painted affordance (the flex row is what guarantees this: a cell is laid " +
+          "out inside its container, it is not positioned over an edge)",
       );
     } finally {
       await page.close();
@@ -977,8 +1040,8 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
             left: w.style.left,
             top: w.style.top,
             ghosts: document.querySelectorAll(".be-drag-ghost").length,
-            handleVisibility: getComputedStyle(w.querySelector(":scope > .be-drag-handle")).visibility,
-            cursor: getComputedStyle(w.querySelector(":scope > .be-drag-handle")).cursor,
+            handleVisibility: getComputedStyle(w.querySelector(":scope > .be-section-actions > .be-drag-handle")).visibility,
+            cursor: getComputedStyle(w.querySelector(":scope > .be-section-actions > .be-drag-handle")).cursor,
           };
         },
         pick.id,
@@ -1019,7 +1082,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       );
       const p2 = await page.evaluate(
         (id) => {
-          const h = document.getElementById(id).querySelector(":scope > .be-drag-handle");
+          const h = document.getElementById(id).querySelector(":scope > .be-section-actions > .be-drag-handle");
           const r = h.getBoundingClientRect();
           return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
         },
@@ -1075,13 +1138,24 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
       // (js/print_styles.js:1105), NOT to the `.be-section-wrapper`. Reading the
       // wrapper reports "none" even with the filter live, which would make the guard
       // below vacuous — so the guard reads the container.
+      //
+      // THE ANCESTOR CHAIN, not the handle's own computed value: a filter on an
+      // ancestor is a GROUP filter over its whole subtree, and no `filter:none` on a
+      // descendant undoes it (measured: under this shift the handle computes
+      // `hue-rotate(120deg) hue-rotate(-120deg)` — the row's inverse rotation composed
+      // over its own — and the dots travel with it). That is the deliberate
+      // consequence of the grip being a CELL of the rail now, recorded in
+      // js/filters.js: counter-rotating the handle would make it the one cell in the
+      // row that does not shift, splitting the row apart visually. So this case
+      // asserts the chain the handle composes through, which is the half that can
+      // still regress silently, and leaves the colour itself to the eye.
       const painted = await page.evaluate(() => {
         const style = document.getElementById("be-global-filters-style");
         const text = style ? style.textContent : "";
         const w = document.querySelector(
           ".be-active-layer .be-section-wrapper:not(.be-shape-wrapper)",
         );
-        const h = w ? w.querySelector(":scope > .be-drag-handle") : null;
+        const h = w ? w.querySelector(":scope > .be-section-actions > .be-drag-handle") : null;
         const content = w ? w.querySelector(".print-section-container") : null;
         const inner = content ? content.querySelector(".print-section-content") : null;
         return {
@@ -1091,6 +1165,9 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
           // the handle's rule belongs to) — proof the exclusion is doing real work
           contentFilter: inner ? getComputedStyle(inner).filter : "no-content",
           handleFilter: h ? getComputedStyle(h).filter : "no-handle",
+          // the chain the handle sits in: the rail is the row's inverse rotation,
+          // and the handle's own value is whatever composes over it
+          railFilter: h && h.parentElement ? getComputedStyle(h.parentElement).filter : "no-rail",
         };
       });
       log("with hue=120:", JSON.stringify(painted));
@@ -1105,6 +1182,19 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         "the handle is excluded, so its ink does not shift with the section: " + painted.handleFilter,
       );
       assert.ok(painted.hasHandleRule, "the exclusion rule is present in the generated filter sheet");
+      // THE CHAIN, and the one thing that can still go wrong invisibly: the rail must
+      // carry the inverse rotation (it is the row the grip is a cell of), and the
+      // handle must not be counter-rotated on top of it — that would be the fix this
+      // case's own comment declines, and it would split the row's colour apart.
+      assert.ok(
+        /hue-rotate\(-120deg\)/.test(painted.railFilter || ""),
+        "the rail carries the inverse rotation the grip now composes through: " + painted.railFilter,
+      );
+      assert.ok(
+        !/hue-rotate\(-120deg\)/.test(painted.handleFilter || ""),
+        "and the handle is NOT counter-rotated against it (that would make it the one cell " +
+          "in the row that does not shift): " + painted.handleFilter,
+      );
 
       // Restore the identity state so nothing downstream inherits a shifted sheet.
       await contentCall(ctx, "setGlobalFilters", [
@@ -1285,7 +1375,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         const shapeRead = await page.evaluate(() => {
           const w = document.querySelector("[data-be-aff-probe]");
           const bar = w.querySelector(":scope > .be-section-actions");
-          const handle = w.querySelector(":scope > .be-drag-handle");
+          const handle = w.querySelector(":scope > .be-section-actions > .be-drag-handle");
           const cs = (n) => (n ? getComputedStyle(n) : null);
           const b = cs(bar);
           const h = cs(handle);
@@ -1426,7 +1516,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
           const w = document.getElementById(id);
           const g = (s) => (s ? getComputedStyle(s).display : null);
           return {
-            handle: g(w.querySelector(":scope > .be-drag-handle")),
+            handle: g(w.querySelector(":scope > .be-section-actions > .be-drag-handle")),
             bar: g(w.querySelector(":scope > .be-section-actions")),
           };
         },
@@ -1437,7 +1527,7 @@ describe("sheet affordances — drag handle, active-layer hover, panel shadow (P
         (id) => {
           const w = document.getElementById(id);
           const g = (s) => (s ? getComputedStyle(s) : null);
-          const h = g(w.querySelector(":scope > .be-drag-handle"));
+          const h = g(w.querySelector(":scope > .be-section-actions > .be-drag-handle"));
           const b = g(w.querySelector(":scope > .be-section-actions"));
           return {
             handle: h && { display: h.display, visibility: h.visibility, opacity: h.opacity },

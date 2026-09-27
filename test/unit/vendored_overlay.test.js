@@ -17,6 +17,9 @@
  * Falsifiability (checked at authoring, 2026-09-15): re-creating a root `conductor/` fails case 1;
  * deleting the generated block's open marker fails case 2 AND case 3; unsetting `core.hooksPath`
  * fails case 4; dropping `[skills] paths` fails case 5; clearing the lock flag fails case 6.
+ * 2026-09-24 update: root `docs/` is now a NARROWER second exception (after `AGENTS.md`) so the
+ * restamp receipt and the live attestation ledger survive a public clone (`vendor/` is excluded by
+ * the generated block).
  */
 "use strict";
 
@@ -95,12 +98,40 @@ describe("vendored overlay layout + public flow (issue …_vendored_overlay_layo
     // …and the SAME names must NOT exist at the root. The root `AGENTS.md` is the documented
     // exception to this rule (a pointer, because Reasonix cannot be told where else to look);
     // everything else at the root would be a duplicated member.
-    const banned = members.filter((m) => m !== "AGENTS.md");
+    //
+    // `docs` is the second exception, and it is a NARROWER one than "docs may exist": the root
+    // `docs/` carries this project's OWN records (the public restamp receipt and the live
+    // attestation ledger). Stamping those under `vendor/docs/` was the alternative and it is
+    // worse on the exact axis this suite protects — `vendor/` is excluded from history by the
+    // public block, so a receipt filed there would not survive a clone, which is the whole
+    // reason the receipt exists. The half-migration the spec §3.7 forbids is a root COPY OF AN
+    // OVERLAY MEMBER, so that is what is checked: every file under the root `docs/` must be a
+    // file the overlay does NOT carry. A root `docs/governance/plan-commit-gate.md` still fails
+    // this case, which is the defect that matters.
+    const banned = members.filter((m) => m !== "AGENTS.md" && m !== "docs");
     for (const rel of banned) {
       assert.ok(
         !has(rel),
         `the root still carries ${rel}, which now lives in vendor/ — a half-migrated tree ` +
           `(spec §3.7). Remove the root copy; do not re-add it.`,
+      );
+    }
+    if (has("docs")) {
+      const overlayDocs = path.join(OVERLAY, "docs");
+      for (const [rel] of walk(path.join(ROOT, "docs"))) {
+        const twin = path.join(overlayDocs, rel);
+        if (!fs.existsSync(twin)) continue; // a project-owned record, which is what this root is for
+        assert.fail(
+          `the root docs/${rel} is a COPY of the overlay member vendor/docs/${rel} — the root ` +
+            `docs/ is reserved for this project's own records; the overlay's units live only ` +
+            `under vendor/ (spec §3.7)`,
+        );
+      }
+      // …and the one thing a root docs/ must never be is a second copy of the shipped surface.
+      assert.ok(
+        !has(path.join("docs", "governance", "gates")),
+        "the root docs/ must not carry a governance/gates/ tree — those 14 gate units are " +
+          "overlay members and live under vendor/docs/governance/gates/",
       );
     }
     // The three named root exceptions really are at the root.

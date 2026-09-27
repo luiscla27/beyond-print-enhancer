@@ -185,10 +185,27 @@ function applyGlobalFilters(filters) {
           filter: none !important;
       }
 
-      /* …and the centred drag handle (ISSUE_drag_and_drop.md): it is chrome
-         painted over the sheet, not sheet content, so a hue-rotate on the
-         section must not travel the 300px up into it. It shares the exclusion
-         .be-section-actions already gets for the same reason. */
+      /* …and the drag handle (ISSUE_drag_and_drop.md): it is chrome painted over
+         the sheet, not sheet content, so a hue-rotate on the section must not
+         travel into it.
+
+         IT NOW ALSO SITS INSIDE THE RAIL (js/dnd.js ensureDragHandle makes it
+         the row's first cell), so both rules above reach it: the row itself is
+         the inverse rotation, and its '*' arm is what keeps a child from being
+         rotated a SECOND time. This block's own arm is kept for that second
+         job, and for a grip that is somehow outside a rail mid-rebuild.
+
+         ONE CONSEQUENCE IS ACCEPTED DELIBERATELY, and it should not be a
+         surprise to whoever reads a colour bug here: a filter on an ANCESTOR is
+         a group filter over its whole subtree, and no filter:none on a
+         descendant undoes it, so the dots now travel with the row's inverse
+         rotation. Before the move the grip sat beside the rail and stayed put.
+         Counter-rotating the handle to restore its exact ink was NOT taken: it
+         would make the grip the one cell in the row that does not shift,
+         splitting the row apart visually, and the point of the move is that the
+         grip IS a cell of that row. The browser case in
+         test/browser_e2e/affordance_drag_hover_shadows.spec.js reports the
+         ancestor chain it composes through, so this stays visible. */
       .be-drag-handle,
       .be-drag-handle * {
           filter: none !important;

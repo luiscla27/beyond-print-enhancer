@@ -261,6 +261,11 @@ function renderExtractedSection(snapshot) {
   const sourceElement = sanitizedClone; // Alias for existing logic compliance
   sourceElement.style.display = "";
   sourceElement.classList.remove("be-extractable");
+  // Same id-collision rule as the creation path in `handleElementExtraction` (see the note
+  // there): the clone is a COPY of the source element, so it must not carry the source's id —
+  // two elements with one id make `getElementById` answer with the first in document order, and
+  // the restore/rollback paths below look the ORIGINAL up by that id.
+  sourceElement.removeAttribute("id");
 
   // Hide original title inside the live clone to avoid duplication
   const originalHeader = sourceElement.querySelector(

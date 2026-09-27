@@ -430,7 +430,7 @@ describe("AC-2 layer 4 — no routed site introduced a NEW tag literal", functio
   // VOCABULARY (14 tags, no new one, none dead) and it still holds. A count edit like this must
   // therefore be made by the phase that adds a site, in the same commit, never by widening the
   // vocabulary or by dropping the assertion.
-  it("every tag the inventory sees is one of the 14 recorded in Phase 0 (23 sites, 8 files)", function () {
+  it("every tag the inventory sees is one of the 14 recorded in Phase 0 (24 sites, 8 files)", function () {
     const inv = inventory();
     const recorded = [
       "asset",

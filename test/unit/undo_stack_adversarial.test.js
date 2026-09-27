@@ -618,3 +618,212 @@ describe("Phase 2 §3 — the ROUTED rotate gesture (AC-1's rotate arm)", functi
     );
   });
 });
+
+/**
+ * §4 — the STRUCTURAL-ADDITION path: creating an extraction.
+ *
+ * WHY IT IS ITS OWN SECTION AND NOT ANOTHER CLASS IN §1. Every §1 case repairs a value that
+ * ALREADY existed (an angle, a width, a position), so `patchCapturedFields` overwrites it. This
+ * class CREATES a node, which no field overwrite can undo — the record's `extractions[]` gains
+ * an ENTRY, so the repair has to REMOVE one. That is `stripLateAdditions`, and the risk profile
+ * is the mirror image of the others: a repair that fires too late leaves a no-op undo (§1's
+ * failure), while a repair that is too aggressive DELETES something the user had before the
+ * gesture. So this section asserts BOTH edges — that the strip does the work, and that it stops
+ * at the work.
+ *
+ * THE WATCHER REPLACES `pushAssertingSettledPath` ON PURPOSE: this site's repair is a named
+ * module function (js/undo.js's `repairLateExtractions`), not a per-site lambda, and the
+ * settled layout is MUTATED by the repair — so the raw content must be read AT THE CALL, before
+ * the real helper runs, or the vacuity guard would inspect an already-stripped object.
+ */
+const EXTRACT_SHEET = `<!DOCTYPE html><html><body>
+  <div id="print-layout-wrapper">
+    <div id="print-enhance-sections-layer">
+      <div class="be-section-wrapper" id="wrapper-main" data-title="Main">
+        <div class="print-section-container" id="section-main" style="width: 200px; height: 100px;">
+          <div class="print-section-header"><span>Main</span></div>
+          <div class="print-section-content"><div>body</div></div>
+        </div>
+      </div>
+      <div class="ct-actions-group" id="target-a">
+        <h3 class="head">Actions A</h3>
+        <p>first content</p>
+      </div>
+      <div class="ct-actions-group" id="target-b">
+        <h3 class="head">Actions B</h3>
+        <p>second content</p>
+      </div>
+    </div>
+    <div id="print-enhance-shapes-layer">
+      <div class="be-shape-layer-container" id="shapes-default"></div>
+    </div>
+    <div id="print-enhance-properties-panel"></div>
+  </div>
+</body></html>`;
+
+function bootExtractor() {
+  const b = boot(EXTRACT_SHEET);
+  b.window.LayerManager = b.window.LayerManager || LayerManager;
+  b.window.eval(DND_JS);
+  return b;
+}
+
+/** The extraction ids a layout record carries. */
+function extractionIds(layout) {
+  return (layout.extractions || []).map((e) => e.id);
+}
+
+/**
+ * Watch the ADDITION repair at the moment the site's push reaches it.
+ *
+ * WHY A WRAPPER AND NOT A READ OF `mut.settled`: the repair MUTATES the settled layout, so any
+ * read after the fact sees the post-repair content — the vacuity guard would inspect its own
+ * evidence. So the ids are read BEFORE the real repair is delegated to, which is exactly the
+ * state an unrepaired push would have recorded. `pushUndo` is wrapped too, to prove which
+ * object became the record (identity, not a copy).
+ */
+function watchAdditionPush(window) {
+  const realRepair = window.repairLateExtractions;
+  const realPush = window.pushUndo;
+  const seen = { repairs: [], pushes: [] };
+  window.repairLateExtractions = function (layout, snap) {
+    seen.repairs.push({
+      layout,
+      idsBeforeRepair: extractionIds(layout).slice(),
+      snap,
+    });
+    return realRepair.apply(this, arguments);
+  };
+  window.pushUndo = function (before, label, klass) {
+    seen.pushes.push({ before, label, klass });
+    return realPush.apply(this, arguments);
+  };
+  return {
+    seen,
+    restore: () => {
+      window.repairLateExtractions = realRepair;
+      window.pushUndo = realPush;
+    },
+  };
+}
+
+describe("Phase 1 §4 — the structural-ADDITION repair (creating an extraction)", function () {
+  this.timeout(20000);
+  let window, document, cleanup, release;
+
+  beforeEach(async function () {
+    const b = bootExtractor();
+    window = b.window;
+    document = b.document;
+    cleanup = b.cleanup;
+    await window.__DDBStorage.init();
+    await window.__DDBStorage.saveGlobalLayout({ version: "1.5.0", sections: {} });
+    window.flagExtractableElements();
+    const lm = window.DomManager.getInstance().getLayerManager();
+    if (lm) {
+      lm.createPanel();
+      lm.refreshLayerContents();
+      lm.updatePrintZIndexes(true);
+    }
+    window.clearUndoStack();
+  });
+
+  afterEach(function () {
+    if (release) release();
+    if (cleanup) cleanup();
+  });
+
+  it("the late capture DOES contain the new extraction, the record does not", async function () {
+    // THE VACUITY GUARD, and the reason this wiring is not just `captureUndo` after the
+    // mutation: `scanLayout` awaits storage before it walks the DOM, so the settled snapshot
+    // CARRIES the node the user is trying to undo. If that stops being true, the raw-ids
+    // assertion below goes red — a passing case about a repair that never had work to do is
+    // exactly the vacuous green this file exists to prevent.
+    release = holdStorageOpen(window, 6);
+    const watch = watchAdditionPush(window);
+    try {
+      document.getElementById("target-a").dispatchEvent(
+        new window.MouseEvent("dblclick", { bubbles: true }),
+      );
+      assert.ok(
+        document.querySelector(".print-section-container.be-extracted-section"),
+        "the extraction is synchronous — the property that forbids awaiting the capture first",
+      );
+      await waitFor(() => watch.seen.pushes.length > 0, { timeout: 5000 });
+
+      assert.strictEqual(watch.seen.pushes.length, 1, "exactly one record for the gesture");
+      assert.strictEqual(watch.seen.repairs.length, 1, "and exactly one repair ran");
+      const { label, klass, before } = watch.seen.pushes[0];
+      assert.strictEqual(klass, window.MUTATION_CLASSES.STRUCTURAL, "tagged structural");
+      assert.strictEqual(label, 'Extract "Actions A"', "labelled with the section title");
+      assert.deepStrictEqual(
+        // CROSS-REALM: the id list was allocated by the jsdom realm, so a deepStrictEqual
+        // against a Node-realm array fails on the PROTOTYPE alone. `Array.from` keeps the
+        // assertion about contents.
+        Array.from(watch.seen.repairs[0].snap.extractionIds),
+        [],
+        "the site's snapshot was taken BEFORE the mutation — nothing was in it yet",
+      );
+      assert.strictEqual(
+        watch.seen.repairs[0].idsBeforeRepair.length,
+        1,
+        "VACUITY: the capture the repair received ALREADY HOLDS the new extraction — pushed raw, " +
+          "the undo would record the post-state instead of the pre-state",
+      );
+      assert.strictEqual(
+        before,
+        watch.seen.repairs[0].layout,
+        "PATH GUARD: pushUndo received the SAME settled object the repair fixed (identity, not " +
+          "a copy — a copy would mean the repair was applied to something else)",
+      );
+      assert.deepStrictEqual(
+        Array.from(extractionIds(before)),
+        [],
+        "and the RECORD holds no extraction — the gained entry was stripped",
+      );
+    } finally {
+      watch.restore();
+    }
+  });
+
+  it("the strip stops at its work — an extraction the user already had survives", async function () {
+    // THE OVER-REACH ARM. A repair written as "extractions = []" would pass the case above and
+    // destroy the user's sheet here: the strip may only remove entries whose id is NOT in the
+    // pre-mutation snapshot.
+    document.getElementById("target-a").dispatchEvent(
+      new window.MouseEvent("dblclick", { bubbles: true }),
+    );
+    await waitFor(() => window.undoDepth() > 0, { timeout: 5000 });
+    const firstLive = extractionIds(await window.scanLayout());
+    assert.strictEqual(firstLive.length, 1, "the first extraction is live");
+    const keptId = firstLive[0];
+    window.clearUndoStack();
+
+    release = holdStorageOpen(window, 6);
+    const watch = watchAdditionPush(window);
+    try {
+      document.getElementById("target-b").dispatchEvent(
+        new window.MouseEvent("dblclick", { bubbles: true }),
+      );
+      await waitFor(() => watch.seen.pushes.length > 0, { timeout: 5000 });
+      assert.strictEqual(
+        watch.seen.repairs[0].idsBeforeRepair.length,
+        2,
+        "VACUITY: the late capture holds BOTH extractions",
+      );
+      assert.deepStrictEqual(
+        Array.from(watch.seen.repairs[0].snap.extractionIds),
+        [keptId],
+        "the site's pre-mutation snapshot named the one the user already had",
+      );
+      assert.deepStrictEqual(
+        Array.from(extractionIds(watch.seen.pushes[0].before)),
+        [keptId],
+        "so the RECORD carries that extraction — the strip removed only the gained entry, never " +
+          "a pre-existing one",
+      );
+    } finally {
+      watch.restore();
+    }
+  });
+});

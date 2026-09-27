@@ -46,7 +46,11 @@ function allSeams() {
 describe("AC-4 — the split's seam set and the move's fidelity", function () {
   this.timeout(20000);
 
-  it("the seam set is the FROZEN 35 names the single module published", function () {
+  it("the seam set is the FROZEN 40 names the three modules publish", function () {
+    // The NUMBER IN THE TITLE WAS STALE before this edit: it said 35 while the list below already
+    // carried 39 (`destructiveGate` + the three refusal-copy names were recorded in the list and
+    // never in the prose). The list is the assertion; the title is prose, and prose that drifts is
+    // the exact failure class this whole file guards. Corrected to the measured 40.
     // Read off `git show HEAD:js/persistence.js` before the split and recorded here; the split may
     // MOVE an assignment between modules, never rename, drop or invent one.
     const EXPECTED = [
@@ -71,6 +75,13 @@ describe("AC-4 — the split's seam set and the move's fidelity", function () {
       // keeps the long form (`showGateRefusalDetail`). Recorded here for the same reason as
       // `destructiveGate`: this list is what makes an invented or renamed seam visible.
       "gateRefusalMessage", "gateRefusalDetail", "showGateRefusalDetail",
+      // The extraction-undo repair added ONE, from the same reasoning as the two above: the
+      // structural-ADDITION site lives in js/main.js, which is evaluated AFTER this module, so it
+      // must resolve the repair through the seam — exactly why `patchCapturedFields` and
+      // `repairSectionFlags` are here. Recorded rather than silently passed, because this list is
+      // what makes an invented or renamed seam visible. The generic `stripLateAdditions` it wraps
+      // is deliberately NOT a seam (no outside reader; the re-rot guard deletes those).
+      "repairLateExtractions",
     ];
     assert.deepStrictEqual(
       [...allSeams()].sort(),

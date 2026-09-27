@@ -1,0 +1,90 @@
+{
+  "type": "msf_restamp_receipt",
+  "schema_version": 1,
+  "project": "dndbeyond-printenhance",
+  "generated_utc": "2026-09-24T23:34:30Z",
+  "local_paths_included": false,
+  "redaction_policy": "strip-user-home-and-absolute-drive-paths",
+  "receipt_is_public_safe": true,
+  "lock": {
+    "path_token": "modelstack.lock",
+    "unit_revision": "982956cc7eeb8f3af8688a581216694ae459c242563d7cc591040eea6793ba0b",
+    "framework_revision": "dd3dcd72fc0a3ce4e64a71df3ceb2df171416787",
+    "catalog_revision": "6e4d31f3b033",
+    "files": 183
+  },
+  "governance": {
+    "stamped_utc": "2026-09-24T20:46:12Z",
+    "unit_count": 21,
+    "declaration": "governance: enforced"
+  },
+  "verification": {
+    "validate_all": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 11,
+      "governance_lines": 0
+    },
+    "drift_check": {
+      "status": "OK",
+      "unit_revision_prefix": "982956cc7eeb",
+      "framework_revision_prefix": "dd3dcd72fc0a"
+    },
+    "guard": {
+      "roots": ["<project-root>", "<project-root>/vendor"],
+      "verdict": "HOUSEKEEPING GUARD OK",
+      "exit": 0
+    }
+  },
+  "tracked_hashes_only": true,
+  "evidence_policy": {
+    "disk_authority": "modelstack.lock + governance.stamps.json (worktree receipt truth)",
+    "live_authority": "process probe of the listening relay (scripts/relay_serving_identity.py) in the ledger docs/governance/msf_live_attestations.jsonl",
+    "scratch_hash_verifier": "diagnostic_only_not_evidence",
+    "hash_mismatch_policy": "file_framework_defect_do_not_resolve_locally",
+    "public_exclusion": "framework bodies are NOT committed; /vendor/ and /governance.stamps.json stay out of history by the generated public block"
+  },
+  "served_relay_probe": {
+    "type": "served_relay_probe",
+    "project": "dndbeyond-printenhance",
+    "port": 38116,
+    "pid": null,
+    "pid_in_receipt": false,
+    "pid_in_attestation": true,
+    "attestation_row": "docs/governance/msf_live_attestations.jsonl#dnd-relay-20260924",
+    "served_module_token": "orch:vendor/relay/reasonix_proxy.py",
+    "project_module_token": "dnd:vendor/relay/reasonix_proxy.py",
+    "argv_tokens": [
+      "<path>",
+      "orch:vendor/relay/reasonix_proxy.py",
+      "--project",
+      "dndbeyond-printenhance"
+    ],
+    "argv_sha256": "f97193839d622fa090a669bb56749315b792e25e9abfee9fb17f301f707c511c",
+    "checked_utc": "2026-09-24T23:34:30Z",
+    "process_created_utc": "2026-09-24T20:51:01Z",
+    "module_mtime_utc": "2026-09-24T20:46:11Z",
+    "relay_self_report": {
+      "schema": "msf.reload.v1",
+      "reachable": true,
+      "reported_pid_matches_listener": true,
+      "catalog_revision": "2026-09-18.1",
+      "draining": false
+    },
+    "relay_pins": {
+      "checked": 20,
+      "matched": 20,
+      "mismatches": []
+    },
+    "unit_pins": {
+      "checked": 183,
+      "matched": 183,
+      "mismatches": []
+    },
+    "hash_match": true,
+    "billing_marker_present": true,
+    "evidence_class": "process_probe",
+    "verdict": "PROVENANCE-OK",
+    "notes": "One relay pin set (20 files) and the whole pinned unit (183 files) match the SERVED overlay, and the listening process was created 2026-09-24T20:51:01Z, after the newest served source file at 2026-09-24T20:46:11Z — so it cannot be serving pre-restamp bytes. The relay's own reload surface corroborates: it reports the same pid the OS reports and catalog revision 2026-09-18.1. An earlier draft of this receipt recorded STALE-UNIT from a date comparison that ran the wrong way; the verdict was corrected against the measurements, not the other way round."
+  }
+}

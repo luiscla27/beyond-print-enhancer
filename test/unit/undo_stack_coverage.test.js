@@ -352,6 +352,66 @@ describe("coverage — the THIRD batch: clone section, add shape, roll back extr
     if (cleanup) cleanup();
   });
 
+  it("CREATE EXTRACTION through the double-click is recorded, and the undo removes it", async function () {
+    // THE HOLE THIS CLOSES. Creating an extraction had no capture point at all: rolling one
+    // back was undoable while making one was not, and the reason it was left open for eleven
+    // days is recorded at `extractElementRecorded` in js/main.js. It is wired now through the
+    // NON-DEFERRING pair plus a repair, and the assertions below are exactly the ones that
+    // could not be written honestly while the gap stood.
+    const before = await state(window);
+    const target = document.getElementById("target-element");
+    assert.ok(target, "the extractable element exists");
+    assert.strictEqual(window.undoDepth(), 0, "the stack starts empty");
+
+    target.dispatchEvent(new window.MouseEvent("dblclick", { bubbles: true }));
+
+    // THE MUTATION IS STILL SYNCHRONOUS — the property that made the obvious wiring illegal.
+    // A capture awaited BEFORE the extraction defers it by a microtask, and that is what broke
+    // the dblclick suites. If a future edit moves the `await` back in front, THIS line goes red
+    // rather than the whole feature silently regressing to "no extraction on double-click".
+    assert.ok(
+      document.querySelector(".print-section-container.be-extracted-section"),
+      "the extraction is in the DOM the instant the handler returns (nothing was deferred)",
+    );
+
+    await waitFor(() => window.undoDepth() > 0, { timeout: 3000 });
+    assert.strictEqual(window.undoDepth(), 1, "exactly one record was pushed");
+    assert.strictEqual(window.peekUndo().class, "structural", "tagged as structural");
+    assert.strictEqual(
+      window.peekUndo().label,
+      'Extract "My Actions"',
+      "and the label names what the control will undo",
+    );
+
+    const after = await state(window);
+    assert.notStrictEqual(after, before, "the extraction CHANGED the layout (not vacuous)");
+
+    // THE RECORD MUST BE THE PRE-STATE, which is the whole point of the repair: `scanLayout`
+    // reads the DOM AFTER its storage await, so the settled capture CONTAINS the new extraction
+    // and an unrepaired record would restore the post-state — a no-op that looks like an undo.
+    // CROSS-REALM: the array the jsdom realm allocated has THAT realm's `Array.prototype`, so a
+    // `deepStrictEqual` against a Node-realm `[]` fails on the prototype alone (the same trap
+    // `test/unit/mutation_class_guard.test.js` documents). `Array.from` makes this a statement
+    // about the record's contents, which is the actual claim.
+    assert.deepStrictEqual(
+      Array.from(window.peekUndo().before.extractions),
+      [],
+      "the record holds NO extraction — the entry the late capture gained was stripped",
+    );
+
+    assert.strictEqual((await window.applyUndo()).ok, true, "undo runs");
+    assert.strictEqual(await state(window), before, "EXACTLY the pre-extraction layout");
+    assert.ok(
+      document.getElementById("target-element"),
+      "the original is still in the document after the undo",
+    );
+    assert.strictEqual(
+      document.getElementById("target-element").style.display,
+      "",
+      "and it is visible again — the hidden original came back, not just the record",
+    );
+  });
+
   it("ROLL BACK EXTRACTION through the USER path is recorded (the path that was missing)", async function () {
     // 1. Extract through the product's own entry point (double-click an extractable element).
     const target = document.getElementById("target-element");
@@ -361,12 +421,6 @@ describe("coverage — the THIRD batch: clone section, add shape, roll back extr
 
     const extracted = document.querySelector(".be-extracted-section");
     assert.ok(extracted, "an extracted section was created");
-
-    // NOTE: creating the extraction is NOT asserted as recorded, because it is NOT — that gap
-    // is real and documented at `extractElementRecorded` in js/main.js (wiring it needs the
-    // non-deferring pattern plus a repair, since this class ADDS an entry and a late capture
-    // would include it). Claiming it here would be a false assertion; the ROLLBACK below is
-    // the arm this case exists for.
 
     // 2. Roll it back through the USER-facing control. THIS is the arm that was broken:
     //    `handleElementExtraction` wires `.be-delete-button`, while the capture point used to
