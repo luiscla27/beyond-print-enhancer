@@ -110,7 +110,17 @@ describe("ai_layout — the patch schema (AC-1)", function () {
     // {moves, hide, note?}, and fixture D rejects an extra top-level key — a schema that
     // shipped one would contradict its own rejection rule. Destructiveness is refused where
     // it is real (the width floor below), and the rest is Phase 4's preview + undo.
-    assert.deepStrictEqual(Object.keys(aiLayout.PATCH_KEYS), ["moves", "hide", "note"]);
+    //
+    // `border` JOINED this list in track `byok_svg_borders_20260927` (AC-2: "the patch schema
+    // adds an optional `border` object `{svg, note?}`"). It is listed here rather than
+    // tolerated, so the vocabulary can still not grow silently: a new carrier must edit this
+    // assertion, which is the whole point of the case.
+    assert.deepStrictEqual(Object.keys(aiLayout.PATCH_KEYS), [
+      "moves",
+      "hide",
+      "note",
+      "border",
+    ]);
     assert.deepStrictEqual(Object.keys(aiLayout.PATCH_SECTION_KEYS), [
       "left",
       "top",
@@ -623,7 +633,7 @@ describe("ai_layout.validatePatch — the no-throw contract", function () {
       OPT,
     );
     assert.strictEqual(verdict.ok, true, JSON.stringify(verdict.errors));
-    assert.deepStrictEqual(Object.keys(verdict.patch).sort(), ["hide", "moves", "note"]);
+    assert.deepStrictEqual(Object.keys(verdict.patch).sort(), ["border", "hide", "moves", "note"]);
     assert.deepStrictEqual(verdict.patch.moves["section-spells"], {
       width: 300,
       left: 40,
@@ -1173,3 +1183,190 @@ describe("ai_layout — module surface discipline (AC-7, spec L-6)", function ()
     assert.deepStrictEqual(summary, { moves: 2, hides: 1, resized: 2, restacked: 2 });
   });
 });
+
+// ---------------------------------------------------------------------------
+// AC-2 / AC-3 — the per-request capability switches (track byok_svg_borders_20260927)
+// ---------------------------------------------------------------------------
+
+/** A clean, viewBox-carrying border — the positive control for every case below. */
+const BORDER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"></svg>';
+
+describe("ai_layout — AC-2: the `border` member and the capability gate", function () {
+  it("declares the border schema as ONE frozen vocabulary, beside the arrange one", function () {
+    // AC-2's first clause: "the patch schema adds an optional `border` object `{svg, note?}`".
+    // `border` joins PATCH_KEYS (a patch carrying only a border is well-formed) and its own
+    // members are declared once, so the validator, the prompt and Phase 3's copy cannot drift.
+    assert.deepStrictEqual(Object.keys(aiLayout.PATCH_KEYS), ["moves", "hide", "note", "border"]);
+    assert.deepStrictEqual(Object.keys(aiLayout.BORDER_PATCH_KEYS), ["svg", "note"]);
+    assert.ok(Object.isFrozen(aiLayout.BORDER_PATCH_KEYS), "the vocabulary is frozen");
+  });
+
+  it("defaults BOTH capabilities ON, so an un-migrated caller keeps working", function () {
+    // AC-4 says the two dialog switches are ON by default. `validatePatch` mirrors that: a caller
+    // that passes no `capabilities` (every pre-existing suite, and Phase 1's own fixtures) gets
+    // the ON state rather than a silent "everything is disabled" verdict.
+    assert.deepStrictEqual(aiLayout.DEFAULT_CAPABILITIES, { arrange: true, border: true });
+    assert.ok(Object.isFrozen(aiLayout.DEFAULT_CAPABILITIES), "the default is frozen");
+    const verdict = aiLayout.validatePatch({ border: { svg: BORDER_SVG } }, LIVE_IDS, OPT);
+    assert.strictEqual(verdict.ok, true, JSON.stringify(codes(verdict)));
+  });
+
+  it("accepts a border-only patch, and does NOT call it an empty envelope", function () {
+    // The old `envelope_empty` rule was "moves and/or hide" because those were the only carriers.
+    // With a third carrier, a border-only answer is a COMPLETE answer — rejecting it would make
+    // AC-2's new member unusable.
+    const verdict = aiLayout.validatePatch({ border: { svg: BORDER_SVG } }, LIVE_IDS, OPT);
+    assert.deepStrictEqual(codes(verdict), []);
+    assert.strictEqual(verdict.ok, true);
+    assert.strictEqual(typeof verdict.patch.border.svg, "string");
+    assert.ok(verdict.patch.border.svg.startsWith("<svg"), "still an svg element");
+    assert.ok(verdict.patch.border.svg.includes("viewBox"), "still carries the viewBox");
+  });
+
+  it("rejects a border patch with `capability_disabled` when the border switch is OFF", function () {
+    // AC-2's FAIL condition, verbatim: "a `border` patch accepted while the capability is off, or
+    // rejected without `capability_disabled`". The second half is the one this asserts — an
+    // `envelope_key` verdict would tell the user their well-formed answer was malformed.
+    const verdict = aiLayout.validatePatch(
+      { border: { svg: BORDER_SVG } },
+      LIVE_IDS,
+      { ...OPT, capabilities: { arrange: true, border: false } },
+    );
+    assert.strictEqual(verdict.ok, false);
+    assert.deepStrictEqual(codes(verdict), ["capability_disabled"]);
+    assert.strictEqual(verdict.patch, null, "a disabled capability yields no patch to apply");
+  });
+
+  it("rejects `moves` and `hide` with `capability_disabled` when arrange is OFF (symmetric)", function () {
+    const off = { ...OPT, capabilities: { arrange: false, border: true } };
+    const moved = aiLayout.validatePatch(validPatch(), LIVE_IDS, off);
+    assert.strictEqual(moved.ok, false);
+    assert.ok(
+      codes(moved).every((c) => c === "capability_disabled"),
+      "arrange keys must be refused by the capability gate, not by the geometry rules: " +
+        JSON.stringify(codes(moved)),
+    );
+    // `hide` alone, so the two carriers are proven independently rather than by one shared code.
+    const hidden = aiLayout.validatePatch({ hide: ["section-equipment"] }, LIVE_IDS, off);
+    assert.deepStrictEqual(codes(hidden), ["capability_disabled"]);
+  });
+
+  it("keeps a well-formed border but refuses an ill-shaped one, with its own code", function () {
+    // The envelope is only half of AC-2: `border` is `{svg, note?}` and nothing else, and `svg` is
+    // a NON-EMPTY string. A shape failure must not wear `capability_disabled` (the switch is ON)
+    // and must not wear `envelope_shape` (the envelope is fine — the member's body is not).
+    const cases = [
+      ["a string instead of an object", "svg", "border_shape"],
+      ["an array", [], "border_shape"],
+      ["a missing svg", { note: "hi" }, "border_shape"],
+      ["an empty svg", { svg: "" }, "border_shape"],
+      ["a non-string svg", { svg: 7 }, "border_shape"],
+      ["an extra member", { svg: BORDER_SVG, fill: "#fff" }, "border_shape"],
+      ["a non-string note", { svg: BORDER_SVG, note: 3 }, "border_shape"],
+    ];
+    for (const [label, border, code] of cases) {
+      const verdict = aiLayout.validatePatch({ border }, LIVE_IDS, OPT);
+      assert.strictEqual(verdict.ok, false, label + " must be refused");
+      assert.deepStrictEqual(codes(verdict), [code], label);
+    }
+  });
+
+  it("refuses an SVG the trust root rejects, and carries the AC-1 reason", function () {
+    // The patch validator does NOT re-implement any SVG rule (that would be a second, ungated
+    // check — the exact thing AC-9 forbids): it DELEGATES to `validateSvg` and surfaces the
+    // vector it named. One code at this level (`border_svg_rejected`), because AC-1 owns the
+    // vector vocabulary and Phase 2's choke point is where a vector becomes a rendered nothing.
+    const verdict = aiLayout.validatePatch(
+      { border: { svg: '<svg viewBox="0 0 1 1"><script>alert(1)</script></svg>' } },
+      LIVE_IDS,
+      OPT,
+    );
+    assert.strictEqual(verdict.ok, false);
+    assert.deepStrictEqual(codes(verdict), ["border_svg_rejected"]);
+    assert.strictEqual(verdict.errors[0].reason, "script", "the AC-1 vector travels with it");
+    const noViewBox = aiLayout.validatePatch({ border: { svg: "<svg></svg>" } }, LIVE_IDS, OPT);
+    assert.strictEqual(noViewBox.errors[0].reason, "missing_viewbox");
+  });
+
+  it("hands back the SANITIZED string, frozen, never the raw model text", function () {
+    // `sanitize-then-inject, never inject-if-caller-says-clean` starts here: the verdict's patched
+    // border is the trust root's output, so Phase 3 cannot accidentally persist raw model bytes.
+    const raw = '<svg viewBox="0 0 4 4"  xmlns="http://www.w3.org/2000/svg"><rect width="4" height="4"/></svg>';
+    const verdict = aiLayout.validatePatch({ border: { svg: raw } }, LIVE_IDS, OPT);
+    assert.strictEqual(verdict.ok, true);
+    assert.strictEqual(typeof verdict.patch.border.svg, "string");
+    assert.ok(verdict.patch.border.svg.includes("viewBox"), "still an svg");
+    assert.ok(Object.isFrozen(verdict.patch.border), "the border verdict is frozen");
+  });
+
+  it("never throws for a hostile border member", function () {
+    for (const border of [null, undefined, 0, "", [], { svg: null }, { svg: {} }]) {
+      const verdict = aiLayout.validatePatch({ border }, LIVE_IDS, OPT);
+      assert.strictEqual(typeof verdict.ok, "boolean", JSON.stringify(border));
+    }
+  });
+});
+
+describe("ai_layout.buildMessages — AC-3: the disabled capability is ABSENT from the prompt", function () {
+  const instruction = "design a border for the selected section";
+
+  it("teaches BOTH schemas when both capabilities are on (the default)", function () {
+    const system = aiLayout.buildMessages(sectionTable(), instruction)[0].content;
+    assert.ok(system.includes('"moves"'), "the arrange schema is declared");
+    assert.ok(system.includes('"border"'), "the border schema is declared");
+    assert.ok(system.includes("svg"), "the border member is described");
+  });
+
+  it("drops the border schema and forbids the key when border design is OFF", function () {
+    // AC-3's FAIL condition is "the system message still describes the disabled capability's
+    // schema or keys". The schema is the QUOTED key in the JSON example, so the assertion is
+    // exact: no `"border"` token anywhere — the prohibition below deliberately uses the bare
+    // word, which is the other half of AC-3 ("the message tells the model not to emit those
+    // keys").
+    const system = aiLayout.buildMessages(sectionTable(), instruction, {
+      capabilities: { arrange: true, border: false },
+    })[0].content;
+    assert.strictEqual(system.includes('"border"'), false, "the border schema must be absent");
+    assert.ok(/\bborder\b/i.test(system), "and the model must be told not to emit it");
+    assert.ok(/disabled|not enabled|do not/i.test(system), "the prohibition is stated");
+    assert.ok(system.includes('"moves"'), "the enabled capability is untouched");
+  });
+
+  it("drops the arrange schema and forbids those keys when arrange is OFF", function () {
+    const system = aiLayout.buildMessages(sectionTable(), instruction, {
+      capabilities: { arrange: false, border: true },
+    })[0].content;
+    assert.strictEqual(system.includes('"moves"'), false, "the arrange schema must be absent");
+    assert.strictEqual(system.includes('"hide"'), false, "the arrange schema must be absent");
+    assert.ok(/moves/.test(system) && /hide/.test(system), "both keys are named in the prohibition");
+    assert.ok(system.includes('"border"'), "the enabled capability is declared");
+  });
+
+  it("still sends the section table, so the model knows what exists", function () {
+    // A narrower capability is not a narrower world: both flows are about the same sheet, and the
+    // enum is what makes an id legal. Dropping it would make the border prompt rely on the model
+    // guessing ids — the failure AC-1's enum exists to prevent.
+    const system = aiLayout.buildMessages(sectionTable(), instruction, {
+      capabilities: { arrange: false, border: true },
+    })[0].content;
+    assert.ok(system.includes(aiLayout.SECTION_TABLE_MARKER), "the table marker survives");
+    for (const id of LIVE_IDS) assert.ok(system.includes(id), "every live id survives: " + id);
+  });
+
+  it("fails CLOSED on a malformed capability value (only `true` enables)", function () {
+    // A truthy-but-wrong value must not widen the model's permissions — the switch is a security
+    // boundary, so `undefined`/`"yes"`/`1` are all OFF. (Absent `capabilities` entirely keeps the
+    // documented both-ON default; this case is about a caller that DID pass the object.)
+    for (const border of [undefined, null, 0, "", "yes", 1, {}]) {
+      const system = aiLayout.buildMessages(sectionTable(), instruction, {
+        capabilities: { arrange: true, border },
+      })[0].content;
+      assert.strictEqual(
+        system.includes('"border"'),
+        false,
+        "a non-true capability must not enable the schema: " + JSON.stringify(border),
+      );
+    }
+  });
+});
+

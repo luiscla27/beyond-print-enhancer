@@ -92,6 +92,16 @@ const AI_ARRANGE_REJECT_COPY = Object.freeze({
   derived_width_unchecked:
     "The AI proposed a width that could not be checked against the live sheet.",
   model_output_not_json: AI_ARRANGE_ERROR_COPY.model_output_not_json,
+  // ADDED by track `byok_svg_borders_20260927` (Phase 1) — the three codes the border carrier and
+  // the capability gate introduce. The exhaustiveness gate above is what caught their absence:
+  // without copy, a switched-off capability would have surfaced as the generic "not a layout
+  // patch" sentence about a well-formed answer, which is the exact fall-through this table exists
+  // to prevent.
+  capability_disabled:
+    "The AI tried to use a capability you switched off. Nothing was changed.",
+  border_shape: "The AI sent a border it cannot mean. Nothing was changed.",
+  border_svg_rejected:
+    "The AI's border drawing was refused - it may not contain scripts or links to other sites.",
 });
 
 /**
