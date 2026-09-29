@@ -874,6 +874,72 @@ async function contentCall(ctx, name, args = []) {
             return { ok: true, settings: await S.loadSettings() };
           }
 
+          // Phase 4: the isolated-world seam probe. Returns the border-choke-point names so
+          // the gallery spec can assert the module exists in the SAME world the product's own
+          // content script runs in. This is deliberately a NAMES-only answer: a real border
+          // is applied below via `applyBorder`, and the choke point's own verdict (rendered?
+          // hostile? z-index?) is what the gallery measures, not the existence of the seam.
+          if (o.action === "probeAiBorder") {
+            const api = window.AiBorder;
+            return {
+              ok: Boolean(api),
+              render: typeof (api && api.renderBorderSvg),
+              read: typeof (api && api.readBorderSvg),
+              clear: typeof (api && api.clearBorderSvg),
+            };
+          }
+
+          // Phase 4 gallery-only: render a raw SVG through the choke point without the BYOK relay.
+          // The gallery's designs come from a local generator (not the extension's dialog), and the
+          // point of the proof is the choke point's DOM verdict — rendered? hostile? z-index? — so
+          // this drives `window.AiBorder.renderBorderSvg` directly and reads back the geometry the
+          // overlaid div's own inline styles carry (AC-8). It reuses the SAME clear-before-each loop
+          // the per-design case above uses, so a leaked border cannot make the next frame carry a
+          // stale overlay. `aiArrangeFirstSection`'s answer is trusted for the section id — the
+          // caller picked a real, scanned section, which is exactly the precondition AC-5 enforces
+          // in the product flow.
+          if (o.action === "applyBorder") {
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            if (!section) return { ok: false, reason: "no_section", id: sid };
+            const api = window.AiBorder;
+            if (!api || typeof api.renderBorderSvg !== "function") {
+              return { ok: false, reason: "no_AiBorder" };
+            }
+            // Always clear the previous border first, so the per-design verdict is the ONLY overlay.
+            api.clearBorderSvg(section);
+            const res = api.renderBorderSvg(section, o.rawSvg || "");
+            if (!res || !res.ok) {
+              return {
+                ok: false,
+                reason: (res && (res.reason || res.error)) || "rejected",
+                rendered: false,
+                read: null,
+                hostile: false,
+                geom: null,
+              };
+            }
+            const read = api.readBorderSvg(section);
+            const overlay = section.querySelector(".be-border-svg-overlay");
+            const geom = overlay
+              ? (() => {
+                  const cs = getComputedStyle(overlay);
+                  return {
+                    position: cs.position,
+                    pointerEvents: cs.pointerEvents,
+                    zIndex: parseInt(cs.zIndex, 10),
+                  };
+                })()
+              : null;
+            return {
+              ok: true,
+              rendered: api.hasBorderSvg(section),
+              read,
+              hostile: /<script|<foreignObject|onload=|xlink:href|href="[^#]/i.test(read || ""),
+              geom,
+            };
+          }
+
           return { ok: false, why: "unknown action " + o.action };
         },
 

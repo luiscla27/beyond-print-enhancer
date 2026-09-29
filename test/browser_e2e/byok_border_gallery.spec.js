@@ -66,14 +66,6 @@ function loadDesigns(round) {
   return (data.designs || []).filter((d) => d.accepted && d.svg);
 }
 
-const DEFAULT_TIMEOUT = (function () {
-  try {
-    return require("path").resolve(__dirname, "..", "..") ? 180000 : 30000;
-  } catch {
-    return 30000;
-  }
-})();
-
 describe("BYOK SVG border gallery — live NOUS designs through the real choke point, real page", function () {
   this.timeout(900000);
   let ctx;
@@ -108,7 +100,7 @@ describe("BYOK SVG border gallery — live NOUS designs through the real choke p
     // `page.evaluate` default. `contentCall` drives the ISOLATED world — the world the
     // extension's own content script and the choke point live in — so it is the honest place to
     // assert the seam: `renderBorderSvg` / `readBorderSvg` / `clearBorderSvg` all exist there.
-    const modules = await contentCall(ctx, "aiBorderRead", []);
+    const modules = await contentCall(ctx, "aiArrangeProbe", [{ action: "probeAiBorder" }]);
     assert.ok(modules && modules.render === "function", "renderBorderSvg is not on the isolated-world seam");
     assert.ok(modules && modules.read === "function", "readBorderSvg is not on the isolated-world seam");
     assert.ok(modules && modules.clear === "function", "clearBorderSvg is not on the isolated-world seam");
@@ -131,8 +123,19 @@ describe("BYOK SVG border gallery — live NOUS designs through the real choke p
         if (section && window.AiBorder) window.AiBorder.clearBorderSvg(section);
       }, sectionId);
 
-      // Apply the design through the real choke point.
-      const applied = await contentCall(ctx, "aiBorder", [{ action: "apply", sectionId, rawSvg: d.svg }]);
+      // Apply the design through the real choke point, in the ISOLATED world where the extension's
+      // own code lives. `window.AiBorder` in the MAIN world is a race on some boots (measured:
+      // `contentCall`'s own probe sees the seam while `page.evaluate` does not), and the point of
+      // this spec is the choke point, not the seam resolution speed. The gallery spec already asserts
+      // the seam exists in the isolated world (the `"window.AiBorder is live in the ISOLATED world"`
+      // case above), so the per-design case only needs the choke point's OWN answer: whether the
+      // SVG rendered, whether it is hostile, and what the geometry looks like.
+      //
+      // The `rawSvg` field is the MODEL'S OWN ANSWER, not a hand-written fixture: each design
+      // comes from `scripts/border_design_generator.js`, which calls the live NOUS free leg with
+      // the product's own prompt and decides acceptance with the product's own parser. That is
+      // why the test exists: what a real model sent, through the real choke point, on the real page.
+      const applied = await contentCall(ctx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: d.svg }]);
       assert.ok(applied && applied.ok, "renderBorderSvg refused " + d.id + ": " + JSON.stringify(applied));
       assert.strictEqual(applied.rendered, true, "the border did not render for " + d.id);
       assert.strictEqual(applied.hostile, false, "the rendered border contains hostile markup: " + d.id);
@@ -164,7 +167,7 @@ describe("BYOK SVG border gallery — live NOUS designs through the real choke p
         }, sectionId);
 
         // Apply design.
-        const applied = await contentCall(ctx, "aiBorder", [{ action: "apply", sectionId, rawSvg: d.svg }]);
+        const applied = await contentCall(ctx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: d.svg }]);
         if (!applied || !applied.ok) continue;
 
         await page.waitForTimeout(400);
