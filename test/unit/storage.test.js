@@ -98,9 +98,11 @@ window.eval(sectionUtilsContent);
   it('should save and load layout data', async function() {
     await Storage.saveLayout(characterId, testData);
     const loadedData = await Storage.loadLayout(characterId);
-    // loadedData will have version 1.5.0 and shapeLayers due to migration
+    // loadedData is stamped with the CURRENT schema version and gains shapeLayers via
+    // migration; the assertion reads the constant so a legitimate bump does not have to
+    // be copied into this file (it did not, at 1.6.0 — AC-7's `borderSvg` field).
     assert.strictEqual(loadedData.characterId, characterId);
-    assert.strictEqual(loadedData.version, '1.5.0');
+    assert.strictEqual(loadedData.version, Storage.SCHEMA_VERSION);
     assert.ok(Array.isArray(loadedData.shapeLayers));
   });
 
@@ -115,7 +117,7 @@ window.eval(sectionUtilsContent);
     const loadedData = await Storage.loadGlobalLayout();
     
     assert.strictEqual(loadedData.characterId, 'GLOBAL');
-    assert.strictEqual(loadedData.version, '1.5.0');
+    assert.strictEqual(loadedData.version, Storage.SCHEMA_VERSION);
     assert.deepStrictEqual(loadedData.sections, globalData.sections);
     assert.deepStrictEqual(loadedData.shapeLayers, globalData.shapeLayers);
   });

@@ -1,10 +1,10 @@
 {
   "name": "dndbeyond-print",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint js/ test/ scripts/",
+    "lint": "eslint js/ test/ scripts/ && node scripts/check_border_svg_injection.js",
     "pretest": "npm run lint",
     "test": "mocha --recursive test/unit test/e2e test/manifest.test.js",
     "release:check": "node scripts/release_gate.js",

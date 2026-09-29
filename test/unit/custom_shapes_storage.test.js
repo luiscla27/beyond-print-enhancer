@@ -113,7 +113,7 @@ window.eval(sectionUtilsContent);
       ]
     };
     const migrated = Storage.migrateLayout(legacyLayout);
-    assert.strictEqual(migrated.version, '1.5.0');
+    assert.strictEqual(migrated.version, Storage.SCHEMA_VERSION);
     assert.ok(Array.isArray(migrated.customShapes));
     assert.strictEqual(migrated.customShapes[0].id, 'legacy-1');
   });

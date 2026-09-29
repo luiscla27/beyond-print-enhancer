@@ -158,6 +158,13 @@ chrome.action.onClicked.addListener(function(tab) {
       // `importScripts` at the top of this file.
       'js/ai_layout.js',
       'js/ai_arrange.js',
+      // Track byok_svg_borders_20260927 (Phase 2): the SVG render choke point (AC-9).
+      // A separate file from js/ai_layout.js on purpose: the pure core may not touch the
+      // DOM, and the whole job of this module is to be the ONE place allowed to. It loads
+      // before the modules that call it (layout_apply, layout_scan, section_cloning,
+      // undo) and its readers resolve `window.AiBorder` at CALL time anyway, so its
+      // position in this list is tidiness rather than a correctness constraint.
+      'js/ai_border.js',
       'js/shape_picker.js',
       'js/properties_panel.js',
       'js/controls.js',

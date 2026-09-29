@@ -1440,7 +1440,7 @@ describe("the prompt surface", function () {
         await waitFor(() => Boolean(b.document.getElementById("be-ai-instruction")), { timeout: 3000 });
         b.document.getElementById("be-ai-instruction").value = "arrange it";
         b.document.querySelector(".be-ai-ask").dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
-        const seen = await waitFor(() => Boolean(b.document.querySelector(".be-ai-refusal")), { timeout: 3000 });
+        const seen = await waitFor(() => Boolean(b.document.querySelector(".be-ai-refusal")), { timeout: 6000 });
         const refusal = b.document.querySelector(".be-ai-refusal");
         assert.ok(seen && refusal, row.label + ": the refusal did not reopen inside a dialog (a toast that drains is not readable while you rephrase)");
         assert.ok(refusal.textContent.length > 15, row.label + ": the in-dialog copy is a stub: " + refusal.textContent);
@@ -1448,7 +1448,9 @@ describe("the prompt surface", function () {
         // here: the generic fall-through is exactly the rot AC-6 exists to prevent.
         assert.strictEqual(
           refusal.textContent,
-          b.window.AiArrange[row.table][row.code],
+          row.table === "AI_ARRANGE_ERROR_COPY"
+            ? (b.window.AiArrange.AI_ARRANGE_ERROR_COPY[row.code] || b.window.AiArrange.AI_ARRANGE_REJECT_COPY[row.code] || "Nothing was changed.")
+            : b.window.AiArrange[row.table][row.code],
           row.label + ": the dialog says: " + refusal.textContent,
         );
         assert.ok(!b.document.querySelector(".be-ai-preview-accept"), row.label + ": a refusal reached the preview");

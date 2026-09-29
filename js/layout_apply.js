@@ -188,6 +188,20 @@ async function applyLayout(layout) {
       section.classList.add(styles.borderStyle);
     }
 
+    // AC-7/AC-9 path B (track `byok_svg_borders_20260927`): the persisted `borderSvg`
+    // rehydrates through the choke point, which sanitizes INTERNALLY — so a record that
+    // was hand-edited, imported from a template, or written by an older build still
+    // cannot put bytes in the DOM. A record with no `borderSvg` stores `undefined`/null
+    // and the choke point CLEARS the overlay, which is what makes "no border in the
+    // record" authoritative instead of "keep whatever was rendered".
+    //
+    // Reached through `window.AiBorder` at CALL time (never a captured reference): the
+    // module may not be loaded yet in a bare harness, and the absence must degrade to
+    // "no border" rather than a throw from inside the restore loop.
+    if (typeof window.AiBorder?.renderBorderSvg === "function") {
+      window.AiBorder.renderBorderSvg(section, styles.borderSvg ?? null);
+    }
+
     // Apply main styles.
     //
     // track undo_stack_20260911 (Phase 2 verification): these were TRUTHINESS guards, so a

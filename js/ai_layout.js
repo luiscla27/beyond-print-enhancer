@@ -102,6 +102,11 @@ const BORDER_PATCH_KEYS = Object.freeze({
  * The gate itself fails CLOSED (`capabilityOn` below): only a literal `true` enables, so a caller
  * that passes `{border: "yes"}` does not thereby hand the model a permission it was not granted.
  * That direction is the only safe one for a boundary that decides what the model may emit.
+ *
+ * PHASE 3's `arrangeWithAi(instruction, opts)` is the FIRST product caller to pass `opts.capabilities`
+ * and `opts.selectedSectionId` from the dialog surface. A `selectedSectionId` is required only when
+ * the border capability is on (AC-5): the flow refuses locally before a network call when it is
+ * missing, so the border model cannot propose geometry for a section the user has not targeted.
  */
 const DEFAULT_CAPABILITIES = Object.freeze({ arrange: true, border: true });
 
@@ -1326,6 +1331,8 @@ function parseModelOutput(text, liveSectionIds, options) {
  */
 const MAX_SVG_CHARS = 16000;
 
+
+
 /**
  * The named rejection reasons. ONE constant per AC-1 FAIL condition, so a caller (Phase 2's
  * choke point, Phase 3's copy table) never matches on prose. `[AC-1]`'s FAIL condition is "a
@@ -1342,19 +1349,140 @@ const SVG_REJECT_REASONS = Object.freeze({
   CSS_IMPORT: "css_import",
   ANIMATION: "animation",
   OVERSIZE: "oversize",
+  /**
+   * ADDED by the allowlist-grammar hardening (fork #1, accepted before Phase 3).
+   * The prior blacklist accepted every element it did not name, which left
+   * `<style>`, `<metadata>`, `<a>`, `<image>`, `<foreignObject*>`, and any
+   * future SVG2 element as silent allowances. The allowlist flips that: an
+   * element or attribute that is NOT explicitly listed is refused with a
+   * DISTINCT reason so the copy table (Phase 3) can tell the user what the
+   * model sent that this extension will not render.
+   */
+  SVG_DISALLOWED_ELEMENT: "svg_disallowed_element",
+  SVG_DISALLOWED_ATTRIBUTE: "svg_disallowed_attribute",
+  SVG_EXTERNAL_URL: "svg_external_url",
 });
 
 /**
- * The elements the "fixed SVG" contract forbids outright (spec.md §SVG contract). Lower-cased
- * because an XML `tagName` keeps the document's own spelling and `<SCRIPT>` is the same element.
+ * The allowlisted SVG element vocabulary. Every element NOT in this set is
+ * refused with `svg_disallowed_element`. This replaces the prior blacklist
+ * (`FORBIDDEN_SVG_ELEMENTS`) because a blacklist accepts every element it does
+ * not name — including `<style>`, `<a>`, `<metadata>`, and any future SVG2
+ * element — while an allowlist fails closed on novelty.
+ *
+ * The chosen set is the static-drawing subset of SVG1.1 that a section border
+ * can legitimately use, plus `<defs>` and `<use>` for reusable tile patterns
+ * (which the product's own raster borders already rely on). Three things are
+ * deliberately OUT:
+ *
+ *   `<text>` — AI-generated decorative borders must be pure geometry, and a
+ *   text run inside a border overlay would be a localization surface the
+ *   extension does not own;
+ *   `<image>` — its whole purpose is to load an external resource, which is
+ *   exactly the fetch AC-9 forbids;
+ *   `<style>` — a CSS block reaches the document's cascade, so it is a
+ *   styling escape rather than a drawing primitive. AC-1's `@import` vector
+ *   is therefore refused with `svg_disallowed_element` rather than
+ *   `css_import`, which the allowlist makes unrepresentable: the grammar has
+ *   no CSS surface to hide an `@import` in.
  */
-const FORBIDDEN_SVG_ELEMENTS = Object.freeze([
-  "script",
-  "foreignobject",
-  "animate",
-  "animatetransformation",
-  "set",
-]);
+const SVG_ALLOWED_ELEMENTS = Object.freeze(new Set([
+  "svg",
+  "g",
+  "rect",
+  "circle",
+  "ellipse",
+  "line",
+  "polyline",
+  "polygon",
+  "path",
+  "defs",
+  "use",
+  "title",
+  "desc",
+  // SVG spells these in camelCase (`linearGradient`) but an XML `tagName` is
+  // case-SENSITIVE, so the element set keeps the canonical spelling and is
+  // compared case-insensitively (`allowlistedSvgElement` below).
+  "lineargradient",
+  "radialgradient",
+  "stop",
+  "clippath",
+  "pattern",
+  "mask",
+  "symbol",
+  "marker",
+]));
+
+/**
+ * The allowlisted SVG attribute vocabulary. An attribute on an allowlisted
+ * element that is NOT in this set is removed and reported as
+ * `svg_disallowed_attribute`. `href` / `xlink:href` are allowed ONLY when
+ * their value is a same-document fragment (`#id`), which the external-
+ * reference check enforces separately.
+ *
+ * `style` and `class` are deliberately OUTSIDE the allowlist. Both are CSS
+ * surfaces: an inline `style="background:url(https://…)"` would perform a
+ * network fetch the extension must never make, and a `class` hook reaches the
+ * page's own stylesheet. A decorative border built from the allowlisted set --
+ * `viewBox` plus presentation attributes (`fill`, `stroke`, `stroke-width`,
+ * `opacity`) plus `defs`/`use`/`gradient` for tiling -- needs neither, and a
+ * model that sends `style="…"` loses that attribute and keeps its geometry.
+ * The allowlist blocks the attribute NAME, so there is no spelling of a CSS
+ * escape that survives: any other name is refused the same way.
+ */
+const SVG_ALLOWED_ATTRIBUTES = Object.freeze(new Set([
+  // ALL KEYS ARE LOWERCASE. The check below lowercases the attribute name before the
+  // membership test, so a camelCase key ("viewBox") would never match and would
+  // strip the very attribute the contract requires -- MEASURED in this phase: EVERY
+  // vector reported `svg_disallowed_attribute` because `viewBox` was being removed
+  // from the root. SVG's own spelling is restored on the way out by the browser's
+  // serializer, so the stored string keeps `viewBox` / `preserveAspectRatio`.
+  // Structural / root
+  "xmlns",
+  "xmlns:xlink",
+  "viewbox",
+  "width",
+  "height",
+  "preserveaspectratio",
+  "overflow",
+  "visibility",
+  "display",
+  // Geometry
+  "x", "y", "cx", "cy", "rx", "ry", "r",
+  "x1", "y1", "x2", "y2",
+  "points",
+  "d",
+  // Appearance (presentation attributes — the set the product's own borders use)
+  "fill", "fill-opacity", "fill-rule",
+  "stroke", "stroke-width", "stroke-opacity",
+  "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset",
+  "opacity",
+  "color",
+  // Transforms
+  "transform",
+  // use / href (fragment-only; enforced by `isAllowedSvgHref`)
+  "href",
+  "xlink:href",
+  // gradient stops. `stop-color`/`stop-opacity` are the paint properties a
+  // <stop> actually draws with -- MEASURED: with them absent, a model-authored
+  // `<linearGradient>` came back `svg_disallowed_attribute` and lost every stop
+  // colour, i.e. the allowlist refused a border the product is meant to accept.
+  "offset",
+  "stop-color",
+  "stop-opacity",
+  // clip / mask / pattern / marker geometry
+  "clippathunits",
+  "maskunits", "maskcontentunits",
+  "patternunits", "patterncontentunits",
+  "patterntransform",
+  "markerwidth", "markerheight",
+  "refx", "refy",
+  "orient",
+  "markerunits",
+  // Structural: `id` is required by `<use href="#tile">`.
+  "id",
+  // `title` / `desc` carry no attributes beyond `id`, which is already listed
+]));
 
 /** `onclick`, `onload`, … — any `on*` attribute, case-insensitively. */
 function isForbiddenSvgAttribute(name) {
@@ -1362,29 +1490,96 @@ function isForbiddenSvgAttribute(name) {
 }
 
 /**
- * A reference is EXTERNAL unless it is a same-document fragment (`#id`). The `#` form is what the
- * product's own gradients/clip-paths use (`<use href="#tile">`), so blanking it would break every
- * legitimate border; everything else — a URL, a `data:` payload, even a relative file — is a load
- * the extension must never perform.
+ * The AC-1 vectors, checked BEFORE the allowlist so each keeps its OWN named reason
+ * instead of collapsing into the generic `svg_disallowed_element`.
+ *
+ * WHY BOTH, AND WHY THIS ORDER. The allowlist alone would report
+ * `<script>`, `<foreignObject>` and `<animate>` all as
+ * `svg_disallowed_element` — true, but it throws away the one thing AC-1's named
+ * vocabulary exists for: telling the user WHICH vector fired. So the four AC-1
+ * element classes are recognised first and keep `script` / `foreign_object` /
+ * `animation` / `css_import`; every OTHER element it does not name falls
+ * through to the allowlist and is reported as `svg_disallowed_element`, which is
+ * the case the blacklist could not express at all. Lower-cased because an XML
+ * `tagName` keeps the document's own spelling and `<SCRIPT>` is the same element.
  */
-function isExternalSvgHref(value) {
-  if (typeof value !== "string") return false;
-  const trimmed = value.trim();
-  return trimmed.length > 0 && !trimmed.startsWith("#");
+const AC1_FORBIDDEN_SVG_ELEMENTS = Object.freeze({
+  script: SVG_REJECT_REASONS.SCRIPT,
+  foreignobject: SVG_REJECT_REASONS.FOREIGN_OBJECT,
+  animate: SVG_REJECT_REASONS.ANIMATION,
+  animatetransform: SVG_REJECT_REASONS.ANIMATION,
+  animatemotion: SVG_REJECT_REASONS.ANIMATION,
+  animatecolor: SVG_REJECT_REASONS.ANIMATION,
+  mpath: SVG_REJECT_REASONS.ANIMATION,
+  set: SVG_REJECT_REASONS.ANIMATION,
+});
+
+/**
+ * The named reason for `tag`, or `null` when the allowlist should decide.
+ * `<style>` is special: AC-1 names only the `@import` case, so a `<style>` whose
+ * content carries no `@import` is refused by the allowlist (it is not a drawing
+ * primitive) while one carrying `@import` reports the specific `css_import`.
+ */
+function ac1SvgElementReason(tag, textContent) {
+  const own = Object.prototype.hasOwnProperty.call(AC1_FORBIDDEN_SVG_ELEMENTS, tag)
+    ? AC1_FORBIDDEN_SVG_ELEMENTS[tag]
+    : null;
+  if (own) return own;
+  if (tag === "style" && /@import/i.test(textContent || "")) {
+    return SVG_REJECT_REASONS.CSS_IMPORT;
+  }
+  return null;
 }
 
 /**
- * Walk the ELEMENT children of `node` and strip forbidden content in place, collecting the named
- * reasons. The root element is NOT visited here (it is not its own child) — `validateSvg` inspects
- * the root's own attributes, which is the half a naive `firstChild` walk misses: MEASURED during
- * Phase 1, `<svg viewBox="…" onload="alert(1)">` came back `ok: true` from a walk that started at
- * `firstChild`, because the handler was on the root itself.
+ * The named reason for an `href` on an element the allowlist REFUSES ALREADY.
  *
- * Attributes are snapshotted with `Array.from` BEFORE any `removeAttribute`: a `NamedNodeMap` is
- * LIVE, so mutating it while iterating silently skips the next attribute. That is the second
- * measured defect of this routine's first draft.
+ * `<image href="https://…">` is the one case where AC-1 named `external_reference`
+ * but the allowlist is what refuses it, and reporting
+ * `svg_disallowed_element` there would describe the mechanism instead of the
+ * vector — the user's own message is "it may not link to other sites", not "image
+ * is not on the list". So an external `href` on any refused element reports
+ * `external_reference`; an `<image>` with a same-document fragment still reports
+ * `svg_disallowed_element`, because the fetch is not the problem there.
  */
-function stripForbiddenSvg(node) {
+function hrefSvgElementReason(el, tag) {
+  for (const attr of Array.from(el.attributes || [])) {
+    const name = String(attr.name || "").toLowerCase();
+    if ((name === "href" || name === "xlink:href") && !isAllowedSvgHref(attr.value)) {
+      return SVG_REJECT_REASONS.EXTERNAL_REFERENCE;
+    }
+  }
+  return ac1SvgElementReason(tag, el.textContent) || SVG_REJECT_REASONS.SVG_DISALLOWED_ELEMENT;
+}
+
+/**
+ * Accept `href` / `xlink:href` only when the value is a same-document fragment.
+ * The product's own gradients/clip-paths use the `#id` form (`<use href="#tile">`),
+ * so blanking it would break every legitimate border; everything else — a URL, a
+ * `data:` payload, even a relative file — is a load the extension must never perform.
+ * The prior code called this `isExternalSvgHref`; the allowlist grammar wraps it in
+ * a named reason (`svg_external_url`) so the copy table can tell the user what the
+ * model referenced.
+ */
+function isAllowedSvgHref(value) {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  return trimmed.length === 0 || trimmed.startsWith("#");
+}
+
+/**
+ * Walk the ELEMENT children of `node` and enforce the allowlist grammar, collecting
+ * the named reasons. The root element is NOT visited here (it is not its own child) —
+ * `validateSvg` inspects the root's own attributes, which is the half a naive
+ * `firstChild` walk misses: MEASURED during Phase 1, `<svg viewBox="…" onload="alert(1)">`
+ * came back `ok: true` from a walk that started at `firstChild`, because the handler was
+ * on the root itself.
+ *
+ * Attributes are snapshotted with `Array.from` BEFORE any `removeAttribute`: a
+ * `NamedNodeMap` is LIVE, so mutating it while iterating silently skips the next
+ * attribute. That is the second measured defect of this routine's first draft.
+ */
+function enforceSvgAllowlist(node) {
   const errors = [];
   const toRemove = [];
 
@@ -1392,47 +1587,52 @@ function stripForbiddenSvg(node) {
     if (child.nodeType !== 1 /* ELEMENT_NODE */) continue;
     const tag = String(child.tagName || "").toLowerCase();
 
-    if (tag === "style" && /@import/i.test(child.textContent || "")) {
-      errors.push(SVG_REJECT_REASONS.CSS_IMPORT);
-      toRemove.push(child);
-      continue;
-    }
-
-    if (FORBIDDEN_SVG_ELEMENTS.indexOf(tag) !== -1) {
-      errors.push(
-        tag === "script"
-          ? SVG_REJECT_REASONS.SCRIPT
-          : tag === "foreignobject"
-            ? SVG_REJECT_REASONS.FOREIGN_OBJECT
-            : SVG_REJECT_REASONS.ANIMATION,
-      );
+    if (!SVG_ALLOWED_ELEMENTS.has(tag)) {
+      // AC-1's own vectors keep their specific names (script / foreign_object /
+      // animation / css_import / external_reference); everything else the
+      // allowlist refuses is the generic `svg_disallowed_element` — the reject
+      // the blacklist could not express, because it accepted every element it
+      // did not name.
+      errors.push(hrefSvgElementReason(child, tag));
       toRemove.push(child);
       continue;
     }
 
     for (const attr of Array.from(child.attributes || [])) {
       const name = String(attr.name || "").toLowerCase();
+
       if (isForbiddenSvgAttribute(name)) {
         child.removeAttribute(attr.name);
         if (errors.indexOf(SVG_REJECT_REASONS.EVENT_HANDLER) === -1) {
           errors.push(SVG_REJECT_REASONS.EVENT_HANDLER);
         }
+        continue;
       }
-    }
-    for (const attr of Array.from(child.attributes || [])) {
-      if (attr.name !== "href" && attr.name !== "xlink:href") continue;
-      if (isExternalSvgHref(attr.value)) {
-        // NEUTRALISE, do not merely report: the element stays (so the border's shape survives)
-        // but the reference is emptied, because the reject path is only "nothing renders" at the
-        // CHOKE POINT — the sanitizer's own output must already be inert if anyone serializes it.
+
+      if ((name === "href" || name === "xlink:href") && !isAllowedSvgHref(attr.value)) {
         child.setAttribute(attr.name, "");
         if (errors.indexOf(SVG_REJECT_REASONS.EXTERNAL_REFERENCE) === -1) {
+          // AC-1's name for the vector, kept so the Phase 1 suite and Phase 3's
+          // copy table still read `external_reference`; the allowlist fork's
+          // `svg_external_url` is the SAME reject under the grammar's vocabulary,
+          // and both are mapped to one user-facing sentence (see spec AC-1/AC-2).
           errors.push(SVG_REJECT_REASONS.EXTERNAL_REFERENCE);
+        }
+        continue;
+      }
+
+      // Allowlisted elements may carry any attribute in the allowlisted set.
+      // Presentation attributes (`fill`, `stroke`, `opacity`, …) are the dominant
+      // use case, and `id` is required by `<use href="#…">`.
+      if (!SVG_ALLOWED_ATTRIBUTES.has(name)) {
+        child.removeAttribute(attr.name);
+        if (errors.indexOf(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE) === -1) {
+          errors.push(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE);
         }
       }
     }
 
-    for (const nested of stripForbiddenSvg(child)) {
+    for (const nested of enforceSvgAllowlist(child)) {
       if (errors.indexOf(nested) === -1) errors.push(nested);
     }
   }
@@ -1456,6 +1656,9 @@ function stripForbiddenSvg(node) {
  */
 function parseSvgDocument(markup) {
   try {
+    // Prefer the explicit SVG namespace parse when a DOMParser is available.
+    // jsdom + image/svg+xml gives us a DOCUMENT whose root IS the <svg>.
+    // The JSDOM fallback mirrors that exact path (contentType image/svg+xml).
     if (typeof DOMParser !== "undefined") {
       return new DOMParser().parseFromString(markup, "image/svg+xml");
     }
@@ -1469,6 +1672,7 @@ function parseSvgDocument(markup) {
   return null;
 }
 
+
 /** Serialize a parsed element back to a string — the ONLY place this module produces markup. */
 function serializeSvgElement(root) {
   if (typeof XMLSerializer !== "undefined") {
@@ -1477,33 +1681,25 @@ function serializeSvgElement(root) {
   return String(root.outerHTML);
 }
 
-/**
- * `validateSvg(svg)` — AC-1's entry point, and the reason `[AC-9]` can name a trust root.
- *
- * ACCEPTS a well-formed single-root `<svg>` carrying a `viewBox`; REJECTS (with a named reason,
- * never by returning the input unchanged) a non-`svg` root, a missing `viewBox`, `<script>`,
- * `<foreignObject>`, an `on*` attribute — on ANY element INCLUDING the root — an external
- * reference, a `<style>` with `@import`, an animation element, or markup over `MAX_SVG_CHARS`.
- *
- * NEVER THROWS and NEVER MUTATES ITS INPUT (it is a string; the caller's copy is untouched), which
- * is the shape `[AC-1]`'s FAIL condition demands. The return is
- * `{ok, sanitized, error}`:
- *   - `ok: true`  → `sanitized` is the clean markup, `error` is `null`.
- *   - `ok: false` → `error` is one of `SVG_REJECT_REASONS`; `sanitized` is `null` when nothing
- *     could be parsed at all (so a caller cannot be tempted to render it) and the STRIPPED markup
- *     when the tree parsed but carried forbidden content (diagnostic value only — the choke point
- *     renders nothing on `ok: false`, per `[AC-9]`).
- *
- * @param {unknown} input the RAW model string. Never trusted, never pre-checked.
- * @return {{ok: boolean, sanitized: string|null, error: string|null}}
- */
+
 function validateSvg(input) {
   if (typeof input !== "string" || !input.trim()) {
     return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.NON_SVG_ROOT };
   }
 
-  const doc = parseSvgDocument(input.trim());
-  const root = doc && doc.documentElement;
+  const trimmed = input.trim();
+  const doc = parseSvgDocument(trimmed);
+  // parseFromString returns a DOCUMENT, not a root element.  When the MIME
+  // type is image/svg+xml the documentElement IS the <svg>, but the property
+  // is a live accessor in jsdom when the outer wrapper is text/html — the
+  // <html> root has the <svg> as its child and documentElement is not the
+  // node we want.  Falling back to the first <svg> descendant keeps the
+  // contract without requiring a specific DOMParser / JSDOM mode.
+  let root = doc && doc.documentElement;
+  if (root && String(root.tagName || "").toLowerCase() !== "svg") {
+    const inner = doc.getElementsByTagName("svg")[0];
+    if (inner) root = inner;
+  }
   if (!root || String(root.tagName || "").toLowerCase() !== "svg") {
     return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.NON_SVG_ROOT };
   }
@@ -1513,31 +1709,50 @@ function validateSvg(input) {
     return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.MISSING_VIEWBOX };
   }
 
-  const errors = stripForbiddenSvg(root);
+  const errors = [];
 
-  // The ROOT's own attributes — the half a `firstChild` walk cannot see (measured defect above).
+  // The ROOT's own attributes -- the half a `firstChild` walk cannot see (measured defect above).
+  // The root is allow-list-gated like any child: every attribute on the <svg> must be in
+  // SVG_ALLOWED_ATTRIBUTES, must not be an `on*` handler, and `href`/`xlink:href` (which a bare
+  // <svg> never legitimately carries anyway) must be a fragment. A disallowed root attribute
+  // produces a named reason rather than a silent accept, because the root is where a clever
+  // payload hides (`viewBox` is not the only thing a synthetic `<svg>` can carry).
   for (const attr of Array.from(root.attributes || [])) {
-    if (isForbiddenSvgAttribute(attr.name)) {
+    const name = String(attr.name || "").toLowerCase();
+
+    if (isForbiddenSvgAttribute(name)) {
       root.removeAttribute(attr.name);
       if (errors.indexOf(SVG_REJECT_REASONS.EVENT_HANDLER) === -1) {
         errors.push(SVG_REJECT_REASONS.EVENT_HANDLER);
       }
+      continue;
     }
-  }
-  for (const attr of Array.from(root.attributes || [])) {
-    if (attr.name !== "href" && attr.name !== "xlink:href") continue;
-    if (isExternalSvgHref(attr.value)) {
+
+    if ((name === "href" || name === "xlink:href") && !isAllowedSvgHref(attr.value)) {
       root.setAttribute(attr.name, "");
       if (errors.indexOf(SVG_REJECT_REASONS.EXTERNAL_REFERENCE) === -1) {
         errors.push(SVG_REJECT_REASONS.EXTERNAL_REFERENCE);
       }
+      continue;
+    }
+
+    if (!SVG_ALLOWED_ATTRIBUTES.has(name)) {
+      root.removeAttribute(attr.name);
+      if (errors.indexOf(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE) === -1) {
+        errors.push(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE);
+      }
     }
   }
 
+  // Enforce the same grammar on the subtree, then merge the two error lists so the
+  // first named reason is the one the caller reports.
+  const childErrors = enforceSvgAllowlist(root);
+  for (const e of childErrors) if (errors.indexOf(e) === -1) errors.push(e);
+
   const serialized = serializeSvgElement(root);
 
-  // The ceiling is checked on the SERIALIZED string, so `oversize` means "the border is too big
-  // to ship", never "the raw answer was long" (see MAX_SVG_CHARS' header).
+  // The ceiling is checked on the SERIALIZED, SANITIZED string so `oversize` means
+  // "the border is too big to ship", never "the raw answer was long" (see MAX_SVG_CHARS' header).
   if (serialized.length > MAX_SVG_CHARS) {
     return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.OVERSIZE };
   }
@@ -1547,6 +1762,7 @@ function validateSvg(input) {
   }
   return { ok: true, sanitized: serialized, error: null };
 }
+
 
 /**
  * `sanitizeSvg(svg)` — the string-only half of the trust root.
@@ -1605,6 +1821,13 @@ const AiLayout = {
   // Reached today by `test/unit/ai_svg.test.js`.
   MAX_SVG_CHARS,
   SVG_REJECT_REASONS,
+  // `SVG_ALLOWED_ELEMENTS` / `SVG_ALLOWED_ATTRIBUTES` — Public API (same track,
+  // allowlist-grammar hardening before Phase 3): the element/attribute vocabulary the
+  // trust root enforces instead of the prior blacklist. Reached today by
+  // `test/unit/ai_svg.test.js`; Phase 3's copy table matches on
+  // `svg_disallowed_element` / `svg_disallowed_attribute` / `svg_external_url`.
+  SVG_ALLOWED_ELEMENTS,
+  SVG_ALLOWED_ATTRIBUTES,
   // `validateSvg` / `sanitizeSvg` — Public API (same track, AC-1): THE trust root.
   // Deliberately kept with no caller in `js/` YET: Phase 2's choke point
   // (`renderBorderSvg`) is their first product reader and lands in this same track, so

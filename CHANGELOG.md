@@ -238,6 +238,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `temp/scratch/s28_verify_pointers.py` (the citation audit, **0 stale lines**, exit 0), and
   `temp/scratch/s30_s293_check.py` (the §29.3 falsifiable check, `NEW-ROW EXPECTATION: MET`).
 
+## [2.2.0] - 2026-09-28
+
+### Added
+- **AI border design.** The AI Arrange dialog now has two ephemeral switches — "Arrange layout" and "Border design" — so you can ask the model for a layout change, a border, or both. When Border design is on and a section is targeted, the model can propose a static SVG border for that section. The SVG is validated and sanitized by a single render choke point (`renderBorderSvg`), and every path that can put a border SVG in the DOM (fresh apply, persistence rehydrate, template import, library reuse, section clone, undo restore, preview, print) is forced through it. Accepted borders are stored per-section as a `borderSvg` field in the regular layout save and can also be saved into a reusable local library (`custom_borders`).
+- **Ephemeral capability switches.** The dialog's two switches are not persisted between sessions — they default to ON and reset on every open, per `[AC-4]`.
+- **Blocking injection guard.** `scripts/check_border_svg_injection.js` is wired into `npm run lint` / `npm run pretest`. It is a structural guard, not an advisory, and fails the build if a second injection site or a direct-injection bypass appears in product source.
+- **Privacy copy.** `PRIVACY_POLICY.md` now documents the new on-device border storage and the border-design prompt in §2 and in the `storage` permission description.
+
+### Changed
+- **Version bump 2.1.1 → 2.2.0** (manifest.json + package.json).
+
 ## [2.1.1] - 2026-09-22
 
 ### Fixed

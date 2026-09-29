@@ -157,8 +157,15 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // a seam with no outside reader is what the re-rot guard below deletes. `currentExtractionIds`
     // is also NOT a `window.*` of its own; it joins the `LayoutScan` namespace (a member, counted
     // below), which is the surface js/main.js already destructures.
-    assert.strictEqual(SUMMARY.directExports, 163, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 162, "of which module exports");
+    // +1 (163 -> 164): track byok_svg_borders_20260927, Phase 2, adds `window.AiBorder` — the
+    // AC-9 choke point (`renderBorderSvg`) plus the AC-7 reuse library, a namespace with real
+    // `js/` readers (js/layout_apply.js, js/section_cloning.js, js/layout_scan.js), which is why
+    // this is a count bump with no annotation excuse. It is ONE seam for the whole module
+    // deliberately: the module's ten members are `AiBorder.*` (counted as namespace members
+    // below), because publishing each as its own `window.*` would multiply the re-rot surface
+    // without adding a reader.
+    assert.strictEqual(SUMMARY.directExports, 164, "direct `window.*` assignments");
+    assert.strictEqual(SUMMARY.moduleExports, 163, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

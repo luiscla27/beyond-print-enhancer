@@ -1188,6 +1188,35 @@ function enforceFullHeight() {
           border-style: solid;
           pointer-events: auto;
       }
+
+      /* AC-8 (track byok_svg_borders_20260927): the AI border SVG overlay. The node is
+         CREATED and positioned inline by 'renderBorderSvg' (js/ai_border.js — the one
+         writer AC-9 allows); this rule is the print/geometry half, and it is the second
+         and last file permitted to name the class. scripts/check_border_svg_injection.js
+         R5 fails the build if a third file mentions it.
+
+         '!important' mirrors the ::before border slot beside it: the generic
+         '.print-section-container *' rule further down forces font-size / white-space on
+         every descendant, and the overlay must stay a full-rect, non-interactive layer
+         that the print engine scales with the section. */
+      .print-section-container > .be-border-svg-overlay {
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          display: block !important;
+          pointer-events: none !important;
+          overflow: visible !important;
+          z-index: -1 !important;
+      }
+      .print-section-container > .be-border-svg-overlay svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+      }
+      /* Same contract as the class-based border slot: 'no-border' shows neither. */
+      .print-section-container.be-no-border > .be-border-svg-overlay {
+          display: none !important;
+      }
+
       .print-shape-container .print-section-content {
           background-color: transparent !important;
       }

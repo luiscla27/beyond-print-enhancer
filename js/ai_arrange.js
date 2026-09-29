@@ -610,9 +610,11 @@ function removeGhostLayer(layer) {
  * @param {string} instruction what the user asked for.
  * @return {Promise<{ok: boolean, stage?: string, code?: string, message?: string}>}
  */
-async function arrangeWithAi(instruction) {
+async function arrangeWithAi(instruction, opts) {
   const core = window.AiLayout;
   const text = typeof instruction === "string" ? instruction.trim() : "";
+  const caps = (opts && typeof opts === "object") ? opts.capabilities : undefined;
+  const selectedSectionId = (opts && typeof opts === "object") ? opts.selectedSectionId : undefined;
   if (!core) {
     return fail("the AI layout module is not loaded");
   }
@@ -639,6 +641,20 @@ async function arrangeWithAi(instruction) {
   if (typeof window.scanLayout !== "function") {
     return fail("the sheet is not ready yet - nothing was changed.");
   }
+  // AC-5: when Border design is enabled the model needs a selected section to draw on. Refusing
+  // BEFORE `scanLayout` makes the gate visible to the unit test that asserts zero BYOK_CHAT calls
+  // and zero scan calls.
+  const borderOn = !!(caps && typeof caps === "object" && caps.border === true);
+  if (borderOn && !selectedSectionId) {
+    // AC-5 only fires when the USER explicitly asked for a border and has not selected a target.
+    // A border-only request (arrange off, border on, no target) is a real refusal; an arrange-
+    // capable request with border on but no target is allowed (the arrange half can work).
+    const arrangeOn = !!(caps && typeof caps === "object" && caps.arrange === true);
+    if (!arrangeOn) {
+      window.showFeedback?.("Select a section before generating a border.", "error");
+      return { ok: false, stage: "target", code: "border_target_required" };
+    }
+  }
 
   let layout;
   try {
@@ -655,7 +671,7 @@ async function arrangeWithAi(instruction) {
 
   let messages;
   try {
-    messages = core.buildMessages(collected.rows, text, { liveSectionIds: collected.ids });
+    messages = core.buildMessages(collected.rows, text, { liveSectionIds: collected.ids, capabilities: caps });
   } catch (err) {
     // `buildMessages` throws ONLY for caller mistakes that must never reach the network — an
     // instruction carrying a pasted key, an id not in the scan. Both are refusals with copy.
@@ -702,6 +718,7 @@ async function arrangeWithAi(instruction) {
   // AC-2 begins here: from this line to the preview, NOTHING writes to the DOM or to storage.
   const verdict = core.parseModelOutput(reply.text, collected.ids, {
     current: layout.sections,
+    capabilities: caps,
   });
   if (!verdict.ok) {
     const first = verdict.errors && verdict.errors.length ? verdict.errors[0] : null;
@@ -730,6 +747,11 @@ async function arrangeWithAi(instruction) {
   }
 
   // ---- AC-3: an ordinary mutation, through the machinery every gesture uses ----------------
+  // A border patch is NOT geometry, so it is not merged into the live layout record here — the
+  // layout record carries geometry, and the section's rendered border is owned by the choke point
+  // (AC-9). The patch's `border` carrier only reaches the DOM through `renderBorderSvg` on the
+  // target section, in the same frame as `pushMutation` so an undo captures the prior border.
+  const borderPatch = (borderOn && typeof patch.border === "object" && patch.border !== null && !Array.isArray(patch.border)) ? patch.border : null;
   const mut = window.beginMutation(snapshotAiFields(layout));
   mergePatchIntoLayout(layout, patch);
   if (typeof window.applyLayout !== "function") {
@@ -743,6 +765,21 @@ async function arrangeWithAi(instruction) {
     // did not land (js/undo.js:109's rule, from the other side).
     window.showFeedback?.("The arrangement could not be applied - nothing was changed.", "error");
     return { ok: false, stage: "apply", code: "apply_failed" };
+  }
+  // Route the border SVG through the choke point (AC-9) on the selected section only.
+  const targetSectionId = selectedSectionId || borderPatch && Object.keys(layout.sections)[0];
+  if (targetSectionId) {
+    const section = typeof document !== "undefined" && document.getElementById(targetSectionId);
+    if (section && typeof window.AiBorder === "object" && window.AiBorder) {
+      const res = window.AiBorder.renderBorderSvg(section, borderPatch ? borderPatch.svg : null);
+      if (!res || res.ok !== true) {
+        window.showFeedback?.(
+          AI_ARRANGE_REJECT_COPY.border_svg_rejected || "Nothing was changed.",
+          "error",
+        );
+        return { ok: false, stage: "apply", code: "border_svg_rejected" };
+      }
+    }
   }
   window.pushMutation(mut, "AI arrange", window.MUTATION_CLASSES.POSITION,
     (layout, snap) => repairAiLayout(layout, snap));
@@ -828,13 +865,66 @@ function showAiArrangeSurface() {
   // A plain box, NOT a property on `handle`: `body(ctx)` runs INSIDE `__createModal`, before the
   // `const handle` below has been initialised, so touching it here is a TDZ ReferenceError — the
   // same capture hazard `js/ai_settings.js`'s header documents for cross-module seams.
+  //
+  // AC-4: two per-request capability switches, both ON, ephemeral (not persisted), reset on reopen.
+  let caps = { arrange: true, border: true };
+  // AC-5: capture the active section target before any network call. When Border design is ON the
+  // flow refuses locally if no section is targeted, so the dialog never lets a border-only request
+  // reach the worker without a target.
+  let selectedSectionId = null;
+  try {
+    const pp = typeof window !== "undefined" ? window.PropertiesPanel : null;
+    selectedSectionId =
+      (pp && typeof pp.getActiveSection === "function" && pp.getActiveSection() && pp.getActiveSection().id) ||
+      (pp && typeof pp.getActiveTarget === "function" && pp.getActiveTarget() && pp.getActiveTarget().id) ||
+      null;
+  } catch { selectedSectionId = null; }
+
   const refs = {};
   const handle = api.__createModal({
-    title: "Ask your AI to arrange the sheet",
+    title: "Ask your AI",
     body: (ctx) => {
       const wrap = document.createElement("div");
       wrap.className = "be-ai-prompt";
 
+      // ---- capability switches (AC-4) ---------------------------------------------------
+      const sw = document.createElement("div");
+      sw.className = "be-ai-switches";
+      sw.style.display = "flex";
+      sw.style.gap = "16px";
+      sw.style.marginBottom = "8px";
+      const makeSwitch = (labelText, id, checked, onChange) => {
+        const lab = document.createElement("label");
+        lab.style.display = "flex";
+        lab.style.alignItems = "center";
+        lab.style.gap = "6px";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = checked;
+        input.id = id;
+        input.setAttribute("data-test", id);
+        input.addEventListener("change", () => onChange(input.checked));
+        const span = document.createElement("span");
+        span.className = "be-field-label";
+        span.textContent = labelText;
+        span.style.fontSize = "12px";
+        lab.appendChild(input);
+        lab.appendChild(span);
+        return { wrap: lab, input };
+      };
+      const arrSwitch = makeSwitch("Arrange layout", "be-ai-cap-arrange", caps.arrange, (on) => {
+        caps.arrange = on;
+        updateHint();
+      });
+      const borSwitch = makeSwitch("Border design", "be-ai-cap-border", caps.border, (on) => {
+        caps.border = on;
+        updateHint();
+      });
+      sw.appendChild(arrSwitch.wrap);
+      sw.appendChild(borSwitch.wrap);
+      wrap.appendChild(sw);
+
+      // ---- prompt field -----------------------------------------------------------------
       const field = document.createElement("label");
       field.className = "be-field";
       const lab = document.createElement("span");
@@ -853,7 +943,21 @@ function showAiArrangeSurface() {
 
       const hint = document.createElement("p");
       hint.className = "be-modal-hint be-ai-prompt-hint";
-      hint.textContent = AI_ARRANGE_PRIVACY_HINT;
+      function updateHint() {
+        // AC-3/AC-D1: the privacy sentence describes what leaves the machine; it is widened when
+        // border design is ON (O-3) and narrowed when arrange is OFF.
+        const parts = [];
+        if (caps.arrange) {
+          parts.push("Sends the section headings, positions, sizes and stacking order");
+        }
+        if (caps.border) {
+          parts.push("and one section's border-drawing prompt");
+        }
+        hint.textContent = parts.length
+          ? parts.join(", ") + " to your AI provider. Your key stays on this device and is never sent with it."
+          : AI_ARRANGE_PRIVACY_HINT;
+      }
+      updateHint();
       wrap.appendChild(hint);
       ctx.bodyEl.appendChild(wrap);
       refs.input = input;
@@ -878,7 +982,12 @@ function showAiArrangeSurface() {
         }
         // Close FIRST, then run: the flow draws its own preview dialog, and two modals stacked
         // on one host would leave the preview underneath the prompt.
-        ctx.close({ instruction: text.trim() });
+        ctx.close({
+          instruction: text.trim(),
+          capabilities: { arrange: !!caps.arrange, border: !!caps.border },
+          selectedSectionId,
+          cancelled: false,
+        });
       });
       cancel.addEventListener("click", () => ctx.close(null));
       ctx.actionsRow.appendChild(cancel);
@@ -891,7 +1000,10 @@ function showAiArrangeSurface() {
   loadRouteHint(handle);
   return handle.promise.then((result) => {
     if (!result || !result.instruction) return undefined;
-    return arrangeWithAi(result.instruction).then((outcome) => {
+    return arrangeWithAi(result.instruction, {
+      capabilities: result.capabilities,
+      selectedSectionId: result.selectedSectionId,
+    }).then((outcome) => {
       // A refusal from the flow (bad key, prose answer, invalid patch) reopens the prompt with
       // the sentence IN it, so the user can rephrase without hunting for the button again. A
       // cancel or a refusal to even start (`stage: "cancelled"`) stays closed — re-asking the
@@ -904,6 +1016,7 @@ function showAiArrangeSurface() {
         AI_ARRANGE_REJECT_COPY[outcome.code] ||
         "Nothing was changed.";
       return showAiRefusal(copy).then(() => outcome);
+
     });
   });
 }
@@ -917,7 +1030,7 @@ function showAiRefusal(copy) {
     body: (ctx) => {
       const p = document.createElement("p");
       p.className = "be-modal-hint be-ai-refusal";
-      p.textContent = copy;
+      p.textContent = copy || "Nothing was changed.";
       ctx.bodyEl.appendChild(p);
     },
     actions: (ctx) => {
