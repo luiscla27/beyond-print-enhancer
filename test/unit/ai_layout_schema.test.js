@@ -1251,6 +1251,61 @@ describe("ai_layout — AC-2: the `border` member and the capability gate", func
     assert.deepStrictEqual(codes(hidden), ["capability_disabled"]);
   });
 
+  it("does NOT gate the top-level `note` on a capability it never belonged to", function () {
+    // MEASURED 2026-09-30 by this track's Phase 4 gallery generator, which drives the product's
+    // own prompt with `{arrange: false, border: true}` and asks the live NOUS leg for nothing but
+    // a border. The model answers `{border: {...}, note: "..."}` — the shape the border rule in
+    // `buildMessages` ASKS FOR, since `note` is described unconditionally in the system message.
+    // `validatePatch` refused it with `capability_disabled@note`, so the ONE answer the product's
+    // own prompt produces under a legal switch combination was unwrappable: the border never
+    // reached the user, and the refusal named a capability (`Arrange layout`) whose key the model
+    // had not sent.
+    //
+    // The gate is about the keys a CAPABILITY owns. `note` is not owned by either: it is the
+    // one-sentence reply the message demands in every capability state, and it is what
+    // `summarizePatch` reports. It stays accepted with arrange OFF — and, symmetrically, with
+    // BORDER off, which is why the round trip below is asserted on both.
+    const noteWithBorder = aiLayout.validatePatch(
+      { border: { svg: BORDER_SVG }, note: "A runic band around the traits." },
+      LIVE_IDS,
+      { ...OPT, capabilities: { arrange: false, border: true } },
+    );
+    assert.strictEqual(
+      noteWithBorder.ok,
+      true,
+      "a border answer carrying the note the system message demands must validate: " +
+        JSON.stringify(codes(noteWithBorder)),
+    );
+
+    const noteWithArrangement = aiLayout.validatePatch(
+      {
+        moves: { "section-ability": { left: 0, top: 0, width: 320, zIndex: 210, minimized: false } },
+        note: "Combat on the left.",
+      },
+      LIVE_IDS,
+      { ...OPT, capabilities: { arrange: true, border: false } },
+    );
+    assert.strictEqual(
+      noteWithArrangement.ok,
+      true,
+      "the same must hold with the OTHER capability off: " + JSON.stringify(codes(noteWithArrangement)),
+    );
+
+    // The gate itself is NOT weakened: the keys the switch actually owns are still refused, one
+    // code each, in the same verdict that now accepts the note.
+    const both = aiLayout.validatePatch(
+      { moves: { "section-ability": { left: 0, top: 0, width: 320, zIndex: 210, minimized: false } }, note: "hi" },
+      LIVE_IDS,
+      { ...OPT, capabilities: { arrange: false, border: true } },
+    );
+    assert.strictEqual(both.ok, false);
+    assert.deepStrictEqual(codes(both), ["capability_disabled"]);
+    assert.ok(
+      both.errors.every((e) => e.path === "moves"),
+      "only the arrange-owned key may be flagged, got " + JSON.stringify(both.errors.map((e) => e.path)),
+    );
+  });
+
   it("keeps a well-formed border but refuses an ill-shaped one, with its own code", function () {
     // The envelope is only half of AC-2: `border` is `{svg, note?}` and nothing else, and `svg` is
     // a NON-EMPTY string. A shape failure must not wear `capability_disabled` (the switch is ON)

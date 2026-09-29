@@ -22,6 +22,8 @@
     "test:e2e:byokpersist": "mocha test/browser_e2e/byok_settings_persistence.spec.js --timeout 900000",
     "test:e2e:byokrelay": "mocha test/browser_e2e/byok_relay.spec.js --timeout 900000",
     "test:e2e:byokarrange": "mocha test/browser_e2e/byok_arrange_roundtrip.spec.js --timeout 900000",
+    "test:e2e:byokborder": "mocha test/browser_e2e/byok_border_roundtrip.spec.js --timeout 900000",
+    "test:e2e:byokgallery": "mocha test/browser_e2e/byok_border_gallery.spec.js --timeout 900000",
     "test:e2e:autoscroll": "mocha test/browser_e2e/sheet_autoscroll.spec.js --timeout 900000",
     "test:e2e:deletes": "mocha test/browser_e2e/layer_delete_constraints.spec.js --timeout 900000",
     "test:e2e:upload": "mocha test/browser_e2e/custom_shapes_upload.spec.js --timeout 900000",

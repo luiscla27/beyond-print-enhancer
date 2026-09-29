@@ -1,0 +1,89 @@
+{
+  "_comment": [
+    "The border-design corpus for track byok_svg_borders_20260927 Phase 4 (gallery + prompt polish).",
+    "Each entry is a USER INSTRUCTION, in the shape a person would actually type into the BYOK box.",
+    "`scripts/border_design_generator.js` pairs it with the PRODUCT's own system message",
+    "(`AiLayout.buildMessages`, capabilities {arrange:false, border:true}) and sends the pair to the",
+    "live NOUS leg, so what is under test is the product prompt PLUS this instruction — polishing the",
+    "one and not the other would polish a prompt the extension never sends.",
+    "",
+    "`criterion` is the visual gate's per-design line. It is written to be DECIDABLE IN PIXELS: a",
+    "reviewer that cannot see it in the frame must answer NOT MET, so a criterion that names a",
+    "feeling rather than a drawn thing is a defect in this file.",
+    "`id` is stable and is what the collage label and the verdict file key on."
+  ],
+  "designs": [
+    {
+      "id": "01-gilded-frame",
+      "title": "Gilded double frame",
+      "instruction": "Draw a restrained double gold rule frame with a small diamond at each corner. Thin lines, nothing ornate.",
+      "criterion": "Two concentric rectangular rules in a gold tone are both closed around the full rectangle, a diamond mark sits at each of the four corners, and no rule crosses the interior."
+    },
+    {
+      "id": "02-runic-band",
+      "title": "Runic tick band",
+      "instruction": "Draw a narrow band of repeated angular rune ticks running along the top and bottom edges, with a plain rule on the left and right.",
+      "criterion": "A repeating sequence of at least six separate angular rune glyphs is visible along the top edge AND along the bottom edge, spaced evenly, with plain vertical rules on the left and right."
+    },
+    {
+      "id": "03-thornvine",
+      "title": "Thorn vine",
+      "instruction": "Draw a thorny vine that weaves around all four edges with small leaves and thorns.",
+      "criterion": "A single continuous sinuous vine path is traceable along all four edges, with thorns or leaves projecting from it on at least three of the four edges."
+    },
+    {
+      "id": "04-dragon-scale",
+      "title": "Dragon scale rail",
+      "instruction": "Draw a rail of overlapping dragon scales around the border, scutes pointing outward.",
+      "criterion": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour, and the rows read as the same texture on the left/right as on the top/bottom."
+    },
+    {
+      "id": "05-celestial-arcs",
+      "title": "Celestial arcs",
+      "instruction": "Draw a celestial border: a thin arc along the top and bottom with small four-point stars between the arcs.",
+      "criterion": "A distinct arc curve is drawn along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them."
+    },
+    {
+      "id": "06-chainmail",
+      "title": "Chainmail interlace",
+      "instruction": "Draw an interlocking chainmail ring border, rings overlapping so the weave is obvious.",
+      "criterion": "At least eight separate ring shapes are visible around the border, drawn so consecutive rings visibly overlap and interlock rather than sitting apart as dots."
+    },
+    {
+      "id": "07-corner-arcs",
+      "title": "Concentric corner arcs",
+      "instruction": "Draw concentric quarter-circle arcs tucked into each corner, growing outward, with straight rules joining them along the edges.",
+      "criterion": "Each of the four corners shows at least three nested quarter-circle arcs, the nesting direction is consistent at all four corners, and straight rules connect the corner groups along each edge."
+    },
+    {
+      "id": "08-flame-crest",
+      "title": "Flame crest rails",
+      "instruction": "Draw flames licking upward along the left and right edges, with a plain rule across the top and bottom.",
+      "criterion": "Flame tongues with a visible tapered tip are drawn along the left edge AND the right edge, they point the same direction on both sides, and the top and bottom carry only a plain straight rule."
+    },
+    {
+      "id": "09-frost-shards",
+      "title": "Frost shard frame",
+      "instruction": "Draw angular ice shards around the border, with a crystalline burst at each corner.",
+      "criterion": "Sharp angular shard shapes are drawn along the edges, every shard is visibly faceted by at least two straight segments, and each of the four corners carries a denser multi-arm crystalline cluster than the edge run."
+    },
+    {
+      "id": "10-ink-brush",
+      "title": "Ink brush stroke",
+      "instruction": "Draw a calligraphic ink brush frame: a wet uneven stroke around the border with visible thick-to-thin variation and a small ink dot near one corner.",
+      "criterion": "The border is drawn as a stroke whose thickness varies visibly along its length (not a constant-width rule), the stroke reads as continuous around the frame, and at least one small detached ink dot is visible near a corner."
+    },
+    {
+      "id": "11-starlit-void",
+      "title": "Starlit void band",
+      "instruction": "Draw a dark solid band around the border with scattered small stars inside the band and a thin silver inner rule.",
+      "criterion": "A dark filled band is drawn around the border, at least ten small star marks are scattered inside that dark band, and a thin lighter rule runs along the band's interior edge."
+    },
+    {
+      "id": "12-knotwork",
+      "title": "Celtic knotwork rails",
+      "instruction": "Draw celtic knotwork along the top and bottom rails, with interwoven strands crossing over and under.",
+      "criterion": "On the top rail and on the bottom rail an interlaced strand pattern is visible, at least one crossing is drawn with an over/under break rather than a plain intersection, and the left and right edges carry a simpler treatment."
+    }
+  ]
+}

@@ -427,8 +427,18 @@ function validatePatch(patch, liveSectionIds, options) {
     }
     // A key that EXISTS in the schema but whose capability is switched off. Reported once per
     // key, with the code the spec names, and with the switch spelled out so the user can act.
-    const owner = key === PATCH_KEYS.border ? "border" : "arrange";
-    if ((owner === "border" && !borderOn) || (owner === "arrange" && !arrangeOn)) {
+    //
+    // `note` IS NOT OWNED BY A CAPABILITY — MEASURED 2026-09-30 (this track, Phase 4). The first
+    // version read `owner = key === border ? "border" : "arrange"`, which swept the top-level
+    // `note` into the arrange half and REFUSED the exact answer the product's own prompt asks for
+    // when the dialog has Arrange layout off and Border design on: `buildMessages` describes
+    // `note` unconditionally ("one short sentence to the user about what you did"), so the model
+    // reliably sends it, and the patch was then unwrappable for a capability it had not touched.
+    // `note` is prose ABOUT the patch, not a modification; it is also what `summarizePatch`
+    // reports. Only the three carriers that change something are owned.
+    const owner =
+      key === PATCH_KEYS.border ? "border" : key === PATCH_KEYS.note ? null : "arrange";
+    if (owner && ((owner === "border" && !borderOn) || (owner === "arrange" && !arrangeOn))) {
       errors.push(
         finding(
           "capability_disabled",
