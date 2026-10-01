@@ -187,6 +187,9 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
   });
 
   after(async function () {
+    // Leave the page in screen media — the roundtrip spec and any later step in this context
+    // must not inherit the gallery's print-media emulation.
+    if (page) await page.emulateMedia({ media: null }).catch(() => {});
     if (ctx) await ctx.close().catch(() => {});
   });
 
@@ -307,7 +310,22 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
       // whole). The route that fits is to GROW the viewport until the clip fits, then re-scroll and
       // re-measure: MEASURED, a 1440x1970 viewport returns the full 704x1968 clip with both end
       // rules present at image y=1 and y=1918.
-      const PAD = 24;
+      // RING-INCLUSIVE CAMERA, MEASURED AND FIXED (2026-10-01, loop-2 of the 6-loop consultation).
+      // The band the product paints spans `[edge-16, edge+12]` around the section rect
+      // (`--border-img-width: 28px` + `--border-image-outset: 16px`,
+      // js/print_styles.js:1174-1178 / BORDER_IMAGE_KNOBS). MEASURED in real Chromium with the
+      // shipped stylesheet (temp/scratch/psc_probeK_geometry.js + psc_probeL_calibrate.js):
+      // 35.5%-99.9% of each corpus design's edge pigment lies OUTSIDE the section rect, and
+      // `scrollIntoView({block:"start"})` parks the section's top at viewport y=0 (round-20
+      // manifest: frameRect.y = 0), where `Math.max(0, ...)` CLAMPED the clip to row 0 — so the
+      // top outset was never photographed and every strip crop deleted the rest. The reviewer's
+      // recurring "not resolvable at this downsample" was describing this camera, not the art.
+      // The fix has two halves: (1) HEADROOM — scroll UP by PAD after the scroll-into-view so the
+      // section's top lands PAD px below the viewport top and the clamp can never fire;
+      // (2) an ASSERTION that the clip carries the full band (`OUTSET_PX` of the outer side) on
+      // all four edges, which fails loudly instead of shipping another cropped ring to a gate.
+      const OUTSET_PX = 16;
+      const PAD = 24; // >= OUTSET_PX + 8: the clip must carry the whole painted band on every edge
       const measureClip = async (id) => {
         const r = await page.evaluate((sid) => {
           const el = document.getElementById(sid);
@@ -326,12 +344,30 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
           },
         };
       };
+      // CAPTURE THE PRINT PIPELINE — AC-V1's own words ("capture the print pipeline"). MEASURED
+      // (temp/scratch/psc_probeW_print.js, solid black ring through the real choke point):
+      // in SCREEN media the bottom band's outer 16px reads 0.0000 because the product's own
+      // layer `#print-enhance-sections-layer` (position:fixed, overflow:hidden auto in screen)
+      // has its clip-box bottom exactly at the target section's bottom edge (the Inventory
+      // section is the LAST section in the layer: content bottom 5408 == layer scrollHeight
+      // 5408) — the band below the section is clipped away before any pixel exists. Under
+      // PRINT media the product's own rule `html body #print-enhance-sections-layer { overflow:
+      // visible !important; }` unclips it and the same ring measures bottomOuter = 1.0000 (all
+      // four outer bands full; the inner half sits under the section's 85%-alpha background in
+      // print for BOTH carriers — A vs B = 0 differing px in print too,
+      // temp/scratch/psc_probeX_print_identity.js). The reviewer must judge the pipeline the
+      // criterion names, so the gallery captures print media; the camera math is unchanged.
+      await page.emulateMedia({ media: "print" });
       let measured = null;
       for (let attempt = 0; attempt < 4; attempt++) {
         await page.evaluate((id) => {
           const el = document.getElementById(id);
           if (el) el.scrollIntoView({ block: "start", behavior: "instant" });
         }, sectionId);
+        // Headroom above the section: scrollIntoView parks its top at the viewport top (y=0),
+        // and PAD of clip above a y=0 rect is clamped away. This scroll-up is what makes the
+        // band's outer 16px photographable at all.
+        await page.evaluate((pad) => window.scrollBy(0, -pad), PAD);
         await page.waitForTimeout(200);
         measured = await measureClip(sectionId);
         if (!measured) throw new Error("the chosen section " + sectionId + " is not in the document");
@@ -350,6 +386,22 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
         rectAtCapture.y >= clip.y && rectAtCapture.y + rectAtCapture.h <= clip.y + clip.height,
         "the capture clip " + JSON.stringify(clip) + " does not contain the section's full height " +
           JSON.stringify(rectAtCapture) + " — the reviewer would judge a cropped border",
+      );
+      // AND the clip must carry the border band's OUTER OUTSET on all four edges — containment
+      // alone is what let round 20 ship frames with frameRect.y = 0 (top band outside the image).
+      const bandMargins = {
+        top: rectAtCapture.y - clip.y,
+        bottom: clip.y + clip.height - (rectAtCapture.y + rectAtCapture.h),
+        left: rectAtCapture.x - clip.x,
+        right: clip.x + clip.width - (rectAtCapture.x + rectAtCapture.w),
+      };
+      assert.ok(
+        bandMargins.top >= OUTSET_PX && bandMargins.bottom >= OUTSET_PX &&
+          bandMargins.left >= OUTSET_PX && bandMargins.right >= OUTSET_PX,
+        "the capture clip " + JSON.stringify(clip) + " does not carry the border band's outer " +
+          OUTSET_PX + "px (border-image outset) around the section " + JSON.stringify(rectAtCapture) +
+          " — margins " + JSON.stringify(bandMargins) + "; the reviewer would judge a ring whose" +
+          " outer half was cropped away",
       );
       // Where the section sits INSIDE the clip, for this capture's own page state. Recorded on
       // every frame (a per-design scroll can move the page) and used by the pixel metric.
@@ -415,6 +467,10 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
         corpusDir: path.relative(ROOT, path.join(ROOT, "test", "fixtures")).split(path.sep).join("/"),
         generatedAt: new Date().toISOString(),
         provenance: cap.provenance(page, "byok_border_gallery.spec.js"),
+        // The media the frames were captured under — load-bearing, not decorative: in screen
+        // media the layer's clip eats the bottom band (probe W: 0.0000), in print it paints
+        // (1.0000). A reader comparing rounds MUST see which pipeline produced the pixels.
+        media: "print",
         target: pick.pick,
         clip,
         // WHERE THE SECTION IS INSIDE THE CLIP, for the page state the last frame was taken in.
