@@ -31,6 +31,8 @@ The Extension can generate a static SVG border for a single section you select, 
 
 The generated SVG is validated and sanitized by a single render choke point: every path that puts a border SVG in the DOM (fresh apply, persistence rehydrate, template import, library reuse, section clone, undo restore, preview, print) goes through the same sanitizer, and the sanitizer renders nothing when the SVG is rejected (scripts, foreign objects, external references, animation, etc.).
 
+An accepted border is painted by the **same** `border-image` pipeline the Extension already uses for its built-in borders: the sanitized SVG is turned into a CSS image (a `data:image/svg+xml` value) carried on the section, and the browser's own `border-image` engine draws it in the same behind-the-content slot your built-in borders use, under the same decoration filter. Nothing from the model is ever inserted as markup — the SVG is treated strictly as an image, so no script, animation, or external reference in it can execute, and the only insertion site permitted to build that CSS image value is the choke point itself (enforced by a blocking build-time guard).
+
 The accepted SVG is stored **on-device** in your browser's extension storage (`chrome.storage.local`) as a per-section `borderSvg` field, included in your regular layout save and template exports. You can also save a generated border to a local reusable library (also stored in `chrome.storage.local`). Neither the SVG nor the library data ever leaves your machine unless you yourself export or share a layout file.
 
 ## 3. Third-Party Services

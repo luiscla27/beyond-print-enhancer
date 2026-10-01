@@ -302,7 +302,10 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
     sanitized and rendered through a single choke point, and the accepted border is stored on-device
     as a per-section `borderSvg` field in your regular layout save. You can also save a generated
     border into a local reusable library (both stored in `chrome.storage.local`). The SVG never
-    leaves your device unless you yourself export or share a layout file.
+    leaves your device unless you yourself export or share a layout file. A generated border is
+    painted by the **same** `border-image` pipeline your built-in borders use — the source image and
+    its own slice are the only things that differ — so it prints through the same code path, with
+    the same decoration filter and the same position in your printout.
 
 ### The tool's own chrome (since 1.8.0, ornamented in 1.11.0)
 

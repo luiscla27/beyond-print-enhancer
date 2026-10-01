@@ -247,6 +247,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Privacy copy.** `PRIVACY_POLICY.md` now documents the new on-device border storage and the border-design prompt in §2 and in the `storage` permission description.
 
 ### Changed
+- **The AI border paints through the SAME `border-image` pipeline as the built-in borders.** A
+  generated border is now carried as four inline custom properties on the section (`--border-img`
+  plus `--border-img-slice` / `-width` / `-outset`) consumed by the existing
+  `.print-section-container:not(.be-no-border)::before` slot — the very rule set the built-in
+  raster border classes paint through — instead of a separate overlay node carrying its own copy of
+  the border math. That removes a second implementation of `border-image` from the product, and with
+  it a real divergence: the retired overlay declared no decoration filter, so on the default
+  greyscale output the built-in borders printed grey while an AI border printed full colour. The
+  four values are now the only thing the AI border adds, and with the same source and the same
+  values the two are pixel-identical (measured: 0 differing pixels in a 5,184,000-pixel frame), so
+  the only difference that remains is the source image. The slice — the one knob that is a property
+  of the source rather than of the pipeline — is why every built-in border class already carries its
+  own (33 / 25 / 177 / 146 / 250) and the generated family carries `24%`.
 - **Version bump 2.1.1 → 2.2.0** (manifest.json + package.json).
 
 ## [2.1.1] - 2026-09-22
