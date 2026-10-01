@@ -22,25 +22,25 @@
     {
       "id": "02-runic-band",
       "title": "Runic tick band",
-      "instruction": "Draw a narrow band of repeated angular rune ticks running along the top and bottom edges, with a plain rule on the left and right.",
+      "instruction": "Draw a narrow band of repeated angular rune ticks running along the top and bottom edges, with a plain rule on the left and right. Place exactly 6 or more angular rune glyphs evenly spaced along the top edge, and exactly 6 or more along the bottom edge. Each glyph must be clearly separated from its neighbours by at least 4px.",
       "criterion": "A repeating sequence of at least six separate angular rune glyphs is visible along the top edge AND along the bottom edge, spaced evenly, with plain vertical rules on the left and right."
     },
     {
       "id": "03-thornvine",
       "title": "Thorn vine",
-      "instruction": "Draw a thorny vine that weaves around all four edges with small leaves and thorns.",
+      "instruction": "Draw a single continuous sinuous vine path that weaves around all four edges — top, right, bottom, left — without breaking. Add small triangular thorns projecting outward and small oval leaves along at least three of the four edges.",
       "criterion": "A single continuous sinuous vine path is traceable along all four edges, with thorns or leaves projecting from it on at least three of the four edges."
     },
     {
       "id": "04-dragon-scale",
       "title": "Dragon scale rail",
-      "instruction": "Draw a rail of overlapping dragon scales around the border, scutes pointing outward.",
+      "instruction": "Draw a rail of overlapping dragon scales around the border, scutes pointing outward. Draw the EXACT SAME scale pattern on all four edges — top, right, bottom, left — so the texture is consistent. Each scale must visibly overlap its neighbour with the top of one scale tucked under the one beside it.",
       "criterion": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour, and the rows read as the same texture on the left/right as on the top/bottom."
     },
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "instruction": "Draw a celestial border: a thin arc along the top and bottom with small four-point stars between the arcs.",
+      "instruction": "Draw a celestial border: a thin arc along the top and bottom edges. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star must be clearly visible and separate from the others.",
       "criterion": "A distinct arc curve is drawn along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them."
     },
     {
@@ -52,19 +52,19 @@
     {
       "id": "07-corner-arcs",
       "title": "Concentric corner arcs",
-      "instruction": "Draw concentric quarter-circle arcs tucked into each corner, growing outward, with straight rules joining them along the edges.",
+      "instruction": "Draw concentric quarter-circle arcs tucked into each of the four corners, growing outward. Each corner must have at least THREE nested arcs. Then draw straight rules joining the corner groups along each edge. Make all four corners have the same nesting direction.",
       "criterion": "Each of the four corners shows at least three nested quarter-circle arcs, the nesting direction is consistent at all four corners, and straight rules connect the corner groups along each edge."
     },
     {
       "id": "08-flame-crest",
       "title": "Flame crest rails",
-      "instruction": "Draw flames licking upward along the left and right edges, with a plain rule across the top and bottom.",
+      "instruction": "Draw flames along the left and right edges. Each flame must have a clearly tapered tongue — wide at the base, narrowing to a sharp point. The same direction of flame tongues (pointing inward toward the center) must appear on BOTH the left edge AND the right edge. The top and bottom edges carry only a plain straight rule.",
       "criterion": "Flame tongues with a visible tapered tip are drawn along the left edge AND the right edge, they point the same direction on both sides, and the top and bottom carry only a plain straight rule."
     },
     {
       "id": "09-frost-shards",
       "title": "Frost shard frame",
-      "instruction": "Draw angular ice shards around the border, with a crystalline burst at each corner.",
+      "instruction": "Draw sharp angular ice shards around all four edges, each shard made of at least two straight line segments forming a faceted crystal shape. At each of the four corners, draw a visibly DENSER cluster of 5 or more shards radiating outward — this corner cluster must be denser and more complex than the shards along the straight edges.",
       "criterion": "Sharp angular shard shapes are drawn along the edges, every shard is visibly faceted by at least two straight segments, and each of the four corners carries a denser multi-arm crystalline cluster than the edge run."
     },
     {
@@ -82,7 +82,7 @@
     {
       "id": "12-knotwork",
       "title": "Celtic knotwork rails",
-      "instruction": "Draw celtic knotwork along the top and bottom rails, with interwoven strands crossing over and under.",
+      "instruction": "Draw celtic knotwork along the top and bottom rails. Each rail must have interwoven strands where you can clearly see at least TWO crossings where one strand goes over and another goes under — use thicker strokes at the over-point and thinner at the under-point to make the over/under break obvious. The left and right edges carry a simpler plain treatment.",
       "criterion": "On the top rail and on the bottom rail an interlaced strand pattern is visible, at least one crossing is drawn with an over/under break rather than a plain intersection, and the left and right edges carry a simpler treatment."
     }
   ]

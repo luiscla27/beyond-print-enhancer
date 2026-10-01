@@ -153,31 +153,42 @@ describe("AC-7 — borderSvg persistence + custom_borders library (Phase 2)", fu
       assert.ok(exported.sections["section-main"].borderSvg.includes("<svg"));
     });
 
-    it("applyLayout rehydrates the field into the DOM (path B)", async function () {
+    it("applyLayout rehydrates borderSvg through the choke point (path B)", async function () {
       await w.applyLayout({
         version: "1.6.0",
         sections: { "section-main": { left: "40px", borderSvg: CLEAN_SVG } },
       });
       const section = w.document.getElementById("section-main");
-      const overlay = section.querySelector(".be-border-svg-overlay");
-      assert.ok(overlay, "a stored borderSvg must rehydrate an overlay node");
-      assert.strictEqual(overlay.querySelectorAll("svg").length, 1);
+      // Under D4 the border paints the ::before slot via four inline custom properties
+      // on the section — there is no overlay node to query. The choke point is the
+      // rehydrate writer, so a stored borderSvg MUST produce a paint.
+      const painted = section && section.style.getPropertyValue("--border-img").trim();
+      assert.ok(painted, "a stored borderSvg must paint through the choke point on rehydrate");
+      assert.ok(painted.startsWith('url("data:image/svg+xml'), `painted URI is wrong: ${painted}`);
+      // …and the record carrier survives the round trip.
+      assert.strictEqual(
+        section.dataset.borderRawSvg,
+        CLEAN_SVG,
+        "the raw model SVG must be the carrier read back by scanLayout",
+      );
     });
 
-    it("a section record with NO borderSvg clears any overlay (no stale residue)", async function () {
+    it("a section record with NO borderSvg clears any paint (no stale residue)", async function () {
       const section = w.document.getElementById("section-main");
       w.AiBorder.renderBorderSvg(section, CLEAN_SVG);
-      assert.ok(section.querySelector(".be-border-svg-overlay"));
+      assert.ok(section.style.getPropertyValue("--border-img").trim(), "precondition: a border painted");
 
       await w.applyLayout({
         version: "1.6.0",
         sections: { "section-main": { left: "40px" } },
       });
+      const s2 = w.document.getElementById("section-main");
       assert.strictEqual(
-        w.document.getElementById("section-main").querySelector(".be-border-svg-overlay"),
-        null,
+        s2.style.getPropertyValue("--border-img").trim(),
+        "",
         "a record without borderSvg means 'no border', not 'keep whatever was there'",
       );
+      assert.strictEqual(s2.dataset.borderRawSvg, undefined, "the carrier must be cleared too");
     });
   });
 

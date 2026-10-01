@@ -5,41 +5,35 @@
  *
  * WHY A BUILD GUARD AND NOT A NOTE
  * -------------------------------
- * AC-9 says the invariant is "no SVG string is ever rendered without passing the
- * sanitizer, on EVERY path that can put SVG bytes in the DOM". `js/ai_border.js`'s
- * `renderBorderSvg` is the ONE choke point that satisfies it, and a unit test can only
- * prove that the paths THAT EXIST TODAY go through it. The failure mode this guard
- * exists for is the one a test cannot see: a FUTURE edit that reaches the DOM directly
- * (a stray `innerHTML`, a `data:` background, a second overlay builder). That is a
- * static property of the source tree, so it is checked statically, and the check is
- * BLOCKING: it runs inside `npm run lint`, which `pretest` runs, so a bypass fails the
- * build rather than emitting an advisory nobody reads.
+ * AC-9's claim is about the BUILD: "a bypass fails the build/lint, never an advisory
+ * note". A static property of the source tree, checked statically, blocking.
  *
- * THE RULES (each names what it prevents)
- * ---------------------------------------
+ * THE RULES (operator decision D4, 2026-10-01 — the AI border rides the product's own
+ * `border-image` slot, so the rules moved with it)
+ * ---------------------------------------------------------------------------
  *  R1 — the choke point must EXIST. `js/ai_border.js` must declare `renderBorderSvg`
- *       and must call the trust root (`validateSvg`/`sanitizeSvg`, AC-1) itself. A
- *       missing helper is a hard failure, not a vacuous pass: without R1 every other
- *       rule would be satisfied trivially by there being nothing to check.
- *  R2 — the choke point must sanitize BEFORE it injects: inside `js/ai_border.js` the
- *       assignment that writes markup must derive from the validator's own `sanitized`
- *       output. This is the `inject-if-caller-says-clean` falsifier (AC-9b(i) at the
- *       source level).
+ *       and must call the trust root (`sanitizeSvg`, AC-1) itself.
+ *  R2 — sanitize-then-paint: the choke point must (a) NEVER use a markup-injection
+ *       primitive at all (the border SVG never becomes DOM markup — it becomes a CSS
+ *       image), and (b) write the `--border-img` custom property on a line that
+ *       mentions the sanitizer's output. The inject-if-caller-says-clean falsifier
+ *       (AC-9b(i)) is now expressed as: no markup primitive, ever, in the choke point.
  *  R3 — no OTHER product file may use a markup-injection primitive on an SVG-sourced
  *       expression: `innerHTML` / `outerHTML` / `insertAdjacentHTML` / `document.write`
  *       whose right-hand side mentions a border-SVG source name.
- *  R4 — no product file may feed a `data:` or `url(` value into a CSS image property
- *       (`backgroundImage`, `borderImageSource`, `setProperty("background-image"…)`…)
- *       from a border-SVG source, outside the choke point.
- *  R5 — the overlay node's own class literal (`be-border-svg-overlay`) may appear in
- *       exactly two files: the choke point that CREATES it and `js/print_styles.js`
- *       whose CSS sizes and prints it. A third file means a second injection site.
+ *  R4 — no OTHER product file may feed a `data:`/`url(` value into a CSS image sink
+ *       from a border-SVG source. The choke point is the ONE sanctioned site (D4's
+ *       amended AC-9 clause); everywhere else a border-SVG source must never become a
+ *       CSS image value.
+ *  R5 — the RETIRED overlay literal `be-border-svg-overlay` must appear in ZERO product
+ *       files. It was allowed in exactly two under the pre-D4 implementation; D4
+ *       deleted the overlay node, so any reappearance is a second renderer being
+ *       rebuilt and fails the build.
  *
  * HOSTILE INPUT
  * -------------
  * The scan is over SOURCE TEXT, and this file's own docstring quotes the banned
- * patterns, so comments are stripped before matching (otherwise the guard fails on its
- * own explanatory prose — the `js/ai_arrange.test.js` `codeOf()` lesson).
+ * patterns, so comments and template literals are stripped before matching.
  *
  * USAGE
  *   node scripts/check_border_svg_injection.js            # exit 0 clean, 1 violations
@@ -56,12 +50,11 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 const CHOKE_POINT = "js/ai_border.js";
-const PRINT_STYLES = "js/print_styles.js";
-const OVERLAY_CLASS = "be-border-svg-overlay";
 const RENDER_FN = "renderBorderSvg";
+const CSS_CUSTOM_PROP = "--border-img";
 
-/** Files allowed to mention `OVERLAY_CLASS`: the creator and the CSS consumer. */
-const OVERLAY_ALLOWED = [CHOKE_POINT, PRINT_STYLES];
+/** The overlay node's class — RETIRED by D4. R5 fails the build on any reappearance. */
+const OVERLAY_CLASS = "be-border-svg-overlay";
 
 /**
  * Names that mean "a border SVG string is flowing here".
@@ -70,8 +63,8 @@ const OVERLAY_ALLOWED = [CHOKE_POINT, PRINT_STYLES];
  * is a false alarm (`window.Icons.svg` is an icon lookup, not a border payload —
  * MEASURED, it tripped the first draft of this file on two unrelated modules), so the
  * set is the border-specific spellings plus the library record's `svg` field. The
- * STRUCTURAL rules below (R5's overlay-node literal, R2's sanitize-then-inject) are what
- * carry the weight; this rule is the cheap tripwire for the obvious bypass.
+ * STRUCTURAL rules below (R2's sanitize-then-paint, R5's retired literal) carry the
+ * weight; this rule is the cheap tripwire for the obvious bypass.
  */
 const SVG_SOURCE =
   /\bborderSvg\b|\brawSvg\b|\bsanitizedSvg\b|\bborderSvgString\b|\bborder_svg\b|\brecord\.svg\b|\bborder\.svg\b/;
@@ -80,9 +73,14 @@ const SVG_SOURCE =
 const MARKUP_PRIMITIVE =
   /\.(innerHTML|outerHTML)\s*=[^=]|\.insertAdjacentHTML\s*\(|document\.write(?:ln)?\s*\(/;
 
-/** CSS image sinks that accept a `data:`/`url(` payload. */
+/**
+ * CSS image sinks that accept a `data:`/`url(` payload, plus the `--border-img`
+ * custom-property write D4 introduced. The custom property is named explicitly so a
+ * second writer of the AI border's source fails R4 rather than sliding through a
+ * pattern that only knew `backgroundImage`/`borderImageSource`.
+ */
 const CSS_IMAGE_SINK =
-  /(backgroundImage|borderImageSource|listStyleImage|maskImage|WebkitMaskImage|src)\s*=|setProperty\s*\(\s*["'](?:background|border-image|list-style|mask)/;
+  /(backgroundImage|borderImageSource|listStyleImage|maskImage|WebkitMaskImage|src)\s*=|setProperty\s*\(\s*["'](?:background|border-image|list-style|mask|--border-img)/;
 
 /** A literal that carries bytes rather than a reference. */
 const BLOB_LITERAL = /data:[a-z]+\/|url\(/i;
@@ -134,7 +132,7 @@ function checkSources(sources) {
   const bare = {};
   for (const [rel, src] of Object.entries(sources)) bare[rel] = stripComments(src);
 
-  // ---- R1 + R2: the choke point exists and sanitizes before it injects -------------
+  // ---- R1 + R2: the choke point exists and paints from the sanitizer's output ----
   const choke = bare[CHOKE_POINT];
   if (choke === undefined) {
     findings.push({
@@ -165,27 +163,58 @@ function checkSources(sources) {
           `The choke point must sanitize INTERNALLY.`,
       });
     }
-    // The injection must read the validator's own output, not a caller-supplied string.
-    const injectIdx = choke.search(MARKUP_PRIMITIVE);
-    if (injectIdx !== -1) {
-      const line = at(choke, injectIdx);
-      const lineText = choke.split("\n")[line - 1] || "";
+    // R2(a): the choke point must NEVER inject markup — D4 moved the border off the DOM
+    // and into a CSS image, so any markup primitive in the choke point is a bypass.
+    const markupIdx = choke.search(MARKUP_PRIMITIVE);
+    if (markupIdx !== -1) {
+      findings.push({
+        rule: "R2",
+        file: CHOKE_POINT,
+        line: at(choke, markupIdx),
+        message:
+          `${CHOKE_POINT} uses a markup-injection primitive. Under D4 the border SVG never ` +
+          `becomes DOM markup — it becomes a CSS image (a \`data:\` URI in ` +
+          `\`${CSS_CUSTOM_PROP}\`); an \`innerHTML\` here is a second render surface.`,
+      });
+    }
+    // R2(b): the custom-property PAINT must derive from the sanitizer's output.
+    // Scoped to the actual assignment (`setProperty`/`borderImageSource`), not any
+    // mention of the property name — the property also appears in a frozen array
+    // literal and in prose, neither of which paints anything.
+    const paintRe = new RegExp(
+      `(setProperty\\s*\\(\\s*["']${CSS_CUSTOM_PROP}["']|\\b${CSS_CUSTOM_PROP}\\b\\s*[:=])`,
+    );
+    const paintMatch = choke.match(paintRe);
+    if (!paintMatch) {
+      findings.push({
+        rule: "R2",
+        file: CHOKE_POINT,
+        line: 0,
+        message:
+          `${CHOKE_POINT} never paints \`${CSS_CUSTOM_PROP}\` (no setProperty/assignment ` +
+          `found) — under D4 the choke point paints the border by writing that custom ` +
+          `property from the trust root's output.`,
+      });
+    } else {
+      const paintLine = at(choke, paintMatch.index);
+      const lineText = choke.split("\n")[paintLine - 1] || "";
       if (!/sanitiz/i.test(lineText)) {
         findings.push({
           rule: "R2",
           file: CHOKE_POINT,
-          line,
+          line: paintLine,
           message:
-            `${CHOKE_POINT}:${line} injects markup from a value that is not the sanitizer's ` +
-            `output (\`${lineText.trim()}\`). sanitize-then-inject; never inject-if-caller-says-clean.`,
+            `${CHOKE_POINT}:${paintLine} writes \`${CSS_CUSTOM_PROP}\` from a value that ` +
+            `is not the sanitizer's output (\`${lineText.trim()}\`). sanitize-then-paint; ` +
+            `never paint-what-the-caller-says-is-clean.`,
         });
       } else {
-        checked.push(`${CHOKE_POINT}:${line} (sanitize-then-inject)`);
+        checked.push(`${CHOKE_POINT}:${paintLine} (sanitize-then-paint)`);
       }
     }
   }
 
-  // ---- R3 + R4 + R5: no second injection site ------------------------------------
+  // ---- R3 + R4 + R5: no second render surface, no second writer -------------------
   for (const [rel, src] of Object.entries(bare)) {
     if (rel === CHOKE_POINT) continue;
 
@@ -207,20 +236,21 @@ function checkSources(sources) {
           line: 0,
           message:
             `${rel}: \`data:\`/\`url(\` fed into a CSS image sink from an SVG source — ` +
-            `\`${line.trim()}\`.`,
+            `\`${line.trim()}\`. Under D4 the choke point is the ONE sanctioned site for ` +
+            `that write; a second writer is a second render surface.`,
         });
       }
     }
 
-    if (src.includes(OVERLAY_CLASS) && !OVERLAY_ALLOWED.includes(rel)) {
+    if (src.includes(OVERLAY_CLASS)) {
       findings.push({
         rule: "R5",
         file: rel,
         line: 0,
         message:
-          `${rel} mentions the overlay node literal \`${OVERLAY_CLASS}\`; only ` +
-          `${CHOKE_POINT} (creates it) and ${PRINT_STYLES} (styles/prints it) may. ` +
-          `A third file is a second injection site.`,
+          `${rel} mentions the RETIRED overlay literal \`${OVERLAY_CLASS}\`. D4 deleted ` +
+          `the overlay node — the AI border rides the product's \`::before\` ` +
+          `\`border-image\` slot instead. Any reappearance is a second renderer.`,
       });
     }
     checked.push(`${rel} (no direct injection)`);

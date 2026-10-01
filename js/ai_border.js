@@ -21,15 +21,33 @@
  * because it cannot inject at all. `scripts/check_border_svg_injection.js` (BLOCKING,
  * wired into `npm run lint`) is what keeps that structural claim true after this commit.
  *
- * THE OVERLAY NODE
- * ----------------
- * `div.be-border-svg-overlay` inside the `.print-section-container`, absolutely
- * positioned to the section's rect with `z-index: -1` and `pointer-events: none`, so it
- * sits behind the content; `js/print_styles.js` owns its sizing/print CSS. That literal
- * appears in exactly these two files (the guard's R5 enforces it). The overlay is
- * APPENDED to the section — never written into `.print-section-content` — so the clone
- * path's `getSanitizedContent(content)` cannot copy it, and `borderSvg` travels as a
- * record FIELD instead (AC-7).
+ * THE BORDER RIDES THE PRODUCT'S OWN `border-image` SLOT (operator decision D4, 2026-10-01)
+ * ------------------------------------------------------------------------------------------
+ * There is NO overlay node. The AI border is painted by the SAME CSS the raster
+ * `assets/border_*.webp` borders use: the choke point sets four inline custom properties
+ * on the SECTION — `--border-img` (the source), `--border-img-slice`, `--border-img-width`,
+ * `--border-img-outset` — and the existing `.print-section-container::before` rule in
+ * `js/print_styles.js` paints them through the browser's own `border-image` engine. The
+ * only difference between an AI border and a webp border is the SOURCE IMAGE. That slot
+ * already carries the AC-8 geometry (`z-index:-1`, `pointer-events:none`, inset 0) and the
+ * decoration filter (`filter: var(--be-decoration-filter)`), so the AI border inherits
+ * print, `no-border` hiding and filter parity instead of re-deriving them.
+ *
+ * WHY THE SVG IS A `data:` URI HERE (AC-9's clause was amended, not ignored)
+ * --------------------------------------------------------------------------
+ * The original AC-9 banned `data:`/`url(` of a `borderSvg` string. The operator's D4
+ * amendment permits it at exactly ONE site — inside this choke point, built only from the
+ * trust root's own output via `encodeURIComponent` — and `scripts/check_border_svg_injection.js`
+ * R4 enforces that: any OTHER file feeding a border-SVG source into a CSS image sink fails
+ * the build. SVG-as-CSS-image is also the SAFER surface: Chromium loads it in secure static
+ * mode (no script execution, no external references, no foreignObject) even if a sanitizer
+ * bypass were ever found.
+ *
+ * MEASURED before the switch (temp/scratch/border_css_vs_composer_geom.js, 2026-10-01):
+ * the literal pipeline closed the perimeter on 10/12 frozen-corpus designs at 656x400,
+ * 656x1920 AND 1200x500, against 9/12 for the hand-rolled JS composer under the identical
+ * metric. The two open designs are corner-only art whose edge strips are empty — they fail
+ * under every mechanism and belong to the design-corpus loop, not the renderer.
  *
  * WHAT IS *NOT* HERE: no prompt construction, no provider call, no `chrome.*`, no
  * credential. The generation half is Phase 3 (`js/ai_arrange.js`); this file only
@@ -38,8 +56,56 @@
 
 "use strict";
 
-/** The overlay node's class. See the header: two files may name it, no more. */
-const BORDER_OVERLAY_CLASS = "be-border-svg-overlay";
+/**
+ * The four border-image knobs, fixed for this design family.
+ *
+ * MEASURED (temp/scratch/border_css_vs_composer_geom.js): slice 24% / width 28px /
+ * outset 16px closes 10/12 corpus designs at all three section geometries — against
+ * 9/12 for the JS composer under the identical strict metric, 6/12 for the webp's own
+ * unit slice (33 design units) and 3/12 for whole-design stretch. Width 28px and
+ * outset 16px are the product's DEFAULT border's own values (`:root` in
+ * `js/print_styles.js`), so the AI border's visual weight matches the raster default.
+ * Slice is a PERCENTAGE because it is a property of the SOURCE image: the webp classes
+ * each carry their own slice (33 default / 25 ability / 177 spikes / 146 barbarian /
+ * 250 goth1) for exactly that reason, and 24% is the swept optimum for this family.
+ */
+const BORDER_IMAGE_KNOBS = Object.freeze({
+  slice: "24%",
+  width: "28px",
+  outset: "16px",
+});
+
+/**
+ * The custom-property names the `::before` slot consumes. Four, not two: the AI border
+ * specifies ALL of them inline so a border CLASS on the same section (e.g. `spikes_border`
+ * with its 118px width) cannot leak its knobs into the AI border, and clearing removes
+ * all four so the class border returns byte-for-byte.
+ */
+const BORDER_IMAGE_PROPS = Object.freeze([
+  "--border-img",
+  "--border-img-slice",
+  "--border-img-width",
+  "--border-img-outset",
+]);
+
+/**
+ * Build the `border-image-source` value from the TRUST ROOT'S OWN OUTPUT.
+ *
+ * `encodeURIComponent` escapes the only character that could terminate the quoted `url()`
+ * string (`"` -> %22) and every whitespace/control byte; `(` `)` `!` `*` stay literal,
+ * which is legal inside a double-quoted CSS url(). This is the same encoding the shipped
+ * catalog placeholder uses (`js/catalog_service.js:172`), so the form is a product
+ * precedent, not a new invention.
+ *
+ * @param {string} sanitizedSvg — the AC-1 trust root's serialized output, NOT the raw input
+ * @returns {string} `url("data:image/svg+xml;utf8,…")`
+ */
+function borderImageValue(sanitizedSvg) {
+  // sanitize-then-paint: the only bytes in this expression are `sanitizedSvg`, the trust
+  // root's own output; `rawSvg` is never a member of it. The guard's R2 grep sees
+  // "sanitiz" on the setProperty line below and passes for the same reason.
+  return 'url("data:image/svg+xml;utf8,' + encodeURIComponent(sanitizedSvg) + '")';
+}
 
 /** Resolve the AC-1 trust root at CALL time. Returns the `validateSvg`/`sanitizeSvg`
  *  callable from `window.AiLayout` — the choke point calls it INTERNALLY and never trusts
@@ -67,21 +133,25 @@ function storage() {
 }
 
 /**
- * `renderBorderSvg(section, rawSvg)` — THE ONLY WRITER of a border overlay.
+ * `renderBorderSvg(section, rawSvg)` — THE ONLY WRITER of a border.
  *
  * Sanitizes INTERNALLY (the argument is always treated as untrusted), then and only
- * then touches the DOM. Fail-closed in every direction:
- *  - `rawSvg` falsy / not a string / rejected by the trust root → any existing overlay
- *    is REMOVED and nothing is written, so a rejected payload can never leave a stale
+ * then touches the section's inline custom properties. Fail-closed in every direction:
+ *  - `rawSvg` falsy / not a string / rejected by the trust root → the custom properties
+ *    are REMOVED and nothing is painted, so a rejected payload can never leave a stale
  *    border behind, nor a half-cleaned one;
  *  - a section that is not an element → refused without throwing.
+ *
+ * The four inline custom properties override any border CLASS on the same section (inline
+ * style beats every stylesheet rule), so the AI border takes precedence while present and
+ * clearing it restores whatever class border the section carries.
  *
  * @param {Element} section the `.print-section-container`
  * @param {unknown} rawSvg the RAW svg string from the model, a record, or the library
  * @returns {{ok: boolean, error: string|null, sanitized: string|null, reason: string|null}}
  */
 function renderBorderSvg(section, rawSvg) {
-  if (!section || typeof section.appendChild !== "function") {
+  if (!section || typeof section.style !== "object" || !section.dataset) {
     return { ok: false, error: null, reason: "no_section", sanitized: null };
   }
 
@@ -109,74 +179,58 @@ function renderBorderSvg(section, rawSvg) {
     };
   }
 
-  const overlay = ensureOverlay(section);
-  // sanitize-then-inject: the ONLY thing that reaches the DOM is `verdict.sanitized`,
-  // the trust root's own output. `rawSvg` is never a member of the expression below.
-  overlay.innerHTML = verdict.sanitized;
+  // sanitize-then-paint: the ONLY bytes that reach the CSS sink are the trust root's own
+  // output, URI-encoded by `borderImageValue`. `rawSvg` is never a member of the value.
+  //
+  // The record carrier moves with the paint site: `dataset.borderRawSvg` on the SECTION
+  // (not on an overlay node — there is none). The record therefore holds the MODEL's
+  // sanitized output, not any composition of it, and every reader (`readBorderSvg`) sees
+  // the same bytes on every path (A fresh apply, B rehydrate, D library, E clone,
+  // F undo, G ghost).
+  const sanitized = verdict.sanitized;
+  section.dataset.borderRawSvg = sanitized;
+  section.style.setProperty("--border-img", borderImageValue(sanitized));
+  section.style.setProperty("--border-img-slice", BORDER_IMAGE_KNOBS.slice);
+  section.style.setProperty("--border-img-width", BORDER_IMAGE_KNOBS.width);
+  section.style.setProperty("--border-img-outset", BORDER_IMAGE_KNOBS.outset);
 
-  // The record must hold what the DOM ACTUALLY holds, so the canonical form is read
-  // back out of the tree (browser parsing can normalise attribute spelling/casing).
-  // This is what makes scan/load/undo agree byte-for-byte instead of "agree in intent".
-  const canonical = readBorderSvg(section);
-  if (!canonical) {
-    // Parsed as clean but produced no element: fail closed rather than leave an empty box.
-    clearBorderSvg(section);
-    return { ok: false, error: "non_svg_root", reason: "empty", sanitized: null };
-  }
-  return { ok: true, error: null, reason: "rendered", sanitized: canonical };
-}
-
-/** The overlay for `section`, created (and positioned) on first use. */
-function ensureOverlay(section) {
-  let overlay = section.querySelector(":scope > ." + BORDER_OVERLAY_CLASS);
-  if (overlay) return overlay;
-  overlay = section.ownerDocument.createElement("div");
-  overlay.className = BORDER_OVERLAY_CLASS;
-  // The geometry contract of AC-8 lives HERE, not in a stylesheet only: an inline
-  // declaration survives the print pipeline's stylesheet regeneration, and it is what
-  // the DOM-level path cases assert against.
-  overlay.style.position = "absolute";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.right = "0";
-  overlay.style.bottom = "0";
-  overlay.style.pointerEvents = "none";
-  overlay.style.zIndex = "-1";
-  overlay.style.overflow = "visible";
-  section.appendChild(overlay);
-  return overlay;
+  return { ok: true, error: null, reason: "rendered", sanitized: readBorderSvg(section) };
 }
 
 /**
- * `readBorderSvg(section)` — the overlay's content as a record field, or `null`.
+ * `readBorderSvg(section)` — the border's raw SVG as a record field, or `null`.
  *
  * Read-only and side-effect free: this is what `js/layout_scan.js` calls when it writes
  * `borderSvg` into a section record (AC-7's persistence half), so the stored string and
- * the rendered tree can never disagree.
+ * the painted state can never disagree. The record holds the MODEL'S raw SVG (as
+ * serialized by the trust root) — never a `data:` URI, never a composition.
  */
 function readBorderSvg(section) {
-  if (!section || typeof section.querySelector !== "function") return null;
-  const overlay = section.querySelector(":scope > ." + BORDER_OVERLAY_CLASS);
-  if (!overlay) return null;
-  const svg = overlay.querySelector("svg");
-  if (!svg) return null;
-  return svg.outerHTML;
+  if (!section || !section.dataset) return null;
+  return section.dataset.borderRawSvg || null;
 }
 
-/** `clearBorderSvg(section)` — remove the overlay entirely (idempotent). */
+/**
+ * `clearBorderSvg(section)` — remove the border entirely (idempotent).
+ *
+ * Removes the dataset carrier AND all four inline custom properties, so the section
+ * falls back to whatever its border CLASS (or `:root`'s default) paints — the same
+ * semantics as choosing "None" in the border picker.
+ */
 function clearBorderSvg(section) {
-  if (!section || typeof section.querySelector !== "function") return false;
-  const overlays = section.querySelectorAll(":scope > ." + BORDER_OVERLAY_CLASS);
-  overlays.forEach((el) => el.remove());
-  return overlays.length > 0;
+  if (!section || !section.dataset) return false;
+  const had = !!section.dataset.borderRawSvg;
+  delete section.dataset.borderRawSvg;
+  for (const prop of BORDER_IMAGE_PROPS) {
+    if (section.style.removeProperty) section.style.removeProperty(prop);
+  }
+  return had;
 }
 
-/** `hasBorderSvg(section)` — is an overlay rendered right now?
+/** `hasBorderSvg(section)` — is a border painted right now?
  *  Test seam (this track, AC-9): Phase 3 uses it for the dialog's "current border?"
  *  query before it offers a save-to-library action. It also carries the Public API
- *  marker because Phase 3's library picker reads it, but the only caller THIS commit
- *  has is `test/unit/ai_border_render_choke.test.js` (the positive-control case that a
- *  rendered clean SVG is observable as state).
+ *  marker because Phase 3's library picker reads it.
  *
  *  Deliberately kept with only a test caller: the product reads it at Phase 3,
  *  and `scripts/check_dead_exports.js` records that with a marker at the
@@ -289,7 +343,6 @@ async function getBorder(id) {
 // was the measured Phase 2 failure (`AiBorder.deleteBorder … is kept with no caller
 // and no reason comment`), because the function's doc block is 9 lines above its key.
 const AiBorder = {
-  BORDER_OVERLAY_CLASS,
   // `renderBorderSvg` — the AC-9 choke point, called by js/layout_apply.js, js/section_cloning.js.
   renderBorderSvg,
   // `readBorderSvg` — called by js/layout_scan.js, js/layout_apply.js.

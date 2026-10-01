@@ -1525,11 +1525,21 @@ describe("Phase 4's seams (source level)", function () {
     // VISIBLE IN THE ARGUMENTS of the call. An earlier draft aliased it into a helper and became
     // the fifth UNCLASSIFIED tag-bearing call in the tree — `test/unit/mutation_class_guard.test.js`
     // is what caught that, and this is the case that keeps it caught here too.
+    //
+    // There are now TWO push sites (border → BORDER, arrange → POSITION), so both are asserted
+    // rather than asserting the single POSITION site the flow used to have.
     const src = codeOf(SRC.aiArrange);
-    const at = src.indexOf("pushMutation(");
-    assert.ok(at > 0, "no pushMutation call");
-    const call = src.slice(at, src.indexOf(")", at));
-    assert.match(call, /window\.MUTATION_CLASSES\.POSITION/, "the push site does not name the declaration: " + call);
+    const pushSites = [...src.matchAll(/pushMutation\(([\s\S]*?)\)/g)];
+    assert.ok(pushSites.length >= 2, "expected at least two pushMutation calls (border + arrange)");
+    const pushTexts = pushSites.map((m) => m[1]);
+    assert.ok(
+      pushTexts.some((t) => /window\.MUTATION_CLASSES\.BORDER/.test(t)),
+      "the border push site does not reference MUTATION_CLASSES.BORDER",
+    );
+    assert.ok(
+      pushTexts.some((t) => /window\.MUTATION_CLASSES\.POSITION/.test(t)),
+      "the arrange push site does not reference MUTATION_CLASSES.POSITION",
+    );
   });
 
   it("the module has ONE window seam, and no bare aliases beside it", function () {

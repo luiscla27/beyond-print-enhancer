@@ -1,6 +1,9 @@
 /**
  * AC-9 / AC-9b(ii) — the BLOCKING border-SVG injection guard
- * (track `byok_svg_borders_20260927`, Phase 2, sub-step 2.3).
+ * (track `byok_svg_borders_20260927`, Phase 2, sub-step 2.3; RULES REWRITTEN under
+ * operator decision D4 — the AI border rides the product's own `::before`
+ * `border-image` slot, so the choke point PAINTS a CSS custom property instead of
+ * injecting markup).
  *
  * WHAT THIS SUITE EXISTS TO PREVENT
  * ---------------------------------
@@ -9,7 +12,7 @@
  * build/lint, never an advisory note". Two properties have to hold, and they are
  * independent:
  *
- *  1. the guard is CORRECT — it fails on a crafted direct-injection fixture, per rule;
+ *  1. the guard is CORRECT — it fails on a crafted bypass fixture, per rule;
  *  2. the guard is WIRED — it runs inside the `lint`/`pretest` chain, so `npm test`
  *     cannot be green while a bypass exists.
  *
@@ -18,9 +21,9 @@
  * suite would see). (2) is tested by reading `package.json` — an unwired guard is the
  * "green while broken" failure this case exists to make impossible.
  *
- * The last case is the anti-vacuity control AC-6 of the original track established:
- * re-inject a direct assignment, assert FAIL, and assert the CLEAN tree PASSES in the
- * same run, so a guard stuck on `return []` cannot read as green.
+ * The last case is the anti-vacuity control: the CLEAN tree passes AND re-injecting a
+ * bypass makes the SAME guard fail, so a guard stuck on `return []` cannot read as
+ * green.
  */
 "use strict";
 
@@ -37,24 +40,27 @@ const {
 
 const ROOT = path.resolve(__dirname, "..", "..");
 
-/** A minimal, rule-satisfying choke point, so each fixture can vary exactly one thing. */
+/**
+ * A minimal, rule-satisfying choke point for the D4 shape: the border is PAINTED as a
+ * `data:` URI in the `--border-img` custom property, built only from the trust root's
+ * output. The value passes `encodeURIComponent` exactly as the product does, so the
+ * fixture mirrors the shipped call rather than approximating it.
+ */
 const GOOD_CHOKE = `
 function renderBorderSvg(section, rawSvg) {
   const v = sanitizeSvg(rawSvg);
   if (!v.ok) return { ok: false, error: v.error };
-  const overlay = document.createElement("div");
-  overlay.className = "${OVERLAY_CLASS}";
-  overlay.innerHTML = v.sanitized;
-  section.appendChild(overlay);
+  section.style.setProperty("--border-img", "url(\\"data:image/svg+xml;utf8," + encodeURIComponent(v.sanitized) + "\\")");
+  section.dataset.borderRawSvg = v.sanitized;
   return { ok: true, sanitized: v.sanitized };
 }
 `;
 
-/** A clean 2-file world: the choke point + a print-styles CSS consumer. */
+/** A clean 2-file world: the choke point + a CSS consumer that never names the retired literal. */
 function cleanWorld(extra = {}) {
   return {
     [CHOKE_POINT]: GOOD_CHOKE,
-    "js/print_styles.js": `.${OVERLAY_CLASS} { position: absolute; z-index: -1; }\n`,
+    "js/print_styles.js": ".print-section-container::before { border-image-source: var(--border-img); }\n",
     ...extra,
   };
 }
@@ -63,7 +69,7 @@ function rules(findings) {
   return findings.map((f) => f.rule);
 }
 
-describe("AC-9b(ii) — border-SVG injection guard is blocking and falsifiable", function () {
+describe("AC-9b(ii) — border-SVG injection guard is blocking and falsifiable (D4 rules)", function () {
   it("passes on a clean world", function () {
     const { findings } = checkSources(cleanWorld());
     assert.deepStrictEqual(rules(findings), [], JSON.stringify(findings, null, 2));
@@ -87,10 +93,7 @@ describe("AC-9b(ii) — border-SVG injection guard is blocking and falsifiable",
     const sources = cleanWorld({
       [CHOKE_POINT]: `
 function renderBorderSvg(section, rawSvg) {
-  const overlay = document.createElement("div");
-  overlay.className = "${OVERLAY_CLASS}";
-  overlay.innerHTML = rawSvg;
-  section.appendChild(overlay);
+  section.style.setProperty("--border-img", rawSvg);
 }
 `,
     });
@@ -98,24 +101,55 @@ function renderBorderSvg(section, rawSvg) {
     assert.ok(found.includes("R2"), `expected R2, got ${found.join(",")}`);
   });
 
-  it("R2 FAILS when the choke point injects a caller-supplied string", function () {
-    // It DOES call the validator — but injects the raw argument anyway. This is the
-    // exact `inject-if-caller-says-clean` shape AC-9b(i) names.
+  it("R2 FAILS when the choke point injects markup (innerHTML is a second render surface)", function () {
+    // The exact shape D4 exists to forbid: the choke point calling the validator but
+    // still injecting markup. Under D4 the border never becomes DOM markup at all.
     const sources = cleanWorld({
       [CHOKE_POINT]: `
 function renderBorderSvg(section, rawSvg) {
   const v = window.AiLayout.validateSvg(rawSvg);
   if (!v.ok) return { ok: false, error: v.error };
-  const overlay = document.createElement("div");
-  overlay.className = "${OVERLAY_CLASS}";
-  overlay.innerHTML = rawSvg;
-  section.appendChild(overlay);
+  section.innerHTML = v.sanitized;
 }
 `,
     });
     assert.ok(
       rules(checkSources(sources).findings).includes("R2"),
-      "injecting the raw argument while the validator exists must fail R2",
+      "an innerHTML in the choke point must fail R2 under D4",
+    );
+  });
+
+  it("R2 FAILS when the choke point paints from a caller-supplied string", function () {
+    // It DOES call the validator — but paints the raw argument anyway. This is the
+    // exact `inject-if-caller-says-clean` shape AC-9b(i) names, in its D4 spelling.
+    const sources = cleanWorld({
+      [CHOKE_POINT]: `
+function renderBorderSvg(section, rawSvg) {
+  const v = window.AiLayout.validateSvg(rawSvg);
+  if (!v.ok) return { ok: false, error: v.error };
+  section.style.setProperty("--border-img", "url(\\"data:image/svg+xml;utf8," + encodeURIComponent(rawSvg) + "\\")");
+}
+`,
+    });
+    assert.ok(
+      rules(checkSources(sources).findings).includes("R2"),
+      "painting the raw argument while the validator exists must fail R2",
+    );
+  });
+
+  it("R2 FAILS when the choke point never paints --border-img at all", function () {
+    const sources = cleanWorld({
+      [CHOKE_POINT]: `
+function renderBorderSvg(section, rawSvg) {
+  const v = sanitizeSvg(rawSvg);
+  if (!v.ok) return { ok: false, error: v.error };
+  return { ok: true, sanitized: v.sanitized };
+}
+`,
+    });
+    assert.ok(
+      rules(checkSources(sources).findings).includes("R2"),
+      "a choke point that never paints --border-img is decorative; it must fail R2",
     );
   });
 
@@ -144,7 +178,7 @@ function applyBorder(section, borderSvg) {
     }
   });
 
-  it("R4 FAILS on a data:/url( payload fed to a CSS image sink", function () {
+  it("R4 FAILS on a data:/url( payload fed to a CSS image sink outside the choke point", function () {
     const sources = cleanWorld({
       "js/layout_apply.js": `
 function paint(el, borderSvg) {
@@ -156,12 +190,31 @@ function paint(el, borderSvg) {
     assert.ok(found.includes("R4"), `expected R4, got ${found.join(",")}`);
   });
 
-  it("R5 FAILS when a third file mentions the overlay node class", function () {
+  it("R4 FAILS on a second writer of --border-img from an SVG source", function () {
+    // The D4-specific tripwire: the choke point is the ONE sanctioned site for the
+    // custom-property write. Any other file doing it is a second render surface.
     const sources = cleanWorld({
-      "js/main.js": `const CLS = "${OVERLAY_CLASS}";\n`,
+      "js/undo.js": `
+function restore(el, borderSvg) {
+  el.style.setProperty("--border-img", "url(\\"data:image/svg+xml;utf8," + encodeURIComponent(borderSvg) + "\\")");
+}
+`,
     });
     const found = rules(checkSources(sources).findings);
-    assert.ok(found.includes("R5"), `expected R5, got ${found.join(",")}`);
+    assert.ok(found.includes("R4"), `expected R4 on a --border-img second writer, got ${found.join(",")}`);
+  });
+
+  it("R5 FAILS on ANY file mentioning the retired overlay literal", function () {
+    // Under D4 the overlay node is deleted; the literal may appear in ZERO product
+    // files. Any reappearance — including in the CSS file that used to style it — is
+    // a second renderer being rebuilt.
+    for (const file of ["js/main.js", "js/print_styles.js", "js/ai_arrange.js"]) {
+      const sources = cleanWorld({
+        [file]: `const CLS = "${OVERLAY_CLASS}";\n`,
+      });
+      const found = rules(checkSources(sources).findings);
+      assert.ok(found.includes("R5"), `R5 must fire on ${file}, got ${found.join(",")}`);
+    }
   });
 
   it("comments quoting the banned patterns do not trip the guard", function () {
@@ -169,7 +222,7 @@ function paint(el, borderSvg) {
       "js/main.js": `/**
  * Never do this: el.innerHTML = borderSvg;  // nor document.write(borderSvg)
  * and never style.backgroundImage = "url(" + borderSvg + ")".
- * The overlay class is ${OVERLAY_CLASS}.
+ * The overlay class is ${OVERLAY_CLASS}.  // quoted in prose only
  */
 function safe() { return 1; }
 `,
@@ -208,6 +261,17 @@ function safe() { return 1; }
     assert.ok(
       rules(after.findings).includes("R3"),
       "an injected legacy direct-injection path must FAIL the guard",
+    );
+
+    // (c) and a retired-literal resurrection fails it too (R5)
+    const resurrected = { ...readProductSources(ROOT) };
+    resurrected["js/filters.js"] =
+      (resurrected["js/filters.js"] || "") +
+      `\nconst _old = "${OVERLAY_CLASS}";\n`;
+    const afterR5 = checkSources(resurrected);
+    assert.ok(
+      rules(afterR5.findings).includes("R5"),
+      "reintroducing the retired overlay literal must FAIL the guard",
     );
   });
 });

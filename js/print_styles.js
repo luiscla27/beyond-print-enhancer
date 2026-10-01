@@ -1189,33 +1189,34 @@ function enforceFullHeight() {
           pointer-events: auto;
       }
 
-      /* AC-8 (track byok_svg_borders_20260927): the AI border SVG overlay. The node is
-         CREATED and positioned inline by 'renderBorderSvg' (js/ai_border.js — the one
-         writer AC-9 allows); this rule is the print/geometry half, and it is the second
-         and last file permitted to name the class. scripts/check_border_svg_injection.js
-         R5 fails the build if a third file mentions it.
+      /* AC-8 (track byok_svg_borders_20260927, operator decision D4 2026-10-01): the AI
+         border rides THIS slot — the same border-image pipeline the raster
+         'assets/border_*.webp' borders use — not a separate overlay node. The only
+         difference between an AI border and a webp border is the SOURCE IMAGE: the
+         choke point ('renderBorderSvg', js/ai_border.js — the one writer AC-9 allows)
+         sets four INLINE custom properties on the section —
 
-         '!important' mirrors the ::before border slot beside it: the generic
-         '.print-section-container *' rule further down forces font-size / white-space on
-         every descendant, and the overlay must stay a full-rect, non-interactive layer
-         that the print engine scales with the section. */
-      .print-section-container > .be-border-svg-overlay {
-          position: absolute;
-          top: 0; left: 0; right: 0; bottom: 0;
-          display: block !important;
-          pointer-events: none !important;
-          overflow: visible !important;
-          z-index: -1 !important;
-      }
-      .print-section-container > .be-border-svg-overlay svg {
-          width: 100%;
-          height: 100%;
-          display: block;
-      }
-      /* Same contract as the class-based border slot: 'no-border' shows neither. */
-      .print-section-container.be-no-border > .be-border-svg-overlay {
-          display: none !important;
-      }
+             --border-img:        url("data:image/svg+xml;utf8,<encoded sanitized SVG>")
+             --border-img-slice:  24%
+             --border-img-width:  28px
+             --border-img-outset: 16px
+
+         — and the ::before rule above consumes them through the browser's own
+         border-image engine. Width 28px / outset 16px are this slot's OWN :root
+         defaults; slice 24% is the swept optimum for the generated designs (MEASURED
+         temp/scratch/border_css_vs_composer_geom.js: 24% closes 10/12 corpus designs at
+         656x400, 656x1920 AND 1200x500 against 9/12 for the hand-rolled JS composer
+         under the identical strict metric; the webp's own unit slice closes 6/12 on the
+         same corpus, because slice is a property of the SOURCE image — each webp class
+         carries its own slice for exactly that reason).
+
+         Riding the slot is WHY no new rules live here: geometry (z-index:-1,
+         pointer-events:none, inset 0), the decoration filter, 'no-border' hiding and
+         print behaviour are all inherited from the rules above rather than re-derived.
+         The inline custom properties override any border CLASS on the same section, and
+         'clearBorderSvg' removes them so the class border returns byte-for-byte.
+         scripts/check_border_svg_injection.js R4 permits the data: URI at exactly ONE
+         site — inside the choke point — and fails the build on any other writer. */
 
       .print-shape-container .print-section-content {
           background-color: transparent !important;

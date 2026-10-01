@@ -1180,7 +1180,7 @@ describe("ai_layout — module surface discipline (AC-7, spec L-6)", function ()
     const summary = aiLayout.summarizePatch(
       aiLayout.validatePatch(validPatch(), LIVE_IDS, OPT).patch,
     );
-    assert.deepStrictEqual(summary, { moves: 2, hides: 1, resized: 2, restacked: 2 });
+    assert.deepStrictEqual(summary, { moves: 2, hides: 1, resized: 2, restacked: 2, borders: 0 });
   });
 });
 

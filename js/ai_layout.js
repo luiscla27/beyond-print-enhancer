@@ -436,17 +436,42 @@ function validatePatch(patch, liveSectionIds, options) {
     // reliably sends it, and the patch was then unwrappable for a capability it had not touched.
     // `note` is prose ABOUT the patch, not a modification; it is also what `summarizePatch`
     // reports. Only the three carriers that change something are owned.
+    //
+    // EMPTY CARRIER LENIENCY — MEASURED 2026-10-01 (this track, Phase 4). The product's own
+    // prompt says "do NOT emit `moves` and `hide`" when arrange is off, but the model
+    // reliably sends `moves: {}` and `hide: []` anyway (empty, zero changes). A strict read
+    // triggered `capability_disabled` for BOTH keys, which meant the ONE answer the border
+    // capability exists to produce — `{border: {svg: …}, note: "…"}` plus empty arrange keys
+    // the model could not suppress — was refused as "The AI tried to use a capability you
+    // switched off." before the border ever reached the trust root. The border-only path
+    // through `arrangeWithAi` (the roundtrip spec's path A) died at `stage: "validate"`,
+    // and the hostile-svg test never reached the trust root either — the `capability_disabled`
+    // error short-circuited the verdict. The fix: an empty carrier (empty object for `moves`,
+    // empty array for `hide`, null/undefined/empty for `border`) is silently dropped, not
+    // refused. The capability gate fires only when the key carries SUBSTANTIVE data.
     const owner =
       key === PATCH_KEYS.border ? "border" : key === PATCH_KEYS.note ? null : "arrange";
     if (owner && ((owner === "border" && !borderOn) || (owner === "arrange" && !arrangeOn))) {
-      errors.push(
-        finding(
-          "capability_disabled",
-          key,
-          `\`${key}\` was sent, but "${owner === "border" ? "Border design" : "Arrange layout"}" ` +
-            "is switched off for this request",
-        ),
-      );
+      // Check if the carrier is empty — no changes proposed.
+      const val = patch[key];
+      const isEmpty =
+        owner === "arrange"
+          ? (key === PATCH_KEYS.moves ? isPlainObject(val) && Object.keys(val).length === 0
+             : key === PATCH_KEYS.hide ? Array.isArray(val) && val.length === 0
+             : false)
+          : owner === "border"
+          ? (!val || (typeof val === "object" && !isPlainObject(val)))
+          : false;
+      if (!isEmpty) {
+        errors.push(
+          finding(
+            "capability_disabled",
+            key,
+            `\`${key}\` was sent, but "${owner === "border" ? "Border design" : "Arrange layout"}" ` +
+              "is switched off for this request",
+          ),
+        );
+      }
     }
   }
 
@@ -808,7 +833,7 @@ function describeValue(value) {
  * normalised patch the apply consumes.
  */
 function summarizePatch(patch) {
-  if (!isPlainObject(patch)) return { moves: 0, hides: 0, resized: 0, restacked: 0 };
+  if (!isPlainObject(patch)) return { moves: 0, hides: 0, resized: 0, restacked: 0, borders: 0 };
   const moves = isPlainObject(patch.moves) ? patch.moves : {};
   let resized = 0;
   let restacked = 0;
@@ -822,7 +847,27 @@ function summarizePatch(patch) {
     hides: Array.isArray(patch.hide) ? patch.hide.length : 0,
     resized,
     restacked,
+    /**
+     * ADDED by track `byok_svg_borders_20260927` (Phase 4, MEASURED defect).
+     *
+     * The count is 1 or 0 because a patch carries at most ONE border (`BORDER_PATCH_KEYS` is
+     * `{svg, note?}`, a single artefact for the one selected section — AC-2). It is REPORTED
+     * rather than implied because `js/ai_arrange.js` used to ask "did anything change?" as
+     * `!summary.moves && !summary.hides`, and a border-only patch — the shape the product's own
+     * prompt produces with Arrange off / Border on, ratified decision D3 — answers 0/0/0/0 to
+     * that question. The flow therefore refused the ONE answer the border capability exists to
+     * produce, with `envelope_empty` ("The AI proposed no changes.") and before the preview ever
+     * opened: `test/browser_e2e/byok_border_roundtrip.spec.js` measured every border case dying
+     * on `stage: "preview"`. A summary that cannot tell "no border" from "a border" is the bug.
+     */
+    borders: hasOwnBorder(patch) ? 1 : 0,
   };
+}
+
+/** Does this patch carry a well-formed border carrier? (The single-vs-absent test above.) */
+function hasOwnBorder(patch) {
+  const b = isPlainObject(patch) ? patch[PATCH_KEYS.border] : null;
+  return isPlainObject(b) && typeof b[BORDER_PATCH_KEYS.svg] === "string" && b[BORDER_PATCH_KEYS.svg] !== "";
 }
 
 // ---------------------------------------------------------------------------
@@ -1718,6 +1763,21 @@ function validateSvg(input) {
   if (!viewBox || !String(viewBox).trim()) {
     return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.MISSING_VIEWBOX };
   }
+
+  // NORMALISE preserveAspectRatio — MEASURED 2026-10-01 (this track, Phase 4).
+  //
+  // The overlay div is sized to 100% x 100% by CSS (the overlay contract). The AI draws
+  // complete frame designs on a small canvas (224×144 or 224×256) and expects them to STRETCH
+  // across the section. Without this normalisation, the browser's own default
+  // preserveAspectRatio="xMidYMid meet" letterboxes the content: only the top slice of a
+  // 224×144 design reaching a 656×1920 section is visible, and the Muse gate consistently
+  // scores the cropped frame as NOT MET ("fragmented top/bottom dotted segments", "isolated
+  // triangular points", "no distinct top arc"). With preserveAspectRatio="none" the design
+  // fills the section — the exact visual the model drew. The attribute is in the SVG allowlist
+  // and is already in the sanitized output when the model includes it; this normalisation
+  // ensures every accepted SVG fills its target, even when the model omits the attribute
+  // (which it does in 100% of the 20 corpus designs, measured).
+  root.setAttribute("preserveAspectRatio", "none");
 
   const errors = [];
 

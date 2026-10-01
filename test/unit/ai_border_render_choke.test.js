@@ -1,23 +1,29 @@
 /**
  * AC-9 / AC-9b(i) — the render CHOKE POINT contract
- * (track `byok_svg_borders_20260927`, Phase 2, sub-step 2.2).
+ * (track `byok_svg_borders_20260927`, Phase 2, sub-step 2.2; contract REWRITTEN under
+ * operator decision D4 2026-10-01: the border rides the product's own `::before`
+ * `border-image` slot, so `renderBorderSvg` PAINTS four inline custom properties on the
+ * section instead of injecting a markup overlay node).
  *
  * WHAT THIS SUITE EXISTS TO PREVENT
  * ---------------------------------
- * `js/ai_border.js`'s `renderBorderSvg` is the single writer of a border overlay. Two
+ * `js/ai_border.js`'s `renderBorderSvg` is the single writer of a border. Under D4 two
  * failure modes are one edit away from looking correct, and this file is written against
  * both of them:
  *
- *  1. **trusting the caller.** If the helper's signature were `renderBorderSvg(section,
- *     sanitizedSvg)` and the callers sanitized first, every existing case would still pass
- *     while a new path could inject freely. So the cases here hand the helper a RAW,
- *     hostile string and assert on the DOM that nothing hostile arrived — the helper is
- *     never given a "clean" string it could have been told about.
- *  2. **fail-open on reject.** A helper that strips what it can and injects the rest is
- *     worse than one that throws, because the residue looks like a working border. The
- *     cases assert the overlay is ABSENT after a reject — including the case where an
- *     overlay from a PREVIOUS good render is already in the DOM, since "clear the old one
- *     before refusing the new one" is the part a happy-path test skips.
+ *  1. **trusting the caller.** If the helper skipped validation and painted the raw
+ *     argument, every existing case would still pass while a hostile path could inject.
+ *     So the cases here hand the helper a RAW, hostile string and assert that the
+ *     custom properties are NOT set — the helper is never given a "clean" string.
+ *  2. **fail-open on reject.** A helper that clears some properties and leaves others
+ *     is worse than one that throws, because the residue paints a half-border. The
+ *     cases assert ALL FOUR custom properties are absent after a reject — including
+ *     when a GOOD border from a PREVIOUS render is already on the section.
+ *
+ * Under D4 the DOM stays pristine (no injected markup to inspect), so the assertions
+ * moved to the PAINT STATE: the custom-property set that the `::before` slot consumes.
+ * The hostility check (`assertDomClean`) is retained unchanged as defense-in-depth — a
+ * future edit that reintroduces markup injection fails here AND in the static guard R2.
  *
  * PATHS COVERED HERE (`[AC-9]` A–H), all driven through the real product functions:
  *   B  persistence rehydrate   — `window.applyLayout(storedRecord)`
@@ -115,7 +121,13 @@ function bootStack() {
   return b;
 }
 
-/** Every hostile artefact that must NOT be in the DOM after any render. */
+/** Under D4 the border has NO markup node of its own — it is a set of inline custom
+ *  properties on the section. A section is "bordered" exactly when those properties are set. */
+const painted = (s) => Boolean(s && s.style.getPropertyValue("--border-img").trim());
+
+/** Every hostile artefact that must NOT be in the DOM after any render. Retained as
+ *  defense-in-depth: a future edit that reintroduces markup injection fails here AND in
+ *  the static guard R2, so a single broken assertion cannot mask the regression. */
 function assertDomClean(root, label) {
   const html = root.innerHTML;
   assert.strictEqual(root.querySelectorAll("script").length, 0, `${label}: <script> in DOM`);
@@ -146,7 +158,20 @@ function assertDomClean(root, label) {
   );
 }
 
-describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke point", function () {
+/** Assert a section carries no AI border paint at all — none of the four custom properties. */
+function assertNoBorder(section, label) {
+  const style = section.style;
+  const props = ["--border-img", "--border-img-slice", "--border-img-width", "--border-img-outset"];
+  for (const p of props) {
+    assert.ok(
+      !style.getPropertyValue(p).trim(),
+      `${label}: custom property ${p} was left set after a refuse/clear`,
+    );
+  }
+  assert.strictEqual(section.dataset.borderRawSvg, undefined, `${label}: dataset.borderRawSvg left set`);
+}
+
+describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke point (D4)", function () {
   this.timeout(10000);
 
   let b;
@@ -162,100 +187,99 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
   });
 
   const section = () => w.document.getElementById("section-main");
-  const overlayOf = (s) => s.querySelector(".be-border-svg-overlay");
 
-  describe("the positive control (a clean SVG really renders)", function () {
-    it("creates one overlay holding one svg, behind the content", function () {
+  describe("the positive control (a clean SVG really paints)", function () {
+    it("sets --border-img on the section and the record carries the sanitized bytes", function () {
       const res = w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
       assert.strictEqual(res.ok, true, JSON.stringify(res));
-      const overlay = overlayOf(section());
-      assert.ok(overlay, "overlay node must exist");
-      assert.strictEqual(overlay.querySelectorAll("svg").length, 1);
-      // AC-8 geometry contract.
-      assert.strictEqual(overlay.style.zIndex, "-1");
-      assert.strictEqual(overlay.style.pointerEvents, "none");
-      assert.strictEqual(overlay.style.position, "absolute");
-      // …and it is NOT inside the content (so a clone's html can never carry it).
-      assert.ok(!section().querySelector(".print-section-content .be-border-svg-overlay"));
+      assert.ok(painted(section()), "the section must carry a --border-img paint on a clean render");
+      // `--border-img` must be the sanitized SVG as a data URI, never the raw input or a
+      // composition wrapper.
+      const src = section().style.getPropertyValue("--border-img");
+      assert.ok(src.startsWith('url("data:image/svg+xml'), `--border-img is a data URI: ${src}`);
+      assert.ok(
+        src.includes(encodeURIComponent(CLEAN_SVG).slice(0, 40)),
+        "the painted URI must encode the sanitized SVG, not a hand-truncated variant",
+      );
+      assert.strictEqual(
+        w.AiBorder.readBorderSvg(section()),
+        res.sanitized,
+        "readBorderSvg must return the sanitized bytes the paint was built from",
+      );
+      assert.ok(!section().querySelector(".be-border-svg-overlay"), "D4 must leave no overlay node");
       assertDomClean(section(), "clean render");
     });
 
-    it("`hasBorderSvg` reports the STATE, so a caller need not read the DOM itself", function () {
-      // The dialog's "is there a border here already?" query (Phase 3) must be answerable
-      // without a second DOM inspection that could drift from the overlay contract — and
-      // the answer must flip for the SILENT clear case too, since that is the path a
-      // "no border" record takes on rehydrate (a truthy-looking empty node would make the
-      // dialog claim a border that is not there).
-      assert.strictEqual(w.AiBorder.hasBorderSvg(section()), false, "nothing rendered yet");
+    it("`hasBorderSvg` reports the STATE, so a caller need not inspect the custom properties", function () {
+      assert.strictEqual(w.AiBorder.hasBorderSvg(section()), false, "nothing painted yet");
       w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
       assert.strictEqual(w.AiBorder.hasBorderSvg(section()), true);
       w.AiBorder.renderBorderSvg(section(), null);
       assert.strictEqual(w.AiBorder.hasBorderSvg(section()), false, "after an explicit clear");
-      // …and a REJECTED payload must not read as "has a border" either: that is the
-      // fail-closed claim seen from the caller's side rather than the DOM's.
+      // …and a REJECTED payload must not read as "has a border" either — fail-closed from
+      // the caller's side, not just the DOM's.
       w.AiBorder.renderBorderSvg(section(), HOSTILE.script.svg);
       assert.strictEqual(w.AiBorder.hasBorderSvg(section()), false, "after a reject");
     });
 
     it("is idempotent: a second render replaces, never stacks", function () {
       w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
+      assert.ok(painted(section()));
       w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
-      assert.strictEqual(section().querySelectorAll(".be-border-svg-overlay").length, 1);
+      assert.ok(painted(section()), "the paint survived the second render");
+      assert.strictEqual(section().querySelectorAll(".be-border-svg-overlay").length, 0, "no overlay node");
     });
 
     it("clears on an explicit empty value (the 'no border' state is silent, not a reject)", function () {
       w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
+      assert.ok(painted(section()), "precondition: border painted");
       const res = w.AiBorder.renderBorderSvg(section(), null);
       assert.strictEqual(res.ok, true);
       assert.strictEqual(res.reason, "cleared");
-      assert.strictEqual(overlayOf(section()), null);
+      assert.strictEqual(painted(section()), false, "a clear must remove all four properties");
+      assertNoBorder(section(), "cleared render");
     });
   });
 
-  describe("hostile input is refused and leaves NOTHING in the DOM", function () {
+  describe("hostile input is refused and leaves NOTHING painted", function () {
     for (const [name, vector] of Object.entries(HOSTILE)) {
-      it(`${name} → refused with the named AC-1 error, overlay absent`, function () {
+      it(`${name} → refused with the named AC-1 error, no custom property set`, function () {
         const res = w.AiBorder.renderBorderSvg(section(), vector.svg);
         assert.strictEqual(res.ok, false, `${name} was ACCEPTED`);
         assert.strictEqual(res.error, vector.error, `wrong reject reason for ${name}`);
-        assert.strictEqual(overlayOf(section()), null, `${name}: an overlay was left behind`);
+        assert.strictEqual(res.sanitized, null, `${name}: a rejected render must not report bytes`);
+        assertNoBorder(section(), name);
         assertDomClean(section(), name);
       });
 
-      it(`${name} → a PRIOR good overlay is CLEARED, not kept`, function () {
-        // The fail-open shape that a happy-path test cannot see: refuse the new payload
-        // but leave the previous border painted, so the user sees "it worked".
+      it(`${name} → a PRIOR good paint is CLEARED, not kept`, function () {
+        // The fail-open shape a happy-path test cannot see: refuse the new payload but
+        // leave the previous border painted, so the user sees "it worked".
         w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
-        assert.ok(overlayOf(section()), "precondition");
+        assert.ok(painted(section()), "precondition: good border painted");
         const res = w.AiBorder.renderBorderSvg(section(), vector.svg);
         assert.strictEqual(res.ok, false);
-        assert.strictEqual(
-          overlayOf(section()),
-          null,
-          `${name}: the previous overlay survived a rejected render`,
-        );
+        assertNoBorder(section(), `${name}: the previous paint survived a rejected render`);
       });
 
-      it(`${name} → never injects a PARTIALLY cleaned string`, function () {
-        // A "strip what we can and keep the rest" implementation must not pass: the
-        // overlay, if one exists at all, may not contain the vector's marker.
+      it(`${name} → never paints a PARTIALLY cleaned string`, function () {
+        // A "strip what we can and keep the rest" implementation must not pass: if any
+        // property is set, it must encode the FULL sanitized output, not a fragment.
         const res = w.AiBorder.renderBorderSvg(section(), vector.svg);
-        const overlay = overlayOf(section());
-        if (overlay) {
+        assert.strictEqual(res.ok, false);
+        if (painted(section())) {
+          const src = section().style.getPropertyValue("--border-img");
           assert.ok(
-            !/<script|foreignObject|onload=|evil\.example|@import/i.test(overlay.innerHTML),
-            `${name}: partially-cleaned residue reached the DOM`,
+            !/<script|foreignObject|onload=|evil\.example|@import/i.test(src),
+            `${name}: partially-cleaned residue reached the paint`,
           );
         }
-        assert.strictEqual(res.sanitized, null, `${name}: a rejected render must not report bytes`);
       });
     }
   });
 
   describe("the helper never trusts a caller's 'already clean' claim", function () {
     it("has a TWO-argument contract (section, raw string) — no pre-sanitized variant", function () {
-      // Read the source, so the claim is about the shipped signature and not about a
-      // coincidentally-matching call in a test.
       const src = readJs("ai_border.js").replace(/\/\*[\s\S]*?\*\//g, "");
       const m = src.match(/function\s+renderBorderSvg\s*\(([^)]*)\)/);
       assert.ok(m, "renderBorderSvg must be declared");
@@ -268,12 +292,10 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
       );
     });
 
-    it("sanitizes internally: a payload the trust root rejects never renders", function () {
-      // Called with a string that is NOT clean, by a caller that claims nothing. If the
-      // helper skipped validation this case would render a script tag.
+    it("sanitizes internally: a payload the trust root rejects never paints", function () {
       const res = w.AiBorder.renderBorderSvg(section(), HOSTILE.script.svg);
       assert.strictEqual(res.ok, false);
-      assert.strictEqual(overlayOf(section()), null);
+      assert.strictEqual(painted(section()), false, "a rejected payload must not paint");
     });
 
     it("fails closed when the trust root is unavailable", function () {
@@ -283,7 +305,7 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
         const res = w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
         assert.strictEqual(res.ok, false);
         assert.strictEqual(res.reason, "unavailable");
-        assert.strictEqual(overlayOf(section()), null);
+        assert.strictEqual(painted(section()), false);
       } finally {
         w.AiLayout = saved;
       }
@@ -296,14 +318,14 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
         version: "1.6.0",
         sections: { "section-main": { borderSvg: HOSTILE.script.svg } },
       });
-      assert.strictEqual(overlayOf(section()), null, "a stored script payload rendered");
+      assertNoBorder(section(), "a stored script payload must not paint");
       assertDomClean(section(), "path B");
 
       await w.applyLayout({
         version: "1.6.0",
         sections: { "section-main": { borderSvg: CLEAN_SVG } },
       });
-      assert.ok(overlayOf(section()), "path B's positive control failed");
+      assert.ok(painted(section()), "path B's positive control failed");
     });
 
     it("path E — a cloned section re-renders through the helper", function () {
@@ -322,12 +344,14 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
       const wrapper = w.renderClonedSection(snapshot);
       assert.ok(wrapper, "the clone must still render (only the border is refused)");
       const container = wrapper.querySelector(".print-section-container");
+      assertNoBorder(container, "path E rendered a hostile border");
       assertDomClean(container, "path E");
-      assert.strictEqual(
-        container.querySelector(".be-border-svg-overlay"),
-        null,
-        "path E rendered a hostile border",
-      );
+
+      // …and a clean clone paints.
+      const good = Object.assign({}, snapshot, { borderSvg: CLEAN_SVG });
+      const w2 = w.renderClonedSection(good);
+      const c2 = w2.querySelector(".print-section-container");
+      assert.ok(painted(c2), "path E's positive control failed");
     });
 
     it("path D — the library round-trips through the helper and refuses on save", async function () {
@@ -345,6 +369,7 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
         true,
         "a library record must render through the helper",
       );
+      assert.ok(painted(section()), "the library record did not paint");
 
       // …and the library refuses to STORE a hostile payload, so it cannot become a
       // laundering channel that a later render would have to reject.
@@ -371,7 +396,7 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
         version: "1.6.0",
         sections: { "section-main": { left: "40px", borderSvg: CLEAN_SVG } },
       });
-      assert.ok(overlayOf(section()), "precondition: the border rendered");
+      assert.ok(painted(section()), "precondition: the border painted");
 
       const snap = w.snapshotSectionFlags();
       assert.strictEqual(
@@ -382,7 +407,7 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
 
       // The user's NEXT border (or a clear), then an undo that repairs from the snapshot.
       w.AiBorder.renderBorderSvg(section(), null);
-      assert.strictEqual(overlayOf(section()), null);
+      assert.strictEqual(painted(section()), false);
 
       const layout = {
         version: "1.6.0",
@@ -391,11 +416,11 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
       w.repairSectionFlags(layout, snap);
       assert.ok(layout.sections["section-main"].borderSvg, "repair dropped the border");
       await w.applyLayout(layout);
-      assert.ok(overlayOf(section()), "path F: undo did not restore the border");
+      assert.ok(painted(section()), "path F: undo did not restore the border");
       assertDomClean(section(), "path F");
     });
 
-    it("path G — a preview render writes the same node shape (no separate preview path)", function () {
+    it("path G — a preview render writes the same paint (no separate preview path)", function () {
       // There is no `renderBorderSvgPreview`: the ghost IS this helper, which is what
       // makes 'preview' unable to be the path that forgets to sanitize.
       const surface = Object.keys(w.AiBorder);
@@ -405,7 +430,7 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
         `a separate preview renderer is a second injection site: ${surface.join(",")}`,
       );
       w.AiBorder.renderBorderSvg(section(), CLEAN_SVG);
-      assert.strictEqual(section().querySelectorAll(".be-border-svg-overlay").length, 1);
+      assert.ok(painted(section()), "preview must leave the same paint as a real render");
     });
 
     it("path A — apply through the helper, then scan: the record holds the sanitized bytes", async function () {
@@ -414,41 +439,36 @@ describe("AC-9b(i) — renderBorderSvg is the single, self-sanitizing choke poin
       assert.strictEqual(
         layout.sections["section-main"].borderSvg,
         res.sanitized,
-        "path A: the scan must record exactly what the helper rendered",
+        "path A: the scan must record exactly what the helper painted",
       );
     });
   });
 
-  describe("[AC-8] the overlay's CSS/print contract is declared", function () {
-    it("js/print_styles.js sizes and prints the overlay node", function () {
+  describe("[AC-8] the border rides the product's ::before border-image slot", function () {
+    it("js/print_styles.js must NOT declare a D4-retired overlay rule set", function () {
+      // Under D4 there is no overlay node to style. The print/layout contract must live
+      // ONLY on the existing `::before` slot (`print_styles.js:1168`), so print_styles must
+      // not carry any rule that names the retired literal. The guard R5 enforces this
+      // across all product source; this case pins it here too, against the test's own
+      // source read, so it survives a guard bypass.
       const css = readJs("print_styles.js");
       assert.ok(
-        css.includes("be-border-svg-overlay"),
-        "print_styles must style the overlay (it is the only other file allowed to name it)",
+        !css.includes("be-border-svg-overlay"),
+        "print_styles.js must not declare the retired overlay class (D4)",
       );
-      // The print block must keep the border visible. Stated precisely, because the
-      // overlay HAS one legitimate `display: none`: the `.be-no-border` rule (AC-8 says a
-      // no-border section shows neither border slot). So the check is per-RULE — every
-      // overlay rule that hides the node must be scoped to `be-no-border` — rather than a
-      // substring search, which would either pass a blanket `display:none` added by a
-      // later edit or fail on the legitimate scoped one.
-      const printBlock = css.slice(css.indexOf("@media print"));
-      const rules = printBlock.match(/[^{}]+\{[^}]*\}/g) || [];
-      const overlayRules = rules.filter((r) => r.includes("be-border-svg-overlay"));
-      assert.ok(overlayRules.length > 0, "the overlay must have a rule in the print block");
-      for (const rule of overlayRules) {
-        const selector = rule.slice(0, rule.indexOf("{"));
-        if (/display\s*:\s*none/.test(rule)) {
-          assert.ok(
-            selector.includes("be-no-border"),
-            `only a .be-no-border selector may hide the overlay; got: ${selector.trim()}`,
-          );
-        }
-      }
-      assert.ok(
-        overlayRules.some((r) => /width\s*:\s*100%/.test(r)),
-        "the overlay's svg must be scaled to the section rect (width: 100%)",
-      );
+    });
+
+    it("the ::before slot is the AI border's render contract, not a new overlay rule", function () {
+      // The AC-8 invariants (behind content, non-interactive, full-rect, no-border hides,
+      // in print) are all on the .print-section-container:not(.be-no-border)::before rule
+      // — so the AI border inherits them instead of re-declaring them.
+      const css = readJs("print_styles.js");
+      const beforeRule = css.slice(css.indexOf(".print-section-container:not(.be-no-border)::before"));
+      assert.ok(/border-image-source\s*:\s*var\(--border-img\)/.test(beforeRule), "the slot consumes --border-img");
+      assert.ok(/z-index\s*:\s*-1/.test(beforeRule), "the slot sits behind content");
+      assert.ok(/pointer-events\s*:\s*none/.test(beforeRule), "the slot is non-interactive");
+      assert.ok(/@media print/.test(css.slice(css.indexOf("print-section-container:not(.be-no-border)::before"))),
+        "the slot must be defined inside @media print (it is) — verified it is reachable from the rule");
     });
   });
 });

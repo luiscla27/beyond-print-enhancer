@@ -69,7 +69,6 @@ const CONTENT_PROBE_NAMES = [
   "aiArrangePanelRead",
   "aiArrangePanelClick",
 ];
-
 /**
  * Run a named probe INSIDE the extension's isolated world — the world the
  * content script and this enhancer actually run in — and return its
@@ -804,7 +803,10 @@ async function contentCall(ctx, name, args = []) {
             st.applies = 0;
             st.saves = 0;
             st.out = undefined;
-            st.running = api.arrangeWithAi(o.instruction);
+            st.running = api.arrangeWithAi(o.instruction, {
+              capabilities: o.capabilities,
+              selectedSectionId: o.selectedSectionId,
+            });
             st.running.then(
               (r) => {
                 st.out = r;
@@ -874,6 +876,116 @@ async function contentCall(ctx, name, args = []) {
             return { ok: true, settings: await S.loadSettings() };
           }
 
+          // Phase 4 (measured defect, 2026-09-29). The gallery's first Muse round returned NOT MET
+          // on all six criteria and named the SAME thing in every cell: "dark gray/black spiky barbed
+          // rectangle". The gallery was photographing the wrong section: `aiArrangeFirstSection`
+          // takes the first row with `width >= 100`, which on the demo sheet is the section at
+          // record x 16..240, and the extension's OWN control tray is `position: fixed` at viewport
+          // x 10..258 with `z-index: 10000` (window.Z.PANEL, js/controls.js:104) while a section is
+          // z-index 10. MEASURED here with `elementsFromPoint` at the section's centre: the stack is
+          // `.be-ctl-tray-head` > `.be-ctl-tray` > `.be-ctl-scroll` > the fixed `z-index:10000`
+          // tray — the border overlay (`z-index: -1`, behind the section) can never be in that stack,
+          // and the tray's own `rgb(25, 20, 16)` background is the "dark rectangle" the reviewer saw.
+          //
+          // The fix is in the CAMERA, not the product: pick a section that is (a) large enough to
+          // read, (b) clear of every fixed/opaque surface at its own centre and at its four corners,
+          // and (c) as far down the page as such a section can be. `aiArrangeEvidenceTarget` already
+          // implements (a)-(c) but is tuned for a GEOMETRY move (it needs a free destination at
+          // least `minDist` away), which is why the diag run above found no `pick` for a static
+          // border. This action is the border-specific version: it reports the candidate AND its
+          // clearance numbers so the choice is falsifiable rather than curated.
+          if (o.action === "pickBorderTarget") {
+            const api = window.AiArrange;
+            if (!api || typeof window.scanLayout !== "function") {
+              return { ok: false, why: "no AiArrange or scanLayout in this world" };
+            }
+            const layout = await window.scanLayout();
+            const wrap = document.getElementById("print-layout-wrapper");
+            const origin = wrap ? wrap.getBoundingClientRect() : { x: 0, y: 0 };
+
+            // Every surface that would PAINT OVER a section: the tool's own fixed panels (z 10000+)
+            // and any opaque ancestor between the sheet and the section.
+            const fixedChrome = Array.from(document.body.querySelectorAll("*"))
+              .filter((el) => {
+                const cs = getComputedStyle(el);
+                if (cs.position !== "fixed" || cs.display === "none" || cs.visibility === "hidden") return false;
+                if (parseInt(cs.zIndex, 10) < 1000) return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 20 && r.height > 20;
+              })
+              .map((el) => {
+                const r = el.getBoundingClientRect();
+                return {
+                  cls: String(el.className || "").slice(0, 40),
+                  z: parseInt(getComputedStyle(el).zIndex, 10) || 0,
+                  x: r.x, y: r.y, w: r.width, h: r.height,
+                };
+              });
+
+            const rows = api.collectSections(layout).rows.filter(
+              (r) =>
+                r.width >= 150 &&
+                r.height >= 100 &&
+                Number.isFinite(r.left) &&
+                Number.isFinite(r.top) &&
+                Boolean(document.getElementById(r.id)),
+            );
+            const scored = rows.map((r) => {
+              const el = document.getElementById(r.id);
+              const rect = el.getBoundingClientRect();
+              // Centre + four corners, in viewport space. A border is a FRAME, so the four corners
+              // are the pixels a reviewer judges — a section whose centre is clear but whose corner
+              // is under the tray is exactly the case that made round 1 unreadable.
+              const probes = [
+                [rect.x + rect.width / 2, rect.y + rect.height / 2],
+                [rect.x + 6, rect.y + 6],
+                [rect.x + rect.width - 6, rect.y + 6],
+                [rect.x + 6, rect.y + rect.height - 6],
+                [rect.x + rect.width - 6, rect.y + rect.height - 6],
+              ];
+              const obstructions = [];
+              for (const [px, py] of probes) {
+                for (const c of fixedChrome) {
+                  if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) {
+                    obstructions.push(c.cls || "fixed@" + c.z);
+                  }
+                }
+                // A non-section element painted above the section at this point is equally fatal.
+                const top = document.elementFromPoint(px, py);
+                if (top && !(el === top || el.contains(top) || top.contains(el))) {
+                  const cls = String(top.className || "").slice(0, 40);
+                  if (cls) obstructions.push(cls);
+                }
+              }
+              return {
+                id: r.id,
+                title: r.title,
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+                viewport: { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height) },
+                obstructions: Array.from(new Set(obstructions)),
+                area: Math.round(rect.width * rect.height),
+              };
+            });
+            scored.sort((a, b) => a.obstructions.length - b.obstructions.length || b.area - a.area);
+            const clean = scored.filter((s) => s.obstructions.length === 0);
+            const best = clean[0] || scored[0] || null;
+            return {
+              ok: Boolean(best),
+              pick: best,
+              cleanCount: clean.length,
+              candidateCount: scored.length,
+              fixedChrome: fixedChrome.slice(0, 8),
+              wrapperOrigin: { x: origin.x, y: origin.y },
+              rejected: scored
+                .filter((s) => s.obstructions.length > 0)
+                .slice(0, 6)
+                .map((s) => ({ id: s.id, obstructions: s.obstructions })),
+            };
+          }
+
           // Phase 4: the isolated-world seam probe. Returns the border-choke-point names so
           // the gallery spec can assert the module exists in the SAME world the product's own
           // content script runs in. This is deliberately a NAMES-only answer: a real border
@@ -920,17 +1032,17 @@ async function contentCall(ctx, name, args = []) {
               };
             }
             const read = api.readBorderSvg(section);
-            const overlay = section.querySelector(".be-border-svg-overlay");
-            const geom = overlay
-              ? (() => {
-                  const cs = getComputedStyle(overlay);
-                  return {
-                    position: cs.position,
-                    pointerEvents: cs.pointerEvents,
-                    zIndex: parseInt(cs.zIndex, 10),
-                  };
-                })()
-              : null;
+            // D4: the border is painted by the product's own ::before border-image slot,
+            // driven by four inline custom properties on the section. The geometry the
+            // spec asserts (behind content, non-interactive) is the ::before rule's, so
+            // the probe reads the COMPUTED style of that pseudo-element.
+            const cs = getComputedStyle(section, "::before");
+            const geom = {
+              position: cs.position,
+              pointerEvents: cs.pointerEvents,
+              zIndex: parseInt(cs.zIndex, 10),
+              borderImageSource: cs.borderImageSource,
+            };
             return {
               ok: true,
               rendered: api.hasBorderSvg(section),
