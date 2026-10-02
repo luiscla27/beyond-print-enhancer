@@ -246,6 +246,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Blocking injection guard.** `scripts/check_border_svg_injection.js` is wired into `npm run lint` / `npm run pretest`. It is a structural guard, not an advisory, and fails the build if a second injection site or a direct-injection bypass appears in product source.
 - **Privacy copy.** `PRIVACY_POLICY.md` now documents the new on-device border storage and the border-design prompt in §2 and in the `storage` permission description.
 
+### Fixed
+- **Picking a raster border now actually replaces an AI border.** After the D4 pipeline
+  switch an AI border rides inline custom properties, and inline beats every stylesheet rule —
+  so the border picker (and the properties-panel picker, the catalog apply and the layout
+  rehydrate, which all funnel through the same clear) removed only the border CLASS and left
+  the AI border painted: clicking "Spikes" on an AI-bordered section was a visual no-op.
+  The shared clear now also clears the AI border through the render choke point
+  (`js/ai_border.js`), so one picker has one winner in both directions — a raster pick (or
+  "None") takes the AI border off, and a layout record that carries a `borderSvg` still
+  rehydrates last and wins over a `borderStyle`. (Track `byok_svg_borders_20260927`, operator
+  ruling R-1, 2026-10-01; pinned by `test/unit/ai_border_picker_clear.test.js`.)
+
 ### Changed
 - **The AI border paints through the SAME `border-image` pipeline as the built-in borders.** A
   generated border is now carried as four inline custom properties on the section (`--border-img`
