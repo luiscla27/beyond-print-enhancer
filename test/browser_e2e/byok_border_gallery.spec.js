@@ -326,8 +326,8 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
       // all four edges, which fails loudly instead of shipping another cropped ring to a gate.
       const OUTSET_PX = 16;
       const PAD = 24; // >= OUTSET_PX + 8: the clip must carry the whole painted band on every edge
-      const measureClip = async (id) => {
-        const r = await page.evaluate((sid) => {
+      const measureClip = async (pg, id) => {
+        const r = await pg.evaluate((sid) => {
           const el = document.getElementById(sid);
           if (!el) return null;
           const b = el.getBoundingClientRect();
@@ -369,7 +369,7 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
         // band's outer 16px photographable at all.
         await page.evaluate((pad) => window.scrollBy(0, -pad), PAD);
         await page.waitForTimeout(200);
-        measured = await measureClip(sectionId);
+        measured = await measureClip(page, sectionId);
         if (!measured) throw new Error("the chosen section " + sectionId + " is not in the document");
         const vp = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
         const needW = Math.max(vp.w, measured.clip.x + measured.clip.width + 2);
@@ -403,61 +403,174 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
           " — margins " + JSON.stringify(bandMargins) + "; the reviewer would judge a ring whose" +
           " outer half was cropped away",
       );
-      // Where the section sits INSIDE the clip, for this capture's own page state. Recorded on
-      // every frame (a per-design scroll can move the page) and used by the pixel metric.
-      const frameRect = {
-        x: Math.round(rectAtCapture.x - clip.x),
-        y: Math.round(rectAtCapture.y - clip.y),
-        w: Math.round(rectAtCapture.w),
-        h: Math.round(rectAtCapture.h),
-      };
       const frames = [];
 
       // Optional: a 1px magenta rectangle on the section's screen rect, drawn INSIDE the frames
       // when BORDER_GALLERY_MARK=1. It is harness-only (not product chrome) and it is what lets the
       // brief say "the magenta line is the section edge", turning "is the frame complete?" into a
-      // question about pixels rather than about the camera.
+      // question about pixels rather than about the camera. Marked once, below; `markSection`
+      // removes any previous mark, and each camera pass re-measures without re-marking. The
+      // per-pass `frameRect` (measured in the same page state its screenshots were taken in)
+      // supersedes the initial measure's rect for the manifest — the doctrine the old
+      // `const frameRect` block stated, now applied where it belongs.
+
+      // ---- THE JUDGED/OVERVIEW CAMERA (operator ruling D-A, 2026-10-01) ----
+      // The seat judges the per-design NATIVE-SCALE cells; the overview is SUPPLEMENTARY
+      // (ruling D-A; the judged-scale anchor is also the [SUPERSEDED] re-scope of AC-V1-c,
+      // ruling D-D). Every design is therefore captured TWICE:
+      //   judged   — in a SECOND extension context booted with `deviceScaleFactor: 2`, so
+      //              the PNG is TRUE device pixels of the band-inclusive clip (1408x3936
+      //              for the 704x1968 clip). MEASURED 2026-10-01: a CDP
+      //              `Emulation.setDeviceMetricsOverride` on the shared Playwright page
+      //              does NOT scale `page.screenshot` — Playwright pins its own metrics
+      //              from the CONTEXT options (the first judged frame came out 704x1968,
+      //              and the IHDR assertion below caught it), which is why the dsf is a
+      //              property of the judged context rather than an override on the shared
+      //              one. `launchExtensionContext` forwards the option (see its docstring).
+      //   overview — the original dsf-1 context, the round-22 scale, context only.
+      // Each pass asserts its PNG dimensions against clip * dsf (read from the PNG's own
+      // IHDR): a camera that silently falls back to 1x would ship an upscale as "native",
+      // which is exactly the instrument defect this ruling exists to end. Each pass
+      // re-scrolls, re-measures and re-asserts the band margins on ITS OWN page.
+      const pngSize = (file) => {
+        const fd = fs.openSync(file, "r");
+        const buf = Buffer.alloc(24);
+        fs.readSync(fd, buf, 0, 24, 0);
+        fs.closeSync(fd);
+        return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+      };
+      const makePassRunner = ({ passCtx, passPage, dsf, suffix, role }) => {
+        const remeasure = async () => {
+          let m = null;
+          for (let attempt = 0; attempt < 4; attempt++) {
+            await passPage.evaluate((id) => {
+              const el = document.getElementById(id);
+              if (el) el.scrollIntoView({ block: "start", behavior: "instant" });
+            }, sectionId);
+            await passPage.evaluate((pad) => window.scrollBy(0, -pad), PAD);
+            await passPage.waitForTimeout(200);
+            m = await measureClip(passPage, sectionId);
+            if (!m) throw new Error("the chosen section " + sectionId + " vanished during re-measure");
+            const cur = await passPage.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }));
+            const needW = Math.max(cur.w, m.clip.x + m.clip.width + 2);
+            const needH = Math.max(cur.h, m.clip.y + m.clip.height + 2);
+            if (needW === cur.w && needH === cur.h) break;
+            await passPage.setViewportSize({ width: needW, height: needH });
+          }
+          return m;
+        };
+        const clearSection = () =>
+          passPage.evaluate((id) => {
+            const section = document.getElementById(id);
+            if (section && window.AiBorder) window.AiBorder.clearBorderSvg(section);
+          }, sectionId);
+        return async () => {
+          const m = await remeasure();
+          const clipNow = m.clip;
+          const marginsNow = {
+            top: m.rect.y - clipNow.y,
+            bottom: clipNow.y + clipNow.height - (m.rect.y + m.rect.h),
+            left: m.rect.x - clipNow.x,
+            right: clipNow.x + clipNow.width - (m.rect.x + m.rect.w),
+          };
+          assert.ok(
+            marginsNow.top >= OUTSET_PX && marginsNow.bottom >= OUTSET_PX &&
+              marginsNow.left >= OUTSET_PX && marginsNow.right >= OUTSET_PX,
+            role + " pass: the clip " + JSON.stringify(clipNow) + " does not carry the band's outer " +
+              OUTSET_PX + "px around " + JSON.stringify(m.rect) + " — margins " + JSON.stringify(marginsNow),
+          );
+          const out = [];
+          for (const d of designs) {
+            await clearSection();
+            const applied = await contentCall(passCtx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: d.svg }]);
+            if (!applied || !applied.ok) continue;
+            await passPage.waitForTimeout(400);
+            const name = (d.variant ? d.id + "-v" + d.round : d.id) + suffix + ".png";
+            fs.mkdirSync(cap.shots, { recursive: true });
+            const p = path.join(cap.shots, name);
+            await passPage.screenshot({ path: p, clip: clipNow });
+            const px = pngSize(p);
+            const want = { w: Math.round(clipNow.width * dsf), h: Math.round(clipNow.height * dsf) };
+            assert.ok(
+              px.w === want.w && px.h === want.h,
+              name + ": the PNG is " + px.w + "x" + px.h + " but the camera claims deviceScaleFactor " +
+                dsf + " over " + clipNow.width + "x" + clipNow.height + " (want " + want.w + "x" + want.h +
+                ") — a judged cell must be TRUE device pixels (operator ruling D-A); a silent 1x " +
+                "fallback would ship an upscale as \"native\"",
+            );
+            out.push({ design: d, name, applied, px });
+            console.log("frame:", path.join(cap.subdir || "", name), "(" + role + ", dsf " + dsf + ", " + px.w + "x" + px.h + ")");
+          }
+          return { out, clip: clipNow, frameRect: {
+            x: Math.round(m.rect.x - clipNow.x),
+            y: Math.round(m.rect.y - clipNow.y),
+            w: Math.round(m.rect.w),
+            h: Math.round(m.rect.h),
+          } };
+        };
+      };
+
+      // JUDGED pass FIRST (the binding artifact) in its own dsf-2 context. The judged
+      // context must resolve to the SAME target section — `pickBorderTarget` scores
+      // deterministically, so a different pick means the two passes would judge different
+      // pixels under one manifest, and that fails loudly here instead of downstream.
+      const jctx = await launchExtensionContext({ deviceScaleFactor: 2 });
+      let judgedPass = null;
+      try {
+        const jpage = await bootPage(jctx);
+        await jpage.emulateMedia({ media: "print" });
+        const injected2 = await contentCall(jctx, "aiArrangeFirstSection", []);
+        assert.ok(injected2 && injected2.ok, "the dsf-2 judged context did not inject the extension");
+        await jpage.setViewportSize(cap.viewport);
+        const pick2 = await contentCall(jctx, "aiArrangeProbe", [{ action: "pickBorderTarget" }]);
+        assert.ok(
+          pick2 && pick2.ok && pick2.pick && pick2.pick.id === sectionId,
+          "the judged context resolved a different border target (" +
+            (pick2 && pick2.pick ? pick2.pick.id : "none") + " vs " + sectionId +
+            ") — the two passes would judge different pixels",
+        );
+        await markSection(jpage, sectionId);
+        judgedPass = await makePassRunner({
+          passCtx: jctx, passPage: jpage, dsf: 2, suffix: "", role: "judged native",
+        })();
+      } finally {
+        await jctx.close().catch(() => {});
+      }
+
       await markSection(page, sectionId);
+      const overviewPass = await makePassRunner({
+        passCtx: ctx, passPage: page, dsf: 1, suffix: "-overview", role: "overview (supplementary)",
+      })();
 
-      for (const d of designs) {
-        // Clear prior border.
-        await page.evaluate((id) => {
-          const section = document.getElementById(id);
-          if (section && window.AiBorder) window.AiBorder.clearBorderSvg(section);
-        }, sectionId);
-
-        // Apply design.
-        const applied = await contentCall(ctx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: d.svg }]);
-        if (!applied || !applied.ok) continue;
-
-        await page.waitForTimeout(400);
-        // A SUPERSEDED variant has the same id as its canonical design, so `d.id + ".png"` would
-        // overwrite the winner's frame — MEASURED in the first 20-design capture run: 20 cases,
-        // 12 files, and the 8 real model outputs the user asked to see were gone. A variant frame
-        // therefore carries its own round in the name.
-        const name = (d.variant ? d.id + "-v" + d.round : d.id) + ".png";
-        fs.mkdirSync(cap.shots, { recursive: true });
-        await page.screenshot({ path: path.join(cap.shots, name), clip });
-        console.log("frame:", path.join(cap.subdir || "", name), "(close-up", clip.width + "x" + clip.height + ")");
+      const judgedByKey = new Map(judgedPass.out.map((j) => [j.design.id + "|" + j.design.round, j]));
+      for (const o of overviewPass.out) {
+        const j = judgedByKey.get(o.design.id + "|" + o.design.round);
+        if (!j) continue; // the judged pass is the binding one; an overview without it is dropped
         frames.push({
-          id: d.id,
-          title: d.title,
+          id: o.design.id,
+          title: o.design.title,
           // A superseded blob keeps its own identity so the collage can label it separately from
           // the canonical design it lost to (same id, different bytes, different round).
-          variant: Boolean(d.variant),
-          label: (d.variant ? d.id + " v" + d.round + " (superseded)" : d.id),
+          variant: Boolean(o.design.variant),
+          label: (o.design.variant ? o.design.id + " v" + o.design.round + " (superseded)" : o.design.id),
           // The frozen design's own identity, so a red Muse cell in the collage can be traced to
           // the exact bytes that were rendered (and to the round that produced them).
-          sha256: d.sha256 || null,
-          round: d.round || null,
-          criterion: d.criterion || null,
-          file: name,
-          svgChars: (applied.read || "").length,
+          sha256: o.design.sha256 || null,
+          round: o.design.round || null,
+          criterion: o.design.criterion || null,
+          // Present only for an override (operator ruling D-C): the judged TEXT differs from
+          // what the winning round generated, and both ride on the fixture entry.
+          criterionOverride: o.design.criterionOverride || null,
+          // THE JUDGED CELL: true 2x device pixels; `overviewFile` is the supplementary view.
+          file: j.name,
+          role: "judged",
+          deviceScaleFactor: 2,
+          overviewFile: o.name,
+          overviewDeviceScaleFactor: 1,
+          svgChars: (j.applied.read || "").length,
           sectionId,
-          clip,
-          // The section's rect INSIDE this frame, measured in the same page state the
-          // screenshot was taken in (see the comment on `frameRect` above the loop).
-          frameRect,
+          clip: judgedPass.clip,
+          frameRect: judgedPass.frameRect,
         });
       }
 
@@ -472,14 +585,16 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
         // (1.0000). A reader comparing rounds MUST see which pipeline produced the pixels.
         media: "print",
         target: pick.pick,
-        clip,
-        // WHERE THE SECTION IS INSIDE THE CLIP, for the page state the last frame was taken in.
-        // (Per-frame values are on each entry in `designs`; this top-level copy is the one a
-        // reader sees first.) `target.viewport` is a PRE-scroll measurement and the clip is
-        // derived from the POST-scroll rect, so the two disagree — MEASURED 2026-09-30: the
-        // frame's left rule sits at image x=6..11, the pre-scroll numbers imply x=8, and the
-        // post-scroll pick reports x=24. Only this rect describes the pixels in the frames.
-        frameRect,
+        // THE TWO CAMERAS (operator ruling D-A). `judged*` describes the binding cells;
+        // `overview*` the supplementary ones. Each pass re-measured its own clip, so both
+        // are recorded rather than assumed identical.
+        judged: { deviceScaleFactor: 2, fileSuffix: "", clip: judgedPass.clip, role: "binding (AC-V1-c + per-design criteria)" },
+        overview: { deviceScaleFactor: 1, fileSuffix: "-overview", clip: overviewPass.clip, role: "supplementary context (AC-V1-a/b)" },
+        clip: judgedPass.clip,
+        // WHERE THE SECTION IS INSIDE THE CLIP, for the page state the judged pass ran in.
+        // `target.viewport` is a PRE-scroll measurement and the clip is derived from the
+        // POST-scroll rect, so the two disagree — only this rect describes the pixels.
+        frameRect: judgedPass.frameRect,
         designs: frames,
       });
 

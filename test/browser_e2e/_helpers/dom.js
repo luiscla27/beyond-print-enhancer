@@ -34,17 +34,28 @@ function productionInjectFiles() {
 }
 const FILES = productionInjectFiles();
 
-/** Launch one persistent Chromium context with the extension loaded. */
-async function launchExtensionContext() {
+/** Launch one persistent Chromium context with the extension loaded.
+ *
+ * `opts` is forwarded into `launchPersistentContext` — the ONE case that needs it today is
+ * the Phase-4 judged camera (track `byok_svg_borders_20260927`, operator ruling D-A): a
+ * TRUE `deviceScaleFactor: 2` context, because MEASURED 2026-10-01 a CDP
+ * `Emulation.setDeviceMetricsOverride` on a Playwright page does NOT scale
+ * `page.screenshot` (Playwright pins its own metrics from the context options — the first
+ * judged frame came out 704x1968 instead of 1408x3936, and the harness's own IHDR
+ * assertion caught it). The dsf therefore has to be a property of the CONTEXT, which is
+ * why the judged pass boots its own context instead of overriding the shared one. */
+async function launchExtensionContext(opts = {}) {
   const profile = path.join(EXT_ROOT, "temp", ".pw-e2e-" + Date.now());
   const ctx = await chromium.launchPersistentContext(profile, {
     headless: true,
     executablePath: chromium.executablePath(),
+    ...opts,
     args: [
       `--disable-extensions-except=${EXT_ROOT}`,
       `--load-extension=${EXT_ROOT}`,
       "--disable-blink-features=AutomationControlled",
       "--headless=new",
+      ...((opts && opts.args) || []),
     ],
   });
   // A persistent context needs a real user-data dir, and each one is ~48MB of

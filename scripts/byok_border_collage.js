@@ -59,7 +59,13 @@ function readDesigns() {
     const data = JSON.parse(fs.readFileSync(manifest, "utf8"));
     return {
       cells: (data.designs || []).map((d) => ({
-        file: path.join(ART, d.file),
+        // The OVERVIEW frame is the collage's cell (operator ruling D-A, 2026-10-01): since
+        // the D-A camera `d.file` is the JUDGED cell (deviceScaleFactor 2, native band
+        // strips) and `d.overviewFile` the dsf-1 whole-section view. The overview strip is
+        // SUPPLEMENTARY context for the seat — the judged artifact is composed by
+        // `scripts/byok_border_judged.js` — so the collage reads the overview when the
+        // manifest carries one and falls back to `file` for pre-D-A manifests.
+        file: path.join(ART, d.overviewFile || d.file),
         // Prefer the manifest's own label: a SUPERSEDED variant shares its canonical design's id
         // (same instruction, earlier round), so `id` alone labels two different artworks the same
         // and the reviewer cannot tell which bytes they are judging. Fall back to the id for
