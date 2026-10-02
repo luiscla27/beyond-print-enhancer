@@ -32,8 +32,20 @@ gitignored scratch driver survives" as a re-runnability limitation (gate re-run 
 
 Usage:
   python scripts/byok_border_visual_seat.py [--round-dir <dir>] [--out <dir>] [--only <substr>]
+  [--force]
   (defaults: the latest temp/visual_logs/byok_svg_borders_20260927/gallery-roundN with a
    judged-meta.json, and <round-dir>/seat/)
+
+Round 24 added `--force` for the MANDATED RE-CONFIRMATION (operator instruction 2026-10-01):
+when a design's verdict flips between rounds on a BYTE-IDENTICAL judged cell, that verdict is
+not full evidence — the seat is stochastic even at temperature 0.0 — so it must reproduce
+before anything is read off it (`temp/scratch/psc_hashrounds.py` proves the byte identity).
+`--force` re-asks the same image the same brief WITHOUT touching the round's first transcript,
+writing rep2/rep3 files beside it, so the first answer stays intact as evidence. It is also
+what the diagnostic CHALLENGE uses (`--challenge <design> --points <file>`): the same seat, the
+same pixels, plus the measured coordinates it is asked to falsify. The challenge is DIAGNOSTIC,
+never persuasive — the seat is told in the brief that raising a score, softening, or agreeing
+without the pixels is VOID and that its original verdict then stands.
 """
 import argparse
 import importlib.util
@@ -41,6 +53,12 @@ import json
 import os
 import sys
 import time
+
+# The verdicts are reviewer TEXT and legitimately contain characters outside cp1252 (≥, ×, —);
+# a console that cannot ENCODE them must not kill a 24-call run after the transcript was already
+# written (MEASURED: round-24 run crashed at cell 2 on '\\u2265' mid-print).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
@@ -135,7 +153,9 @@ def latest_round_dir():
     return max(rounds)[1]
 
 
-def build_brief(img):
+def build_brief(img, challenge_points=None):
+    if challenge_points is not None:
+        return challenge_points
     extra = CANON_EXTRA if not img["variant"] else VARIANT_EXTRA
     critlines = 1 + (1 if not img["variant"] else 0)
     return HEADER % {
@@ -154,6 +174,15 @@ def main():
     ap.add_argument("--round-dir", default=None, help="gallery round directory (default: latest with judged-meta.json)")
     ap.add_argument("--out", default=None, help="transcript directory (default: <round-dir>/seat)")
     ap.add_argument("--only", default="", help="only images whose file name contains this substring")
+    ap.add_argument("--force", action="store_true",
+                    help="re-ask even a cached cell, writing repN files BESIDE the first transcript "
+                         "(mandated re-confirmation of a verdict that flipped on identical pixels)")
+    ap.add_argument("--reps", type=int, default=1,
+                    help="with --force: how many repeats of the same call to write (rep2, rep3, ...)")
+    ap.add_argument("--challenge", default="",
+                    help="with --force: judge this design against the verbatim brief in --points "
+                         "instead of its own brief (diagnostic challenge of a filed verdict)")
+    ap.add_argument("--points", default="", help="the challenge brief file (verbatim, used as-is)")
     args = ap.parse_args()
 
     round_dir = os.path.abspath(args.round_dir) if args.round_dir else latest_round_dir()
@@ -164,36 +193,59 @@ def main():
     brief_dir = os.path.join(out_dir, "briefs")
     os.makedirs(brief_dir, exist_ok=True)
 
+    challenge_text = None
+    if args.challenge:
+        if not args.points or not os.path.isfile(args.points):
+            raise SystemExit("--challenge needs --points <file> with the verbatim challenge brief")
+        challenge_text = open(args.points, encoding="utf-8").read()
+
     meta = json.load(open(meta_path, encoding="utf-8"))
     spec = importlib.util.spec_from_file_location("byok_vision_gate", GATE)
     gate = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gate)
 
     todo = [i for i in meta["images"] if args.only in i["file"]]
-    print("visual seat: %d image(s) from %s" % (len(todo), round_dir))
+    if args.challenge:
+        todo = [i for i in todo if args.challenge in i["file"] or args.challenge == i["label"]]
+        if not todo:
+            raise SystemExit("--challenge %r matched no image in %s" % (args.challenge, round_dir))
+    print("visual seat: %d image(s) from %s%s" % (
+        len(todo), round_dir, " [FORCED]" if args.force else ""))
     for n, img in enumerate(todo, 1):
-        out = os.path.join(out_dir, "seat_" + img["file"].replace(".png", ".txt"))
-        if os.path.isfile(out) and os.path.getsize(out) > 0:
+        base = os.path.join(out_dir, "seat_" + img["file"].replace(".png", ""))
+        out = base + ".txt"
+        if os.path.isfile(out) and os.path.getsize(out) > 0 and not args.force:
             print("[%d/%d] cached %s" % (n, len(todo), img["file"]))
             continue
-        brief = os.path.join(brief_dir, img["file"].replace(".png", ".md"))
-        with open(brief, "w", encoding="utf-8") as f:
-            f.write(build_brief(img))
-        print("[%d/%d] %s" % (n, len(todo), img["file"]))
-        verdict = None
-        for attempt in (1, 2):
-            try:
-                verdict = gate.dispatch(gate.REVIEWERS["muse"],
-                                        os.path.join(round_dir, img["file"]), brief)
-                break
-            except Exception as exc:            # noqa: BLE001 — outage: retry once, then fail loudly
-                print("   attempt %d failed: %s" % (attempt, exc))
-                if attempt == 2:
-                    raise
-                time.sleep(5)
-        with open(out, "w", encoding="utf-8") as f:
-            f.write(verdict)
-        print("   " + verdict.strip().replace("\n", "\n   "))
+        if challenge_text is not None:
+            brief = os.path.join(brief_dir, img["file"].replace(".png", "") + "-challenge.md")
+            with open(brief, "w", encoding="utf-8") as f:
+                f.write(challenge_text)
+        else:
+            brief = os.path.join(brief_dir, img["file"].replace(".png", ".md"))
+            with open(brief, "w", encoding="utf-8") as f:
+                f.write(build_brief(img))
+        targets = [out] if not (args.force and challenge_text is None) else \
+            [base + "_rep%d.txt" % r for r in range(2, 2 + max(1, args.reps))]
+        for out_path in targets:
+            if os.path.isfile(out_path) and os.path.getsize(out_path) > 0 and args.force:
+                print("[%d/%d] cached %s" % (n, len(todo), os.path.basename(out_path)))
+                continue
+            print("[%d/%d] %s -> %s" % (n, len(todo), img["file"], os.path.basename(out_path)))
+            verdict = None
+            for attempt in (1, 2):
+                try:
+                    verdict = gate.dispatch(gate.REVIEWERS["muse"],
+                                            os.path.join(round_dir, img["file"]), brief)
+                    break
+                except Exception as exc:            # noqa: BLE001 — outage: retry once, then fail loudly
+                    print("   attempt %d failed: %s" % (attempt, exc))
+                    if attempt == 2:
+                        raise
+                    time.sleep(5)
+            with open(out_path, "w", encoding="utf-8") as f:
+                f.write(verdict)
+            print("   " + verdict.strip().replace("\n", "\n   "))
     print("transcripts under " + out_dir)
 
 

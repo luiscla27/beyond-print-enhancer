@@ -279,15 +279,30 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     assert.deepStrictEqual(gilded, ["1", "5"], "01-gilded-frame's superseded rounds changed: " + gilded.join(","));
   });
 
-  it("D-C: exactly one criterion override exists, on 04-dragon-scale, with both texts and provenance", function () {
+  it("operator overrides: exactly the two ruled ids carry a criterion override, each with provenance", function () {
+    // Operator rulings, both dated 2026-10-01, both re-cutting a judged TEXT while the frozen
+    // bytes stay the winning round's:
+    //   D-C — 04-dragon-scale: aspect-independent scale criterion (the anisotropy of the
+    //         product's border-image edge scaling on a tall section).
+    //   R-3 — 01-gilded-frame: the colour clause ("gold tone") dropped to shape-only, because
+    //         the product's default decoration filter (grayscale(100%)) removes every hue from
+    //         the judged band before any pixel exists (operator ruling R-2 keeps the judged
+    //         instrument at PRINT defaults). The re-cut text is measured against the judged
+    //         frame: two rules per edge (95.5-99.0% line coverage) and a diamond at each of the
+    //         four corners (ink deltas +41/+22/+32/+19 over an identical control box).
+    // An override on ANY other id fails here — that is the fence that keeps a re-cut from
+    // arriving unreviewed.
     const withOverride = corpus.designs.filter((d) => d.criterionOverride);
     assert.deepStrictEqual(
-      withOverride.map((d) => d.id),
-      ["04-dragon-scale"],
-      "criterion overrides must exist on exactly the D-C id — another id carrying one means " +
-        "an unreviewed re-cut reached the fixture",
+      withOverride.map((d) => d.id).sort(),
+      ["01-gilded-frame", "04-dragon-scale"],
+      "criterion overrides must exist on exactly the D-C and R-3 ids — another id carrying one " +
+        "means an unreviewed re-cut reached the fixture",
     );
-    const d04 = withOverride[0];
+    const byId = {};
+    for (const d of withOverride) byId[d.id] = d;
+
+    const d04 = byId["04-dragon-scale"];
     const ov = d04.criterionOverride;
     assert.strictEqual(ov.ruledBy, "D-C", "04's override must name the ruling that made it");
     assert.strictEqual(ov.ruledOn, "2026-10-01", "04's override must carry its ruling date");
@@ -316,6 +331,44 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       d04.sha256,
       "9c25ad91590462baa779cae2f6f8ce3693e4660b67930525d7dc2f94efe79481",
       "04: the frozen bytes changed under an override that only re-cuts the criterion",
+    );
+
+    const d01 = byId["01-gilded-frame"];
+    const o1 = d01.criterionOverride;
+    assert.strictEqual(o1.ruledBy, "R-3", "01's override must name the ruling that made it");
+    assert.strictEqual(o1.ruledOn, "2026-10-01", "01's override must carry its ruling date");
+    assert.ok(o1.reason && o1.reason.length > 40, "01's override must carry its reason");
+    assert.strictEqual(
+      d01.criterionGenerated,
+      o1.supersedes,
+      "01: supersedes must equal the text the winning round actually generated",
+    );
+    assert.notStrictEqual(d01.criterion, d01.criterionGenerated, "01: an override that changes nothing");
+    // The judged criterion must be SHAPE-ONLY and must not DEMAND a hue — the whole point of
+    // R-3, and the property that makes it satisfiable at the product's PRINT defaults.
+    // The re-cut text deliberately KEEPS a disclaimer ("no hue is expected ... an absence of
+    // colour is NOT a failure") so the visual seat is told, in the judged text itself, that
+    // greyscale is the shipped state — that disclaimer is a feature, not a demand, so the
+    // fence tests for colour DEMANDS (the phrase forms the superseded text used), not for the
+    // words in a negative sentence.
+    assert.ok(
+      !/gold\s*tone|gold-tone|in\s+a?\s*gold|stroke[d]?\s+(the\s+)?(rules|lines|marks|frame)\s+in\s+gold/i.test(d01.criterion),
+      "01: the re-cut criterion still DEMANDS a hue — R-3 makes it shape-only",
+    );
+    assert.ok(
+      /greyscale|grayscale|no hue|absence of colour|absence of color/i.test(d01.criterion),
+      "01: the re-cut criterion must carry the disclaimer that greyscale is the shipped state " +
+        "(the seat failed 01 on colour exactly once already — the judged text must say so)",
+    );
+    assert.ok(
+      /continu/i.test(d01.criterion) && /corner/i.test(d01.criterion),
+      "01: the re-cut criterion must keep the two clauses the pixels support (continuity + corner marks)",
+    );
+    assert.strictEqual(d01.round, "5b", "01: R-3 re-cut the criterion, not the artwork");
+    assert.strictEqual(
+      d01.sha256,
+      "99605fc36fcc243fa11f4e1109207b8310fb0dae8999c98453e8cc7bef713e3d",
+      "01: the frozen bytes changed under an override that only re-cuts the criterion",
     );
   });
 
