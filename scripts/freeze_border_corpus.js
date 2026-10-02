@@ -19,7 +19,10 @@
  * WHAT IS FROZEN
  * --------------
  * Every accepted blob from every `designs-round*.json` the generator ever wrote — 20 of them
- * across 12 corpus ids (8 ids were re-accepted in a later round) — split into two arrays:
+ * across 12 corpus ids before the 2026-10-01 re-freeze (round 5 added 3 more for the three
+ * ids operator ruling D-B re-prompted, so 23 blobs / 11 variants after it; the count is
+ * simply "every accepted round entry", asserted by the unit suite either way) — split into
+ * two arrays:
  *
  *   `designs`  — the 12 CANONICAL blobs, one per id = LAST-ACCEPTED-WINS in generation order
  *                (rounds 1, 2, 3, 4, 4b, 4c). This is the merge rule the generator's own
@@ -41,6 +44,17 @@
  * `instruction` is NOT stable for a re-accepted id (MEASURED: 8 of 12 ids carry two distinct
  * instruction strings across rounds — the corpus file was edited between them), so each entry
  * records the instruction of the round that WON, which is the one the frozen bytes answer.
+ *
+ * CRITERION OVERRIDES (`test/fixtures/byok_border_criteria_overrides.json`) — the ONE
+ * sanctioned way to re-cut a per-design `criterion` WITHOUT regenerating the artwork. A
+ * canonical id named there keeps its winning round's bytes but is judged by the override
+ * text; the fixture entry then carries three fields instead of silently swapping one:
+ * `criterion` (the override — what the seat judges), `criterionGenerated` (the winning
+ * round's own text, preserved) and `criterionOverride` ({supersedes, ruledBy, ruledOn,
+ * reason}). The override file is a freeze INPUT, so byte-reproducibility is unchanged.
+ * This exists because operator ruling D-C (2026-10-01) re-cut 04-dragon-scale's criterion
+ * aspect-independently while KEEPING the round-4c bytes — editing the round file would
+ * falsify the generator's record, and regenerating was not what the ruling ordered.
  *
  * DETERMINISM
  * -----------
@@ -117,6 +131,23 @@ function sha256(s) {
   return crypto.createHash("sha256").update(s, "utf8").digest("hex");
 }
 
+const OVERRIDES_PATH = path.join(ROOT, "test", "fixtures", "byok_border_criteria_overrides.json");
+
+/**
+ * The sanctioned criterion overrides (see the docstring). Missing file -> no overrides;
+ * a malformed file FAILS LOUDLY rather than silently dropping a ruling on the floor.
+ */
+function loadOverrides() {
+  if (!fs.existsSync(OVERRIDES_PATH)) return {};
+  const raw = JSON.parse(fs.readFileSync(OVERRIDES_PATH, "utf8"));
+  const ov = raw && raw.overrides;
+  if (ov === undefined || ov === null) return {};
+  if (typeof ov !== "object" || Array.isArray(ov)) {
+    throw new Error("criterion overrides file has a non-object `overrides` member: " + OVERRIDES_PATH);
+  }
+  return ov;
+}
+
 /**
  * The frozen corpus: one CANONICAL blob per id (last-accepted-wins) plus the superseded
  * variants, each carrying its own sha256 so a red frame can name its input.
@@ -150,17 +181,35 @@ function buildCorpus(dir) {
     }
     lastById.set(design.id, { round, design });
   }
-  const designs = Array.from(lastById.values()).map(({ round, design }) => ({
-    id: design.id,
-    title: design.title,
-    instruction: design.instruction,
-    criterion: design.criterion,
-    model: design.model,
-    round,
-    svgChars: design.svg.length,
-    sha256: sha256(design.svg),
-    svg: design.svg,
-  }));
+  const overrides = loadOverrides();
+  const designs = Array.from(lastById.values()).map(({ round, design }) => {
+    const entry = {
+      id: design.id,
+      title: design.title,
+      instruction: design.instruction,
+      criterion: design.criterion,
+    };
+    // Criterion override (operator ruling, e.g. D-C): the BYTES stay the winning round's;
+    // the judged TEXT comes from the overrides file, and both texts plus the provenance
+    // ride on the entry so nothing is silently swapped.
+    const ov = overrides[design.id];
+    if (ov && ov.criterion) {
+      entry.criterionGenerated = design.criterion;
+      entry.criterionOverride = {
+        supersedes: typeof ov.supersedes === "string" ? ov.supersedes : design.criterion,
+        ruledBy: ov.ruledBy || null,
+        ruledOn: ov.ruledOn || null,
+        reason: ov.reason || null,
+      };
+      entry.criterion = ov.criterion;
+    }
+    entry.model = design.model;
+    entry.round = round;
+    entry.svgChars = design.svg.length;
+    entry.sha256 = sha256(design.svg);
+    entry.svg = design.svg;
+    return entry;
+  });
   designs.sort((a, b) => (a.id < b.id ? -1 : 1));
   for (const v of variants) {
     const winner = designs.find((d) => d.id === v.id);
@@ -187,8 +236,14 @@ function main(argv) {
       "Regenerate with `node scripts/freeze_border_corpus.js`; do NOT hand-edit. The live " +
       "generator (scripts/border_design_generator.js) is a non-deterministic free leg, so " +
       "its accepted output is frozen here or the visual gate is not a gate.",
-    _source: "designs-round*.json (generation order 1, 2, 3, 4, 4b, 4c)",
-    _rule: "designs = one canonical blob per id, LAST accepted wins; variants = superseded blobs",
+    _source:
+      "designs-round*.json (generation order) + test/fixtures/byok_border_criteria_overrides.json "
+      + "(criterion overrides, the sanctioned way to re-cut a judged TEXT without touching the bytes)",
+    _rule:
+      "designs = one canonical blob per id, LAST accepted wins; variants = superseded blobs; "
+      + "a canonical id named in the overrides file carries criterion=override + "
+      + "criterionGenerated (the winning round's own text) + "
+      + "criterionOverride {supersedes, ruledBy, ruledOn, reason}",
     rounds: files,
     designs,
     variants,
@@ -201,7 +256,8 @@ function main(argv) {
   for (const d of designs) {
     console.log(
       "  " + d.id.padEnd(20) + " round " + d.round.padEnd(3) + " " +
-        String(d.svgChars).padStart(5) + " chars  " + d.sha256.slice(0, 12)
+        String(d.svgChars).padStart(5) + " chars  " + d.sha256.slice(0, 12) +
+        (d.criterionOverride ? "  [criterion override by " + d.criterionOverride.ruledBy + "]" : "")
     );
   }
 

@@ -16,8 +16,8 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "instruction": "Draw a restrained double gold rule frame with a small diamond at each corner. Thin lines, nothing ornate.",
-      "criterion": "Two concentric rectangular rules in a gold tone are both closed around the full rectangle, a diamond mark sits at each of the four corners, and no rule crosses the interior."
+      "instruction": "Draw a restrained double gold rule frame: TWO concentric rectangular rules, one inside the other, each drawn as ONE CONTINUOUS SOLID line running unbroken around all four edges — no gaps, no dashes, no tick marks, no breaks anywhere on either rule. Stroke the rules and the corner diamonds in a GOLD tone (for example #c9a227 or #d4af37) — NOT black, NOT grey. Place a small solid gold diamond at each of the four corners. Keep the lines thin and the interior empty.",
+      "criterion": "Two concentric rectangular rules in a gold tone are both drawn as continuous SOLID lines closed around the full rectangle — no gaps or dashes anywhere on either rule — a diamond mark sits at each of the four corners, and no rule crosses the interior."
     },
     {
       "id": "02-runic-band",
@@ -40,8 +40,8 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "instruction": "Draw a celestial border: a thin arc along the top and bottom edges. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star must be clearly visible and separate from the others.",
-      "criterion": "A distinct arc curve is drawn along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them."
+      "instruction": "Draw a celestial border: ONE thin SOLID arc curve along the top edge and ONE thin SOLID arc curve along the bottom edge — each arc a SINGLE UNBROKEN stroke, no dashes, no gaps, no dotted segments. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star drawn with solid strokes or filled, clearly visible and separate from the others.",
+      "criterion": "A thin arc curve drawn as a single unbroken solid stroke (no dashes, no gaps) runs along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them."
     },
     {
       "id": "06-chainmail",
@@ -58,8 +58,8 @@
     {
       "id": "08-flame-crest",
       "title": "Flame crest rails",
-      "instruction": "Draw flames along the left and right edges. Each flame must have a clearly tapered tongue — wide at the base, narrowing to a sharp point. The same direction of flame tongues (pointing inward toward the center) must appear on BOTH the left edge AND the right edge. The top and bottom edges carry only a plain straight rule.",
-      "criterion": "Flame tongues with a visible tapered tip are drawn along the left edge AND the right edge, they point the same direction on both sides, and the top and bottom carry only a plain straight rule."
+      "instruction": "Draw BOLD flame tongues along the left and right edges: each flame is a FILLED shape at least 8px wide at its base, clearly tapering to a sharp point, so the tongues stay visible even when the border is drawn small. The flame tongues on BOTH edges point INWARD toward the center. The top and bottom edges carry only one plain solid straight rule each.",
+      "criterion": "FILLED flame tongues, each at least 8px wide at its base and clearly tapering to a sharp point, are drawn along the left edge AND the right edge; the tongues point inward on both sides; and the top and bottom edges carry only a plain straight rule."
     },
     {
       "id": "09-frost-shards",

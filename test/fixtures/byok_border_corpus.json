@@ -1,26 +1,28 @@
 {
   "_comment": "FROZEN BYOK border-design corpus. Deterministic input for the gallery gate (test/browser_e2e/byok_border_gallery.spec.js) and the render-path unit tests. Regenerate with `node scripts/freeze_border_corpus.js`; do NOT hand-edit. The live generator (scripts/border_design_generator.js) is a non-deterministic free leg, so its accepted output is frozen here or the visual gate is not a gate.",
-  "_source": "designs-round*.json (generation order 1, 2, 3, 4, 4b, 4c)",
-  "_rule": "designs = one canonical blob per id, LAST accepted wins; variants = superseded blobs",
+  "_source": "designs-round*.json (generation order) + test/fixtures/byok_border_criteria_overrides.json (criterion overrides, the sanctioned way to re-cut a judged TEXT without touching the bytes)",
+  "_rule": "designs = one canonical blob per id, LAST accepted wins; variants = superseded blobs; a canonical id named in the overrides file carries criterion=override + criterionGenerated (the winning round's own text) + criterionOverride {supersedes, ruledBy, ruledOn, reason}",
   "rounds": [
     "designs-round1.json",
     "designs-round2.json",
     "designs-round3.json",
     "designs-round4.json",
     "designs-round4b.json",
-    "designs-round4c.json"
+    "designs-round4c.json",
+    "designs-round5.json",
+    "designs-round5b.json"
   ],
   "designs": [
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "instruction": "Draw a restrained double gold rule frame with a small diamond at each corner. Thin lines, nothing ornate.",
-      "criterion": "Two concentric rectangular rules in a gold tone are both closed around the full rectangle, a diamond mark sits at each of the four corners, and no rule crosses the interior.",
+      "instruction": "Draw a restrained double gold rule frame: TWO concentric rectangular rules, one inside the other, each drawn as ONE CONTINUOUS SOLID line running unbroken around all four edges — no gaps, no dashes, no tick marks, no breaks anywhere on either rule. Stroke the rules and the corner diamonds in a GOLD tone (for example #c9a227 or #d4af37) — NOT black, NOT grey. Place a small solid gold diamond at each of the four corners. Keep the lines thin and the interior empty.",
+      "criterion": "Two concentric rectangular rules in a gold tone are both drawn as continuous SOLID lines closed around the full rectangle — no gaps or dashes anywhere on either rule — a diamond mark sits at each of the four corners, and no rule crosses the interior.",
       "model": "poolside/laguna-s-2.1:free",
-      "round": "1",
-      "svgChars": 719,
-      "sha256": "b4aa0e9eb18732a9b6d9660b7326b3adce261a94105591ea3593247534d0dc5c",
-      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><pattern id=\"gold\" x=\"0\" y=\"0\" width=\"4\" height=\"4\" patternUnits=\"userSpaceOnUse\"><path d=\"M0 0L4 4M4 0L0 4\" stroke=\"#d4af37\" stroke-width=\"1\"/></pattern></defs><g stroke=\"#888\" stroke-width=\"1\" fill=\"none\"><rect x=\"0.5\" y=\"0.5\" width=\"223\" height=\"143\" stroke-dasharray=\"4 3\"/><rect x=\"2\" y=\"2\" width=\"220\" height=\"140\" stroke=\"url(#gold)\" stroke-width=\"2\"/></g><g fill=\"#d4af37\"><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(0,0)\"/><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(224,0)\"/><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(0,144)\"/><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(224,144)\"/></g></svg>"
+      "round": "5b",
+      "svgChars": 889,
+      "sha256": "99605fc36fcc243fa11f4e1109207b8310fb0dae8999c98453e8cc7bef713e3d",
+      "svg": "<svg viewBox=\"0 0 256 288\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"goldGrad\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#c9a227\"/><stop offset=\"100%\" stop-color=\"#d4af37\"/></linearGradient></defs><polygon points=\"8,8 248,8 248,280 8,280\" fill=\"none\" stroke=\"url(#goldGrad)\" stroke-width=\"2\" stroke-linejoin=\"miter\"/><polygon points=\"16,16 232,16 232,272 16,272\" fill=\"none\" stroke=\"url(#goldGrad)\" stroke-width=\"2\" stroke-linejoin=\"miter\"/><polygon points=\"12,12 16,8 20,12 16,20\" fill=\"url(#goldGrad)\" transform=\"translate(0,0)\"/><polygon points=\"12,12 16,8 20,12 16,20\" fill=\"url(#goldGrad)\" transform=\"translate(232,0)\"/><polygon points=\"12,12 16,8 20,12 16,20\" fill=\"url(#goldGrad)\" transform=\"translate(0,272)\"/><polygon points=\"12,12 16,8 20,12 16,20\" fill=\"url(#goldGrad)\" transform=\"translate(232,272)\"/></svg>"
     },
     {
       "id": "02-runic-band",
@@ -48,7 +50,14 @@
       "id": "04-dragon-scale",
       "title": "Dragon scale rail",
       "instruction": "Draw a rail of overlapping dragon scales around the border, scutes pointing outward. Draw the EXACT SAME scale pattern on all four edges — top, right, bottom, left — so the texture is consistent. Each scale must visibly overlap its neighbour with the top of one scale tucked under the one beside it.",
-      "criterion": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour, and the rows read as the same texture on the left/right as on the top/bottom.",
+      "criterion": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour; the individual scales are judged where the pipeline paints them at the source's own proportions — the top and bottom rails — and the left and right rails must carry the same overlapping-row texture even where the pipeline's anisotropic edge scaling narrows the individual scales.",
+      "criterionGenerated": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour, and the rows read as the same texture on the left/right as on the top/bottom.",
+      "criterionOverride": {
+        "supersedes": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour, and the rows read as the same texture on the left/right as on the top/bottom.",
+        "ruledBy": "D-C",
+        "ruledOn": "2026-10-01",
+        "reason": "Operator ruling D-C: the frozen 4c blob (800x800, filled paths) is deformed by anisotropic border-image edge scaling on the 656x1920 gallery section; the ruling re-cut the criterion aspect-independently and kept the render knobs unchanged, so the criterion now judges the source's proportions where the pipeline preserves them and only demands texture (not aspect) on the anisotropic rails."
+      },
       "model": "poolside/laguna-s-2.1:free",
       "round": "4c",
       "svgChars": 3488,
@@ -58,13 +67,13 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "instruction": "Draw a celestial border: a thin arc along the top and bottom edges. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star must be clearly visible and separate from the others.",
-      "criterion": "A distinct arc curve is drawn along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them.",
+      "instruction": "Draw a celestial border: ONE thin SOLID arc curve along the top edge and ONE thin SOLID arc curve along the bottom edge — each arc a SINGLE UNBROKEN stroke, no dashes, no gaps, no dotted segments. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star drawn with solid strokes or filled, clearly visible and separate from the others.",
+      "criterion": "A thin arc curve drawn as a single unbroken solid stroke (no dashes, no gaps) runs along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them.",
       "model": "poolside/laguna-s-2.1:free",
-      "round": "4b",
-      "svgChars": 1070,
-      "sha256": "495fa2914016b6d0411900f31578865aa2907483b496b049f5a6b3b6e3992959",
-      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g1\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\"/><stop offset=\"100%\" stop-color=\"#a8c4ff\"/></linearGradient></defs><rect x=\"0\" y=\"0\" width=\"224\" height=\"256\" fill=\"url(#g1)\"/><path d=\"M8,24 A104,104 0 0 1 216,24\" fill=\"none\" stroke=\"#003366\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/><path d=\"M8,232 A104,104 0 0 1 216,232\" fill=\"none\" stroke=\"#003366\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/><g fill=\"#003366\"><polygon points=\"40,70 44,80 54,82 44,88 40,98 36,88 26,82 36,70\"/><polygon points=\"100,60 104,70 114,72 104,78 100,88 96,78 86,72 96,60\"/><polygon points=\"160,75 164,85 174,87 164,93 160,103 156,93 146,87 156,75\"/><polygon points=\"60,120 64,130 74,132 64,138 60,148 56,138 46,132 56,120\"/><polygon points=\"130,115 134,125 144,127 134,133 130,143 126,133 116,127 126,115\"/><polygon points=\"90,160 94,170 104,172 94,178 90,188 86,178 76,172 86,160\"/><polygon points=\"170,155 174,165 184,167 174,173 170,183 166,173 156,167 166,155\"/></g></svg>"
+      "round": "5",
+      "svgChars": 1125,
+      "sha256": "bce88831e291b19a1694ce2cce1747231efa68ca1423efe6f51e99fe06f709cb",
+      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"celestialGlow\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"/><stop offset=\"100%\" stop-color=\"#aaccff\" stop-opacity=\"0.6\"/></linearGradient></defs><path d=\"M8,24 Q112,8 216,24\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8,232 Q112,240 216,232\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"40,60 44,52 48,60 44,68\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"100,80 104,72 108,80 104,88\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"160,100 164,92 168,100 164,108\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"70,140 74,132 78,140 74,148\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"130,160 134,152 138,160 134,168\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"180,120 184,112 188,120 184,128\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/></svg>"
     },
     {
       "id": "06-chainmail",
@@ -91,13 +100,13 @@
     {
       "id": "08-flame-crest",
       "title": "Flame crest rails",
-      "instruction": "Draw flames along the left and right edges. Each flame must have a clearly tapered tongue — wide at the base, narrowing to a sharp point. The same direction of flame tongues (pointing inward toward the center) must appear on BOTH the left edge AND the right edge. The top and bottom edges carry only a plain straight rule.",
-      "criterion": "Flame tongues with a visible tapered tip are drawn along the left edge AND the right edge, they point the same direction on both sides, and the top and bottom carry only a plain straight rule.",
+      "instruction": "Draw BOLD flame tongues along the left and right edges: each flame is a FILLED shape at least 8px wide at its base, clearly tapering to a sharp point, so the tongues stay visible even when the border is drawn small. The flame tongues on BOTH edges point INWARD toward the center. The top and bottom edges carry only one plain solid straight rule each.",
+      "criterion": "FILLED flame tongues, each at least 8px wide at its base and clearly tapering to a sharp point, are drawn along the left edge AND the right edge; the tongues point inward on both sides; and the top and bottom edges carry only a plain straight rule.",
       "model": "poolside/laguna-s-2.1:free",
-      "round": "4",
-      "svgChars": 838,
-      "sha256": "8caaa0a80f2cdfb6d431a682273acdec1535ac2d1614fd7cf7c8fadb62da7a14",
-      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"flameGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ff9900\"/><stop offset=\"50%\" stop-color=\"#ff3300\"/><stop offset=\"100%\" stop-color=\"#990000\"/></linearGradient></defs><path d=\"M2 0 L2 256\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M222 0 L222 256\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M0 0 L224 0\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M0 256 L224 256\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M4 20 C2 40 6 60 4 80 C2 100 6 120 4 140 C2 160 6 180 4 200 C2 220 6 240 4 250\" fill=\"url(#flameGrad)\" opacity=\"0.8\"/><path d=\"M220 20 C222 40 218 60 220 80 C222 100 218 120 220 140 C222 160 218 180 220 200 C222 220 218 240 220 250\" fill=\"url(#flameGrad)\" opacity=\"0.8\"/></svg>"
+      "round": "5",
+      "svgChars": 1211,
+      "sha256": "ae5f32e55eae1ac2f4ec30d03b137c314c2dbdc2ffc4269f44c5bdfb0dee3091",
+      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"flameGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ff9800\"/><stop offset=\"50%\" stop-color=\"#ff5722\"/><stop offset=\"100%\" stop-color=\"#d32f2f\"/></linearGradient></defs><rect x=\"0\" y=\"0\" width=\"224\" height=\"256\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/><path d=\"M0,0 L8,0 L4,24 L0,24 Z M0,232 L4,256 L0,256 Z M0,24 L4,48 L0,48 Z M0,208 L4,232 L0,232 Z M0,48 L4,72 L0,72 Z M0,184 L4,208 L0,208 Z M0,72 L4,96 L0,96 Z M0,160 L4,184 L0,184 Z M0,96 L4,120 L0,120 Z M0,136 L4,160 L0,160 Z M0,120 L4,144 L0,144 Z M0,112 L4,136 L0,136 Z M216,0 L224,0 L220,24 L216,24 Z M216,232 L220,256 L216,256 Z M216,24 L220,48 L216,48 Z M216,208 L220,232 L216,232 Z M216,48 L220,72 L216,72 Z M216,184 L220,208 L216,208 Z M216,72 L220,96 L216,96 Z M216,160 L220,184 L216,184 Z M216,96 L220,120 L216,120 Z M216,136 L220,160 L216,160 Z M216,120 L220,144 L216,144 Z M216,112 L220,136 L216,136 Z M216,104 L220,128 L216,128 Z\" fill=\"url(#flameGrad)\"/><line x1=\"0\" y1=\"0\" x2=\"224\" y2=\"0\" stroke=\"#000\" stroke-width=\"1\"/><line x1=\"0\" y1=\"256\" x2=\"224\" y2=\"256\" stroke=\"#000\" stroke-width=\"1\"/></svg>"
     },
     {
       "id": "09-frost-shards",
@@ -146,6 +155,24 @@
   ],
   "variants": [
     {
+      "id": "01-gilded-frame",
+      "title": "Gilded double frame",
+      "supersededByRound": "5b",
+      "round": "1",
+      "svgChars": 719,
+      "sha256": "b4aa0e9eb18732a9b6d9660b7326b3adce261a94105591ea3593247534d0dc5c",
+      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><pattern id=\"gold\" x=\"0\" y=\"0\" width=\"4\" height=\"4\" patternUnits=\"userSpaceOnUse\"><path d=\"M0 0L4 4M4 0L0 4\" stroke=\"#d4af37\" stroke-width=\"1\"/></pattern></defs><g stroke=\"#888\" stroke-width=\"1\" fill=\"none\"><rect x=\"0.5\" y=\"0.5\" width=\"223\" height=\"143\" stroke-dasharray=\"4 3\"/><rect x=\"2\" y=\"2\" width=\"220\" height=\"140\" stroke=\"url(#gold)\" stroke-width=\"2\"/></g><g fill=\"#d4af37\"><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(0,0)\"/><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(224,0)\"/><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(0,144)\"/><polygon points=\"0,0 4,-6 8,0 4,8\" transform=\"translate(224,144)\"/></g></svg>"
+    },
+    {
+      "id": "01-gilded-frame",
+      "title": "Gilded double frame",
+      "supersededByRound": "5b",
+      "round": "5",
+      "svgChars": 497,
+      "sha256": "c44c81ff10ebd00cedfba7832c3fdd0df4660921f5553fd4c2ec95a5e7c3d36b",
+      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><rect x=\"2\" y=\"2\" width=\"220\" height=\"252\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"6\" y=\"6\" width=\"216\" height=\"248\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"4,4 8,8 12,4 8,0\" fill=\"black\"/><polygon points=\"212,4 216,8 220,4 216,0\" fill=\"black\"/><polygon points=\"4,252 8,248 12,252 8,256\" fill=\"black\"/><polygon points=\"212,252 216,248 220,252 216,256\" fill=\"black\"/></svg>"
+    },
+    {
       "id": "02-runic-band",
       "title": "Runic tick band",
       "supersededByRound": "4",
@@ -175,11 +202,20 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "supersededByRound": "4b",
+      "supersededByRound": "5",
       "round": "1",
       "svgChars": 1447,
       "sha256": "22506f9e1cc4f61cbd741c6514bb596b77aae07d7c97353723ec46a76e4541a7",
       "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"celestialGlow\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"/><stop offset=\"100%\" stop-color=\"#aaccff\" stop-opacity=\"0.6\"/></linearGradient></defs><path d=\"M8 20 A40 40 0 0 1 216 20\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8 124 A40 40 0 0 0 216 124\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><g fill=\"#ffffff\"><polygon points=\"40,12 42,16 46,16 43,19 44,23 40,21 36,23 37,19 34,16 38,16\"/><polygon points=\"80,12 82,16 86,16 83,19 84,23 80,21 76,23 77,19 74,16 78,16\"/><polygon points=\"120,12 122,16 126,16 123,19 124,23 120,21 116,23 117,19 114,16 118,16\"/><polygon points=\"160,12 162,16 166,16 163,19 164,23 160,21 156,23 157,19 154,16 158,16\"/><polygon points=\"200,12 202,16 206,16 203,19 204,23 200,21 196,23 197,19 194,16 198,16\"/><polygon points=\"40,132 42,128 46,128 43,125 44,121 40,123 36,121 37,125 34,128 38,128\"/><polygon points=\"80,132 82,128 86,128 83,125 84,121 80,123 76,121 77,125 74,128 78,128\"/><polygon points=\"120,132 122,128 126,128 123,125 124,121 120,123 116,121 117,125 114,128 118,128\"/><polygon points=\"160,132 162,128 166,128 163,125 164,121 160,123 156,121 157,125 154,128 158,128\"/><polygon points=\"200,132 202,128 206,128 203,125 204,121 200,123 196,121 197,125 194,128 198,128\"/></g></svg>"
+    },
+    {
+      "id": "05-celestial-arcs",
+      "title": "Celestial arcs",
+      "supersededByRound": "5",
+      "round": "4b",
+      "svgChars": 1070,
+      "sha256": "495fa2914016b6d0411900f31578865aa2907483b496b049f5a6b3b6e3992959",
+      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g1\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\"/><stop offset=\"100%\" stop-color=\"#a8c4ff\"/></linearGradient></defs><rect x=\"0\" y=\"0\" width=\"224\" height=\"256\" fill=\"url(#g1)\"/><path d=\"M8,24 A104,104 0 0 1 216,24\" fill=\"none\" stroke=\"#003366\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/><path d=\"M8,232 A104,104 0 0 1 216,232\" fill=\"none\" stroke=\"#003366\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/><g fill=\"#003366\"><polygon points=\"40,70 44,80 54,82 44,88 40,98 36,88 26,82 36,70\"/><polygon points=\"100,60 104,70 114,72 104,78 100,88 96,78 86,72 96,60\"/><polygon points=\"160,75 164,85 174,87 164,93 160,103 156,93 146,87 156,75\"/><polygon points=\"60,120 64,130 74,132 64,138 60,148 56,138 46,132 56,120\"/><polygon points=\"130,115 134,125 144,127 134,133 130,143 126,133 116,127 126,115\"/><polygon points=\"90,160 94,170 104,172 94,178 90,188 86,178 76,172 86,160\"/><polygon points=\"170,155 174,165 184,167 174,173 170,183 166,173 156,167 166,155\"/></g></svg>"
     },
     {
       "id": "07-corner-arcs",
@@ -193,11 +229,20 @@
     {
       "id": "08-flame-crest",
       "title": "Flame crest rails",
-      "supersededByRound": "4",
+      "supersededByRound": "5",
       "round": "2",
       "svgChars": 971,
       "sha256": "ef3ad4eb1d9993f89d152652e20aa8c59d0faceff86792f944dbcce9069f472f",
       "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"flameGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ff9800\"/><stop offset=\"50%\" stop-color=\"#ff5722\"/><stop offset=\"100%\" stop-color=\"#ff9800\"/></linearGradient></defs><rect x=\"0\" y=\"0\" width=\"224\" height=\"144\" fill=\"none\" stroke=\"#000\" stroke-width=\"1\"/><path d=\"M2 2 L2 142 C4 138 6 134 8 130 C6 126 4 122 2 118 C4 114 6 110 8 106 C6 102 4 98 2 94 C4 90 6 86 8 82 C6 78 4 74 2 70 C4 66 6 62 8 58 C6 54 4 50 2 46 C4 42 6 38 8 34 C6 30 4 26 2 22 C4 18 6 14 8 10 C6 6 4 2 2 2 Z\" fill=\"url(#flameGrad)\" opacity=\"0.8\"/><path d=\"M222 2 L222 142 C220 138 218 134 216 130 C218 126 220 122 222 118 C220 114 218 110 216 106 C218 102 220 98 222 94 C220 90 218 86 216 82 C218 78 220 74 222 70 C220 66 218 62 216 58 C218 54 220 50 222 46 C220 42 218 38 216 34 C218 30 220 26 222 22 C220 18 218 14 216 10 C218 6 220 2 222 2 Z\" fill=\"url(#flameGrad)\" opacity=\"0.8\"/></svg>"
+    },
+    {
+      "id": "08-flame-crest",
+      "title": "Flame crest rails",
+      "supersededByRound": "5",
+      "round": "4",
+      "svgChars": 838,
+      "sha256": "8caaa0a80f2cdfb6d431a682273acdec1535ac2d1614fd7cf7c8fadb62da7a14",
+      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"flameGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ff9900\"/><stop offset=\"50%\" stop-color=\"#ff3300\"/><stop offset=\"100%\" stop-color=\"#990000\"/></linearGradient></defs><path d=\"M2 0 L2 256\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M222 0 L222 256\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M0 0 L224 0\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M0 256 L224 256\" stroke=\"#000\" stroke-width=\"1\" fill=\"none\"/><path d=\"M4 20 C2 40 6 60 4 80 C2 100 6 120 4 140 C2 160 6 180 4 200 C2 220 6 240 4 250\" fill=\"url(#flameGrad)\" opacity=\"0.8\"/><path d=\"M220 20 C222 40 218 60 220 80 C222 100 218 120 220 140 C222 160 218 180 220 200 C222 220 218 240 220 250\" fill=\"url(#flameGrad)\" opacity=\"0.8\"/></svg>"
     },
     {
       "id": "09-frost-shards",

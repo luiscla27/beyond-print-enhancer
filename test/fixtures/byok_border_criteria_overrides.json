@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "CRITERION OVERRIDES for the frozen BYOK border-design corpus (track byok_svg_borders_20260927).",
+    "A per-design `criterion` normally comes from the round file that WON the freeze (last-",
+    "accepted-wins), so the criterion a design is judged by is the one its frozen bytes were",
+    "generated for. That invariant is deliberately OVERRIDABLE, once, by an operator ruling:",
+    "when a criterion is re-cut WITHOUT regenerating the artwork (the bytes stay the winning",
+    "round's), the freeze takes the criterion from THIS file and records both texts on the",
+    "fixture entry (`criterion` = the override, `criterionGenerated` = the round file's text,",
+    "`criterionOverride` = the provenance). The override file is a freeze INPUT, so a fresh",
+    "freeze over the same rounds + this file is still byte-reproducible.",
+    "",
+    "Only ONE override exists, and it is the operator's D-C ruling (2026-10-01,",
+    "`phase4_operator_rulings_20261001.md` §1 D-C): 04-dragon-scale's scale rows are judged",
+    "aspect-independently because the product's `border-image` edge scaling is ANISOTROPIC on",
+    "a tall section (~0.146 px/unit horizontal vs ~0.923 vertical with `round` on 656x1920),",
+    "so square scales become vertical slivers on the left/right rails while the top/bottom",
+    "rails keep the source's own proportions. The render knob did NOT move; the criterion did."
+  ],
+  "overrides": {
+    "04-dragon-scale": {
+      "criterion": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour; the individual scales are judged where the pipeline paints them at the source's own proportions — the top and bottom rails — and the left and right rails must carry the same overlapping-row texture even where the pipeline's anisotropic edge scaling narrows the individual scales.",
+      "supersedes": "Overlapping scale shapes are drawn in rows along the border, each scale visibly tucked under or over its neighbour, and the rows read as the same texture on the left/right as on the top/bottom.",
+      "ruledBy": "D-C",
+      "ruledOn": "2026-10-01",
+      "reason": "Operator ruling D-C: the frozen 4c blob (800x800, filled paths) is deformed by anisotropic border-image edge scaling on the 656x1920 gallery section; the ruling re-cut the criterion aspect-independently and kept the render knobs unchanged, so the criterion now judges the source's proportions where the pipeline preserves them and only demands texture (not aspect) on the anisotropic rails."
+    }
+  }
+}
