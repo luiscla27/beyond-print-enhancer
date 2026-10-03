@@ -82,7 +82,13 @@ The image carries, top to bottom:
 3. the `BOTTOM edge band` — the band that sits OVER the section's bottom edge, same depth;
 4. the `LEFT edge` rail, then the `RIGHT edge` rail — each the rail's own pixels, UNSLICED,
    cut into 2-3 segments printed side by side (the leftmost segment is the top of the rail;
-   consecutive segments overlap by 96 device px).
+   consecutive segments overlap by 96 device px);
+5. the `CORNERS` row — the four boxes at the section's own four corners (TL, TR, BL, BR,
+   printed left to right), 28x28 CSS px each at the same 1:1 scale.
+
+READ THE WHOLE IMAGE BEFORE ANSWERING. Some bands of a design are genuinely blank — the
+criterion decides what counts, not the ink; a band carrying only a faint line is not "blank",
+and "blank" is a word about pixels that are WHITE, not about pixels that are grey.
 
 EVERY strip has a %(mark)s MARKER BAR printed BESIDE it (never over it, so no judged pixel is
 covered): that bar is on the side of the strip that faces the section's CENTRE. "The ornament

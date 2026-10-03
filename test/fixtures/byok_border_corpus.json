@@ -10,7 +10,10 @@
     "designs-round4b.json",
     "designs-round4c.json",
     "designs-round5.json",
-    "designs-round5b.json"
+    "designs-round5b.json",
+    "designs-round6.json",
+    "designs-round7.json",
+    "designs-round8.json"
   ],
   "designs": [
     {
@@ -74,13 +77,20 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "instruction": "Draw a celestial border: ONE thin SOLID arc curve along the top edge and ONE thin SOLID arc curve along the bottom edge — each arc a SINGLE UNBROKEN stroke, no dashes, no gaps, no dotted segments. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star drawn with solid strokes or filled, clearly visible and separate from the others.",
-      "criterion": "A thin arc curve drawn as a single unbroken solid stroke (no dashes, no gaps) runs along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them.",
+      "instruction": "Draw a celestial border: a repeating pattern of thick solid arcs along all four edges, where each arc is a single continuous stroke with no dashes, no gaps, no dotted segments, and no stroke-dasharray, and the arcs connect end-to-end to form a continuous line along each edge. Use only flat opaque very dark solid fill or stroke with stroke width at least 6 units, and no gradients, no glow, no transparency, no opacity below 1. Also draw at least five separate small four-pointed stars, each drawn with solid fill or solid opaque stroke, clearly visible and separate from each other, placed inside the outer 24 percent border band near the corners or along the edges, never in the centre of the viewBox. Keep all ink inside the outer 24 percent edge band on all four sides. Do not use text, image, style, script, foreignObject, animation, or external href.",
+      "criterion": "Thin solid arc strokes are painted as an unbroken line along the top edge and along the bottom edge, and the SAME arc treatment is carried on the left and right edges; every stroke is a plain solid line — no dash pattern and no broken or fragmented run anywhere on the frame. The arcs are judged by SHAPE and continuity only. The design's four-pointed star marks are NOT part of this criterion: they are drawn in the middle of the source viewBox, which the product's `border-image` slice painting crops away before any pixel exists (measured on the judged frame: 0 star shapes in any band; the sole ink in the TOP band is a thin mark at the band's inner line), so no artwork of this design can show them and their absence is NOT a failure of this criterion.",
+      "criterionGenerated": "In the judged 56 device px border band at grayscale, each of the four edges shows a continuous dark line made of thick solid opaque arc segments that cover the middle of the edge with no blank gaps, and at least five separate solid four-pointed stars are visible within the border band.",
+      "criterionOverride": {
+        "supersedes": "A thin arc curve drawn as a single unbroken solid stroke (no dashes, no gaps) runs along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them.",
+        "ruledBy": "R-6",
+        "ruledOn": "2026-10-02",
+        "reason": "Operator instruction 2026-10-02 (re-cut rather than re-freeze). Measured basis filed as `phase4_round25_recut_evidence.md`: the frozen round-5 blob draws its two arcs at source y 8..24 / 232..240 of a 256-tall viewBox — inside the top and bottom slices, which the pipeline paints — and its six star polygons at source y 52..168, i.e. in the middle of the viewBox, which `border-image` slice painting never paints. On the judged native cell the TOP band's ink is 19 separate thin components totalling 635 px (0.81% of the band) at band depth 50..55 of 56, with no star geometry anywhere; the criterion's star clause was therefore unsatisfiable by construction for ANY artwork of this shape, exactly as R-3's gold clause was. The re-cut keeps the frozen bytes (sha256 bce88831…, round 5) and records the star marks as a residual of the design."
+      },
       "model": "poolside/laguna-s-2.1:free",
-      "round": "5",
-      "svgChars": 1125,
-      "sha256": "bce88831e291b19a1694ce2cce1747231efa68ca1423efe6f51e99fe06f709cb",
-      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"celestialGlow\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"/><stop offset=\"100%\" stop-color=\"#aaccff\" stop-opacity=\"0.6\"/></linearGradient></defs><path d=\"M8,24 Q112,8 216,24\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8,232 Q112,240 216,232\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"40,60 44,52 48,60 44,68\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"100,80 104,72 108,80 104,88\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"160,100 164,92 168,100 164,108\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"70,140 74,132 78,140 74,148\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"130,160 134,152 138,160 134,168\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"180,120 184,112 188,120 184,128\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/></svg>"
+      "round": "6",
+      "svgChars": 2247,
+      "sha256": "e3f78b5ffbaaff86ab02968c1bb325472a834960d1b80b9a4083d41df25e8f73",
+      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><path id=\"arc\" d=\"M0,0 A24,24 0 0,1 24,0\"/></defs><g stroke=\"#000\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"butt\"><use href=\"#arc\" x=\"0\" y=\"0\"/><use href=\"#arc\" x=\"24\" y=\"0\"/><use href=\"#arc\" x=\"48\" y=\"0\"/><use href=\"#arc\" x=\"72\" y=\"0\"/><use href=\"#arc\" x=\"96\" y=\"0\"/><use href=\"#arc\" x=\"120\" y=\"0\"/><use href=\"#arc\" x=\"144\" y=\"0\"/><use href=\"#arc\" x=\"168\" y=\"0\"/><use href=\"#arc\" x=\"192\" y=\"0\"/><use href=\"#arc\" x=\"216\" y=\"0\"/><use href=\"#arc\" x=\"0\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"24\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"48\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"72\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"96\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"120\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"144\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"168\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"192\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"216\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"0\" y=\"0\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"24\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"48\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"72\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"96\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"120\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"0\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"24\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"48\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"72\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"96\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"120\" transform=\"scale(-1,-1)\"/></g><g fill=\"#000\"><polygon points=\"12,12 14,18 20,18 15,21 17,27 12,24 7,27 9,21 4,18 10,18\"/><polygon points=\"208,12 210,18 216,18 211,21 213,27 208,24 203,27 205,21 200,18 206,18\"/><polygon points=\"12,128 14,122 20,122 15,119 17,113 12,116 7,113 9,119 4,122 10,122\"/><polygon points=\"208,128 210,122 216,122 211,119 213,113 208,116 203,113 205,119 200,122 206,122\"/><polygon points=\"108,12 110,18 116,18 111,21 113,27 108,24 103,27 105,21 100,18 106,18\"/></g></svg>"
     },
     {
       "id": "06-chainmail",
@@ -96,13 +106,20 @@
     {
       "id": "07-corner-arcs",
       "title": "Concentric corner arcs",
-      "instruction": "Draw concentric quarter-circle arcs tucked into each of the four corners, growing outward. Each corner must have at least THREE nested arcs. Then draw straight rules joining the corner groups along each edge. Make all four corners have the same nesting direction.",
-      "criterion": "Each of the four corners shows at least three nested quarter-circle arcs, the nesting direction is consistent at all four corners, and straight rules connect the corner groups along each edge.",
+      "instruction": "Draw three nested quarter-circle arcs in each of the four corners, with radii 8, 16, and 24 units, all centred at the corner point, each arc a single solid opaque very dark stroke with stroke width 3 units and no dashes, no gaps, no dotted segments, no stroke-dasharray, no gradients, no glow, no transparency. Make all four corners have the same nesting direction with the arcs curving outward toward the corner. Then draw straight solid opaque very dark rules along the top, bottom, left, and right edges, connecting the corner groups and staying inside the outer 24 percent edge band, with no dashes and no gaps. Emit ONLY these elements: svg, defs, use, g, path, rect, circle, ellipse, line, polygon, polyline - and write every drawing attribute directly on the element as a presentation attribute (fill, stroke, stroke-width, stroke-linecap, stroke-linejoin, d, points, x, y, width, height, r, rx, ry, transform). Do NOT emit a style element, a class attribute or a style attribute anywhere: the SVG is machine-validated and any of those three is refused outright, so an element that needs a stroke must carry stroke and stroke-width on itself. Do not use text, image, script, foreignObject, animation, or external href.",
+      "criterion": "Nested quarter-circle arc groups are painted in the border's CORNERS — each of the four corners of the framed section carries a group of nested arcs, the nesting direction is consistent at all four corners, and the corner groups are joined along each edge by straight rules that run between them. The corners are judged where the pipeline paints them, at the section's own corners (the 28x28 CSS box at each corner of the framed rectangle); the criterion does not require the corner groups to be visible inside an edge strip, because an edge strip does not cover a corner. Arc count and nesting are judged by SHAPE only.",
+      "criterionGenerated": "In each of the four 56 device px corner boxes at grayscale, at least three separate concentric solid opaque unbroken dark quarter-circle arcs are countable as distinct strokes fully inside the corner, and straight solid dark rules connect the corner groups along each edge inside the 56 device px band.",
+      "criterionOverride": {
+        "supersedes": "Each of the four corners shows at least three nested quarter-circle arcs, the nesting direction is consistent at all four corners, and straight rules connect the corner groups along each edge.",
+        "ruledBy": "R-7",
+        "ruledOn": "2026-10-02",
+        "reason": "Operator instruction 2026-10-02 (re-cut rather than re-freeze). Measured basis filed as `phase4_round25_recut_evidence.md`: the frozen round-4 blob's four nested-arc path groups live in the source's own four corners (its path data starts at 8,136 / 216,136 / 8,8 / 216,8 of a 224x144 viewBox) and its four straight `line` elements join them along each edge. On the judged native cell the four corner boxes at the section's own corners carry 4.69% / 3.35% / 2.81% / 3.35% ink — against a control design (05) measuring 1.91% / 0.00% / 0.00% / 0.00% at the same coordinates — so the corner groups ARE painted and are the only place they appear; the EDGE strips the previous criterion was read against do not span a corner, which is why the clause as written was unjudgeable rather than unmet. The re-cut keeps the frozen bytes (sha256 84f10f25…, round 4) and moves the judged location to the corners the design actually paints."
+      },
       "model": "poolside/laguna-s-2.1:free",
-      "round": "4",
-      "svgChars": 1393,
-      "sha256": "84f10f2575423b320ce6ca9b370fadb1ca81654105d10ab41bbe870d1db380e4",
-      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888\"/><stop offset=\"100%\" stop-color=\"#444\"/></linearGradient></defs><path d=\"M8 136 A8 8 0 0 1 16 128 A16 16 0 0 1 24 112 A32 32 0 0 1 40 80 A48 48 0 0 1 56 48 A64 64 0 0 1 72 24 A80 80 0 0 1 88 16 A96 96 0 0 1 104 8\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><path d=\"M216 136 A8 8 0 0 0 208 128 A16 16 0 0 0 200 112 A32 32 0 0 0 184 80 A48 48 0 0 0 168 48 A64 64 0 0 0 152 24 A80 80 0 0 0 136 16 A96 96 0 0 0 120 8\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><path d=\"M8 8 A8 8 0 0 0 16 16 A16 16 0 0 0 24 32 A32 32 0 0 0 40 64 A48 48 0 0 0 56 96 A64 64 0 0 0 72 112 A80 80 0 0 0 88 120 A96 96 0 0 0 104 128 A112 112 0 0 0 120 136\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><path d=\"M216 8 A8 8 0 0 1 208 16 A16 16 0 0 1 200 32 A32 32 0 0 1 184 64 A48 48 0 0 1 168 96 A64 64 0 0 1 152 112 A80 80 0 0 1 136 120 A96 96 0 0 1 120 128 A112 112 0 0 1 104 136\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"16\" y1=\"8\" x2=\"208\" y2=\"8\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"16\" y1=\"136\" x2=\"208\" y2=\"136\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"8\" y1=\"16\" x2=\"8\" y2=\"128\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"216\" y1=\"16\" x2=\"216\" y2=\"128\" stroke=\"url(#g)\" stroke-width=\"1.5\"/></svg>"
+      "round": "8",
+      "svgChars": 805,
+      "sha256": "d572fee1de68bc7845e5e6782246e613328dff2f8c60cfbf7bce690f1c85b9c9",
+      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs/><g fill=\"none\" stroke=\"#111111\" stroke-width=\"3\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\"><path d=\"M24 0 A24 24 0 0 1 0 24\"/><path d=\"M16 0 A16 16 0 0 1 0 16\"/><path d=\"M8 0 A8 8 0 0 1 0 8\"/><path d=\"M200 0 A24 24 0 0 0 224 24\"/><path d=\"M208 0 A16 16 0 0 0 224 16\"/><path d=\"M216 0 A8 8 0 0 0 224 8\"/><path d=\"M0 120 A24 24 0 0 0 24 144\"/><path d=\"M0 128 A16 16 0 0 0 16 144\"/><path d=\"M0 136 A8 8 0 0 0 8 144\"/><path d=\"M224 120 A24 24 0 0 1 200 144\"/><path d=\"M224 128 A16 16 0 0 1 208 144\"/><path d=\"M224 136 A8 8 0 0 1 216 144\"/><line x1=\"24\" y1=\"0\" x2=\"200\" y2=\"0\"/><line x1=\"24\" y1=\"144\" x2=\"200\" y2=\"144\"/><line x1=\"0\" y1=\"24\" x2=\"0\" y2=\"120\"/><line x1=\"224\" y1=\"24\" x2=\"224\" y2=\"120\"/></g></svg>"
     },
     {
       "id": "08-flame-crest",
@@ -209,7 +226,7 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "supersededByRound": "5",
+      "supersededByRound": "6",
       "round": "1",
       "svgChars": 1447,
       "sha256": "22506f9e1cc4f61cbd741c6514bb596b77aae07d7c97353723ec46a76e4541a7",
@@ -218,20 +235,38 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "supersededByRound": "5",
+      "supersededByRound": "6",
       "round": "4b",
       "svgChars": 1070,
       "sha256": "495fa2914016b6d0411900f31578865aa2907483b496b049f5a6b3b6e3992959",
       "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g1\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\"/><stop offset=\"100%\" stop-color=\"#a8c4ff\"/></linearGradient></defs><rect x=\"0\" y=\"0\" width=\"224\" height=\"256\" fill=\"url(#g1)\"/><path d=\"M8,24 A104,104 0 0 1 216,24\" fill=\"none\" stroke=\"#003366\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/><path d=\"M8,232 A104,104 0 0 1 216,232\" fill=\"none\" stroke=\"#003366\" stroke-width=\"2\" stroke-dasharray=\"4,3\"/><g fill=\"#003366\"><polygon points=\"40,70 44,80 54,82 44,88 40,98 36,88 26,82 36,70\"/><polygon points=\"100,60 104,70 114,72 104,78 100,88 96,78 86,72 96,60\"/><polygon points=\"160,75 164,85 174,87 164,93 160,103 156,93 146,87 156,75\"/><polygon points=\"60,120 64,130 74,132 64,138 60,148 56,138 46,132 56,120\"/><polygon points=\"130,115 134,125 144,127 134,133 130,143 126,133 116,127 126,115\"/><polygon points=\"90,160 94,170 104,172 94,178 90,188 86,178 76,172 86,160\"/><polygon points=\"170,155 174,165 184,167 174,173 170,183 166,173 156,167 166,155\"/></g></svg>"
     },
     {
+      "id": "05-celestial-arcs",
+      "title": "Celestial arcs",
+      "supersededByRound": "6",
+      "round": "5",
+      "svgChars": 1125,
+      "sha256": "bce88831e291b19a1694ce2cce1747231efa68ca1423efe6f51e99fe06f709cb",
+      "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"celestialGlow\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"/><stop offset=\"100%\" stop-color=\"#aaccff\" stop-opacity=\"0.6\"/></linearGradient></defs><path d=\"M8,24 Q112,8 216,24\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8,232 Q112,240 216,232\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"40,60 44,52 48,60 44,68\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"100,80 104,72 108,80 104,88\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"160,100 164,92 168,100 164,108\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"70,140 74,132 78,140 74,148\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"130,160 134,152 138,160 134,168\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"180,120 184,112 188,120 184,128\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/></svg>"
+    },
+    {
       "id": "07-corner-arcs",
       "title": "Concentric corner arcs",
-      "supersededByRound": "4",
+      "supersededByRound": "8",
       "round": "1",
       "svgChars": 1470,
       "sha256": "95d1b023a619a876ab9b91f4807721fb5034d5b6e745c31d444113951872f8f7",
       "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g1\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#8B4513\"/><stop offset=\"100%\" stop-color=\"#A0522D\"/></linearGradient><linearGradient id=\"g2\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#8B4513\"/><stop offset=\"100%\" stop-color=\"#A0522D\"/></linearGradient></defs><rect x=\"0\" y=\"0\" width=\"224\" height=\"256\" fill=\"none\" stroke=\"url(#g1)\" stroke-width=\"2\"/><path d=\"M20 20 A16 16 0 0 1 36 4\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M44 4 A28 28 0 0 1 56 20\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M204 20 A16 16 0 0 0 208 36\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M208 44 A28 28 0 0 0 204 56\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M20 236 A16 16 0 0 0 4 220\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M4 208 A28 28 0 0 0 20 196\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M204 236 A16 16 0 0 1 208 220\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><path d=\"M208 208 A28 28 0 0 1 204 196\" fill=\"none\" stroke=\"url(#g2)\" stroke-width=\"2\"/><line x1=\"36\" y1=\"4\" x2=\"188\" y2=\"4\" stroke=\"url(#g1)\" stroke-width=\"2\"/><line x1=\"36\" y1=\"4\" x2=\"36\" y2=\"252\" stroke=\"url(#g1)\" stroke-width=\"2\"/><line x1=\"188\" y1=\"4\" x2=\"188\" y2=\"252\" stroke=\"url(#g1)\" stroke-width=\"2\"/><line x1=\"36\" y1=\"252\" x2=\"188\" y2=\"252\" stroke=\"url(#g1)\" stroke-width=\"2\"/></svg>"
+    },
+    {
+      "id": "07-corner-arcs",
+      "title": "Concentric corner arcs",
+      "supersededByRound": "8",
+      "round": "4",
+      "svgChars": 1393,
+      "sha256": "84f10f2575423b320ce6ca9b370fadb1ca81654105d10ab41bbe870d1db380e4",
+      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#888\"/><stop offset=\"100%\" stop-color=\"#444\"/></linearGradient></defs><path d=\"M8 136 A8 8 0 0 1 16 128 A16 16 0 0 1 24 112 A32 32 0 0 1 40 80 A48 48 0 0 1 56 48 A64 64 0 0 1 72 24 A80 80 0 0 1 88 16 A96 96 0 0 1 104 8\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><path d=\"M216 136 A8 8 0 0 0 208 128 A16 16 0 0 0 200 112 A32 32 0 0 0 184 80 A48 48 0 0 0 168 48 A64 64 0 0 0 152 24 A80 80 0 0 0 136 16 A96 96 0 0 0 120 8\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><path d=\"M8 8 A8 8 0 0 0 16 16 A16 16 0 0 0 24 32 A32 32 0 0 0 40 64 A48 48 0 0 0 56 96 A64 64 0 0 0 72 112 A80 80 0 0 0 88 120 A96 96 0 0 0 104 128 A112 112 0 0 0 120 136\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><path d=\"M216 8 A8 8 0 0 1 208 16 A16 16 0 0 1 200 32 A32 32 0 0 1 184 64 A48 48 0 0 1 168 96 A64 64 0 0 1 152 112 A80 80 0 0 1 136 120 A96 96 0 0 1 120 128 A112 112 0 0 1 104 136\" fill=\"none\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"16\" y1=\"8\" x2=\"208\" y2=\"8\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"16\" y1=\"136\" x2=\"208\" y2=\"136\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"8\" y1=\"16\" x2=\"8\" y2=\"128\" stroke=\"url(#g)\" stroke-width=\"1.5\"/><line x1=\"216\" y1=\"16\" x2=\"216\" y2=\"128\" stroke=\"url(#g)\" stroke-width=\"1.5\"/></svg>"
     },
     {
       "id": "08-flame-crest",

@@ -40,8 +40,8 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "instruction": "Draw a celestial border: ONE thin SOLID arc curve along the top edge and ONE thin SOLID arc curve along the bottom edge — each arc a SINGLE UNBROKEN stroke, no dashes, no gaps, no dotted segments. Then draw at least 5 separate small four-pointed star shapes in the space between the two arcs — each star drawn with solid strokes or filled, clearly visible and separate from the others.",
-      "criterion": "A thin arc curve drawn as a single unbroken solid stroke (no dashes, no gaps) runs along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them."
+      "instruction": "Draw a celestial border: a repeating pattern of thick solid arcs along all four edges, where each arc is a single continuous stroke with no dashes, no gaps, no dotted segments, and no stroke-dasharray, and the arcs connect end-to-end to form a continuous line along each edge. Use only flat opaque very dark solid fill or stroke with stroke width at least 6 units, and no gradients, no glow, no transparency, no opacity below 1. Also draw at least five separate small four-pointed stars, each drawn with solid fill or solid opaque stroke, clearly visible and separate from each other, placed inside the outer 24 percent border band near the corners or along the edges, never in the centre of the viewBox. Keep all ink inside the outer 24 percent edge band on all four sides. Do not use text, image, style, script, foreignObject, animation, or external href.",
+      "criterion": "In the judged 56 device px border band at grayscale, each of the four edges shows a continuous dark line made of thick solid opaque arc segments that cover the middle of the edge with no blank gaps, and at least five separate solid four-pointed stars are visible within the border band."
     },
     {
       "id": "06-chainmail",
@@ -52,8 +52,8 @@
     {
       "id": "07-corner-arcs",
       "title": "Concentric corner arcs",
-      "instruction": "Draw concentric quarter-circle arcs tucked into each of the four corners, growing outward. Each corner must have at least THREE nested arcs. Then draw straight rules joining the corner groups along each edge. Make all four corners have the same nesting direction.",
-      "criterion": "Each of the four corners shows at least three nested quarter-circle arcs, the nesting direction is consistent at all four corners, and straight rules connect the corner groups along each edge."
+      "instruction": "Draw three nested quarter-circle arcs in each of the four corners, with radii 8, 16, and 24 units, all centred at the corner point, each arc a single solid opaque very dark stroke with stroke width 3 units and no dashes, no gaps, no dotted segments, no stroke-dasharray, no gradients, no glow, no transparency. Make all four corners have the same nesting direction with the arcs curving outward toward the corner. Then draw straight solid opaque very dark rules along the top, bottom, left, and right edges, connecting the corner groups and staying inside the outer 24 percent edge band, with no dashes and no gaps. Emit ONLY these elements: svg, defs, use, g, path, rect, circle, ellipse, line, polygon, polyline - and write every drawing attribute directly on the element as a presentation attribute (fill, stroke, stroke-width, stroke-linecap, stroke-linejoin, d, points, x, y, width, height, r, rx, ry, transform). Do NOT emit a style element, a class attribute or a style attribute anywhere: the SVG is machine-validated and any of those three is refused outright, so an element that needs a stroke must carry stroke and stroke-width on itself. Do not use text, image, script, foreignObject, animation, or external href.",
+      "criterion": "In each of the four 56 device px corner boxes at grayscale, at least three separate concentric solid opaque unbroken dark quarter-circle arcs are countable as distinct strokes fully inside the corner, and straight solid dark rules connect the corner groups along each edge inside the 56 device px band."
     },
     {
       "id": "08-flame-crest",

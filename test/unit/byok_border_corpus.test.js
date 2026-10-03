@@ -62,18 +62,19 @@ const corpus = JSON.parse(fs.readFileSync(FIXTURE, "utf8"));
 const validateSvg = AiLayout.validateSvg;
 
 describe("BYOK border corpus — the frozen input the visual gate renders", function () {
-  it("carries the whole corpus: 12 canonical designs plus the 12 superseded variants", function () {
+  it("carries the whole corpus: 12 canonical designs plus every superseded variant", function () {
     assert.strictEqual(corpus.designs.length, 12, "canonical design count changed");
-    // 12 variants since the 2026-10-01 D-B re-freeze: the 8 round-1..4c supersessions plus
-    // 01@1, 01@5 (the closed-rule 5b answer superseded the black-stroke 5 answer), 05@4b and
-    // 08@4 — every blob the generator ever accepted stays accounted for.
-    assert.strictEqual(corpus.variants.length, 12, "superseded-variant count changed");
-    // 24 = every accepted blob the live generator ever produced (rounds 1..5b); the prompt
-    // corpus has 12 ids.
+    // 14 variants since the 2026-10-02 R-6/R-7 RE-CUT + REGENERATION leg: the D-B set (12) plus
+    // 05@5 and 07@4, whose canonicals moved to the freshly generated round-6 / round-8 blobs.
+    // The count grew because the leg produced NEW artwork, not because history was dropped —
+    // the previous canonicals are still here, as variants.
+    assert.strictEqual(corpus.variants.length, 14, "superseded-variant count changed");
+    // 26 = every accepted blob the live generator ever produced (rounds 1..8); the prompt
+    // corpus has 12 ids. (24 before the R-6/R-7 regeneration added 05@6 and 07@8.)
     assert.strictEqual(
       corpus.designs.length + corpus.variants.length,
-      24,
-      "the frozen corpus must account for all 24 accepted blobs",
+      26,
+      "the frozen corpus must account for all 26 accepted blobs",
     );
     const ids = corpus.designs.map((d) => d.id).sort();
     assert.deepStrictEqual(ids, [
@@ -113,7 +114,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     }
   });
 
-  it("carries 24 DISTINCT accepted blobs — no variant is a duplicate of a canonical design", function () {
+  it("carries 26 DISTINCT accepted blobs — no variant is a duplicate of a canonical design", function () {
     // MEASURED DEFECT, FIXED 2026-10-01. `buildCorpus` used to push the INCOMING design as the
     // "superseded variant" instead of the one it replaced, so all 8 variants were byte-identical to
     // their own winner: the corpus asserted "every accepted blob the generator ever produced" while
@@ -134,9 +135,9 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       "the frozen corpus holds duplicate blobs (a variant recorded its own winner's bytes): " +
         collisions.join(", "),
     );
-    // 24 distinct since the D-B re-freeze (2026-10-01): 20 pre-re-freeze blobs + the three
-    // round-5 answers + the round-5b gold answer for 01.
-    assert.strictEqual(seen.size, 24, "distinct blob count is not 24: " + seen.size);
+    // 26 distinct since the 2026-10-02 R-6/R-7 re-cut + regeneration leg: 24 distinct at the D-B
+    // re-freeze + the two freshly accepted blobs (05@6, 07@8) whose superseded predecessors stay.
+    assert.strictEqual(seen.size, 26, "distinct blob count is not 26: " + seen.size);
   });
 
   it("attributes each superseded variant to the round it was SUPERSEDED BY, not to itself", function () {
@@ -197,10 +198,13 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // would carry its ROUND-1 blob (1447 chars) instead of its latest accepted one.
     const byId = {};
     for (const d of corpus.designs) byId[d.id] = d;
-    // D-B (2026-10-01): 01/05/08 were re-generated under closed-rule prompts — 05 and 08 in
-    // round 5, 01 in round 5b (round 5's own 01 answer drew black rules and was superseded).
-    assert.strictEqual(byId["05-celestial-arcs"].round, "5", "05-celestial-arcs must come from round 5");
+    // D-B (2026-10-01): 01/05/08 were re-generated under closed-rule prompts — 01/08 in round 5,
+    // 01 also in round 5b (round 5's own 01 answer drew black rules and was superseded).
+    // R-6/R-7 (2026-10-02): 05 and 07 were re-cut AND REGENERATED — 05 in round 6, 07 in round 8
+    // (round 7's 07 answer was REFUSED by the trust root: the model emitted a `<style>` block).
+    assert.strictEqual(byId["05-celestial-arcs"].round, "6", "05-celestial-arcs must come from round 6");
     assert.strictEqual(byId["01-gilded-frame"].round, "5b", "01-gilded-frame must come from round 5b (the gold answer)");
+    assert.strictEqual(byId["07-corner-arcs"].round, "8", "07-corner-arcs must come from round 8");
     assert.strictEqual(byId["08-flame-crest"].round, "5", "08-flame-crest must come from round 5");
     assert.strictEqual(byId["03-thornvine"].round, "4c", "03-thornvine must come from round 4c");
     assert.strictEqual(byId["04-dragon-scale"].round, "4c", "04-dragon-scale must come from round 4c (D-C kept its bytes)");
@@ -212,7 +216,8 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       [
         "designs-round1.json", "designs-round2.json", "designs-round3.json",
         "designs-round4.json", "designs-round4b.json", "designs-round4c.json",
-        "designs-round5.json", "designs-round5b.json",
+        "designs-round5.json", "designs-round5b.json", "designs-round6.json",
+        "designs-round7.json", "designs-round8.json",
       ],
     );
     const keys = corpus.rounds.map((f) => freeze.roundKey(path.basename(f)));
@@ -221,6 +226,13 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
   });
 
   it("agrees with the generator's own merge file, when that file exists", function () {
+    // `designs-merged.json` is the GENERATOR's own last-accepted-wins merge, written when the
+    // generator's merge leg last ran (round field `merged-5`, 2026-10-01). MEASURED 2026-10-02:
+    // it is now STALE for exactly the two ids the R-6/R-7 leg regenerated, because it was not
+    // re-run after them. That staleness is the EXPECTED state, not a defect, so the assertion is
+    // directional: the two regenerated ids must have moved FORWARD to their new rounds (asserted
+    // separately in the round-order case), and every OTHER id must still agree byte for byte.
+    // A re-run of the generator's merge leg becomes a no-op for the fixture.
     const merged = path.join(
       ROOT, "temp", "visual_logs", "byok_svg_borders_20260927", "designs-merged.json",
     );
@@ -228,12 +240,24 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     const m = JSON.parse(fs.readFileSync(merged, "utf8"));
     const byId = {};
     for (const d of m.designs || []) byId[d.id] = d.svg;
-    const mismatched = corpus.designs.filter((d) => byId[d.id] !== d.svg).map((d) => d.id);
+    const regenerated = new Set(["05-celestial-arcs", "07-corner-arcs"]);
+    const mismatched = corpus.designs
+      .filter((d) => !regenerated.has(d.id) && byId[d.id] !== d.svg)
+      .map((d) => d.id);
     assert.deepStrictEqual(
       mismatched,
       [],
       "the frozen corpus disagrees with designs-merged.json for: " + mismatched.join(", "),
     );
+    for (const id of regenerated) {
+      assert.notStrictEqual(
+        byId[id],
+        corpus.designs.find((d) => d.id === id).svg,
+        id + ": the R-6/R-7 regeneration is not visible against the stale merge file — either " +
+          "the regeneration did not land in the fixture, or the merge file was rebuilt and this " +
+          "exclusion should be removed",
+      );
+    }
   });
 
   it("is read by the gallery spec as its DEFAULT source, not the generator's run directory", function () {
@@ -279,9 +303,9 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     assert.deepStrictEqual(gilded, ["1", "5"], "01-gilded-frame's superseded rounds changed: " + gilded.join(","));
   });
 
-  it("operator overrides: exactly the two ruled ids carry a criterion override, each with provenance", function () {
-    // Operator rulings, both dated 2026-10-01, both re-cutting a judged TEXT while the frozen
-    // bytes stay the winning round's:
+  it("operator overrides: exactly the four ruled ids carry a criterion override, each with provenance", function () {
+    // Operator rulings. D-C and R-3 are dated 2026-10-01, both re-cutting a judged TEXT while
+    // the frozen bytes stay the winning round's:
     //   D-C — 04-dragon-scale: aspect-independent scale criterion (the anisotropy of the
     //         product's border-image edge scaling on a tall section).
     //   R-3 — 01-gilded-frame: the colour clause ("gold tone") dropped to shape-only, because
@@ -290,14 +314,18 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     //         instrument at PRINT defaults). The re-cut text is measured against the judged
     //         frame: two rules per edge (95.5-99.0% line coverage) and a diamond at each of the
     //         four corners (ink deltas +41/+22/+32/+19 over an identical control box).
+    // R-6 and R-7 are the operator's 2026-10-02 RE-CUT instruction for the two designs whose
+    // criteria named features no pipeline stage can paint (05's source-mid-viewBox star marks;
+    // 07's corner groups, which no EDGE strip covers). Their measured basis is filed as
+    // `phase4_round25_recut_evidence.md`; the bytes are likewise unchanged.
     // An override on ANY other id fails here — that is the fence that keeps a re-cut from
     // arriving unreviewed.
     const withOverride = corpus.designs.filter((d) => d.criterionOverride);
     assert.deepStrictEqual(
       withOverride.map((d) => d.id).sort(),
-      ["01-gilded-frame", "04-dragon-scale"],
-      "criterion overrides must exist on exactly the D-C and R-3 ids — another id carrying one " +
-        "means an unreviewed re-cut reached the fixture",
+      ["01-gilded-frame", "04-dragon-scale", "05-celestial-arcs", "07-corner-arcs"],
+      "criterion overrides must exist on exactly the ruled ids (D-C, R-3, R-6, R-7) — another " +
+        "id carrying one means an unreviewed re-cut reached the fixture",
     );
     const byId = {};
     for (const d of withOverride) byId[d.id] = d;
@@ -369,6 +397,97 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       d01.sha256,
       "99605fc36fcc243fa11f4e1109207b8310fb0dae8999c98453e8cc7bef713e3d",
       "01: the frozen bytes changed under an override that only re-cuts the criterion",
+    );
+
+    // ---- R-6 / R-7 (2026-10-02): the two RE-CUT designs, both fenced the same way as above.
+    // Each must: name its own ruling + date, carry a reason, keep `criterionGenerated` equal to
+    // the text its round actually generated, CHANGED (an override that changes nothing is a
+    // silently swapped field), and leave the frozen bytes at the winning round's hash.
+    const recuts = [
+      {
+        id: "05-celestial-arcs",
+        ruledBy: "R-6",
+        round: "6",
+        previousSha256: "bce88831e291b19a1694ce2cce1747231efa68ca1423efe6f51e99fe06f709cb",
+        // The clause the pipeline cannot satisfy must be REMOVED as a demand: the re-cut may
+        // mention the stars (as a recorded residual) but must not require them.
+        mustNotDemand: /at least four separate four-pointed star shapes are visible/i,
+      },
+      {
+        id: "07-corner-arcs",
+        ruledBy: "R-7",
+        round: "8",
+        previousSha256: "84f10f2575423b320ce6ca9b370fadb1ca81654105d10ab41bbe870d1db380e4",
+        mustNotDemand: /each of the four corners shows at least three nested quarter-circle arcs/i,
+      },
+    ];
+    for (const r of recuts) {
+      const d = byId[r.id];
+      assert.ok(d, `${r.id}: the re-cut override is missing from the fixture`);
+      const o = d.criterionOverride;
+      assert.strictEqual(o.ruledBy, r.ruledBy, `${r.id}: override must name its ruling`);
+      assert.strictEqual(o.ruledOn, "2026-10-02", `${r.id}: override must carry its ruling date`);
+      assert.ok(o.reason && o.reason.length > 80, `${r.id}: override must carry its measured reason`);
+      // R-6/R-7 were the operator's 2026-10-02 instruction to RE-CUT **and regenerate**: the
+      // criterion moved to what the pipeline can paint, and the artwork was regenerated under it.
+      // So on these two ids the override's `supersedes` is the pre-regeneration JUDGED text (the
+      // text the previous seat actually judged), NOT the text the new winning round generated —
+      // `criterionGenerated` is that new round's own text, by construction. Pinning both keeps
+      // the history readable: the SUPERSEDED criterion survives even though the bytes moved.
+      assert.ok(
+        typeof o.supersedes === "string" && o.supersedes.length > 60,
+        `${r.id}: the override must preserve the superseded judged text`,
+      );
+      assert.notStrictEqual(d.criterion, d.criterionGenerated, `${r.id}: override changes nothing`);
+      // `criterionGenerated` is the WINNING ROUND's own text — for these two ids that is the NEW
+      // round's criterion, and the round file is the authority for it.
+      const roundFile = path.join(freeze.DEFAULT_FROM, "designs-round" + d.round + ".json");
+      if (fs.existsSync(roundFile)) {
+        const rf = JSON.parse(fs.readFileSync(roundFile, "utf8"));
+        const gen = (rf.designs || []).find((x) => x.id === r.id);
+        assert.strictEqual(
+          d.criterionGenerated,
+          gen.criterion,
+          `${r.id}: criterionGenerated must equal the criterion of the WINNING round file ` +
+            `(round ${d.round})`,
+        );
+      }
+      assert.ok(
+        !r.mustNotDemand.test(d.criterion),
+        `${r.id}: the re-cut still DEMANDS the clause the pipeline cannot paint`,
+      );
+      // R-6/R-7 were a RE-CUT **plus REGENERATION**: the canonical bytes must be the NEW round's
+      // blob, the superseded predecessor must survive as a variant, and the OLD bytes must NOT
+      // still be canonical (that would mean only the text moved).
+      assert.strictEqual(
+        d.round,
+        r.round,
+        `${r.id}: the R-6/R-7 leg regenerated this design — the canonical round must be the new one`,
+      );
+      assert.ok(
+        corpus.variants.some((v) => v.id === r.id && v.svg !== d.svg),
+        `${r.id}: the previous canonical blob vanished — a regeneration must keep its predecessor`,
+      );
+      assert.notStrictEqual(
+        d.sha256,
+        r.previousSha256,
+        `${r.id}: the bytes did NOT change — only the criterion moved, which is NOT what ` +
+          `R-6/R-7 ordered (they ordered a re-cut AND a regeneration)`,
+      );
+    }
+    // 05 judged by continuity, 07 judged at the corners — the property each re-cut exists to
+    // establish, asserted on the JUDGED text (not on the superseded one).
+    assert.ok(
+      /unbroken|continu/i.test(byId["05-celestial-arcs"].criterion),
+      "05: the re-cut must keep the clause the frame measurably satisfies (unbroken strokes)",
+    );
+    assert.ok(
+      /corner/i.test(byId["07-corner-arcs"].criterion) &&
+        /does not require the corner groups to be visible inside an edge strip/i.test(
+          byId["07-corner-arcs"].criterion,
+        ),
+      "07: the re-cut must move the judged location to the corners AND say why an edge strip " +
+        "is not the place to look",
     );
   });
 

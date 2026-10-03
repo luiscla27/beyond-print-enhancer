@@ -239,6 +239,27 @@ async function main() {
         left: clamp(dev.x + dev.w - inn, W - bandPx), top: 0, width: bandPx, height: H,
       },
     };
+    // The band is an EDGE STRIP: it does not span a corner. A criterion that judges something
+    // at the border's corners is therefore read here, in the 28 CSS px CORNER SQUARE of the
+    // RING — the intersection of the two bands, i.e. [edge-16, edge+12] on BOTH axes, which is
+    // mostly OUTSIDE the section. (An earlier build of this row placed the box at the section's
+    // OWN top-left corner, 32 device px too far in: there the section's page content fills the
+    // box and a reviewer correctly reported "no arc groups" about a box the border never paints.
+    // The box is the RING's corner, not the section's.)
+    const cornerPx = Math.round(28 * dsf);
+    const corners = {
+      "TL": { left: dev.x - out, top: dev.y - out, width: cornerPx, height: cornerPx },
+      "TR": {
+        left: dev.x + dev.w + inn - cornerPx, top: dev.y - out, width: cornerPx, height: cornerPx,
+      },
+      "BL": {
+        left: dev.x - out, top: dev.y + dev.h + inn - cornerPx, width: cornerPx, height: cornerPx,
+      },
+      "BR": {
+        left: dev.x + dev.w + inn - cornerPx, top: dev.y + dev.h + inn - cornerPx,
+        width: cornerPx, height: cornerPx,
+      },
+    };
 
     const label = d.label || d.id;
     const overrideNote = d.criterionOverride
@@ -260,8 +281,10 @@ async function main() {
         "strip that faces the section's CENTRE - the ornament must point at that bar, not at " +
         "the blank field beside it.",
       "READING ORDER: TOP edge, BOTTOM edge, then LEFT and RIGHT rails left-to-right as " +
-        "overlapping segments; a rail segment is the rail's own pixels UNSLICED. A design " +
-        "whose criterion is not met must be named NOT MET.",
+        "overlapping segments, then the four CORNERS (TL, TR, BL, BR) as 28x28 CSS boxes cut " +
+        "from the section's own corners - a rail segment is the rail's own pixels UNSLICED, and " +
+        "an edge strip does not span a corner, so a corner question is answered by the corner " +
+        "row. A design whose criterion is not met must be named NOT MET.",
     ];
     const cap = captionBand(W, capLines, "#222", "#fff", FONT);
 
@@ -337,12 +360,47 @@ async function main() {
       };
     };
 
+    // ---- corners: the four corner boxes side by side (what an edge strip cannot show) -------
+    const cornerNames = Object.keys(corners);
+    const cornerRow = async () => {
+      const cells = [];
+      for (const k of cornerNames) {
+        const box = await cut(corners[k]);
+        cells.push({ buf: box, w: cornerPx, h: cornerPx, name: k });
+      }
+      const gapW = 12;
+      const tag = tagBand(
+        W,
+        "CORNERS - the four " + cornerPx + "x" + cornerPx + " device px boxes at the section's " +
+          "own corners (28 CSS px at dsf " + dsf + "), LEFT-to-RIGHT: " + cornerNames.join(", ") +
+          ". An edge strip above does NOT span a corner: a criterion that judges corner " +
+          "artwork is read HERE.",
+      );
+      const rowH = cornerPx;
+      const h = tag.h + rowH;
+      const parts = [{ input: tag.buf, top: 0, left: 0 }];
+      let x = 0;
+      for (let i = 0; i < cells.length; i++) {
+        if (i > 0) x += gapW;
+        parts.push({ input: cells[i].buf, top: tag.h, left: x });
+        x += cells[i].w;
+      }
+      return {
+        buf: await sharp({ create: { width: W, height: h, channels: 4, background: "#111" } })
+          .composite(parts)
+          .png()
+          .toBuffer(),
+        w: W, h,
+      };
+    };
+
     const rows = [];
     rows.push(await rowFor(EDGES.find((e) => e.id === "TOP")));
     rows.push(await rowFor(EDGES.find((e) => e.id === "BOTTOM")));
     const railLeft = await railRow(EDGES.find((e) => e.id === "LEFT"));
     const railRight = await railRow(EDGES.find((e) => e.id === "RIGHT"));
     rows.push(railLeft, railRight);
+    rows.push(await cornerRow());
 
     const imgH = cap.h + rows.reduce((a, r) => a + r.h + GAP, 0) + GAP;
     const parts = [{ input: cap.buf, top: 0, left: 0 }];
@@ -368,8 +426,17 @@ async function main() {
       width: W, height: imgH, mpx: Number(mpx.toFixed(2)),
       edges: EDGES.map((e) => ({
         edge: e.id, interiorSide: e.interior,
-        region: region[e.id], railSegments: e.id === "LEFT" || e.id === "RIGHT" ? segments(H).length : 1,
+        region: region[e.id],
+        // For the rails the region is the WHOLE rail and this entry names the slot list; for the
+        // horizontals the region is the whole strip and there is exactly one slot. `segments`
+        // is the offset/length list a consumer needs to locate a slot's pixels — a bare COUNT
+        // is not reconstructible (a prior probe had to re-derive it).
+        segments: segments(e.id === "LEFT" || e.id === "RIGHT" ? H : W),
       })),
+      corners: {
+        boxPx: cornerPx,
+        boxes: corners,
+      },
     });
     console.log(
       "judged cell: " + name + " - " + W + "x" + imgH + " (" + mpx.toFixed(2) + " Mpx) - " + label,
