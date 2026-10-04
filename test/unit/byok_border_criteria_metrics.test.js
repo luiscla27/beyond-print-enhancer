@@ -253,4 +253,28 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
     assert.strictEqual(v.pass, null, "VOID is not MET and not NOT MET — it is unjudged");
     assert.ok(v.voidReason.length > 20, "a VOID must name its reason");
   });
+
+  it("the instrument is DETERMINISTIC: the same pixels yield byte-identical readings", function () {
+    // D2's whole claim is that the measurement, not a seat, is binding. A measurement that
+    // varies run to run would be a seat call wearing a number, so this is asserted rather than
+    // assumed: pixels in, numbers out, twice, compared exactly.
+    const { png, camera, imageEntry } = syntheticCell({ rules: [6, 12], cornerMarks: true });
+    const a = instrument.evaluate(png, imageEntry, SYNTH_FIXTURE, camera);
+    const b = instrument.evaluate(png, imageEntry, SYNTH_FIXTURE, camera);
+    assert.deepStrictEqual(b, a, "two reads of identical pixels disagreed — the metric is not deterministic");
+    // and on the REAL judged cell, where the pipeline's own anti-aliasing is in play
+    const realMeta = JSON.parse(
+      fs.readFileSync(path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
+        "gallery-round27", "judged-meta.json"), "utf8"),
+    );
+    const entry = realMeta.images.find((i) => i.label === "01-gilded-frame" && !i.variant);
+    const cell = path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
+      "gallery-round27", entry.judgedFile);
+    if (!fs.existsSync(cell)) return; // a fresh clone has no captured frames; the fence skips
+    const png2 = instrument.loadPng(cell);
+    const a2 = instrument.evaluate(png2, entry, METRICS.criteria["01-gilded-frame"], realMeta.camera);
+    const png3 = instrument.loadPng(cell);
+    const b2 = instrument.evaluate(png3, entry, METRICS.criteria["01-gilded-frame"], realMeta.camera);
+    assert.deepStrictEqual(b2, a2, "the real judged cell read differently twice");
+  });
 });
