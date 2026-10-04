@@ -118,6 +118,27 @@ const CatalogService = {
                         }
                         section.classList.add(config.borderStyle);
                     }
+
+                    // AC-9a path C (track `byok_svg_borders_20260927`, operator option 2
+                    // 2026-10-03): a template's section config may carry `borderSvg` — the
+                    // SAME bytes an AI border writes into a layout record — and the import
+                    // half rehydrates them through the choke point, which sanitizes
+                    // INTERNALLY. A template is a PARTIAL patch (unlike a full layout
+                    // record, whose restore path clears what the record does not carry):
+                    // the border is touched only when the template's config actually HAS
+                    // the key, so shipped templates that predate AI borders keep whatever
+                    // border the section already shows. An explicit `borderSvg: null` IS
+                    // the key, and means "no border" — the choke point clears. Every byte
+                    // that reaches the DOM is the trust root's own output; a hostile
+                    // payload smuggled inside a template JSON is refused and paints
+                    // NOTHING, fail-closed.
+                    if (Object.prototype.hasOwnProperty.call(config, "borderSvg")) {
+                        if (typeof window.AiBorder?.renderBorderSvg === "function") {
+                            window.AiBorder.renderBorderSvg(section, config.borderSvg ?? null);
+                        } else {
+                            window.safeLog?.("warn", "[DDB Print] Template carries borderSvg but AiBorder is not loaded — border not applied (fail-closed).");
+                        }
+                    }
                 }
             }
         }
