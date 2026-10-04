@@ -156,7 +156,7 @@ const Z_ORDER_MAX = 2147483647;
 
 /**
  * The smallest `width` a patch may write. NOT an invention: a user dragging the resize
- * handle cannot produce anything under it — `js/main.js:2303` clamps `newWidth < 50` up to
+ * handle cannot produce anything under it — `js/main.js:2314` clamps `newWidth < 50` up to
  * 48 — so a 0 (or a hairline) is a value the sheet's own UI cannot make, i.e. malformed
  * geometry rather than a legitimate destructive ask. This is what closes GATE-3's D1: the
  * blank-the-sheet patch dies as a `geometry_value` rejection, with no new schema field and
@@ -275,9 +275,9 @@ function toNumber(value) {
  *   ok       an integer (or an integer-valued `"300px"`, the record's own spelling)
  *
  * The product's user path cannot produce a fractional width: the resize handle snaps to
- * multiples of 16 and clamps to integers (`js/main.js:2294-2305`), and the scaling
+ * multiples of 16 and clamps to integers (`js/main.js:2310-2315`), and the scaling
  * compensation travels as `--be-scale`, which no inline-style scan reads
- * (`js/print_styles.js:1234-1246`).
+ * (`js/print_styles.js:1298-1304`).
  */
 function classifyNumber(value) {
   if (value === null) return { kind: "value", n: null };
@@ -615,7 +615,7 @@ function validatePatch(patch, liveSectionIds, options) {
             "geometry_value",
             where,
             `a width of ${num.n}px is below the ${MIN_WIDTH_PX}px the sheet's own resize ` +
-              "handle clamps to (js/main.js:2303) — a collapsed section is a malformed ask, " +
+              "handle clamps to (js/main.js:2314) — a collapsed section is a malformed ask, " +
               "not something to confirm",
           ),
         );
