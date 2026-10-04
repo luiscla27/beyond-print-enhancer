@@ -34,13 +34,19 @@
  * logged, so a run log cannot leak it. Nothing is written outside `temp/` and the artifact dir.
  *
  * Usage:
- *   node scripts/border_design_generator.js [--out <dir>] [--model <id>] [--only <id,id>] [--round N]
+ *   node scripts/border_design_generator.js [--out <dir>] [--model <id>] [--only <id,id>]
+ *                                           [--round N] [--overwrite-round]
  *
  *   --out    artifact directory (default temp/visual_logs/byok_svg_borders_20260927)
  *   --model  the Nous seat (default poolside/laguna-s-2.1:free — MEASURED: 200 in ~31 s, clean JSON)
  *   --only   comma-separated design ids, for a single-design retry
  *   --round  suffixed into the output filenames (default 1), so a re-polish never overwrites the
  *            frames a previous verdict was scored against
+ *   --overwrite-round
+ *            re-cut a round file that ALREADY holds accepted designs. Without it such a write is
+ *            REFUSED, because `test/fixtures/byok_border_corpus.json` is frozen over these files —
+ *            see "A ROUND FILE THAT HAS BEEN FROZEN IS NOT SCRATCH" below. The dangerous
+ *            invocation is a RETRY (`--only`, no `--round`) against a round already frozen.
  *
  * Outputs (all under --out):
  *   designs-round<N>.json   every design + its provenance (model, ms, usage, sanitizer verdicts)
@@ -73,6 +79,53 @@ function standInRow(id, title, w, h) {
 function arg(name, fallback) {
   const i = process.argv.indexOf("--" + name);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+}
+
+/**
+ * A ROUND FILE THAT HAS BEEN FROZEN IS NOT SCRATCH — the write guard (2026-10-04).
+ *
+ * `test/fixtures/byok_border_corpus.json` is a freeze OVER these files: the visual gate renders the
+ * fixture, and `scripts/freeze_border_corpus.js --check` (and the unit suite) require a fresh freeze
+ * to reproduce it byte-for-byte. So an accepted entry in a `designs-round<N>.json` is an INPUT of a
+ * tracked artifact, and rewriting the round silently breaks the corpus.
+ *
+ * MEASURED, 2026-10-04: one run overwrote `designs-round1.json` (`generatedAt
+ * 2026-10-04T11:38:08Z`, SIX of its twelve entries refusals, and `01-gilded-frame`'s accepted blob
+ * replaced by 431 chars of parser-recovered malformed markup) where the fixture had frozen a
+ * 719-char artwork — and the corpus stopped reproducing. Seven rewritten entries and not twelve
+ * means the run carried `--only`: a RETRY ("re-dial the ones that came back bad"), which has no
+ * reason to mention `--round`, and this tool's `--round` default is 1. Issue:
+ * `temp/issues/ISSUE_byok_border_corpus_round1_drift_vs_frozen_fixture_20261004.md`.
+ *
+ * Two rules, both pure so they are testable without a live seat (see the corpus suite):
+ *   1. a round file that already holds accepted designs is NOT rewritten unless the operator passes
+ *      `--overwrite-round`; the refusal names both sanctioned ways forward;
+ *   2. a FAILED attempt never replaces an accepted entry, with or without `--overwrite-round` — a
+ *      429 or a refused answer must not erase the record of an accepted blob. A SUCCESSFUL attempt
+ *      still supersedes it: that is what a re-cut is.
+ */
+function isAccepted(d) {
+  return Boolean(d && d.accepted === true && d.svg);
+}
+
+/** The refusal to throw BEFORE any network call or write, or null when this run may write the file. */
+function roundWriteRefusal(designs, round, overwriteRound) {
+  if (overwriteRound) return null;
+  const accepted = (designs || []).filter(isAccepted).length;
+  if (accepted === 0) return null;
+  return new Error(
+    "refusing to overwrite designs-round" + round + ".json: it already holds " + accepted +
+      " accepted design(s) that a TRACKED artifact (test/fixtures/byok_border_corpus.json) is " +
+      "frozen over, so rewriting this round breaks the corpus. Pass --round <new> to ADD a round, " +
+      "or --overwrite-round to re-cut this one deliberately (a FAILED attempt still cannot replace " +
+      "an accepted entry).",
+  );
+}
+
+/** Merge ONE attempt into its id's entry. A failed attempt cannot displace an accepted blob. */
+function mergeAttempt(existing, attempt) {
+  if (isAccepted(existing) && !isAccepted(attempt)) return existing;
+  return attempt;
 }
 
 /** process env -> `temp/secrets.env` -> HKCU\Environment, mirroring scripts/byok_vision_gate.py. */
@@ -156,10 +209,21 @@ async function main() {
   const round = String(arg("round", "1"));
   const only = (arg("only", "") || "").split(",").map((s) => s.trim()).filter(Boolean);
   const maxTokens = Number(arg("max-tokens", "6000"));
+  const overwriteRound = process.argv.includes("--overwrite-round");
 
   const corpus = JSON.parse(fs.readFileSync(path.join(__dirname, "border_designs.json"), "utf8"));
   const wanted = corpus.designs.filter((d) => only.length === 0 || only.includes(d.id));
   if (wanted.length === 0) throw new Error("no designs selected (--only matched nothing)");
+
+  const roundPath = path.join(outDir, "designs-round" + round + ".json");
+  const existing = fs.existsSync(roundPath)
+    ? JSON.parse(fs.readFileSync(roundPath, "utf8")).designs || []
+    : [];
+
+  // THE WRITE GUARD FIRST: before the credential is resolved, before the first network call and
+  // before anything is written. A refused run costs nothing and touches nothing.
+  const refusal = roundWriteRefusal(existing, round, overwriteRound);
+  if (refusal) throw refusal;
 
   const key = resolveKey("NOUS_API_KEY");
   if (!key) {
@@ -179,12 +243,9 @@ async function main() {
   say("designs: " + wanted.length + (only.length ? " (--only " + only.join(",") + ")" : ""));
   say("");
 
-  const designs = JSON.parse(
-    fs.existsSync(path.join(outDir, "designs-round" + round + ".json"))
-      ? fs.readFileSync(path.join(outDir, "designs-round" + round + ".json"), "utf8")
-      : JSON.stringify({ round, model, designs: [] }),
-  ).designs || [];
-  const byId = new Map(designs.map((d) => [d.id, d]));
+  // The round's own entries, read once by the write guard above so the refusal and the merge agree
+  // on what "already accepted" means.
+  const byId = new Map(existing.map((d) => [d.id, d]));
 
   for (const entry of wanted) {
     const messages = promptFor(entry.instruction);
@@ -246,26 +307,32 @@ async function main() {
       verdict = { ok: false, code: "empty_content", detail: "finish=" + call.finish, svg: null };
     }
 
-    byId.set(entry.id, {
-      id: entry.id,
-      title: entry.title,
-      instruction: entry.instruction,
-      criterion: entry.criterion,
-      model,
-      ms: call.ms || 0,
-      finish: call.finish || null,
-      usage: call.usage || null,
-      promptChars,
-      accepted: verdict.ok,
-      rejectCode: verdict.ok ? null : verdict.code,
-      rejectDetail: verdict.detail || null,
-      svgChars: verdict.chars || 0,
-      svg: verdict.svg,
-    });
+    byId.set(
+      entry.id,
+      mergeAttempt(byId.get(entry.id), {
+        id: entry.id,
+        title: entry.title,
+        instruction: entry.instruction,
+        criterion: entry.criterion,
+        model,
+        ms: call.ms || 0,
+        finish: call.finish || null,
+        usage: call.usage || null,
+        promptChars,
+        accepted: verdict.ok,
+        rejectCode: verdict.ok ? null : verdict.code,
+        rejectDetail: verdict.detail || null,
+        svgChars: verdict.chars || 0,
+        svg: verdict.svg,
+      }),
+    );
     say(
       verdict.ok
         ? "OK  " + verdict.chars + " chars  " + (call.ms / 1000).toFixed(1) + "s"
-        : "FAIL " + verdict.code + "  " + (call.ms / 1000).toFixed(1) + "s",
+        : "FAIL " + verdict.code + "  " + (call.ms / 1000).toFixed(1) + "s" +
+            (isAccepted(byId.get(entry.id))
+              ? "  (this round's ACCEPTED entry for " + entry.id + " is PRESERVED)"
+              : ""),
     );
     fs.writeFileSync(
       path.join(outDir, "designs-round" + round + ".json"),
@@ -283,7 +350,14 @@ async function main() {
   say("wrote " + path.relative(ROOT, path.join(outDir, "designs-round" + round + ".json")));
 }
 
-main().catch((err) => {
-  console.error(String((err && err.stack) || err));
-  process.exit(1);
-});
+// A MODULE IMPORT MUST NOT DIAL THE LIVE LEG (added 2026-10-04 with the write guard above): without
+// this, `require("./border_design_generator.js")` from a test would run a generation against the free
+// seat and the guard could not be tested at all. Nothing else imports this file.
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(String((err && err.stack) || err));
+    process.exit(1);
+  });
+}
+
+module.exports = { isAccepted, roundWriteRefusal, mergeAttempt, arg, main };

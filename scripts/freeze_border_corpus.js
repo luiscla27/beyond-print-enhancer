@@ -63,6 +63,13 @@
  * so re-running this script over the same rounds must produce an identical file, and
  * `test/unit/byok_border_corpus.test.js` fails if it does not.
  *
+ * LINE ENDINGS (`normalizeEol`, added 2026-10-04) — the comparison forgives the CHECKOUT, not the
+ * content. This script writes `\n`; git checks the tracked fixture out with whatever the machine's
+ * `core.autocrlf` says (CRLF here), so a byte comparison reds on a fresh Windows worktree/clone even
+ * with a perfect corpus. `--check` therefore normalises CRLF on both sides; any content difference
+ * still fails it. The attribute half (`test/fixtures/*.json -text` in `.gitattributes`) is
+ * deliberately NOT used: that file is gitignored (`.gitignore:194`), so it cannot travel.
+ *
  * Usage:
  *   node scripts/freeze_border_corpus.js [--from <dir>] [--out <file>] [--check]
  *
@@ -129,6 +136,25 @@ function collectRounds(dir) {  const files = fs
 /** sha256 over the UTF-8 bytes — the identity a gate can name when a frame goes red. */
 function sha256(s) {
   return crypto.createHash("sha256").update(s, "utf8").digest("hex");
+}
+
+/**
+ * The ONE line-ending rule, applied on BOTH sides of every comparison in this script.
+ *
+ * WHY (MEASURED 2026-10-04, `temp/issues/ISSUE_byok_border_corpus_round1_drift_vs_frozen_fixture_20261004.md`):
+ * the fixture is compared BYTE-for-byte against this CLI's `\n` output, but the tracked fixture is
+ * checked out by git according to the machine's `core.autocrlf` — `true` here, so a fresh worktree
+ * or clone gets 75,288 B with 308 CRs against this script's 74,980 B with 0. `/.gitattributes` is
+ * the natural home for the attribute and CANNOT be used here: it is listed in `.gitignore:194`
+ * (`/.gitattributes`), so it is untracked, absent from every worktree and clone, and an edit there
+ * fixes exactly one machine. The comparison is the half that travels with the repository.
+ *
+ * It forgives the CHECKOUT's line endings and nothing else: any content difference still fails, so
+ * `--check` cannot go green over a drifted corpus (proved by the negative control in
+ * `test/unit/byok_border_corpus.test.js`).
+ */
+function normalizeEol(text) {
+  return text.replace(/\r\n/g, "\n");
 }
 
 const OVERRIDES_PATH = path.join(ROOT, "test", "fixtures", "byok_border_criteria_overrides.json");
@@ -263,7 +289,9 @@ function main(argv) {
 
   if (args.check) {
     const existing = fs.existsSync(args.out) ? fs.readFileSync(args.out, "utf8") : null;
-    if (existing !== text) {
+    // EOL-insensitive on BOTH sides (see normalizeEol): a CRLF checkout of the fixture is not
+    // "CORPUS DRIFT", a content difference still is.
+    if (existing === null || normalizeEol(existing) !== normalizeEol(text)) {
       console.error("CORPUS DRIFT: " + args.out + " does not match a fresh freeze");
       process.exit(1);
     }
@@ -278,4 +306,4 @@ function main(argv) {
 
 if (require.main === module) main(process.argv.slice(2));
 
-module.exports = { buildCorpus, collectRounds, roundKey, ord, sha256, DEFAULT_FROM, DEFAULT_OUT };
+module.exports = { buildCorpus, collectRounds, roundKey, ord, sha256, normalizeEol, DEFAULT_FROM, DEFAULT_OUT };

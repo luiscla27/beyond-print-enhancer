@@ -183,11 +183,25 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     const out = path.join(os.tmpdir(), "be-corpus-check-" + process.pid + ".json");
     try {
       execFileSync(process.execPath, [GENERATOR, "--out", out], { cwd: ROOT, stdio: "pipe" });
-      assert.strictEqual(
-        fs.readFileSync(out, "utf8"),
-        fs.readFileSync(FIXTURE, "utf8"),
-        "the CLI's freeze output differs from the committed fixture",
-      );
+      // LINE-WISE and EOL-INSENSITIVE. Line-wise so a red NAMES the drift instead of dumping both
+      // 70 kB strings into the transcript (the assertion that produced 64,608 characters of mocha
+      // output and no diagnosis); EOL-insensitive so a Windows checkout of this fixture is not read
+      // as corpus drift — git checks it out with `core.autocrlf` (MEASURED here: 75,288 B / 308 CRs
+      // on disk vs 74,980 B / 0 in the blob), and the CLI writes `\n`. The rule is the shipping one,
+      // `freeze.normalizeEol`, shared with `--check`, and it forgives ONLY the checkout's line
+      // endings: a content difference still fails, which is what the negative control below pins.
+      const cliLines = freeze.normalizeEol(fs.readFileSync(out, "utf8")).split("\n");
+      const fixLines = freeze.normalizeEol(fs.readFileSync(FIXTURE, "utf8")).split("\n");
+      const firstDiff = cliLines.findIndex((line, i) => line !== fixLines[i]);
+      if (cliLines.length !== fixLines.length || firstDiff !== -1) {
+        const at = firstDiff === -1 ? Math.min(cliLines.length, fixLines.length) : firstDiff;
+        assert.fail(
+          "the CLI's freeze output differs from the committed fixture at line " + (at + 1) +
+            " of " + fixLines.length + " (a NORMALISED difference IS a content difference): " +
+            "cli=" + JSON.stringify(String(cliLines[at]).slice(0, 120)) +
+            " fixture=" + JSON.stringify(String(fixLines[at]).slice(0, 120)),
+        );
+      }
     } finally {
       if (fs.existsSync(out)) fs.unlinkSync(out);
     }
@@ -502,5 +516,89 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       ignored = e.status === 1 ? false : true;
     }
     assert.strictEqual(ignored, false, "test/fixtures/byok_border_corpus.json is gitignored");
+  });
+});
+
+/**
+ * THE 2026-10-04 CORPUS BREAK, fenced at BOTH ends (issue
+ * `temp/issues/ISSUE_byok_border_corpus_round1_drift_vs_frozen_fixture_20261004.md`).
+ *
+ * The break had two causes and neither was the product: (1) a live generator run REWROTE
+ * `designs-round1.json` — `--only` retry, no `--round`, so the default 1 — replacing the accepted
+ * 719-char `01-gilded-frame` blob this fixture had frozen with 431 chars of parser-recovered
+ * malformed markup, so the freeze stopped reproducing; (2) the fixture is compared byte-for-byte
+ * against an LF-emitting CLI while git checks it out CRLF here, so a fresh Windows checkout reds
+ * even over a perfect corpus. Cause (1) is fenced in `border_design_generator.js`, cause (2) in the
+ * comparison itself; these cases are the fence around the fences.
+ */
+describe("BYOK border corpus — the 2026-10-04 break cannot come back", function () {
+  const generator = require("../../scripts/border_design_generator.js");
+
+  it("a round file that holds accepted designs is REFUSED a rewrite unless --overwrite-round", function () {
+    const accepted = { id: "01-gilded-frame", accepted: true, svg: "<svg/>" };
+    const refused = { id: "01-gilded-frame", accepted: false, rejectCode: "http_429", svg: null };
+    const empty = { id: "01-gilded-frame", accepted: false, svg: null };
+
+    // 1. The dangerous invocation: the file has an accepted entry, no --overwrite-round.
+    const err = generator.roundWriteRefusal([accepted], "1", false);
+    assert.ok(err, "rewriting a frozen round was allowed");
+    assert.ok(
+      /--round <new>[\s\S]*--overwrite-round/.test(err.message),
+      "the refusal must name BOTH sanctioned ways forward: " + err.message,
+    );
+    // 2. The same rewrite, deliberately re-cut.
+    assert.strictEqual(generator.roundWriteRefusal([accepted], "1", true), null);
+    // 3. A round that has never held accepted artwork is scratch — a brand new --round is not blocked.
+    assert.strictEqual(generator.roundWriteRefusal([empty, refused], "2", false), null);
+    assert.strictEqual(generator.roundWriteRefusal([], "1", false), null);
+
+    // 4. And the second rule: a FAILED attempt can never displace an accepted blob, with or without
+    //    --overwrite-round (the exact mechanism that lost the frozen round-1 record).
+    assert.strictEqual(generator.mergeAttempt(accepted, refused), accepted);
+    assert.strictEqual(generator.mergeAttempt(empty, refused), refused);
+    // 5. A SUCCESSFUL attempt still supersedes: that is what a re-cut is.
+    const winner = { id: "01-gilded-frame", accepted: true, svg: "<svg id='new'/>" };
+    assert.strictEqual(generator.mergeAttempt(accepted, winner), winner);
+  });
+
+  it("--check forgives a CRLF copy of a fresh freeze and still fails on one character of drift", function () {
+    const dir = freeze.DEFAULT_FROM;
+    if (!fs.existsSync(dir)) this.skip();
+
+    const fresh = path.join(os.tmpdir(), "be-corpus-fresh-" + process.pid + ".json");
+    const crlfCopy = path.join(os.tmpdir(), "be-corpus-crlf-" + process.pid + ".json");
+    const drifted = path.join(os.tmpdir(), "be-corpus-drift-" + process.pid + ".json");
+    const check = (file) => {
+      try {
+        execFileSync(process.execPath, [GENERATOR, "--check", "--out", file], { cwd: ROOT, stdio: "pipe" });
+        return 0;
+      } catch (e) {
+        return e.status;
+      }
+    };
+    try {
+      execFileSync(process.execPath, [GENERATOR, "--out", fresh], { cwd: ROOT, stdio: "pipe" });
+      // PREMISE: this case is about the EOL rule, so it only runs where the corpus actually
+      // reproduces. A corpus that does not reproduce is the byte-reproducibility case's red — it
+      // names the drifting record — and it must not be reported here as an EOL finding.
+      const lf = fs.readFileSync(fresh, "utf8");
+      if (freeze.normalizeEol(lf) !== freeze.normalizeEol(fs.readFileSync(FIXTURE, "utf8"))) this.skip();
+      assert.ok(!/\r\n/.test(lf), "a fresh freeze emitted CRLF: the CLI's own output carries a CR");
+
+      // THE FIX, at the CLI: the SAME bytes with a CRLF checkout's line endings pass. This is the
+      // exact state a fresh Windows worktree/clone is in (and the state that reds at HEAD).
+      fs.writeFileSync(crlfCopy, lf.replace(/\n/g, "\r\n"), "utf8");
+      assert.ok(/\r\n/.test(fs.readFileSync(crlfCopy, "utf8")), "the CRLF plant has no CR");
+      assert.strictEqual(check(crlfCopy), 0, "--check calls a CRLF checkout CORPUS DRIFT");
+
+      // NEGATIVE CONTROL: one character inside one frozen blob, CRLF or not, still fails. Without
+      // this the normalisation could hide exactly the drift the suite exists to catch.
+      assert.ok(lf.includes('"svgChars": 719'), "the plant's anchor is not in a fresh freeze");
+      fs.writeFileSync(drifted, lf.replace('"svgChars": 719', '"svgChars": 718').replace(/\n/g, "\r\n"), "utf8");
+      assert.notStrictEqual(fs.readFileSync(drifted, "utf8"), fs.readFileSync(crlfCopy, "utf8"), "the content-drift plant changed nothing");
+      assert.strictEqual(check(drifted), 1, "--check passed a fixture with drifted content");
+    } finally {
+      for (const f of [fresh, crlfCopy, drifted]) if (fs.existsSync(f)) fs.unlinkSync(f);
+    }
   });
 });
