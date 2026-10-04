@@ -1,0 +1,67 @@
+{
+  "_comment": [
+    "D4 (operator ruling 2026-10-02) - the formulation gate's data. A criterion may not be",
+    "judged as MET by anything unless it carries, HERE, the frozen judgedScale it is stated at,",
+    "its minFeaturePx (the smallest feature the product's pipeline can still paint at that",
+    "scale), and a deterministic metric term per binding predicate. The corpus gate",
+    "(test/unit/byok_border_corpus.test.js) rejects: a missing entry, a missing field, a",
+    "demand below minFeaturePx, a feature the print decoration pipeline crops away, and a",
+    "binding predicate with no deterministic metric (D4's four rejection clauses).",
+    "",
+    "`metric: null` is NOT a pass - it is the honest declaration that the criterion's binding",
+    "predicates are gestalt prose (or a shape the pipeline does not paint), so per D2 the",
+    "criterion is VOID for binding purposes and per D5 nothing may be published or frozen while",
+    "such an entry exists. Only 01-gilded-frame has a metric today, because only it received a",
+    "clause whose predicates are shape/continuity/coverage - the exact class D2 assigns to the",
+    "metric. The rest stay VOID until each is re-cut the same way; inventing thresholds for",
+    "prose criteria would be the vacuous pass this gate exists to prevent."
+  ],
+  "judgedScale": {
+    "capture2x": true,
+    "sectionCssWidth": 200,
+    "slicePercent": 24,
+    "sourceUnits": 200,
+    "bandDevicePx": 96,
+    "outsideDevicePx": 16,
+    "greyscale": true,
+    "sourceUnitsPerBand": { "x": 61.44, "y": 69.12 }
+  },
+  "criteria": {
+    "01-gilded-frame": {
+      "metric": "two-rule-per-edge",
+      "minFeaturePx": {
+        "ruleThicknessPx": 1,
+        "ruleSeparationPx": 4,
+        "cornerMarkBoxPx": 16,
+        "continuityGapPx": 2
+      },
+      "terms": [
+        { "name": "twoRulePerEdgeCoverageMin", "op": ">=", "value": 0.9, "unit": "fraction" },
+        { "name": "cornerDeltaMin", "op": ">=", "value": 15, "unit": "device px" }
+      ],
+      "cornerMark": {
+        "sourceUnits": { "x": 61.44, "y": 69.12 },
+        "corners": {
+          "TL": { "x": 12, "y": 8, "w": 8, "h": 12 },
+          "TR": { "x": 12, "y": 8, "w": 8, "h": 12 },
+          "BL": { "x": 12, "y": 8, "w": 8, "h": 12 },
+          "BR": { "x": 12, "y": 8, "w": 8, "h": 12 }
+        }
+      },
+      "ruledBy": "D1",
+      "ruledOn": "2026-10-02",
+      "reason": "Operator ruling D1: 01's original criterion is vacated as unverifiable at the judged scale (its two rules are measured present at 95.5-99.0% line coverage and its four corner marks at +41/+22/+32/+19 px over an identical control, yet the seat denies both), so the binding verdict moves to this metric and the seat becomes corroborating. The thresholds are the consultants' converged clause (per-edge coverage >= 90% for two parallel rules; corner mark delta >= 15 device px) with one correction the measurement forced: the corner term is stated as a delta against a CONTROL box on the same rails, because an absolute ink threshold is satisfiable by rail thickness alone (measured: a design with no corner artwork carries 200-340 inked px in the same-size box)."
+    },
+    "02-runic-band": { "metric": null, "voidReason": "binding predicates are gestalt prose (glyph-like marks along the band) with no deterministic metric defined at this scale" },
+    "03-thornvine": { "metric": null, "voidReason": "binding predicates are gestalt prose (organic vine tracing) with no deterministic metric defined at this scale" },
+    "04-dragon-scale": { "metric": null, "voidReason": "D-C re-cut the TEXT to an aspect-independent scale criterion but the anisotropy class's metric was D3, which the operator DISCARDED on 2026-10-02; the criterion therefore has no metric and per D2 is VOID for binding purposes" },
+    "05-celestial-arcs": { "metric": null, "voidReason": "the re-cut artwork paints repeating solid arcs but no binding metric was implemented once D3 (which carried 05's stroke/coverage terms) was discarded" },
+    "06-chainmail": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlocking ring pattern) with no deterministic metric defined at this scale" },
+    "07-corner-arcs": { "metric": null, "voidReason": "the criterion's feature (four corner groups) is not covered by an EDGE strip, so no edge-band metric can decide it; a corner-band metric is not defined" },
+    "08-flame-crest": { "metric": null, "voidReason": "binding predicate is a gestalt shape ('tapering to a sharp point') with no metric - the residual the consultants flagged as the operator's to settle" },
+    "09-frost-shards": { "metric": null, "voidReason": "binding predicates are gestalt prose (scattered shard shapes) with no deterministic metric defined at this scale" },
+    "10-ink-brush": { "metric": null, "voidReason": "binding predicates are gestalt prose (brush-stroke texture) with no deterministic metric defined at this scale" },
+    "11-starlit-void": { "metric": null, "voidReason": "binding predicates combine coverage with a star-count term that the band's crop does not expose reliably; no metric defined" },
+    "12-knotwork": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlaced knot) with no deterministic metric defined at this scale" }
+  }
+}
