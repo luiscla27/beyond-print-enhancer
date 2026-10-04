@@ -218,8 +218,8 @@ async function answerPreview(b, accept, { timeout = 3000 } = {}) {
  * assertion below reads. The flow draws the preview AFTER the model answers, so the click is
  * raced against the promise in a loop rather than awaited in order.
  */
-async function runFlow(b, instruction, accept) {
-  const running = b.window.AiArrange.arrangeWithAi(instruction);
+async function runFlow(b, instruction, accept, opts) {
+  const running = b.window.AiArrange.arrangeWithAi(instruction, opts);
   let previewSeen = false;
   const deadline = Date.now() + 6000;
   while (Date.now() < deadline) {
@@ -746,17 +746,26 @@ describe("AC-6 — every failure has its own sentence, and none of them touch th
     assert.deepStrictEqual(extra, ["unavailable"], "orphan copy keys (the table cannot grow silently): " + extra.join(", "));
   });
 
-  it("the reject table covers EVERY code validatePatch can emit, with no orphans", function () {
+  it("the reject table covers EVERY code validatePatch can emit (plus the flow's own local codes), with no orphans", function () {
     // Same gate on the other vocabulary, derived from the SOURCE (see `emittedCodes`) so the
     // `section_id_duplicate` typo class cannot return: a code the core emits and this table lacks
     // falls through to `envelope_shape`, telling the user their well-formed answer was "not a
     // layout patch".
+    //
+    // `localCodes` is the flow's OWN vocabulary — refusals raised by `js/ai_arrange.js` BEFORE
+    // `validatePatch` ever runs, which therefore cannot appear among `ai_layout.js`'s `finding(…)`
+    // literals. It is a NAMED list rather than a widened filter, and it is asserted to be
+    // disjoint from the emitted set, so it cannot silently absorb an upstream code (which is the
+    // exact hole the source-derived check exists to close).
+    const localCodes = ["border_target_required"]; // AC-5, ruled 2026-10-03
     const emitted = emittedCodes();
     assert.ok(emitted.length >= 12, "the source-derived code set shrank (" + emitted.length + ") — the extraction is broken, not the product");
     const table = frozenKeys(SRC.aiArrange, "AI_ARRANGE_REJECT_COPY");
     const missing = emitted.filter((c) => table.indexOf(c) === -1);
     assert.deepStrictEqual(missing, [], "codes with no reject copy: " + missing.join(", "));
-    const orphans = table.filter((c) => emitted.indexOf(c) === -1);
+    const overlap = localCodes.filter((c) => emitted.indexOf(c) !== -1);
+    assert.deepStrictEqual(overlap, [], "a 'local' code is emitted by the core — it belongs in the derived set: " + overlap.join(", "));
+    const orphans = table.filter((c) => emitted.indexOf(c) === -1 && localCodes.indexOf(c) === -1);
     assert.deepStrictEqual(orphans, [], "reject copy for a code nothing emits: " + orphans.join(", "));
   });
 
@@ -1381,6 +1390,15 @@ describe("the prompt surface", function () {
       const running = b.window.AiArrange.showAiArrangeSurface();
       const found = await waitFor(() => Boolean(b.document.getElementById("be-ai-instruction")), { timeout: 3000 });
       assert.ok(found, "the instruction field was never built");
+      // AC-5 (ruled 2026-10-03): Border design is ON by default and this sheet has no selected
+      // section, so this dialog would refuse the ask on the target gate before any request. The
+      // case is about the HINT and the empty-ask refusal, so it turns Border design OFF through
+      // the dialog's own switch — the same control a user has, not a bypass.
+      const borderSwitch = b.document.getElementById("be-ai-cap-border");
+      assert.ok(borderSwitch, "the Border design switch is not in the dialog (AC-4)");
+      assert.strictEqual(borderSwitch.checked, true, "AC-4: the switches default ON");
+      borderSwitch.checked = false;
+      borderSwitch.dispatchEvent(new b.window.Event("change", { bubbles: true }));
       // AC-D1's copy rule: the sentence names what leaves the device, and never claims "no text".
       const hint = b.document.querySelector(".be-ai-prompt-hint");
       assert.ok(hint, "no privacy hint in the dialog");
@@ -1438,6 +1456,14 @@ describe("the prompt surface", function () {
         await b.seed;
         const running = b.window.AiArrange.showAiArrangeSurface();
         await waitFor(() => Boolean(b.document.getElementById("be-ai-instruction")), { timeout: 3000 });
+        // AC-5 (ruled 2026-10-03): the dialog opens with Border design ON and this sheet has no
+        // selected section, so the target gate would refuse BEFORE the transport could fail and
+        // this row would assert the wrong code. Each row turns the border switch off through the
+        // dialog's own control, so the escape hatch is the product's switch, not a test bypass.
+        const borderSwitch = b.document.getElementById("be-ai-cap-border");
+        assert.ok(borderSwitch, "the Border design switch is not in the dialog (AC-4)");
+        borderSwitch.checked = false;
+        borderSwitch.dispatchEvent(new b.window.Event("change", { bubbles: true }));
         b.document.getElementById("be-ai-instruction").value = "arrange it";
         b.document.querySelector(".be-ai-ask").dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
         const seen = await waitFor(() => Boolean(b.document.querySelector(".be-ai-refusal")), { timeout: 6000 });
@@ -1591,5 +1617,114 @@ describe("Phase 4's seams (source level)", function () {
     const arrange = codeOf(SRC.aiArrange);
     assert.match(scan, /\.be-ai-ghost/, "the scanner no longer ignores the preview's ghost layer");
     assert.match(arrange, /be-ai-ghost/, "the flow no longer draws with the registered class");
+  });
+});
+
+// -------------------------------------------------------------------------------------------
+// AC-5, as ruled 2026-10-03 — a border request with no targeted section refuses LOCALLY
+// -------------------------------------------------------------------------------------------
+
+describe("AC-5 - Border design with no targeted section refuses before any network call", function () {
+  this.timeout(30000);
+
+  it("border ON, arrange OFF, no section: refused with its own code, zero network", async function () {
+    const b = bootAi({ reply: () => b.jsonReply(OK_PATCH) });
+    try {
+      await b.seed;
+      const before = await state(b.window);
+      b.window.clearUndoStack();
+      const out = await b.window.AiArrange.arrangeWithAi("draw a border", {
+        capabilities: { arrange: false, border: true },
+        selectedSectionId: null,
+      });
+      await settle();
+      assert.strictEqual(out.ok, false, "a border request with no target must be refused");
+      assert.strictEqual(out.stage, "target");
+      assert.strictEqual(out.code, "border_target_required");
+      // THE FAIL CONDITION AC-5 NAMES: no BYOK_CHAT is dispatched. The probe is the worker
+      // boundary itself, so this is the request the product would have sent.
+      assert.deepStrictEqual(b.chat.calls, [], "a BYOK_CHAT was dispatched with no target section");
+      assert.strictEqual(await state(b.window), before, "the refusal touched the layout");
+      assert.strictEqual(b.window.undoDepth(), 0, "the refusal left an undo entry");
+      assert.deepStrictEqual(b.applies, [], "the refusal reached applyLayout");
+      assert.deepStrictEqual(b.saves, [], "the refusal saved");
+      const errs = b.toasts.filter((t) => t.kind === "error");
+      assert.strictEqual(errs.length, 1, "expected one error toast: " + JSON.stringify(b.toasts));
+      assert.strictEqual(errs[0].msg, b.window.AiArrange.AI_ARRANGE_REJECT_COPY.border_target_required);
+    } finally {
+      b.cleanup();
+    }
+  });
+
+  it("the 2026-10-03 ruling: border ON with ARRANGE ALSO ON still refuses (the exception is gone)", async function () {
+    // The gate split here. The earlier implementation let this case through — with arrange ON
+    // the flow proceeded and derived a target from the scan AFTER the model answered, so a
+    // BYOK_CHAT carrying the border capability went out with no target, which IS AC-5's FAIL
+    // condition. The operator ruled the strict reading (2026-10-03); this case is the regression
+    // fence on that ruling, and it is the one that would have caught the exception.
+    const b = bootAi({ reply: () => b.jsonReply(OK_PATCH) });
+    try {
+      await b.seed;
+      const out = await b.window.AiArrange.arrangeWithAi("tidy it and add a border", {
+        capabilities: { arrange: true, border: true },
+        selectedSectionId: null,
+      });
+      await settle();
+      assert.strictEqual(out.ok, false, "arrange ON must not exempt the border target gate");
+      assert.strictEqual(out.code, "border_target_required");
+      assert.deepStrictEqual(b.chat.calls, [], "the arrange+no-target request reached the worker");
+    } finally {
+      b.cleanup();
+    }
+  });
+
+  it("an ARRANGE-ONLY request with no section still goes through (Border OFF is unaffected)", async function () {
+    // The other half of the ruling: the gate keys on the BORDER capability, not on "no target".
+    // A user who switched Border design off must not be blocked from arranging.
+    const b = bootAi({ reply: () => b.jsonReply(OK_PATCH) });
+    try {
+      await b.seed;
+      const { out } = await runFlow(b, "two tidy columns", true, {
+        capabilities: { arrange: true, border: false },
+        selectedSectionId: null,
+      });
+      assert.strictEqual(out.ok, true, "an arrange-only request was blocked: " + JSON.stringify(out));
+      assert.strictEqual(out.stage, "applied");
+      assert.ok(b.chat.calls.length >= 1, "the arrange-only request never reached the worker");
+    } finally {
+      b.cleanup();
+    }
+  });
+
+  it("a border request WITH a target still works end to end (the gate is a gate, not a wall)", async function () {
+    const svg = '<svg viewBox="0 0 100 100"><rect x="1" y="1" width="98" height="98" fill="none" stroke="black"></rect></svg>';
+    // A border-only request carries ONLY the border carrier: with `arrange: false` any substantive
+    // `moves`/`hide` entry is correctly refused as `capability_disabled`, so the fixture must speak
+    // the shape the switch permits.
+    const b = bootAi({ reply: () => b.jsonReply({ moves: {}, hide: [], border: { svg }, note: "" }) });
+    try {
+      await b.seed;
+      const { out } = await runFlow(b, "draw a border", true, {
+        capabilities: { arrange: false, border: true },
+        selectedSectionId: "section-main",
+      });
+      assert.strictEqual(out.ok, true, "a targeted border request was refused: " + JSON.stringify(out));
+      assert.strictEqual(out.stage, "applied");
+      assert.strictEqual(b.applies.length, 1, "the border apply did not reach the apply entry point");
+      // The request really carried the border capability: it rides the SYSTEM PROMPT's schema
+      // paragraph (there is no separate wire flag), so the assertion reads the message contents
+      // rather than the re-encoded JSON, where the inner quotes are escaped.
+      const wire = b.chat.calls[b.chat.calls.length - 1];
+      const system = wire.messages.map((m) => m.content).join("\n");
+      assert.match(system, /"border"/, "the border capability never reached the system prompt");
+      // WHAT THIS HARNESS CANNOT SHOW, named rather than pretended: the PAINT. `debt_harness.js`
+      // deliberately does not eval `js/ai_border.js`, and `scanLayout` reads a section's border out
+      // of the DOM, so a record assertion here would read `null` for a border that painted. The
+      // live-DOM proof of the paint lives where it can be real:
+      // `test/browser_e2e/byok_border_roundtrip.spec.js` (real Chromium) and
+      // `test/unit/ai_border_render_choke.test.js` (the choke point, with jsdom).
+    } finally {
+      b.cleanup();
+    }
   });
 });

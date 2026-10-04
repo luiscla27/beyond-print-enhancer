@@ -1052,6 +1052,41 @@ async function contentCall(ctx, name, args = []) {
             };
           }
 
+          if (o.action === "printState") {
+            // AC-9a path H — the PRINT pipeline. The probe reads what the border looks like
+            // while the page is emulating print media: the ::before slot's COMPUTED border
+            // image source (the product's own paint), the section's own carried bytes, and
+            // the values a criterion could forbid. It reads the DOM, not the helper's
+            // return, so a path that short-circuited the choke point could not pass it.
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            if (!section) return { ok: false, reason: "no_section", id: sid };
+            const api = window.AiBorder;
+            if (!api || typeof api.hasBorderSvg !== "function") {
+              return { ok: false, reason: "no_AiBorder" };
+            }
+            const cs = getComputedStyle(section, "::before");
+            const raw = section.dataset ? section.dataset.borderRawSvg || null : null;
+            const slice = section.style ? section.style.getPropertyValue("--border-img-slice") : "";
+            const width = section.style ? section.style.getPropertyValue("--border-img-width") : "";
+            const outset = section.style ? section.style.getPropertyValue("--border-img-outset") : "";
+            return {
+              ok: true,
+              hasBorder: api.hasBorderSvg(section),
+              // The computed `border-image-source` is what Chromium would actually load in
+              // print. An empty string means the slot painted nothing at all.
+              printedSource: cs.borderImageSource,
+              slice,
+              width,
+              outset,
+              svg: raw,
+              hostile: raw
+                ? /<script|<foreignObject|onload=|onerror=|xlink:href|href="[^#]|@import/i.test(raw)
+                : false,
+              noScriptInSource: !/<script|javascript:/i.test(cs.borderImageSource || ""),
+            };
+          }
+
           return { ok: false, why: "unknown action " + o.action };
         },
 

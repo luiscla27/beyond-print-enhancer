@@ -339,6 +339,65 @@ describe("BYOK border design — apply round-trip in the real page, zero network
   });
 
   // -----------------------------------------------------------------------
+  // 5b. AC-9a PATH H — the print pipeline, hostile + positive control
+  // -----------------------------------------------------------------------
+
+  it("path H: a hostile record paints NOTHING under print media, and the positive control paints through the same slot", async function () {
+    // AC-9a's path H says the SAME border, in the PRINT OUTPUT, is still sanitized, and carries a
+    // positive control so a path that simply painted nothing could not pass. Both halves run in
+    // one case on purpose: a case that only proves the negative would also pass against a product
+    // whose border never printed at all.
+    const section = await ensureSectionsReady();
+    const sectionId = section.id;
+
+    // NEGATIVE: the hostile record must not reach the slot, in print or in screen.
+    const hostile = await applyBorderIsolated(sectionId, HOSTILE_SVG);
+    assert.strictEqual(hostile.ok, false, "a hostile SVG was accepted by the choke point");
+    await page.emulateMedia({ media: "print" });
+    const printedHostile = await contentCall(ctx, "aiArrangeProbe", [
+      { action: "printState", sectionId },
+    ]);
+    await page.emulateMedia({ media: null });
+    assert.strictEqual(printedHostile.ok, true, "the print probe failed: " + JSON.stringify(printedHostile));
+    assert.strictEqual(printedHostile.hasBorder, false, "a hostile SVG survived into the print state");
+    // NOT `printedSource === "none"`, and the measurement is why: with no AI border painted the
+    // slot falls back to the product's OWN raster default (`assets/border_default.webp`), which
+    // MEASURED here is what `::before` computes. The negative contract is therefore about WHERE the
+    // bytes come from - no `data:` SVG and nothing hostile - not about an empty slot.
+    assert.doesNotMatch(
+      printedHostile.printedSource,
+      /data:image\/svg\+xml/,
+      "a hostile payload reached the border-image slot: " + printedHostile.printedSource,
+    );
+    assert.strictEqual(printedHostile.hostile, false, "hostile markup is still carried on the section");
+    assert.strictEqual(printedHostile.noScriptInSource, true, "the print paint carries a script");
+
+    // POSITIVE CONTROL: the clean SVG must paint, IN PRINT, through the same ::before slot.
+    const clean = await applyBorderIsolated(sectionId, CLEAN_SVG);
+    assert.strictEqual(clean.ok, true, "the positive control was refused by the choke point");
+    await page.emulateMedia({ media: "print" });
+    const printedClean = await contentCall(ctx, "aiArrangeProbe", [
+      { action: "printState", sectionId },
+    ]);
+    await page.emulateMedia({ media: null });
+    assert.strictEqual(printedClean.ok, true, "the print probe failed: " + JSON.stringify(printedClean));
+    assert.strictEqual(printedClean.hasBorder, true, "the positive control did not paint in print");
+    assert.ok(
+      /data:image\/svg\+xml/.test(printedClean.printedSource || ""),
+      "print media painted no AI image through the slot: " + printedClean.printedSource,
+    );
+    assert.strictEqual(printedClean.noScriptInSource, true, "the print paint carries a script");
+    assert.strictEqual(printedClean.hostile, false, "the clean control is not clean");
+    // The four custom properties are what the slot consumes (D4), so the print contract is also
+    // that they are set, not that some overlay node exists.
+    assert.ok(printedClean.slice, "no --border-img-slice in the print state");
+    assert.ok(printedClean.width, "no --border-img-width in the print state");
+    assert.ok(printedClean.outset, "no --border-img-outset in the print state");
+
+    await clearBorderIsolated(sectionId);
+  });
+
+  // -----------------------------------------------------------------------
   // 6. Cancel leaves no residue and no mutation
   // -----------------------------------------------------------------------
 

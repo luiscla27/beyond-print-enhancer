@@ -102,6 +102,10 @@ const AI_ARRANGE_REJECT_COPY = Object.freeze({
   border_shape: "The AI sent a border it cannot mean. Nothing was changed.",
   border_svg_rejected:
     "The AI's border drawing was refused - it may not contain scripts or links to other sites.",
+  // ADDED by the 2026-10-03 AC-5 ruling: the flow refuses locally, BEFORE any network call, when
+  // Border design is ON and no section is targeted. The sentence names the ACTION the user takes
+  // (select a section), not the mechanism — the same shape as the flow's other local refusals.
+  border_target_required: "Select a section before generating a border.",
 });
 
 /**
@@ -742,16 +746,18 @@ async function arrangeWithAi(instruction, opts) {
   // AC-5: when Border design is enabled the model needs a selected section to draw on. Refusing
   // BEFORE `scanLayout` makes the gate visible to the unit test that asserts zero BYOK_CHAT calls
   // and zero scan calls.
+  // AC-5, ruled 2026-10-03 by the operator (the stricter reading of the gate's split): when
+  // Border design is ON the flow needs a USER-targeted section, and it must refuse BEFORE any
+  // network call. The earlier form of this gate carried an `arrangeOn` exception — with Arrange
+  // also ON the request went through and the target was derived from the scan AFTER the model
+  // answered (`selectedSectionId || Object.keys(layout.sections)[0]`, further down). That
+  // dispatched a `BYOK_CHAT` carrying the border capability with no target section, which is
+  // AC-5's FAIL condition in the criterion's own words, so the exception is REMOVED. The
+  // dialog's two switches still default ON and an arrange-only request (Border OFF) is unaffected.
   const borderOn = !!(caps && typeof caps === "object" && caps.border === true);
   if (borderOn && !selectedSectionId) {
-    // AC-5 only fires when the USER explicitly asked for a border and has not selected a target.
-    // A border-only request (arrange off, border on, no target) is a real refusal; an arrange-
-    // capable request with border on but no target is allowed (the arrange half can work).
-    const arrangeOn = !!(caps && typeof caps === "object" && caps.arrange === true);
-    if (!arrangeOn) {
-      window.showFeedback?.("Select a section before generating a border.", "error");
-      return { ok: false, stage: "target", code: "border_target_required" };
-    }
+    window.showFeedback?.(AI_ARRANGE_REJECT_COPY.border_target_required, "error");
+    return { ok: false, stage: "target", code: "border_target_required" };
   }
 
   let layout;
@@ -778,11 +784,6 @@ async function arrangeWithAi(instruction, opts) {
     return { ok: false, stage: "prompt", code };
   }
 
-  // The target section for a border patch, derived BEFORE the preview so the ghost render can
-  // use it. `selectedSectionId` is what the dialog passed through `opts`; a border-only patch
-  // that reaches here without one (arrange is ON and the dialog started without selection) falls
-  // back to the first section the scan found — the same heuristic the old code used at apply
-  // time, but read earlier so the preview can draw the same border the apply will use.
   let cfg;
   try {
     cfg = await settings.loadSettings();
@@ -836,15 +837,13 @@ async function arrangeWithAi(instruction, opts) {
 
   const patch = verdict.patch;
   const summary = core.summarizePatch(patch);
-  // The target section for a border patch, derived BEFORE the preview so the ghost render can
-  // use it. `selectedSectionId` is what the dialog passed through `opts`; a border-only patch
-  // that reaches here without one (arrange is ON and the dialog started without selection) falls
-  // back to the first section the scan found — the same heuristic the old code used at apply
-  // time, but read earlier so the preview can draw the same border the apply will use.
+  // The target section for a border patch. `selectedSectionId` is what the dialog passed through
+  // `opts`, and since the 2026-10-03 AC-5 ruling a border patch can no longer REACH this line
+  // without one: the flow refuses earlier when Border design is ON and no section is targeted, so
+  // there is no scan-derived fallback left to take. The `||` below is a defensive read of the
+  // same value, not a second way in — the empty case is unreachable here.
   const borderPatch = (borderOn && typeof patch.border === "object" && patch.border !== null && !Array.isArray(patch.border)) ? patch.border : null;
-  const targetSectionId = borderPatch
-    ? selectedSectionId || Object.keys(layout.sections)[0]
-    : null;
+  const targetSectionId = borderPatch ? (selectedSectionId || null) : null;
   if (!summary.moves && !summary.hides && !summary.borders) {
     // An empty patch is a refusal like any other: the model answered in shape but proposed
     // nothing. It shares the `envelope_empty` code with the validator, and it must carry the SAME
