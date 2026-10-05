@@ -38,7 +38,7 @@ const corpus = JSON.parse(
 // the dependency is declared, so a fresh clone can run the gate.
 const instrument = require(path.join(ROOT, "scripts", "border_metric.js"));
 
-const KNOWN_METRICS = new Set(["two-rule-per-edge"]);
+const KNOWN_METRICS = new Set(["two-rule-per-edge", "per-edge-band"]);
 
 describe("D4 formulation gate — the criteria metrics fixture (operator ruling 2026-10-02)", function () {
   it("carries an entry for EVERY canonical design (no silent omission)", function () {
@@ -63,6 +63,12 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
         typeof instrument.measure === "function" && typeof instrument.cornerDeltas === "function",
         "the instrument module lost its measure/cornerDeltas entry points",
       );
+      if (entry.metric === "per-edge-band") {
+        assert.ok(
+          typeof instrument.measureBand === "function" && typeof instrument.evaluateBand === "function",
+          id + ": the per-edge-band metric requires the instrument's D3 entry points (measureBand/evaluateBand)",
+        );
+      }
     }
   });
 
@@ -122,14 +128,17 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
     // The D5 clause: no canonical tally may be PUBLISHED as binding while designs are VOID.
     // This assertion is the fence that makes the state EXPLICIT: when the binding set changes,
     // this line must be updated consciously, so a report cannot silently claim 12/12.
+    // D3 (operator ruling 2026-10-05): 04/11 become binding under the per-edge-band metric and
+    // 05 becomes binding PROVISIONALLY pending its regeneration + metric verdict (retire on
+    // failure). 01 remains binding under the D1 two-rule metric.
     assert.deepStrictEqual(
       binding.sort(),
-      ["01-gilded-frame"],
+      ["01-gilded-frame", "04-dragon-scale", "05-celestial-arcs", "11-starlit-void"],
       "the BINDING set changed — update this fence AND every published tally (D5: a canonical " +
         "count computed over VOID criteria is not a tally), naming the ruling that metricized " +
         "each new id",
     );
-    assert.strictEqual(voided.length, ids.length - 1, "every non-binding id is counted VOID");
+    assert.strictEqual(voided.length, ids.length - 4, "every non-binding id is counted VOID");
   });
 
   // ---------------------------------------------------------------------------------------
@@ -276,5 +285,138 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
     const png3 = instrument.loadPng(cell);
     const b2 = instrument.evaluate(png3, entry, METRICS.criteria["01-gilded-frame"], realMeta.camera);
     assert.deepStrictEqual(b2, a2, "the real judged cell read differently twice");
+  });
+
+  // ---------------------------------------------------------------------------------------
+  // D3 (operator ruling 2026-10-05) — the per-edge-band metric. Same discipline as the D1
+  // block above: the metric must be able to FAIL on synthetic pixels, and the REAL round-27
+  // cells are the reference verdicts the ruling was measured on (04/11 MET, 05 NOT MET with
+  // its regeneration branch pending — the branch retires 05, it does not amend the terms).
+  // ---------------------------------------------------------------------------------------
+  function d3Frame(depth) {
+    // A synthetic judged frame with all four edge bands painted to `depth` device px inside
+    // each band, leaving the 16px border-image tile margins unpainted (the real cells' shape).
+    // 408 wide so the 16px margins are ~3.9% per side — the real cells' proportion (16/1408);
+    // at 200 the margins would be 16% and coverage would read 0.84, a synthetic-geometry
+    // artifact, not a metric fact.
+    const W = 408, H = 408, B = 16;
+    const png = new PNG({ width: W, height: H, colorType: 6 });
+    for (let p = 0; p < png.data.length; p += 4) {
+      png.data[p] = png.data[p + 1] = png.data[p + 2] = 240;
+      png.data[p + 3] = 255;
+    }
+    const ink = (x, y) => {
+      const i = (W * y + x) << 2;
+      png.data[i] = png.data[i + 1] = png.data[i + 2] = 20;
+    };
+    for (let x = B; x < W - B; x++) {
+      for (let d = 0; d < depth; d++) { ink(x, d); ink(x, H - 1 - d); }
+    }
+    for (let y = B; y < H - B; y++) {
+      for (let d = 0; d < depth; d++) { ink(d, y); ink(W - 1 - d, y); }
+    }
+    const imageEntry = {
+      label: "synthetic-d3",
+      edges: [
+        { edge: "TOP", region: { left: 0, top: 0, width: W, height: B } },
+        { edge: "BOTTOM", region: { left: 0, top: H - B, width: W, height: B } },
+        { edge: "LEFT", region: { left: 0, top: 0, width: B, height: H } },
+        { edge: "RIGHT", region: { left: W - B, top: 0, width: B, height: H } },
+      ],
+    };
+    return { png, imageEntry };
+  }
+  // Unpaint the TOP band's x span [a..b] on a d3Frame (reset to paper), leaving every other
+  // edge intact — the interior-gap falsifier's carver.
+  function carve(png, a, b) {
+    const W = png.width;
+    for (let x = a; x <= b; x++) {
+      for (let y = 0; y < 16; y++) {
+        const i = (W * y + x) << 2;
+        png.data[i] = png.data[i + 1] = png.data[i + 2] = 240;
+      }
+    }
+  }
+  const D3_TERMS = [
+    { name: "perEdgePaintedCoverageMin", op: ">=", value: 0.9, unit: "fraction" },
+    { name: "maxInteriorGapPx", op: "<=", value: 8, unit: "device px" },
+    { name: "railStrokeP50Px", op: ">=", value: 3, unit: "device px" },
+    { name: "stileStrokeP50Px", op: ">=", value: 1.5, unit: "device px" },
+  ];
+  const d3Fixture = { metric: "per-edge-band", minFeaturePx: { paintedSpanPx: 1, interiorGapPx: 1, strokeP50Px: 1 }, terms: D3_TERMS };
+
+  it("per-edge-band CONTROL (synthetic): a full band on all four edges measures MET", function () {
+    const full = d3Frame(6);
+    const v = instrument.evaluateBand(full.png, full.imageEntry, d3Fixture);
+    assert.strictEqual(v.pass, true, "a full painted band must pass its own terms: " +
+      JSON.stringify(v.terms.map((t) => [t.name, t.reading, t.pass])));
+  });
+
+  it("per-edge-band FALSIFIER (synthetic): a hairline band (depth 1) fails the rail minimum", function () {
+    const thin = d3Frame(1);
+    const v = instrument.evaluateBand(thin.png, thin.imageEntry, d3Fixture);
+    const rail = v.terms.find((t) => t.name === "railStrokeP50Px");
+    assert.strictEqual(rail.reading, 1, "a 1px band's stroke p50 was misread as " + rail.reading);
+    assert.strictEqual(rail.pass, false, "a 1px band must FAIL the rails >= 3 minimum");
+    const stile = v.terms.find((t) => t.name === "stileStrokeP50Px");
+    assert.strictEqual(stile.pass, false, "a 1px band must FAIL the stiles >= 1.5 minimum");
+  });
+
+  it("per-edge-band FALSIFIER (synthetic): an interior gap of 9 fails, exactly 8 passes (the clause's <=)", function () {
+    // Reuse the synthetic frame but unpaint a 9px (then 8px) interior window on the TOP band
+    // only, by carving it out of a fresh frame with a gap: paint [0..90] + [100..199] on TOP.
+    const g9 = d3Frame(6);
+    carve(g9.png, 91, 99);
+    const v9 = instrument.evaluateBand(g9.png, g9.imageEntry, d3Fixture);
+    const gap9 = v9.terms.find((t) => t.name === "maxInteriorGapPx");
+    assert.strictEqual(gap9.reading, 9, "the 9px interior gap was misread as " + gap9.reading);
+    assert.strictEqual(gap9.pass, false, "a 9px interior gap must FAIL the <= 8 term");
+    const g8 = d3Frame(6);
+    carve(g8.png, 92, 99);
+    const v8 = instrument.evaluateBand(g8.png, g8.imageEntry, d3Fixture);
+    const gap8 = v8.terms.find((t) => t.name === "maxInteriorGapPx");
+    assert.strictEqual(gap8.reading, 8, "the 8px interior gap was misread as " + gap8.reading);
+    assert.strictEqual(gap8.pass, true, "exactly 8 SATISFIES <= 8 (the clause's own threshold case)");
+  });
+
+  it("per-edge-band FALSIFIER (synthetic): the span-end tile margins are NOT interior gaps", function () {
+    // The synthetic frame leaves the 16px tile margins unpainted on every edge, exactly the
+    // shape every real cell measures: the interior-gap term must read 0, not 16.
+    const margined = d3Frame(6);
+    const v = instrument.evaluateBand(margined.png, margined.imageEntry, d3Fixture);
+    const gap = v.terms.find((t) => t.name === "maxInteriorGapPx");
+    assert.strictEqual(gap.reading, 0, "the border-image tile margins were counted as an interior gap: " + gap.reading);
+  });
+
+  it("per-edge-band FALSIFIER (synthetic): an unpainted edge fails coverage and stroke minima", function () {
+    const blank = d3Frame(0);
+    const v = instrument.evaluateBand(blank.png, blank.imageEntry, d3Fixture);
+    assert.strictEqual(v.pass, false, "a blank band must fail");
+    assert.ok(v.terms.every((t) => t.pass === false || (t.name === "maxInteriorGapPx" && t.pass === true)),
+      "on a blank band the coverage/stroke terms must fail (gap 0 vacuously passes): " +
+      JSON.stringify(v.terms.map((t) => [t.name, t.reading, t.pass])));
+  });
+
+  it("D3 reference verdicts on the REAL round-27 cells: 04 MET, 11 MET, 05 NOT MET (regeneration pending)", function () {
+    // The ruling's measured basis. A fresh clone has no captured frames and skips; where the
+    // frames exist this fence pins the verdicts so the terms cannot drift without the record.
+    const realMeta = JSON.parse(
+      fs.readFileSync(path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
+        "gallery-round27", "judged-meta.json"), "utf8"),
+    );
+    const expectVerdict = { "04-dragon-scale": true, "11-starlit-void": true, "05-celestial-arcs": false };
+    for (const [id, want] of Object.entries(expectVerdict)) {
+      const entry = realMeta.images.find((i) => i.label === id && !i.variant);
+      const cell = path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
+        "gallery-round27", entry.judgedFile);
+      if (!fs.existsSync(cell)) return; // skip, as the determinism fence above does
+      const png = instrument.loadPng(cell);
+      const v = instrument.evaluateBand(png, entry, METRICS.criteria[id]);
+      assert.strictEqual(v.pass, want,
+        id + ": the D3 binding verdict on the round-27 cell is " + v.pass +
+        " — the ruling was measured on these pixels (" +
+        JSON.stringify(v.terms.map((t) => [t.name, t.reading, t.pass])) + "); a drift here means " +
+        (want ? "the cell or the terms changed" : "the regenerated artwork landed and the branch must be dispositioned, not the terms amended"));
+    }
   });
 });

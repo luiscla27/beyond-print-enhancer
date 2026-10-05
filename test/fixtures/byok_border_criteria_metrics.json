@@ -54,14 +54,56 @@
     },
     "02-runic-band": { "metric": null, "voidReason": "binding predicates are gestalt prose (glyph-like marks along the band) with no deterministic metric defined at this scale" },
     "03-thornvine": { "metric": null, "voidReason": "binding predicates are gestalt prose (organic vine tracing) with no deterministic metric defined at this scale" },
-    "04-dragon-scale": { "metric": null, "voidReason": "D-C re-cut the TEXT to an aspect-independent scale criterion but the anisotropy class's metric was D3, which the operator DISCARDED on 2026-10-02; the criterion therefore has no metric and per D2 is VOID for binding purposes" },
-    "05-celestial-arcs": { "metric": null, "voidReason": "the re-cut artwork paints repeating solid arcs but no binding metric was implemented once D3 (which carried 05's stroke/coverage terms) was discarded" },
+    "04-dragon-scale": {
+      "metric": "per-edge-band",
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1 },
+      "terms": [
+        { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.9, "unit": "fraction" },
+        { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
+        { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" }
+      ],
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5, measured basis phase4_d3_measurements_20261004.md (reproduced 2026-10-05 on 1577133): AC-V1-c is superseded ONLY for 04/11/05; closure is judged per edge on the judged 2x print capture after the actual border-image-repeat: round rail scaling, which is ANISOTROPIC (~0.146 px/unit horizontal vs ~0.923 vertical on 656x1920) so square-source-unit closure cannot hold on the rails. Round-27 readings: paintedSpan 0.9773/0.9773/0.9919/0.9919, interior gaps 0, stroke p50 rails 6/6, stiles 2/6. The rail/stile minima are the operator's 2026-10-05 ruling (rails >= 3, stiles >= 1.5); the draft's example numbers (rails >= 1.5, stiles >= 3) were REJECTED because they would fail 04's LEFT stile at p50 2px. assumeSquareSourceUnits: false; no four-edge continuity required; corners judged separately as corner marks."
+    },
+    "05-celestial-arcs": {
+      "metric": "per-edge-band",
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1 },
+      "terms": [
+        { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.85, "unit": "fraction" },
+        { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
+        { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" }
+      ],
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "branch": {
+        "status": "REGENERATION PENDING",
+        "route": "formulation gate -> ONE --border-img generation -> fresh judged capture -> binding metric on the new cell",
+        "onMetricFailure": "retire (canonical: false); its superseded variant already exists; the criterion is NOT amended to fit",
+        "measuredBasis": "Round-6 artwork FAILS on the round-27 cell: paintedSpan 0.8061/0.0348/0.1438/0.0208 (all four edges below the 0.85 floor), interior gaps 8/839/334/2063 (TOP's gap sits exactly AT the <= 8 threshold; its coverage fails regardless). Operator answer 2026-10-05: regenerate once, then retire if the metric fails."
+      },
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5: 05's coverage floor is 0.85 (not 0.90) and it additionally requires a solid arc stroke >= 8 device px (depth-run share >= 8px on the round-27 cell: TOP 131/1475, BOTTOM 14/58, LEFT 425/726, RIGHT 27/103 - partially satisfiable; binding = every term passes). The measured FAIL on the round-6 artwork routes 05 to the clause's own regeneration-then-retire branch, which the operator confirmed 2026-10-05. The round-6 bytes stay canonical until the regenerated artwork is judged."
+    },
     "06-chainmail": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlocking ring pattern) with no deterministic metric defined at this scale" },
     "07-corner-arcs": { "metric": null, "voidReason": "the criterion's feature (four corner groups) is not covered by an EDGE strip, so no edge-band metric can decide it; a corner-band metric is not defined" },
     "08-flame-crest": { "metric": null, "voidReason": "binding predicate is a gestalt shape ('tapering to a sharp point') with no metric - the residual the consultants flagged as the operator's to settle" },
     "09-frost-shards": { "metric": null, "voidReason": "binding predicates are gestalt prose (scattered shard shapes) with no deterministic metric defined at this scale" },
     "10-ink-brush": { "metric": null, "voidReason": "binding predicates are gestalt prose (brush-stroke texture) with no deterministic metric defined at this scale" },
-    "11-starlit-void": { "metric": null, "voidReason": "binding predicates combine coverage with a star-count term that the band's crop does not expose reliably; no metric defined" },
+    "11-starlit-void": {
+      "metric": "per-edge-band",
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1 },
+      "terms": [
+        { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.9, "unit": "fraction" },
+        { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
+        { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" }
+      ],
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5, measured basis phase4_d3_measurements_20261004.md (reproduced 2026-10-05 on 1577133): AC-V1-c is superseded ONLY for 04/11/05. Round-27 readings: paintedSpan 0.9773/0.9773/0.9919/0.9919, interior gaps 0, solid band 31.46-55.13 device px with >= 8px depth-runs on 95.9-100% of span positions - above any plausible minFeaturePx. Rail/stile minima per the operator's 2026-10-05 ruling (rails >= 3, stiles >= 1.5)."
+    },
     "12-knotwork": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlaced knot) with no deterministic metric defined at this scale" }
   }
 }

@@ -405,6 +405,178 @@ function evaluate(png, imageEntry, fixtureEntry, camera, opts) {
   };
 }
 
+/**
+ * D3 IMPLEMENTATION (operator ruling 2026-10-05) — the two new terms the D3 clause
+ * needs and the D1 two-rule terms above do not express: a single-rule design reads
+ * `pairCoverage` 0 BY CONSTRUCTION (it is the best PAIR over rules), which is exactly
+ * why 04/11/05 read 0.0000 under the D1 term on pixels that carry a full band
+ * (`phase4_d3_measurements_20261004.md` §6 — same pixels, opposite verdicts).
+ *
+ * The clause (converged §5 wording, ruled 2026-10-05):
+ *   `[SUPERSEDED] AC-V1-c is superseded ONLY for 04-dragon-scale, 11-starlit-void and
+ *   05-celestial-arcs; for all other canonical designs AC-V1-c remains as written. For
+ *   those three, per-edge coverage >= 90% (05 >= 85%), max interior-edge gap <= 8 device
+ *   px, rail/stile minima stated separately, assumeSquareSourceUnits: false, and no
+ *   four-edge continuity required; 05 additionally requires a solid arc stroke >= 8
+ *   device px. 05 is regenerated once via --border-img, then judged by the binding
+ *   metric; if the metric fails, 05 is retired (canonical: false). Product
+ *   border-image-repeat: round is UNCHANGED.`
+ *
+ * The terms, as measured (the filed probe implementations are the reference):
+ *   paintedCoverage    - fraction of the edge's SPAN with >= 1 ink px at ANY band depth
+ *                        (ink = luma <= inkLumaMax). NOT the two-rule pairCoverage.
+ *   maxInteriorGapPx   - longest UNPAINTED span run EXCLUDING runs that touch a span
+ *                        end: every edge carries the border-image tile margins at
+ *                        [0..15] and [span-16..span-1], which are the pipeline's own,
+ *                        not artwork — the clause's word "interior" excludes them.
+ *   strokeP50Px        - median ink-run length ALONG the band DEPTH axis over the
+ *                        span (the rail/stile minima, stated separately per the
+ *                        ruling: rails >= 3 device px, stiles >= 1.5 device px).
+ */
+
+/** Per-span ink profile of one edge band (which span positions carry ink, how deep). */
+function bandProfile(png, region, edge, inkLumaMax) {
+  const horizontal = edge === "TOP" || edge === "BOTTOM";
+  const depthCount = horizontal ? region.height : region.width;
+  const span = horizontal ? region.width : region.height;
+  const paintedAt = new Array(span).fill(false);
+  const depthAt = new Array(span).fill(0);
+  for (let d = 0; d < depthCount; d++) {
+    for (let t = 0; t < span; t++) {
+      const x = horizontal ? region.left + t : region.left + d;
+      const y = horizontal ? region.top + d : region.top + t;
+      if (luma(png, x, y) <= inkLumaMax) {
+        paintedAt[t] = true;
+        depthAt[t]++;
+      }
+    }
+  }
+  return { span, paintedAt, depthAt };
+}
+
+/** Ink-free span runs; runs touching a span end are flagged `interior: false`. */
+function unpaintedRuns(paintedAt) {
+  const span = paintedAt.length;
+  const runs = [];
+  let run = 0;
+  for (let t = 0; t < span; t++) {
+    if (!paintedAt[t]) run++;
+    else {
+      if (run) runs.push({ start: t - run, end: t - 1, len: run });
+      run = 0;
+    }
+  }
+  if (run) runs.push({ start: span - run, end: span - 1, len: run });
+  if (runs.length) {
+    runs[0].interior = runs[0].start > 0;
+    runs[runs.length - 1].interior = runs[runs.length - 1].end < span - 1;
+    for (let i = 1; i < runs.length - 1; i++) runs[i].interior = true;
+  }
+  return runs;
+}
+
+/** Median of numbers; 0 for an empty list (an unpainted edge has no strokes). */
+function median(vals) {
+  if (!vals.length) return 0;
+  const s = [...vals].sort((a, b) => a - b);
+  const mid = s.length >> 1;
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/**
+ * The D3 band terms for ONE edge of a judged cell: paintedCoverage,
+ * maxInteriorGapPx and strokeP50Px (plus the run counts, for the record).
+ */
+function edgeBandTerms(png, region, edge, inkLumaMax) {
+  const o = { ...DEFAULTS, ...(inkLumaMax === undefined ? {} : { inkLumaMax }) };
+  const { span, paintedAt, depthAt } = bandProfile(png, region, edge, o.inkLumaMax);
+  let painted = 0;
+  for (const p of paintedAt) if (p) painted++;
+  const interior = unpaintedRuns(paintedAt).filter((r) => r.interior);
+  const strokes = depthAt.filter((c) => c > 0);
+  return {
+    edge,
+    span,
+    paintedCoverage: span ? painted / span : 0,
+    maxInteriorGapPx: interior.reduce((m, r) => Math.max(m, r.len), 0),
+    interiorRunCount: interior.length,
+    strokeP50Px: median(strokes),
+    strokeRuns: strokes.length,
+  };
+}
+
+/**
+ * The D3 binding readings on one judged cell (an images[] entry of judged-meta.json):
+ * the MIN per-edge painted coverage, the MAX interior gap, and the MIN stroke p50 over
+ * rails (TOP/BOTTOM) and over stiles (LEFT/RIGHT) — the clause's "rail/stile minima
+ * stated separately" as two separate pooled minima.
+ */
+function measureBand(png, meta, opts) {
+  const o = { ...DEFAULTS, ...(opts || {}) };
+  const perEdge = {};
+  for (const e of meta.edges) {
+    perEdge[e.edge] = edgeBandTerms(png, e.region, e.edge, o.inkLumaMax);
+  }
+  const pick = (keys) =>
+    keys.map((k) => perEdge[k]).filter((v) => v && typeof v.strokeP50Px === "number");
+  const result = {
+    id: meta.label,
+    sha256: meta.sha256 || null,
+    file: meta.judgedFile || null,
+    judgedScale: JUDGED_SCALE,
+    perEdge,
+    perEdgePaintedCoverageMin: Math.min(...Object.values(perEdge).map((e) => e.paintedCoverage)),
+    maxInteriorGapPx: Math.max(...Object.values(perEdge).map((e) => e.maxInteriorGapPx)),
+    railStrokeP50Px: Math.min(...pick(["TOP", "BOTTOM"]).map((e) => e.strokeP50Px)),
+    stileStrokeP50Px: Math.min(...pick(["LEFT", "RIGHT"]).map((e) => e.strokeP50Px)),
+  };
+  // A missing edge reads 0, not undefined: an edge the camera did not take is a FAIL
+  // condition of the verdict, never a term that silently disappears.
+  for (const k of ["perEdgePaintedCoverageMin", "maxInteriorGapPx", "railStrokeP50Px", "stileStrokeP50Px"]) {
+    if (!Number.isFinite(result[k])) result[k] = 0;
+  }
+  return result;
+}
+
+/**
+ * The D3 binding verdict for ONE design on ONE judged cell — same contract as
+ * `evaluate`: metric null is VOID (pass null, never a silent false), a term that
+ * cannot be read is UNRESOLVED (null), binding = EVERY stated term passes. The
+ * fixture entries (04/11/05 in `byok_border_criteria_metrics.json`) carry the
+ * thresholds; the metric name is "per-edge-band".
+ */
+function evaluateBand(png, imageEntry, fixtureEntry, opts) {
+  const o = { ...DEFAULTS, ...(opts || {}) };
+  if (!fixtureEntry || fixtureEntry.metric === null) {
+    return {
+      metric: null,
+      terms: [],
+      pass: null,
+      void: true,
+      voidReason: (fixtureEntry && fixtureEntry.voidReason) || "no fixture entry",
+      readings: {},
+    };
+  }
+  const meas = measureBand(png, imageEntry, o);
+  const terms = (fixtureEntry.terms || []).map((t) => {
+    const reading = meas[t.name];
+    const cmp = { ">=": (a, b) => a >= b, ">": (a, b) => a > b, "<=": (a, b) => a <= b, "<": (a, b) => a < b }[t.op];
+    if (!cmp || reading === undefined) {
+      return { ...t, reading: reading === undefined ? null : reading, pass: null };
+    }
+    return { ...t, reading, pass: cmp(reading, t.value) };
+  });
+  return {
+    metric: fixtureEntry.metric,
+    terms,
+    pass: terms.length > 0 && terms.every((t) => t.pass === true)
+      ? true
+      : terms.some((t) => t.pass === null) ? null : false,
+    void: false,
+    readings: meas,
+  };
+}
+
 module.exports = {
   JUDGED_SCALE,
   DEFAULTS,
@@ -416,4 +588,10 @@ module.exports = {
   cornerDeltas,
   cornerMarks,
   evaluate,
+  bandProfile,
+  unpaintedRuns,
+  median,
+  edgeBandTerms,
+  measureBand,
+  evaluateBand,
 };
