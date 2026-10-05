@@ -41,7 +41,8 @@ const instrument = require(path.join(ROOT, "scripts", "border_metric.js"));
 const KNOWN_METRICS = new Set(["two-rule-per-edge", "per-edge-band"]);
 
 describe("D4 formulation gate — the criteria metrics fixture (operator ruling 2026-10-02)", function () {
-  it("carries an entry for EVERY canonical design (no silent omission)", function () {
+  it("carries an entry for EVERY canonical design, and no entry for an id that is not canonical " +
+    "(no silent omission, no orphan metric)", function () {
     const missing = corpus.designs.filter((d) => !METRICS.criteria[d.id]);
     assert.deepStrictEqual(
       missing.map((d) => d.id),
@@ -49,6 +50,19 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
       "canonical designs with no metrics entry are silently VOID — declare them (metric: null " +
         "+ voidReason) or define their metric: " + missing.map((d) => d.id).join(", "),
     );
+    // The other direction: an entry whose id is no longer canonical (D3 retired 05) must still be
+    // DECLARED as a retirement on the entry itself, so a reader can tell "this design was retired"
+    // from "this id was mistyped".
+    const orphans = Object.keys(METRICS.criteria)
+      .filter((id) => !corpus.designs.some((d) => d.id === id));
+    for (const id of orphans) {
+      const e = METRICS.criteria[id];
+      assert.ok(
+        e.metric === null && /RETIRED/.test(e.voidReason || "") && e.retired,
+        id + ": an entry for a non-canonical id must be a declared RETIREMENT (metric null + " +
+          "retired block), not a stale row",
+      );
+    }
   });
 
   it("every declared metric is deterministic and IMPLEMENTED by scripts/border_metric.js", function () {
@@ -128,17 +142,28 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
     // The D5 clause: no canonical tally may be PUBLISHED as binding while designs are VOID.
     // This assertion is the fence that makes the state EXPLICIT: when the binding set changes,
     // this line must be updated consciously, so a report cannot silently claim 12/12.
-    // D3 (operator ruling 2026-10-05): 04/11 become binding under the per-edge-band metric and
-    // 05 becomes binding PROVISIONALLY pending its regeneration + metric verdict (retire on
-    // failure). 01 remains binding under the D1 two-rule metric.
+    // D3 (operator ruling 2026-10-05): 04/11 become binding under the per-edge-band metric; 05
+    // became binding PROVISIONALLY for its regeneration, FAILED the metric on the regenerated
+    // artwork, and was RETIRED (absent from the canonical set), so it is VOID again — by the
+    // ruling's own branch, not by omission. 01 remains binding under the D1 two-rule metric.
     assert.deepStrictEqual(
       binding.sort(),
-      ["01-gilded-frame", "04-dragon-scale", "05-celestial-arcs", "11-starlit-void"],
+      ["01-gilded-frame", "04-dragon-scale", "11-starlit-void"],
       "the BINDING set changed — update this fence AND every published tally (D5: a canonical " +
         "count computed over VOID criteria is not a tally), naming the ruling that metricized " +
-        "each new id",
+        "each new id (and any retirement that removed one)",
     );
-    assert.strictEqual(voided.length, ids.length - 4, "every non-binding id is counted VOID");
+    assert.strictEqual(voided.length, ids.length - 3, "every non-binding id is counted VOID");
+    // The retired id is present in the fixture as a VOID whose voidReason is a RETIREMENT, never as
+    // a silent omission and never as a metricized row a tally could count.
+    assert.strictEqual(
+      METRICS.criteria["05-celestial-arcs"].metric, null,
+      "the D3-retired design must not carry a binding metric",
+    );
+    assert.ok(
+      /RETIRED/.test(METRICS.criteria["05-celestial-arcs"].voidReason),
+      "05's VOID must name the retirement, not merely the absence of a metric",
+    );
   });
 
   // ---------------------------------------------------------------------------------------
@@ -344,6 +369,15 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
     { name: "stileStrokeP50Px", op: ">=", value: 1.5, unit: "device px" },
   ];
   const d3Fixture = { metric: "per-edge-band", minFeaturePx: { paintedSpanPx: 1, interiorGapPx: 1, strokeP50Px: 1 }, terms: D3_TERMS };
+  // 05's own fifth term (the clause's "solid arc stroke >= 8 device px"), as ruled and
+  // implemented: the min over the four edges of the per-edge depth-run median of painted
+  // strokes. Its synthetic CONTROL lives in the d3Frame below (a 6px band would fail it,
+  // which is why the term is only stated on 05's entry, whose artwork carries 8px+ arcs).
+  const d3SolidFixture = {
+    metric: "per-edge-band",
+    minFeaturePx: { paintedSpanPx: 1, interiorGapPx: 1, strokeP50Px: 1, solidStrokeP50Px: 8 },
+    terms: [...D3_TERMS, { name: "solidStrokeP50PxMin", op: ">=", value: 8, unit: "device px" }],
+  };
 
   it("per-edge-band CONTROL (synthetic): a full band on all four edges measures MET", function () {
     const full = d3Frame(6);
@@ -379,6 +413,28 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
     assert.strictEqual(gap8.pass, true, "exactly 8 SATISFIES <= 8 (the clause's own threshold case)");
   });
 
+  it("per-edge-band solidStrokeP50PxMin (05's clause): a 6px band fails the >= 8 minimum, and " +
+    "the blank-edge contract keeps its UNRESOLVED shape", function () {
+    // The falsifier the clause's threshold needs: a texture whose coverage/rail/stile terms
+    // all pass but whose stroke p50 sits under 8 must FAIL on 05's term and PASS without it.
+    const six = d3Frame(6);
+    const v6 = instrument.evaluateBand(six.png, six.imageEntry, d3SolidFixture);
+    const solid = v6.terms.find((t) => t.name === "solidStrokeP50PxMin");
+    assert.strictEqual(solid.reading, 6, "a 6px band's solid-stroke p50 was misread as " + solid.reading);
+    assert.strictEqual(solid.pass, false, "a 6px stroke must FAIL 05's >= 8 solid minimum");
+    assert.strictEqual(v6.pass, false, "binding = every stated term passes");
+    // Same pixels, terms without the fifth: NOT MET vs MET — the term is what decides.
+    const v6without = instrument.evaluateBand(six.png, six.imageEntry, d3Fixture);
+    assert.strictEqual(v6without.pass, true, "without 05's term the same pixels pass — the term is 05's own");
+    // A fully blank cell: no edge carries ink, so the solid p50 has nothing to read —
+    // null (UNRESOLVED), never a vacuous numeric 0.
+    const blank = d3Frame(0);
+    const vb = instrument.evaluateBand(blank.png, blank.imageEntry, d3SolidFixture);
+    const solidBlank = vb.terms.find((t) => t.name === "solidStrokeP50PxMin");
+    assert.strictEqual(solidBlank.reading, null, "a blank cell's solid p50 must read null (no ink to measure)");
+    assert.strictEqual(solidBlank.pass, null, "null reading is UNRESOLVED, never a silent false");
+  });
+
   it("per-edge-band FALSIFIER (synthetic): the span-end tile margins are NOT interior gaps", function () {
     // The synthetic frame leaves the 16px tile margins unpainted on every edge, exactly the
     // shape every real cell measures: the interior-gap term must read 0, not 16.
@@ -397,14 +453,18 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
       JSON.stringify(v.terms.map((t) => [t.name, t.reading, t.pass])));
   });
 
-  it("D3 reference verdicts on the REAL round-27 cells: 04 MET, 11 MET, 05 NOT MET (regeneration pending)", function () {
+  it("D3 reference verdicts on the REAL cells: 04 MET and 11 MET (round 27), and the RETIRED 05 reads " +
+    "VOID on the round-27 cell instead of a verdict", function () {
     // The ruling's measured basis. A fresh clone has no captured frames and skips; where the
     // frames exist this fence pins the verdicts so the terms cannot drift without the record.
+    // 05 is NOT in the expectVerdict set any more: D3 retired it on 2026-10-05 after its one
+    // permitted regeneration FAILED the metric, so its fixture entry carries no binding metric and
+    // `evaluateBand` reports VOID (pass null) — a VOID, never a silent NOT MET.
     const realMeta = JSON.parse(
       fs.readFileSync(path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
         "gallery-round27", "judged-meta.json"), "utf8"),
     );
-    const expectVerdict = { "04-dragon-scale": true, "11-starlit-void": true, "05-celestial-arcs": false };
+    const expectVerdict = { "04-dragon-scale": true, "11-starlit-void": true };
     for (const [id, want] of Object.entries(expectVerdict)) {
       const entry = realMeta.images.find((i) => i.label === id && !i.variant);
       const cell = path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
@@ -417,6 +477,36 @@ describe("D4 formulation gate — the criteria metrics fixture (operator ruling 
         " — the ruling was measured on these pixels (" +
         JSON.stringify(v.terms.map((t) => [t.name, t.reading, t.pass])) + "); a drift here means " +
         (want ? "the cell or the terms changed" : "the regenerated artwork landed and the branch must be dispositioned, not the terms amended"));
+    }
+    // The retired id: VOID on the same cell, and VOID on the round-28 cell where the D3 generation
+    // was judged. The five terms stay on the entry as the RECORD of what decided the retirement, so
+    // this assertion also proves the retained terms still measure the artwork they were read on.
+    const retired = METRICS.criteria["05-celestial-arcs"];
+    assert.strictEqual(retired.metric, null, "the retired design carries a binding metric");
+    assert.strictEqual(retired.terms.length, 5, "the five terms the verdict was read with are gone");
+    for (const [roundDir, label] of [["gallery-round27", "05-celestial-arcs"],
+      ["gallery-round28", "05-celestial-arcs"]]) {
+      const meta = JSON.parse(
+        fs.readFileSync(path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
+          roundDir, "judged-meta.json"), "utf8"),
+      );
+      const entry = meta.images.find((i) => i.label === label && !i.variant);
+      const cell = path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927",
+        roundDir, entry.judgedFile);
+      if (!fs.existsSync(cell)) continue;
+      const png = instrument.loadPng(cell);
+      const v = instrument.evaluateBand(png, entry, retired);
+      assert.strictEqual(v.void, true, roundDir + ": a retired design must read VOID, not a verdict");
+      assert.strictEqual(v.pass, null, roundDir + ": VOID is null, never a silent false");
+      // And the retained terms, read with the clause's own thresholds, still FAIL the artwork they
+      // were measured on — the retirement's premise, re-measured by the instrument itself.
+      const m = instrument.measureBand(png, entry);
+      assert.ok(
+        m.perEdgePaintedCoverageMin < 0.85 || m.maxInteriorGapPx > 8,
+        roundDir + ": the retired artwork now PASSES its own clause (" +
+          JSON.stringify({ cov: m.perEdgePaintedCoverageMin, gap: m.maxInteriorGapPx }) +
+          ") — the retirement premise no longer holds and the ruling must be revisited",
+      );
     }
   });
 });

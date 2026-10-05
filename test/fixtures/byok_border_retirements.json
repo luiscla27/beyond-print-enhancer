@@ -1,0 +1,38 @@
+{
+  "_comment": [
+    "RETIRED CANONICAL DESIGNS - the corpus-fidelity input the freeze script reads.",
+    "An id named here LEAVES the canonical set: its final accepted blob moves out of `designs`",
+    "and every accepted blob for that id stays in `variants` as the record. It is the sanctioned",
+    "mechanism for 'retire (canonical: false)' -- the clause operator ruling D3 gave 05-celestial-arcs",
+    "-- expressed in the form this corpus actually has: the canonical set IS `designs`, so a",
+    "retirement is a membership change, not a flag every consumer has to learn to filter on.",
+    "A retirement is a corpus-fidelity decision of the D-B class: it is recorded here WITH the",
+    "ruling that ordered it and the measurement that satisfied the ruling's condition, so a later",
+    "reader can tell an executed branch from an agent's improvisation. The invocation is",
+    "`node scripts/freeze_border_corpus.js` (byte-reproducibility is unchanged: this file is an",
+    "input of the freeze, exactly like byok_border_criteria_overrides.json)."
+  ],
+  "retirements": {
+    "05-celestial-arcs": {
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "executedOn": "2026-10-05",
+      "condition": "regenerate once via --border-img, then judge by the binding metric; retire (canonical: false) if the metric fails",
+      "regenerationRound": "9",
+      "finalRound": "9",
+      "metric": "per-edge-band",
+      "judgedRound": "28 (fresh gallery capture of the regenerated artwork; the judged cells are the D-A camera's, print media, deviceScaleFactor 2)",
+      "verdict": "FAIL - four of the five stated terms fail",
+      "measured": "perEdgePaintedCoverageMin 0.0231 (TOP 0.9084 / BOTTOM 0.0298 / LEFT 0.1402 / RIGHT 0.0231) against >= 0.85; maxInteriorGapPx 2063 against <= 8; railStrokeP50Px 2 against >= 3; solidStrokeP50PxMin 2 against >= 8 (the clause's own 'solid arc stroke >= 8 device px'); stileStrokeP50Px 8 against >= 1.5 (the only term that passes)",
+      "previousCanonical": "the round-6 artwork, whose round-27 readings were paintedSpan 0.8061/0.0348/0.1438/0.0208, interior gaps 8/839/334/2063, stroke p50 rails 4/4 stiles 8/5, solid p50 min 4",
+      "reason": "The regeneration was performed exactly once, as the clause orders, and the freshly captured artwork FAILS the binding metric: the regenerated blob improves the TOP edge (coverage 0.8061 -> 0.9084) but its interior gap on that edge is 14 device px (> 8) and the other three edges are unchanged in kind (coverage 0.02-0.14, interior gaps 334-2063). The mid-viewBox star marks are absent for the reason R-6 already recorded (the slice painting crops them) - and the R-3/R-6/R-7 class of criterion re-cut is NOT available here, because the clause that re-cut this design's text came with its own condition: retry the ARTWORK once, then retire. Amending the criterion to fit the artwork is the outcome D3 explicitly forbids ('the criterion is NOT amended to fit'), so 05 leaves the canonical set and every blob it ever produced stays in `variants`.",
+      "residual": "The consultants' own falsifier is what this outcome tests: 'if re-cut rail/stile criteria still fail after regeneration, anisotropy is not the sole cause - artwork generation via --border-img cannot produce rail-visible texture at the product's ~0.146 px/unit horizontal rail scaling, requiring a product-level change (border-image-slice or source aspect)'. That residual is recorded, not acted on: the product surface (border-image-repeat: round) is UNCHANGED by D3 and stays unchanged.",
+      "evidence": [
+        "test/fixtures/byok_border_criteria_metrics.json - the terms the verdict is read with (05's entry now carries the retirement record instead of a binding metric)",
+        "temp/visual_logs/byok_svg_borders_20260927/designs-round9.json - the one permitted generation (round 9, accepted by the product's own parser/sanitizer)",
+        "temp/visual_logs/byok_svg_borders_20260927/gallery-round28/judged-meta.json - the fresh judged capture the verdict was measured on",
+        "vendor/conductor/tracks/byok_svg_borders_20260927/phase4_d3_ruling_20261005.md - the ruling and its condition"
+      ]
+    }
+  }
+}

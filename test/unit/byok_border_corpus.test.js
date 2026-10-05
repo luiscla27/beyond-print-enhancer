@@ -36,6 +36,12 @@
  *     with `criterionGenerated` preserving what the round actually recorded and
  *     `criterionOverride` carrying {supersedes, ruledBy, ruledOn, reason} — an override on
  *     any OTHER id, or one missing its provenance, fails here.
+ *  6. A RETIREMENT IS DECLARED, NOT AN OMISSION — D3 (2026-10-05) gave 05-celestial-arcs one
+ *     regeneration and then a binding-metric verdict, retiring it on failure. The regeneration
+ *     FAILED the metric, so 05 left the canonical set: it is absent from `designs`, all five of
+ *     its accepted blobs are in `variants`, and `test/fixtures/byok_border_retirements.json`
+ *     (a freeze INPUT) carries the ruling, the condition, the measured verdict and the evidence
+ *     paths. Without this fence a dropped id and a retired one would look identical.
  *
  * The corpus is the VISUAL gate's input, so its sha256 list is asserted as a whole: adding,
  * removing or re-spelling any design must be a deliberate, reviewed change to this file.
@@ -62,26 +68,39 @@ const corpus = JSON.parse(fs.readFileSync(FIXTURE, "utf8"));
 const validateSvg = AiLayout.validateSvg;
 
 describe("BYOK border corpus — the frozen input the visual gate renders", function () {
-  it("carries the whole corpus: 12 canonical designs plus every superseded variant", function () {
-    assert.strictEqual(corpus.designs.length, 12, "canonical design count changed");
-    // 14 variants since the 2026-10-02 R-6/R-7 RE-CUT + REGENERATION leg: the D-B set (12) plus
-    // 05@5 and 07@4, whose canonicals moved to the freshly generated round-6 / round-8 blobs.
-    // The count grew because the leg produced NEW artwork, not because history was dropped —
-    // the previous canonicals are still here, as variants.
-    assert.strictEqual(corpus.variants.length, 14, "superseded-variant count changed");
-    // 26 = every accepted blob the live generator ever produced (rounds 1..8); the prompt
-    // corpus has 12 ids. (24 before the R-6/R-7 regeneration added 05@6 and 07@8.)
+  it("carries the whole corpus: 11 canonical designs plus every superseded variant", function () {
+    assert.strictEqual(corpus.designs.length, 11, "canonical design count changed");
+    // 16 variants since the 2026-10-05 D3 retirement leg: the R-6/R-7 set (14) plus BOTH of 05's
+    // later blobs — round 6 (the previous canonical) and round 9 (the one regeneration D3
+    // permitted, whose verdict FAILED the binding metric). A retirement moves the id OUT of the
+    // canonical set; every blob it ever produced stays in the record, and that includes the id's
+    // final accepted blob, which would otherwise have lived only in `designs`.
+    assert.strictEqual(corpus.variants.length, 16, "superseded-variant count changed");
+    // 27 = every accepted blob the live generator ever produced (rounds 1..9). It was 26 through
+    // the R-6/R-7 freeze and grew by exactly one here, because D3 permitted exactly ONE further
+    // generation — the retirement itself adds no blob, it moves 05's out of `designs`.
     assert.strictEqual(
       corpus.designs.length + corpus.variants.length,
-      26,
-      "the frozen corpus must account for all 26 accepted blobs",
+      27,
+      "the frozen corpus must account for all 27 accepted blobs",
     );
     const ids = corpus.designs.map((d) => d.id).sort();
     assert.deepStrictEqual(ids, [
       "01-gilded-frame", "02-runic-band", "03-thornvine", "04-dragon-scale",
-      "05-celestial-arcs", "06-chainmail", "07-corner-arcs", "08-flame-crest",
+      "06-chainmail", "07-corner-arcs", "08-flame-crest",
       "09-frost-shards", "10-ink-brush", "11-starlit-void", "12-knotwork",
     ]);
+    // The retired id is ABSENT from the canonical set and PRESENT in the record — the two
+    // halves of "retire (canonical: false)" in the form this corpus actually has.
+    assert.ok(
+      !corpus.designs.some((d) => d.id === "05-celestial-arcs"),
+      "the D3-retired design is still canonical",
+    );
+    assert.strictEqual(
+      corpus.variants.filter((v) => v.id === "05-celestial-arcs").length,
+      5,
+      "05's accepted blobs (rounds 1, 4b, 5, 6, 9) must all survive the retirement",
+    );
   });
 
   it("every frozen blob is ACCEPTED by the product's own trust root", function () {
@@ -114,7 +133,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     }
   });
 
-  it("carries 26 DISTINCT accepted blobs — no variant is a duplicate of a canonical design", function () {
+  it("carries 27 DISTINCT accepted blobs — no variant is a duplicate of a canonical design", function () {
     // MEASURED DEFECT, FIXED 2026-10-01. `buildCorpus` used to push the INCOMING design as the
     // "superseded variant" instead of the one it replaced, so all 8 variants were byte-identical to
     // their own winner: the corpus asserted "every accepted blob the generator ever produced" while
@@ -135,9 +154,10 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       "the frozen corpus holds duplicate blobs (a variant recorded its own winner's bytes): " +
         collisions.join(", "),
     );
-    // 26 distinct since the 2026-10-02 R-6/R-7 re-cut + regeneration leg: 24 distinct at the D-B
-    // re-freeze + the two freshly accepted blobs (05@6, 07@8) whose superseded predecessors stay.
-    assert.strictEqual(seen.size, 26, "distinct blob count is not 26: " + seen.size);
+    // 27 distinct since the 2026-10-05 D3 retirement leg: the 26 blobs of the R-6/R-7 freeze plus
+    // round 9's accepted blob, which D3 permitted as the ONE regeneration of 05. A retirement
+    // moves history, it does not delete it — which is exactly what this count proves.
+    assert.strictEqual(seen.size, 27, "distinct blob count is not 27: " + seen.size);
   });
 
   it("attributes each superseded variant to the round it was SUPERSEDED BY, not to itself", function () {
@@ -148,7 +168,20 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         v.id + ": a variant cannot be superseded by the round it came from",
       );
       const winner = corpus.designs.find((d) => d.id === v.id);
-      assert.ok(winner, v.id + ": a variant with no canonical design");
+      // A RETIRED id has no canonical entry at all — that is the retirement, and
+      // `supersededByRound` is null for its blobs. Every non-retired id must still name its winner.
+      if (!winner) {
+        assert.ok(
+          corpus.retirements && corpus.retirements[v.id],
+          v.id + ": a variant with no canonical design that is not declared retired — a dropped " +
+            "id and a retired one must not look identical",
+        );
+        assert.strictEqual(
+          v.supersededByRound, null,
+          v.id + ": a retired design's blob must carry no supersededByRound",
+        );
+        continue;
+      }
       assert.strictEqual(v.supersededByRound, winner.round, v.id + ": supersededByRound is wrong");
       // And the variant really is a DIFFERENT blob from the winner.
       assert.notStrictEqual(v.svg, winner.svg, v.id + ": the variant IS the winner's bytes");
@@ -159,14 +192,19 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     }
   });
 
-  it("is byte-reproducible: a fresh freeze over the round files equals the fixture", function () {
+  it("is byte-reproducible: a fresh freeze over the round files + retirements equals the fixture", function () {
     // The generator's own run directory is the SOURCE of the fixture. It is `temp/` (ignored),
     // so a machine that has never run the generator cannot re-freeze — that is a skip, not a
     // failure, and the fixture itself stays the authority.
     const dir = freeze.DEFAULT_FROM;
     if (!fs.existsSync(dir)) this.skip();
 
-    const { designs, variants } = freeze.buildCorpus(dir);
+    const { designs, variants, retirements } = freeze.buildCorpus(dir);
+    assert.deepStrictEqual(
+      Object.keys(retirements).sort(),
+      Object.keys(corpus.retirements || {}).sort(),
+      "the retirement set changed — a retirement is a corpus-fidelity ruling, not a build option",
+    );
     assert.strictEqual(designs.length, corpus.designs.length, "a fresh freeze yields a different design count");
     assert.strictEqual(variants.length, corpus.variants.length, "a fresh freeze yields a different variant count");
     for (let i = 0; i < designs.length; i++) {
@@ -216,7 +254,13 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // 01 also in round 5b (round 5's own 01 answer drew black rules and was superseded).
     // R-6/R-7 (2026-10-02): 05 and 07 were re-cut AND REGENERATED — 05 in round 6, 07 in round 8
     // (round 7's 07 answer was REFUSED by the trust root: the model emitted a `<style>` block).
-    assert.strictEqual(byId["05-celestial-arcs"].round, "6", "05-celestial-arcs must come from round 6");
+    // D3 (2026-10-05): 05 was regenerated ONCE more (round 9) and its id RETIRED out of `designs`
+    // entirely, so it has no canonical round to check here — the retirement fence below pins its
+    // blob history instead.
+    assert.ok(
+      !byId["05-celestial-arcs"],
+      "05-celestial-arcs is D3-retired and must not be a canonical design",
+    );
     assert.strictEqual(byId["01-gilded-frame"].round, "5b", "01-gilded-frame must come from round 5b (the gold answer)");
     assert.strictEqual(byId["07-corner-arcs"].round, "8", "07-corner-arcs must come from round 8");
     assert.strictEqual(byId["08-flame-crest"].round, "5", "08-flame-crest must come from round 5");
@@ -231,7 +275,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         "designs-round1.json", "designs-round2.json", "designs-round3.json",
         "designs-round4.json", "designs-round4b.json", "designs-round4c.json",
         "designs-round5.json", "designs-round5b.json", "designs-round6.json",
-        "designs-round7.json", "designs-round8.json",
+        "designs-round7.json", "designs-round8.json", "designs-round9.json",
       ],
     );
     const keys = corpus.rounds.map((f) => freeze.roundKey(path.basename(f)));
@@ -264,14 +308,69 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       "the frozen corpus disagrees with designs-merged.json for: " + mismatched.join(", "),
     );
     for (const id of regenerated) {
+      const canonical = corpus.designs.find((d) => d.id === id);
+      if (!canonical) {
+        // D3 retired 05 out of the canonical set; against the stale merge file it survives only as
+        // a variant, and the retirement record is what names why.
+        assert.ok(
+          corpus.retirements[id] &&
+            corpus.variants.some((v) => v.id === id),
+          id + ": a regenerated id with no canonical entry must be a DECLARED retirement whose " +
+            "blobs survive as variants",
+        );
+        continue;
+      }
       assert.notStrictEqual(
         byId[id],
-        corpus.designs.find((d) => d.id === id).svg,
+        canonical.svg,
         id + ": the R-6/R-7 regeneration is not visible against the stale merge file — either " +
           "the regeneration did not land in the fixture, or the merge file was rebuilt and this " +
           "exclusion should be removed",
       );
     }
+  });
+
+  it("D3 (2026-10-05): the retired design is DECLARED — its blobs survive and the retirement " +
+    "carries its ruling, condition and measured verdict", function () {
+    // The failure mode this fence exists for: a dropped id and a retired one look identical in the
+    // frozen data. The retirement file is the difference, and it must name the ruling that ordered
+    // it, the condition that was met, the metric reading that met it, and the round it was judged
+    // on — enough for a reader to tell an executed branch from an agent's improvisation.
+    const r = corpus.retirements;
+    assert.ok(r && r["05-celestial-arcs"], "the D3 retirement is not declared in the fixture");
+    const t = r["05-celestial-arcs"];
+    assert.strictEqual(t.ruledBy, "D3", "the retirement must name the ruling that ordered it");
+    assert.strictEqual(t.ruledOn, "2026-10-05", "the retirement must carry its ruling date");
+    assert.ok(/regenerate once/i.test(t.condition), "the retirement must state the condition it met");
+    assert.strictEqual(t.regenerationRound, "9", "the retirement must name the one permitted generation");
+    assert.ok(/FAIL/.test(t.verdict), "the retirement must record the verdict as measured");
+    assert.ok(
+      /0\.0231|2063|solidStrokeP50PxMin/.test(t.measured),
+      "the retirement must carry the metric reading the verdict was read from",
+    );
+    // The ONE regeneration was performed and IS in the corpus: round 9's blob exists as a variant
+    // (nothing the generator accepted is dropped by a retirement).
+    const rounds = corpus.variants.filter((v) => v.id === "05-celestial-arcs").map((v) => v.round);
+    assert.deepStrictEqual(
+      rounds.sort(),
+      ["1", "4b", "5", "6", "9"],
+      "05's four predecessor blobs plus the D3 regeneration must all survive: " + rounds.join(","),
+    );
+    // And the metric fixture agrees: a retired design carries NO binding criterion (VOID with a
+    // reason), so D5's fence can never count it as a MET or a NOT MET row.
+    const metrics = JSON.parse(
+      fs.readFileSync(path.join(ROOT, "test", "fixtures", "byok_border_criteria_metrics.json"), "utf8"),
+    );
+    const me = metrics.criteria["05-celestial-arcs"];
+    assert.strictEqual(me.metric, null, "a retired design may not carry a binding metric");
+    assert.ok(
+      /RETIRED/.test(me.voidReason) && me.retired && me.retired.verdict === "FAIL",
+      "the metrics fixture must record the retirement, not merely omit a metric",
+    );
+    assert.ok(
+      Array.isArray(me.terms) && me.terms.length === 5,
+      "the terms the verdict was read with must be retained on the retired entry",
+    );
   });
 
   it("is read by the gallery spec as its DEFAULT source, not the generator's run directory", function () {
@@ -297,7 +396,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // is still accounted for — a re-freeze that DROPPED history would fail here.
     const byId = {};
     for (const d of corpus.designs) byId[d.id] = d;
-    for (const id of ["01-gilded-frame", "05-celestial-arcs", "08-flame-crest"]) {
+    for (const id of ["01-gilded-frame", "08-flame-crest"]) {
       assert.ok(byId[id], id + " missing from the canonical set");
       assert.ok(
         !/stroke-dasharray/i.test(byId[id].svg),
@@ -311,6 +410,28 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         id + ": a variant's supersededByRound does not name the D-B winner",
       );
     }
+    // 05 was the third D-B id and is now RETIRED (D3, 2026-10-05), so the property is asserted on
+    // its blobs instead of on a canonical entry. A retirement does NOT rewrite history: the blobs
+    // the D-B leg produced (rounds 5 and later) are dash-free, while 05's PRE-D-B blobs (rounds 1
+    // and 4b) keep the dash pattern they were frozen with — which is why 4b is the one variant in
+    // the corpus that still carries `stroke-dasharray`, exactly as 01's round-1 blob does.
+    const five = corpus.variants.filter((v) => v.id === "05-celestial-arcs");
+    assert.strictEqual(five.length, 5, "05's blob history changed");
+    const dashed = five.filter((v) => /stroke-dasharray/i.test(v.svg)).map((v) => v.round).sort();
+    assert.deepStrictEqual(
+      dashed,
+      ["4b"],
+      "05's pre-D-B dash pattern must be preserved as history (and only there): " + dashed.join(","),
+    );
+    assert.ok(
+      five.filter((v) => ["5", "6", "9"].includes(v.round))
+        .every((v) => !/stroke-dasharray/i.test(v.svg)),
+      "05: a D-B-era blob still carries stroke-dasharray",
+    );
+    assert.ok(
+      five.every((v) => v.supersededByRound === null),
+      "05 is retired: none of its blobs may name a canonical winner",
+    );
     // 01's own history is the sharpest case: round 1 (dashed) AND round 5 (solid but black)
     // were both accepted and both superseded by the round-5b gold answer.
     const gilded = corpus.variants.filter((v) => v.id === "01-gilded-frame").map((v) => v.round).sort();
@@ -334,12 +455,27 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // `phase4_round25_recut_evidence.md`; the bytes are likewise unchanged.
     // An override on ANY other id fails here — that is the fence that keeps a re-cut from
     // arriving unreviewed.
+    //
+    // D3 (2026-10-05) removed 05 from the CANONICAL set, so its override is no longer a canonical
+    // entry either. The override file still carries 05's re-cut text (the overrides file is the
+    // record of the ruling, not of membership), so the fence below names the canonical ids that
+    // remain and asserts 05's retirement separately — an override that silently disappeared would
+    // otherwise read as "05 was never re-cut".
     const withOverride = corpus.designs.filter((d) => d.criterionOverride);
     assert.deepStrictEqual(
       withOverride.map((d) => d.id).sort(),
+      ["01-gilded-frame", "04-dragon-scale", "07-corner-arcs"],
+      "criterion overrides must exist on exactly the ruled CANONICAL ids (D-C, R-3, R-6, R-7 minus " +
+        "the D3 retirement) — another id carrying one means an unreviewed re-cut reached the fixture",
+    );
+    const overridesRaw = JSON.parse(
+      fs.readFileSync(path.join(ROOT, "test", "fixtures", "byok_border_criteria_overrides.json"), "utf8"),
+    );
+    assert.deepStrictEqual(
+      Object.keys(overridesRaw.overrides).sort(),
       ["01-gilded-frame", "04-dragon-scale", "05-celestial-arcs", "07-corner-arcs"],
-      "criterion overrides must exist on exactly the ruled ids (D-C, R-3, R-6, R-7) — another " +
-        "id carrying one means an unreviewed re-cut reached the fixture",
+      "the override FILE must keep the four ruled ids — including the retired 05, whose re-cut is " +
+        "part of the record and whose retirement is recorded in byok_border_retirements.json",
     );
     const byId = {};
     for (const d of withOverride) byId[d.id] = d;
@@ -419,15 +555,6 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // silently swapped field), and leave the frozen bytes at the winning round's hash.
     const recuts = [
       {
-        id: "05-celestial-arcs",
-        ruledBy: "R-6",
-        round: "6",
-        previousSha256: "bce88831e291b19a1694ce2cce1747231efa68ca1423efe6f51e99fe06f709cb",
-        // The clause the pipeline cannot satisfy must be REMOVED as a demand: the re-cut may
-        // mention the stars (as a recorded residual) but must not require them.
-        mustNotDemand: /at least four separate four-pointed star shapes are visible/i,
-      },
-      {
         id: "07-corner-arcs",
         ruledBy: "R-7",
         round: "8",
@@ -490,10 +617,18 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       );
     }
     // 05 judged by continuity, 07 judged at the corners — the property each re-cut exists to
-    // establish, asserted on the JUDGED text (not on the superseded one).
+    // establish, asserted on the JUDGED text (not on the superseded one). 05's text is read from
+    // the OVERRIDE FILE now that the design is retired from the canonical set: the re-cut is part
+    // of the record even though the id is gone from `designs`.
     assert.ok(
-      /unbroken|continu/i.test(byId["05-celestial-arcs"].criterion),
+      /unbroken|continu/i.test(overridesRaw.overrides["05-celestial-arcs"].criterion),
       "05: the re-cut must keep the clause the frame measurably satisfies (unbroken strokes)",
+    );
+    assert.ok(
+      !/at least four separate four-pointed star shapes are visible/i.test(
+        overridesRaw.overrides["05-celestial-arcs"].criterion,
+      ),
+      "05: the re-cut still DEMANDS the star clause the pipeline cannot paint",
     );
     assert.ok(
       /corner/i.test(byId["07-corner-arcs"].criterion) &&

@@ -24,18 +24,22 @@
  * simply "every accepted round entry", asserted by the unit suite either way) — split into
  * two arrays:
  *
- *   `designs`  — the 12 CANONICAL blobs, one per id = LAST-ACCEPTED-WINS in generation order
+ *   `designs`  — the CANONICAL blobs, one per id = LAST-ACCEPTED-WINS in generation order
  *                (rounds 1, 2, 3, 4, 4b, 4c). This is the merge rule the generator's own
  *                `designs-merged.json` used; MEASURED 2026-10-01: all 12 canonical blobs are
  *                byte-identical to that file (12/12), which is what licenses calling this
  *                array the corpus. (An earlier reading of this script said FIRST-accepted-wins;
  *                the 12/12 last-wins comparison falsifies that and the rule is now measured,
- *                not assumed.)
- *   `variants` — the 8 superseded blobs, kept because they are real model output for a real
- *                instruction and are the only artifact that records how a design EVOLVED
- *                across rounds. A gate can render them to check the render path is
- *                instruction-independent; it must not judge them against the criterion,
- *                which belongs to the canonical blob.
+ *                not assumed.) 11 ids as of 2026-10-05: an id named in
+ *                `test/fixtures/byok_border_retirements.json` leaves this array entirely, which
+ *                is how operator ruling D3's "retire (`canonical: false`)" is executed here.
+ *   `variants` — every accepted blob WITHOUT a canonical winner: the superseded blobs, plus ALL
+ *                blobs of a retired id (including the final one, which would otherwise have lived
+ *                only in `designs`). Kept because they are real model output for a real
+ *                instruction and are the only artifact that records how a design EVOLVED across
+ *                rounds. A gate can render them to check the render path is
+ *                instruction-independent; it must not judge them against a criterion, which
+ *                belongs to a canonical blob — a retired id has none.
  *
  * Round order is parsed, not lexicographic: `4b` sorts BEFORE `4` as a string, which would
  * silently pick the wrong canonical blob for `05-celestial-arcs` (round 1 accepted it, round
@@ -158,6 +162,43 @@ function normalizeEol(text) {
 }
 
 const OVERRIDES_PATH = path.join(ROOT, "test", "fixtures", "byok_border_criteria_overrides.json");
+const RETIREMENTS_PATH = path.join(ROOT, "test", "fixtures", "byok_border_retirements.json");
+
+/**
+ * The retired canonical designs (see `test/fixtures/byok_border_retirements.json`).
+ *
+ * WHY A RETIREMENT IS AN INPUT AND NOT A FLAG. Operator ruling D3 gave 05-celestial-arcs the
+ * clause "regenerate once via --border-img, then judge by the binding metric; retire
+ * (`canonical: false`) if the metric fails". This corpus expresses "the canonical set" as the
+ * `designs` array, so the faithful execution is a MEMBERSHIP change — the id leaves `designs` and
+ * every blob it ever produced stays in `variants` as the record — rather than a boolean that
+ * every consumer (gallery spec, judged builder, seat driver, two metric fences) would have to
+ * learn to filter on. The retirement file carries the ruling, its condition, the metric reading
+ * that satisfied the condition and the evidence paths, so the fixture records WHY an id is
+ * missing instead of merely omitting it.
+ *
+ * Missing file -> no retirements; a malformed file FAILS LOUDLY (a silent drop of a retirement
+ * would re-crown a design the operator retired).
+ */
+function loadRetirements() {
+  if (!fs.existsSync(RETIREMENTS_PATH)) return {};
+  const raw = JSON.parse(fs.readFileSync(RETIREMENTS_PATH, "utf8"));
+  const r = raw && raw.retirements;
+  if (r === undefined || r === null) return {};
+  if (typeof r !== "object" || Array.isArray(r)) {
+    throw new Error("retirements file has a non-object `retirements` member: " + RETIREMENTS_PATH);
+  }
+  for (const [id, v] of Object.entries(r)) {
+    if (!v || typeof v.reason !== "string" || v.reason.length < 80) {
+      throw new Error("retirement of " + id + " carries no reason — a retirement without its " +
+        "ruling and measurement is indistinguishable from an accidental omission");
+    }
+    if (!v.ruledBy || !v.judgedRound) {
+      throw new Error("retirement of " + id + " must name the ruling and the judged round");
+    }
+  }
+  return r;
+}
 
 /**
  * The sanctioned criterion overrides (see the docstring). Missing file -> no overrides;
@@ -183,6 +224,7 @@ function loadOverrides() {
  */
 function buildCorpus(dir) {
   const { files, out } = collectRounds(dir);
+  const retirements = loadRetirements();
   /** @type {Map<string, {round: string, design: object}>} */
   const lastById = new Map();
   /** @type {object[]} */
@@ -208,7 +250,25 @@ function buildCorpus(dir) {
     lastById.set(design.id, { round, design });
   }
   const overrides = loadOverrides();
-  const designs = Array.from(lastById.values()).map(({ round, design }) => {
+  // A RETIRED id's FINAL blob would otherwise vanish: the loop above only pushes the SUPERSEDED
+  // blob into `variants`, so the winner of each id lives in `designs` by construction. Filtering a
+  // retired id out of `designs` must therefore move its final blob into `variants` as well — the
+  // retirement is "out of the canonical set", never "out of the record".
+  for (const { round, design } of lastById.values()) {
+    if (!retirements[design.id]) continue;
+    variants.push({
+      id: design.id,
+      title: design.title,
+      supersededByRound: null, // filled below; a retired id has no canonical winner
+      round,
+      svgChars: design.svg.length,
+      sha256: sha256(design.svg),
+      svg: design.svg,
+    });
+  }
+  const designs = Array.from(lastById.values())
+    .filter(({ design }) => !retirements[design.id])
+    .map(({ round, design }) => {
     const entry = {
       id: design.id,
       title: design.title,
@@ -238,11 +298,13 @@ function buildCorpus(dir) {
   });
   designs.sort((a, b) => (a.id < b.id ? -1 : 1));
   for (const v of variants) {
+    // A RETIRED design has no canonical entry, so `supersededByRound` is null for its blobs —
+    // the retirement record (not the winner) is what names why they are all variants.
     const winner = designs.find((d) => d.id === v.id);
     v.supersededByRound = winner ? winner.round : null;
   }
   variants.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : ord(a.round) - ord(b.round)));
-  return { files, designs, variants };
+  return { files, designs, variants, retirements };
 }
 
 function main(argv) {
@@ -254,7 +316,7 @@ function main(argv) {
     else throw new Error("unknown argument: " + argv[i]);
   }
 
-  const { files, designs, variants } = buildCorpus(args.from);
+  const { files, designs, variants, retirements } = buildCorpus(args.from);
   const payload = {
     _comment:
       "FROZEN BYOK border-design corpus. Deterministic input for the gallery gate " +
@@ -264,15 +326,19 @@ function main(argv) {
       "its accepted output is frozen here or the visual gate is not a gate.",
     _source:
       "designs-round*.json (generation order) + test/fixtures/byok_border_criteria_overrides.json "
-      + "(criterion overrides, the sanctioned way to re-cut a judged TEXT without touching the bytes)",
+      + "(criterion overrides, the sanctioned way to re-cut a judged TEXT without touching the bytes) "
+      + "+ test/fixtures/byok_border_retirements.json (retired canonical ids: a membership change, "
+      + "the faithful form of the ruling's 'canonical: false' - see the file's own header)",
     _rule:
-      "designs = one canonical blob per id, LAST accepted wins; variants = superseded blobs; "
+      "designs = one canonical blob per id, LAST accepted wins, MINUS every id named in the "
+      + "retirements file (whose blobs all live in `variants`); variants = superseded blobs; "
       + "a canonical id named in the overrides file carries criterion=override + "
       + "criterionGenerated (the winning round's own text) + "
       + "criterionOverride {supersedes, ruledBy, ruledOn, reason}",
     rounds: files,
     designs,
     variants,
+    retirements,
   };
   const text = JSON.stringify(payload, null, 2) + "\n";
 
@@ -285,6 +351,10 @@ function main(argv) {
         String(d.svgChars).padStart(5) + " chars  " + d.sha256.slice(0, 12) +
         (d.criterionOverride ? "  [criterion override by " + d.criterionOverride.ruledBy + "]" : "")
     );
+  }
+  for (const id of Object.keys(retirements)) {
+    console.log("  " + id.padEnd(20) + " RETIRED — " + retirements[id].ruledBy + " / " +
+      retirements[id].ruledOn + ": " + retirements[id].verdict);
   }
 
   if (args.check) {

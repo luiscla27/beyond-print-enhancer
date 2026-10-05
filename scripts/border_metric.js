@@ -432,6 +432,15 @@ function evaluate(png, imageEntry, fixtureEntry, camera, opts) {
  *   strokeP50Px        - median ink-run length ALONG the band DEPTH axis over the
  *                        span (the rail/stile minima, stated separately per the
  *                        ruling: rails >= 3 device px, stiles >= 1.5 device px).
+ *   solidStrokeP50Px   - 05's own clause ("a solid arc stroke >= 8 device px"), the
+ *                        D3-drafted solid-stroke minFeaturePx example the rail/stile
+ *                        minima deliberately do not carry: the MIN over the four edges
+ *                        of the median ink-run length of the runs that are PAINTED
+ *                        strokes (the same depthRunMedianPx instrument, restricted to
+ *                        each edge's own strokes), so a dashed/fragmented texture
+ *                        (round-6 05: p50 4/4/8/5) fails even where a rail minimum
+ *                        would pass. Stated ONLY on 05's entry (a 04/11 entry carrying
+ *                        it would need its own operator ruling).
  */
 
 /** Per-span ink profile of one edge band (which span positions carry ink, how deep). */
@@ -502,6 +511,9 @@ function edgeBandTerms(png, region, edge, inkLumaMax) {
     interiorRunCount: interior.length,
     strokeP50Px: median(strokes),
     strokeRuns: strokes.length,
+    // The clause's "solid" half: a stroke the pipeline paints, read at its own
+    // median run length — the null only fires when the edge carries NO ink at all.
+    solidStrokeP50Px: strokes.length ? median(strokes) : null,
   };
 }
 
@@ -519,6 +531,8 @@ function measureBand(png, meta, opts) {
   }
   const pick = (keys) =>
     keys.map((k) => perEdge[k]).filter((v) => v && typeof v.strokeP50Px === "number");
+  const solidPick = (keys) =>
+    keys.map((k) => perEdge[k]).filter((v) => v && typeof v.solidStrokeP50Px === "number");
   const result = {
     id: meta.label,
     sha256: meta.sha256 || null,
@@ -529,9 +543,19 @@ function measureBand(png, meta, opts) {
     maxInteriorGapPx: Math.max(...Object.values(perEdge).map((e) => e.maxInteriorGapPx)),
     railStrokeP50Px: Math.min(...pick(["TOP", "BOTTOM"]).map((e) => e.strokeP50Px)),
     stileStrokeP50Px: Math.min(...pick(["LEFT", "RIGHT"]).map((e) => e.strokeP50Px)),
+    // 05's own clause ("a solid arc stroke >= 8 device px"): the MIN over all four edges
+    // of the per-edge solid-stroke p50 — the exact instrument the term names, pooled the
+    // same way the rail/stile minima pool theirs. An edge with no ink contributes no
+    // reading, and if NO edge carries ink the term reads null (UNRESOLVED), never a
+    // vacuous 0 — the same "missing evidence is not a FAIL" contract as evaluateBand's.
+    solidStrokeP50PxMin: solidPick(["TOP", "BOTTOM", "LEFT", "RIGHT"]).length
+      ? Math.min(...solidPick(["TOP", "BOTTOM", "LEFT", "RIGHT"]).map((e) => e.solidStrokeP50Px))
+      : null,
   };
   // A missing edge reads 0, not undefined: an edge the camera did not take is a FAIL
-  // condition of the verdict, never a term that silently disappears.
+  // condition of the verdict, never a term that silently disappears. `solidStrokeP50PxMin`
+  // is exempt — it stays null (UNRESOLVED) when no edge carries ink, because its FAIL
+  // contract is the coverage term's, not a pooled-minimum's.
   for (const k of ["perEdgePaintedCoverageMin", "maxInteriorGapPx", "railStrokeP50Px", "stileStrokeP50Px"]) {
     if (!Number.isFinite(result[k])) result[k] = 0;
   }
@@ -561,8 +585,11 @@ function evaluateBand(png, imageEntry, fixtureEntry, opts) {
   const terms = (fixtureEntry.terms || []).map((t) => {
     const reading = meas[t.name];
     const cmp = { ">=": (a, b) => a >= b, ">": (a, b) => a > b, "<=": (a, b) => a <= b, "<": (a, b) => a < b }[t.op];
-    if (!cmp || reading === undefined) {
-      return { ...t, reading: reading === undefined ? null : reading, pass: null };
+    // A null reading is UNREADABLE evidence (the term's measure has nothing to read), not a
+    // 0: comparing null against a threshold would coerce it to 0 and turn "cannot measure"
+    // into a silent FAIL. UNRESOLVED (pass null), never a silent false.
+    if (!cmp || reading === undefined || reading === null) {
+      return { ...t, reading: reading === undefined || reading === null ? null : reading, pass: null };
     }
     return { ...t, reading, pass: cmp(reading, t.value) };
   });

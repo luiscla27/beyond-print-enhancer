@@ -68,23 +68,31 @@
       "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5, measured basis phase4_d3_measurements_20261004.md (reproduced 2026-10-05 on 1577133): AC-V1-c is superseded ONLY for 04/11/05; closure is judged per edge on the judged 2x print capture after the actual border-image-repeat: round rail scaling, which is ANISOTROPIC (~0.146 px/unit horizontal vs ~0.923 vertical on 656x1920) so square-source-unit closure cannot hold on the rails. Round-27 readings: paintedSpan 0.9773/0.9773/0.9919/0.9919, interior gaps 0, stroke p50 rails 6/6, stiles 2/6. The rail/stile minima are the operator's 2026-10-05 ruling (rails >= 3, stiles >= 1.5); the draft's example numbers (rails >= 1.5, stiles >= 3) were REJECTED because they would fail 04's LEFT stile at p50 2px. assumeSquareSourceUnits: false; no four-edge continuity required; corners judged separately as corner marks."
     },
     "05-celestial-arcs": {
-      "metric": "per-edge-band",
-      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1 },
+      "metric": null,
+      "voidReason": "RETIRED (operator ruling D3, executed 2026-10-05): the clause ordered ONE regeneration via --border-img and then a binding-metric verdict, with retirement (canonical: false) on failure and no amendment of the criterion to fit. The regeneration was performed (round 9, accepted by the product's own parser/sanitizer) and the freshly captured artwork FAILS four of the five stated terms: perEdgePaintedCoverageMin 0.0231 (TOP 0.9084 / BOTTOM 0.0298 / LEFT 0.1402 / RIGHT 0.0231) vs >= 0.85, maxInteriorGapPx 2063 vs <= 8, railStrokeP50Px 2 vs >= 3, solidStrokeP50PxMin 2 vs >= 8; only stileStrokeP50Px passes (8 vs >= 1.5). A retired design has no binding criterion, so its predicates are VOID by construction, not by omission - the terms that produced the verdict stay in reason and in test/fixtures/byok_border_retirements.json, which is also where the retirement is DECLARED as a freeze input. The design is no longer canonical: it is absent from byok_border_corpus.json designs and all five of its accepted blobs (rounds 1, 4b, 5, 6, 9) live in variants.",
       "terms": [
         { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.85, "unit": "fraction" },
         { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
         { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
-        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" }
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" },
+        { "name": "solidStrokeP50PxMin", "op": ">=", "value": 8, "unit": "device px" }
       ],
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1, "solidStrokeP50Px": 8 },
       "ruledBy": "D3",
       "ruledOn": "2026-10-05",
-      "branch": {
-        "status": "REGENERATION PENDING",
-        "route": "formulation gate -> ONE --border-img generation -> fresh judged capture -> binding metric on the new cell",
-        "onMetricFailure": "retire (canonical: false); its superseded variant already exists; the criterion is NOT amended to fit",
-        "measuredBasis": "Round-6 artwork FAILS on the round-27 cell: paintedSpan 0.8061/0.0348/0.1438/0.0208 (all four edges below the 0.85 floor), interior gaps 8/839/334/2063 (TOP's gap sits exactly AT the <= 8 threshold; its coverage fails regardless). Operator answer 2026-10-05: regenerate once, then retire if the metric fails."
+      "retired": {
+        "executedOn": "2026-10-05",
+        "condition": "regenerate once via --border-img, then judge by the binding metric; retire (canonical: false) if the metric fails",
+        "regenerationRound": "9",
+        "judgedRound": "28",
+        "verdict": "FAIL",
+        "measured": "round-9 cell (gallery-round28, dsf 2, print): coverage min 0.0231 (TOP 0.9084 / BOTTOM 0.0298 / LEFT 0.1402 / RIGHT 0.0231); interior gap max 2063 (TOP 14 / BOTTOM 839 / LEFT 334 / RIGHT 2063); rail stroke p50 2 (TOP 10 / BOTTOM 2); stile stroke p50 8 (LEFT 8 / RIGHT 8); solid stroke p50 min 2",
+        "previousCanonicalMeasured": "round-6 cell (gallery-round27): coverage min 0.8061 (0.8061/0.0348/0.1438/0.0208); interior gaps 8/839/334/2063; rail p50 4/4; stile p50 8/5; solid p50 min 4",
+        "declaredIn": "test/fixtures/byok_border_retirements.json (the freeze input that removes the id from the canonical set)",
+        "criterionAmended": false,
+        "productSurface": "js/print_styles.js border-image-repeat: round UNCHANGED (D3's product clause)"
       },
-      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5: 05's coverage floor is 0.85 (not 0.90) and it additionally requires a solid arc stroke >= 8 device px (depth-run share >= 8px on the round-27 cell: TOP 131/1475, BOTTOM 14/58, LEFT 425/726, RIGHT 27/103 - partially satisfiable; binding = every term passes). The measured FAIL on the round-6 artwork routes 05 to the clause's own regeneration-then-retire branch, which the operator confirmed 2026-10-05. The round-6 bytes stay canonical until the regenerated artwork is judged."
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5: 05's coverage floor is 0.85 (not 0.90) and it additionally requires a solid arc stroke >= 8 device px, implemented as the solidStrokeP50PxMin term (the clause's own 8 device px; the depth-run share parenthetical of the drafting round is the DRAFT's form and does not bind). The terms above are RETAINED for the record: they are exactly the terms the verdict was read with, and they were the reason the round-6 artwork failed. The ROUTE the clause gave (formulation gate -> ONE --border-img generation -> fresh judged capture -> binding metric on the new cell) was executed on 2026-10-05 and FAILED, so the clause's own retirement branch is what ran. The criterion was NOT amended to fit the artwork - the re-cut class (R-3/R-6/R-7) is not available here because this clause re-cut the criterion once already and then ordered the artwork retried, not the text."
     },
     "06-chainmail": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlocking ring pattern) with no deterministic metric defined at this scale" },
     "07-corner-arcs": { "metric": null, "voidReason": "the criterion's feature (four corner groups) is not covered by an EDGE strip, so no edge-band metric can decide it; a corner-band metric is not defined" },

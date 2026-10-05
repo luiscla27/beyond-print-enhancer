@@ -1,7 +1,7 @@
 {
   "_comment": "FROZEN BYOK border-design corpus. Deterministic input for the gallery gate (test/browser_e2e/byok_border_gallery.spec.js) and the render-path unit tests. Regenerate with `node scripts/freeze_border_corpus.js`; do NOT hand-edit. The live generator (scripts/border_design_generator.js) is a non-deterministic free leg, so its accepted output is frozen here or the visual gate is not a gate.",
-  "_source": "designs-round*.json (generation order) + test/fixtures/byok_border_criteria_overrides.json (criterion overrides, the sanctioned way to re-cut a judged TEXT without touching the bytes)",
-  "_rule": "designs = one canonical blob per id, LAST accepted wins; variants = superseded blobs; a canonical id named in the overrides file carries criterion=override + criterionGenerated (the winning round's own text) + criterionOverride {supersedes, ruledBy, ruledOn, reason}",
+  "_source": "designs-round*.json (generation order) + test/fixtures/byok_border_criteria_overrides.json (criterion overrides, the sanctioned way to re-cut a judged TEXT without touching the bytes) + test/fixtures/byok_border_retirements.json (retired canonical ids: a membership change, the faithful form of the ruling's 'canonical: false' - see the file's own header)",
+  "_rule": "designs = one canonical blob per id, LAST accepted wins, MINUS every id named in the retirements file (whose blobs all live in `variants`); variants = superseded blobs; a canonical id named in the overrides file carries criterion=override + criterionGenerated (the winning round's own text) + criterionOverride {supersedes, ruledBy, ruledOn, reason}",
   "rounds": [
     "designs-round1.json",
     "designs-round2.json",
@@ -13,7 +13,8 @@
     "designs-round5b.json",
     "designs-round6.json",
     "designs-round7.json",
-    "designs-round8.json"
+    "designs-round8.json",
+    "designs-round9.json"
   ],
   "designs": [
     {
@@ -73,24 +74,6 @@
       "svgChars": 3488,
       "sha256": "9c25ad91590462baa779cae2f6f8ce3693e4660b67930525d7dc2f94efe79481",
       "svg": "<svg viewBox=\"0 0 800 800\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"scaleGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#8B4513\"/><stop offset=\"100%\" stop-color=\"#5D2906\"/></linearGradient></defs><g fill=\"url(#scaleGrad)\"><path d=\"M0,0 L40,0 L30,20 L10,20 Z M35,0 L75,0 L65,20 L45,20 Z M70,0 L110,0 L100,20 L80,20 Z M105,0 L145,0 L135,20 L115,20 Z M140,0 L180,0 L170,20 L150,20 Z M175,0 L215,0 L205,20 L185,20 Z M210,0 L250,0 L240,20 L220,20 Z M245,0 L285,0 L275,20 L255,20 Z M280,0 L320,0 L310,20 L290,20 Z M315,0 L355,0 L345,20 L325,20 Z M350,0 L390,0 L380,20 L360,20 Z M385,0 L425,0 L415,20 L395,20 Z M420,0 L460,0 L450,20 L430,20 Z M455,0 L495,0 L485,20 L465,20 Z M490,0 L530,0 L520,20 L500,20 Z M525,0 L565,0 L555,20 L535,20 Z M560,0 L600,0 L590,20 L570,20 Z M595,0 L635,0 L625,20 L605,20 Z M630,0 L670,0 L660,20 L640,20 Z M665,0 L705,0 L695,20 L675,20 Z M700,0 L740,0 L730,20 L710,20 Z M735,0 L775,0 L765,20 L745,20 Z M770,0 L800,0 L800,20 L770,20 Z\"/><path d=\"M800,0 L800,40 L780,30 L780,10 Z M800,35 L800,75 L780,65 L780,45 Z M800,70 L800,110 L780,100 L780,80 Z M800,105 L800,145 L780,135 L780,115 Z M800,140 L800,180 L780,170 L780,150 Z M800,175 L800,215 L780,205 L780,185 Z M800,210 L800,250 L780,240 L780,220 Z M800,245 L800,285 L780,275 L780,255 Z M800,280 L800,320 L780,310 L780,290 Z M800,315 L800,355 L780,345 L780,325 Z M800,350 L800,390 L780,380 L780,360 Z M800,385 L800,425 L780,415 L780,395 Z M800,420 L800,460 L780,450 L780,430 Z M800,455 L800,495 L780,485 L780,465 Z M800,490 L800,530 L780,520 L780,500 Z M800,525 L800,565 L780,555 L780,535 Z M800,560 L800,600 L780,590 L780,570 Z M800,595 L800,635 L780,625 L780,605 Z M800,630 L800,670 L780,660 L780,640 Z M800,665 L800,705 L780,695 L780,675 Z M800,700 L800,740 L780,730 L780,710 Z M800,735 L800,775 L780,765 L780,745 Z M800,770 L800,800 L780,800 L780,770 Z\"/><path d=\"M800,800 L760,800 L770,780 L790,780 Z M765,800 L725,800 L735,780 L755,780 Z M730,800 L690,800 L700,780 L720,780 Z M695,800 L655,800 L665,780 L685,780 Z M660,800 L620,800 L630,780 L650,780 Z M625,800 L585,800 L595,780 L615,780 Z M590,800 L550,800 L560,780 L580,780 Z M555,800 L515,800 L525,780 L545,780 Z M520,800 L480,800 L490,780 L510,780 Z M485,800 L445,800 L455,780 L475,780 Z M450,800 L410,800 L420,780 L440,780 Z M415,800 L375,800 L385,780 L405,780 Z M380,800 L340,800 L350,780 L370,780 Z M345,800 L305,800 L315,780 L335,780 Z M310,800 L270,800 L280,780 L300,780 Z M275,800 L235,800 L245,780 L265,780 Z M240,800 L200,800 L210,780 L230,780 Z M205,800 L165,800 L175,780 L195,780 Z M170,800 L130,800 L140,780 L160,780 Z M135,800 L95,800 L105,780 L125,780 Z M100,800 L60,800 L70,780 L90,780 Z M65,800 L25,800 L35,780 L55,780 Z M30,800 L0,800 L0,780 L20,780 Z\"/><path d=\"M0,800 L0,760 L20,770 L20,790 Z M0,765 L0,725 L20,735 L20,715 Z M0,730 L0,690 L20,700 L20,680 Z M0,695 L0,655 L20,665 L20,645 Z M0,660 L0,620 L20,630 L20,610 Z M0,625 L0,585 L20,595 L20,575 Z M0,590 L0,550 L20,560 L20,540 Z M0,555 L0,515 L20,525 L20,505 Z M0,520 L0,480 L20,490 L20,470 Z M0,485 L0,445 L20,455 L20,435 Z M0,450 L0,410 L20,420 L20,400 Z M0,415 L0,375 L20,385 L20,365 Z M0,380 L0,340 L20,350 L20,330 Z M0,345 L0,305 L20,315 L20,295 Z M0,310 L0,270 L20,280 L20,260 Z M0,275 L0,235 L20,245 L20,225 Z M0,240 L0,200 L20,210 L20,190 Z M0,205 L0,165 L20,175 L20,155 Z M0,170 L0,130 L20,140 L20,120 Z M0,135 L0,95 L20,105 L20,85 Z M0,100 L0,60 L20,70 L20,50 Z M0,65 L0,25 L20,35 L20,15 Z M0,30 L0,0 L20,0 L20,20 Z\"/></g></svg>"
-    },
-    {
-      "id": "05-celestial-arcs",
-      "title": "Celestial arcs",
-      "instruction": "Draw a celestial border: a repeating pattern of thick solid arcs along all four edges, where each arc is a single continuous stroke with no dashes, no gaps, no dotted segments, and no stroke-dasharray, and the arcs connect end-to-end to form a continuous line along each edge. Use only flat opaque very dark solid fill or stroke with stroke width at least 6 units, and no gradients, no glow, no transparency, no opacity below 1. Also draw at least five separate small four-pointed stars, each drawn with solid fill or solid opaque stroke, clearly visible and separate from each other, placed inside the outer 24 percent border band near the corners or along the edges, never in the centre of the viewBox. Keep all ink inside the outer 24 percent edge band on all four sides. Do not use text, image, style, script, foreignObject, animation, or external href.",
-      "criterion": "Thin solid arc strokes are painted as an unbroken line along the top edge and along the bottom edge, and the SAME arc treatment is carried on the left and right edges; every stroke is a plain solid line — no dash pattern and no broken or fragmented run anywhere on the frame. The arcs are judged by SHAPE and continuity only. The design's four-pointed star marks are NOT part of this criterion: they are drawn in the middle of the source viewBox, which the product's `border-image` slice painting crops away before any pixel exists (measured on the judged frame: 0 star shapes in any band; the sole ink in the TOP band is a thin mark at the band's inner line), so no artwork of this design can show them and their absence is NOT a failure of this criterion.",
-      "criterionGenerated": "In the judged 56 device px border band at grayscale, each of the four edges shows a continuous dark line made of thick solid opaque arc segments that cover the middle of the edge with no blank gaps, and at least five separate solid four-pointed stars are visible within the border band.",
-      "criterionOverride": {
-        "supersedes": "A thin arc curve drawn as a single unbroken solid stroke (no dashes, no gaps) runs along the top edge and along the bottom edge, and at least four separate four-pointed star shapes are visible in the space between them.",
-        "ruledBy": "R-6",
-        "ruledOn": "2026-10-02",
-        "reason": "Operator instruction 2026-10-02 (re-cut rather than re-freeze). Measured basis filed as `phase4_round25_recut_evidence.md`: the frozen round-5 blob draws its two arcs at source y 8..24 / 232..240 of a 256-tall viewBox — inside the top and bottom slices, which the pipeline paints — and its six star polygons at source y 52..168, i.e. in the middle of the viewBox, which `border-image` slice painting never paints. On the judged native cell the TOP band's ink is 19 separate thin components totalling 635 px (0.81% of the band) at band depth 50..55 of 56, with no star geometry anywhere; the criterion's star clause was therefore unsatisfiable by construction for ANY artwork of this shape, exactly as R-3's gold clause was. The re-cut keeps the frozen bytes (sha256 bce88831…, round 5) and records the star marks as a residual of the design."
-      },
-      "model": "poolside/laguna-s-2.1:free",
-      "round": "6",
-      "svgChars": 2247,
-      "sha256": "e3f78b5ffbaaff86ab02968c1bb325472a834960d1b80b9a4083d41df25e8f73",
-      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><path id=\"arc\" d=\"M0,0 A24,24 0 0,1 24,0\"/></defs><g stroke=\"#000\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"butt\"><use href=\"#arc\" x=\"0\" y=\"0\"/><use href=\"#arc\" x=\"24\" y=\"0\"/><use href=\"#arc\" x=\"48\" y=\"0\"/><use href=\"#arc\" x=\"72\" y=\"0\"/><use href=\"#arc\" x=\"96\" y=\"0\"/><use href=\"#arc\" x=\"120\" y=\"0\"/><use href=\"#arc\" x=\"144\" y=\"0\"/><use href=\"#arc\" x=\"168\" y=\"0\"/><use href=\"#arc\" x=\"192\" y=\"0\"/><use href=\"#arc\" x=\"216\" y=\"0\"/><use href=\"#arc\" x=\"0\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"24\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"48\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"72\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"96\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"120\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"144\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"168\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"192\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"216\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"0\" y=\"0\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"24\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"48\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"72\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"96\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"120\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"0\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"24\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"48\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"72\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"96\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"120\" transform=\"scale(-1,-1)\"/></g><g fill=\"#000\"><polygon points=\"12,12 14,18 20,18 15,21 17,27 12,24 7,27 9,21 4,18 10,18\"/><polygon points=\"208,12 210,18 216,18 211,21 213,27 208,24 203,27 205,21 200,18 206,18\"/><polygon points=\"12,128 14,122 20,122 15,119 17,113 12,116 7,113 9,119 4,122 10,122\"/><polygon points=\"208,128 210,122 216,122 211,119 213,113 208,116 203,113 205,119 200,122 206,122\"/><polygon points=\"108,12 110,18 116,18 111,21 113,27 108,24 103,27 105,21 100,18 106,18\"/></g></svg>"
     },
     {
       "id": "06-chainmail",
@@ -226,7 +209,7 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "supersededByRound": "6",
+      "supersededByRound": null,
       "round": "1",
       "svgChars": 1447,
       "sha256": "22506f9e1cc4f61cbd741c6514bb596b77aae07d7c97353723ec46a76e4541a7",
@@ -235,7 +218,7 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "supersededByRound": "6",
+      "supersededByRound": null,
       "round": "4b",
       "svgChars": 1070,
       "sha256": "495fa2914016b6d0411900f31578865aa2907483b496b049f5a6b3b6e3992959",
@@ -244,11 +227,29 @@
     {
       "id": "05-celestial-arcs",
       "title": "Celestial arcs",
-      "supersededByRound": "6",
+      "supersededByRound": null,
       "round": "5",
       "svgChars": 1125,
       "sha256": "bce88831e291b19a1694ce2cce1747231efa68ca1423efe6f51e99fe06f709cb",
       "svg": "<svg viewBox=\"0 0 224 256\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><linearGradient id=\"celestialGlow\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"/><stop offset=\"100%\" stop-color=\"#aaccff\" stop-opacity=\"0.6\"/></linearGradient></defs><path d=\"M8,24 Q112,8 216,24\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M8,232 Q112,240 216,232\" fill=\"none\" stroke=\"url(#celestialGlow)\" stroke-width=\"2\" stroke-linecap=\"round\"/><polygon points=\"40,60 44,52 48,60 44,68\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"100,80 104,72 108,80 104,88\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"160,100 164,92 168,100 164,108\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"70,140 74,132 78,140 74,148\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"130,160 134,152 138,160 134,168\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/><polygon points=\"180,120 184,112 188,120 184,128\" fill=\"#ffffff\" stroke=\"#aaccff\" stroke-width=\"1\"/></svg>"
+    },
+    {
+      "id": "05-celestial-arcs",
+      "title": "Celestial arcs",
+      "supersededByRound": null,
+      "round": "6",
+      "svgChars": 2247,
+      "sha256": "e3f78b5ffbaaff86ab02968c1bb325472a834960d1b80b9a4083d41df25e8f73",
+      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><path id=\"arc\" d=\"M0,0 A24,24 0 0,1 24,0\"/></defs><g stroke=\"#000\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"butt\"><use href=\"#arc\" x=\"0\" y=\"0\"/><use href=\"#arc\" x=\"24\" y=\"0\"/><use href=\"#arc\" x=\"48\" y=\"0\"/><use href=\"#arc\" x=\"72\" y=\"0\"/><use href=\"#arc\" x=\"96\" y=\"0\"/><use href=\"#arc\" x=\"120\" y=\"0\"/><use href=\"#arc\" x=\"144\" y=\"0\"/><use href=\"#arc\" x=\"168\" y=\"0\"/><use href=\"#arc\" x=\"192\" y=\"0\"/><use href=\"#arc\" x=\"216\" y=\"0\"/><use href=\"#arc\" x=\"0\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"24\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"48\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"72\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"96\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"120\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"144\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"168\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"192\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"216\" y=\"120\" transform=\"scale(-1,1)\"/><use href=\"#arc\" x=\"0\" y=\"0\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"24\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"48\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"72\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"96\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"0\" y=\"120\" transform=\"scale(1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"0\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"24\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"48\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"72\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"96\" transform=\"scale(-1,-1)\"/><use href=\"#arc\" x=\"216\" y=\"120\" transform=\"scale(-1,-1)\"/></g><g fill=\"#000\"><polygon points=\"12,12 14,18 20,18 15,21 17,27 12,24 7,27 9,21 4,18 10,18\"/><polygon points=\"208,12 210,18 216,18 211,21 213,27 208,24 203,27 205,21 200,18 206,18\"/><polygon points=\"12,128 14,122 20,122 15,119 17,113 12,116 7,113 9,119 4,122 10,122\"/><polygon points=\"208,128 210,122 216,122 211,119 213,113 208,116 203,113 205,119 200,122 206,122\"/><polygon points=\"108,12 110,18 116,18 111,21 113,27 108,24 103,27 105,21 100,18 106,18\"/></g></svg>"
+    },
+    {
+      "id": "05-celestial-arcs",
+      "title": "Celestial arcs",
+      "supersededByRound": null,
+      "round": "9",
+      "svgChars": 1694,
+      "sha256": "ad951f21aec67f9926a63aee8b50c0da2efe0f74b20b3be8f2c253cfdd20ed87",
+      "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><defs><path id=\"arc\" d=\"M0,0 A24,24 0 0,1 24,0\"/></defs><g stroke=\"#000\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"><use href=\"#arc\" x=\"0\" y=\"0\"/><use href=\"#arc\" x=\"48\" y=\"0\"/><use href=\"#arc\" x=\"96\" y=\"0\"/><use href=\"#arc\" x=\"144\" y=\"0\"/><use href=\"#arc\" x=\"192\" y=\"0\"/><use href=\"#arc\" x=\"0\" y=\"144\" transform=\"scale(1,-1) translate(0,-144)\"/><use href=\"#arc\" x=\"48\" y=\"144\" transform=\"scale(1,-1) translate(0,-144)\"/><use href=\"#arc\" x=\"96\" y=\"144\" transform=\"scale(1,-1) translate(0,-144)\"/><use href=\"#arc\" x=\"144\" y=\"144\" transform=\"scale(1,-1) translate(0,-144)\"/><use href=\"#arc\" x=\"192\" y=\"144\" transform=\"scale(1,-1) translate(0,-144)\"/><use href=\"#arc\" x=\"0\" y=\"0\" transform=\"rotate(-90 0 0)\"/><use href=\"#arc\" x=\"0\" y=\"48\" transform=\"rotate(-90 0 0)\"/><use href=\"#arc\" x=\"0\" y=\"96\" transform=\"rotate(-90 0 0)\"/><use href=\"#arc\" x=\"0\" y=\"144\" transform=\"rotate(-90 0 0)\"/><use href=\"#arc\" x=\"224\" y=\"0\" transform=\"rotate(90 224 0)\"/><use href=\"#arc\" x=\"224\" y=\"48\" transform=\"rotate(90 224 0)\"/><use href=\"#arc\" x=\"224\" y=\"96\" transform=\"rotate(90 224 0)\"/><use href=\"#arc\" x=\"224\" y=\"144\" transform=\"rotate(90 224 0)\"/></g><g fill=\"#000\"><polygon points=\"12,12 14,16 18,16 15,19 16,23 12,21 8,23 9,19 6,16 10,16\"/><polygon points=\"212,12 214,16 218,16 215,19 216,23 212,21 208,23 209,19 206,16 210,16\"/><polygon points=\"12,132 14,128 18,128 15,125 16,121 12,123 8,121 9,125 6,128 10,128\"/><polygon points=\"212,132 214,128 218,128 215,125 216,121 212,123 208,121 209,125 206,128 210,128\"/><polygon points=\"100,12 102,16 106,16 103,19 104,23 100,21 96,23 97,19 94,16 98,16\"/></g></svg>"
     },
     {
       "id": "07-corner-arcs",
@@ -304,5 +305,28 @@
       "sha256": "76593d045c25c6962095da3a7a30fd7ef0a5591be4670daa26193c56b0b7b030",
       "svg": "<svg viewBox=\"0 0 224 144\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"g1\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"#8B4513\"/><stop offset=\"100%\" stop-color=\"#654321\"/></linearGradient></defs><path d=\"M0,8 L224,8 C218,20 206,28 196,32 C186,36 174,38 164,36 C154,34 144,28 136,20 C128,12 120,4 112,8 C104,12 96,20 88,28 C80,36 72,44 64,48 C56,52 48,52 40,48 C32,44 24,36 16,28 C8,20 0,12 0,8 Z\" fill=\"none\" stroke=\"url(#g1)\" stroke-width=\"2\" stroke-linejoin=\"round\"/>...</svg>"
     }
-  ]
+  ],
+  "retirements": {
+    "05-celestial-arcs": {
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "executedOn": "2026-10-05",
+      "condition": "regenerate once via --border-img, then judge by the binding metric; retire (canonical: false) if the metric fails",
+      "regenerationRound": "9",
+      "finalRound": "9",
+      "metric": "per-edge-band",
+      "judgedRound": "28 (fresh gallery capture of the regenerated artwork; the judged cells are the D-A camera's, print media, deviceScaleFactor 2)",
+      "verdict": "FAIL - four of the five stated terms fail",
+      "measured": "perEdgePaintedCoverageMin 0.0231 (TOP 0.9084 / BOTTOM 0.0298 / LEFT 0.1402 / RIGHT 0.0231) against >= 0.85; maxInteriorGapPx 2063 against <= 8; railStrokeP50Px 2 against >= 3; solidStrokeP50PxMin 2 against >= 8 (the clause's own 'solid arc stroke >= 8 device px'); stileStrokeP50Px 8 against >= 1.5 (the only term that passes)",
+      "previousCanonical": "the round-6 artwork, whose round-27 readings were paintedSpan 0.8061/0.0348/0.1438/0.0208, interior gaps 8/839/334/2063, stroke p50 rails 4/4 stiles 8/5, solid p50 min 4",
+      "reason": "The regeneration was performed exactly once, as the clause orders, and the freshly captured artwork FAILS the binding metric: the regenerated blob improves the TOP edge (coverage 0.8061 -> 0.9084) but its interior gap on that edge is 14 device px (> 8) and the other three edges are unchanged in kind (coverage 0.02-0.14, interior gaps 334-2063). The mid-viewBox star marks are absent for the reason R-6 already recorded (the slice painting crops them) - and the R-3/R-6/R-7 class of criterion re-cut is NOT available here, because the clause that re-cut this design's text came with its own condition: retry the ARTWORK once, then retire. Amending the criterion to fit the artwork is the outcome D3 explicitly forbids ('the criterion is NOT amended to fit'), so 05 leaves the canonical set and every blob it ever produced stays in `variants`.",
+      "residual": "The consultants' own falsifier is what this outcome tests: 'if re-cut rail/stile criteria still fail after regeneration, anisotropy is not the sole cause - artwork generation via --border-img cannot produce rail-visible texture at the product's ~0.146 px/unit horizontal rail scaling, requiring a product-level change (border-image-slice or source aspect)'. That residual is recorded, not acted on: the product surface (border-image-repeat: round) is UNCHANGED by D3 and stays unchanged.",
+      "evidence": [
+        "test/fixtures/byok_border_criteria_metrics.json - the terms the verdict is read with (05's entry now carries the retirement record instead of a binding metric)",
+        "temp/visual_logs/byok_svg_borders_20260927/designs-round9.json - the one permitted generation (round 9, accepted by the product's own parser/sanitizer)",
+        "temp/visual_logs/byok_svg_borders_20260927/gallery-round28/judged-meta.json - the fresh judged capture the verdict was measured on",
+        "vendor/conductor/tracks/byok_svg_borders_20260927/phase4_d3_ruling_20261005.md - the ruling and its condition"
+      ]
+    }
+  }
 }
