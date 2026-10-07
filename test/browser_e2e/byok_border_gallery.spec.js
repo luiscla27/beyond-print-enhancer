@@ -159,9 +159,10 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
   let page;
   const loaded = loadDesigns();
   // EVERY frozen blob is rendered, not just the canonical designs. The user's requirement is
-  // "use all the SVGs created until now", and the corpus holds 27 DISTINCT accepted artworks
-  // (11 canonical + 16 without a canonical winner: superseded blobs, plus every blob of the
-  // D3-retired 05-celestial-arcs). A gate that renders only the winners would leave those real
+  // "use all the SVGs created until now", and the corpus holds 46 DISTINCT accepted artworks
+  // (11 canonical + 35 without a canonical winner: superseded blobs — including 04's three
+  // degenerate empty frames from the pre-gate rounds and 05-celestial-arcs' full blob history
+  // under its D3 retirement). A gate that renders only the winners would leave those real
   // model outputs unmeasured.
   const designs = loaded.designs.concat(
     (loaded.variants || []).map((v) => Object.assign({}, v, { variant: true })),

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-10-06 — track `byok_border_prompt_adoption_20261006`)
+- **The BYOK border prompt corpus now carries the 10/10 prompt texts.** All 11 canonical
+  instructions in `scripts/border_designs.json` were replaced VERBATIM with the muse-loop's
+  10/10 texts (`temp/scratch/border_prompts_final.json`; title + criterion per design
+  unchanged; `05-celestial-arcs` stays D3-retired). The corpus artwork was regenerated on the
+  live NOUS leg through the product's own prompt path and
+  `test/fixtures/byok_border_corpus.json` re-frozen byte-reproducibly over rounds 1–22:
+  **11 canonical / 35 variants / 46 distinct accepted blobs** (the freeze's last-accepted-wins
+  and every-blob-survives fences unchanged; old canonical bytes survive as hash-pinned
+  variants). Corpus suite pins moved to the measured counts; full suite **1630 passing /
+  0 failing**. Certification (gallery-round33 judged capture + the D2 binding metric + the
+  Muse visual seat, per the archived track's operator rulings): **7/11 certified MET**
+  (02-runic-band, 03-thornvine, 06-chainmail, 07-corner-arcs, 08-flame-crest, 09-frost-shards,
+  11-starlit-void); **01/04/10/12 escalated to the operator** after 2+ consecutive failing
+  samples from the same adopted prompts — no criterion, threshold, or prompt was amended.
+  Records: `vendor/conductor/tracks/byok_border_prompt_adoption_20261006/final_report.md`.
+- **`scripts/byok_vision_gate.py` — the vision seat no longer crashes on a reasoning-only
+  completion.** Muse Spark can spend the whole completion budget inside `reasoning_tokens` and
+  return `content: null` with `finish_reason: "length"` (measured: 8000/8000 reasoning tokens,
+  null content, on a judged cell that answers fine at 16000). `extract_text` used to return
+  `None`, crashing the seat driver with `write() argument must be str, not None` — the same
+  "a reasoning-only answer is not evidence" class the archived track hit at 2000 tokens.
+  Fixed: `max_tokens` 8000 → **16000**, and an unreadable answer is returned as a NAMED string
+  carrying the finish reason and reasoning-token count, so it can never be read as a verdict.
+
 ### Fixed
 - **§5's own yardstick could not see §5 passing — `admission_cutover()` now splits by instant
   (`scripts/utility_telemetry.py`, 2026-09-21, telemetry handoff §27).** The after-state landed at

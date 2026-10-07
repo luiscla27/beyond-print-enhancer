@@ -70,19 +70,24 @@ const validateSvg = AiLayout.validateSvg;
 describe("BYOK border corpus — the frozen input the visual gate renders", function () {
   it("carries the whole corpus: 11 canonical designs plus every superseded variant", function () {
     assert.strictEqual(corpus.designs.length, 11, "canonical design count changed");
-    // 16 variants since the 2026-10-05 D3 retirement leg: the R-6/R-7 set (14) plus BOTH of 05's
-    // later blobs — round 6 (the previous canonical) and round 9 (the one regeneration D3
-    // permitted, whose verdict FAILED the binding metric). A retirement moves the id OUT of the
-    // canonical set; every blob it ever produced stays in the record, and that includes the id's
-    // final accepted blob, which would otherwise have lived only in `designs`.
-    assert.strictEqual(corpus.variants.length, 16, "superseded-variant count changed");
-    // 27 = every accepted blob the live generator ever produced (rounds 1..9). It was 26 through
-    // the R-6/R-7 freeze and grew by exactly one here, because D3 permitted exactly ONE further
-    // generation — the retirement itself adds no blob, it moves 05's out of `designs`.
+    // 30 variants since the 2026-10-06 prompt-adoption leg (track
+    // byok_border_prompt_adoption_20261006): the 16 of the D3 leg plus 14 more accepted blobs the
+    // adoption regeneration superseded — rounds 10-14 accepted 01/06/07/10 (r10), 08 (r11), 12
+    // (r12), 09/11 (r13) and 04's two DEGENERATE empty frames (r11 395 chars, r14 415 chars,
+    // which last-accepted-wins had made canonical before the degenerate gate existed), and the
+    // sampled-leg remedy for the three T=0-stuck ids (Muse 6-loop consult 2026-10-06) superseded
+    // 02/03 (r4 winners) and 04's degenerate canonical with real artwork in rounds 17/19.
+    assert.strictEqual(corpus.variants.length, 35, "superseded-variant count changed");
+    // 46 = every accepted blob the live generator ever produced (rounds 1..22). It was 27
+    // through the D3 leg, 41 after the 2026-10-06 prompt-adoption regeneration (rounds 10-19),
+    // and grew by exactly 5 here: the close-out consult's ordered RESAMPLES (01/08/12 in round
+    // 20, 02/10 in round 22 — rounds 21 accepted nothing; 04 stayed at its r19 blob after three
+    // consecutive refused resample rounds, the consult's own escalation boundary). A retirement,
+    // an adoption or a resample moves history, it never deletes it.
     assert.strictEqual(
       corpus.designs.length + corpus.variants.length,
-      27,
-      "the frozen corpus must account for all 27 accepted blobs",
+      46,
+      "the frozen corpus must account for all 46 accepted blobs",
     );
     const ids = corpus.designs.map((d) => d.id).sort();
     assert.deepStrictEqual(ids, [
@@ -154,10 +159,10 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       "the frozen corpus holds duplicate blobs (a variant recorded its own winner's bytes): " +
         collisions.join(", "),
     );
-    // 27 distinct since the 2026-10-05 D3 retirement leg: the 26 blobs of the R-6/R-7 freeze plus
-    // round 9's accepted blob, which D3 permitted as the ONE regeneration of 05. A retirement
-    // moves history, it does not delete it — which is exactly what this count proves.
-    assert.strictEqual(seen.size, 27, "distinct blob count is not 27: " + seen.size);
+    // 41 distinct since the 2026-10-06 prompt-adoption leg: the 27 blobs of the D3 leg plus the
+    // 14 accepted blobs the adoption regeneration added (rounds 10-19). History is preserved —
+    // which is exactly what this count proves.
+    assert.strictEqual(seen.size, 46, "distinct blob count is not 46: " + seen.size);
   });
 
   it("attributes each superseded variant to the round it was SUPERSEDED BY, not to itself", function () {
@@ -261,12 +266,18 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       !byId["05-celestial-arcs"],
       "05-celestial-arcs is D3-retired and must not be a canonical design",
     );
-    assert.strictEqual(byId["01-gilded-frame"].round, "5b", "01-gilded-frame must come from round 5b (the gold answer)");
-    assert.strictEqual(byId["07-corner-arcs"].round, "8", "07-corner-arcs must come from round 8");
-    assert.strictEqual(byId["08-flame-crest"].round, "5", "08-flame-crest must come from round 5");
-    assert.strictEqual(byId["03-thornvine"].round, "4c", "03-thornvine must come from round 4c");
-    assert.strictEqual(byId["04-dragon-scale"].round, "4c", "04-dragon-scale must come from round 4c (D-C kept its bytes)");
-    assert.strictEqual(byId["06-chainmail"].round, "3", "06-chainmail was only ever accepted in round 3");
+    // The 2026-10-06 prompt-adoption leg (track byok_border_prompt_adoption_20261006) REGENERATED
+    // every canonical id under the adopted 10/10 prompts: 01/06/07/10 in round 10, 08 in 11,
+    // 12 in 12, 09/11 in 13, and — after the Muse 6-loop consult diagnosed the T=0 greedy-decode
+    // envelope attractor and ordered T>0 sampling — 02/03 in round 17 (T=0.75) and 04 in round 19
+    // (T=0.8; round 18 went 0/5, its two envelope failures repair diagnostically and were NOT
+    // frozen). 04's r11/r14 "acceptances" were degenerate empty frames and are variants.
+    assert.strictEqual(byId["01-gilded-frame"].round, "20", "01-gilded-frame must come from round 20 (the close-out consult's ordered resample)");
+    assert.strictEqual(byId["07-corner-arcs"].round, "10", "07-corner-arcs must come from round 10 (the adoption regeneration)");
+    assert.strictEqual(byId["08-flame-crest"].round, "20", "08-flame-crest must come from round 20 (the close-out consult's ordered resample)");
+    assert.strictEqual(byId["03-thornvine"].round, "17", "03-thornvine must come from round 17 (the sampled-leg remedy)");
+    assert.strictEqual(byId["04-dragon-scale"].round, "19", "04-dragon-scale must come from round 19 (the sampled-leg remedy; r14's canonical was degenerate)");
+    assert.strictEqual(byId["06-chainmail"].round, "10", "06-chainmail must come from round 10 (the adoption regeneration; its r3 blob is the superseded predecessor)");
 
     // The round order itself, pinned as data.
     assert.deepStrictEqual(
@@ -276,6 +287,11 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         "designs-round4.json", "designs-round4b.json", "designs-round4c.json",
         "designs-round5.json", "designs-round5b.json", "designs-round6.json",
         "designs-round7.json", "designs-round8.json", "designs-round9.json",
+        "designs-round10.json", "designs-round11.json", "designs-round12.json",
+        "designs-round13.json", "designs-round14.json", "designs-round15.json",
+        "designs-round16.json", "designs-round17.json", "designs-round18.json",
+        "designs-round19.json", "designs-round20.json", "designs-round21.json",
+        "designs-round22.json",
       ],
     );
     const keys = corpus.rounds.map((f) => freeze.roundKey(path.basename(f)));
@@ -291,16 +307,25 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // directional: the two regenerated ids must have moved FORWARD to their new rounds (asserted
     // separately in the round-order case), and every OTHER id must still agree byte for byte.
     // A re-run of the generator's merge leg becomes a no-op for the fixture.
+    // STALE-BY-DESIGN (2026-10-06): the merge leg last ran at round "merged-5" (2026-10-01).
+    // The 2026-10-06 prompt-adoption leg then regenerated EVERY canonical id (rounds 10-19), so
+    // the corpus now intentionally leads the merge file on all eleven non-retired ids. The
+    // fence's shape is preserved but inverted for this leg: every adoption-regenerated id must
+    // have moved FORWARD, and only 05 (retired, absent from both) is exempt. A later re-run of
+    // the merge leg becomes a no-op again and this exclusion should then be narrowed.
     const merged = path.join(
       ROOT, "temp", "visual_logs", "byok_svg_borders_20260927", "designs-merged.json",
     );
     if (!fs.existsSync(merged)) this.skip();
     const m = JSON.parse(fs.readFileSync(merged, "utf8"));
-    const byId = {};
-    for (const d of m.designs || []) byId[d.id] = d.svg;
-    const regenerated = new Set(["05-celestial-arcs", "07-corner-arcs"]);
+    const byIdM = {};
+    for (const d of m.designs || []) byIdM[d.id] = d.svg;
+    const adoptionRound = new Set(["10", "11", "12", "13", "17", "19", "20", "22"]);
+    const regenerated = new Set(["05-celestial-arcs", "07-corner-arcs"].concat(
+      corpus.designs.filter((d) => adoptionRound.has(d.round)).map((d) => d.id),
+    ));
     const mismatched = corpus.designs
-      .filter((d) => !regenerated.has(d.id) && byId[d.id] !== d.svg)
+      .filter((d) => !regenerated.has(d.id) && byIdM[d.id] !== d.svg)
       .map((d) => d.id);
     assert.deepStrictEqual(
       mismatched,
@@ -321,7 +346,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         continue;
       }
       assert.notStrictEqual(
-        byId[id],
+        byIdM[id],
         canonical.svg,
         id + ": the R-6/R-7 regeneration is not visible against the stale merge file — either " +
           "the regeneration did not land in the fixture, or the merge file was rebuilt and this " +
@@ -432,10 +457,12 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       five.every((v) => v.supersededByRound === null),
       "05 is retired: none of its blobs may name a canonical winner",
     );
-    // 01's own history is the sharpest case: round 1 (dashed) AND round 5 (solid but black)
-    // were both accepted and both superseded by the round-5b gold answer.
+    // 01's own history is the sharpest case: round 1 (dashed), round 5 (solid but black),
+    // round 5b (the gold answer R-3 later judged) and round 10 (the adoption regeneration) were
+    // all accepted, and the 2026-10-06 close-out consult's ordered resample moved the canonical
+    // status to round 20.
     const gilded = corpus.variants.filter((v) => v.id === "01-gilded-frame").map((v) => v.round).sort();
-    assert.deepStrictEqual(gilded, ["1", "5"], "01-gilded-frame's superseded rounds changed: " + gilded.join(","));
+    assert.deepStrictEqual(gilded, ["1", "10", "5", "5b"].sort(), "01-gilded-frame's superseded rounds changed: " + gilded.join(","));
   });
 
   it("operator overrides: exactly the four ruled ids carry a criterion override, each with provenance", function () {
@@ -501,15 +528,25 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       /anisotropic/i.test(d04.criterion),
       "04: the judged criterion must state the anisotropic-scaling basis the ruling rests on",
     );
-    // The bytes are UNTOUCHED by the override: the same blob the round-4c freeze produced
-    // (sha256 pinned from the pre-override fixture, so an accidental regeneration of 04
-    // would fail here rather than silently re-anchoring the ruling).
-    assert.strictEqual(d04.round, "4c", "04: D-C re-cut the criterion, not the artwork");
+    // The bytes are the ADOPTION REGENERATION's (round 19, 5055 chars of real scale rows —
+    // r4c's old bytes survive as a variant pinned below, and r11/r14's degenerate empty frames
+    // are variants too). D-C's rulings still govern the JUDGED text: the override's reason,
+    // ruledOn and aspect-independent clause are unchanged.
+    assert.strictEqual(d04.round, "19", "04: the adoption regeneration moved the canonical blob to round 19");
     assert.strictEqual(
       d04.sha256,
-      "9c25ad91590462baa779cae2f6f8ce3693e4660b67930525d7dc2f94efe79481",
-      "04: the frozen bytes changed under an override that only re-cuts the criterion",
+      "eb2bbff687b60eaff5ad4cb79c8a787eff5c0eeeb12ced86c4fc959b2625cd02",
+      "04: the canonical bytes are not round 19's adoption blob",
     );
+    {
+      const r4cVariant = corpus.variants.find((v) => v.id === "04-dragon-scale" && v.round === "4c");
+      assert.ok(r4cVariant, "04: the r4c blob the D-C ruling was measured against must survive as a variant");
+      assert.strictEqual(
+        r4cVariant.sha256,
+        "9c25ad91590462baa779cae2f6f8ce3693e4660b67930525d7dc2f94efe79481",
+        "04: the r4c bytes changed in the variants record",
+      );
+    }
 
     const d01 = byId["01-gilded-frame"];
     const o1 = d01.criterionOverride;
@@ -542,12 +579,27 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       /continu/i.test(d01.criterion) && /corner/i.test(d01.criterion),
       "01: the re-cut criterion must keep the two clauses the pixels support (continuity + corner marks)",
     );
-    assert.strictEqual(d01.round, "5b", "01: R-3 re-cut the criterion, not the artwork");
+    // The 2026-10-06 adoption leg REGENERATED 01 (round 10, two-rule frame + four diamond
+    // corners). R-3's rulings still govern the JUDGED text — the override's reason, ruledOn and
+    // shape-only clause are unchanged — but the bytes and their provenance are the new round's,
+    // and the OLD r5b bytes survive as a variant pinned by hash below (a regeneration keeps its
+    // predecessor; an adoption must not be able to quietly erase the blob a ruling was measured
+    // against).
+    assert.strictEqual(d01.round, "20", "01: the close-out consult's ordered resample moved the canonical blob to round 20");
     assert.strictEqual(
       d01.sha256,
-      "99605fc36fcc243fa11f4e1109207b8310fb0dae8999c98453e8cc7bef713e3d",
-      "01: the frozen bytes changed under an override that only re-cuts the criterion",
+      "f36388288892286d7ceb596d1bc9302fed11b9a411b656fe1204b0673bb9a4c3",
+      "01: the canonical bytes are not round 20's resample blob",
     );
+    {
+      const r5bVariant = corpus.variants.find((v) => v.id === "01-gilded-frame" && v.round === "5b");
+      assert.ok(r5bVariant, "01: the r5b blob the R-3 ruling was measured against must survive as a variant");
+      assert.strictEqual(
+        r5bVariant.sha256,
+        "99605fc36fcc243fa11f4e1109207b8310fb0dae8999c98453e8cc7bef713e3d",
+        "01: the r5b bytes changed in the variants record",
+      );
+    }
 
     // ---- R-6 / R-7 (2026-10-02): the two RE-CUT designs, both fenced the same way as above.
     // Each must: name its own ruling + date, carry a reason, keep `criterionGenerated` equal to
@@ -557,8 +609,13 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       {
         id: "07-corner-arcs",
         ruledBy: "R-7",
-        round: "8",
-        previousSha256: "84f10f2575423b320ce6ca9b370fadb1ca81654105d10ab41bbe870d1db380e4",
+        // R-7 (2026-10-02) regenerated 07 into round 8. The 2026-10-06 adoption leg regenerated
+        // it AGAIN (round 10) under the adopted 10/10 prompt — a later sanctioned regeneration —
+        // so the canonical round is now 10 and R-7's own round-8 bytes survive as a variant,
+        // pinned by hash below.
+        round: "10",
+        previousSha256: "1684ff40bb8de67ec7e448ff05c544c332f76e503e4b413233864d2f61e343d1",
+        priorRegeneration: { round: "8", sha256: "d572fee1de68bc7845e5e6782246e613328dff2f8c60cfbf7bce690f1c85b9c9" },
         mustNotDemand: /each of the four corners shows at least three nested quarter-circle arcs/i,
       },
     ];
@@ -609,12 +666,25 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         corpus.variants.some((v) => v.id === r.id && v.svg !== d.svg),
         `${r.id}: the previous canonical blob vanished — a regeneration must keep its predecessor`,
       );
-      assert.notStrictEqual(
+      assert.strictEqual(
         d.sha256,
         r.previousSha256,
-        `${r.id}: the bytes did NOT change — only the criterion moved, which is NOT what ` +
-          `R-6/R-7 ordered (they ordered a re-cut AND a regeneration)`,
+        `${r.id}: the canonical bytes are not the adoption regeneration's blob`,
       );
+      if (r.priorRegeneration) {
+        // The PRIOR regeneration's bytes survive in the variants record (nothing accepted is
+        // dropped by a later regeneration).
+        const prior = corpus.variants.find((v) => v.id === r.id && v.round === r.priorRegeneration.round);
+        assert.ok(
+          prior,
+          `${r.id}: the prior regeneration's blob (round ${r.priorRegeneration.round}) vanished from the variants`,
+        );
+        assert.strictEqual(
+          prior.sha256,
+          r.priorRegeneration.sha256,
+          `${r.id}: the prior regeneration's bytes changed in the variants record`,
+        );
+      }
     }
     // 05 judged by continuity, 07 judged at the corners — the property each re-cut exists to
     // establish, asserted on the JUDGED text (not on the superseded one). 05's text is read from
