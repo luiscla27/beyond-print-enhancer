@@ -1485,6 +1485,10 @@ const SVG_ALLOWED_ELEMENTS = Object.freeze(new Set([
  * The allowlist blocks the attribute NAME, so there is no spelling of a CSS
  * escape that survives: any other name is refused the same way.
  */
+/** The SVG namespace binding every image decoder requires; see the namespace
+ *  normalisation inside `validateSvg` for why the trust root stamps it. */
+const SVG_NS = "http://www.w3.org/2000/svg";
+
 const SVG_ALLOWED_ATTRIBUTES = Object.freeze(new Set([
   // ALL KEYS ARE LOWERCASE. The check below lowercases the attribute name before the
   // membership test, so a camelCase key ("viewBox") would never match and would
@@ -1762,6 +1766,43 @@ function validateSvg(input) {
   const viewBox = root.getAttribute("viewBox");
   if (!viewBox || !String(viewBox).trim()) {
     return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.MISSING_VIEWBOX };
+  }
+
+  // NORMALISE THE SVG NAMESPACE — MEASURED 2026-10-06 (track
+  // byok_border_prompt_adoption_20261006, gallery round 30).
+  //
+  // The product paints the border as an IMAGE: `borderImageValue` (js/ai_border.js) ships the
+  // sanitized string as `url("data:image/svg+xml;utf8,…")`, and Chromium's image decoder needs
+  // a valid XML document — an <svg> without the namespace binding is not an SVG root to it and
+  // paints NOTHING. The trust root accepted exactly such payloads: its parser path does not
+  // require the binding (an xmlns-less <svg> parses; jsdom gives its root `namespaceURI: null`),
+  // and both serializer paths (XMLSerializer on a namespace-less node, outerHTML) emit the
+  // string back WITHOUT any xmlns — so `renderBorderSvg` returned ok with a rendered=false-class
+  // payload the caller could not distinguish from a real border. MEASURED on the round-30
+  // gallery: 6 of 41 frames (01-gilded-frame, 04-dragon-scale, 07-corner-arcs canonicals and
+  // 04's three superseded blobs) are byte-identical page states with no border pigment — 41/41
+  // correlation between "no xmlns in the first 300 bytes" and "no paint", 0 violations.
+  //
+  // The fix is the same class as the preserveAspectRatio normalisation above: an attribute the
+  // model may omit, whose absence the pipeline cannot survive, stamped at the trust root so
+  // EVERY downstream painter receives it. A DOM-surgery re-anchor (creating a namespaced root
+  // and moving children under it) is NOT sufficient — MEASURED in jsdom: children parsed under
+  // a null namespace keep xmlns="" on serialization, which is again non-SVG content to the
+  // decoder. So the binding is stamped on the SERIALIZED string and the document is re-parsed:
+  // the re-parse puts every descendant into the SVG namespace by inheritance, and all
+  // allow-list work below runs on that fresh tree.
+  if (!root.namespaceURI) {
+    const stamped = serializeSvgElement(root).replace(/^<svg/i, '<svg xmlns="' + SVG_NS + '"');
+    const redoc = parseSvgDocument(stamped);
+    const reroot = redoc && (String(redoc.documentElement.tagName || "").toLowerCase() === "svg"
+      ? redoc.documentElement
+      : redoc.getElementsByTagName("svg")[0]);
+    if (!reroot || !reroot.namespaceURI) {
+      // Unreachable in practice (the stamp is well-formed XML); a failure here is a refusal,
+      // never a silently un-namespaced payload.
+      return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.NON_SVG_ROOT };
+    }
+    root = reroot;
   }
 
   // NORMALISE preserveAspectRatio — MEASURED 2026-10-01 (this track, Phase 4).

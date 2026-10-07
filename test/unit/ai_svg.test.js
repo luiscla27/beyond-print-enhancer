@@ -151,4 +151,43 @@ describe("ai_svg — SVG sanitizer + validator (AC-1)", function () {
     const b = sanitizeSvg(a);
     assert.strictEqual(a, b, "running twice must not change the bytes");
   });
+
+  // --- the SVG NAMESPACE normalisation (track byok_border_prompt_adoption_20261006) ---
+  //
+  // WHY: the product paints the border as an IMAGE (`url("data:image/svg+xml;utf8,…")`).
+  // Chromium's image decoder requires a valid XML document, so an <svg> WITHOUT the
+  // xmlns binding is not an SVG root to it and paints NOTHING — while the trust root
+  // (an XML/html parse, not an image decode) accepted it. MEASURED on gallery round 30:
+  // 41/41 correlation between "no xmlns" and "no paint" (6 frames byte-identical, no
+  // border pigment), 0 violations. The trust root therefore stamps the binding and
+  // re-parses, so EVERY downstream painter receives a decodable document.
+
+  it("stamps the SVG namespace on an xmlns-less root (the image decoder requires it)", function () {
+    this.timeout(5000);
+    const v = validateSvg('<svg viewBox="0 0 100 100"><rect width="50" height="50"/></svg>');
+    assert.strictEqual(v.ok, true, "an xmlns-less SVG is still a legal SVG document to accept");
+    assert.ok(
+      v.sanitized.startsWith('<svg xmlns="http://www.w3.org/2000/svg"'),
+      "the sanitized output must carry the SVG namespace binding: " + v.sanitized.slice(0, 80),
+    );
+    // The re-parse must re-anchor DESCENDANTS too — a root-only DOM re-anchor serializes
+    // them with xmlns="" (measured in jsdom), which is again non-SVG to the decoder.
+    assert.ok(!v.sanitized.includes('xmlns=""'), "no dangling empty namespace bindings");
+    assert.ok(v.sanitized.includes("<rect"), "content survives the re-parse");
+  });
+
+  it("leaves an explicit xmlns untouched and keeps sanitizeSvg idempotent on it", function () {
+    this.timeout(5000);
+    const once = sanitizeSvg('<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect width="9" height="9"/></svg>');
+    assert.ok(once.startsWith('<svg xmlns="http://www.w3.org/2000/svg"'), once.slice(0, 80));
+    const twice = sanitizeSvg(once);
+    assert.strictEqual(twice, once, "a stamped document re-sanitizes byte-identically");
+    // And the explicit-xmlns form is untouched (no double binding).
+    const explicit = validateSvg(CLEAN);
+    assert.strictEqual(explicit.ok, true);
+    assert.strictEqual(
+      (explicit.sanitized.match(/xmlns=/g) || []).length, 1,
+      "an explicit xmlns must not be duplicated",
+    );
+  });
 });
