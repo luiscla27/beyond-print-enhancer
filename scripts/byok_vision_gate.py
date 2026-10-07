@@ -80,9 +80,35 @@ def resolve_key(env_name):
 
 
 def extract_text(resp_bytes):
+    """The reviewer's text, ALWAYS a string.
+
+    MEASURED DEFECT, FIXED 2026-10-06 (track byok_border_prompt_adoption_20261006). This used
+    to return `message.content` raw, and a REASONING-HEAVY answer can legitimately be null:
+    Muse Spark spends its whole completion budget inside `reasoning_tokens` and returns
+    `content: null` with `finish_reason: "length"`. MEASURED on round-31's canonical cells —
+    at `max_tokens` 8000 the SAME image that answers in ~5000 tokens came back null with
+    8000/8000 reasoning tokens; at 16000 it answered (5239 completion, 5178 of them reasoning).
+    The old contract turned that into `write() argument must be str, not None` inside the
+    caller, i.e. a crash in the seat driver instead of a recorded answer — the exact "a
+    reasoning-only answer is not evidence" class the archived track already met at 2000 tokens.
+    So: the budget is raised, and an unreadable answer is returned as a NAMED string carrying
+    the finish reason and the reasoning-token count, which is what a caller must record.
+    """
     data = json.loads(resp_bytes.decode("utf-8", errors="replace"))
     try:
-        return data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        msg = choice.get("message") or {}
+        content = msg.get("content")
+        if isinstance(content, str) and content.strip():
+            return content
+        usage = data.get("usage") or {}
+        details = usage.get("completion_tokens_details") or {}
+        return (
+            "(NO READABLE ANSWER — finish_reason=%s, completion_tokens=%s, reasoning_tokens=%s; "
+            "a reasoning-only completion is NOT a verdict and must not be read as one)"
+            % (choice.get("finish_reason"), usage.get("completion_tokens"),
+               details.get("reasoning_tokens"))
+        )
     except (KeyError, IndexError, TypeError):
         return json.dumps(data, indent=2)[:2000]
 
@@ -111,7 +137,7 @@ def dispatch(review, image_path, brief_path):
             },
         ],
         "temperature": 0.0,
-        "max_tokens": 8000,
+        "max_tokens": 16000,
     }
     req = urllib.request.Request(
         review["base_url"] + "/chat/completions",

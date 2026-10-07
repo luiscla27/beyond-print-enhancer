@@ -36,6 +36,8 @@
  * Usage:
  *   node scripts/border_design_generator.js [--out <dir>] [--model <id>] [--only <id,id>]
  *                                           [--round N] [--overwrite-round]
+ *                                           [--temperature T] [--top-p P] [--samples K]
+ *                                           [--retries R] [--degenerate-ids id,id]
  *
  *   --out    artifact directory (default temp/visual_logs/byok_svg_borders_20260927)
  *   --model  the Nous seat (default poolside/laguna-s-2.1:free — MEASURED: 200 in ~31 s, clean JSON)
@@ -47,6 +49,22 @@
  *            REFUSED, because `test/fixtures/byok_border_corpus.json` is frozen over these files —
  *            see "A ROUND FILE THAT HAS BEEN FROZEN IS NOT SCRATCH" below. The dangerous
  *            invocation is a RETRY (`--only`, no `--round`) against a round already frozen.
+ *   --temperature / --top-p / --samples
+ *            sampling controls (default temperature 0.0, one sample — the pre-2026-10-06 behavior,
+ *            byte-identical). Track byok_border_prompt_adoption_20261006 added them after the muse
+ *            6-loop consultation MEASURED a greedy-decode envelope attractor on three ids at T=0
+ *            (retries were replays, not trials). Every sample records its temperature/seed in
+ *            `raw-round<N>/<id>[.sampleK].json` and its verdict line in the round file, so a
+ *            corpus blob's provenance stays readable.
+ *   --retries R  additional attempts per sample on a 429/502 (exponential backoff). A rate-limit is
+ *            a transient leg state, never a design verdict; retries are NOT design attempts.
+ *   --degenerate-ids id,id
+ *            gate these ids' "valid" answers on minimum artwork: >= 6 drawing elements
+ *            (rect/path/circle/polygon/line/ellipse) AND >= 300 chars, else the sample is recorded
+ *            as `degenerate` and CANNOT become an accepted entry (an empty frame that passes the
+ *            trust root is not a design — 04-dragon-scale produced two such frames before this
+ *            gate existed). The gate is deliberately per-id, never global: the accepted corpus
+ *            legitimately contains short real artworks (01 532 chars, 07 623, 10 581 — measured).
  *
  * Outputs (all under --out):
  *   designs-round<N>.json   every design + its provenance (model, ms, usage, sanitizer verdicts)
@@ -172,14 +190,31 @@ function promptFor(instruction) {
 const LIVE_CAPS = { arrange: false, border: true };
 const LIVE_IDS = [standInRow("section-Section-1", "Traits", 224, 144).id, standInRow("section-Section-2", "Actions", 224, 256).id];
 
-async function callNous(model, messages, key, maxTokens) {
-  const body = JSON.stringify({ model, messages, temperature: 0.0, max_tokens: maxTokens });
-  const t0 = Date.now();
-  const res = await fetch(NOUS_BASE + "/chat/completions", {
-    method: "POST",
-    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
-    body,
+async function callNous(model, messages, key, maxTokens, sampling) {
+  const s = sampling || {};
+  const body = JSON.stringify({
+    model,
+    messages,
+    // Sampling config: temperature 0.0 was the default through round 16 (MEASURED,
+    // muse 6-loop consultation 20261006: at T=0 the leg's greedy decoder locked three
+    // ids into a malformed-JSON-envelope attractor — retries were replays, not trials).
+    // `--temperature` is a generator (tooling) choice; the round file records it.
+    temperature: s.temperature !== undefined ? s.temperature : 0.0,
+    top_p: s.top_p !== undefined ? s.top_p : undefined,
+    seed: s.seed !== undefined ? s.seed : undefined,
+    max_tokens: maxTokens,
   });
+  const t0 = Date.now();
+  let res;
+  try {
+    res = await fetch(NOUS_BASE + "/chat/completions", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
+      body,
+    });
+  } catch (err) {
+    return { ok: false, status: 0, ms: Date.now() - t0, error: String((err && err.message) || err) };
+  }
   const ms = Date.now() - t0;
   const text = await res.text();
   if (!res.ok) {
@@ -209,6 +244,25 @@ async function main() {
   const round = String(arg("round", "1"));
   const only = (arg("only", "") || "").split(",").map((s) => s.trim()).filter(Boolean);
   const maxTokens = Number(arg("max-tokens", "6000"));
+  // SAMPLING (added 2026-10-06, track byok_border_prompt_adoption_20261006). Through round 16 the
+  // request pinned `temperature: 0.0`, and the muse 6-loop consultation MEASURED what that cost:
+  // three ids fell into a malformed-JSON-envelope attractor and every retry was a REPLAY of the
+  // same token sequence (r15/r16 byte-identical failure shapes), not an independent trial.
+  // `--temperature` / `--top-p` / `--samples` are the generator's answer — a tooling choice, never
+  // a product one — and the round file records what was sent, so a corpus blob's provenance stays
+  // readable. Defaults are UNCHANGED (0.0, one sample) so an un-flagged run behaves exactly as it
+  // did before this edit.
+  const temperature = arg("temperature", null) === null ? 0.0 : Number(arg("temperature", "0"));
+  const topP = arg("top-p", null) === null ? undefined : Number(arg("top-p", "1"));
+  const samples = Math.max(1, Number(arg("samples", "1")));
+  const maxRetries = Math.max(0, Number(arg("retries", "0")));
+  const sampling = { temperature, top_p: topP };
+  // DEGENERATE GATE (per SAMPLE id only, never a global length rule). A validity pass is not an
+  // artwork: 04 returned 395- and 415-char empty frames (one rect outline, one path) that the trust
+  // root ACCEPTS, and under last-accepted-wins such a frame becomes the canonical blob. The gate is
+  // restricted to the ids named here because the accepted corpus legitimately contains short, real
+  // artworks (01 532 chars, 07 623, 10 581 — measured), so a global floor would block them.
+  const degenerateIds = (arg("degenerate-ids", "") || "").split(",").map((s) => s.trim()).filter(Boolean);
   const overwriteRound = process.argv.includes("--overwrite-round");
 
   const corpus = JSON.parse(fs.readFileSync(path.join(__dirname, "border_designs.json"), "utf8"));
@@ -241,7 +295,22 @@ async function main() {
   say("model: " + model + " @ " + NOUS_BASE);
   say("key: prefix=" + key.slice(0, 6) + "... len=" + key.length);
   say("designs: " + wanted.length + (only.length ? " (--only " + only.join(",") + ")" : ""));
+  say("sampling: temperature=" + temperature + " top_p=" + (topP === undefined ? "-" : topP) +
+      " samples=" + samples + " max_tokens=" + maxTokens + " retries=" + maxRetries +
+      (degenerateIds.length ? " degenerate-gate=" + degenerateIds.join(",") : ""));
   say("");
+
+  // Async sleep for backoff — a 429 is a TRANSIENT leg state, never a design verdict.
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /** Count drawing elements the degenerate gate reads (Muse amendment, muse_6loop_consultation):
+   *  at least 6 of rect/path/circle/polygon/line/ellipse AND at least 300 chars. A validity pass
+   *  is not an artwork — 04's empty frames (1 rect + 1 path) must not become canonical blobs. */
+  function degenerate(svg) {
+    const s = String(svg || "");
+    const n = (s.match(/<(rect|path|circle|polygon|line|ellipse)\b/g) || []).length;
+    return { elements: n, chars: s.length, bad: n < 6 || s.length < 300 };
+  }
 
   // The round's own entries, read once by the write guard above so the refusal and the merge agree
   // on what "already accepted" means.
@@ -250,93 +319,117 @@ async function main() {
   for (const entry of wanted) {
     const messages = promptFor(entry.instruction);
     const promptChars = messages.map((m) => m.content.length).reduce((a, b) => a + b, 0);
-    process.stdout.write("[" + entry.id + "] " + entry.title + " — prompt " + promptChars + " chars ... ");
-    let call;
-    try {
-      call = await callNous(model, messages, key, maxTokens);
-    } catch (err) {
-      call = { ok: false, status: 0, ms: 0, error: String((err && err.message) || err) };
-    }
-    const rawDir = path.join(outDir, "raw-round" + round);
-    if (call.ok) {
-      fs.writeFileSync(
-        path.join(rawDir, entry.id + ".json"),
-        JSON.stringify(
-          {
-            id: entry.id,
-            title: entry.title,
-            model,
-            instruction: entry.instruction,
-            finish: call.finish,
-            usage: call.usage,
-            ms: call.ms,
-            content: call.content,
-          },
-          null,
-          2,
-        ),
-      );
-    }
+    process.stdout.write("[" + entry.id + "] " + entry.title + " — prompt " + promptChars + " chars, " + samples + " sample(s) ... ");
+    const sampleRecords = [];
+    let acceptedAttempt = null;
+    let lastFail = null;
 
-    // The PRODUCT's own parser decides. A design the extension would refuse is not a design, and
-    // recording it as one would make the gallery score a file the product cannot ever render.
-    let verdict = { ok: false, code: "no_response", svg: null };
-    if (call.ok && call.content) {
-      // `liveSectionIds` is mandatory: the parser refuses a patch with no live enum
-      // (`live_ids_empty`), which is correct — a border patch is validated against a sheet. The
-      // stand-in rows stand in for that sheet here; the gallery applies the design to the REAL one.
-      const parsed = AiLayout.parseModelOutput(call.content, LIVE_IDS, {
-        capabilities: LIVE_CAPS,
-      });
-      if (parsed && parsed.ok && parsed.patch && parsed.patch.border) {
-        const raw = String(parsed.patch.border.svg || "");
-        const sv = AiLayout.validateSvg(raw);
-        verdict = {
-          ok: Boolean(sv && sv.ok),
-          code: sv && sv.ok ? "accepted" : (sv && sv.error) || "unknown",
-          chars: raw.length,
-          svg: sv && sv.ok ? sv.sanitized || raw : null,
-        };
-      } else {
-        const first = (parsed && parsed.errors && parsed.errors[0]) || null;
-        verdict = { ok: false, code: (first && first.code) || "patch_rejected", detail: first || null, svg: null };
+    for (let k = 1; k <= samples && !acceptedAttempt; k++) {
+      // Per-call seed: two samples at the same temperature must not be replays of one trajectory.
+      const seed = Math.floor(Math.random() * 1e9);
+      let call = null;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          call = await callNous(model, messages, key, maxTokens, Object.assign({}, sampling, { seed }));
+        } catch (err) {
+          call = { ok: false, status: 0, ms: 0, error: String((err && err.message) || err) };
+        }
+        if (call && (call.status === 429 || call.status === 502) && attempt < maxRetries) {
+          await sleep(2000 * Math.pow(2, attempt));
+          continue;
+        }
+        break;
       }
-    } else if (!call.ok) {
-      verdict = { ok: false, code: "http_" + call.status, detail: call.error, svg: null };
-    } else if (!call.content) {
-      verdict = { ok: false, code: "empty_content", detail: "finish=" + call.finish, svg: null };
+
+      const rawDir = path.join(outDir, "raw-round" + round);
+      const rawName = k === 1 ? entry.id + ".json" : entry.id + ".sample" + k + ".json";
+      if (call.ok) {
+        fs.writeFileSync(
+          path.join(rawDir, rawName),
+          JSON.stringify({
+            id: entry.id, title: entry.title, model, instruction: entry.instruction,
+            temperature, top_p: topP === undefined ? null : topP, seed, sample: k,
+            finish: call.finish, usage: call.usage, ms: call.ms, content: call.content,
+          }, null, 2),
+        );
+      }
+
+      // The PRODUCT's own parser decides. A design the extension would refuse is not a design, and
+      // recording it as one would make the gallery score a file the product cannot ever render.
+      let verdict = { ok: false, code: "no_response", svg: null };
+      if (call.ok && call.content) {
+        // `liveSectionIds` is mandatory: the parser refuses a patch with no live enum
+        // (`live_ids_empty`), which is correct — a border patch is validated against a sheet. The
+        // stand-in rows stand in for that sheet here; the gallery applies the design to the REAL one.
+        const parsed = AiLayout.parseModelOutput(call.content, LIVE_IDS, { capabilities: LIVE_CAPS });
+        if (parsed && parsed.ok && parsed.patch && parsed.patch.border) {
+          const raw = String(parsed.patch.border.svg || "");
+          const sv = AiLayout.validateSvg(raw);
+          const deg = degenerateIds.includes(entry.id) && sv && sv.ok ? degenerate(sv.sanitized || raw) : null;
+          if (sv && sv.ok && deg && deg.bad) {
+            // A "valid" empty frame is a DEGENERATE pass, not an acceptance: recorded as such and
+            // it cannot displace a real artwork (mergeAttempt keeps accepted > failed).
+            verdict = { ok: false, code: "degenerate", detail: deg, chars: deg.chars, svg: null };
+          } else {
+            verdict = {
+              ok: Boolean(sv && sv.ok),
+              code: sv && sv.ok ? "accepted" : (sv && sv.error) || "unknown",
+              chars: raw.length,
+              svg: sv && sv.ok ? sv.sanitized || raw : null,
+              deg: deg || null,
+            };
+          }
+        } else {
+          const first = (parsed && parsed.errors && parsed.errors[0]) || null;
+          verdict = { ok: false, code: (first && first.code) || "patch_rejected", detail: first || null, svg: null };
+        }
+      } else if (!call.ok) {
+        verdict = { ok: false, code: "http_" + call.status, detail: call.error, svg: null };
+      } else if (!call.content) {
+        verdict = { ok: false, code: "empty_content", detail: "finish=" + call.finish, svg: null };
+      }
+
+      sampleRecords.push({ sample: k, seed, ok: verdict.ok, code: verdict.code, chars: verdict.chars || 0, finish: call.finish || null });
+      if (verdict.ok) {
+        acceptedAttempt = {
+          id: entry.id, title: entry.title, instruction: entry.instruction, criterion: entry.criterion,
+          model, ms: call.ms || 0, finish: call.finish || null, usage: call.usage || null, promptChars,
+          temperature, seed, sample: k, samplesRequested: samples,
+          accepted: true, rejectCode: null, rejectDetail: null,
+          svgChars: verdict.chars || 0, svg: verdict.svg,
+        };
+        break; // Muse's rule: freeze only the FIRST non-degenerate PASS and stop sampling this id.
+      }
+      lastFail = verdict;
+      if (samples > 1 && k < samples) await sleep(700); // gentle pacing on the rate-limited leg
     }
 
-    byId.set(
-      entry.id,
-      mergeAttempt(byId.get(entry.id), {
-        id: entry.id,
-        title: entry.title,
-        instruction: entry.instruction,
-        criterion: entry.criterion,
-        model,
-        ms: call.ms || 0,
-        finish: call.finish || null,
-        usage: call.usage || null,
-        promptChars,
-        accepted: verdict.ok,
-        rejectCode: verdict.ok ? null : verdict.code,
-        rejectDetail: verdict.detail || null,
-        svgChars: verdict.chars || 0,
-        svg: verdict.svg,
-      }),
-    );
+    if (!acceptedAttempt) {
+      const d = lastFail || { code: "no_response", chars: 0 };
+      byId.set(entry.id, mergeAttempt(byId.get(entry.id), {
+        id: entry.id, title: entry.title, instruction: entry.instruction, criterion: entry.criterion,
+        model, ms: 0, finish: null, usage: null, promptChars,
+        temperature, samplesRequested: samples,
+        accepted: false, rejectCode: d.code, rejectDetail: d.detail || null,
+        svgChars: d.chars || 0, svg: null,
+      }));
+    } else {
+      byId.set(entry.id, mergeAttempt(byId.get(entry.id), acceptedAttempt));
+    }
+
+    const entry2 = byId.get(entry.id);
     say(
-      verdict.ok
-        ? "OK  " + verdict.chars + " chars  " + (call.ms / 1000).toFixed(1) + "s"
-        : "FAIL " + verdict.code + "  " + (call.ms / 1000).toFixed(1) + "s" +
-            (isAccepted(byId.get(entry.id))
-              ? "  (this round's ACCEPTED entry for " + entry.id + " is PRESERVED)"
-              : ""),
+      acceptedAttempt
+        ? "OK  sample " + acceptedAttempt.sample + "/" + samples + "  " + acceptedAttempt.svgChars + " chars  (deg: " +
+            (acceptedAttempt.deg ? acceptedAttempt.deg.elements + " elements" : "-") + ")"
+        : "FAIL " + (lastFail && lastFail.code) + "  [" + sampleRecords.map((s) => "s" + s.sample + ":" + s.code).join(" ") + "]" +
+            (isAccepted(entry2) ? "  (this round's ACCEPTED entry for " + entry.id + " is PRESERVED)" : ""),
     );
     fs.writeFileSync(
       path.join(outDir, "designs-round" + round + ".json"),
-      JSON.stringify({ round, model, generatedAt: new Date().toISOString(), designs: [...byId.values()] }, null, 2),
+      JSON.stringify({ round, model, generatedAt: new Date().toISOString(),
+        sampling: { temperature, top_p: topP === undefined ? null : topP, max_tokens: maxTokens, retries: maxRetries, samples, degenerateIds },
+        designs: [...byId.values()] }, null, 2),
     );
   }
 
