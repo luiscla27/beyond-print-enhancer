@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attempted (2026-10-09 — 03-thornvine leg 2: forensics + mandated consult + three probes, NOT shipped)
+- **Leg 2 ran the cumulative consult the protocol owes and executed its three cheap
+  probes; the result is a measured exculpation of the prompt and pipeline, and a
+  sharply-named seat problem — recorded so the operator rules on evidence.** Raw-file
+  forensics first: leg 1's "root-brace truncation with finish=stop" is NOT length
+  truncation — every envelope failure ended `finish=stop` at 1161-4300 completion tokens,
+  far under the 6000-token request (`max_tokens` exonerated); the classes are JSON
+  bookkeeping (one missing final `}` on r23/29/31/r32-s3/r37-s3, over-closure r27, invalid
+  `\)` r30, degenerate-but-valid frames r28/r36, malformed SVG r32-s2/r33-s1/s3/r34-s3,
+  prose preamble r34-s1) — and one NEW class, a parse-OK answer refused by the trust root
+  for invalid UTF-8 + a literal `...` ellipsis inside the SVG (r32-s2). Sampling then ran
+  rounds 32-34 (staged 3910-char comp, T=0.75/0.80/0.85, 9 samples): 2 accepted, both gate
+  0/10 — r34-s2 draws a vine through the CANVAS CENTRE (128,60), the swirl attractor.
+  **Cumulative: 23 samples, 4 accepted (r24 1/10, r33-s2 0/10, r34-s2 0/10, r35 2/10),
+  zero passers.** The mandated consult (muse seat, `temp/scratch/tv_leg2_consult_brief.md`
+  + `_answer.md`) named five things the loop was doing wrong (category error: brute-forcing
+  a deterministic 10-predicate gate with a stochastic text prior; product-acceptance ≠
+  model-executability; sunk-cost sampling) and ordered six falsifiable probes — three were
+  executed the same session: **r35** sampled the full 5504-char iter-14 GO with the
+  ceiling BYPASSED (product scaffolding preserved by message-swap; diagnostic only,
+  corpus-inadmissible): gate **2/10** — the best any thornvine sample ever scored, which
+  exculpates the 4000-char cut (the GO was never sample-able either); **r36** at T=0:
+  degenerate 1060-char one-path frame — the comp has NO deterministic control on this seat;
+  **r37** with a hard output cap (svg <1800 chars, no brace/quote in path data, end `}}`):
+  degenerate again + the brace-drop persisting — the cap buys minimalism, not bookkeeping.
+  Consult steps 4/5 (agent-executed parametric code; few-shot anchor embedding a passing
+  snippet) were REJECTED for the ship path: both make the artwork agent-computed, the same
+  provenance class as hand repair. Step 6 (model self-correction against the gate JSON) is
+  open as a scratch probe, with the operator owning the multi-turn provenance ruling.
+  Everything on disk: `temp/scratch/thornvine_leg2_record_20261009.md` (full record +
+  per-approach dispositions), `temp/scratch/tv_leg2_20261009/` (round files, raw answers,
+  accepted blobs). No tracked byte changed; corpus freeze and suite untouched.
+
 ### Attempted (2026-10-08 — 03-thornvine sinuosity fix, NOT shipped)
 - **The 03-thornvine regeneration leg ran to measurement and shipped nothing — recorded so
   the next leg starts from evidence, not memory.** The muse-loop over the border's prompt
