@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attempted (2026-10-08 — 03-thornvine sinuosity fix, NOT shipped)
+- **The 03-thornvine regeneration leg ran to measurement and shipped nothing — recorded so
+  the next leg starts from evidence, not memory.** The muse-loop over the border's prompt
+  (15 iterations, hard cap) reached a GO comp at iter-14 (temp/scratch/thornvine_muse_loop_transcript.md);
+  the product's own `buildMessages` then refused it — `MAX_INSTRUCTION_CHARS = 4000`
+  (`js/ai_layout.js:177`, pinned by `test/unit/ai_layout_schema.test.js:755`) against 5504
+  chars — so iter-15 re-cut it under the ceiling (3910 chars, product envelope tail verbatim,
+  every iter-14 constraint accounted for; Muse's own compression was challenged and repaired
+  per-protocol: wrong viewBox, half-period defined as same-kind pairs, wavelength-vs-
+  peak-to-trough, Euclidean-instead-of-edge-projection, mutilated element allowlist). The
+  staged comp (`temp/scratch/tv_final_instruction.txt`, verified through `buildMessages`) is
+  NOT in `scripts/border_designs.json`: the sampling leg on the Nous seat (rounds 23-31,
+  T=0.75-0.85) produced ONE parser-accepted blob (r24) and it FAILs the deterministic
+  acceptance gate 9/10 gates (temp/scratch/thornvine_acceptance_gate.js — chord deviation 0.0
+  on three edges, two ring-scale strokes, sprout combinations not enumerated, roots floating,
+  micro-ripple), and the other eight samples died on the envelope (4 × root-brace truncation
+  with `finish=stop`, 2 × 429, 1 degenerate empty frame, 1 doubled `"note"`). The strict
+  product parser refuses truncated JSON by design, so nothing was hand-repaired into the
+  corpus; per the operator's 2026-10-08 choice the failed rounds are archived verbatim to
+  `temp/scratch/tv_failed_rounds_20261008/` and the freeze + corpus suite went back green
+  (`freeze --check OK`, 15 passing/0 failing). The binding gate, the measured baseline
+  (`tv_gate_baseline.json`: the frozen canonical fails 9/10 — the defect this loop is fixing),
+  and the full sampling record (`temp/scratch/thornvine_sampling_record_20261008.md`) are on
+  disk. Full suite still green; no tracked byte changed by this leg (the gate lives in
+  `temp/scratch/` by design — scratch, not product).
+
 ### Changed (2026-10-06 — track `byok_border_prompt_adoption_20261006`)
 - **The BYOK border prompt corpus now carries the 10/10 prompt texts.** All 11 canonical
   instructions in `scripts/border_designs.json` were replaced VERBATIM with the muse-loop's
