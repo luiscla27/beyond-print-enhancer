@@ -1,0 +1,19 @@
+thornvine leg-2 sampling — round 50
+model: poolside/laguna-s-2.1:free @ https://inference-api.nousresearch.com/v1
+key: prefix=sk-nou... len=40
+instruction: 3837 chars — SHIPPABLE product-path prompt (from tv_leg5_instruction_v4.txt)
+sampling: temperature=0.75 top_p=- samples=10 max_tokens=7500 retries=4
+
+  [s1] seed=180155074 finish=stop ctok=1714 -> border_svg_rejected
+  [s2] seed=916988163 finish=stop ctok=5068 -> accepted gate 2/10 FAIL ["G1_sinuous_all_edges","G3_one_closed_stroke","G4_sprouts_rooted","G5_directions","G7_extremum_tiling","G8_corner_turns","G9_sprout_inventory","G10_smoothness"]
+  [s3] seed=196244473 finish=stop ctok=1716 -> model_output_not_json  [diag: +1 brace repairs]
+  [s4] seed=764552963 finish=stop ctok=4463 -> accepted gate 2/10 FAIL ["G1_sinuous_all_edges","G3_one_closed_stroke","G4_sprouts_rooted","G5_directions","G7_extremum_tiling","G8_corner_turns","G9_sprout_inventory","G10_smoothness"]
+  [s5] seed=983897929 finish=length ctok=7500 -> model_output_not_json
+  [s6] seed=573613246 finish=stop ctok=1028 -> accepted gate 1/10 FAIL ["G1_sinuous_all_edges","G2_gap_rhythm","G4_sprouts_rooted","G5_directions","G6_bands","G7_extremum_tiling","G8_corner_turns","G9_sprout_inventory","G10_smoothness"]
+  [s7] seed=556896913 finish=stop ctok=258 -> degenerate
+  [s8] http_429 — retry 1/4 after backoff
+  [s8] seed=938457003 finish=stop ctok=1902 -> accepted gate 1/10 FAIL ["G1_sinuous_all_edges","G2_gap_rhythm","G4_sprouts_rooted","G5_directions","G6_bands","G7_extremum_tiling","G8_corner_turns","G9_sprout_inventory","G10_smoothness"]
+  [s9] seed=588618982 finish=stop ctok=1680 -> border_svg_rejected
+  [s10] seed=151871353 finish=stop ctok=3487 -> model_output_not_json
+
+accepted: 4 / 10

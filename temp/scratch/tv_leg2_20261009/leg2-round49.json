@@ -1,0 +1,1183 @@
+{
+  "round": "49",
+  "model": "poolside/laguna-s-2.1:free",
+  "temperature": 0.75,
+  "top_p": null,
+  "max_tokens": 7500,
+  "retries": 4,
+  "samples": 10,
+  "generatedAt": "2026-10-09T07:58:08.783Z",
+  "records": [
+    {
+      "sample": 1,
+      "seed": 264428407,
+      "finish": "stop",
+      "completion_tokens": 769,
+      "outcome": "accepted",
+      "svgChars": 1150,
+      "gate": {
+        "gates": {
+          "G1_sinuous_all_edges": false,
+          "G2_gap_rhythm": false,
+          "G3_one_closed_stroke": true,
+          "G4_sprouts_rooted": false,
+          "G5_directions": false,
+          "G6_bands": true,
+          "G7_extremum_tiling": false,
+          "G8_corner_turns": false,
+          "G9_sprout_inventory": false,
+          "G10_smoothness": false
+        },
+        "detail": {
+          "strokePathCount": 1,
+          "ringScaleStrokes": 1,
+          "ringClosed": true,
+          "ringSamples": 1935,
+          "cornerWindowSamples": {
+            "TL": 98,
+            "TR": 107,
+            "BR": 108,
+            "BL": 100
+          },
+          "fail_G1_sinuous_all_edges": [
+            "right mid-edge chord dev 0.0 < 8",
+            "left mid-edge chord dev 4.9 < 8"
+          ],
+          "midEdgeChordDevs": {
+            "top": 14.9,
+            "right": 0,
+            "bottom": 14.9,
+            "left": 4.9
+          },
+          "cornerChordDevs": {
+            "TL": 21.6,
+            "TR": 20.7,
+            "BR": 21,
+            "BL": 21.7
+          },
+          "thornCount": 5,
+          "leafCount": 4,
+          "perEdgeSprouts": {
+            "top": {
+              "t": 1,
+              "l": 2
+            },
+            "right": {
+              "t": 3,
+              "l": 2
+            },
+            "bottom": {
+              "t": 0,
+              "l": 0
+            },
+            "left": {
+              "t": 1,
+              "l": 0
+            }
+          },
+          "fail_G9_sprout_inventory": [
+            "top has (thorns,leaves)=(1,2) — not an enumerated combination [[6,3],[6,4],[7,3]]",
+            "right has (thorns,leaves)=(3,2) — not an enumerated combination [[6,3],[6,4],[7,3],[7,4],[8,3]]",
+            "bottom has (thorns,leaves)=(0,0) — not an enumerated combination [[6,3],[6,4],[7,3]]",
+            "left has (thorns,leaves)=(1,0) — not an enumerated combination [[6,3],[6,4],[7,3],[7,4],[8,3]]",
+            "thorn at (16,19) size 4.5x8.1 outside 6-8 x 8-10",
+            "thorn at (114,19) size 4.5x8.1 outside 6-8 x 8-10",
+            "thorn at (208,57) size 4.5x8.1 outside 6-8 x 8-10",
+            "thorn at (208,137) size 4.5x8.1 outside 6-8 x 8-10",
+            "thorn at (208,217) size 4.5x8.1 outside 6-8 x 8-10"
+          ],
+          "thornSizes": {
+            "wMin": 4.5,
+            "wMax": 4.5,
+            "hMin": 8.1,
+            "hMax": 8.1
+          },
+          "leafSizes": {
+            "lMin": 14,
+            "lMax": 14,
+            "wMin": 6,
+            "wMax": 6
+          },
+          "unrootedCount": 7,
+          "unrootedSample": [
+            {
+              "kind": "thorn",
+              "x": 16,
+              "y": 19,
+              "d": 8
+            },
+            {
+              "kind": "thorn",
+              "x": 114,
+              "y": 19,
+              "d": 4.2
+            },
+            {
+              "kind": "thorn",
+              "x": 208,
+              "y": 57,
+              "d": 8
+            },
+            {
+              "kind": "thorn",
+              "x": 208,
+              "y": 137,
+              "d": 8
+            },
+            {
+              "kind": "thorn",
+              "x": 208,
+              "y": 217,
+              "d": 8
+            },
+            {
+              "kind": "leaf",
+              "x": 67,
+              "y": 16,
+              "d": 5.5
+            },
+            {
+              "kind": "leaf",
+              "x": 167,
+              "y": 16,
+              "d": 7.4
+            }
+          ],
+          "fail_G4_sprouts_rooted": [
+            "7 sprout root(s) more than 3 units off the stem"
+          ],
+          "inwardThorns": 3,
+          "fail_G5_directions": [
+            "3 thorn(s) not pointing outward (radial cos < 0.4)"
+          ],
+          "leafOutwardViolations": 0,
+          "vineTooDeep": 0,
+          "sproutBandViolations": 0,
+          "extrema_top": [
+            {
+              "k": "m",
+              "d": 24,
+              "s": 37.5
+            },
+            {
+              "k": "m",
+              "d": 8,
+              "s": 82
+            },
+            {
+              "k": "m",
+              "d": 24,
+              "s": 126.5
+            },
+            {
+              "k": "m",
+              "d": 8,
+              "s": 171
+            },
+            {
+              "k": "m",
+              "d": 23.4,
+              "s": 209
+            }
+          ],
+          "fail_G7_extremum_tiling": [
+            "top trough at depth 23.4 outside 24-30.5",
+            "top along-vine extremum gap 44.5 outside 22.5-42.5",
+            "top along-vine extremum gap 44.5 outside 22.5-42.5",
+            "top along-vine extremum gap 44.5 outside 22.5-42.5",
+            "top swing 15.4 outside 16-29 between s=171 and s=209",
+            "right trough at depth 8 outside 24-30.5",
+            "right projection stretch 196 without an extremum (> 42.5)",
+            "right carries only 1 extrema (a 3-swell edge needs >= 6)",
+            "bottom crest at depth 21.4 outside 1.5-8",
+            "bottom along-vine extremum gap 44.5 outside 22.5-42.5",
+            "bottom along-vine extremum gap 44.5 outside 22.5-42.5",
+            "bottom along-vine extremum gap 44.5 outside 22.5-42.5",
+            "bottom swing 2.6 outside 16-29 between s=684.5 and s=694.5",
+            "bottom along-vine extremum gap 10 outside 22.5-42.5",
+            "left trough at depth 14.2 outside 24-30.5",
+            "left swing 6.2 outside 16-29 between s=751 and s=759.5",
+            "left along-vine extremum gap 8.5 outside 22.5-42.5",
+            "left projection stretch 185.6 without an extremum (> 42.5)",
+            "left carries only 2 extrema (a 3-swell edge needs >= 6)"
+          ],
+          "projTiling_top": [
+            9.9,
+            40.2,
+            40.1,
+            40.1,
+            33.6,
+            0.1
+          ],
+          "extrema_right": [
+            {
+              "k": "m",
+              "d": 8,
+              "s": 263
+            }
+          ],
+          "projTiling_right": [
+            0,
+            196
+          ],
+          "extrema_bottom": [
+            {
+              "k": "m",
+              "d": 8,
+              "s": 551
+            },
+            {
+              "k": "m",
+              "d": 24,
+              "s": 595.5
+            },
+            {
+              "k": "m",
+              "d": 8,
+              "s": 640
+            },
+            {
+              "k": "m",
+              "d": 24,
+              "s": 684.5
+            },
+            {
+              "k": "m",
+              "d": 21.4,
+              "s": 694.5
+            }
+          ],
+          "projTiling_bottom": [
+            33.8,
+            40.1,
+            40.1,
+            40.2,
+            9.5,
+            0.4
+          ],
+          "extrema_left": [
+            {
+              "k": "m",
+              "d": 14.2,
+              "s": 751
+            },
+            {
+              "k": "m",
+              "d": 8,
+              "s": 759.5
+            }
+          ],
+          "projTiling_left": [
+            6.3,
+            4.2,
+            185.6
+          ],
+          "corner_TL": {
+            "ok": false,
+            "attempts": [
+              {
+                "datum": "top",
+                "crest": 8.1,
+                "trough": 29.6,
+                "swing": 21.5,
+                "straddles": false,
+                "ds": 21.5
+              },
+              {
+                "datum": "left",
+                "crest": 8,
+                "trough": 29.6,
+                "swing": 21.6,
+                "straddles": false,
+                "ds": 919
+              }
+            ]
+          },
+          "fail_G8_corner_turns": [
+            "corner TL: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)",
+            "corner TR: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)",
+            "corner BR: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)"
+          ],
+          "corner_TR": {
+            "ok": false,
+            "attempts": [
+              {
+                "datum": "top",
+                "crest": 8,
+                "trough": 24,
+                "swing": 16,
+                "straddles": false,
+                "ds": 26
+              },
+              {
+                "datum": "top",
+                "crest": 8,
+                "trough": 29.5,
+                "swing": 21.5,
+                "straddles": false,
+                "ds": 21.5
+              }
+            ]
+          },
+          "corner_BR": {
+            "ok": false,
+            "attempts": []
+          },
+          "corner_BL": {
+            "ok": true,
+            "attempts": [
+              {
+                "datum": "bottom",
+                "crest": 8,
+                "trough": 29.9,
+                "swing": 21.9,
+                "straddles": true,
+                "ds": 23
+              }
+            ]
+          },
+          "alongGaps": [
+            53,
+            60.5,
+            110.5,
+            33,
+            47,
+            33,
+            47,
+            506,
+            77.5
+          ],
+          "projGaps": [
+            48.2,
+            55.9,
+            112.4,
+            33,
+            47,
+            33,
+            316.9,
+            198,
+            115.6
+          ],
+          "fail_G2_gap_rhythm": [
+            "along-vine gap 60.5 outside 20-60 (between s=119 and s=179.5)",
+            "along-vine gap 110.5 outside 20-60 (between s=179.5 and s=290)",
+            "along-vine gap 506 outside 20-60 (between s=450 and s=956)",
+            "along-vine gap 77.5 outside 20-60 (between s=956 and s=66)",
+            "along-vine gap sequence periodic with period 2 at position 3",
+            "left (along-vine) edge set + corner gaps hold only 1 values pairwise >= 4 apart (need 3)",
+            "projection gap 112.4 outside 20-60 (between s=179.5 and s=290)",
+            "projection gap 316.9 outside 20-60 (between s=403 and s=450)",
+            "projection gap 198 outside 20-60 (between s=450 and s=956)",
+            "projection gap 115.6 outside 20-60 (between s=956 and s=66)",
+            "left (projection) edge set + corner gaps hold only 1 values pairwise >= 4 apart (need 3)"
+          ],
+          "pairwise_top_alo": {
+            "n": 4,
+            "maxIndependent": 4
+          },
+          "pairwise_right_alo": {
+            "n": 7,
+            "maxIndependent": 4
+          },
+          "pairwise_left_alo": {
+            "n": 1,
+            "maxIndependent": 1
+          },
+          "pairwise_top_pro": {
+            "n": 4,
+            "maxIndependent": 3
+          },
+          "pairwise_right_pro": {
+            "n": 7,
+            "maxIndependent": 5
+          },
+          "pairwise_left_pro": {
+            "n": 1,
+            "maxIndependent": 1
+          },
+          "fail_G10_smoothness": [
+            "right micro-ripple peak-to-trough 1.2 (banned below 8) at proj 14.8",
+            "right micro-ripple peak-to-trough 1.2 (banned below 8) at proj 15",
+            "right micro-ripple peak-to-trough 1.4 (banned below 8) at proj 15.3",
+            "right micro-ripple peak-to-trough 1.4 (banned below 8) at proj 15.5",
+            "right micro-ripple peak-to-trough 1.5 (banned below 8) at proj 15.8",
+            "right micro-ripple peak-to-trough 1.5 (banned below 8) at proj 16",
+            "right micro-ripple peak-to-trough 1.7 (banned below 8) at proj 16.2",
+            "right micro-ripple peak-to-trough 1.7 (banned below 8) at proj 16.5",
+            "right micro-ripple peak-to-trough 1.9 (banned below 8) at proj 16.7",
+            "right micro-ripple peak-to-trough 1.9 (banned below 8) at proj 17",
+            "right micro-ripple peak-to-trough 2.2 (banned below 8) at proj 17.1",
+            "right micro-ripple peak-to-trough 2.2 (banned below 8) at proj 17.5",
+            "right micro-ripple peak-to-trough 2.7 (banned below 8) at proj 18",
+            "right micro-ripple peak-to-trough 2.7 (banned below 8) at proj 18",
+            "right micro-ripple peak-to-trough 2.9 (banned below 8) at proj 18.4",
+            "right micro-ripple peak-to-trough 2.9 (banned below 8) at proj 18.5",
+            "right micro-ripple peak-to-trough 3.2 (banned below 8) at proj 18.8",
+            "right micro-ripple peak-to-trough 3.2 (banned below 8) at proj 19",
+            "right micro-ripple peak-to-trough 3.5 (banned below 8) at proj 19.2",
+            "right micro-ripple peak-to-trough 3.5 (banned below 8) at proj 19.5",
+            "right micro-ripple peak-to-trough 4.2 (banned below 8) at proj 19.9",
+            "right micro-ripple peak-to-trough 4.2 (banned below 8) at proj 20",
+            "right micro-ripple peak-to-trough 4.5 (banned below 8) at proj 20.3",
+            "right micro-ripple peak-to-trough 4.5 (banned below 8) at proj 20.5",
+            "right micro-ripple peak-to-trough 5.3 (banned below 8) at proj 20.9",
+            "right micro-ripple peak-to-trough 5.3 (banned below 8) at proj 21",
+            "right micro-ripple peak-to-trough 5.7 (banned below 8) at proj 21.2",
+            "right micro-ripple peak-to-trough 5.7 (banned below 8) at proj 21.5",
+            "right micro-ripple peak-to-trough 7 (banned below 8) at proj 22",
+            "right micro-ripple peak-to-trough 7 (banned below 8) at proj 22",
+            "right micro-ripple peak-to-trough 7.5 (banned below 8) at proj 233.7",
+            "right micro-ripple peak-to-trough 7.5 (banned below 8) at proj 234",
+            "right micro-ripple peak-to-trough 6.6 (banned below 8) at proj 234.2",
+            "right micro-ripple peak-to-trough 6.6 (banned below 8) at proj 234.5",
+            "right micro-ripple peak-to-trough 5.8 (banned below 8) at proj 234.7",
+            "right micro-ripple peak-to-trough 5.8 (banned below 8) at proj 235",
+            "right micro-ripple peak-to-trough 5 (banned below 8) at proj 235.3",
+            "right micro-ripple peak-to-trough 5 (banned below 8) at proj 235.5",
+            "right micro-ripple peak-to-trough 4.6 (banned below 8) at proj 235.6",
+            "right micro-ripple peak-to-trough 4.6 (banned below 8) at proj 236",
+            "right micro-ripple peak-to-trough 3.9 (banned below 8) at proj 236.4",
+            "right micro-ripple peak-to-trough 3.9 (banned below 8) at proj 236.5",
+            "right micro-ripple peak-to-trough 3.6 (banned below 8) at proj 236.7",
+            "right micro-ripple peak-to-trough 3.6 (banned below 8) at proj 237",
+            "right micro-ripple peak-to-trough 3.3 (banned below 8) at proj 237.1",
+            "right micro-ripple peak-to-trough 3.3 (banned below 8) at proj 237.5",
+            "right micro-ripple peak-to-trough 3 (banned below 8) at proj 237.5",
+            "right micro-ripple peak-to-trough 3 (banned below 8) at proj 238",
+            "right micro-ripple peak-to-trough 2.4 (banned below 8) at proj 238.4",
+            "right micro-ripple peak-to-trough 2.4 (banned below 8) at proj 238.5",
+            "right micro-ripple peak-to-trough 2.2 (banned below 8) at proj 238.8",
+            "right micro-ripple peak-to-trough 2.2 (banned below 8) at proj 239",
+            "right micro-ripple peak-to-trough 2 (banned below 8) at proj 239.3",
+            "right micro-ripple peak-to-trough 2 (banned below 8) at proj 239.5",
+            "right micro-ripple peak-to-trough 1.8 (banned below 8) at proj 239.7",
+            "right micro-ripple peak-to-trough 1.8 (banned below 8) at proj 240",
+            "right micro-ripple peak-to-trough 1.6 (banned below 8) at proj 240.2",
+            "right micro-ripple peak-to-trough 1.6 (banned below 8) at proj 240.5",
+            "right micro-ripple peak-to-trough 1.4 (banned below 8) at proj 240.6",
+            "right micro-ripple peak-to-trough 1.4 (banned below 8) at proj 241",
+            "right micro-ripple peak-to-trough 1.2 (banned below 8) at proj 241.1",
+            "right micro-ripple peak-to-trough 1.2 (banned below 8) at proj 241.5",
+            "left micro-ripple peak-to-trough 6.2 (banned below 8) at proj 40.4",
+            "441 eight-unit stretch(es) read straight/flat (worst sagitta 0 at s=52)"
+          ],
+          "flatWindows": 441
+        },
+        "pass": false,
+        "failing": [
+          "G1_sinuous_all_edges",
+          "G2_gap_rhythm",
+          "G4_sprouts_rooted",
+          "G5_directions",
+          "G7_extremum_tiling",
+          "G8_corner_turns",
+          "G9_sprout_inventory",
+          "G10_smoothness"
+        ]
+      },
+      "gatePass": false,
+      "gateFailing": [
+        "G1_sinuous_all_edges",
+        "G2_gap_rhythm",
+        "G4_sprouts_rooted",
+        "G5_directions",
+        "G7_extremum_tiling",
+        "G8_corner_turns",
+        "G9_sprout_inventory",
+        "G10_smoothness"
+      ],
+      "svgPath": "temp\\scratch\\tv_leg2_20261009\\raw-round49\\accepted.sample1.svg"
+    },
+    {
+      "sample": 2,
+      "seed": 909075750,
+      "finish": "stop",
+      "completion_tokens": 2316,
+      "outcome": "accepted",
+      "svgChars": 3307,
+      "gate": {
+        "gates": {
+          "G1_sinuous_all_edges": false,
+          "G2_gap_rhythm": true,
+          "G3_one_closed_stroke": false,
+          "G4_sprouts_rooted": false,
+          "G5_directions": false,
+          "G6_bands": true,
+          "G7_extremum_tiling": false,
+          "G8_corner_turns": false,
+          "G9_sprout_inventory": false,
+          "G10_smoothness": false
+        },
+        "detail": {
+          "strokePathCount": 1,
+          "ringScaleStrokes": 0,
+          "fail_G3_one_closed_stroke": [
+            "expected exactly ONE ring-scale stroke, found 0"
+          ],
+          "ringSamples": 0,
+          "cornerWindowSamples": {
+            "TL": 0,
+            "TR": 0,
+            "BR": 0,
+            "BL": 0
+          },
+          "fail_G1_sinuous_all_edges": [
+            "no ring geometry"
+          ],
+          "thornCount": 16,
+          "leafCount": 16,
+          "perEdgeSprouts": {
+            "top": {
+              "t": 7,
+              "l": 7
+            },
+            "right": {
+              "t": 9,
+              "l": 9
+            },
+            "bottom": {
+              "t": 0,
+              "l": 0
+            },
+            "left": {
+              "t": 0,
+              "l": 0
+            }
+          },
+          "fail_G9_sprout_inventory": [
+            "top has (thorns,leaves)=(7,7) — not an enumerated combination [[6,3],[6,4],[7,3]]",
+            "right has (thorns,leaves)=(9,9) — not an enumerated combination [[6,3],[6,4],[7,3],[7,4],[8,3]]",
+            "bottom has (thorns,leaves)=(0,0) — not an enumerated combination [[6,3],[6,4],[7,3]]",
+            "left has (thorns,leaves)=(0,0) — not an enumerated combination [[6,3],[6,4],[7,3],[7,4],[8,3]]",
+            "thorn at (60,24) size 12x12 outside 6-8 x 8-10",
+            "thorn at (96,52) size 12x12 outside 6-8 x 8-10",
+            "thorn at (136,60) size 12x12 outside 6-8 x 8-10",
+            "thorn at (184,52) size 12x12 outside 6-8 x 8-10",
+            "thorn at (204,48) size 12x12 outside 6-8 x 8-10",
+            "thorn at (200,72) size 12x12 outside 6-8 x 8-10",
+            "thorn at (196,76) size 12x12 outside 6-8 x 8-10",
+            "thorn at (192,72) size 12x12 outside 6-8 x 8-10",
+            "thorn at (188,68) size 12x12 outside 6-8 x 8-10",
+            "thorn at (184,64) size 12x12 outside 6-8 x 8-10",
+            "thorn at (180,60) size 12x12 outside 6-8 x 8-10",
+            "thorn at (176,56) size 12x12 outside 6-8 x 8-10",
+            "thorn at (172,52) size 12x12 outside 6-8 x 8-10",
+            "thorn at (168,48) size 12x12 outside 6-8 x 8-10",
+            "thorn at (164,44) size 12x12 outside 6-8 x 8-10",
+            "thorn at (160,40) size 12x12 outside 6-8 x 8-10"
+          ],
+          "thornSizes": {
+            "wMin": 12,
+            "wMax": 12,
+            "hMin": 12,
+            "hMax": 12
+          },
+          "leafSizes": {
+            "lMin": 14,
+            "lMax": 14,
+            "wMin": 6,
+            "wMax": 6
+          },
+          "unrootedCount": 32,
+          "unrootedSample": [
+            {
+              "kind": "thorn",
+              "x": 60,
+              "y": 24,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 96,
+              "y": 52,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 136,
+              "y": 60,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 184,
+              "y": 52,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 204,
+              "y": 48,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 200,
+              "y": 72,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 196,
+              "y": 76,
+              "d": null
+            },
+            {
+              "kind": "thorn",
+              "x": 192,
+              "y": 72,
+              "d": null
+            }
+          ],
+          "fail_G4_sprouts_rooted": [
+            "32 sprout root(s) more than 3 units off the stem"
+          ],
+          "inwardThorns": 0,
+          "fail_G5_directions": [
+            "deep-rooted leaf at (184,48) points straight inward"
+          ],
+          "leafOutwardViolations": 0,
+          "fail_G7_extremum_tiling": [
+            "no ring geometry"
+          ],
+          "fail_G8_corner_turns": [
+            "corner TL window nearly empty (0)",
+            "corner TR window nearly empty (0)",
+            "corner BR window nearly empty (0)",
+            "corner BL window nearly empty (0)"
+          ],
+          "fail_G10_smoothness": [
+            "no ring geometry"
+          ]
+        },
+        "pass": false,
+        "failing": [
+          "G1_sinuous_all_edges",
+          "G3_one_closed_stroke",
+          "G4_sprouts_rooted",
+          "G5_directions",
+          "G7_extremum_tiling",
+          "G8_corner_turns",
+          "G9_sprout_inventory",
+          "G10_smoothness"
+        ]
+      },
+      "gatePass": false,
+      "gateFailing": [
+        "G1_sinuous_all_edges",
+        "G3_one_closed_stroke",
+        "G4_sprouts_rooted",
+        "G5_directions",
+        "G7_extremum_tiling",
+        "G8_corner_turns",
+        "G9_sprout_inventory",
+        "G10_smoothness"
+      ],
+      "svgPath": "temp\\scratch\\tv_leg2_20261009\\raw-round49\\accepted.sample2.svg"
+    },
+    {
+      "sample": 3,
+      "seed": 314744947,
+      "finish": "stop",
+      "completion_tokens": 478,
+      "outcome": "degenerate",
+      "detail": {
+        "elements": 1,
+        "chars": 615,
+        "bad": true
+      }
+    },
+    {
+      "sample": 4,
+      "seed": 158798046,
+      "finish": "stop",
+      "completion_tokens": 1011,
+      "outcome": "accepted",
+      "svgChars": 1692,
+      "gate": {
+        "gates": {
+          "G1_sinuous_all_edges": false,
+          "G2_gap_rhythm": false,
+          "G3_one_closed_stroke": true,
+          "G4_sprouts_rooted": false,
+          "G5_directions": false,
+          "G6_bands": false,
+          "G7_extremum_tiling": false,
+          "G8_corner_turns": false,
+          "G9_sprout_inventory": false,
+          "G10_smoothness": false
+        },
+        "detail": {
+          "strokePathCount": 1,
+          "ringScaleStrokes": 1,
+          "ringClosed": true,
+          "ringSamples": 1680,
+          "cornerWindowSamples": {
+            "TL": 61,
+            "TR": 61,
+            "BR": 61,
+            "BL": 61
+          },
+          "fail_G1_sinuous_all_edges": [
+            "top mid-edge chord dev 0.0 < 8",
+            "right mid-edge chord dev 0.0 < 8",
+            "bottom mid-edge chord dev 0.0 < 8",
+            "left mid-edge chord dev 0.0 < 8"
+          ],
+          "midEdgeChordDevs": {
+            "top": 0,
+            "right": 0,
+            "bottom": 0,
+            "left": 0
+          },
+          "cornerChordDevs": {
+            "TL": 15,
+            "TR": 10.6,
+            "BR": 10.6,
+            "BL": 10.6
+          },
+          "thornCount": 10,
+          "leafCount": 12,
+          "perEdgeSprouts": {
+            "top": {
+              "t": 1,
+              "l": 4
+            },
+            "right": {
+              "t": 5,
+              "l": 2
+            },
+            "bottom": {
+              "t": 1,
+              "l": 4
+            },
+            "left": {
+              "t": 3,
+              "l": 2
+            }
+          },
+          "fail_G9_sprout_inventory": [
+            "top has (thorns,leaves)=(1,4) — not an enumerated combination [[6,3],[6,4],[7,3]]",
+            "right has (thorns,leaves)=(5,2) — not an enumerated combination [[6,3],[6,4],[7,3],[7,4],[8,3]]",
+            "bottom has (thorns,leaves)=(1,4) — not an enumerated combination [[6,3],[6,4],[7,3]]",
+            "left has (thorns,leaves)=(3,2) — not an enumerated combination [[6,3],[6,4],[7,3],[7,4],[8,3]]",
+            "thorn at (18.5,10) size 12.2x12.5 outside 6-8 x 8-10",
+            "thorn at (224,10) size 14.1x15.8 outside 6-8 x 8-10",
+            "thorn at (18.5,246) size 12.2x12.5 outside 6-8 x 8-10",
+            "thorn at (224,246) size 14.1x15.8 outside 6-8 x 8-10",
+            "thorn at (10,90.5) size 12.2x11.6 outside 6-8 x 8-10",
+            "thorn at (10,140.5) size 12.2x11.6 outside 6-8 x 8-10",
+            "thorn at (10,190.5) size 12.2x11.6 outside 6-8 x 8-10",
+            "thorn at (209,87) size 14x20 outside 6-8 x 8-10",
+            "thorn at (209,137) size 14x20 outside 6-8 x 8-10",
+            "thorn at (209,187) size 14x20 outside 6-8 x 8-10",
+            "thorn sizes are not ONE size (spread w 1.9, h 8.4 > 1)"
+          ],
+          "thornSizes": {
+            "wMin": 12.2,
+            "wMax": 14.1,
+            "hMin": 11.6,
+            "hMax": 20
+          },
+          "leafSizes": {
+            "lMin": 14,
+            "lMax": 14,
+            "wMin": 6,
+            "wMax": 6
+          },
+          "unrootedCount": 19,
+          "unrootedSample": [
+            {
+              "kind": "thorn",
+              "x": 18.5,
+              "y": 10,
+              "d": 5
+            },
+            {
+              "kind": "thorn",
+              "x": 224,
+              "y": 10,
+              "d": 15.8
+            },
+            {
+              "kind": "thorn",
+              "x": 18.5,
+              "y": 246,
+              "d": 5
+            },
+            {
+              "kind": "thorn",
+              "x": 224,
+              "y": 246,
+              "d": 15.8
+            },
+            {
+              "kind": "thorn",
+              "x": 10,
+              "y": 90.5,
+              "d": 5
+            },
+            {
+              "kind": "thorn",
+              "x": 10,
+              "y": 140.5,
+              "d": 5
+            },
+            {
+              "kind": "thorn",
+              "x": 10,
+              "y": 190.5,
+              "d": 5
+            },
+            {
+              "kind": "leaf",
+              "x": 67,
+              "y": 40,
+              "d": 25
+            }
+          ],
+          "fail_G4_sprouts_rooted": [
+            "19 sprout root(s) more than 3 units off the stem"
+          ],
+          "inwardThorns": 7,
+          "fail_G5_directions": [
+            "7 thorn(s) not pointing outward (radial cos < 0.4)",
+            "deep-rooted leaf at (60,128) points straight inward",
+            "deep-rooted leaf at (60,178) points straight inward",
+            "deep-rooted leaf at (164,128) points straight inward",
+            "deep-rooted leaf at (164,178) points straight inward"
+          ],
+          "leafOutwardViolations": 0,
+          "vineTooDeep": 0,
+          "sproutBandViolations": 181,
+          "fail_G6_bands": [
+            "thorn outside viewBox at 229,15; thorn outside viewBox at 229,241; thorn outside viewBox at 229,87; thorn outside viewBox at 229,137; thorn outside viewBox at 229,187; leaf body (not tip) in 32-45 zone at 62.7,42.8; +175 more"
+          ],
+          "extrema_top": [
+            {
+              "k": "m",
+              "d": 15,
+              "s": 824.5
+            }
+          ],
+          "fail_G7_extremum_tiling": [
+            "top trough at depth 15 outside 24-30.5",
+            "top projection stretch 163.5 without an extremum (> 42.5)",
+            "top carries only 1 extrema (a 3-swell edge needs >= 6)",
+            "right trough at depth 15 outside 24-30.5",
+            "right projection stretch 195.5 without an extremum (> 42.5)",
+            "right carries only 1 extrema (a 3-swell edge needs >= 6)",
+            "bottom trough at depth 15 outside 24-30.5",
+            "bottom projection stretch 163.5 without an extremum (> 42.5)",
+            "bottom carries only 1 extrema (a 3-swell edge needs >= 6)",
+            "left trough at depth 15 outside 24-30.5",
+            "left projection stretch 195.5 without an extremum (> 42.5)",
+            "left carries only 1 extrema (a 3-swell edge needs >= 6)"
+          ],
+          "projTiling_top": [
+            0.5,
+            163.5
+          ],
+          "extrema_right": [
+            {
+              "k": "m",
+              "d": 15,
+              "s": 630.5
+            }
+          ],
+          "projTiling_right": [
+            0.5,
+            195.5
+          ],
+          "extrema_bottom": [
+            {
+              "k": "m",
+              "d": 15,
+              "s": 404.5
+            }
+          ],
+          "projTiling_bottom": [
+            0.5,
+            163.5
+          ],
+          "extrema_left": [
+            {
+              "k": "m",
+              "d": 15,
+              "s": 210.5
+            }
+          ],
+          "projTiling_left": [
+            0.5,
+            195.5
+          ],
+          "corner_TL": {
+            "ok": false,
+            "attempts": []
+          },
+          "fail_G8_corner_turns": [
+            "corner TL: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)",
+            "corner TR: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)",
+            "corner BR: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)",
+            "corner BL: no single-datum straddling crest/trough pair (16-29 swing, <= 42.5 apart)"
+          ],
+          "corner_TR": {
+            "ok": false,
+            "attempts": []
+          },
+          "corner_BR": {
+            "ok": false,
+            "attempts": []
+          },
+          "corner_BL": {
+            "ok": false,
+            "attempts": []
+          },
+          "alongGaps": [
+            37.5,
+            12.5,
+            37.5,
+            12.5,
+            54,
+            48.5,
+            40,
+            40,
+            62,
+            25,
+            29,
+            9,
+            41,
+            9,
+            41,
+            47,
+            25,
+            62,
+            40,
+            40,
+            48.5,
+            79
+          ],
+          "projGaps": [
+            922.5,
+            947.5,
+            922.5,
+            947.5,
+            909.5,
+            960,
+            960,
+            960,
+            960,
+            25,
+            659,
+            951,
+            919,
+            951,
+            919,
+            913,
+            935,
+            868,
+            920,
+            920,
+            911.5,
+            819
+          ],
+          "fail_G2_gap_rhythm": [
+            "along-vine gap 12.5 outside 20-60 (between s=113 and s=125.5)",
+            "along-vine gap 12.5 outside 20-60 (between s=163 and s=175.5)",
+            "along-vine gap 62 outside 20-60 (between s=358 and s=420)",
+            "along-vine gap 9 outside 20-60 (between s=474 and s=483)",
+            "along-vine gap 9 outside 20-60 (between s=524 and s=533)",
+            "along-vine gap 62 outside 20-60 (between s=646 and s=708)",
+            "along-vine gap 79 outside 20-60 (between s=836.5 and s=75.5)",
+            "along-vine consecutive gaps differ by 0 < 4",
+            "along-vine consecutive gaps differ by 0 < 4",
+            "along-vine gap sequence periodic with period 2 at position 0",
+            "along-vine gap sequence periodic with period 2 at position 11",
+            "projection gap 922.5 outside 20-60 (between s=75.5 and s=113)",
+            "projection gap 947.5 outside 20-60 (between s=113 and s=125.5)",
+            "projection gap 922.5 outside 20-60 (between s=125.5 and s=163)",
+            "projection gap 947.5 outside 20-60 (between s=163 and s=175.5)",
+            "projection gap 909.5 outside 20-60 (between s=175.5 and s=229.5)",
+            "projection gap 960 outside 20-60 (between s=229.5 and s=278)",
+            "projection gap 960 outside 20-60 (between s=278 and s=318)",
+            "projection gap 960 outside 20-60 (between s=318 and s=358)",
+            "projection gap 960 outside 20-60 (between s=358 and s=420)",
+            "projection gap 659 outside 20-60 (between s=445 and s=474)",
+            "projection gap 951 outside 20-60 (between s=474 and s=483)",
+            "projection gap 919 outside 20-60 (between s=483 and s=524)",
+            "projection gap 951 outside 20-60 (between s=524 and s=533)",
+            "projection gap 919 outside 20-60 (between s=533 and s=574)",
+            "projection gap 913 outside 20-60 (between s=574 and s=621)",
+            "projection gap 935 outside 20-60 (between s=621 and s=646)",
+            "projection gap 868 outside 20-60 (between s=646 and s=708)",
+            "projection gap 920 outside 20-60 (between s=708 and s=748)",
+            "projection gap 920 outside 20-60 (between s=748 and s=788)",
+            "projection gap 911.5 outside 20-60 (between s=788 and s=836.5)",
+            "projection gap 819 outside 20-60 (between s=836.5 and s=75.5)",
+            "projection consecutive gaps differ by 0 < 4",
+            "projection consecutive gaps differ by 0 < 4",
+            "projection consecutive gaps differ by 0 < 4",
+            "projection consecutive gaps differ by 0 < 4",
+            "projection gap sequence periodic with period 2 at position 0",
+            "projection gap sequence periodic with period 2 at position 5",
+            "projection gap sequence periodic with period 2 at position 11",
+            "bottom (projection) edge set + corner gaps hold only 2 values pairwise >= 4 apart (need 3)"
+          ],
+          "pairwise_top_alo": {
+            "n": 5,
+            "maxIndependent": 4
+          },
+          "pairwise_right_alo": {
+            "n": 9,
+            "maxIndependent": 5
+          },
+          "pairwise_bottom_alo": {
+            "n": 5,
+            "maxIndependent": 4
+          },
+          "pairwise_left_alo": {
+            "n": 7,
+            "maxIndependent": 4
+          },
+          "pairwise_top_pro": {
+            "n": 5,
+            "maxIndependent": 4
+          },
+          "pairwise_right_pro": {
+            "n": 9,
+            "maxIndependent": 6
+          },
+          "pairwise_bottom_pro": {
+            "n": 5,
+            "maxIndependent": 2
+          },
+          "pairwise_left_pro": {
+            "n": 7,
+            "maxIndependent": 4
+          },
+          "flatWindows": 407,
+          "fail_G10_smoothness": [
+            "407 eight-unit stretch(es) read straight/flat (worst sagitta 0 at s=0)"
+          ]
+        },
+        "pass": false,
+        "failing": [
+          "G1_sinuous_all_edges",
+          "G2_gap_rhythm",
+          "G4_sprouts_rooted",
+          "G5_directions",
+          "G6_bands",
+          "G7_extremum_tiling",
+          "G8_corner_turns",
+          "G9_sprout_inventory",
+          "G10_smoothness"
+        ]
+      },
+      "gatePass": false,
+      "gateFailing": [
+        "G1_sinuous_all_edges",
+        "G2_gap_rhythm",
+        "G4_sprouts_rooted",
+        "G5_directions",
+        "G6_bands",
+        "G7_extremum_tiling",
+        "G8_corner_turns",
+        "G9_sprout_inventory",
+        "G10_smoothness"
+      ],
+      "svgPath": "temp\\scratch\\tv_leg2_20261009\\raw-round49\\accepted.sample4.svg"
+    },
+    {
+      "sample": 5,
+      "seed": 106385277,
+      "finish": "stop",
+      "completion_tokens": 266,
+      "outcome": "degenerate",
+      "detail": {
+        "elements": 1,
+        "chars": 472,
+        "bad": true
+      }
+    },
+    {
+      "sample": 6,
+      "seed": 781730530,
+      "finish": "stop",
+      "completion_tokens": 614,
+      "outcome": "model_output_not_json",
+      "detail": {
+        "code": "model_output_not_json",
+        "path": "$",
+        "message": "the model's answer is not a JSON object (\"{\\\"border\\\":{\\\"svg\\\":\\\"<svg viewBox=\\\\\\\"0 0 224\")"
+      },
+      "parseClass": {
+        "msg": "Expected ',' or '}' after property value in JSON at position 975 (line 1 column 976)",
+        "pos": 975,
+        "braceFix": "}"
+      }
+    },
+    {
+      "sample": 7,
+      "seed": 980858344,
+      "finish": "stop",
+      "completion_tokens": 727,
+      "outcome": "model_output_not_json",
+      "detail": {
+        "code": "model_output_not_json",
+        "path": "$",
+        "message": "the model's answer is not a JSON object (\"{\\\"border\\\": {\\\"svg\\\": \\\"<svg viewBox=\\\\\\\"0 0 2\")"
+      },
+      "parseClass": {
+        "msg": "Expected ',' or '}' after property value in JSON at position 874 (line 1 column 875)",
+        "pos": 874,
+        "braceFix": null
+      }
+    },
+    {
+      "sample": 8,
+      "seed": 429754181,
+      "finish": "stop",
+      "completion_tokens": 1457,
+      "outcome": "model_output_not_json",
+      "detail": {
+        "code": "model_output_not_json",
+        "path": "$",
+        "message": "the model's answer is not a JSON object (\"{\\\"border\\\": {\\\"svg\\\": \\\"<svg viewBox=\\\\\\\"0 0 2\")"
+      },
+      "parseClass": {
+        "msg": "Expected ',' or '}' after property value in JSON at position 3115 (line 1 column 3116)",
+        "pos": 3115,
+        "braceFix": "}"
+      }
+    },
+    {
+      "sample": 9,
+      "seed": 593161941,
+      "finish": "stop",
+      "completion_tokens": 329,
+      "outcome": "degenerate",
+      "detail": {
+        "elements": 1,
+        "chars": 532,
+        "bad": true
+      }
+    },
+    {
+      "sample": 10,
+      "seed": 331203422,
+      "finish": "stop",
+      "completion_tokens": 2147,
+      "outcome": "model_output_not_json",
+      "detail": {
+        "code": "model_output_not_json",
+        "path": "$",
+        "message": "the model's answer is not a JSON object (\"{\\\"border\\\": {\\\"svg\\\": \\\"<svg viewBox=\\\\\\\"0 0 2\")"
+      },
+      "parseClass": {
+        "msg": "Expected ',' or '}' after property value in JSON at position 732 (line 1 column 733)",
+        "pos": 732,
+        "braceFix": null
+      }
+    }
+  ]
+}

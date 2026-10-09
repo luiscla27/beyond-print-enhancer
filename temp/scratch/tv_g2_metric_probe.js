@@ -12,15 +12,19 @@ function nearestEdge(x, y) {
   return Object.entries(d).sort((a, b) => a[1] - b[1])[0][0];
 }
 function loopProj(p) {
-  if (p.y < p.x && p.x < 224 - p.y) return p.x;
-  if (p.x >= p.y && 224 - p.x < 256 - p.y) return 224 + p.y;
-  if (256 - p.y <= p.x && p.x <= 224 - p.y) return 448 + (224 - p.x);
-  return 672 + (256 - p.y);
+  // OPTION (a) measurement mode (muse iter-20): branch by nearestEdge (the gate's own
+  // naming), not diagonal quadrants; constants corrected to a true 0..960 perimeter
+  // (right ends 480, bottom 480+(224-x) ends 704, left 704+(256-y) ends 960).
+  const e = nearestEdge(p.x, p.y);
+  if (e === "top") return p.x;
+  if (e === "right") return 224 + p.y;
+  if (e === "bottom") return 480 + (224 - p.x);
+  return 704 + (256 - p.y);
 }
 function projBranch(p) {
   if (p.y < p.x && p.x < 224 - p.y) return "top";
   if (p.x >= p.y && 224 - p.x < 256 - p.y) return "right";
-  if (256 - p.y <= p.x && p.x <= 224 - p.y) return "bottom";
+  if (p.y >= p.x && 256 - p.y <= p.x) return "bottom"; // REPAIRED leg-5 (mirrors gate fix)
   return "left";
 }
 
