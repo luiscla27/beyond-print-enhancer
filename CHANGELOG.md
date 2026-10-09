@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (2026-10-09 — Fix C promoted; the 03-thornvine acceptance gate is a tracked instrument)
+- **The operator authorized Fix C ("promote fix C") and the muses' iter-19/20 package left the
+  scratch gate: the binding 03-thornvine acceptance gate now lives at
+  `scripts/thornvine_acceptance_gate.js`** (the D1 precedent — the criterion contract is a
+  versioned module beside `scripts/border_metric.js`, not a script of the moment). The promoted
+  file is the leg-5b repaired scratch gate (`fb39c6d`, byte-identical body) plus the
+  authorization record in its header. What the promotion carries, all measured in
+  `temp/scratch/thornvine_leg5b_record_20261009.md`: **G2's `loopProj` repaired** — branch by
+  the gate's own `nearestEdge` (muse iter-20 option (a), minimum-diff; (b) drop-the-projection
+  was rejected as deleting iter-13 intent) with a true 0..960 perimeter (right ends 480, bottom
+  `480+(224-x)`, left `704+(256-y)`) — fixing three measured defects: the dead bottom branch
+  (empty set `256<=224`, 0/57,825 hits, every bottom root projected as left `928-y` → the
+  G2+G9 arithmetic impossibility), diagonal-selected seam discontinuities (worst 880.3 units
+  over one 0.5-arc step), and the 32-unit perimeter overlaps; **G8 DISABLED pending redesign**
+  (skip-with-flag, never deleted: the accepted 03-thornvine reference is a plain 16-unit
+  rectangle + one open top-edge path — zero corner-turn pivots in all four corner windows, 57
+  samples each, both datums — so no anchor exists for G8's thresholds; re-enabling requires a
+  new operator decision). No threshold was softened and no criterion text amended; the honest
+  verdict on the current canonical blob stays FAIL (8/10 active gates + disabled G8). The gate
+  is NOT wired into `npm test`/the freeze: the canonical blob is the known-failing baseline this
+  campaign is fixing; the gate judges FUTURE regenerated candidates, and any 10/10 claim still
+  owes the v11 constructor re-derivation of joint G2+G9 feasibility (leg-5b §6, open).
+  **Promotion verified, not assumed:** the promoted file reproduces the leg-5b recorded
+  verdicts measurement-identically on all three artifacts (canonical corpus blob and
+  `tv_canonical.svg` → FAIL [G1,G2,G3,G4,G5,G7,G9,G10]; the constructor tile → FAIL
+  [G1,G2,G4,G6,G9,G10]); three lint-blockers were removed in promotion (dead `atMost` /
+  `nearestEdgeName` helpers, and a dead leaf-endpoint wrapper whose only effect was to
+  double-count identical `sproutBandViolations` — the canonical blob reads 0 either way), and
+  `npx eslint scripts/thornvine_acceptance_gate.js` is clean. The scratch copy stays the
+  campaign's working copy; divergence from `scripts/` after this date is a provenance question,
+  not a gate edit.
+
 ### Attempted (2026-10-09, leg 4 — webp-anchored instruction per operator directive, NOT shipped)
 - **The operator pointed at the shipped webp borders as the pattern to follow ("a fixed
   width and height, followed by fixed border css classes, and strict matching… one of the

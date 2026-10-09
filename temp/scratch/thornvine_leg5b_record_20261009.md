@@ -95,3 +95,26 @@ their FLAT-perimeter gaps at 9.4-19 — arc inflation is not projection. Muse's 
 - Sampling: `tv_leg2_20261009/leg2-round49.json|.log`, `leg2-round50.json|.log`
 - Gate records: `tv_constructed_tile_gate_optA.json`, `tv_canonical_gate_optA.json`
   (+ pre-repair `tv_canonical_gate.json` for the before/after pair)
+
+## 8. Addendum (2026-10-09, later the same session) — Fix C PROMOTED by operator decision
+
+The operator authorized Fix C ("promote fix C"), closing this record's open decision and muse
+iter-20's "no operator decision may be assumed" gate. What was done:
+
+- The repaired gate left the scratch home for the tracked instrument home:
+  **`scripts/thornvine_acceptance_gate.js`** (beside `scripts/border_metric.js`, the D1
+  precedent). Body is the leg-5b scratch gate (`fb39c6d`) byte-identical; the authorization
+  record (items 1-5 of §3-§5 above: option (a), G8 disabled skip-with-flag, no-regression
+  before/after, thresholds unsoftened, not wired into npm test) lives in its header.
+- Promotion lint-blockers removed, all verdict-neutral (three dead bindings: `atMost`,
+  `nearestEdgeName`, and a dead leaf-endpoint wrapper whose only effect was to run the
+  identical leaf-rim loop twice, double-counting identical `sproutBandViolations`; canonical
+  blob reads 0 either way). `npx eslint scripts/thornvine_acceptance_gate.js` exit 0.
+- **Verified against this record, not assumed:** the promoted gate reproduces §3-§5's recorded
+  verdicts measurement-identically — canonical corpus blob and `tv_canonical.svg` → FAIL
+  [G1,G2,G3,G4,G5,G7,G9,G10] (= `tv_canonical_gate_optA.json`), constructor tile → FAIL
+  [G1,G2,G4,G6,G9,G10] (= `tv_constructed_tile_gate_optA.json`).
+- Scratch copy retained as the campaign's working copy; divergence from `scripts/` after this
+  date is a provenance question, not a gate edit.
+- Still owed, unchanged: the v11 constructor re-derivation of joint G2+G9 feasibility (§6)
+  before any 10/10 claim, then re-sampling.
