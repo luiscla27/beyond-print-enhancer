@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attempted (2026-10-09, leg 3 — consult step 6 self-correction probe, NOT shipped)
+- **The operator-chosen leg-3 move (Muse consult step 6: feed the gate's JSON verdict back
+  to the same free seat so the MODEL corrects its own gated answer) ran to measurement and
+  did not converge — the multi-turn pipeline is falsified on this seat.** Four correction
+  turns across both seed blobs (`temp/scratch/tv_step6_correct.js`; model sees its own
+  answer + the gate's verbatim failing predicates; product parse path + binding gate every
+  turn; no hand repair): seed r34-s2 0/10 → **0/10** (no gate changed); seed r35 2/10 →
+  two turns died `finish=length` at 6000 tokens (`model_output_not_json`), and a T=0.3 /
+  9000-token retry REGRESSED 2/10 → **1/10** (lost G3, gained nothing). Zero improvements
+  in four turns — the consult's own "if the 2nd turn reaches 4-5/10 the pipeline is
+  viable" condition is decisively not met, and the multi-turn provenance ruling stays
+  unmade because there is nothing converged to rule in. Cumulative: 27 samples, zero gate
+  passers, every ship-path lever measured (one-shot vs multi-turn, T ∈ {0, 0.6, 0.75,
+  0.8, 0.85}, payload cap, output headroom). Record:
+  `temp/scratch/thornvine_leg3_step6_record_20261009.md`. No tracked byte changed; the
+  operator decision class narrows to (a) a stricter/different seat or (b) retirement.
+
 ### Attempted (2026-10-09 — 03-thornvine leg 2: forensics + mandated consult + three probes, NOT shipped)
 - **Leg 2 ran the cumulative consult the protocol owes and executed its three cheap
   probes; the result is a measured exculpation of the prompt and pipeline, and a
