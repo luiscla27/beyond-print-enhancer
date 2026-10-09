@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attempted (2026-10-09, leg 4 — webp-anchored instruction per operator directive, NOT shipped)
+- **The operator pointed at the shipped webp borders as the pattern to follow ("a fixed
+  width and height, followed by fixed border css classes, and strict matching… one of the
+  existing webp borders are vines… improve the prompt to enforce that the svg borders
+  follow the same logic") — implemented as a measured prompt leg.** The webp pattern was
+  read from product sources (`.vine_border` = vine_hollow.webp slice 205 / width 130px /
+  outset 45px in `js/print_styles.js`; AI borders ride the SAME border-image engine
+  sliced at 24% per `js/ai_border.js` D4; PIL alpha profile of vine_hollow.webp shows the
+  dashed one-third-ink rail) and the instruction was rebuilt around it: nine-slice tile
+  framing, the G8 swing/separation fix, the G1 chord anchor, a CONSTRUCTION recipe
+  (exactly ONE stroked path = the whole vine as one closed loop, sprouts fill-only), and
+  XML-PAIRING / ATTRIBUTE-LOCALITY reply-contract rules — all binding numbers unchanged,
+  3803 chars, SHIPPABLE product-path. **Result (12 samples, r38-41): real gate movement,
+  still zero full passes.** Three gates no sample had ever passed were passed: G4+G5+G6
+  (twice) and G3+G4+G5 (r40-s1 — the campaign's first one-closed-ring architecture, traced
+  to the CONSTRUCTION sentence). JSON parses as-is rose from 5/27 to 4/12. Residual gaps
+  recorded: ONE-stroke compliance under a full sprout inventory, and the seat's
+  `</tool_call>` wrapper leaking into the envelope. Record:
+  `temp/scratch/thornvine_leg4_webp_record_20261009.md`; prompt:
+  `temp/scratch/tv_webp_instruction.txt`; raw rounds in `temp/scratch/tv_leg2_20261009/`.
+  No tracked byte changed.
+
 ### Attempted (2026-10-09, leg 3 — consult step 6 self-correction probe, NOT shipped)
 - **The operator-chosen leg-3 move (Muse consult step 6: feed the gate's JSON verdict back
   to the same free seat so the MODEL corrects its own gated answer) ran to measurement and
