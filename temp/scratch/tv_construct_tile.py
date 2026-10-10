@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
-"""tv_construct_tile.py — CONSTRUCTION-PATH DIAGNOSTIC v10 (muse Fix A validation, scratch only).
+"""tv_construct_tile.py — CONSTRUCTION-PATH DIAGNOSTIC v11 (muse iter-20 §5.4 re-derivation, scratch only).
 
-v9 note (superseded): its INFEASIBLE verdict used FLAT edge lengths (164) for the
-G2 arc gaps; the gate measures ARC gaps on the wave-inflated ring (~290 per
-top edge), so G2+G9 IS arithmetically feasible. The v7/v8 placement failures
-were a single inverted formula: scale = total*len(cycle)/(sum(cycle)*n), not
-total/sum*n/len.
+v11 = v10 geometry (wave cubics per half-period + rounded corners, CORNER_R 12,
+documented parameters) with `loop_proj` REPAIRED TO GATE PARITY: the tracked gate's
+repaired `loopProj` (scripts/thornvine_acceptance_gate.js, leg-5b / muse iter-20
+option (a)) branches by nearestEdge and uses the corrected 0..960 perimeter —
+top x | right 224+y | bottom 480+(224-x) | left 704+(256-y). v10's python copy still
+carried the OLD left constant `2*(W+H)+(H-y)` = 960+(256-y), values 960..1216, which
+%960-wraps into top's [0,224] range — so v10's projection metric could never agree
+with the repaired gate's. Tie-breaking of `edge_of` now mirrors the gate's
+`nearestEdge` dict order (top, bottom, left, right) so branch selection is identical.
+(v11a note: its first repair also "corrected" the bottom branch to 448+(224-x) —
+a REGRESSION: the gate's repaired bottom branch is exactly 480+(224-x), which v10
+already had. v11a's own probe then measured all bottom corner straddles +32 and
+misread the ring as corner-infeasible; v11b restores the true gate constants.
+The corrected phase-0 straddles are TR 38.1, RB 32.1, BL 38.1, LT 31.8 — feasible.)
 
-v10 = v8 geometry (wave cubics per half-period + rounded corners) with the
-fixed scale, global cyclic root walk, kind assignment per edge, dual-metric
-gap validation, and the gate as the final arbiter.
+Purpose (leg-5b record §6/§8, muse iter-20 §5 item 4): confirm a FEASIBLE GLOBAL
+PLACEMENT exists under the documented parameters and re-measure G2 (repaired+(a))
+and G9 on the regenerated tile. A 10/10 claim is not sustainable until this succeeds.
 """
 import math
 import json
@@ -163,11 +172,20 @@ def depth_min(x, y):
 
 
 def edge_of(x, y):
-    cands = [("top", y), ("right", W - x), ("bottom", H - y), ("left", x)]
-    return min(cands, key=lambda c: c[1])[0]
+    # GATE PARITY (v11): mirror the tracked gate's nearestEdge — depth dict in the
+    # gate's own order {top, bottom, left, right}, ties break toward the SMALLER
+    # depth value (sort is stable, so dict order wins on equal depth).
+    d = {"top": y, "bottom": H - y, "left": x, "right": W - x}
+    return sorted(d.items(), key=lambda c: c[1])[0][0]
 
 
 def loop_proj(x, y):
+    # GATE PARITY (v11b): scripts/thornvine_acceptance_gate.js loopProj — branch by
+    # nearestEdge; true 0..960 perimeter (top x | right 224+y | bottom 480+(224-x)
+    # | left 704+(256-y)). v10's ONLY defect was the left constant 960+(256-y)
+    # (pre-repair form; 960..1216 %960-wraps into top's range). The bottom branch
+    # W+H+(W-x) = 480+(224-x) was ALREADY the repaired constant — v11a wrongly
+    # "corrected" it to 448+(224-x) and inflated every bottom corner straddle by 32.
     e = edge_of(x, y)
     if e == "top":
         return x
@@ -175,7 +193,7 @@ def loop_proj(x, y):
         return W + y
     if e == "bottom":
         return W + H + (W - x)
-    return 2 * (W + H) + (H - y)
+    return 2 * (W + H) - H + (H - y)  # 704 + (256-y) at 224x256
 
 
 def nearest_sample_arc(p, S):

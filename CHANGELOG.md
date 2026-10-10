@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attempted (2026-10-09, leg 6 resumed — G10-curvature shape families: the trusted baseline was a broken instrument; the loop reached an ARITHMETIC DEAD END; next move is an operator decision; NOT shipped)
+- **The interrupted leg-6 session resumed at its own recorded state (§7: probe3k2 owed) and the
+  probes UNWOUND the campaign's trusted baseline.** `temp/scratch/thornvine_leg6_record_20261009.md`
+  §8-§9 record, all measured with the gate's own math (arc-length 0.5 resample ==
+  `scripts/thornvine_acceptance_gate.js` `arcResample` L296-311; 17-sample/2u-step windows ==
+  L912-918) under an ASSERTED resample invariant: **(1) probe3's zero-flat table is an
+  instrument artifact** — its `biarc_wall` walks arc1 only to th=alpha/2 then midpoint-mirrors,
+  leaving a 13.835-unit straight chord mid-wall (`tv_probe3_chain_inspect.py`) and scanning
+  windows of raw nodes at irregular spacing; §7's "probe3 STANDS / REPRODUCED" claim is REVOKED
+  (the re-run proved the bug deterministic, not the instrument valid — probe3b's own header had
+  already documented the construction bug). **(2) The TRUE tangent-continuous biarc fails G10's
+  curvature half on EVERY constructor gap 24-42** (`tv_v10_g10_feas_probe3m.py`: flat 1-2/25-28
+  windows/period, worst 0.19-0.38 at the inflection, matching the analytic 2/R prediction; R =
+  run/(2 sin th_j) >= rise/4 = 5 as run -> 0 gives dev(flip) <= 8/rise = 0.4 < 0.5 FOR ANY RUN —
+  structural, not unlucky; corner hairpin marginal 0.43-0.54, not clean) — so §5 item 0's
+  "biarc passes flat=0" premise behind muse iter-22's atomic list is FALSIFIED.
+  **(3) The gaussian-bump slope profile fails on valid scans** (`tv_v10_g10_feas_probe3k2.py`:
+  fixed closure via monotone ratio bisection, resid ~1e-15; NO CLOSURE at gaps 24-38, flat=4 at
+  42; flank kappa 0.018-0.10 < the 0.0625 floor for every |a| >= 0.4). **(4) The ramp-radius
+  family (probe3j, the one unmeasured survivor) is EXCLUDED BY CLOSURE ALONE**
+  (`tv_v10_g10_feas_probe3j2.py` + `_sanity`: u/d >= 1.238 at the 88deg slope cap vs the needed
+  0.60-1.05 — R decreasing in t concentrates arc at low slope; zero closure hits over the
+  196-point grid x 7 gaps; muse iter-23's "measure-zero tuning" prediction confirmed and
+  tightened).
+- **The pinned 6-loop escape valve fired and the mandatory consult ran**
+  (`thornvine_muse_iter23_{brief,answer}.md`): verdict **BLOCK, no score raised** (the
+  hard-to-please rule held), all seven cumulative approaches dispositioned, three named errors
+  recorded (instrument validation burned iters 17-22; iterating symmetric families after the
+  analytic proof; analytic-wall-first as the 1/10th-effort falsification method), and the
+  constraint-set ruling: **swing 20 + half-period <= 29 + one closed stroke + CURV_MIN 0.5 on
+  an 8u window is UNSATISFIABLE for any tangent-continuous S-family with an inflection.** His
+  standing instrument rules are adopted: assert the 0.5-resample invariant AND a positive
+  window count before logging any flat count, and derive the analytic wall BEFORE any family
+  scan. Full exchange with per-approach dispositions: leg-6 record §9.1.
+- **No code, no corpus, no gate byte changed — the next move is an OPERATOR DECISION on the
+  gate rule** (muse iter-23's three named options: CURV_MIN 0.5 -> 0.35-0.40; window 8u -> 6u;
+  or reformulate G10 as curvature-continuity instead of chord sagitta on an inflection-centered
+  window — his argument: the floor's purpose is to reject perceptually flat stretches, and a
+  biarc at R=5 reads dev=0.4, visually curved, failing only through inflection cancellation).
+  The tracked gate (`scripts/thornvine_acceptance_gate.js`, promoted a29a0f4) and the frozen
+  corpus are untouched; the 03-thornvine verdict stands FAIL [G1,G2,G3,G4,G5,G7,G9,G10] /
+  constructor FAIL [G1,G2,G4,G6,G9,G10]. Scratch-only session (probes + record + consult).
+
 ### Changed (2026-10-09 — Fix C promoted; the 03-thornvine acceptance gate is a tracked instrument)
 - **The operator authorized Fix C ("promote fix C") and the muses' iter-19/20 package left the
   scratch gate: the binding 03-thornvine acceptance gate now lives at
