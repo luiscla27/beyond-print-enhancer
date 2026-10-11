@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (2026-10-11 — YouTrack issue-authority go-live CLOSED; the last `msf validate --all` red is green)
+- **The missing runbook unit `policy/youtrack-issue-authority` was delivered** via the
+  framework's `init --adopt --vendored` (run from the framework tree at rev `73c8f2ec970b`):
+  `vendor/docs/governance/youtrack-issue-authority.md` landed byte-faithful (canonical body +
+  pure `{{PROJECT_ROOT}}` placeholder substitution — diff verified), and the full adopt reported
+  exactly 2 additions (`+ vendor/docs/governance/youtrack-issue-authority.md`,
+  `+ vendor/governance.yaml`), 92 pre-existing files skipped untouched. `msf validate --all`
+  now **PASSES with 0 errors** (15 warnings, all pre-existing classes). `drift_check` stays OK
+  (unit `9377e009d43b`, framework `73c8f2ec970b`) — the unit is untracked-by-the-lock, so the
+  new file is lock-neutral.
+- **`python temp/msf_golive_migrate.py --apply` re-run end-to-end per the user instruction:**
+  12 steps — 8 ok (roster/declaration/credential/capability/unit/capability-after/workspace/receipt),
+  2 owed-red (governance + guard, BOTH solely because of the duplicate `vendor/governance.yaml`
+  position; a project judged over two governance declarations cannot be judged), 1 planned
+  (unit-write dry run, no work). The tracker is the live issue authority: the guard answers
+  `[issues=tracker@048e3398c936]` (BEYOND, 5 issues, receipt fresh), and both guard halves pass
+  (root: 0 actionable debt; vendor root: 0/0/0).
+- **Adopt quirk, measured:** `init --adopt` REFUSES the project's own fleet-declared ports
+  (relay 38116 / control 37918 — declared in `reasonix.toml` AND the fleet task table); the run
+  was fail-closed (nothing written). Workaround used here was safe only because adopt is
+  add-only and every port-bearing file already existed: stand-in ports 38123/37923 were accepted
+  and never landed anywhere. Root cause + fix options filed to the framework as
+  `modelstack_framework/temp/issues/ISSUE_adopt_refuses_target_own_fleet_declared_ports_20261011.md`
+  (cross-referenced to its 2026-10-10 silent-REASSIGN sibling — same family, opposite failure
+  mode).
+- **Deliberate trade-off kept:** the duplicate `vendor/governance.yaml` (advisory-mode seed) is
+  NOT deleted — the migrate script's governance+guard steps cannot judge the tree while the two
+  positions disagree, and deleting the root declaration (the documented position, pinned by
+  `test/unit/vendored_overlay.test.js`) would go red against that test. Backlog: the migrate
+  script should accept the vendored-layout position pair (root FIRST wins) instead of holding
+  PENDING; filed as a framework follow-up candidate, not patched here.
+
 ### Attempted (2026-10-09, leg 6 resumed — G10-curvature shape families: the trusted baseline was a broken instrument; the loop reached an ARITHMETIC DEAD END; next move is an operator decision; NOT shipped)
 - **The interrupted leg-6 session resumed at its own recorded state (§7: probe3k2 owed) and the
   probes UNWOUND the campaign's trusted baseline.** `temp/scratch/thornvine_leg6_record_20261009.md`
