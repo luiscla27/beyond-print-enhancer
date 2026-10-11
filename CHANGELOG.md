@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Certified (2026-10-11 — the 8/10 corpus artwork bar: 10 of 11 certified MET)
+- **The 2026-10-11 operator ruling was executed** ("Aim a 8/10 on avg borders"): the corpus
+  bar is the set average ≈ 8/10, operationalized as **9 of 11 canonical designs certified
+  MET**; the escalated four (01/04/10/12) were regenerated on the **Gemini seat**
+  (`gemini-3.8-flash`, official OpenAI-compatible host) and re-judged under the ORIGINAL
+  instruments — no criterion, threshold or prompt text amended. **Outcome: 10/11 certified
+  MET — the bar is MET.** 04-dragon-scale now PASSES the D2 binding metric on all four terms
+  (the prior `LEFT stileStrokeP50Px 1 < 1.5` reads 14); 10-ink-brush and 12-knotwork are MET
+  on the vision seat (criterion + AC-V1-c). 01-gilded-frame is FAIL on the binding metric:
+  three DISTINCT accepted Gemini blobs (r24/r25/r27) all measure `cornerDeltaMin` 14 < 15 —
+  a measured prompt-family floor one device px under the untouched threshold; the seat's MET
+  is corroborating-only under D2. Full record:
+  `vendor/conductor/archive/byok_border_prompt_adoption_20261006/certification_8_10_bar_20261011.md`
+  (ruling: `operator_ruling_20261011.md` in the same directory).
+- **Corpus re-frozen at rounds 1..27**: 11 canonical / 42 variants / 53 accepted blobs, all
+  distinct; `freeze_border_corpus.js --check` byte-reproducible. All four escalated ids were
+  accepted on their first Gemini sample (round 23); 01's three draws each survive as
+  variants. `--provider gemini` added to `scripts/border_design_generator.js` (tooling-only;
+  the NOUS default, the product parse path and the product prompt path are unchanged; the
+  retired Gemini sampling params are never sent).
+- **Layout pin updated for the 2026-10-11 unit advance** (unit `9377e009d43b` /
+  framework `73c8f2ec970b`): the unit ships an advisory scaffold copy at
+  `vendor/governance.yaml`; the framework gate resolves root-first and warns on the second
+  declaration (`msf validate --all` PASS, 0 errors, MEASURED). `vendored_overlay.test.js`
+  now enforces the invariant that matters — root declaration ENFORCED, unit copy ADVISORY —
+  instead of asserting the vendor copy's absence.
+
 ### Fixed (2026-10-11 — YouTrack issue-authority go-live CLOSED; the last `msf validate --all` red is green)
 - **The missing runbook unit `policy/youtrack-issue-authority` was delivered** via the
   framework's `init --adopt --vendored` (run from the framework tree at rev `73c8f2ec970b`):

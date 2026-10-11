@@ -231,11 +231,29 @@ describe("vendored overlay layout + public flow (issue …_vendored_overlay_layo
       has(path.join("governance.yaml")),
       "governance.yaml must be at the ROOT: the gate reads it there and never under vendor/",
     );
-    assert.ok(
-      !has(path.join("vendor", "governance.yaml")),
-      "a vendor/governance.yaml would be inert (the gate's declaration lookup is root-only) — " +
-        "keep exactly one, at the root",
-    );
+    // The 2026-10-11 unit advance (unit 9377e009d43b / framework 73c8f2ec970b) SHIPS an
+    // advisory scaffold copy at vendor/governance.yaml — the framework's own gate now resolves
+    // root-FIRST (upstream F-5) and warns on the second declaration ("2 declaration(s) —
+    // reading governance.yaml and IGNORING vendor/governance.yaml", `msf validate --all`
+    // PASS 0 errors, MEASURED 2026-10-11), so the copy is tolerated as unit content. What this
+    // pin still enforces is the INVARIANT that made "exactly one" matter: the gate must land
+    // on this project's ENFORCED declaration, and the unit-shipped copy must stay the ADVISORY
+    // scaffold default so the two can never disagree in the dangerous direction.
+    const vendorDeclPath = path.join(ROOT, "vendor", "governance.yaml");
+    if (fs.existsSync(vendorDeclPath)) {
+      const vendorDecl = fs.readFileSync(vendorDeclPath, "utf8");
+      assert.ok(
+        /^governance:\s*advisory\s*$/m.test(vendorDecl),
+        "the unit-shipped vendor/governance.yaml is not the advisory scaffold default — the gate " +
+          "resolves root-first, but a second non-advisory declaration is a conflict the gate can " +
+          "only warn about",
+      );
+      assert.ok(
+        !/^local:\s*\[[^\]]/m.test(vendorDecl.replace(/local:\s*\[\s*\]/, "")),
+        "the unit-shipped vendor/governance.yaml declares local units — project-local skill " +
+          "declarations belong ONLY in the root declaration the gate reads",
+      );
+    }
     const decl = read("governance.yaml");
     assert.ok(
       /^governance:\s*enforced\s*$/m.test(decl),

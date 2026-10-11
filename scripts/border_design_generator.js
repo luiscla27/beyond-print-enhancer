@@ -85,6 +85,28 @@ const AiLayout = require(path.join(ROOT, "js", "ai_layout.js"));
  *  (reasoning-only), and `inclusionai/ling-3.0-flash-fin:free` is a 404, so neither is dialable. */
 const DEFAULT_MODEL = "poolside/laguna-s-2.1:free";
 const NOUS_BASE = process.env.NOUS_BASE_URL || "https://inference-api.nousresearch.com/v1";
+
+/** The GEMINI seat (operator ruling 2026-10-11, track byok_border_prompt_adoption_20261006):
+ *  Google's official OpenAI-compatible endpoint with the PROJECT's own credentials — the same
+ *  host and key-resolver order the serving relay uses for the visual lane
+ *  (`vendor/relay/adapters/__init__.py`: GEMINI_OPENAI_BASE default
+ *  `https://generativelanguage.googleapis.com/v1beta/openai`; keys GEMINI_PAID_API_KEY then
+ *  GEMINI_FREE_TIER_API_KEY). The fleet's visual-lane model id is `gemini-3.8-flash`
+ *  (vendor/stack/instances/uppercore.v1.json `visual_primary`). Credential resolution mirrors
+ *  `resolveKey` above (env -> temp/secrets.env -> HKCU\Environment) so a run log can only ever
+ *  leak a prefix + length.
+ *
+ *  SAMPLING KNOBS ARE RETIRED ON THIS HOST (measured in the vendored wire module:
+ *  `GOOGLE_RETIRED_PARAMS` = temperature/top_p/top_k/thinking_budget — Google's 2026-10-07
+ *  notice makes them a hard 400 INVALID_ARGUMENT on upcoming Gemini models). The Gemini leg
+ *  therefore sends NO sampling fields: the provider default is the trial, and the round file
+ *  records `sampling: null` so the provenance stays honest. The per-id degenerate gate and
+ *  the first-accepted-pass freeze rule are unchanged. */
+const GEMINI_BASE = (
+  process.env.REASONIX_PROXY_GEMINI_BASE ||
+  "https://generativelanguage.googleapis.com/v1beta/openai"
+).replace(/\/+$/, "");
+const GEMINI_MODEL = process.env.GEMINI_BORDER_MODEL || "gemini-3.8-flash";
 const DEFAULT_OUT = path.join(ROOT, "temp", "visual_logs", "byok_svg_borders_20260927");
 
 /** A section row in the shape `ai_arrange.collectSections` produces — numbers, not "200px". Values
@@ -238,9 +260,53 @@ async function callNous(model, messages, key, maxTokens, sampling) {
   };
 }
 
+async function callGemini(model, messages, key, maxTokens) {
+  // No temperature/top_p/seed: RETIRED on Google's official host (GOOGLE_RETIRED_PARAMS).
+  const body = JSON.stringify({ model, messages, max_tokens: maxTokens });
+  const t0 = Date.now();
+  let res;
+  try {
+    res = await fetch(GEMINI_BASE + "/chat/completions", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
+      body,
+    });
+  } catch (err) {
+    return { ok: false, status: 0, ms: Date.now() - t0, error: String((err && err.message) || err) };
+  }
+  const ms = Date.now() - t0;
+  const text = await res.text();
+  if (!res.ok) {
+    return { ok: false, status: res.status, ms, error: text.slice(0, 400) };
+  }
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { ok: false, status: res.status, ms, error: "response was not JSON: " + text.slice(0, 200) };
+  }
+  const choice = (data.choices || [])[0] || {};
+  const message = choice.message || {};
+  return {
+    ok: true,
+    status: res.status,
+    ms,
+    finish: choice.finish_reason || null,
+    usage: data.usage || null,
+    content: typeof message.content === "string" ? message.content : "",
+  };
+}
+
 async function main() {
   const outDir = path.resolve(arg("out", DEFAULT_OUT));
   const model = arg("model", DEFAULT_MODEL);
+  // SEAT SELECTOR (operator ruling 2026-10-11): `--provider gemini` dials Google's official
+  // OpenAI-compatible endpoint with the project's own Gemini credentials. Default stays `nous`
+  // so an un-flagged run behaves exactly as before (the write guard depends on that stability).
+  const provider = (arg("provider", "nous") || "nous").toLowerCase();
+  if (provider !== "nous" && provider !== "gemini") {
+    throw new Error("unknown --provider " + provider + " (expected: nous | gemini)");
+  }
   const round = String(arg("round", "1"));
   const only = (arg("only", "") || "").split(",").map((s) => s.trim()).filter(Boolean);
   const maxTokens = Number(arg("max-tokens", "6000"));
@@ -279,9 +345,16 @@ async function main() {
   const refusal = roundWriteRefusal(existing, round, overwriteRound);
   if (refusal) throw refusal;
 
-  const key = resolveKey("NOUS_API_KEY");
+  const keyName = provider === "gemini" ? "GEMINI_PAID_API_KEY" : "NOUS_API_KEY";
+  const keyNames =
+    provider === "gemini" ? ["GEMINI_PAID_API_KEY", "GEMINI_FREE_TIER_API_KEY"] : ["NOUS_API_KEY"];
+  let key = "";
+  for (const name of keyNames) {
+    key = resolveKey(name);
+    if (key) break;
+  }
   if (!key) {
-    throw new Error("NOUS_API_KEY not resolvable (env, temp/secrets.env, or HKCU\\Environment)");
+    throw new Error(keyNames.join(" / ") + " not resolvable (env, temp/secrets.env, or HKCU\\Environment)");
   }
 
   fs.mkdirSync(path.join(outDir, "raw-round" + round), { recursive: true });
@@ -292,8 +365,9 @@ async function main() {
   };
 
   say("border design generator — round " + round);
-  say("model: " + model + " @ " + NOUS_BASE);
-  say("key: prefix=" + key.slice(0, 6) + "... len=" + key.length);
+  say("provider: " + provider + (provider === "gemini" ? " @ " + GEMINI_BASE : " @ " + NOUS_BASE));
+  say("model: " + (provider === "gemini" ? (model === DEFAULT_MODEL ? GEMINI_MODEL : model) : model));
+  say("key: " + keyName + " prefix=" + key.slice(0, 6) + "... len=" + key.length);
   say("designs: " + wanted.length + (only.length ? " (--only " + only.join(",") + ")" : ""));
   say("sampling: temperature=" + temperature + " top_p=" + (topP === undefined ? "-" : topP) +
       " samples=" + samples + " max_tokens=" + maxTokens + " retries=" + maxRetries +
@@ -326,11 +400,15 @@ async function main() {
 
     for (let k = 1; k <= samples && !acceptedAttempt; k++) {
       // Per-call seed: two samples at the same temperature must not be replays of one trajectory.
+      // (Nous leg only — the Gemini leg sends no sampling knobs, so there is no seed to vary.)
       const seed = Math.floor(Math.random() * 1e9);
       let call = null;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          call = await callNous(model, messages, key, maxTokens, Object.assign({}, sampling, { seed }));
+          call =
+            provider === "gemini"
+              ? await callGemini(provider === "gemini" && model === DEFAULT_MODEL ? GEMINI_MODEL : model, messages, key, maxTokens)
+              : await callNous(model, messages, key, maxTokens, Object.assign({}, sampling, { seed }));
         } catch (err) {
           call = { ok: false, status: 0, ms: 0, error: String((err && err.message) || err) };
         }
@@ -347,8 +425,9 @@ async function main() {
         fs.writeFileSync(
           path.join(rawDir, rawName),
           JSON.stringify({
-            id: entry.id, title: entry.title, model, instruction: entry.instruction,
-            temperature, top_p: topP === undefined ? null : topP, seed, sample: k,
+            id: entry.id, title: entry.title, provider, model: provider === "gemini" && model === DEFAULT_MODEL ? GEMINI_MODEL : model,
+            instruction: entry.instruction,
+            temperature: provider === "gemini" ? null : temperature, top_p: provider === "gemini" || topP === undefined ? null : topP, seed: provider === "gemini" ? null : seed, sample: k,
             finish: call.finish, usage: call.usage, ms: call.ms, content: call.content,
           }, null, 2),
         );
@@ -393,8 +472,9 @@ async function main() {
       if (verdict.ok) {
         acceptedAttempt = {
           id: entry.id, title: entry.title, instruction: entry.instruction, criterion: entry.criterion,
-          model, ms: call.ms || 0, finish: call.finish || null, usage: call.usage || null, promptChars,
-          temperature, seed, sample: k, samplesRequested: samples,
+          provider, model: provider === "gemini" && model === DEFAULT_MODEL ? GEMINI_MODEL : model,
+          ms: call.ms || 0, finish: call.finish || null, usage: call.usage || null, promptChars,
+          temperature: provider === "gemini" ? null : temperature, seed: provider === "gemini" ? null : seed, sample: k, samplesRequested: samples,
           accepted: true, rejectCode: null, rejectDetail: null,
           svgChars: verdict.chars || 0, svg: verdict.svg,
         };
@@ -408,8 +488,9 @@ async function main() {
       const d = lastFail || { code: "no_response", chars: 0 };
       byId.set(entry.id, mergeAttempt(byId.get(entry.id), {
         id: entry.id, title: entry.title, instruction: entry.instruction, criterion: entry.criterion,
-        model, ms: 0, finish: null, usage: null, promptChars,
-        temperature, samplesRequested: samples,
+        provider, model: provider === "gemini" && model === DEFAULT_MODEL ? GEMINI_MODEL : model,
+        ms: 0, finish: null, usage: null, promptChars,
+        temperature: provider === "gemini" ? null : temperature, samplesRequested: samples,
         accepted: false, rejectCode: d.code, rejectDetail: d.detail || null,
         svgChars: d.chars || 0, svg: null,
       }));
@@ -427,8 +508,9 @@ async function main() {
     );
     fs.writeFileSync(
       path.join(outDir, "designs-round" + round + ".json"),
-      JSON.stringify({ round, model, generatedAt: new Date().toISOString(),
-        sampling: { temperature, top_p: topP === undefined ? null : topP, max_tokens: maxTokens, retries: maxRetries, samples, degenerateIds },
+      JSON.stringify({ round, provider, model: provider === "gemini" && model === DEFAULT_MODEL ? GEMINI_MODEL : model,
+        generatedAt: new Date().toISOString(),
+        sampling: provider === "gemini" ? null : { temperature, top_p: topP === undefined ? null : topP, max_tokens: maxTokens, retries: maxRetries, samples, degenerateIds },
         designs: [...byId.values()] }, null, 2),
     );
   }
