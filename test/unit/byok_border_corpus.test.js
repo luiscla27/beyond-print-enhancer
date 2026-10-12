@@ -70,28 +70,28 @@ const validateSvg = AiLayout.validateSvg;
 describe("BYOK border corpus — the frozen input the visual gate renders", function () {
   it("carries the whole corpus: 11 canonical designs plus every superseded variant", function () {
     assert.strictEqual(corpus.designs.length, 11, "canonical design count changed");
-    // 42 variants since the 2026-10-11 Gemini regeneration round (operator ruling in
+    // 44 variants since the 2026-10-11 Gemini regeneration round (operator ruling in
     // `vendor/conductor/archive/byok_border_prompt_adoption_20261006/operator_ruling_20261011.md`):
     // the 35 of the adoption leg plus the 4 blobs round 23 (the Gemini seat) superseded —
     // 01 (r20 winner), 04 (r19 winner), 10 (r22 winner), 12 (r20 winner) — plus the round-24
     // 8/10-bar sample (2026-10-11, same session) whose 01 blob re-emitted the same artwork and
-    // superseded the round-23 winner, plus the round-25 draw the same ruling's remedy produced
-    // when round 24's re-emission measured cornerDeltaMin 14 < 15 (01 only; the seat's MET is
-    // corroborating-only, the D2 metric binds in both directions).
-    assert.strictEqual(corpus.variants.length, 42, "superseded-variant count changed");
-    // 53 = every accepted blob the live generator ever produced (rounds 1..27). It was 27
+    // superseded the round-23 winner, plus the round-25/27 remedy draws and the 2026-10-12
+    // 8/10 push (rounds 30/31): five more accepted 01 blobs, each measuring cornerDeltaMin 14.
+    assert.strictEqual(corpus.variants.length, 44, "superseded-variant count changed");
+    // 55 = every accepted blob the live generator ever produced (rounds 1..31). It was 27
     // through the D3 leg, 41 after the 2026-10-06 prompt-adoption regeneration (rounds 10-19),
     // grew by exactly 5 with the close-out consult's ordered RESAMPLES (01/08/12 in round
     // 20, 02/10 in round 22 — rounds 21 accepted nothing; 04 stayed at its r19 blob after three
     // consecutive refused resample rounds, the consult's own escalation boundary), by exactly
     // 4 more with the 2026-10-11 operator-ordered regeneration on the GEMINI seat (round 23,
-    // all four escalated ids accepted on their first sample), and by 1 more with the 8/10-bar
-    // round 24 (01 only; the blob turned out to be a re-emission of the same artwork). A
+    // all four escalated ids accepted on their first sample), and by 5 more with the 8/10-bar
+    // rounds 24/25/27 (2026-10-11) and the 8/10 push rounds 30/31 (2026-10-12) — all 01, the
+    // last a byte re-emission of r23's artwork (accepted history, not a new blob). A
     // retirement, an adoption or a resample moves history, it never deletes it.
     assert.strictEqual(
       corpus.designs.length + corpus.variants.length,
-      53,
-      "the frozen corpus must account for all 53 accepted blobs",
+      55,
+      "the frozen corpus must account for all 55 accepted blobs",
     );
     const ids = corpus.designs.map((d) => d.id).sort();
     assert.deepStrictEqual(ids, [
@@ -152,10 +152,17 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     const all = corpus.designs.concat(corpus.variants);
     const seen = new Map();
     const collisions = [];
+    // Round 31's accepted 01 draw is r23's artwork byte for byte — the adopted prompt pins that
+    // geometry so completely that seven draws across two seats converge on it. That measured
+    // re-emission is pinned here (allowlisted) and asserted once below, so it can neither
+    // silently grow nor masquerade as a fixture bug.
+    const REEMISSIONS = new Set(["01-gilded-frame@31 == 01-gilded-frame@23"]);
     for (const d of all) {
       const h = sha(d.svg);
-      if (seen.has(h)) collisions.push(seen.get(h) + " == " + d.id + "@" + d.round);
-      else seen.set(h, d.id + "@" + d.round);
+      if (seen.has(h)) {
+        const pair = seen.get(h) + " == " + d.id + "@" + d.round;
+        if (!REEMISSIONS.has(pair)) collisions.push(pair);
+      } else seen.set(h, d.id + "@" + d.round);
     }
     assert.deepStrictEqual(
       collisions,
@@ -163,13 +170,15 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
       "the frozen corpus holds duplicate blobs (a variant recorded its own winner's bytes): " +
         collisions.join(", "),
     );
-    // 53 distinct since the 2026-10-11 Gemini regeneration round: the 46 blobs of the adoption
-    // leg plus the 4 accepted blobs round 23 added (one per escalated id), plus 3 — the
+    // 54 distinct since the 2026-10-11 Gemini regeneration round: the 46 blobs of the adoption
+    // leg plus the 4 accepted blobs round 23 added (one per escalated id), plus 4 — the
     // round-24 01 sample re-emitted the round-23 artwork with DIFFERENT BYTES (attribute order
-    // differs, geometry identical), and the round-25/round-27 draws (the same ruling's remedy,
-    // run after r24's blob measured cornerDeltaMin 14 < 15) added two more distinct artworks.
+    // differs, geometry identical), the round-25/round-27 draws (the same ruling's remedy,
+    // run after r24's blob measured cornerDeltaMin 14 < 15) added two more distinct artworks,
+    // and round 30 added one more; round 31 RE-EMITTED r23's exact bytes (an accepted draw
+    // whose bytes already exist — recorded as history, not a new blob).
     // History is preserved — which is exactly what this count proves.
-    assert.strictEqual(seen.size, 53, "distinct blob count is not 53: " + seen.size);
+    assert.strictEqual(seen.size, 54, "distinct blob count is not 54: " + seen.size);
   });
 
   it("attributes each superseded variant to the round it was SUPERSEDED BY, not to itself", function () {
@@ -195,15 +204,33 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         continue;
       }
       assert.strictEqual(v.supersededByRound, winner.round, v.id + ": supersededByRound is wrong");
-      // And the variant really is a DIFFERENT blob from the winner.
-      assert.notStrictEqual(v.svg, winner.svg, v.id + ": the variant IS the winner's bytes");
-      // 01's history carries TWO measured same-length distinct pairs: r23→r24 (the re-emission,
+      // And the variant really is a DIFFERENT blob from the winner — except for a measured
+      // byte re-emission: round 31's accepted 01 draw is r23's artwork byte for byte (the
+      // prompt fully pins that geometry, so two seats and seven draws converge on it), and the
+      // freeze's last-accepted-wins rule correctly records r23 as superseded by r31. That
+      // duplication is the FINDING, not a fixture bug: the corpus gate pins it so it cannot
+      // silently grow.
+      const isReemission =
+        v.id === "01-gilded-frame" && v.round === "23" && winner.round === "31";
+      assert.ok(
+        isReemission || v.svg !== winner.svg,
+        v.id + ": the variant IS the winner's bytes",
+      );
+      // The re-emission itself, asserted once: r31 == r23 byte for byte.
+      if (isReemission) {
+        assert.strictEqual(v.svg, winner.svg,
+          "01: the pinned r23→r31 re-emission no longer matches — a NEW byte re-emission appeared");
+      }
+      // 01's history carries measured same-length distinct pairs: r23→r24 (the re-emission,
       // same artwork in a different attribute order, 517 chars both) and r25→r27 (two DISTINCT
       // artworks that both serialize to 499 chars — different sha256, already proven distinct by
       // the distinct-blob count above). Both are recorded history; everything else stays suspicious.
       const sameLengthOk =
         (v.id === "01-gilded-frame" && v.round === "23" && winner.round === "24") ||
-        (v.id === "01-gilded-frame" && v.round === "25" && winner.round === "27");
+        (v.id === "01-gilded-frame" && v.round === "25" && winner.round === "27") ||
+        (v.id === "01-gilded-frame" && v.round === "23" && winner.round === "31") ||
+        (v.id === "01-gilded-frame" && v.round === "24" && winner.round === "31") ||
+        (v.id === "01-gilded-frame" && v.round === "30" && winner.round === "31");
       assert.ok(
         sameLengthOk || v.svgChars !== winner.svgChars,
         v.id + ": variant and winner have the same length — suspicious for a superseded blob",
@@ -288,7 +315,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // frozen). 04's r11/r14 "acceptances" were degenerate empty frames and are variants.
     // The 2026-10-11 operator ruling (regenerate+re-judge on the GEMINI seat) then moved the four
     // escalated ids to round 23 — all four accepted on their first sample.
-    assert.strictEqual(byId["01-gilded-frame"].round, "27", "01-gilded-frame must come from round 27 (the ruling's remedy draw after r24/r25 both measured cornerDeltaMin 14 < 15)");
+    assert.strictEqual(byId["01-gilded-frame"].round, "31", "01-gilded-frame must come from round 31 (the 8/10 push; r23/r24/r25/r27/r30 all measured cornerDeltaMin 14 < 15)");
     assert.strictEqual(byId["07-corner-arcs"].round, "10", "07-corner-arcs must come from round 10 (the adoption regeneration)");
     assert.strictEqual(byId["08-flame-crest"].round, "20", "08-flame-crest must come from round 20 (the close-out consult's ordered resample)");
     assert.strictEqual(byId["03-thornvine"].round, "17", "03-thornvine must come from round 17 (the sampled-leg remedy)");
@@ -310,7 +337,8 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
         "designs-round16.json", "designs-round17.json", "designs-round18.json",
         "designs-round19.json", "designs-round20.json", "designs-round21.json",
         "designs-round22.json", "designs-round23.json", "designs-round24.json",
-        "designs-round25.json", "designs-round27.json",
+        "designs-round25.json", "designs-round27.json", "designs-round30.json",
+        "designs-round31.json",
       ],
     );
     const keys = corpus.rounds.map((f) => freeze.roundKey(path.basename(f)));
@@ -339,7 +367,7 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     const m = JSON.parse(fs.readFileSync(merged, "utf8"));
     const byIdM = {};
     for (const d of m.designs || []) byIdM[d.id] = d.svg;
-    const adoptionRound = new Set(["10", "11", "12", "13", "17", "19", "20", "22", "23", "24", "25", "27"]);
+    const adoptionRound = new Set(["10", "11", "12", "13", "17", "19", "20", "22", "23", "24", "25", "27", "30", "31"]);
     const regenerated = new Set(["05-celestial-arcs", "07-corner-arcs"].concat(
       corpus.designs.filter((d) => adoptionRound.has(d.round)).map((d) => d.id),
     ));
@@ -479,10 +507,11 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // 01's own history is the sharpest case: round 1 (dashed), round 5 (solid but black),
     // round 5b (the gold answer R-3 later judged), round 10 (the adoption regeneration), round 20
     // (the close-out consult's ordered resample), round 23 (the operator's Gemini-seat
-    // regeneration), round 24 (the 8/10-bar re-emission) and rounds 25/27 (the remedy draws) were
-    // all accepted, and round 27 holds the canonical status.
+    // regeneration), round 24 (the 8/10-bar re-emission), rounds 25/27 (the remedy draws) and
+    // round 30 (the 2026-10-12 8/10 push) were all accepted, and round 31 (the push's second
+    // draw — a byte re-emission of r23) now holds the canonical status.
     const gilded = corpus.variants.filter((v) => v.id === "01-gilded-frame").map((v) => v.round).sort();
-    assert.deepStrictEqual(gilded, ["1", "10", "20", "23", "24", "25", "5", "5b"].sort(), "01-gilded-frame's superseded rounds changed: " + gilded.join(","));
+    assert.deepStrictEqual(gilded, ["1", "10", "20", "23", "24", "25", "27", "30", "5", "5b"].sort(), "01-gilded-frame's superseded rounds changed: " + gilded.join(","));
   });
 
   it("operator overrides: exactly the four ruled ids carry a criterion override, each with provenance", function () {
@@ -625,12 +654,16 @@ describe("BYOK border corpus — the frozen input the visual gate renders", func
     // differs, geometry identical) and superseded the round-23 winner per the freeze's own
     // last-accepted-wins rule. That r24 blob then measured cornerDeltaMin 14 < 15 on the D2
     // binding metric, and the ruling's remedy (regenerate + re-judge) produced the round-25
-    // draw now canonical — the r24 bytes survive as a variant.
-    assert.strictEqual(d01.round, "27", "01: the canonical blob is round 27 (the ruling's remedy draw; r24/r25 both measured cornerDeltaMin 14 < 15)");
+    // draw. The 2026-10-12 8/10 push (rounds 30/31) drew twice more — r30 distinct, r31 a byte
+    // re-emission of r23 — and all five post-r23 blobs measured cornerDeltaMin 14 (the family
+    // floor: the adopted prompt's declared 6-unit diamonds clip the D1 corner box). r31 now
+    // holds canonical status; r23's bytes survive as BOTH the r23 variant (superseded by r31,
+    // the re-emission pin) and inside the r24 variant's reordered spelling.
+    assert.strictEqual(d01.round, "31", "01: the canonical blob is round 31 (the 8/10 push's re-emission draw; r23/r24/r25/r27/r30 all measured cornerDeltaMin 14 < 15)");
     assert.strictEqual(
       d01.sha256,
-      "1fe5f9f794b3877bd255f49c19964be8cb052b23039c46655cf20e983b0adb1c",
-      "01: the canonical bytes are not round 27's sample blob",
+      "efaab92b4d46ef6995f78ce7488460271de5867ea6b6fd3e59cca8212219e493",
+      "01: the canonical bytes are not round 31's sample blob",
     );
     {
       const r5bVariant = corpus.variants.find((v) => v.id === "01-gilded-frame" && v.round === "5b");

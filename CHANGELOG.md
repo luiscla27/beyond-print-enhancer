@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Certified (2026-10-11 — the 8/10 corpus artwork bar: 10 of 11 certified MET)
+- **2026-10-12 push ("Push on to 8/10 svg borders") — 01-gilded-frame re-drawn twice more on
+  the Gemini seat (rounds 30/31), re-measured FAIL at the same family floor.** r30 is a new
+  distinct blob (`60282ce4…`); r31 is a byte re-emission of r23's artwork (seven draws across
+  two seats converge on it — the adopted prompt pins that geometry). Both measure
+  `cornerDeltaMin` **14** (TL 20 / TR 26 / BL 14 / BR 18, coverage 0.963). Root cause now
+  MEASURED: the prompt's declared "**diagonal 6 units**" diamonds (extent x6..12) clip the D1
+  corner box (x12..20) derived from r5b's 8-unit diamonds; re-deriving the box from the
+  declared geometry reads worse for every blob including r5b, so the frozen box is the correct
+  scale. Corpus re-frozen at rounds 1..31 (11 canonical / 44 variants / 55 accepted, **54
+  distinct** — the r23→r31 re-emission pinned in the corpus gate). The 8/10 tally is
+  unchanged: **10 of 11 MET**. The remaining lever is operator-owned (a prompt amendment to
+  8-unit diamonds, or a D1 box re-derivation ruling) — no criterion, threshold or prompt text
+  was amended.
 - **The 2026-10-11 operator ruling was executed** ("Aim a 8/10 on avg borders"): the corpus
   bar is the set average ≈ 8/10, operationalized as **9 of 11 canonical designs certified
   MET**; the escalated four (01/04/10/12) were regenerated on the **Gemini seat**

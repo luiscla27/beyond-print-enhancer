@@ -31,7 +31,9 @@
     "designs-round23.json",
     "designs-round24.json",
     "designs-round25.json",
-    "designs-round27.json"
+    "designs-round27.json",
+    "designs-round30.json",
+    "designs-round31.json"
   ],
   "designs": [
     {
@@ -47,10 +49,10 @@
         "reason": "Operator ruling R-3 (paired with R-2, which keeps the judged instrument at the product's PRINT defaults): the frozen round-5b blob strokes `url(#goldGrad)` #c9a227/#d4af37, and a clean-Chromium reproduction of the shipped border-image pipeline paints that band gold (8.3% gold px), but the product's own default decoration filter — `grayscale(100%)` at the shipped defaults, applied to every border kind through the same ::before slot — removes the hue before any pixel exists. Measured on the judged native cell, the band is the greyscale of the authored gold (luma 161) and gold-classified pixels are 0.0000% on the TOP band; a colour-demanding criterion is therefore unsatisfiable by construction for ANY artwork, not just this one. The ruling re-cuts the judged TEXT to the shapes the pipeline does paint — two concentric rules continuous on every edge plus a corner mark at each corner, both measured on the judged frame — and keeps the frozen bytes (sha256 99605fc3…, round 5b) unchanged."
       },
       "model": "gemini-3.8-flash",
-      "round": "27",
-      "svgChars": 499,
-      "sha256": "1fe5f9f794b3877bd255f49c19964be8cb052b23039c46655cf20e983b0adb1c",
-      "svg": "<svg viewBox=\"0 0 256 288\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><rect x=\"4\" y=\"4\" width=\"248\" height=\"280\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.6\"/><rect x=\"14\" y=\"14\" width=\"228\" height=\"260\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.6\"/><polygon points=\"9,6 12,9 9,12 6,9\" fill=\"#111\"/><polygon points=\"247,6 250,9 247,12 244,9\" fill=\"#111\"/><polygon points=\"9,276 12,279 9,282 6,279\" fill=\"#111\"/><polygon points=\"247,276 250,279 247,282 244,279\" fill=\"#111\"/></svg>"
+      "round": "31",
+      "svgChars": 517,
+      "sha256": "efaab92b4d46ef6995f78ce7488460271de5867ea6b6fd3e59cca8212219e493",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 288\" preserveAspectRatio=\"none\"><rect x=\"4\" y=\"4\" width=\"248\" height=\"280\" fill=\"none\" stroke=\"#111111\" stroke-width=\"1.6\"/><rect x=\"14\" y=\"14\" width=\"228\" height=\"260\" fill=\"none\" stroke=\"#111111\" stroke-width=\"1.6\"/><polygon points=\"9,6 12,9 9,12 6,9\" fill=\"#111111\"/><polygon points=\"247,6 250,9 247,12 244,9\" fill=\"#111111\"/><polygon points=\"9,276 12,279 9,282 6,279\" fill=\"#111111\"/><polygon points=\"247,276 250,279 247,282 244,279\" fill=\"#111111\"/></svg>"
     },
     {
       "id": "02-runic-band",
@@ -181,7 +183,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "1",
       "svgChars": 719,
       "sha256": "b4aa0e9eb18732a9b6d9660b7326b3adce261a94105591ea3593247534d0dc5c",
@@ -190,7 +192,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "5",
       "svgChars": 497,
       "sha256": "c44c81ff10ebd00cedfba7832c3fdd0df4660921f5553fd4c2ec95a5e7c3d36b",
@@ -199,7 +201,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "5b",
       "svgChars": 889,
       "sha256": "99605fc36fcc243fa11f4e1109207b8310fb0dae8999c98453e8cc7bef713e3d",
@@ -208,7 +210,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "10",
       "svgChars": 532,
       "sha256": "b1c1382df4e9218eab3177fc3e83b22441c80bf384ea4d9e0f5ab0b41946080d",
@@ -217,7 +219,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "20",
       "svgChars": 511,
       "sha256": "f36388288892286d7ceb596d1bc9302fed11b9a411b656fe1204b0673bb9a4c3",
@@ -226,7 +228,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "23",
       "svgChars": 517,
       "sha256": "efaab92b4d46ef6995f78ce7488460271de5867ea6b6fd3e59cca8212219e493",
@@ -235,7 +237,7 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "24",
       "svgChars": 517,
       "sha256": "b8c3d3973928eed0c5cd1e90704c04527697156f823b31c47b811a702296de0b",
@@ -244,11 +246,29 @@
     {
       "id": "01-gilded-frame",
       "title": "Gilded double frame",
-      "supersededByRound": "27",
+      "supersededByRound": "31",
       "round": "25",
       "svgChars": 499,
       "sha256": "42efdec2ac306dc7b495ee91712983505baadf2bf04d90872809800deacc1a6d",
       "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 288\" preserveAspectRatio=\"none\"><rect x=\"4\" y=\"4\" width=\"248\" height=\"280\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.6\"/><rect x=\"14\" y=\"14\" width=\"228\" height=\"260\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.6\"/><polygon points=\"9,6 12,9 9,12 6,9\" fill=\"#111\"/><polygon points=\"247,6 250,9 247,12 244,9\" fill=\"#111\"/><polygon points=\"9,276 12,279 9,282 6,279\" fill=\"#111\"/><polygon points=\"247,276 250,279 247,282 244,279\" fill=\"#111\"/></svg>"
+    },
+    {
+      "id": "01-gilded-frame",
+      "title": "Gilded double frame",
+      "supersededByRound": "31",
+      "round": "27",
+      "svgChars": 499,
+      "sha256": "1fe5f9f794b3877bd255f49c19964be8cb052b23039c46655cf20e983b0adb1c",
+      "svg": "<svg viewBox=\"0 0 256 288\" xmlns=\"http://www.w3.org/2000/svg\" preserveAspectRatio=\"none\"><rect x=\"4\" y=\"4\" width=\"248\" height=\"280\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.6\"/><rect x=\"14\" y=\"14\" width=\"228\" height=\"260\" fill=\"none\" stroke=\"#111\" stroke-width=\"1.6\"/><polygon points=\"9,6 12,9 9,12 6,9\" fill=\"#111\"/><polygon points=\"247,6 250,9 247,12 244,9\" fill=\"#111\"/><polygon points=\"9,276 12,279 9,282 6,279\" fill=\"#111\"/><polygon points=\"247,276 250,279 247,282 244,279\" fill=\"#111\"/></svg>"
+    },
+    {
+      "id": "01-gilded-frame",
+      "title": "Gilded double frame",
+      "supersededByRound": "31",
+      "round": "30",
+      "svgChars": 517,
+      "sha256": "60282ce46ffb3ff2548ade8ec0d497e1d2288f73fe6c9527e336648bd4175e45",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 288\" preserveAspectRatio=\"none\"><rect x=\"4\" y=\"4\" width=\"248\" height=\"280\" fill=\"none\" stroke=\"#000000\" stroke-width=\"1.6\"/><rect x=\"14\" y=\"14\" width=\"228\" height=\"260\" fill=\"none\" stroke=\"#000000\" stroke-width=\"1.6\"/><polygon points=\"9,6 12,9 9,12 6,9\" fill=\"#000000\"/><polygon points=\"247,6 250,9 247,12 244,9\" fill=\"#000000\"/><polygon points=\"9,276 12,279 9,282 6,279\" fill=\"#000000\"/><polygon points=\"247,276 250,279 247,282 244,279\" fill=\"#000000\"/></svg>"
     },
     {
       "id": "02-runic-band",
