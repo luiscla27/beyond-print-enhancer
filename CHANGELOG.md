@@ -7,6 +7,114 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Attempted (2026-10-13, leg 8 — v27 = muse iter-26 Q1(a)/Q2 LITERAL + v28 = muse iter-27's mechanisms; best artifact v27c 6/10; NOT shipped)
+- **The mandatory 6-loop escape-valve consult RAN (muse iter-27, 2026-10-13)** after 8
+  tracked gate iterations on the same target (v23..v27c): complete brief with every
+  cumulative approach + measured result
+  (`temp/scratch/thornvine_muse_iter27_brief.md`), answer
+  (`temp/scratch/thornvine_muse_iter27_answer.txt`, 11,725 chars). His named mechanism:
+  wave-start slope-zero isolation (u=0 is a swell extremum; the relief stands alone
+  there and its period-3 regularity fires the G10 3-agree trigger). His prescriptions:
+  Q1 phi_e=pi/2 + single pi slip, Q2 biarc fillet with interior inflection, Q3
+  greedy+slide placement on the displaced ring.
+- **v27 sequence measured (gate, exact):** v27 7/10 (ramp missed the fillet's own
+  K3*L_f accumulation) -> v27b 7/10 (accumulation absorbed + unwrap; normal-direction
+  displacement — hard flatWindows 94-129 -> **0**, p10 0.4; muse F1 remediated) ->
+  v27c 6/10 (right/left 5 periods took **G7 to 0 fails**; roots re-solved on the
+  displaced ring; fillets 36 -> 140 bez: null). Persistent: G10 regularity triggers
+  (16) at wave-start corner windows, firing with fillet relief ON **and** OFF
+  (probe6 A/B) — the dome/dive cubic's own decay forms the 4-alternating run.
+- **v28 = muse iter-27 Q1/Q3 implemented LITERALLY — measured WORSE (G2 8 / G7 10 /
+  G10 16).** Both falsified on this ring: the 3-agree run COMPLETES before the s=9.0
+  slip lands (measured agreeing swings 1.2/1.8/1.9 at proj ~8.6-11.7), the slip's
+  mid-wave phase rate creates new G7 extrema (false crest 28.1; s2 troughs 4.0-4.3),
+  and greedy+slide produced a 570.8u coverage hole (cost 34.4k vs the annealer's
+  17.8 — it cannot cross the legal deserts along the fillet arcs).
+- **Pushback recorded per the challenge protocol:** muse's falsification relabels the
+  G7 gap-44s as sprout gaps; the gate's fail lines read verbatim `along-vine extremum
+  gap 43 outside 22.5-42.5` and the periods lever measured G7 -> 0 fails twice — the
+  lever stays, his relabel is not adopted.
+- **Terminal state:** best artifact v27c (6/10: G2 5 / G4 1 / G9 2 / G10 16; G1/G3/G5/
+  G6/G7/G8 PASS), `temp/scratch/tv_constructed_tile_v27.svg`. muse's own verdict: the
+  criterion set (G10 REGULARITY ban x monotone-relief handoff x G7 band x G2 gaps) is
+  jointly unsatisfiable for this constructor class, and his Option A relaxation is now
+  also measured-worse. Remaining paths are OPERATOR-OWNED: Option B (sharpen the G10
+  3-agree trigger: amplitude >= 2.0 AND period stddev < 0.3 — the hand reference has
+  varied sprout sizes, not strict period-3), Option C (HALF_PERIOD upper 42.5 -> 45.0),
+  or fund a new constructor class. Full record:
+  `temp/scratch/thornvine_leg8_record_20261013.md`.
+
+### Attempted (2026-10-12, leg 7 — v26 constructor executed after the interrupted session; first honest v26 measurement 7/10; NOT shipped)
+- **The interrupted session (gateway restart ~12:59) resumed at its own recorded state and
+  the cancelled work was re-issued.** The killed turn's tv_v26.py run had already FAILED at
+  12:35 (task snapshot `state=failed, job_failed`); its hang probes died mid-diagnosis with
+  no roots JSON / v26 SVG / gate run produced. Full record:
+  `temp/scratch/thornvine_leg7_record_20261012.md`.
+- **Three constructor defects fixed on the way to the first honest v26 measurement:**
+  (1) `resample_relief` infinite loop — the emit branch re-fired from the segment start
+  whenever `seg >= spacing` (measured hang: 3,000,001 iterations at strand-A vertex 37,
+  seg 0.502 > 0.5; zero-length segs ruled out); fixed to v12's proven emit-within-segment
+  structure (6582/6472 points at 0.002 s per strand, arc-true). (2) v26's `bez()` dropped
+  the `+ t**3 * p1[1]` y-endpoint term — every fillet endpoint collapsed toward y=0, the
+  ring inflated 1309->3291 arc units with two 250-unit border jumps per corner, and the
+  roots annealer was structurally blocked (cost floor ~876; 32 roots on a 3290-unit ring
+  force mean arc gap ~103 > the 59-unit band). One term restored: ring 1409.7, solver/main
+  rings verified identical (N=2820, max per-index deviation 0.000000), roots solved to
+  cost 0 at seed 1. (3) Kind-assignment: the arc-order greedy ate both-ok roots into
+  leaves first, starved the thorn pool (G9 pairs [3,4|3,4|4,4|3,4]) and skipped leaf-only
+  roots whose missing positions widened two G2 gaps to 110.5/71; replaced with the
+  capacity-preserving assignment (leaf-only -> thorn-only -> both-ok): G9 PASS 4|4 on all
+  edges, oversized gaps gone (alongGaps 22.0-59.5).
+- **Tracked gate on `tv_constructed_tile_v26.svg`: 7/10** (G1/G3/G4/G5/G6/G8 — disabled
+  per muse iter-20, pass-with-flag — and G9 pass; G2/G7/G10 fail). Residuals root-caused to exact positions: G2 = one consecutive-diff
+  3 < 4 (solver floor 3.75 vs the gate's GAP_DIFF 4.0); G7 = corner-crossing extremum
+  gaps 43-47.5 > 42.5 (s1, every edge) + the s2 crest at depth 14.7 outside [1.5,8]
+  (muse M4 exposure); G10 = fillet-envelope micro-ripple at proj ~8.7 (all four s1 edges)
+  + 100 hard-flat windows on s1, worst sagitta 0.0 at s=292 (the fillet relief maximum
+  cancels the dome's fall). The v26 sin^2 envelope + phase restart DEVIATES from muse
+  iter-26's dispositioned Q1(a)/Q2 plan (per-edge phase + linear ramp + continuous
+  handoff, NO envelope); the §6 measurements falsify the envelope shortcut — v27
+  pre-registered in the record §8 implements muse's plan literally.
+- Full exchange record: muse iter-26 (brief + answer, completed BEFORE the interruption)
+  validated F1/F2/F3 and set the v26 contract; no 6-loop escape-valve boundary crossed
+  this leg (§9 of the record).
+
+### Fixed (2026-10-12 — the Codex lane's weekly supply from this project: the entry declares a trigger and the trigger is MEASURED; the relay restart is owed)
+- **The lane-starvation card `temp/issues/ISSUE_codex_lane_builder_entry_has_no_trigger_so_the_lane_starves_20261011.md`
+  is DONE on the declaration side.** The live `reasonix.toml` declares a SECOND `[[osd.builder]]`
+  entry beside the untouched one-shot `self-audit` — `id = "dndbeyond-printenhance-weekly-doc-path-drift"`,
+  `trigger = "weekly"` (`reasonix.toml:360-382`, both write flags explicit) — the card's own
+  "shape 2". Verified with the framework's reader (`read_builder_entries`: state `declared`,
+  `problems: []`) and minted through the producer with the pass clock PINNED: exactly one job per ISO
+  week, idempotent on the week (`…weekly-doc-path-drift@2026-W42@2d8ed2bb…` → `job-88609833a81a5bf0`;
+  a second pass and a later W42 read coalesce; W43 → `job-b25e92c4066e14dd`; W44 →
+  `job-49947dd2d22462aa`), each carrying that entry's own objective and its own four acceptance
+  criteria — no filler criterion ([CS-2]). The control still starves exactly as the card's §1
+  measured: `self-audit` (`trigger = "declared"`) mints one job ever across W42/W43/W44.
+- **NOT YET LOADED, and the missing step is a SERVICE action an operator owns:** the declaration is
+  read at relay BOOT (`reasonix.toml:325`), and the running relay (PID 29440) booted
+  `2026-10-10T21:16:11Z` — 33.7 h before the config's `2026-10-12T06:04:17Z` edit. Its own newest
+  producer line (`2026-10-12T12:30:28Z`) still reads `of 1 candidate(s), already settled 1`, and the
+  live store carries 0 rows for the weekly key. **Restart `reasonix_proxy.py --project
+  dndbeyond-printenhance`**; nothing else is owed — the lane is enabled
+  (`framework/osd/codex_lane.yaml:11`, `:269`), the tick defaults it on
+  (`framework/osd/tick.py:124`), `codex-cli 0.157.0` and `~/.codex/auth.json` are present.
+- **The week still reads short, honestly, and that is arithmetic rather than a defect.**
+  `python framework/osd/lane_floor.py C:/luiscla27/projects/dndbeyond-printenhance` (2026-10-12,
+  W42): `this_week_jobs: 0`, `min_lane_jobs: 5`, `verdict: codex_lane_underused`, `reason: "the lane
+  ran 0 job(s) this ISO week against a floor of 5 — supply, not health: the feeds mint declared work
+  or the floor cannot be met"`. One weekly objective is one job per week against a floor of five, so
+  the shortfall is a SUPPLY question this declaration cannot answer alone: more REAL weekly
+  objectives, or an operator ruling on the floor — never a job whose purpose is to spend ([CS-2]).
+- **Reproduce** (this lane blocks `python -c`, so the commands live in the card's §6, not in one
+  liners): `read_builder_entries` plus `producer.mint(now=…)` against a throwaway store for the
+  weekly semantics and the control, `lane_floor.py` for the reading, and two greps over
+  `temp/modelstack/telemetry.jsonl` for what the producer's fold sees. The card also carries the
+  harness-side defeat measured on the way (its §8): the idle gate's issue close-out carry-back is
+  dead for every builder child, whose own project's handoff
+  (`telegram_orchestrator/temp/issues/ISSUE_idlegate_re_attempt_task_text_defeats_the_issue_carry_back_20261011.md`)
+  is verified present and OPEN.
+
 ### Certified (2026-10-11 — the 8/10 corpus artwork bar: 10 of 11 certified MET)
 - **2026-10-12 push ("Push on to 8/10 svg borders") — 01-gilded-frame re-drawn twice more on
   the Gemini seat (rounds 30/31), re-measured FAIL at the same family floor.** r30 is a new
