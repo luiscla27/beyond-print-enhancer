@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.6.0",
   "sections": {
     "section-Section-1": {
       "left": "16px",
@@ -47,7 +47,7 @@
     },
     "section-Section-5": {
       "left": "576px",
-      "top": "384px",
+      "top": "400px",
       "width": "592px",
       "height": "96px",
       "zIndex": "10",

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.6.0",
   "sections": {
     "section-Section-1": {
       "left": "16px",
@@ -47,7 +47,7 @@
     },
     "section-Section-5": {
       "left": "704px",
-      "top": "160px",
+      "top": "144px",
       "width": "480px",
       "height": "128px",
       "zIndex": "126",
@@ -69,7 +69,7 @@
     },
     "section-Actions": {
       "left": "512px",
-      "top": "336px",
+      "top": "400px",
       "width": "672px",
       "height": "1312px",
       "zIndex": "110",
