@@ -2075,3 +2075,59 @@ its plan (`vendor/conductor/archive/first_run_and_panel_20260911/`).
 
 ## [1.3.0] - Earlier 2026
 - Initial release of the "Shapes" branch features (internal).
+
+## 2026-10-14 — leg 9 run 5: thornvine CERTIFIED (v45: gate 10/10 + strict muse vision 6/6 twice) — temp/scratch only, no product change
+
+Window reset at 08:21 local; the session resumed the in-flight v43 (already written by run 4)
+instead of re-deriving it. Full chain (all evidence under `temp/scratch/`, record
+`thornvine_leg9_record_20261013.md`, gate iterations 13-15):
+
+- **v43 (iter 13, the escape consult's macro-rhythm mechanism, already in flight at the
+  window close): spline probes ALL PASS both strands** (sagitta min 0.2249/0.2269,
+  projection min 0.197/0.158, margins 0.542/0.486, re-entry clean); roots + constructor +
+  gate → **9/10**, single line `left#s1 along-vine extremum gap 47 outside 22.5-45`. The
+  escape consult's own pre-authorization ("if 36u arc exceeds 45, adjust that single
+  half-length/depth, do not relax gate") fired: measured per-half G7 arc table logged (the
+  consult's implementation condition), over-ceiling half = LEFT h5 (declared L=34,
+  trough 27→crest 4, warp +0.15; s2 twin 44.0, margin 1.0). No trough landed at 23.x, so
+  the consult's other clause did not fire.
+- **v44 (iter 14, single-half remedy, nothing else): left strandA lengths h4/h5
+  34/31→30/33, strandB 31/35→35/31, declared left crest 4→5; all other edges byte-identical.**
+  Gate **10/10** (left#s1 max gap now 40.5). Strict vision: **criterion 2 MET FOR THE FIRST
+  TIME in the 31-round + 15-gate history** (irregular hand-drawn rhythm, varied amplitude,
+  flowing corners, no chain/bead/blob reading) — but **criterion 4 flipped NOT MET**:
+  "bottom-left corner cluster of 4 oval leaves overlap with merged outlines and vine
+  occlusion." Pixel forensics: 3 leaves at (19.9,243.3 rot−125)/(13.9,236.7 rot+30)/
+  (10.3,227.1 rot+55), centre distances 8.9/10.3/18.9 vs sum-of-half-lengths ~15 — tip-to-tip
+  reach overlap (reviewer counted braid ink as a 4th leaf; both readings agree it is a clump).
+  Root cause in source: the roots annealer clears each leaf against RING INK ONLY
+  (`ink_tree=cKDTree(pts+ptsB)`), never leaf-vs-leaf — and gate G4/G9 predicate
+  attachment/clearance/inventory, not leaf separation (the defect class vision exists to
+  catch). No gate edit.
+- **Mid-loop muse consult at iter 14** (`thornvine_leg9_muse_after_v44*.md`, standard
+  muse-first cumulative review — the situation changed class, not a 6-boundary): Q1
+  **reach-disc FLAWED as drafted** (over-rejects opposite-side 14u pair at halfL 7+8;
+  side-by-side parallel leaves over-penalized ~2.5-3u) → required correction adopted
+  verbatim: oriented ellipse separation `sep=|d|−r_i−r_j`,
+  `r(phi)=a·b/√((b·cosφ)²+(a·sinφ)²)`, MARGIN **2.0u**, weight 0.5×; Q2 count delta 4-vs-3
+  diagnostic noise; Q3 zero C2 regression risk with the macro table frozen. Ordered fixes
+  1-6 adopted (geometry frozen — `tv_v45_arc.py` sha-asserted equal to `tv_v44_arc.py` under
+  version-string normalization; per-version leaf-leaf min-sep evidence file; no pool
+  widening; no G4 edit).
+- **v45 (iter 15): the annealer cost gains the oriented leaf-leaf term** (conservative on
+  SIZE — max half-axes 8.0/3.5 + max centre offset 8.0, since emitted size class depends on
+  the choice's own arc order — exact on ORIENTATION; true-size evidence table
+  `tv_v45_leaf_sep.json` reproduces the constructor's LEAF_SIZES cycle exactly: **min sep
+  12.99 over all 120 pairs**, margin 2.0, so the conservative form over-rejected nothing and
+  no pool spill was needed; annealer best cost 0.0). Gate **10/10**. Strict muse vision on
+  the rendered pixels: **6/6 MET — twice, two independent muse-spark calls on the same
+  PNG** (`tv_v45_muse_vision.txt`, `tv_v45_muse_vision_r2.txt`; double-run because this
+  project has measured a low-confidence vision flag flipping between rounds on unchanged
+  bytes). **Done means achieved (operator-confirmed): `pass: true` on the (C-amended) gate
+  AND 6/6 MET strict vision. The 03-thornvine border design is CERTIFIED.**
+- Consult ledger for the leg: escape consults at gate iterations 6 and 12 per the 6-boundary
+  rule; mid-loop consults before every geometry change (v29…v44), each with per-point
+  dispositions; reviewer claims contradicted by pixels/measurements were challenged with
+  reasons and logged (iter-27 G7-gap relabel rejected on gate source; v44 reach-disc
+  corrected per his own Q1). Gate untouched beyond the operator-authorized [HC-C]; no
+  corpus edits; no product files touched; no commits (leg scope: temp/scratch only).

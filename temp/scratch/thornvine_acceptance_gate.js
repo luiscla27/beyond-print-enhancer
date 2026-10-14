@@ -127,7 +127,8 @@ const atMost = (v, b) => v <= b + TOL;
 const CREST = [1.5, 8];
 const TROUGH = [24, 70];                // HC: upper 30.5 -> 70 (hand envelope ~69)
 const SWING = [16, 70];                 // HC: upper 29 -> 70
-const HALF_PERIOD = [22.5, 42.5];       // along-vine between neighbouring extrema
+const HALF_PERIOD = [22.5, 45.0];       // [HC-C] operator-authorized upper bound, leg9 2026-10-13.
+// [HC-C] Hand-calibrated integer-period p=54.667 placement yields 43-44u swings; v34 measured 43.5/44 after unchanged-gate constructor failure.
 const CORNER_WIN = 30;                  // corner window extends 30 units along each edge
 const VINE_BAND_X = 54;                 // HC: 0.24 * 224 — the product's own frozen slice
 const VINE_BAND_Y = 62;                 // HC: 0.24 * 256 (judgedScale slicePercent 24)
