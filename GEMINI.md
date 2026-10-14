@@ -16,7 +16,9 @@
   whole `conductor/` tree lives under the gitignored `vendor/` overlay, so both live and archived
   tracks stay out of history here by layout — the rule is stated so agents do not misread that as a
   gap. (msf-side reconciliation of the canonical skill's "committed with the phase" wording is
-  handed off as an MD issue to `modelstack_framework/temp/issues/`.)
+  handed off as an MD issue — `modelstack_framework/temp/issues/ISSUE_conductor_live_tracks_versioned_before_archive_20261003.md`,
+  filed 2026-10-04, with the same findings re-measured there; this project's own half is done and
+  `git ls-files vendor` here is 0.)
 - **CRITICAL MANDATE - Commit Safety:** You MUST NEVER perform a `git commit` unless you have JUST executed all `mocha` tests and verified that they pass. Committing broken or unverified code is strictly prohibited.
 
 ## Asset Management
