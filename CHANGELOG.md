@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-10-14, leg B — the certified 03-thornvine-lite border embedded in both premade templates)
+- **The amended Fork 1 executed.** Leg B's original premise was measured FALSE (verdict-identity
+  needs ≥44,194 B against the 16,000-char trust-root cap; three instruments agree) and the
+  operator ruled the amended Fork 1: certify a lighter derivative as a NEW design and embed
+  THAT — never a 9/10 artifact under the v45 name.
+- **Certification campaign (`03-thornvine-lite`)**: `temp/scratch/tv_v45_k10.svg` (13,723 B,
+  uniform k=10) certified 10/10 on its own derived instrument
+  (`temp/scratch/thornvine_lite_acceptance_gate.js`; G1–G9 unchanged, G10 `CURV_HARD`
+  recalibrated 0.20 → 0.08 with measured justification — below the artifact's measured window
+  minimum 0.088, the parent gate's own invariant; everything else byte-identical). The absolute
+  C6 clause was FALSIFIED and retired: the certified parent itself fails it at the certification
+  presentation (`deliberation/c6_falsification_record.md`, parent + k=3 both NOT MET), so
+  AC-B3' binds on **C6-delta** ("no visible decimation artifact beyond the parent's own
+  rendering at identical presentation") — two independent strict-muse vision sessions on the
+  final k=10 collage: MET + P1 + P2 (`tv_lite_vision_s10_k10_delta.txt`,
+  `tv_lite_vision_s13_k10_delta2.txt`).
+- **The embed**: `borderSvg` stamped on EXACTLY the 13 basic + 10 archer sections whose
+  `borderStyle` is null/`no-border` (the B-3 disposition: borderStyle fields stay — the AI
+  border overrides while present, clearing it restores the class border). Every other byte of
+  both templates is identical to dd66ad9 (`temp/scratch/verify_embed.js` → AC-B1 IDENTITY:
+  PASS); every embedded blob passes the REAL trust root (`js/ai_border.js` sanitize) and is
+  ≤ MAX_SVG_CHARS.
+- **New suite** `test/unit/template_border_svg.test.js` (8 passing) pins the stamping, the
+  trust-root + cap path, and byte-identity against the certification fixture
+  `test/fixtures/thornvine_lite_border.svg`. Full unit+e2e+manifest suite 1652 passing / 0
+  failing; overlap scan on the embedded templates → 0 overlaps; versions stay 1.6.0.
+- **AC-B3 is recorded FAILED + superseded, not silently swapped** (plan.md AC block; the
+  governing record is `deliberation/c6_falsification_record.md` + the disposition addendum in
+  `temp/scratch/byok_template_tuning_scope_20261014.md`).
+
+### Added (2026-10-14, track scripts_inventory_hygiene_20261014 — the scripts-area hygiene baseline)
+- **`TECH_DEBT_SCRIPTS.md`** — the `scripts` area inventoried: 54 tracked files, each with
+  purpose, invocation, runtime/deps, and touch-risk tier; the dossier's "7 files" count is
+  recorded as unreconciled against the measured 53-file surface (the track adds the 54th).
+- **`scripts/check_scripts_hygiene.js`** — wired into `npm run lint` (after
+  `check_border_svg_injection.js`): compares `TECH_DEBT_SCRIPTS.md` against the tracked
+  `scripts/` surface and fails when they disagree in either direction; a new script cannot
+  arrive without a purpose header. README's lint line updated.
+- **Headers on 23 existing scripts** — `#!/usr/bin/env node` (22) + `python3` fix (1) + one-line
+  purpose comments on the 10 that opened with code; no behaviour change (suite green).
+
 ### Attempted (2026-10-13, leg 8 — v27 = muse iter-26 Q1(a)/Q2 LITERAL + v28 = muse iter-27's mechanisms; best artifact v27c 6/10; NOT shipped)
 - **The mandatory 6-loop escape-valve consult RAN (muse iter-27, 2026-10-13)** after 8
   tracked gate iterations on the same target (v23..v27c): complete brief with every
