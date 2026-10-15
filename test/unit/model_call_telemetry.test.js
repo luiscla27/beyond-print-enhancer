@@ -47,6 +47,37 @@ function tmpFile(name) {
   return path.join(tmpdir(), name);
 }
 
+/**
+ * An HTTP transport built on `node:http`, NOT on the global `fetch`.
+ *
+ * This is not a stylistic choice. `test/unit/catalog_logic.test.js` assigns `global.fetch = ...` at
+ * MODULE SCOPE and never restores it, and it sorts before this file — so by the time these cases run,
+ * the ambient `fetch` is that suite's canned stub: it answers instantly, never contacts this file's
+ * server and never honours the `AbortSignal` the helper passes. Measured in the full suite: every
+ * case that REQUIRES the supervisor's clock (abort-at-budget, cancel, progress ticks, coalescing —
+ * hits 0 instead of 1) failed here while passing in isolation. The helper is transport-agnostic by
+ * design, so the test hands it a transport it OWNS; the production site still passes `fetch`.
+ */
+function httpTransport(url, key) {
+  return ({ signal }) => new Promise((resolve, reject) => {
+    const req = http.request(url, {
+      method: "POST",
+      signal,
+      headers: { "content-type": "application/json", authorization: `Bearer ${key || "test"}` },
+    }, (res) => {
+      let body = "";
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => resolve({
+        ok: res.statusCode >= 200 && res.statusCode < 300,
+        status: res.statusCode,
+        text: async () => body,
+      }));
+    });
+    req.on("error", reject);
+    req.end("{}");
+  });
+}
+
 /** A tiny local transport server. `mode` decides what it does with a request. */
 function startServer(handler) {
   return new Promise((resolve) => {
@@ -87,7 +118,7 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       const r = await callModel({
         site: "scripts/border_design_generator.js", role: "reasonix-agent",
         model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: "body",
-        transport: ({ signal }) => fetch(`${stub.url}/chat/completions`, { signal }),
+        transport: httpTransport(`${stub.url}/chat/completions`),
         store,
       });
       assert.strictEqual(r.ok, true, "the call should succeed against the stub");
@@ -110,7 +141,7 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       const r = await callModel({
         site: "scripts/border_design_generator.js", role: "reasonix-agent",
         model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: "body",
-        transport: ({ signal }) => fetch(`${slow.url}/chat/completions`, { signal }),
+        transport: httpTransport(`${slow.url}/chat/completions`),
         store,
         budgets: narrowedBudgets("background_maintenance", { per_attempt_s: 0.2, session_cap_s: 0.4 }),
       });
@@ -134,7 +165,7 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       const r = await callModel({
         site: "scripts/border_design_generator.js", role: "reasonix-agent",
         model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: "body",
-        transport: ({ signal }) => fetch(`${slow.url}/chat/completions`, { signal }),
+        transport: httpTransport(`${slow.url}/chat/completions`),
         store, cancel,
         budgets: narrowedBudgets("background_maintenance", { per_attempt_s: 30, session_cap_s: 30 }),
       });
@@ -152,7 +183,7 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       const r = await callModel({
         site: "scripts/border_design_generator.js", role: "reasonix-agent",
         model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: "body",
-        transport: ({ signal }) => fetch(`${failing.url}/chat/completions`, { signal })
+        transport: ({ signal, timeoutMs }) => httpTransport(`${failing.url}/chat/completions`)({ signal, timeoutMs })
           .then((res) => { if (!res.ok) throw new Error(`http ${res.status}`); return res; }),
         store,
         budgets: narrowedBudgets("background_maintenance", { per_attempt_s: 0.5, session_cap_s: 5 }),
@@ -174,7 +205,7 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       await callModel({
         site: "scripts/border_design_generator.js", role: "reasonix-agent",
         model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: "body",
-        transport: ({ signal }) => fetch(`${stub2.url}/chat/completions`, { signal }),
+        transport: httpTransport(`${stub2.url}/chat/completions`),
         store, budgets: data,
       });
       const ticks = readRecords(store).filter((x) => x.event === "model_call_progress_tick");
@@ -195,10 +226,12 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       const call = () => callModel({
         site: "scripts/border_design_generator.js", role: "reasonix-agent",
         model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: body,
-        transport: ({ signal }) => fetch(`${stub3.url}/chat/completions`, { signal }),
+        transport: httpTransport(`${stub3.url}/chat/completions`),
         store, budgets: data,
       });
       const [a, b] = await Promise.all([call(), call()]);
+      assert.ok(hits > 0, "the transport must actually reach this file's server (a stubbed ambient "
+        + "fetch would make the count 0 and the assertion below vacuous)");
       assert.strictEqual(hits, 1, "identical concurrent calls must share ONE transport execution");
       assert.strictEqual(a.status, "success");
       assert.strictEqual(b.status, "success");
