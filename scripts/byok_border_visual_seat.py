@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """byok_border_visual_seat.py — the Phase-4 VISUAL CHARTER driver (R2.17's third seat).
 
 Runs the project's vision gate (`scripts/byok_vision_gate.py`, Muse Spark primary) once per

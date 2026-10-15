@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Scratch: turn the "three 1px rules with a 6px gap" claim into raw pixel
  * evidence, because the phase-1 reviewer correctly refused to pass AC-1/AC-2

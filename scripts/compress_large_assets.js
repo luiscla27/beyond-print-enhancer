@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+// compress_large_assets.js - one-off second pass of the asset migration, for the oversized images
+// the first pass missed. Its inputs were read from nanobanana-output/, which is not in the tree.
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');

@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+// compress_assets.js - the asset migration pass: resize every image under assets/ to a max
+// dimension of 512 and re-encode it at quality 80. Every .gif input it names has since been
+// replaced by a .webp (0 .gif remain, 27 .webp), so the migration it performed is already done.
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');

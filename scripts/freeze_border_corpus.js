@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * freeze_border_corpus.js — freeze the BYOK border design corpus into a TRACKED fixture.
  *

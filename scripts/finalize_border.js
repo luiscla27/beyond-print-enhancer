@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+// finalize_border.js - one-off: finalize a single border asset - make its background transparent and
+// recolor the ink to the project's red (#e40712). Its inputs (nanobanana-output/**, assets/*.gif)
+// are no longer in the tree.
 const sharp = require('sharp');
 const fs = require('fs');
 

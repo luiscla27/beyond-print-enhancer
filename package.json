@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint js/ test/ scripts/ && node scripts/check_border_svg_injection.js",
+    "lint": "eslint js/ test/ scripts/ && node scripts/check_border_svg_injection.js && node scripts/check_scripts_hygiene.js",
     "pretest": "npm run lint",
     "test": "mocha --recursive test/unit test/e2e test/manifest.test.js",
     "release:check": "node scripts/release_gate.js",

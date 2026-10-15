@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+// extract_preliminary_shapes.js - one-off: crop candidate SHAPE/icon regions out of the demo sheet
+// into demo/ignored/extracted, beside extract_preliminary_borders.js. Input and output are absent.
 const sharp = require('sharp');
 const fs = require('fs');
 

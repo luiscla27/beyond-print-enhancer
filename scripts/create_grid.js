@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+// create_grid.js - one-off: slice the demo sheet into a 10x10 tile grid under demo/ignored/grid, so
+// a small region can be inspected at full resolution. Input and output directory are both absent.
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
