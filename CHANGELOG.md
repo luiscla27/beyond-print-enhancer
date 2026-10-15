@@ -48,6 +48,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Headers on 23 existing scripts** — `#!/usr/bin/env node` (22) + `python3` fix (1) + one-line
   purpose comments on the 10 that opened with code; no behaviour change (suite green).
 
+### Measured (2026-10-14, the owed operator input-budget re-measure — result: knob stays, no action)
+- **`python scripts/input_budget_report.py` → OK.** Soft 150,000 stays ABOVE the measured
+  five-term floor, which has FALLEN since the 2026-09-15 measurement: minimum post-fold size is
+  now **91,066** (active_turn 45,009 from 2,337 fold-chains over 44,026 telemetry rows;
+  digest 4,852 p95; kept_user_turns 8,192; prefix 245 p1; tail 32,768) vs the ~95,080–192,151
+  range the 2026-09-15 issue recorded — the p90-heavy active-turn profile that motivated the
+  200k consideration has not materialized in the week of live turns. The 2026-09-16 operator
+  decision (keep soft = 150,000, do NOT bump) is re-attested on current data; tightening toward
+  the 50k ideal stays off the table while 84.2% of calls exceed it (input mean 179,143,
+  p90 457,724, max 1,084,278 — folding still lands above the ideal for real turns, but the
+  floor no longer threatens the knob). This closes the 2026-09-15 "re-measure by 2026-09-22"
+  follow-up from `vendor/AGENTS.md`; no config change.
+
 ### Attempted (2026-10-13, leg 8 — v27 = muse iter-26 Q1(a)/Q2 LITERAL + v28 = muse iter-27's mechanisms; best artifact v27c 6/10; NOT shipped)
 - **The mandatory 6-loop escape-valve consult RAN (muse iter-27, 2026-10-13)** after 8
   tracked gate iterations on the same target (v23..v27c): complete brief with every
