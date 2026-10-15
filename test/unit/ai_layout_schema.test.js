@@ -1372,6 +1372,47 @@ describe("ai_layout.buildMessages — AC-3: the disabled capability is ABSENT fr
     assert.ok(system.includes("svg"), "the border member is described");
   });
 
+  // The three certified border conventions (track byok_template_tuning_20261014, AC-C1):
+  // the prompt teaches what the certified corpus earned. Symmetric with AC-3: present
+  // when the border capability is ON, absent when it is OFF — they are teaching, not
+  // schema, so the assertions key on the lines' own distinctive words.
+  it("teaches the three certified border conventions when border design is ON", function () {
+    const system = aiLayout.buildMessages(sectionTable(), instruction)[0].content;
+    assert.ok(
+      /greyscale print/i.test(system),
+      "the greyscale-first convention is taught",
+    );
+    assert.ok(
+      /edge bands/.test(system) && /CENTRE empty/.test(system),
+      "the edge-band discipline is taught",
+    );
+    assert.ok(
+      /wider than they are tall/.test(system) && /never px/.test(system),
+      "the tall-rail aspect convention is taught",
+    );
+  });
+
+  it("teaches NONE of the certified border conventions when border design is OFF", function () {
+    const system = aiLayout.buildMessages(sectionTable(), instruction, {
+      capabilities: { arrange: true, border: false },
+    })[0].content;
+    assert.strictEqual(
+      /greyscale print/i.test(system),
+      false,
+      "the greyscale convention must be absent",
+    );
+    assert.strictEqual(
+      /CENTRE empty/.test(system),
+      false,
+      "the edge-band convention must be absent",
+    );
+    assert.strictEqual(
+      /wider than they are tall/.test(system),
+      false,
+      "the aspect convention must be absent",
+    );
+  });
+
   it("drops the border schema and forbids the key when border design is OFF", function () {
     // AC-3's FAIL condition is "the system message still describes the disabled capability's
     // schema or keys". The schema is the QUOTED key in the JSON example, so the assertion is

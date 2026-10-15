@@ -992,6 +992,19 @@ function buildMessages(sections, instruction, options) {
       "  `<foreignObject>`, animation elements, an external `href`/`xlink:href` that does not",
       `  start with \`#\`, or a \`@import\`. At most ${MAX_SVG_CHARS} characters.`,
       "  Anything that fails those rules is REFUSED and renders nothing.",
+      // The three certified conventions (track byok_template_tuning_20261014, candidate
+      // C-1): the knowledge the certified border corpus cost 31+ rounds to earn, stated
+      // as guidance the model can act on. Each is traced to a corpus-wide prompt line or
+      // a pipeline measurement recorded in the track's deliberation record.
+      "  Design for greyscale print: use luminance contrast only — near-black ink",
+      "  (#111-#555) or light fills (#E8E8E8 and lighter), never hue — the print pipeline",
+      "  renders the band in greyscale.",
+      "  Keep artwork in the outer edge bands of the viewBox and the four corners; leave",
+      "  the CENTRE empty — the pipeline paints only the source's edge and corner slices,",
+      "  so centre ink is cropped away and wasted.",
+      "  For the left and right rails draw shapes wider than they are tall in viewBox",
+      "  units — the pipeline compresses those rails horizontally — and express every",
+      "  size in viewBox units, never px.",
     );
   }
   // The prohibitions. Named with the BARE key (never the quoted schema token), so AC-3's
