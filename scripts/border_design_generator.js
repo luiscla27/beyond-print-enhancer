@@ -79,6 +79,9 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 const AiLayout = require(path.join(ROOT, "js", "ai_layout.js"));
+// The area's shared model-call budget + telemetry (track runtime_perf_20261015). Required, never
+// re-implemented here: both runtimes read one budgets.json so a cap cannot drift between them.
+const { callModel } = require(path.join(__dirname, "perf", "model_call_telemetry.js"));
 
 /** MEASURED default seat (2026-09-30): the only probed free leg that answers a border patch reliably.
  *  `inclusionai/ling-3.0-flash-sante:free` answers 200 but returns EMPTY content at 2000 tokens
@@ -226,18 +229,30 @@ async function callNous(model, messages, key, maxTokens, sampling) {
     seed: s.seed !== undefined ? s.seed : undefined,
     max_tokens: maxTokens,
   });
-  const t0 = Date.now();
-  let res;
-  try {
-    res = await fetch(NOUS_BASE + "/chat/completions", {
+  // BUDGETED + OBSERVED (track runtime_perf_20261015). Before this the fetch had NO timeout at all:
+  // a hung provider held the process open for as long as the socket stayed half-alive, and no
+  // terminal event recorded that the call ever happened. The declared budget for this site lives in
+  // scripts/perf/budgets.json (it is the one site that takes its class default unmodified), the
+  // deadline is a TOTAL one, and the terminal event lands in temp/perf/model_calls.jsonl.
+  const call = await callModel({
+    site: "scripts/border_design_generator.js",
+    role: "reasonix-agent",
+    model,
+    provider: NOUS_BASE,
+    fingerprintMaterial: body,
+    transport: ({ signal }) => fetch(NOUS_BASE + "/chat/completions", {
       method: "POST",
       headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
       body,
-    });
-  } catch (err) {
-    return { ok: false, status: 0, ms: Date.now() - t0, error: String((err && err.message) || err) };
+      signal,
+    }),
+  });
+  const ms = call.durationMs;
+  if (!call.ok) {
+    return { ok: false, status: 0, ms,
+      error: `transport ${call.status}${call.error ? ": " + String(call.error.message || call.error) : ""}` };
   }
-  const ms = Date.now() - t0;
+  const res = call.value;
   const text = await res.text();
   if (!res.ok) {
     return { ok: false, status: res.status, ms, error: text.slice(0, 400) };
@@ -263,18 +278,26 @@ async function callNous(model, messages, key, maxTokens, sampling) {
 async function callGemini(model, messages, key, maxTokens) {
   // No temperature/top_p/seed: RETIRED on Google's official host (GOOGLE_RETIRED_PARAMS).
   const body = JSON.stringify({ model, messages, max_tokens: maxTokens });
-  const t0 = Date.now();
-  let res;
-  try {
-    res = await fetch(GEMINI_BASE + "/chat/completions", {
+  // Same budget + telemetry contract as the NOUS leg above (track runtime_perf_20261015).
+  const call = await callModel({
+    site: "scripts/border_design_generator.js",
+    role: "reasonix-agent",
+    model,
+    provider: GEMINI_BASE,
+    fingerprintMaterial: body,
+    transport: ({ signal }) => fetch(GEMINI_BASE + "/chat/completions", {
       method: "POST",
       headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
       body,
-    });
-  } catch (err) {
-    return { ok: false, status: 0, ms: Date.now() - t0, error: String((err && err.message) || err) };
+      signal,
+    }),
+  });
+  const ms = call.durationMs;
+  if (!call.ok) {
+    return { ok: false, status: 0, ms,
+      error: `transport ${call.status}${call.error ? ": " + String(call.error.message || call.error) : ""}` };
   }
-  const ms = Date.now() - t0;
+  const res = call.value;
   const text = await res.text();
   if (!res.ok) {
     return { ok: false, status: res.status, ms, error: text.slice(0, 400) };

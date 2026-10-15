@@ -29,6 +29,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SC = ROOT / "temp" / "scratch"
 
+sys.path.insert(0, str(Path(__file__).resolve().parent / "perf"))
+from model_call_telemetry import call_model  # noqa: E402  (track runtime_perf_20261015)
+
 # --- key resolution (never printed) ---
 
 def _secret(name: str) -> str:
@@ -65,18 +68,39 @@ def codex_answer(prompt: str, out_file: Path) -> str:
         bin_ = Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "nodejs" / "node_modules" / "@openai" / "codex" / "bin" / "codex.js"
     if not bin_.exists():
         raise RuntimeError("codex.js not found")
-    proc = subprocess.run(
-        ["node", str(bin_), "exec", "--skip-git-repo-check", "-s",
-         "read-only", "-o", str(out_file), "-"],
-        input=prompt.encode("utf-8"), stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE, timeout=900,
+
+    # BUDGETED + OBSERVED (track runtime_perf_20261015). A subprocess leg is a model call with no
+    # socket: its 900 s was passed straight to subprocess.run and nothing recorded that it ran. The
+    # declared budget (with its reason) is in scripts/perf/budgets.json and the terminal event lands
+    # in temp/perf/model_calls.jsonl — one contract for HTTP and subprocess transports alike.
+    def transport(timeout_s):
+        proc = subprocess.run(
+            ["node", str(bin_), "exec", "--skip-git-repo-check", "-s",
+             "read-only", "-o", str(out_file), "-"],
+            input=prompt.encode("utf-8"), stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE, timeout=timeout_s,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError("codex.js exited %d: %s" % (
+                proc.returncode, proc.stderr.decode("utf-8", "replace")[:400]))
+        if not out_file.exists() or out_file.stat().st_size <= 20:
+            raise RuntimeError("codex.js produced no answer file")
+        return out_file.read_text(encoding="utf-8")
+
+    result = call_model(
+        site="scripts/codex_text_leg.py",
+        role="reasonix-agent",
+        model="codex-cli",
+        provider="codex-cli-subprocess",
+        fingerprint_material=prompt,
+        transport=transport,
     )
-    if proc.returncode != 0:
-        raise RuntimeError("codex.js exited %d: %s" % (
-            proc.returncode, proc.stderr.decode("utf-8", "replace")[:400]))
-    if not out_file.exists() or out_file.stat().st_size <= 20:
-        raise RuntimeError("codex.js produced no answer file")
-    return out_file.read_text(encoding="utf-8")
+    if not result.ok:
+        raise RuntimeError(
+            "codex leg %s after %dms (class=%s, attempts=%s, error=%s)"
+            % (result.status, result.duration_ms, result.request_class, result.attempts,
+               result.error))
+    return result.value
 
 
 def deepseek_answer(prompt: str, out_file: Path) -> str:
@@ -88,18 +112,36 @@ def deepseek_answer(prompt: str, out_file: Path) -> str:
     helper = SC / "deepseek_call.js"
     if not helper.exists():
         raise RuntimeError("deepseek_call.js helper missing")
-    proc = subprocess.run(
-        ["node", str(helper)], input=prompt.encode("utf-8"),
-        capture_output=True, timeout=900,
+
+    # Same budget + telemetry contract as the codex leg above (track runtime_perf_20261015).
+    def transport(timeout_s):
+        proc = subprocess.run(
+            ["node", str(helper)], input=prompt.encode("utf-8"),
+            capture_output=True, timeout=timeout_s,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError("deepseek_call.js exited %d: %s" % (
+                proc.returncode, proc.stderr.decode("utf-8", "replace")[:200]))
+        text = proc.stdout.decode("utf-8")
+        if len(text.strip()) <= 20:
+            raise RuntimeError("deepseek_call.js returned an empty answer")
+        return text
+
+    result = call_model(
+        site="scripts/codex_text_leg.py",
+        role="reasonix-agent",
+        model="deepseek-v4-flash",
+        provider="deepseek-call-js-subprocess",
+        fingerprint_material=prompt,
+        transport=transport,
     )
-    if proc.returncode != 0:
-        raise RuntimeError("deepseek_call.js exited %d: %s" % (
-            proc.returncode, proc.stderr.decode("utf-8", "replace")[:200]))
-    text = proc.stdout.decode("utf-8")
-    if len(text.strip()) <= 20:
-        raise RuntimeError("deepseek_call.js returned an empty answer")
-    out_file.write_text(text, encoding="utf-8")
-    return text
+    if not result.ok:
+        raise RuntimeError(
+            "deepseek leg %s after %dms (class=%s, attempts=%s, error=%s)"
+            % (result.status, result.duration_ms, result.request_class, result.attempts,
+               result.error))
+    out_file.write_text(result.value, encoding="utf-8")
+    return result.value
 
 
 # --- product parser ---

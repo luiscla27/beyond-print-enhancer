@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-10-15, track runtime_perf_20261015 — the scripts area's model calls are bounded and observed)
+- **The dossier's premise was measured before it was built on, and two of its four claims did not
+  hold.** `temp/idlegate/runtime-perf/spec.md` (authored 2026-09-22T03:01:27Z by the P4 rung's own
+  maintenance call, after nine dead builder attempts) attributes a severe relay tail latency to "the
+  `scripts` area" — but all 45,589 terminal model-call rows in `temp/modelstack/telemetry.jsonl` are
+  `producer=reasonix_proxy` / `call_origin=relay`, so no `scripts/` edit can move them (its
+  `qwen3.8-flash` row, 852 calls / p50 16.7 / p95 54.0 / max 465.5, is relay traffic); its
+  "`scripts (7 files)`" scope repeats the blind-inventory defect `scripts_inventory_hygiene_20261014`
+  already recorded against a 54-path measured surface; and its `unknown / n/a` row is not a missing
+  measurement but the ABSENCE of a model-call event. AC-3's relay-side clause is therefore recorded
+  NOT ACHIEVED rather than reinterpreted; the track's decision is CONDITIONAL PASS.
+- **The real gap was the area's own traffic, and it is now bounded and observable.** Five tracked
+  scripts dial model endpoints directly (`border_design_generator.js`, `byok_vision_gate.py`,
+  `drag_ux_visual_gate.py`, `codex_text_leg.py`, and `byok_border_visual_seat.py` indirectly) and
+  NONE of them emitted a terminal event anywhere; their only bound was a per-READ socket timeout —
+  which does not bound a call — and `border_design_generator.js`'s `fetch` had no timeout at all.
+  Delivered: `scripts/perf/model_call_telemetry.{py,js}` (one declared budget source,
+  `scripts/perf/budgets.json`, read by BOTH runtimes; a TOTAL deadline enforced by a supervisor so a
+  late response is discarded; a session cap separate from the per-attempt cap; a real cancellation
+  signal; `started`/`progress_tick`/`terminal` telemetry in `temp/perf/model_calls.jsonl`; a hashed,
+  redacted fingerprint), wired at all four direct sites without touching their payload/parse logic.
+- **Evidence instruments, not prose.** `scripts/perf/runtime_perf_report.js` re-derives the dossier's
+  relay baseline by a NAMED command and window (nearest-rank percentiles — the convention that
+  reproduces its numbers unchanged) and emits `runtime-perf-report.{md,json}` with the AC-1..AC-6
+  table; `scripts/perf/validate_model_call_telemetry.js` FAILS CLOSED on an empty store and refuses a
+  terminal record with no `duration_ms`, a bad status, a missing field, a double terminal, or an
+  unterminated call. `test/unit/model_call_telemetry.test.js` (23 cases) drives both helpers against
+  local synthetic transports — abort-at-budget, terminal-on-timeout, cancel-does-not-hang, session
+  cap, progress ticks, coalescing, budget parity across runtimes, and every validator arm in both
+  directions. Validation sample: 120 terminal calls, 100 % `duration_ms` coverage, 7 timeouts,
+  4 cancels, 5 errors, 0 unknown-model rows.
+- **Named shortfalls, not silent ones.** Three wired sites carry a DECLARED cap override above the
+  dossier's 210 s class cap (their own prior timeouts, kept because no seat-latency measurement
+  exists to justify lowering them and a lower cap would turn arriving gate answers into failures) —
+  each override states its reason in `budgets.json` and is printed in the report. One model-call site
+  could not be reached at all: `scripts/muse_gate.py` is gitignored by name, so it is not part of the
+  governed surface and is recorded as `not_wired: true` with its budget pre-declared (TECH_DEBT_SCRIPTS
+  T-6) rather than counted as coverage.
+- **`scripts/perf/` added to the scripts inventory** (12 rows, `TECH_DEBT_SCRIPTS.md` §3; the governed
+  surface is now 66 files) plus a new finding F-8 and gap T-6 in that file. No product file changed:
+  `js/**`, `manifest.json` and the browser suite are untouched, and this ships no release.
+
 ### Added (2026-10-15, track registry_backfill_20261015 — the 11 orphaned archive rows backfilled)
 - **The guard's archive arm is clean again.** It had reported 11 archived track folders
   (2026-03..2026-05 era: archer_template_replication, the layer_* family, properties_panel,
