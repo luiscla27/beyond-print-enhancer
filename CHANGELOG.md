@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-10-15, track registry_backfill_20261015 — the 11 orphaned archive rows backfilled)
+- **The guard's archive arm is clean again.** It had reported 11 archived track folders
+  (2026-03..2026-05 era: archer_template_replication, the layer_* family, properties_panel,
+  refactor_drag_handles, shape_layer_management, skill_box_splitter) named by NO registry
+  row — rows never written, since these tracks predate the row->folder check by months.
+  One honest row per folder was appended to `vendor/conductor/tracks.md` (registry bottom,
+  oldest first), each citing the folder's own artifacts and stating its REAL box state:
+  6 fully ticked; 5 with open boxes recorded as found (NO retro-ticking), with the
+  shipped-surface evidence for their features noted (`.be-drag-handle` in `js/dnd.js`,
+  `shapeLayers` in `js/dom/layer_manager.js`, `splitSkillsBox` at `js/main.js:2651`,
+  `js/properties_panel.js`). Deliberation: required — 3 candidates (backfill rows ADOPTED;
+  drop plan.md REJECTED — all 11 are real tracks, deletion would be signal suppression;
+  do-nothing REJECTED), matrix + ledger; guard: advisories 11 → 0, debt index 0, both
+  roots OK. No product file, archived folder, or guard code touched.
+
 ### Added (2026-10-14, leg B — the certified 03-thornvine-lite border embedded in both premade templates)
 - **The amended Fork 1 executed.** Leg B's original premise was measured FALSE (verdict-identity
   needs ≥44,194 B against the 16,000-char trust-root cap; three instruments agree) and the
