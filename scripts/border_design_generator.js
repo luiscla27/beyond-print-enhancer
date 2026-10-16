@@ -330,8 +330,18 @@ async function main() {
   // artworks (01 532 chars, 07 623, 10 581 — measured), so a global floor would block them.
   const degenerateIds = (arg("degenerate-ids", "") || "").split(",").map((s) => s.trim()).filter(Boolean);
   const overwriteRound = process.argv.includes("--overwrite-round");
-
-  const corpus = JSON.parse(fs.readFileSync(path.join(__dirname, "border_designs.json"), "utf8"));
+  // CAMPAIGN CORPUS OVERRIDE (track byok_corpus_cert_20261016). `--corpus <file>` reads a
+  // campaign instruction file INSTEAD OF the adopted `border_designs.json`, so a geometry-
+  // directed addendum (01 corner-diamond ink delta, 04 explicit stile source-units) never
+  // touches the adopted 10/10 prompt text, the frozen fixture, or any criteria file: the
+  // campaign file carries the adopted instruction VERBATIM plus a clearly-marked addendum,
+  // and `border_designs.json` itself is left byte-identical. Without the flag the behavior
+  // is byte-identical to before (default corpus, write guard unchanged).
+  const corpusArg = arg("corpus", "");
+  const corpusPath = corpusArg
+    ? path.resolve(corpusArg)
+    : path.join(__dirname, "border_designs.json");
+  const corpus = JSON.parse(fs.readFileSync(corpusPath, "utf8"));
   const wanted = corpus.designs.filter((d) => only.length === 0 || only.includes(d.id));
   if (wanted.length === 0) throw new Error("no designs selected (--only matched nothing)");
 
