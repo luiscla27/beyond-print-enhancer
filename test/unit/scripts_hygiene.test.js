@@ -31,6 +31,7 @@ function fixture(files) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "scripts-hygiene-"));
   fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
   for (const [rel, body] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), body, "utf8");
   }
   const rows = Object.keys(files).map((rel) =>
@@ -140,6 +141,24 @@ describe("scripts hygiene guard", function () {
       const { failures, advisories } = check(dir);
       assert.deepStrictEqual(failures, []);
       assert.ok(advisories.some((a) => a.includes("brand-new.js")), JSON.stringify(advisories));
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("does NOT report a DIRECTORY under scripts/ as an undocumented entry", function () {
+      // The counterexample is the real repository's own `scripts/perf/`: 12 tracked, rowed files, and
+      // the arm still said "neither tracked nor documented: perf" — a directory is not a row-able
+      // entry, and the row->file comparison already walks every tracked path at any depth.
+      const dir = fixture({ "scripts/good.js": GOOD_JS, "scripts/perf/helper.js": GOOD_JS });
+      const clean = check(dir);
+      assert.deepStrictEqual(clean.failures, []);
+      assert.ok(!clean.advisories.some((a) => a.includes("neither tracked nor documented")),
+        "a directory must not be reported as an undocumented entry: " + JSON.stringify(clean.advisories));
+      // ...and the arm still fires for an untracked FILE beside it, so skipping directories did not
+      // silence the check it exists for.
+      fs.writeFileSync(path.join(dir, "scripts", "loose.js"), GOOD_JS, "utf8");
+      const dirty = check(dir);
+      assert.ok(dirty.advisories.some((a) => a.includes("neither tracked nor documented")
+        && a.includes("loose.js")), JSON.stringify(dirty.advisories));
       fs.rmSync(dir, { recursive: true, force: true });
     });
   });

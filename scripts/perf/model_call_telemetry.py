@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """model_call_telemetry.py — bound, observe and cancel the model calls the `scripts` area makes.
 
-WHY THIS EXISTS (track `runtime_perf_20261015`). Five tracked scripts dial a model directly, and
-until this file none of them emitted a single terminal event: the whole area's model traffic was
-invisible (`scripts/perf/runtime-perf-baseline.md` F-3 — the framework's relay store holds 45,589
-terminal rows and `producer=reasonix_proxy` on 45,589 of them, so a script-originated call appears
-there ZERO times). What stood in for a bound was a socket timeout — and a socket timeout bounds each
-READ, not the total call, so a slowly-trickling response could outlive its own timeout indefinitely.
+WHY THIS EXISTS (track `runtime_perf_20261015`). Four tracked scripts dial a model endpoint
+directly (three over HTTP, one over a subprocess) and a fifth reaches its seat through one of
+them; until this file none of them emitted a single terminal event: the whole area's model
+traffic was invisible (`scripts/perf/runtime-perf-baseline.md` F-3 — the framework's relay store
+holds 45,589 terminal rows and `producer=reasonix_proxy` on 45,589 of them, so a script-originated
+call appears there ZERO times). What stood in for a bound was a socket timeout — and a socket
+timeout bounds each READ, not the total call, so a slowly-trickling response could outlive its own
+timeout indefinitely.
 
 WHAT IT GUARANTEES
   * ONE terminal record per logical call, whatever the outcome: `success`, `error`, `timeout` or
@@ -164,10 +166,19 @@ class CancelToken:
     def __init__(self):
         self._event = threading.Event()
         self._closers = []
+        self._lock = threading.Lock()
 
     def set(self):
-        self._event.set()
-        for close in list(self._closers):
+        # "Exactly once" is a property of this lock, not a hope. Ownership of the closer list is
+        # TRANSFERRED here under the lock, so a `register_closer` racing this call either joins the
+        # list this call is about to drain or takes the immediate-close path below — never both —
+        # and a second `set()` finds an empty list instead of re-closing every handle. Measured
+        # before the lock: `set()` called twice closed every handle twice, and a registration racing
+        # `set()` could be closed by both sides.
+        with self._lock:
+            self._event.set()
+            closers, self._closers = self._closers, []
+        for close in closers:
             try:
                 close()
             except Exception:  # noqa: BLE001 - a closer that fails must not mask a cancel
@@ -177,15 +188,20 @@ class CancelToken:
         return self._event.is_set()
 
     def register_closer(self, close):
-        """Register the transport handle's teardown (e.g. `response.close`). Called under the lock
-        so a cancel racing the registration still closes the handle exactly once."""
-        if self._event.is_set():
-            try:
-                close()
-            except Exception:  # noqa: BLE001
-                pass
-            return
-        self._closers.append(close)
+        """Register the transport handle's teardown (e.g. `response.close`).
+
+        Under the token's lock, so a cancel racing this registration still closes the handle EXACTLY
+        ONCE: either the closer joins the list `set()` will drain, or `set()` has already taken the
+        list and this call closes it here.
+        """
+        with self._lock:
+            if not self._event.is_set():
+                self._closers.append(close)
+                return
+        try:
+            close()
+        except Exception:  # noqa: BLE001 - a closer that fails must not mask a cancel
+            pass
 
 
 class Session:
@@ -395,49 +411,70 @@ def call_model(site, transport, *, role, model=None, provider=None, fingerprint_
 
     value, err, outcome, attempts, last_budget_s = None, None, None, 0, eff["per_attempt_s"]
     try:
-        while True:
-            if not session.can_attempt():
-                outcome, err = "timeout", RuntimeError("session budget exhausted before an attempt")
+        try:
+            while True:
+                if not session.can_attempt():
+                    outcome, err = "timeout", RuntimeError("session budget exhausted before an attempt")
+                    break
+                attempts += 1
+                budget_s = min(eff["per_attempt_s"], session.remaining_s())
+                last_budget_s = budget_s
+                attempt_started = time.monotonic()
+                outcome, value, err = _run_supervised(transport, budget_s, cancel,
+                                                      budgets.progress_tick_s,
+                                                      on_tick if budget_s > budgets.progress_threshold_s
+                                                      else None)
+                session.charge(time.monotonic() - attempt_started)
+                if outcome == "success":
+                    break
+                if outcome == "cancelled":
+                    break
+                if outcome == "timeout":
+                    break                      # a timeout is never auto-retried
+                retryable_outcome = "error" in (eff.get("retry_on") or [])
+                if (retryable and retryable_outcome and attempts < int(eff["max_attempts"])
+                        and session.can_attempt()):
+                    continue
                 break
-            attempts += 1
-            budget_s = min(eff["per_attempt_s"], session.remaining_s())
-            last_budget_s = budget_s
-            attempt_started = time.monotonic()
-            outcome, value, err = _run_supervised(transport, budget_s, cancel,
-                                                  budgets.progress_tick_s,
-                                                  on_tick if budget_s > budgets.progress_threshold_s
-                                                  else None)
-            session.charge(time.monotonic() - attempt_started)
-            if outcome == "success":
-                break
-            if outcome == "cancelled":
-                break
-            if outcome == "timeout":
-                break                      # a timeout is never auto-retried
-            retryable_outcome = "error" in (eff.get("retry_on") or [])
-            if (retryable and retryable_outcome and attempts < int(eff["max_attempts"])
-                    and session.can_attempt()):
-                continue
-            break
-        status = "timeout" if outcome == "timeout" else (
-            "cancelled" if outcome == "cancelled"
-            else ("success" if outcome == "success" else "error"))
-        error_class = None
-        if status == "error" and err is not None:
-            error_class = type(err).__name__
-        result = _terminal(store, call_id, site, role, model, provider, name, fp, started,
-                           status=status, value=value, err=err, timeout_flag=(status == "timeout"),
-                           cancel_flag=(status == "cancelled"), attempts=attempts, cache_hit=False,
-                           cache_policy="disabled" if not coalesce_key else "coalesce",
-                           error_class=error_class, emit=emit, budget_s=last_budget_s,
-                           session_cap_s=eff["session_cap_s"])
-        # The owner publishes its record BEFORE releasing the waiters: a coalesced call is a HIT, and
-        # a waiter that woke on an unpublished in-flight entry would answer with a second transport
-        # call while still claiming to be one (measured: that ordering produced 2 transport calls and
-        # 0 hits, i.e. coalescing that coalesced nothing).
-        if coalesce_key and inflight is not None:
-            inflight.result = result
-        return result
+            status = "timeout" if outcome == "timeout" else (
+                "cancelled" if outcome == "cancelled"
+                else ("success" if outcome == "success" else "error"))
+            error_class = None
+            if status == "error" and err is not None:
+                error_class = type(err).__name__
+            result = _terminal(store, call_id, site, role, model, provider, name, fp, started,
+                               status=status, value=value, err=err, timeout_flag=(status == "timeout"),
+                               cancel_flag=(status == "cancelled"), attempts=attempts, cache_hit=False,
+                               cache_policy="disabled" if not coalesce_key else "coalesce",
+                               error_class=error_class, emit=emit, budget_s=last_budget_s,
+                               session_cap_s=eff["session_cap_s"])
+            # The owner publishes its record BEFORE releasing the waiters: a coalesced call is a HIT, and
+            # a waiter that woke on an unpublished in-flight entry would answer with a second transport
+            # call while still claiming to be one (measured: that ordering produced 2 transport calls and
+            # 0 hits, i.e. coalescing that coalesced nothing).
+            if coalesce_key and inflight is not None:
+                inflight.result = result
+            return result
+        except BaseException as interrupt:  # noqa: BLE001 - an interruption must not become an OMISSION
+            # A KeyboardInterrupt (Ctrl+C / SIGINT) or any other BaseException delivered to the CALLING
+            # thread while this call is in flight used to skip the terminal record entirely: measured
+            # 2026-10-16 against the helper as first delivered — the store held 1 `model_call_started`
+            # and 0 terminals for that call, and this track's OWN validator then failed the store
+            # ("model_call_started with NO terminal event"), because AC-1 requires a cancelled call to be
+            # terminalised rather than omitted. It is also the most likely way a headless CLI gate's call
+            # ends, which is exactly what AC-4 asks to be observable. So: terminalise it as `cancelled`
+            # (an interrupt IS the caller cancelling — it is the CLI's own cancel signal), name the
+            # exception in `error_class`, and RE-RAISE so the caller's semantics survive (a CLI's
+            # KeyboardInterrupt, a signal handler, an exit status of 130). The transport worker is a
+            # daemon: nothing here can hang the caller, and the site's own `with urlopen(...)` unwinds
+            # when the worker returns or the process ends.
+            _terminal(store, call_id, site, role, model, provider, name, fp, started,
+                      status="cancelled", value=None, err=interrupt, timeout_flag=False,
+                      cancel_flag=True, attempts=attempts, cache_hit=False,
+                      cache_policy="disabled" if not coalesce_key else "coalesce",
+                      error_class=type(interrupt).__name__, emit=emit, budget_s=last_budget_s,
+                      session_cap_s=eff["session_cap_s"])
+            raise
     finally:
         if coalesce_key:
             with _INFLIGHT_LOCK:

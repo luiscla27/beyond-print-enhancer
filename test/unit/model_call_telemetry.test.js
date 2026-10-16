@@ -34,9 +34,11 @@ const HELPER_JS = path.join(ROOT, "scripts", "perf", "model_call_telemetry.js");
 const VALIDATOR = path.join(ROOT, "scripts", "perf", "validate_model_call_telemetry.js");
 const BUDGETS = path.join(ROOT, "scripts", "perf", "budgets.json");
 const PY_HELPER = path.join(ROOT, "scripts", "perf", "model_call_telemetry.py");
+const REPORT_TOOL = path.join(ROOT, "scripts", "perf", "runtime_perf_report.js");
 
 const { callModel, CancelToken, loadBudgets, resolveBudget, fingerprint } = require(HELPER_JS);
 const { validateStore, percentileSorted } = require(VALIDATOR);
+const { displayPath } = require(REPORT_TOOL);
 
 let tmpRoot = null;
 function tmpdir() {
@@ -318,6 +320,25 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       assert.strictEqual(out.coalesce.cache_hits, 1, "exactly one caller is recorded as the coalesced hit");
 
       assert.deepStrictEqual(out.unterminated_call_ids, [], "no call may be left without a terminal event");
+
+      // The lock that makes the token's own "exactly once" claim true. Without it this reads
+      // ["before-set", "before-set", "after-set"] — one closer fired twice and the count wrong.
+      assert.deepStrictEqual(out.closer_hits, ["before-set", "after-set"],
+        "a cancel token must deliver every registered closer EXACTLY once: a repeated set() closes "
+        + "nothing again, and a registration racing the cancel is closed once, never twice");
+
+      // An interrupted call is the interrupt path of AC-4c and, before this session, the one way a
+      // call could end with NO terminal record at all (measured: 1 started / 0 terminal, and the
+      // validator failed the store). It must be terminalised AND still propagate.
+      assert.strictEqual(out.interrupt.raised, "KeyboardInterrupt",
+        "the interrupt must still reach the caller — terminalising it may not swallow it");
+      assert.strictEqual(out.interrupt.terminal_count, 1,
+        "an interrupted call must produce its terminal record rather than being omitted (AC-1c)");
+      assert.strictEqual(out.interrupt.status, "cancelled");
+      assert.strictEqual(out.interrupt.cancel_flag, true);
+      assert.strictEqual(out.interrupt.error_class, "KeyboardInterrupt");
+      assert.ok(typeof out.interrupt.duration_ms === "number" && out.interrupt.duration_ms >= 0,
+        "an interrupted call still carries a measurable duration");
     });
 
     it("resolves the SAME effective budget in both runtimes (one budgets.json, two readers)", () => {
@@ -473,13 +494,26 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       // where it says 356.8s — the convention is load-bearing, not cosmetic.
       assert.notStrictEqual(percentileSorted(values, 0.95), 3.85);
     });
+
+    it("spells a store inside the checkout relative to the root, so the filed report survives its worktree", () => {
+      // The first version printed the path it was handed verbatim, so the TRACKED report carried
+      // `.../worktrees/<stamp>/temp/perf/model_calls.jsonl` — a disposable path naming nothing on the
+      // next run. Inside the checkout: repo-relative, forward slashes. Outside it: unchanged.
+      assert.strictEqual(displayPath(path.join(ROOT, "temp", "perf", "model_calls.jsonl")),
+        "temp/perf/model_calls.jsonl");
+      assert.strictEqual(displayPath(path.join(ROOT, "scripts", "perf", "budgets.json")),
+        "scripts/perf/budgets.json");
+      const outside = path.join(os.tmpdir(), "somewhere-else.jsonl");
+      assert.strictEqual(displayPath(outside), outside,
+        "a path outside the checkout has no relative form and must be left as it was");
+    });
   });
 });
 
 /** The Python side's driver. It starts its OWN local server, so the real urllib transport is what
  *  every case exercises; it prints one JSON object on the last stdout line. */
 const DRIVER_SOURCE = [
-  "import json, sys, threading, time, http.server, socketserver, urllib.request",
+  "import json, sys, threading, time, http.server, socketserver, urllib.request, signal",
   "",
   "HELPER = sys.argv[1]",
   "STORE = sys.argv[2]",
@@ -599,7 +633,47 @@ const DRIVER_SOURCE = [
   "started = [r for r in records() if r['event'] == 'model_call_started']",
   "terminals = [r for r in records() if r['event'] == 'model_call_terminal']",
   "unterminated = [r['call_id'] for r in started if r['call_id'] not in {t['call_id'] for t in terminals}]",
-  "out = {'cases': cases, 'unterminated_call_ids': unterminated,",
+  "",
+  "# EXACTLY-ONCE closer delivery (re-execution 2026-10-16). The token's docstring claimed that a",
+  "# cancel racing a registration still closes the handle `exactly once` while no lock existed: a",
+  "# second `set()` re-closed every handle, and a registration racing `set()` could be closed by both",
+  "# sides. This case is the one that FAILS without the lock (measured on the unlocked version: 3",
+  "# hits, not 2).",
+  "token2 = CancelToken()",
+  "closer_hits = []",
+  "token2.register_closer(lambda: closer_hits.append('before-set'))",
+  "token2.set()",
+  "token2.set()          # a second set() must close NOTHING again",
+  "token2.register_closer(lambda: closer_hits.append('after-set'))",
+  "",
+  "# AN INTERRUPT MUST STILL BE TERMINALISED (AC-1c; re-execution 2026-10-16). A SIGINT delivered to",
+  "# the CALLING thread while a call is in flight is how a headless CLI gate's call most often ends,",
+  "# and the helper as first delivered skipped the terminal record entirely: measured on it, the store",
+  "# held 1 `model_call_started` and 0 terminals, and this track's own validator then FAILED the store.",
+  "interrupt_marks = len(records())",
+  "def slow_transport(timeout_s):",
+  "    time.sleep(0.8)",
+  "    return b'{}'",
+  "interrupt_timer = threading.Timer(0.15, lambda: signal.raise_signal(signal.SIGINT))",
+  "interrupt_timer.start()",
+  "interrupted = None",
+  "try:",
+  "    call_model('scripts/perf/model_call_telemetry.py#sample', slow_transport,",
+  "               role='reasonix-agent', request_class='background_maintenance', model='m',",
+  "               provider='p', fingerprint_material='interrupt', store=STORE,",
+  "               budgets=budgets(per=5.0, sess=5.0, attempts=1))",
+  "except KeyboardInterrupt:",
+  "    interrupted = 'KeyboardInterrupt'",
+  "finally:",
+  "    interrupt_timer.cancel()",
+  "interrupt_terminals = [r for r in records()[interrupt_marks:] if r['event'] == 'model_call_terminal']",
+  "",
+  "out = {'cases': cases, 'unterminated_call_ids': unterminated, 'closer_hits': closer_hits,",
+  "       'interrupt': {'raised': interrupted, 'terminal_count': len(interrupt_terminals),",
+  "                     'status': interrupt_terminals[0]['status'] if interrupt_terminals else None,",
+  "                     'cancel_flag': interrupt_terminals[0].get('cancel_flag') if interrupt_terminals else None,",
+  "                     'error_class': interrupt_terminals[0].get('error_class') if interrupt_terminals else None,",
+  "                     'duration_ms': interrupt_terminals[0].get('duration_ms') if interrupt_terminals else None},",
   "       'coalesce': {'transport_calls': calls['n'],",
   "                    'cache_hits': len([t for t in terminals if t.get('cache_hit_flag')])}}",
   "",

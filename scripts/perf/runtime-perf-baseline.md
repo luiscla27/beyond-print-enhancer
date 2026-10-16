@@ -11,11 +11,22 @@ the first task was to find the ones that reproduce it:
 
 ```bash
 node scripts/perf/runtime_perf_report.js \
-  --relay-store temp/modelstack/telemetry.jsonl \
+  --relay-store "$RELAY_CHECKOUT/temp/modelstack/telemetry.jsonl" \
   --since 2026-09-21T16:31:00Z --until 2026-09-22T03:01:27Z \
   --unknown-since 2026-09-21T12:04:57Z \
-  --project-store temp/perf/model_calls.jsonl
+  --project-store temp/perf/model_calls.jsonl \
+  --out-md scripts/perf/runtime-perf-report.md --out-json scripts/perf/runtime-perf-report.json
 ```
+
+**`$RELAY_CHECKOUT` is not decoration — this command was not runnable as first written** (measured
+2026-10-16, re-execution of this track). The first version passed
+`--relay-store temp/modelstack/telemetry.jsonl`, which cannot resolve in the checkout this track
+executes in: the relay store is untracked and belongs to the project checkout the relay writes from,
+and a builder worktree carries no `temp/modelstack/` at all (`ls <worktree>/temp` → `perf scratch`).
+`$RELAY_CHECKOUT` is that project checkout (here
+`C:/luiscla27/projects/dndbeyond-printenhance`). Every other path in the command is repo-relative and
+works from either checkout; the re-execution ran exactly this command, with the store given by its
+absolute path.
 
 | dossier row | dossier | re-derived | verdict |
 | --- | --- | --- | --- |

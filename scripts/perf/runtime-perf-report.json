@@ -1,6 +1,6 @@
 {
   "schema_version": "runtime-perf-report/1",
-  "generated_utc": "2026-10-15T21:20:32.807Z",
+  "generated_utc": "2026-10-16T06:21:51.761Z",
   "track": "runtime_perf_20261015",
   "sample_size": 120,
   "sample_provenance": "synthetic transport, live code path (scripts/perf/model_call_telemetry.py --sample); no live seat call",
@@ -78,8 +78,8 @@
   "after": {
     "findings": [],
     "metrics": {
-      "store": "C:\\luiscla27\\projects\\dndbeyond-printenhance\\temp\\idlegate\\worktrees\\20261015-205540-17140-wt\\temp\\perf\\model_calls.jsonl",
-      "events": 245,
+      "store": "temp/perf/model_calls.jsonl",
+      "events": 246,
       "terminal": 120,
       "coverage_pct": 100,
       "unknown_model_pct": 0,
@@ -94,37 +94,37 @@
           "n": 40,
           "p50_ms": 16,
           "p95_ms": 46,
-          "p99_ms": 110,
-          "max_ms": 110
+          "p99_ms": 108,
+          "max_ms": 108
         },
         "interactive_agent": {
           "n": 40,
           "p50_ms": 16,
           "p95_ms": 62,
-          "p99_ms": 110,
-          "max_ms": 110
+          "p99_ms": 109,
+          "max_ms": 109
         },
         "background_maintenance": {
           "n": 40,
           "p50_ms": 16,
-          "p95_ms": 62,
-          "p99_ms": 108,
-          "max_ms": 108
+          "p95_ms": 108,
+          "p99_ms": 109,
+          "max_ms": 109
         }
       },
       "latency": {
         "n": 120,
         "p50_ms": 16,
         "p95_ms": 62,
-        "p99_ms": 110,
-        "max_ms": 110
+        "p99_ms": 109,
+        "max_ms": 109
       },
       "timeout_count": 7,
       "cancel_count": 4,
       "error_count": 5,
       "cache_hit_count": 0,
       "cache_hit_rate": 0,
-      "progress_ticks": 5
+      "progress_ticks": 6
     },
     "sites": [
       {
@@ -143,7 +143,7 @@
           "error": 5,
           "cancelled": 4
         },
-        "max_ms": 110,
+        "max_ms": 109,
         "over_cap": false
       },
       {
@@ -237,7 +237,7 @@
     {
       "id": "AC-4",
       "verdict": "PASS",
-      "basis": "5 progress tick(s) measured on the real code path; cancellation and abort-at-budget are asserted in `test/unit/model_call_telemetry.test.js`"
+      "basis": "6 progress tick(s) measured on the real code path; cancellation and abort-at-budget are asserted in `test/unit/model_call_telemetry.test.js`"
     },
     {
       "id": "AC-5",

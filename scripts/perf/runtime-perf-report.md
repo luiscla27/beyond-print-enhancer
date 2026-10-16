@@ -1,6 +1,6 @@
 # Runtime-perf report — scripts-originated model calls
 
-Track `runtime_perf_20261015` · schema `runtime-perf-report/1` · generated 2026-10-15T21:20:32.808Z
+Track `runtime_perf_20261015` · schema `runtime-perf-report/1` · generated 2026-10-16T06:21:51.762Z
 
 ## Evidence sources (AC-6)
 
@@ -30,14 +30,14 @@ Rows in the window that carry no model label at all: **860** (`task_completed`-c
 
 ## After — the scripts area's own calls (project population)
 
-Sample: **120** terminal events in `C:\luiscla27\projects\dndbeyond-printenhance\temp\idlegate\worktrees\20261015-205540-17140-wt\temp\perf\model_calls.jsonl` (245 rows including lifecycle events).
+Sample: **120** terminal events in `temp/perf/model_calls.jsonl` (246 rows including lifecycle events; the path is relative to the repository root, so the artifact does not cite the worktree it was generated in).
 
 - `duration_ms` coverage: **100%**
 - unknown-model rate: **0%**
 - statuses: {"success":104,"timeout":7,"error":5,"cancelled":4}
-- timeouts 7 · cancels 4 · errors 5 · progress ticks 5
+- timeouts 7 · cancels 4 · errors 5 · progress ticks 6
 - cache hits 0 (rate 0)
-- latency: n=120 p50=16ms p95=62ms p99=110ms max=110ms
+- latency: n=120 p50=16ms p95=62ms p99=109ms max=109ms
 
 | site | class | declared cap s | class cap s | override | measured budget s | measured session s | calls | exercised | over session cap |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
@@ -57,7 +57,7 @@ _A row with no calls is a site whose wiring is DECLARED and unmeasured, not a si
 | AC-1 | PASS | 120 terminal calls, duration_ms coverage 100%, 0 validator finding(s), unknown-model 0% |
 | AC-2 | PASS (WITH DECLARED OVERRIDES) | budget mechanism enforced at every site (5 declared site(s)); 4 site(s) carry a declared override above the class cap for the reasons in `scripts/perf/budgets.json`; measured calls over their session cap: 0 |
 | AC-3 | NOT ACHIEVED — OUT OF SCOPE (relay clause); before/after report MET | the criterion's population is relay-served `qwen3.8-flash`, and 865/865 terminal rows in the store are `producer=reasonix_proxy`; no `scripts/` edit can move that percentile. The requested before/after report EXISTS (this file); no p50 comparison is possible because no scripts-originated sample predates this track |
-| AC-4 | PASS | 5 progress tick(s) measured on the real code path; cancellation and abort-at-budget are asserted in `test/unit/model_call_telemetry.test.js` |
+| AC-4 | PASS | 6 progress tick(s) measured on the real code path; cancellation and abort-at-budget are asserted in `test/unit/model_call_telemetry.test.js` |
 | AC-5 | PASS (RULED OUT, WITH REASONS) | the framework's own duplicate markers are unset on 865 relay rows (0 marked); coalescing is implemented and proven by test; caching is disabled by policy because the area's only repeated-request class is the byte-identical re-ask, which the repository requires to be an INDEPENDENT answer (`scripts/perf/redundant-call-analysis.md`) |
 | AC-6 | PASS | every evidence source is named in this report; the change set is `scripts/perf/**`, five call sites in the tracked `scripts` area, one test file, rows in `TECH_DEBT_SCRIPTS.md`; no excluded tree read or written |
 

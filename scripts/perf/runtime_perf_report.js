@@ -43,6 +43,23 @@ const { validateStore, percentileSorted } = require("./validate_model_call_telem
 
 const SCHEMA_VERSION = "runtime-perf-report/1";
 const TERMINAL_EVENTS = new Set(["model_call_completed", "model_call_failed"]);
+const ROOT = path.resolve(__dirname, "..", "..");
+
+/**
+ * A path as a FILED record should spell it: relative to the repository root when it is inside this
+ * checkout, absolute otherwise.
+ *
+ * This is not cosmetic. The first version of this report printed the path it was handed verbatim, so
+ * the tracked artifact carried `.../worktrees/20261015-205540-17140-wt/temp/perf/model_calls.jsonl`
+ * — a DISPOSABLE path that names nothing on the next run, in the next worktree, or in a reader's
+ * checkout, and that made every regeneration rewrite the file for no reason but its own scratch
+ * location. The store is named once, correctly, as `temp/perf/model_calls.jsonl`.
+ */
+function displayPath(p) {
+  const rel = path.relative(ROOT, p);
+  if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) return p;
+  return rel.split(path.sep).join("/");
+}
 
 function arg(name, fallback = null) {
   const i = process.argv.indexOf(name);
@@ -137,6 +154,9 @@ async function scanRelay(storePath, since, until, unknownSince) {
 /** The after-table: what the scripts area's own calls measured, per call class. */
 function projectTable(storePath, budgets) {
   const { findings, metrics } = validateStore(storePath, { minSample: 0 });
+  // The store is reported as the checkout spells it, never as the disposable path this run happened
+  // to be handed (see `displayPath`): the artifact is tracked, the path it names must survive it.
+  if (metrics) metrics.store = displayPath(storePath);
   const measured = new Map();
   if (fs.existsSync(storePath)) {
     for (const line of fs.readFileSync(storePath, "utf8").split(/\r?\n/)) {
@@ -257,7 +277,8 @@ function md(relay, project, verdict) {
   } else {
     const m = project.metrics;
     L.push(`Sample: **${m.terminal}** terminal events in \`${m.store}\` `
-      + `(${m.events} rows including lifecycle events).`);
+      + `(${m.events} rows including lifecycle events; the path is relative to the repository root, `
+      + "so the artifact does not cite the worktree it was generated in).");
     L.push("");
     L.push(`- \`duration_ms\` coverage: **${m.coverage_pct}%**`);
     L.push(`- unknown-model rate: **${m.unknown_model_pct}%**`);
@@ -440,4 +461,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { scanRelay, projectTable, verdicts, md, SCHEMA_VERSION };
+module.exports = { scanRelay, projectTable, verdicts, md, displayPath, SCHEMA_VERSION };
