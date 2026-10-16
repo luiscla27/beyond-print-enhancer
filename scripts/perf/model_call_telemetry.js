@@ -15,9 +15,10 @@
  * file. A record written here and a record written there are indistinguishable to the validator, the
  * report, and whoever reads the store next.
  *
- * WHAT IT GUARANTEES (the same five things the Python half guarantees, in the same words)
- *   * ONE terminal record per logical call — `success`, `error`, `timeout` or `cancelled`. A failure,
- *     a budget expiry and a cancel are all terminal telemetry, never an omission.
+ * WHAT IT GUARANTEES (the Python half's contract, with ONE named gap)
+ *   * ONE terminal record per logical call for every outcome the TRANSPORT reports — `success`,
+ *     `error`, `timeout` or `cancelled`. A failure, a budget expiry and a cancel are all terminal
+ *     telemetry, never an omission.
  *   * A TOTAL deadline, not a socket one: the caller is released at the deadline whether or not the
  *     transport has settled, so a late response is DISCARDED and its record is written once.
  *   * A REAL cancellation signal: `CancelToken.set()` aborts the transport through the
@@ -25,6 +26,17 @@
  *   * A session budget SEPARATE from the per-attempt one, so a retry chain cannot accumulate past the
  *     hard cap. `timeout` and `cancelled` are never auto-retried; only a retryable `error` is.
  *   * A REDACTED fingerprint: the request material is hashed, never stored.
+ *
+ * NAMED GAP — THE INTERRUPT PATH (measured 2026-10-16, re-execution of this track). The PYTHON half
+ * terminalises a `KeyboardInterrupt` delivered to the calling thread (`status=cancelled`), so an
+ * interrupted Python call cannot end with a `model_call_started` and no terminal row. THIS half
+ * cannot: a Ctrl+C on Windows is a `TerminateProcess`, so no handler in this process runs, and the
+ * one Node call site (`scripts/border_design_generator.js`) can therefore leave an unterminated call
+ * behind for the store's next validation to report. A `process.on("SIGINT")` handler was considered
+ * and REJECTED rather than written-but-unfalsifiable: a signal cannot be delivered to a child process
+ * on this platform, so no test here could ever show the handler working. The gap is stated instead,
+ * and the recovery is that the store never hides it — `validate_model_call_telemetry.js` fails on an
+ * unterminated call, which is the signal a re-run should read.
  *
  * USAGE
  *   const { callModel } = require("./model_call_telemetry.js");

@@ -244,13 +244,38 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       await stub3.close();
     });
 
-    it("fingerprints a repeat identically and a different body differently (redacted, never raw)", () => {
+    it("fingerprints a repeat identically, a different body differently, and never stores the material", async () => {
       const a = fingerprint("m", "p", SITE, "some prompt text");
       const b = fingerprint("m", "p", SITE, "some prompt text");
       const c = fingerprint("m", "p", SITE, "some other prompt text");
       assert.strictEqual(a, b);
       assert.notStrictEqual(a, c);
-      assert.ok(!a.includes("prompt"), "the fingerprint must not carry the material it hashes");
+      assert.match(a, /^sha256:[0-9a-f]{16}$/, "the fingerprint is a truncated digest, not the material");
+
+      // THE LEAK CLAIM, CHECKED AGAINST A REAL STORE. What stood here was
+      // `assert.ok(!a.includes("prompt"))` — an assertion that could not fail whatever the helper
+      // did (a `sha256:` + hex digest has no such substring), i.e. a claim with no failure mode.
+      // A canary does have one: call the helper with a unique material and then scan every byte the
+      // helper wrote for it. The scan is itself checked in both directions below, so a green result
+      // cannot come from a scan that finds nothing anywhere.
+      const canary = `LEAK-CANARY-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const stub4 = await startServer((req, res) => { res.writeHead(200, { "content-type": "application/json" }); res.end("{}"); });
+      const store = tmpFile("node-canary.jsonl");
+      await callModel({
+        site: "scripts/border_design_generator.js", role: "reasonix-agent",
+        model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: canary,
+        transport: httpTransport(`${stub4.url}/chat/completions`), store,
+      });
+      const written = fs.readFileSync(store, "utf8");
+      assert.ok(!written.includes(canary),
+        "the request material must never reach the store, in any field");
+      assert.strictEqual(written.trim().split("\n").length, 2, "started + terminal, nothing else");
+      // the same scan DOES find a canary that is there — so the line above is a check, not a tautology
+      const leaking = `${store}.leak`;
+      fs.writeFileSync(leaking, JSON.stringify({ event: "model_call_terminal", material: canary }) + "\n", "utf8");
+      assert.ok(fs.readFileSync(leaking, "utf8").includes(canary),
+        "the canary scan must fire when the material IS written");
+      await stub4.close();
     });
   });
 
@@ -339,6 +364,19 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       assert.strictEqual(out.interrupt.error_class, "KeyboardInterrupt");
       assert.ok(typeof out.interrupt.duration_ms === "number" && out.interrupt.duration_ms >= 0,
         "an interrupted call still carries a measurable duration");
+
+      // ...and a call whose terminal WRITE throws must not be terminalised twice: the record is
+      // already on disk, so a second one would break "EXACTLY ONE terminal per logical call" and
+      // trip the validator's double-terminal arm. Both directions are checked here: exactly one
+      // terminal row AND a validator that accepts the store.
+      assert.strictEqual(out.boom.raised, "KeyboardInterrupt", "the write failure must still propagate");
+      assert.strictEqual(out.boom.terminal_count, 1,
+        `a call must carry exactly ONE terminal row even when its terminal write throws `
+        + `(got ${out.boom.terminal_count} of ${out.boom.rows} rows)`);
+      const boomFindings = validateStore(out.boom.store).findings;
+      assert.deepStrictEqual(boomFindings, [],
+        "the store left by a failed terminal write must still pass the validator: "
+        + boomFindings.join(" | "));
     });
 
     it("resolves the SAME effective budget in both runtimes (one budgets.json, two readers)", () => {
@@ -513,13 +551,13 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
 /** The Python side's driver. It starts its OWN local server, so the real urllib transport is what
  *  every case exercises; it prints one JSON object on the last stdout line. */
 const DRIVER_SOURCE = [
-  "import json, sys, threading, time, http.server, socketserver, urllib.request, signal",
+  "import json, os, sys, threading, time, http.server, socketserver, urllib.request, signal",
   "",
   "HELPER = sys.argv[1]",
   "STORE = sys.argv[2]",
   "PARITY_ONLY = '--parity' in sys.argv",
   "sys.path.insert(0, __import__('os').path.dirname(HELPER))",
-  "from model_call_telemetry import (Budgets, CancelToken, call_model, load_budgets, Session)",
+  "from model_call_telemetry import (Budgets, CancelToken, _Store, call_model, load_budgets, Session)",
   "",
   "class Handler(http.server.BaseHTTPRequestHandler):",
   "    def do_POST(self):",
@@ -668,7 +706,39 @@ const DRIVER_SOURCE = [
   "    interrupt_timer.cancel()",
   "interrupt_terminals = [r for r in records()[interrupt_marks:] if r['event'] == 'model_call_terminal']",
   "",
+  "# A STORE THAT FAILS MID-WRITE must not yield a SECOND terminal row (review finding, fixed",
+  "# 2026-10-16). The interrupt handler marks the call terminalised BEFORE the write, so an exception",
+  "# raised inside the terminal write is re-raised with NO second record. Without that flag this",
+  "# produces 2 terminal rows for one call_id - the module's own 'one terminal per logical call'",
+  "# contract broken, and the validator's double-terminal arm would (rightly) fail the store.",
+  "class BoomStore(_Store):",
+  "    def __init__(self, path, boom_on):",
+  "        _Store.__init__(self, path)",
+  "        self.n = 0",
+  "        self.boom_on = boom_on",
+  "    def append(self, record):",
+  "        self.n += 1",
+  "        _Store.append(self, record)",
+  "        if self.n == self.boom_on:",
+  "            raise KeyboardInterrupt('raised inside the %s write' % record['event'])",
+  "",
+  "boom_path = STORE + '.boom'",
+  "if os.path.exists(boom_path):",
+  "    os.remove(boom_path)",
+  "boom_raised = None",
+  "try:",
+  "    call_model('scripts/perf/model_call_telemetry.py#sample', lambda timeout_s: b'{}',",
+  "               role='reasonix-agent', request_class='background_maintenance', model='m',",
+  "               provider='p', fingerprint_material='boom', store=BoomStore(boom_path, 2),",
+  "               budgets=budgets(per=2.0, sess=2.0, attempts=1))",
+  "except KeyboardInterrupt:",
+  "    boom_raised = 'KeyboardInterrupt'",
+  "boom_rows = [json.loads(l) for l in open(boom_path, encoding='utf-8') if l.strip()]",
+  "boom_terminals = [r for r in boom_rows if r['event'] == 'model_call_terminal']",
+  "",
   "out = {'cases': cases, 'unterminated_call_ids': unterminated, 'closer_hits': closer_hits,",
+  "       'boom': {'raised': boom_raised, 'store': boom_path, 'rows': len(boom_rows),",
+  "                'terminal_count': len(boom_terminals)},",
   "       'interrupt': {'raised': interrupted, 'terminal_count': len(interrupt_terminals),",
   "                     'status': interrupt_terminals[0]['status'] if interrupt_terminals else None,",
   "                     'cancel_flag': interrupt_terminals[0].get('cancel_flag') if interrupt_terminals else None,",

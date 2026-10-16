@@ -410,6 +410,7 @@ def call_model(site, transport, *, role, model=None, provider=None, fingerprint_
                                  elapsed_ms=int(elapsed_s * 1000)))
 
     value, err, outcome, attempts, last_budget_s = None, None, None, 0, eff["per_attempt_s"]
+    terminalised = False
     try:
         try:
             while True:
@@ -442,6 +443,13 @@ def call_model(site, transport, *, role, model=None, provider=None, fingerprint_
             error_class = None
             if status == "error" and err is not None:
                 error_class = type(err).__name__
+            # Set BEFORE the write, so an exception raised INSIDE `_terminal` (a store whose append
+            # fails, an interrupt landing on the write) cannot reach the handler below with the flag
+            # still clear and write a SECOND terminal row for the same `call_id` — which would break
+            # this module's own "ONE terminal record per logical call" contract and trip the
+            # validator's double-terminal arm. Measured reasoning, not theory: the flag is the whole
+            # difference between one row and two on that path.
+            terminalised = True
             result = _terminal(store, call_id, site, role, model, provider, name, fp, started,
                                status=status, value=value, err=err, timeout_flag=(status == "timeout"),
                                cancel_flag=(status == "cancelled"), attempts=attempts, cache_hit=False,
@@ -468,12 +476,18 @@ def call_model(site, transport, *, role, model=None, provider=None, fingerprint_
             # KeyboardInterrupt, a signal handler, an exit status of 130). The transport worker is a
             # daemon: nothing here can hang the caller, and the site's own `with urlopen(...)` unwinds
             # when the worker returns or the process ends.
-            _terminal(store, call_id, site, role, model, provider, name, fp, started,
-                      status="cancelled", value=None, err=interrupt, timeout_flag=False,
-                      cancel_flag=True, attempts=attempts, cache_hit=False,
-                      cache_policy="disabled" if not coalesce_key else "coalesce",
-                      error_class=type(interrupt).__name__, emit=emit, budget_s=last_budget_s,
-                      session_cap_s=eff["session_cap_s"])
+            #
+            # `terminalised` guards the ONE hole this arm could otherwise open: an exception raised
+            # inside the normal `_terminal` write would arrive here with the record already written,
+            # and a second write would break the module's own "one terminal per call" contract. A call
+            # that was already terminalised is therefore left exactly as it is and only re-raised.
+            if not terminalised:
+                _terminal(store, call_id, site, role, model, provider, name, fp, started,
+                          status="cancelled", value=None, err=interrupt, timeout_flag=False,
+                          cancel_flag=True, attempts=attempts, cache_hit=False,
+                          cache_policy="disabled" if not coalesce_key else "coalesce",
+                          error_class=type(interrupt).__name__, emit=emit, budget_s=last_budget_s,
+                          session_cap_s=eff["session_cap_s"])
             raise
     finally:
         if coalesce_key:
