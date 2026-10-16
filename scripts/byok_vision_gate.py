@@ -24,6 +24,9 @@ import os
 import sys
 import urllib.request
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "perf"))
+from model_call_telemetry import call_model  # noqa: E402  (track runtime_perf_20261015)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
 
@@ -145,8 +148,31 @@ def dispatch(review, image_path, brief_path):
         headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=420) as r:
-        return extract_text(r.read())
+
+    # BUDGETED + OBSERVED (track runtime_perf_20261015). Before this, the call's only bound was
+    # `urlopen(timeout=420)`, and a socket timeout bounds each READ rather than the whole call, so a
+    # slowly-trickling response could outlive it; and the call emitted no terminal event anywhere, so
+    # the area's own model traffic was invisible. The declared budget for this site lives in
+    # scripts/perf/budgets.json (with its reason), and the terminal event lands in
+    # temp/perf/model_calls.jsonl.
+    def transport(timeout_s):
+        with urllib.request.urlopen(req, timeout=timeout_s) as r:
+            return r.read()
+
+    result = call_model(
+        site="scripts/byok_vision_gate.py",
+        role="reasonix-agent",
+        model=review["model"],
+        provider=review["base_url"],
+        fingerprint_material=frame_b64 + "\n" + brief,
+        transport=transport,
+    )
+    if not result.ok:
+        raise RuntimeError(
+            "vision seat call %s after %dms (class=%s, attempts=%s, error=%s)"
+            % (result.status, result.duration_ms, result.request_class, result.attempts,
+               result.error))
+    return extract_text(result.value)
 
 
 def main():

@@ -1,0 +1,260 @@
+{
+  "schema_version": "runtime-perf-report/1",
+  "generated_utc": "2026-10-16T06:21:51.761Z",
+  "track": "runtime_perf_20261015",
+  "sample_size": 120,
+  "sample_provenance": "synthetic transport, live code path (scripts/perf/model_call_telemetry.py --sample); no live seat call",
+  "baseline": {
+    "store": "C:/luiscla27/projects/dndbeyond-printenhance/temp/modelstack/telemetry.jsonl",
+    "since": "2026-09-21T16:31:00Z",
+    "until": "2026-09-22T03:01:27Z",
+    "terminal_rows": 865,
+    "non_model_rows": 860,
+    "non_model_rows_over_unknown_window": 1093,
+    "unknown_window_since": "2026-09-21T12:04:57Z",
+    "non_model_rows_without_latency_field": 0,
+    "producers": {
+      "reasonix_proxy": 865
+    },
+    "rows_with_duplicate_marker": 0,
+    "rows": [
+      {
+        "role": "reasonix-agent",
+        "model": "qwen3.8-flash",
+        "calls": 855,
+        "latency_missing": 3,
+        "errors": 3,
+        "p50_s": 16.733,
+        "p95_s": 54.047,
+        "max_s": 465.483,
+        "latency_n": 852
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "deepseek-v4-flash",
+        "calls": 3,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 334.218,
+        "p95_s": 356.828,
+        "max_s": 356.828,
+        "latency_n": 3
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "glm-5.3-flash",
+        "calls": 3,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 8.766,
+        "p95_s": 424.672,
+        "max_s": 424.672,
+        "latency_n": 3
+      },
+      {
+        "role": "maintenance",
+        "model": "qwen3.8-flash",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 120.577,
+        "p95_s": 144.891,
+        "max_s": 144.891,
+        "latency_n": 2
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "mimo-v2.5",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 126.842,
+        "p95_s": 129.186,
+        "max_s": 129.186,
+        "latency_n": 2
+      }
+    ]
+  },
+  "after": {
+    "findings": [],
+    "metrics": {
+      "store": "temp/perf/model_calls.jsonl",
+      "events": 246,
+      "terminal": 120,
+      "coverage_pct": 100,
+      "unknown_model_pct": 0,
+      "by_status": {
+        "success": 104,
+        "timeout": 7,
+        "error": 5,
+        "cancelled": 4
+      },
+      "by_class": {
+        "interactive_user": {
+          "n": 40,
+          "p50_ms": 16,
+          "p95_ms": 46,
+          "p99_ms": 108,
+          "max_ms": 108
+        },
+        "interactive_agent": {
+          "n": 40,
+          "p50_ms": 16,
+          "p95_ms": 62,
+          "p99_ms": 109,
+          "max_ms": 109
+        },
+        "background_maintenance": {
+          "n": 40,
+          "p50_ms": 16,
+          "p95_ms": 108,
+          "p99_ms": 109,
+          "max_ms": 109
+        }
+      },
+      "latency": {
+        "n": 120,
+        "p50_ms": 16,
+        "p95_ms": 62,
+        "p99_ms": 109,
+        "max_ms": 109
+      },
+      "timeout_count": 7,
+      "cancel_count": 4,
+      "error_count": 5,
+      "cache_hit_count": 0,
+      "cache_hit_rate": 0,
+      "progress_ticks": 6
+    },
+    "sites": [
+      {
+        "site": "scripts/perf/model_call_telemetry.py#sample",
+        "request_class": "mixed(background_maintenance,interactive_agent,interactive_user)",
+        "effective_cap_s": 210,
+        "class_cap_s": 210,
+        "cap_override_s": null,
+        "measured_budget_s": 0.05,
+        "measured_session_s": 0.12,
+        "exercised": true,
+        "n": 120,
+        "statuses": {
+          "success": 104,
+          "timeout": 7,
+          "error": 5,
+          "cancelled": 4
+        },
+        "max_ms": 109,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/border_design_generator.js",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 210,
+        "class_cap_s": 210,
+        "cap_override_s": null,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/byok_vision_gate.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 420,
+        "class_cap_s": 210,
+        "cap_override_s": 420,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/codex_text_leg.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 900,
+        "class_cap_s": 210,
+        "cap_override_s": 900,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/drag_ux_visual_gate.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 300,
+        "class_cap_s": 210,
+        "cap_override_s": 300,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/muse_gate.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 600,
+        "class_cap_s": 210,
+        "cap_override_s": 600,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      }
+    ]
+  },
+  "criteria": [
+    {
+      "id": "AC-1",
+      "verdict": "PASS",
+      "basis": "120 terminal calls, duration_ms coverage 100%, 0 validator finding(s), unknown-model 0%"
+    },
+    {
+      "id": "AC-2",
+      "verdict": "PASS (WITH DECLARED OVERRIDES)",
+      "basis": "budget mechanism enforced at every site (5 declared site(s)); 4 site(s) carry a declared override above the class cap for the reasons in `scripts/perf/budgets.json`; measured calls over their session cap: 0"
+    },
+    {
+      "id": "AC-3",
+      "verdict": "NOT ACHIEVED — OUT OF SCOPE (relay clause); before/after report MET",
+      "basis": "the criterion's population is relay-served `qwen3.8-flash`, and 865/865 terminal rows in the store are `producer=reasonix_proxy`; no `scripts/` edit can move that percentile. The requested before/after report EXISTS (this file); no p50 comparison is possible because no scripts-originated sample predates this track"
+    },
+    {
+      "id": "AC-4",
+      "verdict": "PASS",
+      "basis": "6 progress tick(s) measured on the real code path; cancellation and abort-at-budget are asserted in `test/unit/model_call_telemetry.test.js`"
+    },
+    {
+      "id": "AC-5",
+      "verdict": "PASS (RULED OUT, WITH REASONS)",
+      "basis": "the framework's own duplicate markers are unset on 865 relay rows (0 marked); coalescing is implemented and proven by test; caching is disabled by policy because the area's only repeated-request class is the byte-identical re-ask, which the repository requires to be an INDEPENDENT answer (`scripts/perf/redundant-call-analysis.md`)"
+    },
+    {
+      "id": "AC-6",
+      "verdict": "PASS",
+      "basis": "every evidence source is named in this report; the change set is `scripts/perf/**`, five call sites in the tracked `scripts` area, one test file, rows in `TECH_DEBT_SCRIPTS.md`; no excluded tree read or written"
+    }
+  ],
+  "decision": "CONDITIONAL PASS",
+  "decision_reason": "every criterion this scope can move is met on measurements the report cites; AC-3's relay-side clause is recorded NOT ACHIEVED rather than reinterpreted, and the deferred part is named with the instrument that would settle it",
+  "notes": [
+    "AC-2 shortfall, named: 4 of 5 declared site(s) run above their class cap because the cap was below the workload the site was dimensioned for and no measurement exists to justify lowering it — each override states its reason in `scripts/perf/budgets.json` and is printed in the after-table above.",
+    "The sample was produced by driving the REAL helper, supervisor and writer against a LOCAL synthetic transport: it proves the code path and the wiring, not a production latency distribution (no live seat call was made).",
+    "AC-3's settling instrument: a post-restart relay sample over the same window, re-derived by the command in `scripts/perf/runtime-perf-baseline.md`."
+  ]
+}

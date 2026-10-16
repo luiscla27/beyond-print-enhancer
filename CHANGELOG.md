@@ -7,6 +7,104 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (2026-10-16, track runtime_perf_20261015 RE-EXECUTED — three defects the re-run found, and one it refused to inherit)
+- **The track was re-executed because its BUILDER hung after committing, not because its work failed.**
+  `temp/idlegate/idlegate-audit.log` shows the spawn at `2026-10-15T20:55:40Z` (pid 3920), then
+  `2026-10-16T06:10:01Z boot marker past grace: escalate priority=runtime-perf` and a re-fire at
+  `06:13:09Z` (pid 17388). The sealed work (`temp/idlegate/seal-state.json` → `b427321`, kept by
+  `refs/idlegate/keep/20261015-205540-17140-wt`) was on NO branch and the re-run's base (`19549c6`) had
+  no `scripts/perf/` at all. This session ADOPTED it (`git cherry-pick fd5631a b427321`) rather than
+  re-authoring a deliverable whose instruments, validator and suite behave as documented, then re-ran
+  every phase against it: the dossier's baseline reproduced EXACTLY (855 rows / 852 latency-bearing,
+  p50 16.733, p95 54.047, max 465.483; glm 8.766/424.672; deepseek 334.218/356.828; `unknown` 1093 over
+  its own window; 865/865 relay rows `producer=reasonix_proxy`), and the validation sample reproduced
+  its counts exactly (120 terminal, 100 % `duration_ms`, 7 timeouts, 4 cancels, 5 errors, 0
+  unknown-model rows).
+- **An interrupted call wrote NO terminal telemetry at all — fixed.** In the helper as delivered, a
+  SIGINT delivered to the CALLING thread (how a headless CLI gate's call most often ends) left the
+  store holding 1 `model_call_started` and 0 terminal rows — and this track's OWN validator then FAILED
+  that store ("`model_call_started` with NO terminal event"), so AC-1's "a cancelled call is
+  terminalised rather than omitted" was violated on the interrupt path. `call_model` now terminalises
+  the interrupted call as `status=cancelled`, `cancel_flag=true`, `error_class=KeyboardInterrupt` and
+  RE-RAISES it. Measured in both directions (probe drives the real helper with a timed SIGINT, then the
+  real validator reads the store): delivered helper → 1 started / 0 terminal, validator exit 1; fixed
+  helper → 1 started / 1 terminal (`cancelled`), validator exit 0.
+- **`CancelToken`'s "exactly once" was a claim, not a property — fixed.** Its `register_closer`
+  docstring promised delivery "under the lock" and there was no lock: on the delivered code two
+  registrations produced THREE closer calls (a repeated `set()` re-closed every handle; a registration
+  racing `set()` could be closed by both sides). Ownership of the closer list is now TRANSFERRED under
+  a lock, so each closer fires exactly once. Pinned by test, falsified both directions.
+- **The tracked report cited the worktree it was generated in — fixed.** `runtime-perf-report.{md,json}`
+  carried `.../worktrees/20261015-205540-17140-wt/temp/perf/model_calls.jsonl` — a disposable path that
+  names nothing on the next run. Store paths inside the checkout are now spelled relative to the
+  repository root (`temp/perf/model_calls.jsonl`) and both report artifacts were regenerated.
+- **`check_scripts_hygiene.js` reported the new `scripts/perf/` DIRECTORY as an undocumented entry —
+  fixed.** All 12 of its files carry rows, but the advisory arm compared the direct children of
+  `scripts/` against recursive tracked paths, so no directory could ever satisfy it (the false advisory
+  was visible on every run since this track added the directory). Directories are skipped now; the
+  untracked-FILE arm still fires, pinned by a new fixture case.
+- **Three record corrections; no criterion, threshold, cap or verdict was touched.** (1) The baseline's
+  reproduction command is now runnable from the checkout the track runs in (`$RELAY_CHECKOUT` — the relay
+  store is untracked and lives in the project checkout, and a builder worktree's `temp/` holds only
+  `perf/` and `scratch/`). (2) "Five tracked scripts dial a model directly" is corrected to the measured
+  FOUR direct sites + one INDIRECT + two untracked sites. (3) The report's blanket "no file under
+  `vendor/` was read or written" is narrowed to its EVIDENCE set, because this project's own conductor
+  record lives under `vendor/conductor/`. The dossier's telemetry figures are also re-dated as
+  measurements of a growing store: 45,589 terminal rows on 2026-10-15 → **45,698** on 2026-10-16, with
+  duplicate markers still 0 and the largest `(role, model, task_class, context_band)` bucket still
+  **8,422**.
+- **Verification (all in this session):** `npm run lint` green (border-SVG guard + scripts hygiene: 57
+  judged / 66 rows, both directions, and the false `perf` advisory gone); `npx mocha
+  test/unit/model_call_telemetry.test.js` **24 passing**; `test/unit/scripts_hygiene.test.js` **13
+  passing**; `npm test` **1615 passing / 7 pending / 11 failing** against a MEASURED pre-change baseline
+  of **1613 / 7 / 11** (the changes stashed, suite re-run) — the same three environmental suites in both
+  runs (`byok_border_criteria_metrics` missing a `temp/visual_logs` fixture; `lint_config_not_vacuous`
+  with no `node_modules/eslint` in a worktree; `vendored_overlay` with no overlay in a worktree), none of
+  them this track's, and none of them newly failing. No product file changed (`js/**`, `manifest.json`
+  untouched); no release.
+
+### Added (2026-10-15, track runtime_perf_20261015 — the scripts area's model calls are bounded and observed)
+- **The dossier's premise was measured before it was built on, and two of its four claims did not
+  hold.** `temp/idlegate/runtime-perf/spec.md` (authored 2026-09-22T03:01:27Z by the P4 rung's own
+  maintenance call, after nine dead builder attempts) attributes a severe relay tail latency to "the
+  `scripts` area" — but all 45,589 terminal model-call rows in `temp/modelstack/telemetry.jsonl` are
+  `producer=reasonix_proxy` / `call_origin=relay`, so no `scripts/` edit can move them (its
+  `qwen3.8-flash` row, 852 calls / p50 16.7 / p95 54.0 / max 465.5, is relay traffic); its
+  "`scripts (7 files)`" scope repeats the blind-inventory defect `scripts_inventory_hygiene_20261014`
+  already recorded against a 54-path measured surface; and its `unknown / n/a` row is not a missing
+  measurement but the ABSENCE of a model-call event. AC-3's relay-side clause is therefore recorded
+  NOT ACHIEVED rather than reinterpreted; the track's decision is CONDITIONAL PASS.
+- **The real gap was the area's own traffic, and it is now bounded and observable.** Five tracked
+  scripts dial model endpoints directly (`border_design_generator.js`, `byok_vision_gate.py`,
+  `drag_ux_visual_gate.py`, `codex_text_leg.py`, and `byok_border_visual_seat.py` indirectly) and
+  NONE of them emitted a terminal event anywhere; their only bound was a per-READ socket timeout —
+  which does not bound a call — and `border_design_generator.js`'s `fetch` had no timeout at all.
+  Delivered: `scripts/perf/model_call_telemetry.{py,js}` (one declared budget source,
+  `scripts/perf/budgets.json`, read by BOTH runtimes; a TOTAL deadline enforced by a supervisor so a
+  late response is discarded; a session cap separate from the per-attempt cap; a real cancellation
+  signal; `started`/`progress_tick`/`terminal` telemetry in `temp/perf/model_calls.jsonl`; a hashed,
+  redacted fingerprint), wired at all four direct sites without touching their payload/parse logic.
+- **Evidence instruments, not prose.** `scripts/perf/runtime_perf_report.js` re-derives the dossier's
+  relay baseline by a NAMED command and window (nearest-rank percentiles — the convention that
+  reproduces its numbers unchanged) and emits `runtime-perf-report.{md,json}` with the AC-1..AC-6
+  table; `scripts/perf/validate_model_call_telemetry.js` FAILS CLOSED on an empty store and refuses a
+  terminal record with no `duration_ms`, a bad status, a missing field, a double terminal, or an
+  unterminated call. `test/unit/model_call_telemetry.test.js` (23 cases) drives both helpers against
+  local synthetic transports — abort-at-budget, terminal-on-timeout, cancel-does-not-hang, session
+  cap, progress ticks, coalescing, budget parity across runtimes, and every validator arm in both
+  directions. Validation sample: 120 terminal calls, 100 % `duration_ms` coverage, 7 timeouts,
+  4 cancels, 5 errors, 0 unknown-model rows.
+- **Named shortfalls, not silent ones.** Three wired sites carry a DECLARED cap override above the
+  dossier's 210 s class cap (their own prior timeouts, kept because no seat-latency measurement
+  exists to justify lowering them and a lower cap would turn arriving gate answers into failures) —
+  each override states its reason in `budgets.json` and is printed in the report. One model-call site
+  could not be reached at all: `scripts/muse_gate.py` is gitignored by name, so it is not part of the
+  governed surface and is recorded as `not_wired: true` with its budget pre-declared (TECH_DEBT_SCRIPTS
+  T-6) rather than counted as coverage.
+- **`scripts/perf/` added to the scripts inventory** (12 rows, `TECH_DEBT_SCRIPTS.md` §3; the governed
+  surface is now 66 files) plus a new finding F-8 and gap T-6 in that file. No product file changed:
+  `js/**`, `manifest.json` and the browser suite are untouched, and this ships no release.
+
 ### Added (2026-10-15, track registry_backfill_20261015 — the 11 orphaned archive rows backfilled)
 - **The guard's archive arm is clean again.** It had reported 11 archived track folders
   (2026-03..2026-05 era: archer_template_replication, the layer_* family, properties_panel,

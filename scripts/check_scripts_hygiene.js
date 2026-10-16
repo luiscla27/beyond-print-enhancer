@@ -175,7 +175,20 @@ function check(root) {
   }
   const extras = present.filter((n) => {
     const rel = `${SCRIPT_DIR}/${n}`;
-    return !governed.tracked.includes(rel) && !documented.has(rel) && rel !== INVENTORY;
+    if (rel === INVENTORY) return false;
+    // A DIRECTORY is not an entry this inventory can row, and `scripts/perf/` is the counterexample
+    // that made this arm lie: it was reported as "neither tracked nor documented" while each of its
+    // 12 files carried a row, and `git ls-files scripts` (which IS recursive) already covers every
+    // tracked path at any depth — a directory has nothing left to add. Measured 2026-10-16 while
+    // re-executing track runtime_perf_20261015. NB the walk stays one level deep on purpose: this arm
+    // is a drift alarm for a NEW script at the top level, and the recursive row->file comparison
+    // above is what governs the tracked set.
+    try {
+      if (fs.statSync(path.join(root, rel)).isDirectory()) return false;
+    } catch {
+      /* unreadable entry: fall through and report it rather than swallow it */
+    }
+    return !governed.tracked.includes(rel) && !documented.has(rel);
   });
   if (extras.length) {
     advisories.push(`${extras.length} entry(ies) in ${SCRIPT_DIR}/ are neither tracked nor ` +
