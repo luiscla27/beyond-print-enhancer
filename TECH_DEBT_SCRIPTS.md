@@ -1,13 +1,18 @@
 # TECH_DEBT_SCRIPTS.md — the `scripts` area: inventory, hygiene baseline, and the check that keeps it
 
 **Written by** track `scripts_inventory_hygiene_20261014` (`conductor/archive/scripts_inventory_hygiene_20261014/`),
-executed 2026-10-14 from the idlegate tech-debt dossier (`temp/idlegate/tech-debt/spec.md`).
+executed 2026-10-14 from the idlegate tech-debt dossier (`temp/idlegate/tech-debt/spec.md`), and
+**re-measured and corrected by** track `scripts_inventory_hygiene_20261017`
+(`conductor/archive/scripts_inventory_hygiene_20261017/`), the dossier's second execution cycle, on
+2026-10-17.
 
 **What this file is for:** a later track should be able to target the `scripts` area without
 re-deriving its surface. Every file is listed once, with what it is, how it is invoked, what it
 assumes, and how risky it is to touch. The table is not documentation *about* the check — it is the
 check's own input: `scripts/check_scripts_hygiene.js` compares it against the tracked surface and
-fails when the two disagree in either direction.
+fails when the two disagree in either direction, and since 2026-10-17 it also fails when the shape
+this file declares in §1 disagrees with the repository (that sentence was false for two cycles before
+anything read it — finding F-9).
 
 **Verify / regenerate:**
 
@@ -34,11 +39,28 @@ criterion asks for. The track adds one further tracked file of its own
 **54 files**.
 
 Track `runtime_perf_20261015` (2026-10-15) added a twelfth-and-onwards group — twelve more tracked
-paths under `scripts/perf/` (two helpers, three tools, one data file, six docs), all rowed below —
-so the surface this file governs and `scripts/check_scripts_hygiene.js` enforces is now
-**66 files**: 47 `.js`, 9 `.py`, 2 `.json`, 8 `.md`. The `scripts/perf/` subdirectory is new for
+paths under `scripts/perf/` (three `.js` helpers/tools, one `.py` helper, two `.json` data files and
+six `.md` documents), all rowed below — so the surface this file governs and
+`scripts/check_scripts_hygiene.js` enforces is now
+**66 files**: 48 `.js`, 9 `.py`, 3 `.json`, 6 `.md`. The `scripts/perf/` subdirectory is new for
 this area; it exists because the dossier's own plan named those artifact paths, and the area's flat
 layout has no other place for a tool plus its schema/budget/report set.
+
+**Correction, 2026-10-17 (track `scripts_inventory_hygiene_20261017`, finding F-9).** The paragraph
+above used to declare this surface as *"66 files: 47 `.js`, 9 `.py`, 2 `.json`, 8 `.md`"*. Measured at
+`b6db36d` — the very commit that wrote the sentence — and again on 2026-10-17: **48 `.js`, 9 `.py`,
+3 `.json`, 6 `.md`. Three of the four class counts were false**; only `.py` was right, and the TOTAL
+was right, which is why nothing noticed: `47+9+2+8` and `48+9+3+6` are both 66, and the guard compared
+the row SET while nothing ever read this sentence. The counts above are now re-derived from
+`git ls-files scripts`, and the guard has a fifth arm that compares this paragraph with the repository
+— run on the uncorrected file it reported exactly the three lines below, which is the evidence that the
+arm can fail for the reason it names:
+
+```text
+  - shape: .js declared 47, measured 48
+  - shape: .json declared 2, measured 3
+  - shape: .md declared 8, measured 6
+```
 
 ## 2. Risk rubric (declared before anything was rated)
 
@@ -139,15 +161,20 @@ debt and where the reversal condition lives.
 | F-6 | dependency assumptions are undeclared per file: `sharp`, `playwright`, `pngjs` are used but only `package.json` reveals them | **FOLLOW-UP T-3** — recorded per file in §3; a pinning/lint pass is a later track (this one may not change behaviour) |
 | F-7 | 20 of 53 files write to disk and 5 make network calls, but nothing in the area states which ones are safe to run casually | **FIXED (this file)** — the risk rubric in §2 and the per-file risk column make the distinction explicit for the first time |
 | F-8 (2026-10-15, track `runtime_perf_20261015`) | the area's model CALLS were unobservable and effectively unbounded: 5 tracked scripts dial model endpoints directly, none emitted a terminal event anywhere, and the only bound was `urlopen(timeout=N)` / a bare `fetch` — a per-READ socket timeout does not bound a call, and `border_design_generator.js` declared no timeout at all | **FIXED** — a shared budget+telemetry helper in both runtimes (`scripts/perf/model_call_telemetry.{py,js}`), wired at 4 direct sites (the 5th reaches its seat through one of them); 12 new rows above; the one call site this could NOT reach (`scripts/muse_gate.py`, gitignored by name) is recorded as T-6 rather than counted as coverage |
+| F-9 (2026-10-17, track `scripts_inventory_hygiene_20261017`) | **the inventory's declared SHAPE was false in three of four classes, from the day it was written**: §1 said *"66 files: 47 `.js`, 9 `.py`, 2 `.json`, 8 `.md`"* while `git ls-files scripts` reported 48/9/3/6 at `b6db36d` and at `25c7567`. Only `.py` was right; the total was right, which is why nothing noticed — `47+9+2+8` and `48+9+3+6` are both 66. The guard compared the row SET and **nothing read the sentence** | **FIXED + GUARDED** — §1 corrected from measurement (with the correction recorded in place), and the guard gained **arm 5**: it parses the shape sentence and fails on any class or total that disagrees with `git ls-files scripts`, including a *deleted* declaration. Run against the uncorrected file it reported exactly `.js declared 47, measured 48` / `.json declared 2, measured 3` / `.md declared 8, measured 6` |
+| F-10 (2026-10-17, track `scripts_inventory_hygiene_20261017`) | **nine `.py` files were read by no gate in this repository** — not for syntax, not for anything: `npm run lint` runs eslint (which parses the `.js` files), then two guards that parse nothing, and `git grep -E "py_compile\|ruff\|flake8\|python -m"` over the whole tracked tree returned **0 hits**, while the dossier's AC-5 names "syntax errors" explicitly | **FIXED + GUARDED** — the guard gained **arm 6**: every tracked `.py` is compiled by an interpreter (parsed, never imported, no bytecode written). The interpreter is probed (`python3` then `python`, and it reports which answered — on this host `python3` is an EACCES stub and `python` is 3.12.0); an absent interpreter is an ADVISORY that names what was NOT covered, never a failure (D-4) |
+| F-11 (2026-10-17, track `scripts_inventory_hygiene_20261017`) | **the guard's own self-description was stale**: its header stated *"54 tracked files … 44 Node CLIs, 8 Python tools and one data file, of which only three are reached from `package.json` and seven from tests"*, measured today as 66 / 48 / 9 / 3 data files + 6 docs / four `package.json` entries / eight test-required modules | **FIXED** — the header's census is re-derived from this cycle's measurements and names the command that produced each number, and it records what the stale numbers were, so a reader can see the drift rather than a silently corrected sentence |
 
 ## 5. Remaining known debt (not addressed here)
 
-* **T-1 — the area mixes reusable tooling with spent one-off harnesses.** 30 of the 54 files are
-  single-track probes/collage composers whose inputs (`demo/ignored/**`, `nanobanana-output/**`,
-  `temp/visual_logs/**`, migrated `assets/*.gif`) no longer exist, while 11 are live tools wired
-  into lint, the release gate or the test suite. Nothing marks the difference except §3's risk
-  column. Suggested direction: a `scripts/harness/` partition or a documented retirement rule —
-  out of scope here, because moving files changes every citation that names them.
+* **T-1 — the area mixes reusable tooling with spent one-off harnesses.** 30 of the 54 files measured
+  on 2026-10-14's surface (the area is 66 today; the 12 `scripts/perf/` paths added since are live
+  tooling, not harnesses) are single-track probes/collage composers whose inputs
+  (`demo/ignored/**`, `nanobanana-output/**`, `temp/visual_logs/**`, migrated `assets/*.gif`) no
+  longer exist, while 11 are live tools wired into lint, the release gate or the test suite. Nothing
+  marks the difference except §3's risk column. Suggested direction: a `scripts/harness/` partition or
+  a documented retirement rule — out of scope here, because moving files changes every citation that
+  names them.
 * **T-2 — the POSIX exec bit is untracked (F-4).** Reversal condition: the first citation that
   invokes a script as `./scripts/<file>`, or the first POSIX run of the suite. The check activates
   its assertion automatically the moment any tracked file in the repo carries mode `100755`.
@@ -156,7 +183,9 @@ debt and where the reversal condition lives.
   needs a runtime dependency would not be caught by anything.
 * **T-4 — no runtime smoke test.** Nothing verifies that the 11 `low`-risk tools still run: the
   suite exercises some of them as modules, but `check_border_svg_injection.js` and
-  `check_scripts_hygiene.js` are the only ones executed end-to-end by a gate.
+  `check_scripts_hygiene.js` are the only ones executed end-to-end by a gate. **Narrowed 2026-10-17:**
+  the Python files are now at least PARSED by a gate (arm 6 of the guard), so a `.py` that no longer
+  compiles is caught; whether each tool still DOES its job remains open.
 * **T-6 — one model-call site is untracked, so it is not governed and not instrumented.**
   `scripts/muse_gate.py` (the mandated GATE reviewer seat, 600 s socket timeout, no terminal
   telemetry) is gitignored by name (`.gitignore:200`) beside `input_budget_report.py` and
@@ -169,6 +198,22 @@ debt and where the reversal condition lives.
 * **T-5 — the dossier's 7-file count is unreconciled** (§1). Not fixable here: the dossier was
   authored from an inventory this session cannot see. If the idlegate census is instrumented
   again, its area count for `scripts` should be re-measured against `git ls-files scripts`.
+* **T-7 — the nine shebangs say `python3`, and this delivery host answers `python` only** (measured
+  2026-10-17: `python3 --version` → `EACCES`, a Windows Store stub; `python --version` → 3.12.0).
+  Nothing is broken today — every invocation in §3 is explicit (`python scripts/<file>.py`), and the
+  new syntax arm probes both names and reports which one answered — but a POSIX host that resolves
+  only `python` (or only `python3`) would disagree with either the shebang or the invocation column.
+  Reversal condition: the first POSIX run of the suite, or the first `./scripts/<file>.py` invocation
+  (which is also T-2's trigger). The fix then is one convention applied to all nine files and to §3's
+  invocation column in the same change, never one without the other.
+* **T-8 — the row CELLS are shape-checked, not content-checked.** The guard asserts that every row has
+  five columns and a valid risk level, and that the row set equals the tracked set; it cannot tell that
+  a purpose sentence or an invocation line has become false about a file nobody edited. That is the
+  same defect class as F-9 one level down, and it is left open deliberately: F-9 was closable because
+  the claim was arithmetic over `git ls-files` output, while a purpose sentence has no machine-checkable
+  ground truth. A future track could narrow it by requiring the row's purpose to be the file's OWN
+  header text (which arm 2 already demands exists). Reversal condition: the first row found stating a
+  purpose its file no longer serves.
 
 ## 6. Suggested follow-up tracks
 
@@ -179,5 +224,7 @@ debt and where the reversal condition lives.
    rule over `require()` targets) so a missing `package.json` entry cannot ship.
 3. **Runtime smoke test (T-4):** run every `low`-risk tool once in a synthetic fixture directory and
    assert exit 0 and no repo mutation. Feasible because those tools are argument-driven.
-4. **Language-specific linting:** the area already passes eslint (including `scripts/**/*.js`); the 8
-   Python files have no linter at all.
+4. **Language-specific linting:** the area already passes eslint (including `scripts/**/*.js`), and
+   since 2026-10-17 the nine Python files are PARSED by the guard's arm 6 (a `.py` that does not compile
+   is now a `npm run lint` failure). What remains is a real Python LINTER (unused names, shadowing,
+   bare `except`) — the parse is the floor, not the ceiling.

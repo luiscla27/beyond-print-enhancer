@@ -37,7 +37,8 @@ fails the fast gate and names the file and line, rather than being caught by som
 
 ```bash
 npm test                                   # lint + unit + integration + the manifest check
-npm run lint                               # eslint js/ test/ scripts/ + the two script guards (~5 s)
+npm run lint                               # eslint js/ test/ scripts/ + the two script guards
+                                           #   (inventory set + declared shape, python parse)  ~3-6 s
 npx mocha --recursive test/unit            # just the unit suites            (~30 s)
 npx mocha --recursive test/unit/encapsulation_debt   # the code-debt oracle  (299 cases)
 ```
