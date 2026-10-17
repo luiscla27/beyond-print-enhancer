@@ -40,9 +40,10 @@ criterion asks for. The track adds one further tracked file of its own
 
 Track `runtime_perf_20261015` (2026-10-15) added a twelfth-and-onwards group — twelve more tracked
 paths under `scripts/perf/` (three `.js` helpers/tools, one `.py` helper, two `.json` data files and
-six `.md` documents), all rowed below — so the surface this file governs and
+six `.md` documents), all rowed below — and track `scripts_runtime_smoke_20261017` (2026-10-17)
+added the area's runtime smoke, so the surface this file governs and
 `scripts/check_scripts_hygiene.js` enforces is now
-**66 files**: 48 `.js`, 9 `.py`, 3 `.json`, 6 `.md`. The `scripts/perf/` subdirectory is new for
+**67 files**: 49 `.js`, 9 `.py`, 3 `.json`, 6 `.md`. The `scripts/perf/` subdirectory is new for
 this area; it exists because the dossier's own plan named those artifact paths, and the area's flat
 layout has no other place for a tool plus its schema/budget/report set.
 
@@ -144,6 +145,7 @@ is 0 (27 `.webp` remain — the `asset_compression_20260318` migration removed t
 | `scripts/screenshot.js` | capture a D&D Beyond character sheet with the extension ACTIVE, via Playwright + Chromium | `node scripts/screenshot.js <url> [out]` | node, `playwright` | medium — needs a live sheet and a browser |
 | `scripts/selection_collage.js` | collage composer for the `selection_model_ia_20260910` visual gates | `node scripts/selection_collage.js` | node, `sharp` | medium — historical capture frames |
 | `scripts/selection_visual_diff.js` | deterministic pixel-diff gate for the `selection_model_ia_20260910` phase-1 frames (that track's primary evidence instrument) | `node scripts/selection_visual_diff.js` | node, `sharp`, `child_process` | medium — its frame dir `vendor/docs/selection-model-ia-20260910/shots-phase1` is gone |
+| `scripts/smoke_low_risk.js` | the RUNTIME SMOKE for the executable low-risk rows of this table (track `scripts_runtime_smoke_20261017`): runs each as a child process, requires exit 0 + non-empty stdout + an unchanged `git status --porcelain`, per-case 120 s kill | `npm run smoke` (also the prefix of `npm test`) | node, `child_process` (`git status`) | **high** — wired into `npm test`, so a case it holds can fail the suite; its CASES are cross-checked against this table by guard arm 7 (its own row exempt) |
 | `scripts/thornvine_acceptance_gate.js` | the binding DETERMINISTIC acceptance gate for the 03-thornvine fix (the muse-loop comp encoded as measurements) | `node scripts/thornvine_acceptance_gate.js` | node, `fs` | medium — expects rasters that are not in the tree |
 
 ## 4. Hygiene findings and their dispositions
@@ -186,6 +188,18 @@ debt and where the reversal condition lives.
   `check_scripts_hygiene.js` are the only ones executed end-to-end by a gate. **Narrowed 2026-10-17:**
   the Python files are now at least PARSED by a gate (arm 6 of the guard), so a `.py` that no longer
   compiles is caught; whether each tool still DOES its job remains open.
+  **CLOSED 2026-10-17 (track `scripts_runtime_smoke_20261017`):** `scripts/smoke_low_risk.js`
+  executes each executable `low` row END-TO-END as a child process with its documented invocation
+  (`npm run smoke`, and the prefix of `npm test`), and requires per case: exit 0, NON-EMPTY stdout
+  (the exit-0-but-inert degenerate case the dead_exports review named FLAW-01), and an unchanged
+  `git status --porcelain` report; a hang trips the per-case 120 s kill. The two argument-driven
+  cases run on committed synthetic inputs (`test/fixtures/smoke/page-{a,b}-NN.png`, and a tracked
+  `assets/` image for `get_image_metadata.js`), so a fresh clone passes. Guard arm 7 holds §3's
+  executable `low` rows and the runner's CASES equal in both directions. Measured cost: the full
+  smoke is ~46-51 s serial (the two dead-export tools are ~46 s of it), which is why it is wired
+  into `npm test` and NOT into `npm run lint` (~2.6 s, unchanged). Residuals, carried as new debt:
+  the `medium`/`high` rows are still un-smoked (T-9); the no-mutation check cannot see writes into
+  gitignored paths (T-10).
 * **T-6 — one model-call site is untracked, so it is not governed and not instrumented.**
   `scripts/muse_gate.py` (the mandated GATE reviewer seat, 600 s socket timeout, no terminal
   telemetry) is gitignored by name (`.gitignore:200`) beside `input_budget_report.py` and
@@ -214,6 +228,22 @@ debt and where the reversal condition lives.
   ground truth. A future track could narrow it by requiring the row's purpose to be the file's OWN
   header text (which arm 2 already demands exists). Reversal condition: the first row found stating a
   purpose its file no longer serves.
+* **T-9 — the `medium` and `high` rows are not smoked.** The runtime smoke of 2026-10-17 covers the
+  11 executable `low` rows only; 20 executable rows rated `medium` or `high` (visual-gate drivers,
+  collage composers, the model-call helpers, the smoke itself) have no end-to-end gate, for the
+  measured reasons their §3 rows state — absent inputs, live seats, live browsers, and blast radius.
+  The two `high` telemetry helpers' self-test flags (`node scripts/perf/model_call_telemetry.js
+  --self-test`, `python scripts/perf/model_call_telemetry.py --classes`) were measured passing on
+  2026-10-17 and are the natural first two cases. Reversal condition: the first track that builds
+  the missing fixture environments, or the first `medium` row whose inputs become present in the
+  tree — either extends `scripts/smoke_low_risk.js`'s CASES (arm 7 then holds the new row equal).
+* **T-10 — the no-mutation assertion cannot see writes into gitignored paths.**
+  `git status --porcelain` reports tracked changes and untracked files only; `temp/**` and
+  `__pycache__/` are sanctioned scratch and correctly invisible, but any OTHER gitignored path a
+  smoked tool wrote would pass the smoke silently. The runner's own header states this on every run.
+  Reversal condition: the first evidence that a `low`-risk tool writes outside its documented
+  outputs — the fix is a per-case ignored-path audit (e.g. `git status --porcelain --ignored`
+  diffed against a pre-approved scratch set), not a widening of this file's scope.
 
 ## 6. Suggested follow-up tracks
 
@@ -224,6 +254,10 @@ debt and where the reversal condition lives.
    rule over `require()` targets) so a missing `package.json` entry cannot ship.
 3. **Runtime smoke test (T-4):** run every `low`-risk tool once in a synthetic fixture directory and
    assert exit 0 and no repo mutation. Feasible because those tools are argument-driven.
+   **DELIVERED 2026-10-17 (track `scripts_runtime_smoke_20261017`):** `scripts/smoke_low_risk.js`,
+   wired into `npm test` (+ `npm run smoke`), with guard arm 7 cross-checking §3 and the case table
+   in both directions. Residuals T-9 (medium/high rows) + T-10 (gitignored writes) carry reversal
+   conditions instead of being left open.
 4. **Language-specific linting:** the area already passes eslint (including `scripts/**/*.js`), and
    since 2026-10-17 the nine Python files are PARSED by the guard's arm 6 (a `.py` that does not compile
    is now a `npm run lint` failure). What remains is a real Python LINTER (unused names, shadowing,

@@ -36,9 +36,10 @@ To test the extension locally:
 fails the fast gate and names the file and line, rather than being caught by somebody noticing:
 
 ```bash
-npm test                                   # lint + unit + integration + the manifest check
+npm test                                   # smoke (11 low-risk tools, ~46-51 s) + lint + unit + integration + the manifest check
+npm run smoke                              # run only the scripts runtime smoke (standalone)
 npm run lint                               # eslint js/ test/ scripts/ + the two script guards
-                                           #   (inventory set + declared shape, python parse)  ~3-6 s
+                                           #   (inventory set + declared shape, python parse, smoke<->inventory cross-check)  ~3-6 s
 npx mocha --recursive test/unit            # just the unit suites            (~30 s)
 npx mocha --recursive test/unit/encapsulation_debt   # the code-debt oracle  (299 cases)
 ```

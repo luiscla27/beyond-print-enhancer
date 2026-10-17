@@ -39,6 +39,14 @@
  *      explicitly. The interpreter is PROBED (`python3`, then `python`) because this host answers
  *      `python` only, and an absent interpreter is an ADVISORY, never a failure: the repository
  *      cannot require one, and a gate that fails on an absent optional tool gets routed around.
+ *   7. RUNTIME SMOKE CROSS-CHECK (added 2026-10-17, track scripts_runtime_smoke_20261017) - the
+ *      executable `low` rows of section 3 and the case table of scripts/smoke_low_risk.js are
+ *      compared in BOTH directions: an executable low tool with no smoke case fails (governed but
+ *      never executed), and a smoke case naming a path that is not an executable low row fails
+ *      (executed but not vouched for). The runner's OWN row is exempt by name. Measured reason: the
+ *      runtime smoke (T-4's delivery) holds an explicit case set, and without this arm nothing ties
+ *      that set to the inventory that classifies the tools - the same drift class arm 1 closes one
+ *      level up, between the inventory and the repository.
  *
  * WHAT IT DELIBERATELY DOES NOT DO, and why the omission is stated rather than silent:
  *   * THE EXEC BIT IS NOT ASSERTED HERE, because this repository does not track one - measured
@@ -277,6 +285,44 @@ function governedSet(root) {
   };
 }
 
+/**
+ * Arm 7 (added 2026-10-17, track scripts_runtime_smoke_20261017): the executable `low` rows
+ * of the inventory and the smoke runner's case table are the SAME set, in BOTH directions.
+ *
+ * Measured reason: T-4's runner (scripts/smoke_low_risk.js) holds an explicit case table — one
+ * entry per tool the smoke executes — and nothing else ties that table to the inventory that
+ * classifies the tools. A `low` tool added to §3 without a case would be "governed" yet never
+ * executed; a case naming a path that is not a tracked executable `low` row would execute a
+ * tool the inventory does not vouch for. The runner's OWN row is exempt by name (SELF_ROW):
+ * a smoke cannot execute itself, and the exemption is an explicit name match, never a wildcard.
+ *
+ * `cases` is a parameter (not a require of the runner) so the falsification suite can drive
+ * BOTH directions against synthetic sets without touching the real files.
+ */
+function smokeCrossProblems(rows, cases, selfRow) {
+  const executableLow = new Set(
+    rows
+      .filter((r) => /\.(js|py)$/.test(r.path) && (r.risk || "").startsWith("low"))
+      .map((r) => r.path),
+  );
+  const cased = new Set(cases);
+  const findings = [];
+  for (const rel of [...executableLow].sort()) {
+    if (rel === selfRow) continue; // the runner cannot run itself (named exemption)
+    if (!cased.has(rel)) {
+      findings.push(`${rel}: executable low row of ${INVENTORY} §3 has NO case in the runtime smoke ` +
+        "(arm 7) - add it to scripts/smoke_low_risk.js's CASES, or re-rate its risk");
+    }
+  }
+  for (const rel of [...cased].sort()) {
+    if (!executableLow.has(rel)) {
+      findings.push(`${rel}: smoke case is NOT an executable low row of ${INVENTORY} §3 (arm 7) - ` +
+        "the runner executes a tool the inventory does not vouch for (untracked, non-low, or data/doc row)");
+    }
+  }
+  return findings;
+}
+
 function check(root, opts) {
   const options = opts || {};
   const interpreters = options.pythonInterpreters || PY_INTERPRETERS;
@@ -375,6 +421,28 @@ function check(root, opts) {
   failures.push(...py.failures);
   advisories.push(py.advisory);
 
+  // --- 7. the smoke runner's case table vs the inventory's executable low rows (both directions) --
+  // The runner is read as TEXT (a require would execute nothing, but the guard never writes and the
+  // runner exports its table for the falsification suite; the regex keeps this arm independent of the
+  // runner's module shape). The runner's own row is exempt by name — it cannot execute itself.
+  const smokePath = path.join(root, "scripts", "smoke_low_risk.js");
+  let smokeCases = [];
+  let smokeMiss = null;
+  try {
+    const smoke = fs.readFileSync(smokePath, "utf8");
+    smokeCases = [...smoke.matchAll(/file:\s*"([^"]+)"/g)].map((m) => m[1].replace(/\\/g, "/"));
+  } catch {
+    smokeMiss = "smoke runner scripts/smoke_low_risk.js is missing - arm 7 cannot compare " +
+      "the case table with the inventory; every executable low row is un-smoked until it returns";
+  }
+  if (smokeMiss) {
+    advisories.push(smokeMiss);
+  } else {
+    failures.push(...smokeCrossProblems(rows, smokeCases, "scripts/smoke_low_risk.js"));
+    advisories.push(`runtime smoke: ${smokeCases.length} case(s) in scripts/smoke_low_risk.js, ` +
+      "cross-checked with the executable low rows in both directions (arm 7; the runner's own row exempt)");
+  }
+
   // --- 4. the exec-bit arm's own state, reported so green never reads as coverage ----------------
   advisories.unshift(
     governed.anyExecutableTrackedRepoWide
@@ -426,6 +494,7 @@ module.exports = {
   compositionOf,
   compositionProblems,
   pythonSyntax,
+  smokeCrossProblems,
   INVENTORY,
 };
 

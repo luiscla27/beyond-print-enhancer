@@ -33,6 +33,7 @@ const {
   compositionOf,
   compositionProblems,
   pythonSyntax,
+  smokeCrossProblems,
   INVENTORY,
 } = require("../../scripts/check_scripts_hygiene.js");
 
@@ -320,6 +321,65 @@ describe("scripts hygiene guard", function () {
       // compiling must not leave a bytecode cache behind: this is a read-only gate
       assert.deepStrictEqual(fs.readdirSync(dir).sort(), ["bad.py", "ok.py"]);
       fs.rmSync(dir, { recursive: true, force: true });
+    });
+  });
+
+  describe("arm 7 — the smoke runner's case table vs the executable low rows (scripts_runtime_smoke_20261017)", () => {
+    const row = (rel, risk) => ({ path: rel, risk });
+
+    it("matches when every executable low row has its case and every case is vouched for", () => {
+      assert.deepStrictEqual(smokeCrossProblems(
+        [row("scripts/a.js", "low"), row("scripts/b.py", "low"), row("scripts/c.json", "low"),
+         row("scripts/d.js", "medium"), row("scripts/smoke_low_risk.js", "low")],
+        ["scripts/a.js", "scripts/b.py", "scripts/other.js"],
+        "scripts/smoke_low_risk.js",
+      ), ["scripts/other.js: smoke case is NOT an executable low row of TECH_DEBT_SCRIPTS.md §3 (arm 7) - " +
+        "the runner executes a tool the inventory does not vouch for (untracked, non-low, or data/doc row)"]);
+    });
+
+    it("G1: an executable low row with no smoke case is RED, and adding the case repairs it GREEN", () => {
+      const rows = [row("scripts/lonely.js", "low")];
+      const red = smokeCrossProblems(rows, [], null);
+      assert.deepStrictEqual(red, ["scripts/lonely.js: executable low row of TECH_DEBT_SCRIPTS.md §3 has NO case " +
+        "in the runtime smoke (arm 7) - add it to scripts/smoke_low_risk.js's CASES, or re-rate its risk"]);
+      const green = smokeCrossProblems(rows, ["scripts/lonely.js"], null);
+      assert.deepStrictEqual(green, []);
+    });
+
+    it("G2: a rogue case (untracked or non-low) is RED, and removing it repairs it GREEN", () => {
+      const rows = [row("scripts/a.js", "low"), row("scripts/heavy.js", "high")];
+      const red = smokeCrossProblems(rows, ["scripts/ghost.js", "scripts/heavy.js"], null);
+      // BOTH directions fire at once: ghost.js has no vouching row AND heavy.js is high-risk,
+      // while a.js (a vouched low row with no case) adds its own finding — three findings total.
+      assert.strictEqual(red.length, 3, JSON.stringify(red));
+      assert.ok(red.some((f) => f.includes("scripts/ghost.js") && f.includes("NOT an executable low row")));
+      assert.ok(red.some((f) => f.includes("scripts/heavy.js")));
+      assert.ok(red.some((f) => f.includes("scripts/a.js") && f.includes("NO case")));
+      const green = smokeCrossProblems(rows, ["scripts/a.js"], null);
+      assert.deepStrictEqual(green, []);
+    });
+
+    it("the runner's own row is exempt by NAME, and only by name", () => {
+      const rows = [row("scripts/smoke_low_risk.js", "low"), row("scripts/a.js", "low")];
+      assert.deepStrictEqual(smokeCrossProblems(rows, ["scripts/a.js"], "scripts/smoke_low_risk.js"), []);
+      // a different low row with no case is still a finding — the exemption is not a wildcard
+      assert.strictEqual(smokeCrossProblems(rows, ["scripts/a.js"], null).length, 1);
+    });
+
+    it("data rows, docs rows and medium/high rows owe no case", () => {
+      const rows = [row("scripts/corpus.json", "low"), row("scripts/budgets.md", "low"),
+        row("scripts/tool.js", "medium"), row("scripts/tool2.js", "high")];
+      assert.deepStrictEqual(smokeCrossProblems(rows, [], null), []);
+    });
+
+    it("the real inventory and the real case table agree — both directions, on this tree", () => {
+      // the production wiring: parsed rows of the REAL inventory vs the runner's REAL table
+      const inv = fs.readFileSync(path.join(ROOT, INVENTORY), "utf8");
+      const { rows } = parseInventory(inv);
+      const smoke = fs.readFileSync(path.join(ROOT, "scripts", "smoke_low_risk.js"), "utf8");
+      const cases = [...smoke.matchAll(/file:\s*"([^"]+)"/g)].map((m) => m[1]);
+      assert.deepStrictEqual(smokeCrossProblems(rows, cases, "scripts/smoke_low_risk.js"), [],
+        "the shipped inventory and case table must agree in both directions");
     });
   });
 });
