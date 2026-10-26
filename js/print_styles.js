@@ -38,6 +38,15 @@
     const hiddenSections = document.querySelectorAll(
       '[data-print-hidden="true"]',
     );
+    // AC-1 (track ux_quick_wins_20261025): a layer in `Print only` mode carries
+    // `data-print-only="true"`. `js/dom/layer_manager.js` hides it on screen with an INLINE
+    // `display:none` (that is what `isHidden` means), so at print time the hide has to be
+    // UNDONE with `!important` — the same substitution rule the disabled-layer branch below
+    // uses in reverse. This is the one rule that makes the third mode a real mode rather than
+    // a rename of "hidden".
+    const printOnlyLayers = document.querySelectorAll(
+      '[data-print-only="true"]',
+    );
 
     let css = "@media print {\n";
 
@@ -60,6 +69,15 @@
     disabledLayers.forEach((layer) => {
       if (layer.id) {
         css += `  #${layer.id} { display: none !important; }\n`;
+      }
+    });
+
+    // UNDO the on-screen hide for a `Print only` layer (AC-1). Order matters: this block is
+    // emitted AFTER the disabled-layer block, and a layer can be in exactly ONE mode, so the two
+    // selectors never target the same element.
+    printOnlyLayers.forEach((layer) => {
+      if (layer.id) {
+        css += `  #${layer.id} { display: block !important; }\n`;
       }
     });
 

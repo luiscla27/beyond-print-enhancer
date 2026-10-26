@@ -584,6 +584,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (reply && typeof reply.retryAfterSeconds === "number") {
       out.retryAfterSeconds = reply.retryAfterSeconds;
     }
+    if (reply && reply.retryable === true) {
+      out.retryable = true;
+    }
     sendResponse(out);
   };
   Promise.resolve()

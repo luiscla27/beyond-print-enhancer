@@ -156,6 +156,44 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
       await slow.close();
     });
 
+    it("TEARS THE TRANSPORT DOWN at the deadline, not just the caller (cycle 2, E-5)", async () => {
+      // The Python half used to release the caller at its budget and abandon the transport running
+      // (measured: 0.25 s release against a 0.2 s budget, transport out to 1.562 s). The Node half
+      // aborted its `AbortController` from the start — this case pins that property so a later edit
+      // cannot silently drop it while the abort-at-budget case above stays green (that one only
+      // asserts the CALLER was released early).
+      const keepAlive = setInterval(() => {}, 250); // the transport holds no other handle here
+      const seen = { aborted: false, abortedAtMs: null };
+      const store = tmpFile("node-teardown.jsonl");
+      const startedMs = Date.now();
+      let r;
+      try {
+        r = await callModel({
+          site: "scripts/border_design_generator.js", role: "reasonix-agent",
+          model: "gemini-3.8-flash", provider: "stub", fingerprintMaterial: "body",
+          store,
+          budgets: narrowedBudgets("background_maintenance", { per_attempt_s: 0.2, session_cap_s: 0.4 }),
+          transport: ({ signal }) => new Promise((resolve) => {
+            signal.addEventListener("abort", () => {
+              seen.aborted = true;
+              seen.abortedAtMs = Date.now() - startedMs;
+              resolve("late");
+            }, { once: true });
+          }),
+        });
+      } finally {
+        clearInterval(keepAlive);
+      }
+      assert.strictEqual(r.status, "timeout");
+      assert.strictEqual(seen.aborted, true,
+        "the deadline must ABORT the transport, not merely release the caller: a transport that can "
+        + "only settle when its signal fires must have been signalled");
+      assert.ok(seen.abortedAtMs !== null && seen.abortedAtMs < 900,
+        `the abort must land at the budget, not at the transport's own pace (at ${seen.abortedAtMs}ms)`);
+      const terminal = readRecords(store).find((x) => x.event === "model_call_terminal");
+      assert.strictEqual(terminal.status, "timeout", "the bounded outcome is still terminalised");
+    });
+
     it("cancels without hanging and signals it in the terminal record", async () => {
       const slow = await startServer((req, res) => {
         setTimeout(() => { res.writeHead(200); res.end("{}"); }, 2000);
@@ -340,6 +378,16 @@ describe("model-call telemetry: budget, cancellation and terminal coverage (runt
         "a call that never attempted is still terminalised");
 
       assert.ok(byCase.progress.ticks >= 1, "a call past the progress threshold emits ticks");
+
+      // A DEADLINE MUST TEAR THE TRANSPORT DOWN (cycle 2, E-5). Both halves now agree, and this case
+      // can only pass when the teardown actually fires: measured on the pre-fix helper, the supervisor
+      // never even OFFERED its abort token (the transport was called `transport(timeout_s)`), so the
+      // transport ran its full 2 s fallback and both assertions below fail.
+      assert.strictEqual(byCase.teardown.status, "timeout");
+      assert.strictEqual(out.teardown.abort_offered, true,
+        "the supervisor must OFFER its abort token to a transport that accepts one");
+      assert.strictEqual(out.teardown.torn_down, true,
+        "a budget expiry must tear the abandoned transport down, not just release the caller");
 
       assert.strictEqual(out.coalesce.transport_calls, 1, "identical concurrent calls share one transport run");
       assert.strictEqual(out.coalesce.cache_hits, 1, "exactly one caller is recorded as the coalesced hit");
@@ -736,6 +784,21 @@ const DRIVER_SOURCE = [
   "boom_rows = [json.loads(l) for l in open(boom_path, encoding='utf-8') if l.strip()]",
   "boom_terminals = [r for r in boom_rows if r['event'] == 'model_call_terminal']",
   "",
+  "# A DEADLINE MUST TEAR THE TRANSPORT DOWN (cycle 2, E-5). Before this, the supervisor released the",
+  "# caller and left the transport running: measured 0.25 s release against a 0.2 s budget, transport",
+  "# out to 1.562 s, then it returned a value nobody read. This transport can ONLY finish early by",
+  "# having its closer fired, so 'the caller was released' cannot stand in for the teardown.",
+  "td = {'abort_offered': None, 'torn_down': False}",
+  "td_finished = threading.Event()",
+  "def teardown_transport(timeout_s, abort=None):",
+  "    td['abort_offered'] = abort is not None",
+  "    if abort is not None:",
+  "        abort.register_closer(lambda: (td.__setitem__('torn_down', True), td_finished.set()))",
+  "    td_finished.wait(2.0)      # the fallback: with no teardown this returns after 2 s, alone",
+  "    return b'late'",
+  "cases.append(run('teardown', '/ok', per=0.2, sess=0.3, attempts=1,",
+  "                 transport_override=teardown_transport))",
+  "time.sleep(0.2)",
   "out = {'cases': cases, 'unterminated_call_ids': unterminated, 'closer_hits': closer_hits,",
   "       'boom': {'raised': boom_raised, 'store': boom_path, 'rows': len(boom_rows),",
   "                'terminal_count': len(boom_terminals)},",
@@ -744,6 +807,7 @@ const DRIVER_SOURCE = [
   "                     'cancel_flag': interrupt_terminals[0].get('cancel_flag') if interrupt_terminals else None,",
   "                     'error_class': interrupt_terminals[0].get('error_class') if interrupt_terminals else None,",
   "                     'duration_ms': interrupt_terminals[0].get('duration_ms') if interrupt_terminals else None},",
+  "       'teardown': td,",
   "       'coalesce': {'transport_calls': calls['n'],",
   "                    'cache_hits': len([t for t in terminals if t.get('cache_hit_flag')])}}",
   "",

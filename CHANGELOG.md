@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-10-26, track ux_quick_wins_20261025 — Phases 1-3 of the six approved e2e-matrix gaps)
+- **Per-layer three-state visibility (AC-1 / BEYOND-9).** Each layer row now carries an explicit
+  Print only / Both / Screen only strip (`js/dom/layer_manager.js`), which REPLACES nothing and
+  renames nothing: the printer and eye buttons keep their own meanings, and the strip reads and
+  writes the same two persisted flags (`isHidden`, `isDisabledOnPrint`) the panel already owned —
+  so the storage schema is unchanged (operator decision #4) and a legacy record that sets BOTH
+  flags still reads honestly. `Print only` is the mode that needed new code: the on-screen hide is
+  an inline `display:none`, so `js/print_styles.js` now emits a `!important` print rule that undoes
+  it, keyed on `data-print-only`. The strip is a separate LINE rather than three more segments in
+  the row because the row is measurably full (the 248px panel left the sections label 0px at 3x28px
+  segments); the record is `temp/scratch/ac1_measure_record.txt` and the rejected shapes are in the
+  track's `deliberation/evaluation_matrix.md`.
+- **A retryable AI refusal now offers its retry (AC-4 / BEYOND-13).** The worker's
+  `retryable`/`retryAfterSeconds` flags were already computed and dropped on the wire
+  (`js/background.js` kept only the latter); they now reach `js/ai_arrange.js`, which offers one
+  second dial with the SAME instruction, capabilities and target — the user does not retype what
+  they asked. Covered by `byok_relay.spec.js`'s network-failure injection and its recovery case.
+- **Reload persistence is now proven for every customization type, not just the credential
+  (AC-5 / BEYOND-14).** The BYOK persistence spec covered only the API key. A new sibling
+  `test/browser_e2e/byok_settings_persistence_types.spec.js` drives the product's OWN seams for the
+  four types the criterion names — `__DDBStorage.saveCustomShape` / `saveCustomBorder`, the layer
+  manager's `setLayerMode`, and `CatalogService.applyTemplate` — and asserts the read-back after a
+  real `page.reload()` + reinject (5/5 passing). It also pins the undo stack's documented
+  SESSION scope (`js/persistence.js:138-152`): depth ≥1 before the reload, 0 after, with
+  `announceBootRestore`'s "Restored your saved layout." toast as the notification that the reload
+  was not silent. No product gap was found — all four types already persisted correctly.
+- **Keyboard layer reorder + reorder polish (AC-6 / BEYOND-15, Phase 5).** The layer panel's rows
+  now reorder with the arrow keys: a `keydown` live-region listener delegates through
+  `closest("[data-layer-id]")` and maps Up/Down/Home/End to `reorderShapeLayers` — the SAME
+  mutation path a drag drop takes, so a keyboard move is drag-equivalent, and both surfaces derive
+  their insertion index from the same `getRowAfterGroup` midpoint geometry (they cannot disagree
+  about where a move lands). Binding on the row container covers both focus handles
+  (`.be-layer-name`'s `tabindex="0"` and the row itself). The AC-6 polish clause ships as
+  transform-safe opacity/background transitions in `js/ui_theme.js` (`.be-layer-group`, 140ms) —
+  a FLIP transform was honestly rejected because the restack's panel rebuild detaches the old row
+  before a translate can be measured against it; animating only opacity/background keeps the panel
+  60fps (no layout-triggering property, so a panel that repaints on every keystroke does not force
+  a reflow per frame). The drag-over drop-marker precondition (3px gold `be-layer-drop-marker` band,
+  midpoint targeting) was verified as already-shipped rather than authored. Delivered as a dedicated
+  `test/browser_e2e/layer_reorder_keyboard.spec.js` (7/7 passing) rather than growing
+  `byok_arrange_roundtrip.spec.js`, whose subject is the AI-arrange round-trip. For the honest
+  record: the spec's two failing cases were test-baseline bugs (each derived its "before" order from
+  a `"report"`-mode probe taken AFTER the press — and that mode sets `orderAfter = orderBefore` by
+  construction), and one helper referenced a function that exists nowhere in the harness; fixes to
+  the SPEC are in this commit, none to product behavior.
 ### Fixed (2026-10-16, track runtime_perf_20261015 RE-EXECUTED — three defects the re-run found, and one it refused to inherit)
 - **The track was re-executed because its BUILDER hung after committing, not because its work failed.**
   `temp/idlegate/idlegate-audit.log` shows the spawn at `2026-10-15T20:55:40Z` (pid 3920), then

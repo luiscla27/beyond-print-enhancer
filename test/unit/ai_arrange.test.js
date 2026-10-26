@@ -1490,7 +1490,116 @@ describe("the prompt surface", function () {
         b.cleanup();
       }
     }
+  });
 
+  it("AC-4: a retryable refusal offers Retry, and the retry's OWN run is what the surface reports", async function () {
+    // BEYOND-13 (`ux_quick_wins_20261025` Phase 2). TWO claims, and the second is the one that
+    // makes the button more than decoration:
+    //   (1) a `retryable` transport error puts a Retry control in the refusal dialog, and a
+    //       non-retryable one does NOT (a button that cannot help is worse than none);
+    //   (2) pressing it re-runs the SAME instruction and the surface reports the retry's outcome.
+    //       The flow settled on `outcome` (the FIRST failure) before this case existed — measured
+    //       here: the apply and the save both happened and the promise still said
+    //       `ok:false, code:"network"`, which is a false negative the user would read as "nothing
+    //       happened" while the sheet had already changed.
+    const b = bootAi({
+      reply: (n) =>
+        n === 0
+          ? { ok: false, errorClass: "network", retryable: true }
+          : b.jsonReply(OK_PATCH),
+    });
+    try {
+      await b.seed;
+      const running = b.window.AiArrange.showAiArrangeSurface();
+      await waitFor(() => Boolean(b.document.getElementById("be-ai-instruction")), { timeout: 3000 });
+      const borderSwitch = b.document.getElementById("be-ai-cap-border");
+      borderSwitch.checked = false;
+      borderSwitch.dispatchEvent(new b.window.Event("change", { bubbles: true }));
+      b.document.getElementById("be-ai-instruction").value = "two tidy columns";
+      b.document.querySelector(".be-ai-ask").dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
+
+      const seen = await waitFor(() => Boolean(b.document.querySelector(".be-ai-refusal-retry")), { timeout: 6000 });
+      const retry = b.document.querySelector(".be-ai-refusal-retry");
+      assert.ok(seen && retry, "a retryable network error offered no Retry");
+      assert.strictEqual(retry.textContent, "Retry", "no retry-after hint on the wire, so the label is bare");
+      assert.deepStrictEqual(b.applies, [], "the first dial applied something");
+
+      // Press it: the flow re-runs with the SAME instruction (the stub counts the calls itself).
+      retry.dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
+      const previewed = await waitFor(() => Boolean(b.document.querySelector(".be-ai-preview-accept")), { timeout: 6000 });
+      assert.ok(previewed, "the retry never reached a preview");
+      assert.strictEqual(b.chat.calls.length, 2, "the retry did not dial again");
+      assert.strictEqual(
+        b.chat.calls[1].instruction,
+        b.chat.calls[0].instruction,
+        "the retry asked a DIFFERENT question: " + JSON.stringify([b.chat.calls[1].instruction, b.chat.calls[0].instruction]),
+      );
+      b.document.querySelector(".be-ai-preview-accept").dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
+      const out = await running;
+      assert.strictEqual(out.ok, true, "the surface reported the FIRST failure after a successful retry: " + JSON.stringify(out));
+      assert.strictEqual(b.applies.length, 1, "the retried layout was not applied exactly once");
+      assert.strictEqual(b.saves.length, 1, "the retried layout was not saved exactly once");
+
+      // …and the OTHER direction: an error a second dial cannot fix gets no Retry at all.
+      const b2 = bootAi({ reply: () => ({ ok: false, errorClass: "auth" }) });
+      try {
+        await b2.seed;
+        const run2 = b2.window.AiArrange.showAiArrangeSurface();
+        await waitFor(() => Boolean(b2.document.getElementById("be-ai-instruction")), { timeout: 3000 });
+        const bs = b2.document.getElementById("be-ai-cap-border");
+        bs.checked = false;
+        bs.dispatchEvent(new b2.window.Event("change", { bubbles: true }));
+        b2.document.getElementById("be-ai-instruction").value = "arrange it";
+        b2.document.querySelector(".be-ai-ask").dispatchEvent(new b2.window.MouseEvent("click", { bubbles: true }));
+        const refused = await waitFor(() => Boolean(b2.document.querySelector(".be-ai-refusal")), { timeout: 6000 });
+        assert.ok(refused, "an auth refusal did not open a dialog");
+        assert.ok(
+          !b2.document.querySelector(".be-ai-refusal-retry"),
+          "an `auth` failure offered Retry, which cannot fix a rejected key",
+        );
+        b2.document.querySelector(".be-ai-refusal-ok").dispatchEvent(new b2.window.MouseEvent("click", { bubbles: true }));
+        const out2 = await run2;
+        assert.strictEqual(out2.code, "auth");
+        assert.strictEqual(b2.chat.calls.length, 1, "a non-retryable refusal dialled twice");
+      } finally {
+        b2.cleanup();
+      }
+    } finally {
+      b.cleanup();
+    }
+  });
+
+  it("AC-4: a retry-after hint reaches the dialog's Retry label", async function () {
+    // G-ERR's actionable-copy half: when the provider says HOW LONG to wait, the button says it
+    // instead of inviting the user to hammer a rate-limited key.
+    const b = bootAi({
+      reply: (n) =>
+        n === 0
+          ? { ok: false, errorClass: "rate_limit", retryable: true, retryAfterSeconds: 17 }
+          : b.jsonReply(OK_PATCH),
+    });
+    try {
+      await b.seed;
+      const running = b.window.AiArrange.showAiArrangeSurface();
+      await waitFor(() => Boolean(b.document.getElementById("be-ai-instruction")), { timeout: 3000 });
+      const borderSwitch = b.document.getElementById("be-ai-cap-border");
+      borderSwitch.checked = false;
+      borderSwitch.dispatchEvent(new b.window.Event("change", { bubbles: true }));
+      b.document.getElementById("be-ai-instruction").value = "arrange it";
+      b.document.querySelector(".be-ai-ask").dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
+      const seen = await waitFor(() => Boolean(b.document.querySelector(".be-ai-refusal-retry")), { timeout: 6000 });
+      const retry = b.document.querySelector(".be-ai-refusal-retry");
+      assert.ok(seen && retry, "a rate-limited refusal offered no Retry");
+      assert.strictEqual(retry.textContent, "Retry in 17s", "the retry-after hint was dropped: " + retry.textContent);
+      b.document.querySelector(".be-ai-refusal-ok").dispatchEvent(new b.window.MouseEvent("click", { bubbles: true }));
+      const out = await running;
+      assert.strictEqual(out.code, "rate_limit");
+    } finally {
+      b.cleanup();
+    }
+  });
+
+  it("a Cancel on the refusal's place: closing the prompt asks nothing and re-asks nobody", async function () {
     // The Cancel half: closing the prompt asks nothing, refuses nothing, and re-asks nobody.
     const b = bootAi({ reply: () => b.jsonReply(OK_PATCH) });
     try {

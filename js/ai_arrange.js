@@ -807,8 +807,10 @@ async function arrangeWithAi(instruction, opts) {
   }
   if (!reply || reply.ok !== true) {
     const cls = reply && reply.errorClass ? String(reply.errorClass) : "unknown";
+    const retryable = reply && reply.retryable === true;
+    const retryAfterSeconds = reply && typeof reply.retryAfterSeconds === "number" ? reply.retryAfterSeconds : undefined;
     window.showFeedback?.(AI_ARRANGE_ERROR_COPY[cls] || AI_ARRANGE_ERROR_COPY.unknown, "error");
-    return { ok: false, stage: "transport", code: cls };
+    return { ok: false, stage: "transport", code: cls, retryable, retryAfterSeconds };
   }
   // A reply that claims success but carries no text is a transport boundary failure, not a model
   // one: the worker's `byokChatReply` always sets `text` on `ok:true`, so a missing string here is
@@ -1157,29 +1159,60 @@ function showAiArrangeSurface() {
   loadRouteHint(handle);
   return handle.promise.then((result) => {
     if (!result || !result.instruction) return undefined;
-    return arrangeWithAi(result.instruction, {
+    return runArrange(result.instruction, {
       capabilities: result.capabilities,
       selectedSectionId: result.selectedSectionId,
-    }).then((outcome) => {
-      // A refusal from the flow (bad key, prose answer, invalid patch) reopens the prompt with
-      // the sentence IN it, so the user can rephrase without hunting for the button again. A
-      // cancel or a refusal to even start (`stage: "cancelled"`) stays closed — re-asking the
-      // same thing is not what a Cancel means.
-      if (outcome && outcome.ok) return outcome;
-      const stage = outcome ? outcome.stage : "";
-      if (stage === "cancelled" || stage === "preview" || stage === "instruction") return outcome;
-      const copy =
-        AI_ARRANGE_ERROR_COPY[outcome.code] ||
-        AI_ARRANGE_REJECT_COPY[outcome.code] ||
-        "Nothing was changed.";
-      return showAiRefusal(copy).then(() => outcome);
+    });
+  });
+}
 
+/**
+ * Run one arrangement, and on a REFUSAL offer the retry the AC-4 criterion names.
+ *
+ * The retry re-runs THIS function with the SAME instruction, capabilities and target — the user
+ * does not have to re-type what they asked. A retryable transport error (`network`,
+ * `provider_unavailable`, `rate_limit`) is exactly the case where a second dial can succeed: the
+ * network came back, the provider recovered, the rate window passed. The refusal dialog's Retry
+ * button is how the user reaches that second dial; `onRetry` closing with `{retry:true}` is what
+ * `showAiRefusal` translates into this re-run.
+ */
+function runArrange(instruction, opts) {
+  const capabilities = (opts && opts.capabilities) || { arrange: true, border: true };
+  const selectedSectionId = (opts && opts.selectedSectionId) || null;
+  return arrangeWithAi(instruction, {
+    capabilities,
+    selectedSectionId,
+  }).then((outcome) => {
+    // A refusal from the flow (bad key, prose answer, invalid patch) reopens the prompt with
+    // the sentence IN it, so the user can rephrase without hunting for the button again. A
+    // cancel or a refusal to even start (`stage: "cancelled"`) stays closed — re-asking the
+    // same thing is not what a Cancel means.
+    if (outcome && outcome.ok) return outcome;
+    const stage = outcome ? outcome.stage : "";
+    if (stage === "cancelled" || stage === "preview" || stage === "instruction") return outcome;
+    const copy =
+      AI_ARRANGE_ERROR_COPY[outcome.code] ||
+      AI_ARRANGE_REJECT_COPY[outcome.code] ||
+      "Nothing was changed.";
+    // AC-4: pass the retryable flag (and the retry-after hint) to the refusal dialog so it can
+    // show a Retry button for the errors a second dial can actually fix.
+    const retryable = outcome.retryable === true;
+    const retryAfterSeconds = outcome.retryAfterSeconds;
+    return showAiRefusal(copy, outcome.code, retryable, retryAfterSeconds, () => {
+      // Retry: re-run the SAME arrangement — same instruction, same capabilities, same target.
+      return runArrange(instruction, { capabilities, selectedSectionId });
+    }).then((retried) => {
+      // A retry that ran REPLACES this outcome: the second dial is the answer the surface is
+      // asked about, so reporting the first failure after a successful retry would be a false
+      // negative (measured 2026-10-26: the apply and the save both happened, and the promise
+      // still said `ok:false, code:"network"`). A dismissed refusal changes nothing.
+      return retried && retried.retried ? retried.outcome : outcome;
     });
   });
 }
 
 /** A refusal that keeps the user's place: the copy, and the same Ask/Cancel pair. */
-function showAiRefusal(copy) {
+function showAiRefusal(copy, errorClass, retryable, retryAfterSeconds, onRetry) {
   const api = window.Modals;
   if (!api || typeof api.__createModal !== "function") return Promise.resolve(null);
   const handle = api.__createModal({
@@ -1191,6 +1224,22 @@ function showAiRefusal(copy) {
       ctx.bodyEl.appendChild(p);
     },
     actions: (ctx) => {
+      // AC-4: a retryable error (network, provider_unavailable, rate_limit) gets a Retry button
+      // next to OK — the error is one a second dial can fix, so the user is not left with only
+      // "dismiss it and start over".
+      if (retryable && onRetry) {
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "be-modal-ok be-ai-refusal-retry";
+        const label = retryAfterSeconds
+          ? `Retry in ${retryAfterSeconds}s`
+          : "Retry";
+        retry.textContent = label;
+        retry.addEventListener("click", () => {
+          ctx.close({ retry: true });
+        });
+        ctx.actionsRow.appendChild(retry);
+      }
       const ok = document.createElement("button");
       ok.type = "button";
       ok.className = "be-modal-ok be-ai-refusal-ok";
@@ -1199,7 +1248,14 @@ function showAiRefusal(copy) {
       ctx.actionsRow.appendChild(ok);
     },
   });
-  return handle.promise;
+  return handle.promise.then((result) => {
+    if (result && result.retry && onRetry) {
+      // The retry RAN: hand its own outcome back, flagged, so the caller can report the run that
+      // actually happened instead of the failure that opened this dialog.
+      return Promise.resolve(onRetry()).then((outcome) => ({ retried: true, outcome }));
+    }
+    return null;
+  });
 }
 
 /**

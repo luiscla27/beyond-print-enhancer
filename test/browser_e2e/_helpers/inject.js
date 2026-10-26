@@ -60,6 +60,14 @@ const CONTENT_PROBE_NAMES = [
   // byok_ai_layout_20260915 Phase 3 — the BYOK relay, driven from the ISOLATED world (the only
   // world whose sender passes the worker's own gate), plus the worker's decision counters.
   "byokRelayProbe",
+  // ux_quick_wins_20261025 Phase 2 (BEYOND-13) does NOT add a probe here: the network-failure
+  // injection must patch `self.fetch` in the SERVICE WORKER's own scope, and a probe declared in
+  // this list runs in the content script's isolated world — the wrong scope, where patching
+  // `self.fetch` would leave the worker's dial untouched and the injected "failure" would be a
+  // no-op that still lets a real request through. `byok_relay.spec.js` therefore injects with
+  // `serviceWorker(ctx).evaluate(...)` directly, which is the only place that scope exists. (Two
+  // probes were declared here first; they were unreachable — no spec called them — and a dead probe
+  // that looks like it does something is worse than an absent one.)
   // byok_ai_layout_20260915 Phase 4 — the arrange flow, its panel row, and the counters that make
   // "zero applies" / "exactly one save" observable in the REAL page.
   "aiArrangeModuleRead",
@@ -68,6 +76,34 @@ const CONTENT_PROBE_NAMES = [
   "aiArrangeProbe",
   "aiArrangePanelRead",
   "aiArrangePanelClick",
+  // ux_quick_wins_20261025 Phase 3 (AC-5 / BEYOND-14) — every persistence seam the
+  // track's reload cases drive: the shape + border reuse libraries (IndexedDB
+  // CUSTOM_SHAPES_STORE / CUSTOM_BORDERS_STORE via window.__DDBStorage, the SAME
+  // object a real upload or an AI border save writes through), the layer manager's
+  // own mode/delete seams, the template application, and the two read-backs that
+  // make "survived a reload" observable (the library contents and the layout
+  // record's own customShapes array). These are PROBES and not page.evaluate reads
+  // because __DDBStorage and DomManager are content-script-world globals — invisible
+  // from the page's MAIN world, like window.Modals.
+  "saveShapeLibraryEntry",
+  "deleteShapeLibraryEntry",
+  "readShapeLibrary",
+  "addCustomShapeToCurrentLayout",
+  "readCurrentLayoutCustomShapes",
+  "saveBorderLibraryEntry",
+  "deleteBorderLibraryEntry",
+  "readBorderLibrary",
+  "setLayerMode",
+  "removeShapeLayer",
+  "reorderLayersProbe",
+  "toggleLayerLockProbe",
+  "focusedLayerRowProbe",
+  "focusRowProbe",
+  "reorderShapeLayersProbe",
+  "persistLayoutNow",
+  "applyTemplateRecord",
+  "readTemplateSideEffects",
+  "readBootRestoreState",
 ];
 /**
  * Run a named probe INSIDE the extension's isolated world — the world the
@@ -1511,6 +1547,405 @@ async function contentCall(ctx, name, args = []) {
             ok: true,
             hueVar: root.getPropertyValue("--be-hue-filter").trim(),
             decorationVar: root.getPropertyValue("--be-decoration-filter").trim(),
+          };
+        },
+
+        // ---------------------------------------------------------------- *
+        // ux_quick_wins_20261025 Phase 3 (AC-5 / BEYOND-14) probes.         *
+        // ---------------------------------------------------------------- *
+
+        /**
+         * Write one row into the CUSTOM_SHAPES store — the exact join a real
+         * upload takes (js/shape_picker.js uploadFromFile -> __DDBStorage.
+         * saveCustomShape). The store is keyed on `id`, so this is an upsert.
+         */
+        saveShapeLibraryEntry: async (shape) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.saveCustomShape !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveCustomShape in this world" };
+          }
+          if (!shape || !shape.id) return { ok: false, why: "probe needs {id, name, data}" };
+          try {
+            await s.saveCustomShape(shape);
+            return { ok: true, id: shape.id };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /** Deletes through the store directly: js/storage.js exposes NO
+         * deleteCustomShape product seam (only deleteCustomBorder), and this
+         * probe exists so a test can leave the library as it found it. Same
+         * IndexedDB, same store name the product's own writes go to. */
+        deleteShapeLibraryEntry: async (id) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.init !== "function") {
+            return { ok: false, why: "no __DDBStorage in this world" };
+          }
+          const db = await s.init();
+          return new Promise((resolve) => {
+            const tx = db.transaction(["custom_shapes"], "readwrite");
+            const req = tx.objectStore("custom_shapes").delete(id);
+            req.onsuccess = () => resolve({ ok: true });
+            req.onerror = () =>
+              resolve({ ok: false, why: String(req.error && req.error.message) });
+          });
+        },
+        readShapeLibrary: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.getCustomShapes !== "function") {
+            return { ok: false, why: "no __DDBStorage.getCustomShapes in this world" };
+          }
+          try {
+            return await s.getCustomShapes();
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /** Push the id onto the CHARACTER layout record's customShapes — the
+         * second half of a real upload, which persists BOTH the library row and
+         * the record that tells the sheet which library shapes belong to it. */
+        addCustomShapeToCurrentLayout: async (shapeId) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.loadLayout !== "function" || !s.saveLayout) {
+            return { ok: false, why: "no __DDBStorage layout seams in this world" };
+          }
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          const layout = (await s.loadLayout(cid)) || {
+            version: s.SCHEMA_VERSION,
+            sections: {},
+          };
+          if (!layout.customShapes) layout.customShapes = [];
+          if (!layout.customShapes.includes(shapeId)) layout.customShapes.push(shapeId);
+          await s.saveLayout(cid, layout);
+          return { ok: true, id: shapeId, characterId: cid };
+        },
+        readCurrentLayoutCustomShapes: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.loadLayout !== "function") {
+            return { ok: false, why: "no __DDBStorage.loadLayout in this world" };
+          }
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          const layout = await s.loadLayout(cid);
+          return (layout && layout.customShapes) || [];
+        },
+        saveBorderLibraryEntry: async (border) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.saveCustomBorder !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveCustomBorder in this world" };
+          }
+          if (!border || !border.id) return { ok: false, why: "probe needs {id, svg}" };
+          try {
+            await s.saveCustomBorder(border);
+            return { ok: true, id: border.id };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        deleteBorderLibraryEntry: async (id) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.deleteCustomBorder !== "function") {
+            return { ok: false, why: "no __DDBStorage.deleteCustomBorder in this world" };
+          }
+          try {
+            await s.deleteCustomBorder(id);
+            return { ok: true };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        readBorderLibrary: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.getCustomBorders !== "function") {
+            return { ok: false, why: "no __DDBStorage.getCustomBorders in this world" };
+          }
+          try {
+            return await s.getCustomBorders();
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /** One of the three AC-1 modes for the NAMED layer, through the layer
+         * manager's own setLayerMode — the same mutation path the mode strip's
+         * segments take. */
+        setLayerMode: async (layerId, mode) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const layer = lm.shapeLayers.find((l) => l.id === layerId);
+          if (!layer) return { ok: false, why: `no shape layer ${layerId}` };
+          if (typeof lm.setLayerMode !== "function") {
+            return { ok: false, why: "no setLayerMode on the layer manager" };
+          }
+          const got = lm.setLayerMode(layer, mode);
+          if (!got) return { ok: false, why: `mode "${mode}" refused` };
+          return { ok: true, mode: got, id: layerId };
+        },
+        removeShapeLayer: async (layerId) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          if (typeof lm.deleteShapeLayer !== "function") {
+            return { ok: false, why: "no deleteShapeLayer on the layer manager" };
+          }
+          lm.deleteShapeLayer(layerId);
+          return { ok: true, id: layerId };
+        },
+        /**
+         * Phase 5 (AC-6) lock control for the REFUSAL cases ONLY. args =
+         * { layerId, locked: true }. Flips the lock flag on ONE layer through the
+         * manager's own state field (the isLocked flip a real lock click makes),
+         * then refreshes the drag affordance. Two deliberate deviations from a
+         * real lock UI click, both recorded:
+         *   1. no pushMutation — a real toggle pushes a LAYER_FLAG undo record,
+         *      and this case's undo-depth assertions must not be polluted by a
+         *      record that has nothing to do with the arrow press under test.
+         *   2. no UNLOCK cascade — the product's unlock locks every OTHER layer
+         *      (_toggleLayerLockNow, layer_manager.js:1865-1872), which would
+         *      poison the rest of the page's stack for no reason the AC-6
+         *      refusal case needs. Only the named layer's flag changes.
+         */
+        toggleLayerLockProbe: async ({ layerId, locked }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const layer = lm.shapeLayers.find((l) => l.id === layerId);
+          if (!layer) return { ok: false, why: `no shape layer ${layerId}` };
+          layer.isLocked = locked === true;
+          if (typeof lm.syncLayerRowDrag === "function") lm.syncLayerRowDrag();
+          return { ok: true, id: layerId, isLocked: layer.isLocked };
+        },
+        /**
+         * Phase 5 (AC-6): which layer row holds focus in the panel — the proof
+         * restoreRowFocus re-attached the caret to the moved row after the
+         * rebuild instead of letting it drop with the detached element.
+         */
+        focusedLayerRowProbe: async () => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const activeEl = document.activeElement;
+          let focusedLayerId = null;
+          if (activeEl && typeof activeEl.closest === "function") {
+            const focusedRow = activeEl.closest(".be-layer-row");
+            if (focusedRow) focusedLayerId = focusedRow.getAttribute("data-layer-id");
+          }
+          return { ok: true, focusedLayerId };
+        },
+        /**
+         * Phase 5 (AC-6): FOCUS a layer row inside the content world. The panel
+         * rows are content-script-world DOM (js/dom/layer_manager.js's rebuildPanel),
+         * so the caret must be set here, in the same world the keydown handler
+         * lives in — a page-side focus would target an element whose row the
+         * handler still owns, and the AC-6 cases press keys (page.keyboard.press)
+         * that only reach the element holding the caret. Returns the row's
+         * tabindex and draggable state so a case can precondition on them.
+         */
+        focusRowProbe: async ({ layerId }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const row = lm.panel
+            ? lm.panel.querySelector(`[data-layer-id="${layerId}"]`)
+            : null;
+          if (!row) return { ok: false, why: `no panel row for ${layerId}` };
+          row.focus({ preventScroll: true });
+          return {
+            ok: document.activeElement === row,
+            tabindex: row.getAttribute("tabindex"),
+            draggable: row.getAttribute("draggable"),
+            focusedLayerId: document.activeElement === row ? layerId : null,
+          };
+        },
+        /**
+         * Phase 5 (AC-6), drag-equivalence case: commit a move through
+         * reorderShapeLayers ITSELF — the exact API bindRowDrag's drop handler
+         * calls (js/dom/layer_manager.js:859 region) with the beforeId a drop
+         * computes. Runs the same tail a drop runs (print-z banding + the
+         * RESTACK-class undo record opened BEFORE the reorder), so the order it
+         * writes is the order a real drop writes — NOT a shortcut around the
+         * drag path. args = { layerId, beforeId (null = end of stack) }.
+         */
+        reorderShapeLayersProbe: async ({ layerId, beforeId }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          if (typeof lm.reorderShapeLayers !== "function") {
+            return { ok: false, why: "no reorderShapeLayers on the layer manager" };
+          }
+          if (typeof window.undoDepth !== "function") {
+            return { ok: false, why: "no window.undoDepth" };
+          }
+          const orderBefore = lm.shapeLayers.map((l) => l.id);
+          const depthBefore = window.undoDepth();
+          const snapshot = lm.snapshotStackState ? lm.snapshotStackState() : null;
+          const mut = window.beginMutation ? window.beginMutation(snapshot) : null;
+          const changed = lm.reorderShapeLayers(layerId, beforeId || null);
+          const orderAfter = lm.shapeLayers.map((l) => l.id);
+          if (changed && mut && window.pushMutation) {
+            window.pushMutation(mut, "Reorder layers (drop-path probe)", window.MUTATION_CLASSES.RESTACK,
+              (layout, snap) => lm.repairStackState(layout, snap));
+          }
+          return {
+            ok: changed === true,
+            orderBefore,
+            orderAfter,
+            undoDepthBefore: depthBefore,
+            undoDepthAfter: window.undoDepth(),
+          };
+        },
+        /**
+         * ux_quick_wins_20261025 Phase 5 (AC-6 / BEYOND-15) — read back a keyboard
+         * restack. args = { layerId, dir ('up'|'down') }. Returns:
+         *   ok        — reorderLayerByKeyboard returned true (the stack actually changed)
+         *   orderBefore / orderAfter — the shapeLayers ids around the move
+         *   undoDepth — window.undoDepth() after the move: the keyboard path opens a
+         *               RESTACK-class mutation before it reorders (the same record a
+         *               drag drop pushes), so a true move must leave the stack ≥1 deep
+         *               and a refused move must leave it untouched.
+         * The REAL ArrowUp/ArrowDown keypress is driven from the spec with
+         * page.keyboard.press on a focused row — this probe only READS the result,
+         * so the case exercises the DOM keydown handler, not a side-door call.
+         */
+        reorderLayersProbe: async ({ layerId, dir }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          if (typeof lm.reorderLayerByKeyboard !== "function") {
+            return { ok: false, why: "no reorderLayerByKeyboard on the layer manager" };
+          }
+          if (typeof window.undoDepth !== "function") {
+            return { ok: false, why: "no window.undoDepth" };
+          }
+          const orderBefore = lm.shapeLayers.map((l) => l.id);
+          const depthBefore = window.undoDepth();
+          // "report" = READ-ONLY: the order + undo depth as they stand RIGHT NOW,
+          // no reorderLayerByKeyboard call at all. (Passing any other dir would
+          // MOVE the layer — a "read" that mutates would corrupt every case that
+          // asserts over several reads.) "up"/"down" remain the real directions.
+          let orderAfter = orderBefore;
+          let undoDepthAfter = depthBefore;
+          let changed = false;
+          if (dir === "up" || dir === "down") {
+            changed = lm.reorderLayerByKeyboard(layerId, dir);
+            orderAfter = lm.shapeLayers.map((l) => l.id);
+            undoDepthAfter = window.undoDepth();
+          }
+          return {
+            ok: changed === true,
+            moved: changed === true,
+            orderBefore,
+            orderAfter,
+            undoDepthBefore: depthBefore,
+            undoDepthAfter,
+          };
+        },
+        /**
+         * Force the CURRENT live layout into the character store (the exact
+         * scanLayout -> saveLayout->saveGlobalLayout join of js/dnd.js persistLayout).
+         * The product's own autosave fires on a debounce AFTER a drop/nudge/property
+         * event — a probe-driven layer mutation is NOT one of those, so a test that
+         * wants to ask "does the record survive?" must persist FIRST and then reload;
+         * otherwise it would be measuring whether the autosave wiring noticed an
+         * event nobody emitted (that is the autosave track's question, not AC-5's).
+         */
+        persistLayoutNow: async () => {
+          if (
+            typeof window.scanLayout !== "function" ||
+            !window.__DDBStorage ||
+            typeof window.__DDBStorage.saveLayout !== "function"
+          ) {
+            return { ok: false, why: "no scanLayout/saveLayout seam in this world" };
+          }
+          const layout = await window.scanLayout();
+          const characterId =
+            typeof window.getCharacterId === "function"
+              ? window.getCharacterId()
+              : null;
+          const storage = window.__DDBStorage;
+          if (characterId) await storage.saveLayout(characterId, layout);
+          if (typeof storage.saveGlobalLayout === "function") {
+            await storage.saveGlobalLayout(layout);
+          }
+          return { ok: true, saved: !!characterId, shapeLayers: (layout.shapeLayers || []).length };
+        },
+        /** CatalogService.applyTemplate(templateId, true) — the product's own
+         * template path (js/persistence.js applyDefaultLayout calls "archer"
+         * the same way), with skipConfirm so a dialog never blocks the run. */
+        applyTemplateRecord: async (templateId) => {
+          const cs = window.CatalogService;
+          if (!cs || typeof cs.applyTemplate !== "function") {
+            return { ok: false, why: "no window.CatalogService in this world" };
+          }
+          const ok = await cs.applyTemplate(templateId, true);
+          return ok ? { ok: true, id: templateId } : { ok: false, why: `applyTemplate ${templateId} returned false` };
+        },
+        /** The observable residue of a template application: how many decorative
+         * shapes sit on the sheet, how many section wrappers carry the template's
+         * geometry, and how many borders the record carries (the borderSvg fields
+         * a template can seed — js/catalog_service.js AC-9a path C). */
+        readTemplateSideEffects: async () => {
+          const s = window.__DDBStorage;
+          const shapeCount = document.querySelectorAll(".be-shape-wrapper").length;
+          const positioned = Array.from(
+            document.querySelectorAll(".be-section-wrapper"),
+          ).filter((w) => w.style.left || w.style.top).length;
+          let borderCount = 0;
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          if (s && typeof s.loadLayout === "function") {
+            const layout = await s.loadLayout(cid);
+            const sections = (layout && layout.sections) || {};
+            borderCount = Object.values(sections).filter((cfg) =>
+              cfg && Object.prototype.hasOwnProperty.call(cfg, "borderSvg"),
+            ).length;
+          }
+          return { ok: true, shapeCount, sectionCount: positioned, borderCount };
+        },
+        /**
+         * Whether the boot path actually restored a saved record AND announced
+         * it. The announcement is the product's own cross-reload net
+         * (js/persistence.js announceBootRestore -> js/modals.js showFeedback):
+         * a `.be-feedback` toast carrying "Restored your saved layout." when a
+         * record came back. Read THIS FIRST after reinject — the toast self-
+         * dismisses in 3s, so a late read is vacuous. The layout record's own
+         * existence is the second witness (the fact the toast announces);
+         * either one answers the criterion's "not silent data loss".
+         */
+        readBootRestoreState: async () => {
+          const s = window.__DDBStorage;
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          let hasRecord = false;
+          if (s && typeof s.loadLayout === "function") {
+            const layout = await s.loadLayout(cid);
+            hasRecord = !!(layout && (layout.sections || layout.customShapes || layout.shapeLayers));
+          }
+          const toasts = Array.from(document.querySelectorAll(".be-feedback")).map((t) =>
+            (t.textContent || "").replace(/\s+/g, " ").trim(),
+          );
+          return {
+            ok: true,
+            hasRecord,
+            toasts,
+            restoredAnnounced: toasts.some((t) => t.includes("Restored your saved layout")),
+            defaultAnnounced: toasts.some((t) => t.includes("No saved layout yet")),
           };
         },
       };
