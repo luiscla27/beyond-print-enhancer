@@ -37,6 +37,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const readline = require("readline");
+const { execFileSync } = require("child_process");
 
 const { loadBudgets, resolveBudget, DEFAULT_STORE } = require("./model_call_telemetry.js");
 const { validateStore, percentileSorted } = require("./validate_model_call_telemetry.js");
@@ -55,6 +56,26 @@ const ROOT = path.resolve(__dirname, "..", "..");
  * checkout, and that made every regeneration rewrite the file for no reason but its own scratch
  * location. The store is named once, correctly, as `temp/perf/model_calls.jsonl`.
  */
+/**
+ * How many paths the tracked `scripts` surface holds, MEASURED at generation time.
+ *
+ * The first version of this artifact printed "the area's 54-path measured surface" — a number carried
+ * forward by hand from the 2026-10-15 run. Measured 2026-10-17 (cycle 2, E-9): 67 paths. A generated
+ * report that states a count it did not measure is the exact defect class this area fixed once
+ * already, so the count now comes from `git ls-files scripts` on every run, and an unavailable git
+ * says so instead of falling back to a stale literal.
+ */
+function trackedScriptCount() {
+  try {
+    const out = execFileSync("git", ["ls-files", "scripts"], {
+      cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+    });
+    return out.split(String.fromCharCode(10)).filter(Boolean).length;
+  } catch {
+    return null;
+  }
+}
+
 function displayPath(p) {
   const rel = path.relative(ROOT, p);
   if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) return p;
@@ -229,11 +250,12 @@ function projectTable(storePath, budgets) {
   return { findings, metrics, sites: siteRows };
 }
 
-function md(relay, project, verdict) {
+function md(relay, project, verdict, dominant) {
   const L = [];
   L.push("# Runtime-perf report — scripts-originated model calls");
   L.push("");
-  L.push(`Track \`runtime_perf_20261015\` · schema \`${SCHEMA_VERSION}\` · generated ${isoUtc()}`);
+  L.push(`Track \`runtime_perf_20261015\` · re-measured by \`runtime_perf_maintenance_20261017\` · `
+    + `schema \`${SCHEMA_VERSION}\` · generated ${isoUtc()}`);
   L.push("");
   L.push("## Evidence sources (AC-6)");
   L.push("");
@@ -242,8 +264,12 @@ function md(relay, project, verdict) {
   L.push("- `temp/perf/model_calls.jsonl` — the scripts area's own terminal telemetry (this track).");
   L.push("- `scripts/perf/budgets.json` — the declared budget source both runtimes read.");
   L.push("- `scripts/perf/model-call-sites.md` — the measured call-site inventory.");
-  L.push("- `TECH_DEBT_SCRIPTS.md` — the area's 54-path measured surface (the dossier claimed 7).");
-  L.push("- No file under `vendor/`, `third_party/`, `.git/` or `node_modules/` was read or written.");
+  L.push(`- \`TECH_DEBT_SCRIPTS.md\` — the area's **${trackedScriptCount() == null ? "n/a (git unavailable)" : `${trackedScriptCount()}`}-path** tracked surface, measured by \`git ls-files scripts\` at generation time (the dossier claimed 7 files).`);
+  // Narrowed to the EVIDENCE set (cycle 2, E-9's neighbouring defect): the blanket sentence was false
+  // for every conductor record, because a track's OWN record lives under `vendor/conductor/`. What the
+  // claim must pin is that no excluded tree was read or written AS EVIDENCE.
+  L.push("- No file under `vendor/` (other than this track's own record under `vendor/conductor/`), "
+    + "`third_party/`, `.git/` or `node_modules/` was read or written as evidence.");
   L.push("");
   L.push("## Baseline — the dossier's window, re-derived (relay population)");
   L.push("");
@@ -269,6 +295,34 @@ function md(relay, project, verdict) {
     + "unknown row the earlier one) — and what that row actually shows is that a row carrying no "
     + "model-call event carries no duration either: the ABSENCE of an event, not a missing "
     + "measurement.");
+  L.push("");
+  L.push("## Dominant path today — measured, not assumed unchanged (AC-3)");
+  L.push("");
+  if (dominant && dominant.rows.length) {
+    const top = againstTarget(dominant.rows[0]);
+    L.push(`Window \`${dominant.since || "store start"}\` … \`${dominant.until || "now"}\`, `
+      + `${dominant.terminal_rows} terminal rows. Judged against the dossier's own target row `
+      + `(p50 <= ${TARGET.p50_s} s, p95 <= ${TARGET.p95_s} s, max <= ${TARGET.max_s} s):`);
+    L.push("");
+    L.push("| role | model | calls | p50 s | verdict | p95 s | verdict | max s | verdict |");
+    L.push("| --- | --- | ---: | ---: | --- | ---: | --- | ---: | --- |");
+    for (const r of dominant.rows.slice(0, 6)) {
+      const j = againstTarget(r);
+      L.push(`| ${r.role} | ${r.model} | ${r.calls} | ${r.p50_s} | ${j.p50} | ${r.p95_s} | ${j.p95} | `
+        + `${r.max_s} | ${j.max} |`);
+    }
+    L.push("");
+    const dossierModel = dominant.rows
+      .filter((r) => r.model === "qwen3.8-flash").reduce((a, r) => a + r.calls, 0);
+    L.push(`The dossier's own dominant model \`qwen3.8-flash\` appears in this window with `
+      + `**${dossierModel}** call(s): the criterion's subject has moved, so the target is reported `
+      + `against the model that actually carries the traffic (\`${top.row.model}\`) beside it. `
+      + `Attribution over the same window: producer counts ${JSON.stringify(dominant.producers)}.`);
+  } else {
+    L.push("_No dominant-path window was measured. Pass `--dominant-since` (and optionally "
+      + "`--dominant-until`): a report that silently reuses the dossier's model would assert a "
+      + "population nobody checked._");
+  }
   L.push("");
   L.push("## After — the scripts area's own calls (project population)");
   L.push("");
@@ -321,9 +375,25 @@ function md(relay, project, verdict) {
   return L.join(os.EOL);
 }
 
+/** The dossier's own target row for the dominant interactive path (spec.md AC-3). */
+const TARGET = { p50_s: 20, p95_s: 60, max_s: 75 };
+
+/** One dominant-path row judged against AC-3's target, in the criterion's own terms. */
+function againstTarget(row) {
+  if (!row) return null;
+  const mark = (value, target) => (typeof value === "number"
+    ? `${value <= target ? "MET" : "MISS"} (target <= ${target})` : "n/a");
+  return {
+    row,
+    p50: mark(row.p50_s, TARGET.p50_s),
+    p95: mark(row.p95_s, TARGET.p95_s),
+    max: mark(row.max_s, TARGET.max_s),
+  };
+}
+
 /** The AC table. Every clause names its MEASUREMENT or the artifact that attests it; nothing here
  *  is a restatement of intent. */
-function verdicts(relay, project) {
+function verdicts(relay, project, dominant) {
   const m = project.metrics;
   const criteria = [];
   const declaredSites = project.sites.filter((s) => !s.site.includes("#sample"));
@@ -348,14 +418,30 @@ function verdicts(relay, project) {
       + `${overCapSites.length}`,
   });
 
+  // AC-3 is judged on the model that ACTUALLY carries today's traffic, not only on the one the
+  // dossier names: measured 2026-10-17 (cycle 2), `qwen3.8-flash` has had no call since 2026-09-29
+  // while `glm-5.3-flash` carries the volume path. A verdict quoting only the dossier's model would
+  // be true and useless.
+  const top = dominant && dominant.rows.length ? againstTarget(dominant.rows[0]) : null;
+  const dossierModelCalls = dominant
+    ? dominant.rows.filter((r) => r.model === "qwen3.8-flash").reduce((a, r) => a + r.calls, 0)
+    : null;
   criteria.push({
     id: "AC-3",
     verdict: "NOT ACHIEVED — OUT OF SCOPE (relay clause); before/after report MET",
-    basis: "the criterion's population is relay-served `qwen3.8-flash`, and "
-      + `${relay.producers.reasonix_proxy || 0}/${relay.terminal_rows} terminal rows in the store are `
-      + "`producer=reasonix_proxy`; no `scripts/` edit can move that percentile. The requested "
-      + "before/after report EXISTS (this file); no p50 comparison is possible because no "
-      + "scripts-originated sample predates this track",
+    basis: "the criterion's population is relay-served, and "
+      + `${relay.producers.reasonix_proxy || 0}/${relay.terminal_rows} terminal rows in the dossier `
+      + "window are `producer=reasonix_proxy`; no `scripts/` edit can move that percentile. "
+      + (top
+        ? `Measured dominant path over ${dominant.since || "store start"} … `
+          + `${dominant.until || "now"}: ${top.row.role} / ${top.row.model} `
+          + `${top.row.calls} calls — p50 ${top.row.p50_s} s ${top.p50}, p95 ${top.row.p95_s} s `
+          + `${top.p95}, max ${top.row.max_s} s ${top.max}; the dossier's `
+          + `own model appears in that window with ${dossierModelCalls} call(s).`
+        : "No dominant-path window was measured by this run (`--dominant-since`), so today's "
+          + "carrying model is UNMEASURED rather than assumed unchanged.")
+      + " The requested before/after report EXISTS (this file); no p50 comparison is possible "
+      + "because no scripts-originated sample predates the first track",
   });
 
   criteria.push({
@@ -378,9 +464,11 @@ function verdicts(relay, project) {
   criteria.push({
     id: "AC-6",
     verdict: project.findings.length ? "FAIL" : "PASS",
-    basis: "every evidence source is named in this report; the change set is `scripts/perf/**`, five "
-      + "call sites in the tracked `scripts` area, one test file, rows in `TECH_DEBT_SCRIPTS.md`; no "
-      + "excluded tree read or written",
+    basis: "every evidence source is named in this report; the change set is `scripts/perf/**`, the "
+      + `${declaredSites.length} declared call site(s) in scripts/perf/budgets.json `
+      + `(${overrides.length} of them carry a declared cap override, `
+      + `${declaredSites.filter((x) => !x.exercised).length} were not exercised by this sample), `
+      + "one test file, the area's own docs; no excluded tree read or written",
   });
 
   const failed = criteria.filter((c) => c.verdict === "FAIL");
@@ -413,27 +501,38 @@ async function main() {
   const since = arg("--since");
   const until = arg("--until");
   const unknownSince = arg("--unknown-since");
+  const dominantSince = arg("--dominant-since");
+  const dominantUntil = arg("--dominant-until");
   const projectStore = path.resolve(arg("--project-store", DEFAULT_STORE));
   const budgetsPath = arg("--budgets");
   const outMd = arg("--out-md");
   const outJson = arg("--out-json");
   if (!relayStore) {
     process.stderr.write("usage: node scripts/perf/runtime_perf_report.js --relay-store P "
-      + "[--since ISO] [--until ISO] [--project-store P] [--out-md P] [--out-json P]\n");
+      + "[--since ISO] [--until ISO] [--unknown-since ISO] [--dominant-since ISO] "
+      + "[--dominant-until ISO] [--project-store P] [--out-md P] [--out-json P]\n");
     return 2;
   }
   const budgets = loadBudgets(budgetsPath);
   const relay = await scanRelay(relayStore, since, until, unknownSince);
   const project = projectTable(projectStore, budgets);
-  const verdict = verdicts(relay, project);
+  // The dominant path is a SECOND window on purpose: the dossier window is a 2026-09-22 snapshot, and
+  // the model carrying this project's traffic today is not the one inside it (measured: zero
+  // `qwen3.8-flash` calls since 2026-09-29). One window cannot answer both questions.
+  const dominant = dominantSince
+    ? await scanRelay(relayStore, dominantSince, dominantUntil, null)
+    : null;
+  const verdict = verdicts(relay, project, dominant);
   const report = {
     schema_version: SCHEMA_VERSION,
     generated_utc: isoUtc(),
     track: "runtime_perf_20261015",
+    remeasured_by: "runtime_perf_maintenance_20261017",
     sample_size: project.metrics ? project.metrics.terminal : 0,
     sample_provenance: "synthetic transport, live code path (scripts/perf/model_call_telemetry.py "
       + "--sample); no live seat call",
     baseline: relay,
+    dominant: dominant,
     after: project,
     criteria: verdict.criteria,
     decision: verdict.decision,
@@ -442,7 +541,7 @@ async function main() {
   };
   if (outMd) {
     fs.mkdirSync(path.dirname(path.resolve(outMd)), { recursive: true });
-    fs.writeFileSync(path.resolve(outMd), md(relay, project, verdict), "utf8");
+    fs.writeFileSync(path.resolve(outMd), md(relay, project, verdict, dominant), "utf8");
     process.stdout.write(`report -> ${outMd}\n`);
   }
   if (outJson) {

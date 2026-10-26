@@ -38,7 +38,7 @@ const {
 } = require("../../scripts/check_scripts_hygiene.js");
 
 const ROOT = path.resolve(__dirname, "..", "..");
-const PY_SHEBANG = "#!/usr/bin/env python3";
+const PY_SHEBANG = "#!/usr/bin/env python";
 
 /**
  * Rewrite the fixture's declared shape from its own tracked set — the same derivation the guard's arm
@@ -72,11 +72,17 @@ function fixture(files) {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), body, "utf8");
   }
-  const rows = Object.keys(files).map((rel) =>
-    `| \`${rel}\` | purpose | \`node ${rel}\` | node | low |`);
+  const rows = Object.keys(files).map((rel) => {
+    const base = path.basename(rel);
+    const kind = rel.endsWith(".py")
+      ? "a fixture script with a module docstring."
+      : "a fixture script with a purpose header.";
+    return `| \`${rel}\` | ${base} - ${kind} | \`node ${rel}\` | node | low |`;
+  });
   fs.writeFileSync(path.join(dir, INVENTORY),
     `# fixture\n\n| path | purpose | invocation | runtime / dependencies | risk |\n` +
     `| --- | --- | --- | --- | --- |\n${rows.join("\n")}\n`, "utf8");
+  fs.writeFileSync(path.join(dir, "package.json"), "{}\n", "utf8"); // arm 9 resolves against this
   const git = (...args) => spawnSync("git", args, { cwd: dir, encoding: "utf8" });
   git("init", "-q");
   git("add", ".");
@@ -85,9 +91,12 @@ function fixture(files) {
 }
 
 const GOOD_JS = `${"#!/usr/bin/env node"}\n// good.js - a fixture script with a purpose header.\n"use strict";\n`;
-const GOOD_PY = `${"#!/usr/bin/env python3"}\n"""good.py - a fixture script with a module docstring."""\n`;
+const GOOD_PY = `${"#!/usr/bin/env python"}\n"""good.py - a fixture script with a module docstring."""\n`;
 
 describe("scripts hygiene guard", function () {
+  // arms 6 + 9 shell out to a Python interpreter and arms 1-5/10 git+fs the fixtures;
+  // 10 s per test keeps the suite honest without mocha's 2 s default killing real work.
+  this.timeout(10000);
   describe("the repository as delivered", function () {
     it("passes: the inventory and the tracked surface agree in both directions", function () {
       const { failures } = check(ROOT);
@@ -107,11 +116,12 @@ describe("scripts hygiene guard", function () {
       }
     });
 
-    it("reports the exec bit as NOT TRACKED rather than silently skipping that arm", function () {
+    it("asserts the exec bit now that modes ARE tracked (scripts_debt_sweep_20261017, T-2)", function () {
       const { advisories } = check(ROOT);
       assert.ok(
-        advisories.some((a) => a.includes("exec bit") && a.includes("NOT TRACKED")),
-        "the inert exec-bit arm must say so on every run: " + JSON.stringify(advisories),
+        advisories.some((a) => a.includes("exec bit") && a.includes("IS asserted")),
+        "the exec-bit arm must be ACTIVE on this repository since the 100755 flip: " +
+          JSON.stringify(advisories),
       );
     });
   });
@@ -137,7 +147,7 @@ describe("scripts hygiene guard", function () {
       const dir = fixture({ "scripts/good.js": GOOD_JS });
       fs.writeFileSync(path.join(dir, INVENTORY),
         fs.readFileSync(path.join(dir, INVENTORY), "utf8") +
-        "| `scripts/deleted.js` | purpose | `node x` | node | low |\n", "utf8");
+        "| `scripts/deleted.js` | deleted.js - a fixture script with a purpose header. | `node x` | node | low |\n", "utf8");
       const { failures } = check(dir);
       assert.ok(failures.some((f) => f.includes("scripts/deleted.js") && f.includes("stale")),
         "expected a stale-row failure, got " + JSON.stringify(failures));
@@ -280,9 +290,9 @@ describe("scripts hygiene guard", function () {
 
     it("requires the declared interpreter on line 1", function () {
       assert.strictEqual(shebangProblem("scripts/a.js", `${"#!/usr/bin/env node"}\n`), null);
-      assert.match(shebangProblem("scripts/b.js", `${"#!/usr/bin/env python3"}\n`), /expected/);
-      assert.strictEqual(shebangProblem("scripts/c.py", `${"#!/usr/bin/env python3"}\n`), null);
-      assert.match(shebangProblem("scripts/d.py", `${"#!/usr/bin/env python"}\n`), /expected/);
+      assert.match(shebangProblem("scripts/b.js", `${"#!/usr/bin/env python"}\n`), /expected/);
+      assert.strictEqual(shebangProblem("scripts/c.py", `${"#!/usr/bin/env python"}\n`), null);
+      assert.match(shebangProblem("scripts/d.py", `${"#!/usr/bin/env python3"}\n`), /expected/);
     });
 
     it("reads the declared shape from its wording, not from a line number", function () {

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """idlegate_census_v2.py - reduce the idle gate's typed event stream into one census.
 
 Why this exists (2026-09-27 audit): the gate's own daily census line was the ONLY summary

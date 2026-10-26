@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Visual-gate dispatcher for drag_ux_overhaul_20260909 (and reusable for any
 track whose visual-gate protocol permits it).
@@ -105,8 +105,15 @@ def dispatch(key, image_path, brief_path):
     # BUDGETED + OBSERVED (track runtime_perf_20261015): the declared budget for this site is in
     # scripts/perf/budgets.json with its reason, the total deadline is now enforced (not just a
     # per-read socket timeout), and the terminal event lands in temp/perf/model_calls.jsonl.
-    def transport(timeout_s):
-        with urllib.request.urlopen(req, timeout=timeout_s) as r:
+    # TORN DOWN AT THE DEADLINE (track runtime_perf_maintenance_20261017, E-5): registering the
+    # response handle makes a budget expiry or cancel CLOSE the socket instead of abandoning a
+    # transport that keeps draining (measured before the fix: caller released at 0.25 s, transport
+    # still running at 1.562 s).
+    def transport(timeout_s, abort=None):
+        r = urllib.request.urlopen(req, timeout=timeout_s)
+        if abort is not None:
+            abort.register_closer(r.close)
+        with r:
             return r.read()
 
     result = call_model(

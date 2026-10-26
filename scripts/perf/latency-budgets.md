@@ -74,3 +74,19 @@ applies to `temp/text_fallback.py` (the DeepSeek fallback transport, untracked).
 Edit `budgets.json`; nothing else. Both runtimes pick it up, the parity test fails if they ever
 disagree, and the report re-derives the after-table from the records' own `budget_s`, so an old
 record is still judged against the budget it actually ran under.
+
+## What a budget expiry DOES to the call (cycle 2, track `runtime_perf_maintenance_20261017`)
+
+A budget is a total deadline, and expiring it now means three things rather than two:
+
+1. the CALLER is released with `status=timeout` and `timeout_flag=true` (as before);
+2. the attempt's abort token fires, so a transport that registered its handle is **torn down** —
+   `response.close()` on the two urllib sites, the child-process kill on the subprocess sites, the
+   `AbortController` abort in the Node half — and a late answer is never delivered;
+3. exactly one terminal record is written, carrying the duration the call ACTUALLY took.
+
+Step 2 was missing in the Python half until this cycle: measured, the caller was released at 0.25 s
+against a 0.2 s budget while the transport ran on to 1.562 s. A budget that releases the caller but
+lets the transport keep reading bounds the WAIT, not the CALL, which is why the fix is recorded here
+rather than in a comment. The failure mode it removes is provider spend that continues after the
+caller has already been told the call timed out.

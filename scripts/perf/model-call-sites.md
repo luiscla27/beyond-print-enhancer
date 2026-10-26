@@ -83,5 +83,25 @@ The helper's own rule (schema §3) is that a call with no resolvable label must 
 4. a real cancellation path (`CancelToken`) that releases the caller and aborts the transport;
 5. a session cap so a retry chain cannot accumulate past its hard cap.
 
+## The deadline now TEARS THE TRANSPORT DOWN (cycle 2, track `runtime_perf_maintenance_20261017`)
+
+Item 4 above was true of a caller that passed a `CancelToken`, and of the NODE half for a budget
+expiry. The PYTHON half did not: measured 2026-10-17, a call released at 0.25 s against a 0.2 s
+budget left its transport running to **1.562 s** and then returned a value nobody read — the
+"a socket timeout bounds each READ, not the total call" failure this whole area exists to end.
+The supervisor now fires a per-attempt abort token on every non-success outcome, and a transport that
+accepts `abort=` registers the handle it must close:
+
+| site | transport dialect | teardown at the deadline |
+| --- | --- | --- |
+| `scripts/byok_vision_gate.py` | `urllib` (HTTP) | `abort.register_closer(r.close)` — the response is CLOSED, so a late answer is never delivered |
+| `scripts/drag_ux_visual_gate.py` | `urllib` (HTTP) | same |
+| `scripts/codex_text_leg.py` (both legs) | `subprocess` | `subprocess.run(timeout=…)` kills the child at the deadline — the kill IS the teardown, so no `abort` seam is needed (declared, not silently skipped) |
+| `scripts/border_design_generator.js` | `fetch` | the Node supervisor aborts the attempt's `AbortController` at the deadline (already did; now pinned by a test) |
+
+The seam is ADDITIVE: a transport whose signature is `transport(timeout_s)` — every site wired before
+this cycle — is called exactly as it was, so the five wired sites needed no signature change beyond
+the two above that opted into the teardown.
+
 The call sites' business logic is untouched: payload construction and response parsing are exactly as
 they were, and the helper never sees a payload it has to understand.

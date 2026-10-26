@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """codex_text_leg.py — the CODEX text leg for the border prompt corpus.
 
 Tests whether the REVISED prompts survive the PRODUCT'S OWN parser and sanitizer,
@@ -73,6 +73,9 @@ def codex_answer(prompt: str, out_file: Path) -> str:
     # socket: its 900 s was passed straight to subprocess.run and nothing recorded that it ran. The
     # declared budget (with its reason) is in scripts/perf/budgets.json and the terminal event lands
     # in temp/perf/model_calls.jsonl — one contract for HTTP and subprocess transports alike.
+    # TEARDOWN: `timeout_s` IS this transport's teardown — subprocess.run kills the child when it
+    # expires, so unlike the urllib sites there is no handle left draining and no `abort` seam is
+    # needed (declared, not silently skipped; track runtime_perf_maintenance_20261017, D-3).
     def transport(timeout_s):
         proc = subprocess.run(
             ["node", str(bin_), "exec", "--skip-git-repo-check", "-s",
@@ -114,6 +117,7 @@ def deepseek_answer(prompt: str, out_file: Path) -> str:
         raise RuntimeError("deepseek_call.js helper missing")
 
     # Same budget + telemetry contract as the codex leg above (track runtime_perf_20261015).
+    # TEARDOWN: as above — the subprocess kill at `timeout_s` is the teardown for this dialect.
     def transport(timeout_s):
         proc = subprocess.run(
             ["node", str(helper)], input=prompt.encode("utf-8"),

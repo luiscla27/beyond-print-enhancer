@@ -77,17 +77,19 @@ const SCRIPT_DIR = "scripts";
 const RISK_LEVELS = ["low", "medium", "high"];
 const REQUIRED_COLUMNS = 5;
 const JS_SHEBANG = "#!/usr/bin/env node";
-const PY_SHEBANG = "#!/usr/bin/env python3";
+const PY_SHEBANG = "#!/usr/bin/env python";
 //: Arm 5. The area's shape is stated in ONE sentence of the inventory and the sentence's own shape
 //: is `**66 files**: 48 `.js`, 9 `.py`, 3 `.json`, 6 `.md``. It is parsed by its wording rather than
 //: located by line number, so a re-flowed paragraph stays checkable and a DELETED declaration is a
 //: finding instead of a silent disarm.
 const COMPOSITION = /\*\*(\d+)\s+files?\*\*:\s*([^\n]*)/;
 const COMPOSITION_CLASS = /(\d+)\s*`\.([a-z0-9]+)`/gi;
-//: Arm 6. `python3` first, because every tracked shebang says python3 and a POSIX host resolves the
-//: interpreter the file declares; `python` second, because this Windows checkout answers that name
-//: and NOT `python3` (measured 2026-10-17: `python3 --version` -> EACCES, `python --version` -> 3.12.0).
-const PY_INTERPRETERS = ["python3", "python"];
+//: Arm 6. `python` first: that is the convention the nine tracked shebangs declare since
+//: scripts_debt_sweep_20261017 (T-7 — previously `python3`, which this Windows checkout cannot
+//: even resolve: `python3 --version` -> EACCES, `python --version` -> 3.12.0, measured 2026-10-17),
+//: and a POSIX host without `python` on PATH falls through to `python3`, reported by the same
+//: advisory path either way.
+const PY_INTERPRETERS = ["python", "python3"];
 //: Arm 6's child program. It PARSES each file and never imports it, and it writes no bytecode - so
 //: `python -m py_compile` is deliberately NOT used: that writes `__pycache__/` beside the sources,
 //: i.e. a gate that mutates the tree it judges. `utf-8-sig` accepts a BOM, which `compile()` would
@@ -323,6 +325,248 @@ function smokeCrossProblems(rows, cases, selfRow) {
   return findings;
 }
 
+/**
+ * Arm 8 (added 2026-10-17, track scripts_debt_sweep_20261017): the `harness` classification.
+ *
+ * §5-T-1's rule (operator ruling 2026-10-17): every executable row whose risk cell claims absent
+ * inputs (`absent`, `gone`, `not in the tree`, `historical`, `is gone`) is a SPENT HARNESS and must
+ * say so — the cell carries the `harness` marker. A row that claims absent inputs without the
+ * marker is a finding (an unclassified harness), and so is a `harness` marker on a row whose cell
+ * claims no absent input (an unexplained classification). The count is REPORTED on every run, so
+ * the census a reader sees is the census the rule derives, not a number prose asserts.
+ *
+ * `riskText` is the raw risk cell (markdown emphasis stripped by the caller's risk regex is NOT
+ * enough — the cell may carry backticks and reasons).
+ */
+const ABSENT_INPUT = /absent|gone|not in the tree|historical|is gone/i;
+const HARNESS_MARKER = /(^|[^a-z])harness([^a-z]|$)/i;
+function harnessProblems(rows) {
+  const findings = [];
+  let count = 0;
+  for (const r of rows) {
+    if (!/\.(js|py)$/.test(r.path)) continue;
+    const cells = Array.isArray(r.cells) ? r.cells : [];
+    const cell = cells[4] !== undefined ? cells[4] : (cells[3] !== undefined ? cells[3] : (r.risk || ""));
+    const claimsAbsent = ABSENT_INPUT.test(cell);
+    const marked = HARNESS_MARKER.test(cell);
+    if (claimsAbsent && !marked) {
+      findings.push(`${r.path}: risk cell claims absent inputs but carries no \`harness\` marker ` +
+        "(arm 8) - classify it (T-1's rule in the inventory), or state why its inputs are present");
+    } else if (!claimsAbsent && marked) {
+      findings.push(`${r.path}: \`harness\` marker without an absent-input claim in the risk cell ` +
+        "(arm 8) - a harness is a row whose inputs are gone; state what is absent, or drop the marker");
+    } else if (marked) {
+      count += 1;
+    }
+  }
+  return { findings, count };
+}
+
+/**
+ * Arm 9 (added 2026-10-17, track scripts_debt_sweep_20261017): per-script dependency declarations
+ * (T-3). Every third-party `require()` target in every tracked `.js` under scripts/ must resolve
+ * in `package.json` (dependencies or devDependencies — the area's real deps are all dev), and every
+ * import in every tracked `.py` must be stdlib or a sanctioned local module (the two local helpers
+ * the area ships outside its own directory). Relative and built-in targets are not declarations.
+ *
+ * The `.py` half does NOT hardcode a stdlib list (it would rot with every Python release): the
+ * interpreter that arm 6 already probed is asked — `python -c "import sys; print('\n'.join(sorted(sys.stdlib_module_names)))"`.
+ * An interpreter that cannot answer (arm 6's ADVISORY path) demotes the `.py` half to an ADVISORY
+ * that names what was NOT checked, never a silent pass.
+ */
+const PY_LOCAL_MODULES = ["text_fallback", "model_call_telemetry"];
+const JS_REQUIRE = /(?<!["'`]\s*\*?\s*)\brequire\(\s*["']([^"']+)["']\s*\)/g;
+//: A require inside a template literal (this guard's own error messages) is PROSE, not a call —
+//: require( preceded by a backtick/dollar-brace is excluded by the guard below instead, because
+//: lookbehind across the whole file is brittle. Simpler: match and then drop matches whose
+//: capture is literally `${target}`-style prose (contains `${`).
+const PY_IMPORT = /^[ \t]*(?:import[ \t]+([.\w]+)|from[ \t]+([.\w]+)[ \t]+import)/gm;
+
+function pyStdlibNames(root, interpreters) {
+  const src = "import sys; print('\\n'.join(sorted(sys.stdlib_module_names)))";
+  for (const interpreter of interpreters) {
+    const run = spawnSync(interpreter, ["-c", src], { cwd: root, encoding: "utf8" });
+    if (run.error || run.status !== 0 || !run.stdout.trim()) continue;
+    return { names: new Set(run.stdout.split(/\r?\n/).filter(Boolean)), interpreter };
+  }
+  return { names: null, interpreter: null };
+}
+
+function dependencyProblems(root, files, stdlibInfo) {
+  const pyStdlib = stdlibInfo ? stdlibInfo.names : null;
+  const nodeBuiltins = new Set(require("module").builtinModules);
+  let pkg = {};
+  try {
+    pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  } catch (err) {
+    return { js: [`package.json is unreadable (${err.message}) - arm 9 cannot resolve any dependency`], py: [], stdlibVia: null };
+  }
+  const declared = new Set([
+    ...Object.keys(pkg.dependencies || {}),
+    ...Object.keys(pkg.devDependencies || {}),
+  ]);
+  const jsFindings = [];
+  const pyFindings = [];
+  for (const rel of files) {
+    let body;
+    try {
+      body = fs.readFileSync(path.join(root, rel), "utf8");
+    } catch {
+      continue; // unreadable is arm 2's finding, not this arm's
+    }
+    if (rel.endsWith(".js")) {
+      for (const m of body.matchAll(JS_REQUIRE)) {
+        const target = m[1];
+        if (target.includes("${")) continue; // prose inside a template literal, not a call
+        if (target.startsWith(".") || target.startsWith("/") || target.startsWith("node:") ||
+            nodeBuiltins.has(target)) continue;
+        if (!declared.has(target)) {
+          jsFindings.push(`${rel}: require("${target}") is not declared in package.json (arm 9, T-3) - ` +
+            "add it to devDependencies, or make the target relative/built-in");
+        }
+      }
+    } else if (rel.endsWith(".py") && pyStdlib) {
+      for (const m of body.matchAll(PY_IMPORT)) {
+        const top = (m[1] || m[2]).split(".")[0];
+        if (top === "__future__" || pyStdlib.has(top) || PY_LOCAL_MODULES.includes(top)) continue;
+        pyFindings.push(`${rel}: imports "${top}" which is neither stdlib nor a sanctioned local ` +
+          `module (${PY_LOCAL_MODULES.join(", ")}) (arm 9, T-3)`);
+      }
+    }
+  }
+  return { js: jsFindings, py: pyFindings, stdlibVia: pyStdlib ? pyStdlib.interpreter : null };
+}
+
+/**
+ * The file's own PURPOSE STATEMENT: the first paragraph of its opening comment/docstring, rendered
+ * to one line. Arm 2 demands such an opener exists; arm 10 (T-8) holds the inventory's purpose cell
+ * to it, so a row cannot state a purpose its file does not (the F-9 defect class one level down).
+ * "First paragraph" because several headers continue into WHY/USAGE sections — the purpose is the
+ * opening statement, not the whole block.
+ */
+function headerText(rel, body) {
+  const lines = body.replace(/^\uFEFF/, "").split(/\r?\n/);
+  let i = 0;
+  if (lines[i] && lines[i].startsWith("#!")) i += 1;
+  while (i < lines.length && lines[i].trim() === "") i += 1;
+  const out = [];
+  if (rel.endsWith(".py")) {
+    const first = lines[i] || "";
+    const q3 = first.trim().startsWith('"""') ? '"""'
+      : first.trim().startsWith("'''") ? "'''" : null;
+    if (q3) {
+      const rest = first.trim().slice(3);
+      const endIdx = rest.indexOf(q3);
+      if (endIdx >= 0) return collapse(rest.slice(0, endIdx));
+      out.push(rest);
+      for (i += 1; i < lines.length; i += 1) {
+        const line = lines[i];
+        const close = line.indexOf(q3);
+        if (close >= 0) {
+          out.push(line.slice(0, close));
+          break;
+        }
+        out.push(line);
+        if (line.trim() === "" && out.length > 1) break; // first paragraph ended
+      }
+    } else if (first.trim().startsWith("#")) {
+      for (; i < lines.length && lines[i].trim().startsWith("#"); i += 1) {
+        out.push(lines[i].trim().replace(/^#+\s*/, ""));
+        if (lines[i].trim() === "#") break;
+      }
+    }
+    return collapse(out.join(" "));
+  }
+  // .js: the opening comment block, `/**…*/`, `/*…*/` or contiguous `//` lines
+  const first = (lines[i] || "").trim();
+  if (first.startsWith("/*")) {
+    out.push(first.replace(/^\/\*+/, ""));
+    for (i += 1; i < lines.length; i += 1) {
+      const line = lines[i].trim();
+      if (line.includes("*/")) {
+        out.push(line.replace(/\*+\/.*$/, ""));
+        break;
+      }
+      out.push(line.replace(/^\*+\s?/, ""));
+      if (line.replace(/^\*+\s?/, "") === "" && out.length > 1) break; // first paragraph ended
+    }
+  } else if (first.startsWith("//")) {
+    for (; i < lines.length && lines[i].trim().startsWith("//"); i += 1) {
+      out.push(lines[i].trim().replace(/^\/+\s?/, ""));
+      if (lines[i].trim() === "//") break;
+    }
+  }
+  return collapse(out.join(" "));
+}
+
+function collapse(text) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/** Normalized form for the row↔header comparison: case, backticks/emphasis, punctuation runs. */
+function normCell(text) {
+  const collapsed = collapse(text
+    .replace(/[`*_]/g, " ")
+    .replace(/[—–]/g, "-")
+    .replace(/[^A-Za-z0-9.\- ]+/g, " "));
+  return collapse(collapsed
+    .replace(/^\s*[A-Za-z0-9_./-]+\s*[-:]+\s*/, "")   // a leading "<basename> — " prefix
+    .replace(/ \. /g, " ")                             // an inline-codename period ("window.* .")
+    .replace(/[-.] /g, " ")                            // a mid-word hyphen/period from a name
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase());
+}
+
+/**
+ * Arm 10 (added 2026-10-17, track scripts_debt_sweep_20261017): the inventory's purpose cell must
+/**
+ * Arm 10 (added 2026-10-17, track scripts_debt_sweep_20261017): the inventory's purpose cell must
+ * BEGIN with the file's own header text (normalized, D-2: cells are brought to headers, never the
+ * reverse). The leading "<basename>" token of a self-titled header is stripped by normCell on BOTH
+ * sides, so a row that keeps its own citation prefix still aligns. Data/doc rows have no header
+ * (arm 2 does not demand one) and are skipped by the same rule. `readFile(rel)` is injectable for
+ * the falsification suite.
+ */
+function alignmentProblems(rows, readFile) {
+  const findings = [];
+  for (const r of rows) {
+    if (!/\.(js|py)$/.test(r.path)) continue;
+    let body;
+    try {
+      body = readFile(r.path);
+    } catch {
+      continue; // unreadable/missing is arm 1's finding
+    }
+    const header = headerText(r.path, body);
+    if (!header) continue; // no opener: arm 2's finding, not this arm's
+    const purpose = (Array.isArray(r.cells) ? r.cells[1] : "") || "";
+    const normHeader = normCell(header).replace(/^[a-z0-9_./-]+ /, "");
+    const normPurpose = normCell(purpose);
+    // The header's tokens must appear IN ORDER at the START of the normalized purpose cell —
+    // the row may carry its own lead-in tokens (its "<basename> —" prefix, a citation), but the
+    // header's own token sequence must follow from the first token on. Still a falsifiable claim.
+    const tokens = normHeader.split(" ").filter(Boolean);
+    const rowTokens = normPurpose.split(" ").filter(Boolean);
+    let start = -1;
+    if (tokens.length && rowTokens.length) {
+      for (let lead = 0; lead <= 2; lead += 1) {
+        if (rowTokens.length >= tokens.length + lead &&
+            tokens.every((t, i) => rowTokens[lead + i] === t)) {
+          start = lead;
+          break;
+        }
+      }
+    }
+    const aligned = start >= 0;
+    if (!aligned) {
+      findings.push(`${r.path}: purpose cell does not BEGIN with the file's own header text ` +
+        "(arm 10, T-8) - bring the row to the header (normalized), never edit the file's opener");
+    }
+  }
+  return findings;
+}
+
 function check(root, opts) {
   const options = opts || {};
   const interpreters = options.pythonInterpreters || PY_INTERPRETERS;
@@ -330,7 +574,6 @@ function check(root, opts) {
   const advisories = [];
   const governed = governedSet(root);
   if (governed.error) return { failures: [governed.error], advisories, governed: 0 };
-
   // --- 1. the inventory: rows, shape, and both directions of the set comparison -----------------
   let text = "";
   try {
@@ -443,6 +686,28 @@ function check(root, opts) {
       "cross-checked with the executable low rows in both directions (arm 7; the runner's own row exempt)");
   }
 
+  // --- 8. the harness classification (T-1): absent-input rows must carry the marker, and only them
+  const harness = harnessProblems(rows);
+  failures.push(...harness.findings);
+  advisories.push(`harness census: ${harness.count} row(s) classified \`harness\` by arm 8 ` +
+    "(risk cell claims absent inputs; T-1's rule + retirement checklist in the inventory §5)");
+
+  // --- 9. per-script dependency declarations (T-3)
+  const stdlib = pyStdlibNames(root, interpreters);
+  const deps = dependencyProblems(root, governed.tracked, stdlib.names ? stdlib : null);
+  failures.push(...deps.js);
+  if (stdlib.names) {
+    failures.push(...deps.py);
+    advisories.push(`dependencies: .py stdlib resolved via \`${stdlib.interpreter}\` ` +
+      `(${stdlib.names.size} stdlib names)`);
+  } else {
+    advisories.push("dependencies: the .py import half NOT CHECKED - no interpreter answered " +
+      `(tried ${interpreters.join(", ")}); stdlib membership is unparsed until one is present`);
+  }
+
+  // --- 10. the inventory's purpose cells vs the files' own headers (T-8)
+  failures.push(...alignmentProblems(rows, (rel) => fs.readFileSync(path.join(root, rel), "utf8")));
+
   // --- 4. the exec-bit arm's own state, reported so green never reads as coverage ----------------
   advisories.unshift(
     governed.anyExecutableTrackedRepoWide
@@ -495,6 +760,11 @@ module.exports = {
   compositionProblems,
   pythonSyntax,
   smokeCrossProblems,
+  harnessProblems,
+  dependencyProblems,
+  headerText,
+  normCell,
+  alignmentProblems,
   INVENTORY,
 };
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Vision-gate dispatcher for byok_ai_layout_20260915 (AC-V1-lite), reviewer-selectable.
 
 Derived from scripts/drag_ux_visual_gate.py, with the ONE thing that file could not do made
@@ -155,8 +155,17 @@ def dispatch(review, image_path, brief_path):
     # the area's own model traffic was invisible. The declared budget for this site lives in
     # scripts/perf/budgets.json (with its reason), and the terminal event lands in
     # temp/perf/model_calls.jsonl.
-    def transport(timeout_s):
-        with urllib.request.urlopen(req, timeout=timeout_s) as r:
+    #
+    # TORN DOWN AT THE DEADLINE (track runtime_perf_maintenance_20261017, E-5). The supervisor used
+    # to release the CALLER at its budget and leave this response object draining: measured, a
+    # 0.2 s budget returned at 0.25 s while the transport ran to 1.562 s. Registering the handle
+    # means a budget expiry (or a cancel) CLOSES it, so the socket stops and a late answer is not
+    # merely unread — it is never delivered.
+    def transport(timeout_s, abort=None):
+        r = urllib.request.urlopen(req, timeout=timeout_s)
+        if abort is not None:
+            abort.register_closer(r.close)
+        with r:
             return r.read()
 
     result = call_model(

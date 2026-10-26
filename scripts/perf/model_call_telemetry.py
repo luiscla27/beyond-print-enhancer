@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """model_call_telemetry.py — bound, observe and cancel the model calls the `scripts` area makes.
 
 WHY THIS EXISTS (track `runtime_perf_20261015`). Four tracked scripts dial a model endpoint
@@ -19,6 +19,14 @@ WHAT IT GUARANTEES
     DISCARDED and the terminal event is still written exactly once.
   * A real cancellation signal: `CancelToken.set()` releases the caller immediately and closes the
     registered transport handle when one exists — it is not a label.
+  * A DEADLINE TEARS THE TRANSPORT DOWN, it does not merely release the caller. Every path that
+    releases the caller without a value fires the attempt's own abort token first, so a transport
+    that accepts `abort=` can register its handle (`response.close`) and be CLOSED at the deadline.
+    Measured 2026-10-17 (cycle 2) before this: the caller was released at 0.25 s against a 0.2 s
+    budget and the trickling transport kept running to 1.562 s, then returned a value nobody read —
+    the exact "a socket timeout bounds each READ, not the total call" disease this file exists to end,
+    cured in the Node half and not here. The caller's `cancel` token is never set by a deadline: a
+    budget expiry must not be reported as a cancellation.
   * A session budget SEPARATE from the per-attempt one, so a retry chain cannot accumulate past the
     hard cap. A `timeout` or `cancelled` attempt is never auto-retried; only a retryable `error` is.
   * Progress telemetry for long calls (`model_call_started` -> `model_call_progress_tick` ->
@@ -38,7 +46,10 @@ USAGE (as a library — the call sites import it)
         site="scripts/muse_gate.py",
         role="reasonix-agent", model="muse-spark-1.2-contributor", provider="muse",
         fingerprint_material=prompt,
-        transport=lambda timeout_s: _post(req, timeout_s),   # urllib / subprocess / whatever
+        transport=lambda timeout_s, abort=None: _post(req, timeout_s, abort),   # urllib / subprocess
+        # `abort` is optional and ADDITIVE: a transport that does not accept it is called exactly as
+        # before. Accepting it is what lets a budget expiry CLOSE your handle instead of abandoning it
+        # (scripts/byok_vision_gate.py and scripts/drag_ux_visual_gate.py register `response.close`).
     )
     if result.ok:
         ... result.value ...
@@ -54,6 +65,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -311,22 +323,56 @@ _INFLIGHT = {}
 _INFLIGHT_LOCK = threading.Lock()
 
 
+def _invoke_transport(transport, timeout_s, abort):
+    """Call the site's transport, handing it the attempt's `abort` token when it accepts one.
+
+    The token is how an ABANDONED transport gets torn down (see `_run_supervised`): a transport that
+    takes `abort` registers its own handle (`response.close`, a socket's, a pipe's) and the supervisor
+    fires the token the moment the caller is released without a value. This seam is ADDITIVE on
+    purpose — every site wired before this cycle has the signature `transport(timeout_s)` and is
+    called exactly as it was, which is what keeps five call sites source-compatible.
+    """
+    try:
+        params = inspect.signature(transport).parameters
+    except (TypeError, ValueError):  # a builtin/C callable: no signature to read, call it plainly
+        return transport(timeout_s=timeout_s)
+    takes_abort = ("abort" in params
+                   or any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()))
+    if takes_abort:
+        return transport(timeout_s=timeout_s, abort=abort)
+    return transport(timeout_s=timeout_s)
+
+
 def _run_supervised(transport, deadline_s, cancel, tick_s, on_tick):
     """Run `transport(timeout_s)` off-thread and supervise it. Returns `(outcome, value, error)`.
 
     `outcome` is one of `success` / `timeout` / `cancelled` / `error`. A worker that returns a
     value AFTER the caller was released cannot change the outcome: a late response is discarded.
+
+    RELEASING THE CALLER IS NOT ENOUGH (measured 2026-10-17, this track's E-5). The first version of
+    this supervisor released the caller at the deadline and left the transport running: a trickling
+    read — the exact shape a per-READ socket timeout cannot bound, per this module's own docstring —
+    kept running 1.3 s past a 0.2 s budget and then produced its late value, while the Node half
+    aborted its `AbortController` at the deadline. So every path that ABANDONS the worker now fires
+    the attempt's own `abort` token first, which calls every closer the transport registered. The
+    caller's `cancel` token is untouched by this: a budget expiry must not be reported as a
+    cancellation.
     """
+    aborted = CancelToken()
     box = {"value": None, "error": None, "closed": False}
     done = threading.Event()
 
     def worker():
         try:
-            box["value"] = transport(timeout_s=deadline_s)
+            box["value"] = _invoke_transport(transport, deadline_s, aborted)
         except BaseException as exc:  # noqa: BLE001 - the outcome is classified below, not here
             box["error"] = exc
         finally:
             done.set()
+
+    def abandon():
+        """The caller is being released without a value: TEAR THE TRANSPORT DOWN."""
+        aborted.set()
 
     t = threading.Thread(target=worker, name="model-call-transport", daemon=True)
     started = time.monotonic()
@@ -342,8 +388,10 @@ def _run_supervised(transport, deadline_s, cancel, tick_s, on_tick):
         # `closed` flag must not be read as "the cancel already happened" — doing that classified
         # every pre-set cancel as a budget expiry (measured: 4 cancelled samples reported timeout).
         if cancel is not None and cancel.is_set():
+            abandon()
             return "cancelled", None, None
         if (time.monotonic() - started) >= deadline_s:
+            abandon()
             return "timeout", None, None
         now = time.monotonic()
         if on_tick is not None and tick_s > 0 and now >= next_tick:
@@ -353,6 +401,7 @@ def _run_supervised(transport, deadline_s, cancel, tick_s, on_tick):
     if box["value"] is None and box["error"] is None:
         return "error", None, RuntimeError("transport returned no value")
     if box["error"] is not None:
+        abandon()
         if isinstance(box["error"], (TimeoutError,)) or "timed out" in str(box["error"]).lower():
             return "timeout", None, box["error"]
         return "error", None, box["error"]

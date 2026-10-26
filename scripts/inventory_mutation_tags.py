@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Inventory the mutation-class tags the product actually passes, by parsing call sites.
 
 WHY THIS EXISTS (track refactor_surface_20260911, Phase 0). The mutation-class vocabulary —

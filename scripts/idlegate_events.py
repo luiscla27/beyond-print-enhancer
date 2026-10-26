@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """idlegate_events.py - derive a TYPED event stream from the idle gate's log footprints.
 
 Why this exists (2026-09-27 audit): the idle gate wrote 7092 lines into
