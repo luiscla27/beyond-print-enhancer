@@ -276,6 +276,118 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
     });
   }
 
+  // AC-2 (option A, operator decision 2026-10-26) — the refinement loop, NON-capturing.
+  // This phase proves the product seam end-to-end: a stroke-bearing design is applied through
+  // the choke point, then `adjustBorderSvg` rewrites its SVG (weight + dash cycle) and re-renders
+  // it through the SAME `renderBorderSvg` — so the trust root re-validates the transformed bytes
+  // and the section record carries the ADJUSTED bytes (not the original). The original is
+  // returned alongside for the gallery's compare view. A fill-only design is gated to
+  // not_adjustable by `canAdjustBorder`, which is what disables the gallery controls with an
+  // inline reason instead of shipping a no-op.
+  //
+  // This is a seam test, not a visual gate: it asserts on the section record (the transformed
+  // stroke-width + dasharray), not pixels. The visual outcome is the job of the gallery capture
+  // above / a follow-up Muse pass — which is why this block does NOT require BORDER_GALLERY_SHOTS.
+  describe("AC-2 refinement loop (option A) — through the real choke point", function () {
+    // Pick a stroke-bearing corpus design by id. `01-gilded-frame` carries 6 stroke-width attrs
+    // and no <filter>/<mask>/<pattern>, so the gate is satisfied (9/11 designs pass — the
+    // premise test pins this).
+    const refined = (loaded.designs || []).find((d) => d.id === "01-gilded-frame");
+    // A fill-only design: zero stroke-width, ink is fill. The gate must refuse it.
+    const fillOnly = (loaded.designs || []).find((d) => d.id === "08-flame-crest");
+
+    it("exposes adjust/transform/canAdjust on the isolated-world AiBorder seam", async function () {
+      const modules = await contentCall(ctx, "aiArrangeProbe", [{ action: "probeAiBorder" }]);
+      assert.ok(modules && modules.adjust === "function", "adjustBorderSvg is not on the seam");
+      assert.ok(modules && modules.transform === "function", "transformBorderSvg is not on the seam");
+      assert.ok(modules && modules.canAdjust === "function", "canAdjustBorder is not on the seam");
+    });
+
+    if (refined) {
+      it("adjusts a stroke-bearing border in place: weight +1.5x increases the painted stroke-width, original preserved", async function () {
+        const pick = await contentCall(ctx, "aiArrangeProbe", [{ action: "pickBorderTarget" }]);
+        assert.ok(pick && pick.ok, "no section for refinement");
+        const sectionId = pick.pick.id;
+        await page.evaluate((id) => {
+          const s = document.getElementById(id);
+          if (s && window.AiBorder) window.AiBorder.clearBorderSvg(s);
+        }, sectionId);
+
+        // Apply the ORIGINAL design through the choke point.
+        const applied = await contentCall(ctx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: refined.svg }]);
+        assert.ok(applied && applied.ok, "the original design would not render: " + JSON.stringify(applied));
+        assert.strictEqual(applied.hostile, false, "the original design is hostile");
+
+        // The gate must allow this stroke-bearing design.
+        const before = applied.read;
+        const canAdjust = /stroke-width\s*=/.test(before) && !/<filter\b/i.test(before);
+        assert.ok(canAdjust, "01-gilded-frame must be stroke-bearing (the gate's precondition)");
+
+        // Apply the refinement: weight 1.5x + dashed style.
+        const adj = await contentCall(ctx, "aiArrangeProbe", [
+          { action: "adjustBorder", sectionId, weight: 1.5, styleIndex: 1 },
+        ]);
+        assert.strictEqual(adj.ok, true, JSON.stringify(adj));
+        assert.strictEqual(adj.adjustable, true, "a stroke-bearing border is adjustable");
+        assert.ok(adj.weightChanged, "the stroke-width changed in the record: " + JSON.stringify({ beforeSw: adj.beforeSw, afterSw: adj.afterSw }) + " / raw: " + (adj.afterSw || "?"));
+        // 2.2 * 1.5 = 3.3
+        assert.ok(
+          Number(adj.beforeSw) * 1.5 === Number(adj.afterSw),
+          "weight scaled exactly: " + adj.beforeSw + " -> " + adj.afterSw,
+        );
+        assert.strictEqual(adj.afterDash, "4 2", "the dashed style cycle wrote '4 2' into the record");
+
+        // The original is returned for the gallery's compare view.
+        assert.ok(adj.original, "original bytes returned alongside the adjustment");
+        assert.strictEqual(adj.original, before, "the original equals what was applied before the adjustment");
+
+        // Clear.
+        await page.evaluate((id) => {
+          const s = document.getElementById(id);
+          if (s && window.AiBorder) window.AiBorder.clearBorderSvg(s);
+        }, sectionId);
+      });
+    } else {
+      it.skip("refined design 01-gilded-frame not found in corpus (fixture drift)");
+    }
+
+    if (fillOnly) {
+      it("DISABLES refinement on a fill-only border: adjustBorder returns not_adjustable and paints NOTHING new", async function () {
+        const pick = await contentCall(ctx, "aiArrangeProbe", [{ action: "pickBorderTarget" }]);
+        assert.ok(pick && pick.ok, "no section for fill-only test");
+        const sectionId = pick.pick.id;
+        await page.evaluate((id) => {
+          const s = document.getElementById(id);
+          if (s && window.AiBorder) window.AiBorder.clearBorderSvg(s);
+        }, sectionId);
+
+        // 08-flame-crest is fill-only (0 stroke-width). It must still render (it is a valid border,
+        // just not weight/style-adjustable).
+        const applied = await contentCall(ctx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: fillOnly.svg }]);
+        assert.ok(applied && applied.ok, "the fill-only design should still render through the choke point");
+
+        // The gate must refuse refinement on it — the gallery disables the controls here.
+        const adj = await contentCall(ctx, "aiArrangeProbe", [
+          { action: "adjustBorder", sectionId, weight: 1.5, styleIndex: 1 },
+        ]);
+        assert.strictEqual(adj.ok, false, "a fill-only border must NOT be adjustable: " + JSON.stringify(adj));
+        assert.strictEqual(adj.reason, "not_adjustable");
+        assert.strictEqual(adj.adjustable, false);
+
+        // The fill-only border is left UNTOUCHED — no transform overwrote it.
+        const after = await contentCall(ctx, "aiArrangeProbe", [{ action: "applyBorder", sectionId, rawSvg: "" }]);
+        assert.strictEqual(after.read, null, "no border after clear (controls left no residue)");
+
+        await page.evaluate((id) => {
+          const s = document.getElementById(id);
+          if (s && window.AiBorder) window.AiBorder.clearBorderSvg(s);
+        }, sectionId);
+      });
+    } else {
+      it.skip("fill-only design 08-flame-crest not found in corpus (fixture drift)");
+    }
+  });
+
   if (CAPTURING && designs.length > 0) {
     it("captures a labelled frame for every accepted design", async function () {
       const pick = await contentCall(ctx, "aiArrangeProbe", [{ action: "pickBorderTarget" }]);

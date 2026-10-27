@@ -89,6 +89,112 @@ const BORDER_IMAGE_PROPS = Object.freeze([
 ]);
 
 /**
+ * AC-2 (option A, operator decision 2026-10-26): a PURE client-side SVG transform that
+ * rewrites the corpus designs that carry stroke geometry, leaving fill-only designs untouched.
+ *
+ * WHY A STRING TRANSFORM, NOT A CSS KNOB. The border is painted as a `data:` URI through the
+ * product's own `border-image` slot (D4): `border-image-source` is the whole SVG-as-image, so the
+ * browser's geometry lives INSIDE the blob, not in the host element's style. The only way a
+ * "weight/style" control changes the ART's stroke is to rewrite the SVG's own `stroke-width`
+ * and `stroke-dasharray` presentation attributes. The transform is therefore a pure function
+ * over the sanitized SVG string — it never touches the DOM, never touches `border-image-width`
+ * (that is the FRAME's outer thickness, not the art's line), and every transformed result is
+ * re-validated through the trust root by `adjustBorderSvg` so the sanitize-then-paint invariant
+ * holds unchanged.
+ *
+ * The two corpus designs that are FILL-ONLY (`08-flame-crest`, `10-ink-brush` — both carry
+ * `stroke-width: 0` occurrences, measured in the durable test
+ * `test/unit/border_corpus_adjustability.test.js`) cannot be reached by this transform: a
+ * stroke rewrite has no declaration to fire on, and its ink is `fill`, which is what a stroke
+ * transform cannot change. `canAdjustBorder(svg)` reports that fact so the gallery gate can
+ * disable the controls with an inline reason instead of shipping a no-op. The transform is
+ * deliberately scoped to stroke-bearing designs — nothing ships a control that cannot work.
+ *
+ * Style cycle: solid → dashed → dotted → back to solid. The pattern values are small and
+ * viewBox-relative; they are the same family the corpus instructions leave room for
+ * ("no dash pattern" for solid). An EXISTING `stroke-dasharray` that is anything other than
+ * `none`/absent is treated as "already styled" and the cycle leaves it as dashed rather than
+ * clobbering a design's intentional pattern.
+ */
+const DASH_CYCLE = [
+  { name: "solid", value: null },          // null => strip any dasharray => solid
+  { name: "dashed", value: "4 2" },
+  { name: "dotted", value: "1 3" },
+];
+
+/**
+ * Rewrite every `stroke-width` presentation attribute by `factor` (1.5 = 1.5x), and apply the
+ * `styleIndex` dash cycle. Pure string-in/string-out; does NOT mutate its argument.
+ *
+ * The regex matches `stroke-width="…"` / `stroke-width='…'` and captures the numeric value so a
+ * multiplicative change preserves the design's own stroke ratios (a design whose paths mix
+ * 1.6 and 2.2 units scales both by the same factor). `stroke-dasharray` is rewritten in the same
+ * pass: a `none`/absent value takes the cycle at `styleIndex`; an explicit dash value is left
+ * alone (treated as "already styled") unless `styleIndex` is 0 (solid), which strips it.
+ *
+ * @param {string} svg — a sanitized SVG string (the trust root's output)
+ * @param {{weight?: number, styleIndex?: number}} params
+ *   `weight`    multiplicative stroke-width factor (default 1, no change). 0.5 / 0.75 / 1 / 1.25 / 1.5
+ *   `styleIndex` 0=solid, 1=dashed, 2=dotted (default 0 — no dash change)
+ * @returns {string} the rewritten SVG (a NEW string; input is untouched)
+ */
+function transformBorderSvg(svg, params) {
+  if (typeof svg !== "string" || !svg) return typeof svg === "string" ? svg : "";
+  const weight = Number(params && params.weight !== undefined ? params.weight : 1) || 1;
+  const styleIndex = (params && params.styleIndex !== undefined ? params.styleIndex : 0);
+  const swRe = /stroke-width\s*=\s*(["'])([\d.+\-eE]+)\1/g;
+  let out = svg;
+  if (weight !== 1) {
+    out = out.replace(swRe, (m, q, num) => {
+      let v = parseFloat(num);
+      if (!Number.isFinite(v) || v <= 0) return m; // never zero/negative a stroke; leave as-is
+      v = v * weight;
+      if (v <= 0) return m; // a weight that would invert or zero the stroke is refused
+      return 'stroke-width=' + q + (Math.round(v * 1000) / 1000) + q;
+    });
+  }
+
+  if (styleIndex > 0 && DASH_CYCLE[styleIndex]) {
+    // An EXISTING dash value is respected (the design chose it); only `none`/absent is cycled.
+    const sdRe = /stroke-dasharray\s*=\s*(["'])([^"']*)\1/g;
+    out = out.replace(sdRe, (m, q, val) => {
+      const v = String(val || "").trim().toLowerCase();
+      if (v === "none" || v === "") {
+        return 'stroke-dasharray=' + q + DASH_CYCLE[styleIndex].value + q;
+      }
+      return m; // an intentional pattern stays
+    });
+  } else if (styleIndex === 0) {
+    // solid: strip any dasharray so the weight change reads cleanly (no leftover dash).
+    out = out.replace(/\s*stroke-dasharray\s*=\s*(["']).*?\1/g, "");
+  }
+  return out;
+}
+
+/**
+ * AC-2 capability gate: can a client-side weight/style transform actually reach THIS svg?
+ *
+ * Returns `true` only when the SVG carries at least one `stroke-width` attribute AND no
+ * `filter`/`mask`/`pattern` subtree (the `inspect` heuristic in
+ * `test/unit/border_corpus_adjustability.test.js` — the two are kept in sync by reading the SAME
+ * corpus fixture, so the gate and the premise test cannot disagree). The two fill-only corpus
+ * designs (`08-flame-crest`, `10-ink-brush`) return `false`: a stroke transform has no
+ * declaration to rewrite there, so the gallery disables the controls with an inline reason
+ * rather than shipping a no-op.
+ *
+ * @param {string} svg — a sanitized SVG string (or a raw one; the structural check does not
+ *   need the trust root)
+ * @returns {boolean}
+ */
+function canAdjustBorder(svg) {
+  if (typeof svg !== "string" || !svg) return false;
+  if (/<filter\b/i.test(svg)) return false;
+  if (/<mask\b/i.test(svg)) return false;
+  if (/<pattern\b/i.test(svg)) return false;
+  return /stroke-width\s*=/.test(svg);
+}
+
+/**
  * Build the `border-image-source` value from the TRUST ROOT'S OWN OUTPUT.
  *
  * `encodeURIComponent` escapes the only character that could terminate the quoted `url()`
@@ -195,6 +301,61 @@ function renderBorderSvg(section, rawSvg) {
   section.style.setProperty("--border-img-outset", BORDER_IMAGE_KNOBS.outset);
 
   return { ok: true, error: null, reason: "rendered", sanitized: readBorderSvg(section) };
+}
+
+/**
+ * `adjustBorderSvg(section, params)` — AC-2 (option A) client-side refinement through the choke point.
+ *
+ * Applies the PURE `transformBorderSvg` to the section's currently-painted SVG, then re-runs the
+ * result through `renderBorderSvg` — which re-validates via the trust root — so the adjusted
+ * border is painted by the SAME single writer, with the SAME sanitize-then-paint invariant, and
+ * the section's record (`dataset.borderRawSvg`) carries the adjusted bytes, not the original.
+ *
+ * WHY THIS RE-RENDERS INSTEAD OF MUTATING `--border-img` DIRECTLY. The border is an SVG-as-image
+ * `data:` URI (D4); `--border-img` holds the whole blob, and the weight/style knobs live inside
+ * that blob's attributes. There is no CSS handle that reaches into a `data:` URI's strokes, so a
+ * real adjustment MUST rewrite the SVG. Re-running through `renderBorderSvg` keeps the trust-root
+ * gate (the transform only touches presentation attributes the corpus instructions already
+ * allow, but the gate is defense-in-depth: a bug that injected a hostile attribute is refused
+ * here, not on the DOM).
+ *
+ * The ORIGINAL is preserved by the caller: the gallery keeps the un-adjusted design alongside
+ * the adjusted preview, so the comparison the criterion names ("select → adjust → regenerate
+ * → compare") is between the original bytes and the adjusted bytes — no data is lost.
+ *
+ * `params`: `{ weight: <factor>, styleIndex: <0|1|2> }` — see `transformBorderSvg`. Passing
+ * `{ weight: 1, styleIndex: 0 }` (or no params) returns the currently-painted SVG unchanged.
+ *
+ * Returns the same shape as `renderBorderSvg` plus `adjustable` (the capability gate) so the
+ * caller can disable the controls on a fill-only border instead of erroring: a border that
+ * cannot be transformed is a UI state ("controls disabled"), not a runtime error.
+ *
+ * @param {Element} section
+ * @param {{weight?: number, styleIndex?: number}} params
+ * @returns {{ok: boolean, error: string|null, reason: string|null, sanitized: string|null, adjustable: boolean, original: string|null}}
+ */
+function adjustBorderSvg(section, params) {
+  const original = readBorderSvg(section);
+  if (!original) {
+    return { ok: false, error: null, reason: "no_border", sanitized: null, adjustable: false, original: null };
+  }
+  const adjustable = canAdjustBorder(original);
+  if (!adjustable) {
+    // The controls are disabled by the gate before this is reached; this is defensive — fail
+    // closed: a border we cannot transform paints NOTHING rather than painting garbage.
+    return { ok: false, error: null, reason: "not_adjustable", sanitized: null, adjustable: false, original: null };
+  }
+  const transformed = transformBorderSvg(original, params || {});
+  // Re-render through the choke point: the transformed bytes are re-validated by the trust root.
+  const res = renderBorderSvg(section, transformed);
+  return {
+    ok: res.ok,
+    error: res.error,
+    reason: res.reason,
+    sanitized: res.sanitized,
+    adjustable: true,
+    original, // the un-adjusted bytes, for the gallery's compare view
+  };
 }
 
 /**
@@ -345,6 +506,12 @@ async function getBorder(id) {
 const AiBorder = {
   // `renderBorderSvg` — the AC-9 choke point, called by js/layout_apply.js, js/section_cloning.js.
   renderBorderSvg,
+  // `adjustBorderSvg` — AC-2 (option A): client-side weight/style refinement through the choke point.
+  adjustBorderSvg,
+  // `transformBorderSvg` — AC-2 pure SVG string transform (exposed so the gallery/spec can unit-test it directly).
+  transformBorderSvg,
+  // `canAdjustBorder` — AC-2 capability gate: false for fill-only borders, disables the controls with a reason.
+  canAdjustBorder,
   // `readBorderSvg` — called by js/layout_scan.js, js/layout_apply.js.
   readBorderSvg,
   // `clearBorderSvg` — called by js/ai_border.js's own fail-closed paths and by the rehydrate gate.

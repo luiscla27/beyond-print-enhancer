@@ -1034,6 +1034,9 @@ async function contentCall(ctx, name, args = []) {
               render: typeof (api && api.renderBorderSvg),
               read: typeof (api && api.readBorderSvg),
               clear: typeof (api && api.clearBorderSvg),
+              adjust: typeof (api && api.adjustBorderSvg),
+              transform: typeof (api && api.transformBorderSvg),
+              canAdjust: typeof (api && api.canAdjustBorder),
             };
           }
 
@@ -1085,6 +1088,37 @@ async function contentCall(ctx, name, args = []) {
               read,
               hostile: /<script|<foreignObject|onload=|xlink:href|href="[^#]/i.test(read || ""),
               geom,
+            };
+          }
+
+          // AC-2 (option A): apply a client-side weight/style adjustment through the choke point.
+          // Reaches `window.AiBorder.adjustBorderSvg`, which re-runs the transformed bytes through
+          // `renderBorderSvg` (the trust root re-validates). Returns the adjusted SVG record, the
+          // original bytes (for compare), the `adjustable` gate, and the before/after stroke-width
+          // so the spec can assert the transform actually changed the painted bytes.
+          if (o.action === "adjustBorder") {
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            if (!section) return { ok: false, reason: "no_section", id: sid };
+            const api = window.AiBorder;
+            if (!api || typeof api.adjustBorderSvg !== "function") {
+              return { ok: false, reason: "no_AiBorder" };
+            }
+            const before = api.readBorderSvg(section);
+            const beforeSw = before ? (before.match(/stroke-width="([\d.]+)"/) || [])[1] : null;
+            const res = api.adjustBorderSvg(section, { weight: o.weight || 1, styleIndex: o.styleIndex || 0 });
+            const after = api.readBorderSvg(section);
+            const afterSw = after ? (after.match(/stroke-width="([\d.]+)"/) || [])[1] : null;
+            const afterDash = after ? (after.match(/stroke-dasharray="([^"]*)"/) || [])[1] : null;
+            return {
+              ok: res.ok,
+              reason: res.reason,
+              adjustable: res.adjustable,
+              original: res.original,
+              weightChanged: beforeSw !== null && afterSw !== null && beforeSw !== afterSw,
+              beforeSw,
+              afterSw,
+              afterDash,
             };
           }
 
