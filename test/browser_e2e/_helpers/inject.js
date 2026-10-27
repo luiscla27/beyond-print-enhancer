@@ -104,6 +104,14 @@ const CONTENT_PROBE_NAMES = [
   "applyTemplateRecord",
   "readTemplateSideEffects",
   "readBootRestoreState",
+  // ux_quick_wins_20261025 Phase 6 (BEYOND-12) — settings export/import E2E.
+  "collectSettingsBundleRead",
+  "validateSettingsBundleProbe",
+  "applySettingsBundleProbe",
+  "readGlobalFiltersProbe",
+  "writeGlobalFiltersProbe",
+  "readAiSettingsProbe",
+  "writeAiSettingsProbe",
 ];
 /**
  * Run a named probe INSIDE the extension's isolated world — the world the
@@ -1981,6 +1989,211 @@ async function contentCall(ctx, name, args = []) {
             restoredAnnounced: toasts.some((t) => t.includes("Restored your saved layout")),
             defaultAnnounced: toasts.some((t) => t.includes("No saved layout yet")),
           };
+        },
+
+        // ---------------------------------------------------------------- *
+        // BEYOND-12 / ux_quick_wins_20261025 Phase 6 probes.               *
+        // Settings export/import: drive the real Persistence seams from    *
+        // the ISOLATED world, where window.Persistence / __DDBStorage /    *
+        // AiSettings live (invisible to page.evaluate in the main world).  *
+        // ---------------------------------------------------------------- *
+
+        /**
+         * Call `collectSettingsBundle()` — the product's own export collector —
+         * and return the resulting bundle. Each field is gathered through the
+         * product's storage seam, so the bundle is the REAL one, not a fixture.
+         */
+        collectSettingsBundleRead: async () => {
+          if (
+            !window.Persistence ||
+            typeof window.Persistence.collectSettingsBundle !== "function"
+          ) {
+            return { ok: false, why: "no window.Persistence.collectSettingsBundle in this world" };
+          }
+          try {
+            const bundle = await window.Persistence.collectSettingsBundle();
+            return { ok: true, bundle };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Validate an arbitrary object through `validateSettingsBundle` — the
+         * product's own schema gate. Passed a raw bundle object; returns the
+         * `{ok, error?}` verdict the import path uses to refuse a malformed file.
+         */
+        validateSettingsBundleProbe: (data) => {
+          if (
+            !window.Persistence ||
+            typeof window.Persistence.validateSettingsBundle !== "function"
+          ) {
+            return { ok: false, why: "no window.Persistence.validateSettingsBundle in this world" };
+          }
+          try {
+            const verdict = window.Persistence.validateSettingsBundle(data);
+            return { ok: true, verdict };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Drive `applySettingsBundle` (the MERGE CORE) directly — no file
+         * picker is involved, so the harness never has to type into a native
+         * dialog. `destructiveGate` is stubbed to auto-confirm (the gate's UX
+         * is covered by destructive_recovery.test.js; this probe only tests
+         * whether the merge lands), and `createBackupSnapshot` is stubbed to
+         * succeed in-memory (the backup store is IndexedDB; a real one would
+         * persist across cases and pollute the next). `window.showFeedback`
+         * is captured so a test can assert the success / failure copy without
+         * a toast surviving across pages.
+         *
+         * args = { bundle, expectOk }
+         */
+        applySettingsBundleProbe: async ({ bundle, expectOk }) => {
+          if (
+            !window.Persistence ||
+            typeof window.Persistence.applySettingsBundle !== "function"
+          ) {
+            return { ok: false, why: "no window.Persistence.applySettingsBundle in this world" };
+          }
+          const feedback = [];
+          const origFeedback = window.showFeedback;
+          const origGate = window.destructiveGate;
+          const origBackup = window.createBackupSnapshot;
+          const origOfferUndo = window.offerUndo;
+          window.showFeedback = (msg, type) => feedback.push({ msg, type });
+          window.destructiveGate = () => Promise.resolve({ ok: true, record: "probe-backup" });
+          window.createBackupSnapshot = () => Promise.resolve({ ok: true, record: { id: "probe-backup", layout: null } });
+          window.offerUndo = () => {}; // no-op: the test does not walk the undo stack
+          try {
+            const result = await window.Persistence.applySettingsBundle(bundle, { source: "probe" });
+            const ok = result.ok === true;
+            if (expectOk !== undefined && ok !== expectOk) {
+              return {
+                ok: false,
+                why: `expected ok=${expectOk} but got ok=${ok}`,
+                verdict: result,
+                feedback,
+              };
+            }
+            return {
+              ok: true,
+              applied: result.applied,
+              feedback,
+              hasKeyInBundle: JSON.stringify(bundle).match(/be\.ai\.key|\bapiKey\b/) !== null,
+            };
+          } catch (err) {
+            return {
+              ok: false,
+              why: String(err && err.message ? err.message : err),
+              feedback,
+            };
+          } finally {
+            if (origFeedback) window.showFeedback = origFeedback;
+            if (origGate) window.destructiveGate = origGate; else delete window.destructiveGate;
+            if (origBackup) window.createBackupSnapshot = origBackup; else delete window.createBackupSnapshot;
+            if (origOfferUndo) window.offerUndo = origOfferUndo; else delete window.offerUndo;
+          }
+        },
+
+        /**
+         * Read the global filters + hue shift from __DDBStorage getFilters(),
+         * the same seam collectSettingsBundle reads. Returns the raw filter
+         * record so a test can assert a value that survived an import.
+         */
+        readGlobalFiltersProbe: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.getFilters !== "function") {
+            return { ok: false, why: "no __DDBStorage.getFilters in this world" };
+          }
+          try {
+            const filters = await s.getFilters();
+            const hue = await s.getHueShift();
+            return { ok: true, filters, hueShift: hue };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Read the safe BYOK settings record — the same object
+         * collectSettingsBundle reads via window.AiSettings.loadSettings().
+         * Confirms the credential is NEVER in the bundle and that keyPresent
+         * is the derived flag only.
+         */
+        readAiSettingsProbe: async () => {
+          if (!window.AiSettings || typeof window.AiSettings.loadSettings !== "function") {
+            return { ok: false, why: "no window.AiSettings.loadSettings in this world" };
+          }
+          try {
+            const settings = await window.AiSettings.loadSettings();
+            return {
+              ok: true,
+              provider: settings.provider || "",
+              model: settings.model || "",
+              baseUrl: settings.baseUrl || "",
+              keyPresent: !!settings.keyPresent,
+              hasKeyField: Object.prototype.hasOwnProperty.call(settings, "key"),
+              hasApiKeyField: Object.prototype.hasOwnProperty.call(settings, "apiKey"),
+            };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Write global filters + hue through the product's own storage seams
+         * (__DDBStorage.saveFilter / saveHueShift) — the same calls the filter
+         * sliders make. Used to give an export something distinctive to
+         * carry, so a round-trip can be asserted on VALUES, not on shape.
+         * args = { filters: {contrast, greyscale, saturate, sepia}, hueShift }
+         */
+        writeGlobalFiltersProbe: async ({ filters, hueShift }) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.saveFilter !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveFilter in this world" };
+          }
+          try {
+            for (const [key, val] of Object.entries(filters || {})) {
+              if (typeof val === "number") await s.saveFilter(key, val);
+            }
+            if (typeof hueShift === "number" && typeof s.saveHueShift === "function") {
+              await s.saveHueShift(hueShift);
+            }
+            const readBack = await s.getFilters();
+            const hue = await s.getHueShift();
+            return { ok: true, filters: readBack, hueShift: hue };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Write the SAFE BYOK record (provider/model/baseUrl) through
+         * window.AiSettings.saveSettings — the exact seam applySettingsBundle
+         * merges into. Never touches the credential store: saveSettings
+         * physically cannot (js/ai_settings.js:299-320).
+         * args = { provider, model, baseUrl }
+         */
+        writeAiSettingsProbe: async (settings) => {
+          if (!window.AiSettings || typeof window.AiSettings.saveSettings !== "function") {
+            return { ok: false, why: "no window.AiSettings.saveSettings in this world" };
+          }
+          try {
+            const result = await window.AiSettings.saveSettings(settings || {});
+            return {
+              ok: result.ok === true,
+              error: result.error || null,
+              provider: result.settings ? result.settings.provider : "",
+              model: result.settings ? result.settings.model : "",
+              baseUrl: result.settings ? result.settings.baseUrl : "",
+              keyPresent: result.settings ? !!result.settings.keyPresent : false,
+            };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
         },
       };
       const probe = probes[probeName];

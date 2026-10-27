@@ -330,9 +330,10 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
         assert.strictEqual(adj.ok, true, JSON.stringify(adj));
         assert.strictEqual(adj.adjustable, true, "a stroke-bearing border is adjustable");
         assert.ok(adj.weightChanged, "the stroke-width changed in the record: " + JSON.stringify({ beforeSw: adj.beforeSw, afterSw: adj.afterSw }) + " / raw: " + (adj.afterSw || "?"));
-        // 2.2 * 1.5 = 3.3
+        // weight scaled exactly at the transform's own precision (3 decimals —
+        // transformBorderSvg rounds; exact float equality fails on e.g. 1.6*1.5)
         assert.ok(
-          Number(adj.beforeSw) * 1.5 === Number(adj.afterSw),
+          Math.round(Number(adj.beforeSw) * 1.5 * 1000) / 1000 === Number(adj.afterSw),
           "weight scaled exactly: " + adj.beforeSw + " -> " + adj.afterSw,
         );
         assert.strictEqual(adj.afterDash, "4 2", "the dashed style cycle wrote '4 2' into the record");

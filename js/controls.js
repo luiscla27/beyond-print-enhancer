@@ -230,6 +230,31 @@ function createControls() {
     { label: "Save to Browser", iconKey: "download", tray: "output", action: () => window.handleSaveBrowser() },
     { label: "Save to PC", iconKey: "savePc", tray: "output", action: () => window.handleSavePC() },
     {
+      // AC-3 (track ux_quick_wins_20261025 Phase 6 / BEYOND-12): Export Settings
+      // downloads a single JSON that bundles EVERY customization type — the
+      // layout record, the custom-shape and custom-border reuse libraries,
+      // global filters/hue, and the safe BYOK record — so the user can back up
+      // or migrate their whole surface. The credential is never included.
+      label: "Export Settings",
+      title: "Download all your customizations as one JSON file",
+      iconKey: "savePc",
+      tray: "output",
+      id: "be-btn-export-settings",
+      action: () => { if (window.Persistence && typeof window.Persistence.handleExportSettings === "function") return window.Persistence.handleExportSettings(); },
+    },
+    {
+      // AC-3: Import Settings merges a settings bundle into the current sheet.
+      // "Merge" is the contract: the layout record is replaced (it IS the sheet),
+      // but the reuse libraries are upserted, never wiped — a backup is taken
+      // first by `destructiveGate` so any loss is recoverable.
+      label: "Import Settings",
+      title: "Load customizations from a JSON file (merges into current)",
+      iconKey: "folderOpen",
+      tray: "output",
+      id: "be-btn-import-settings",
+      action: () => { if (window.Persistence && typeof window.Persistence.handleImportSettings === "function") return window.Persistence.handleImportSettings(); },
+    },
+    {
       // AC-8 (undo_stack_20260911): ONE control that names what it will undo, instead of
       // a generic "Undo". The label is refreshed from the stack top — see
       // refreshUndoControl() below, which is driven by the `be-undo-stack-changed` event

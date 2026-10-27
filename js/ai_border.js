@@ -157,12 +157,22 @@ function transformBorderSvg(svg, params) {
   if (styleIndex > 0 && DASH_CYCLE[styleIndex]) {
     // An EXISTING dash value is respected (the design chose it); only `none`/absent is cycled.
     const sdRe = /stroke-dasharray\s*=\s*(["'])([^"']*)\1/g;
+    const dashValue = DASH_CYCLE[styleIndex].value;
     out = out.replace(sdRe, (m, q, val) => {
       const v = String(val || "").trim().toLowerCase();
       if (v === "none" || v === "") {
-        return 'stroke-dasharray=' + q + DASH_CYCLE[styleIndex].value + q;
+        return 'stroke-dasharray=' + q + dashValue + q;
       }
       return m; // an intentional pattern stays
+    });
+    // A stroke-bearing element WITHOUT a dasharray attribute gains the cycle too —
+    // a style control that only reached designs that already carried a dasharray
+    // would be a no-op on most of the corpus (01-gilded-frame has none). Applied
+    // per tag so an element that already chose a pattern (handled above) is skipped.
+    out = out.replace(/<[a-z][^>]*>/gi, (tag) => {
+      if (!/stroke-width\s*=/.test(tag)) return tag;
+      if (/stroke-dasharray\s*=/.test(tag)) return tag;
+      return tag.replace(/\s*(\/?>)$/, (m0, close) => ' stroke-dasharray="' + dashValue + '"' + close);
     });
   } else if (styleIndex === 0) {
     // solid: strip any dasharray so the weight change reads cleanly (no leftover dash).

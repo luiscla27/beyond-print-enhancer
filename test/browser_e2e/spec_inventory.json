@@ -250,6 +250,10 @@
       "tests": 3
     },
     {
+      "file": "settings_export_import.spec.js",
+      "tests": 6
+    },
+    {
       "file": "selection_visual_capture.spec.js",
       "tests": 3
     },
