@@ -110,6 +110,14 @@ context_budget_hard_tokens = 240000
 [youtrack]
 project_key = "BEYOND"
 authority = "tracker"
+# BEYOND-17 fix: declares which fleet identity speaks for the `verifier` contract role.
+# Without this, `evidence.adjudicate` can never set a record to VERIFIED, so `Fixed`
+# closes are refused and every card sits at Open forever (DONE_WITHOUT_VERIFIED_
+# EVIDENCE_REFUSED). `consultant-challenger` is the fleet seat whose charter is
+# hard-to-please and which holds `verifier` in the p7 role model; RF-15 keeps the
+# submitter and verifier DIFFERENT identities, and this seat does not do the work.
+role_verifier = "consultant-challenger"
+role_owner_agent = "builder"
 
 # Model providers — RELAY-ROUTED via the project's local modelstack relay
 # (port 38116): the relay forwards /v1/* to the real upstream and writes ONE
