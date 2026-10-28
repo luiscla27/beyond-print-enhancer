@@ -146,10 +146,14 @@ function loadDesigns() {
   if (!designs.length) {
     throw new Error("the border corpus at " + file + " carries no designs with an svg field");
   }
-  console.log(
-    "gallery: " + path.relative(ROOT, file) + " — " + designs.length + " frozen designs" +
-      (overridden ? " (BORDER_GALLERY_DESIGNS override)" : ""),
-  );
+  // Only log during an actual capture run. During mocha --dry-run (used by the spec inventory
+  // generator), this console.log would pollute stdout and break JSON parsing of the report.
+  if (CAPTURING) {
+    console.log(
+      "gallery: " + path.relative(ROOT, file) + " — " + designs.length + " frozen designs" +
+        (overridden ? " (BORDER_GALLERY_DESIGNS override)" : ""),
+    );
+  }
   return { designs, source: path.relative(ROOT, file).split(path.sep).join("/"), variants: data.variants || [] };
 }
 
