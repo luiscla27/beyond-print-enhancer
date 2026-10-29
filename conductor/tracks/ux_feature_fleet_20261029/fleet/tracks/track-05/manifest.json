@@ -1,0 +1,26 @@
+{
+ "track_id": "track-05",
+ "code_count": 1,
+ "component_keys": [
+  "js/dom/layer_manager"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/dom/layer_manager.js"
+ ],
+ "units": [
+  {
+   "id": "feature_03_layer_management",
+   "name": "Layer Management (Three-State Visibility)",
+   "description": "Per-layer print control with Print only / Both / Screen only modes, derived from isHidden/isDisabledOnPrint flags",
+   "files": [
+    "js/dom/layer_manager.js"
+   ],
+   "component_key": "js/dom/layer_manager",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/dom/layer_manager.js",
+   "test_paths": [
+    "test/browser_e2e/layer_print_visibility.spec.js",
+    "test/browser_e2e/layer_reorder_keyboard.spec.js"
+   ]
+  }
+ ]
+}

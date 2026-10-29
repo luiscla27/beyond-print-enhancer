@@ -1,0 +1,598 @@
+{
+ "summary": {
+  "units": 18,
+  "done-recorded": 18,
+  "has-file": 0,
+  "broken-record": 0,
+  "missing": 0,
+  "artifact_signal": "scaffold-declared test_paths (a record's own test_path is NEVER trusted)",
+  "record_test_paths_ignored": 18,
+  "not_done": []
+ },
+ "per_track": {
+  "track-00": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_01_ai_arrange",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/ai_layout_schema.test.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/byok_arrange_roundtrip.spec.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_01_ai_arrange",
+       "batch_id": "js_ai_arrange",
+       "test_path": "test/unit/ai_layout_schema.test.js",
+       "status": "tested",
+       "reviewer": "track-00-orchestrator-hasfile",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/ai_layout_schema.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-01": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_02_ai_borders",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/byok_border_gallery.spec.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/border_metric.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_02_ai_borders",
+       "batch_id": "js_ai_border",
+       "test_path": "test/unit/border_metric.test.js",
+       "status": "tested",
+       "reviewer": "track-01-orchestrator-REVIEW_APPROVED",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/border_metric.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-02": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_16_background_context",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/background.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_16_background_context",
+       "batch_id": "js/background",
+       "test_path": "test/unit/background.test.js",
+       "status": "tested",
+       "reviewer": "track-02-orchestrator (isolated WIP 33/33 + direct verify)",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/background.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-03": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_05_controls_panel",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/encapsulation_debt/controls_panel.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_05_controls_panel",
+       "sha": "",
+       "batch_id": "batch-controls-01",
+       "test_path": "test/unit/encapsulation_debt/controls_panel.test.js",
+       "reviewer": "orchestrator-self-reviewed",
+       "status": "tested"
+      },
+      "record_test_path_ignored": "test/unit/encapsulation_debt/controls_panel.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-04": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_17_dnd",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/dnd.test.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/layer_reorder_keyboard.spec.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_17_dnd",
+       "batch_id": "js/dnd",
+       "test_path": "test/unit/dnd.test.js",
+       "status": "tested",
+       "reviewer": "track-04-reviewer-distinct",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/dnd.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-05": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_03_layer_management",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/layer_print_visibility.spec.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/layer_reorder_keyboard.spec.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_03_layer_management",
+       "batch_id": "batch-layers",
+       "test_path": "test/browser_e2e/layer_print_visibility.spec.js",
+       "status": "tested",
+       "reviewer": "reviewer-track05-batch-layers",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/browser_e2e/layer_print_visibility.spec.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-06": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_14_filters",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/filters.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_14_filters",
+       "batch_id": "batch-js_filters",
+       "test_path": "test/unit/filters.test.js",
+       "status": "tested",
+       "reviewer": "reviewer-track06-batch-js_filters",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/filters.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-07": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_18_image_processor",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/image_processor.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_18_image_processor",
+       "batch_id": "batch-image-processor",
+       "test_path": "test/unit/image_processor.test.js",
+       "status": "tested",
+       "reviewer": "track-07-orchestrator-REVIEW_APPROVED",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/image_processor.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-08": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_08_layout_operations",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/layout_scan.test.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/layout_apply.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_08_layout_operations",
+       "batch_id": "batch-js_layout_ops",
+       "test_path": "test/unit/layout_scan.test.js",
+       "status": "tested",
+       "reviewer": "reviewer-track08-batch-js_layout_ops",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/layout_scan.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-09": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_15_modals",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/modals.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_15_modals",
+       "batch_id": "batch-js_modals",
+       "test_path": "test/unit/modals.test.js",
+       "status": "tested",
+       "reviewer": "reviewer-track09-batch-js_modals",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/modals.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-10": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_07_persistence",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/persistence.test.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/byok_settings_persistence_types.spec.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_07_persistence",
+       "batch_id": "js_persistence",
+       "test_path": "test/unit/persistence.test.js",
+       "status": "tested",
+       "reviewer": "track-10-reviewer-REVIEW_APPROVED",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/persistence.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-11": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_06_print_styles",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/print_styles.test.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/browser_e2e/print_styles.spec.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_06_print_styles",
+       "batch_id": "batch-print_styles",
+       "test_path": "test/unit/print_styles.test.js",
+       "status": "tested",
+       "reviewer": "reviewer-track11-batch-print_styles",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/print_styles.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-12": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_12_properties_panel",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/encapsulation_debt/properties_panel.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_12_properties_panel",
+       "batch_id": "batch-js_properties_panel",
+       "test_path": "test/unit/encapsulation_debt/properties_panel.test.js",
+       "status": "tested",
+       "reviewer": "track-12-reviewer-distinct",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/encapsulation_debt/properties_panel.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-13": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_09_section_cloning",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/section_cloning.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_09_section_cloning",
+       "batch_id": "batch-js_section_cloning",
+       "test_path": "test/unit/section_cloning.test.js",
+       "status": "tested",
+       "reviewer": "reviewer-track13-batch-js_section_cloning",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/section_cloning.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-14": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_04_shape_picker",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/asset_catalog.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_04_shape_picker",
+       "batch_id": "js_shape_picker",
+       "test_path": "test/unit/asset_catalog.test.js",
+       "status": "tested",
+       "reviewer": "track-14-orchestrator-direct",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/asset_catalog.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-15": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_11_spells_ui",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/spells_ui.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_11_spells_ui",
+       "batch_id": "batch-spells_ui",
+       "test_path": "test/unit/spells_ui.test.js",
+       "status": "tested",
+       "reviewer": "track-15-orchestrator (isolated WIP 23/23 + dual-artifact verify: declared + encap-debt, write-path confinement exception)",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/spells_ui.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-16": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_13_ui_theme",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/ui_theme.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_13_ui_theme",
+       "batch_id": "batch-js_ui_theme",
+       "test_path": "test/unit/ui_theme.test.js",
+       "status": "tested",
+       "reviewer": "track-16-reviewer-distinct",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/ui_theme.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  },
+  "track-17": {
+   "stats": {
+    "total": 1,
+    "done-recorded": 1,
+    "has-file": 0,
+    "broken-record": 0,
+    "missing": 0
+   },
+   "buckets": {
+    "done-recorded": [
+     {
+      "id": "feature_10_undo_system",
+      "test_paths": [
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/undo.test.js",
+       "C:\\luiscla27\\projects\\dndbeyond-printenhance\\test/unit/destructive_recovery.test.js"
+      ],
+      "test_paths_declared": true,
+      "progress": {
+       "code": "feature_10_undo_system",
+       "batch_id": "js_undo",
+       "test_path": "test/unit/undo.test.js",
+       "status": "tested",
+       "reviewer": "track-17-orchestrator (direct impl: workspace-confinement exception, lineage in review.md #Cross-review independence)",
+       "sha": ""
+      },
+      "record_test_path_ignored": "test/unit/undo.test.js"
+     }
+    ],
+    "has-file": [],
+    "broken-record": [],
+    "missing": []
+   }
+  }
+ }
+}

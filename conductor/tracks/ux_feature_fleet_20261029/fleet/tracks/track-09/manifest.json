@@ -1,0 +1,25 @@
+{
+ "track_id": "track-09",
+ "code_count": 1,
+ "component_keys": [
+  "js/modals"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/modals.js"
+ ],
+ "units": [
+  {
+   "id": "feature_15_modals",
+   "name": "Modals (Modal Toolkit)",
+   "description": "Modal toolkit: input modal, fallback modal, feedback toast, empty state dialog",
+   "files": [
+    "js/modals.js"
+   ],
+   "component_key": "js/modals",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/modals.js",
+   "test_paths": [
+    "test/unit/modals.test.js"
+   ]
+  }
+ ]
+}

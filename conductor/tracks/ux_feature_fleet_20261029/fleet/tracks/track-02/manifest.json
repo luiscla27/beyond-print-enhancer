@@ -1,0 +1,26 @@
+{
+ "track_id": "track-02",
+ "code_count": 1,
+ "component_keys": [
+  "js/background"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/background.js"
+ ],
+ "units": [
+  {
+   "id": "feature_16_background_context",
+   "name": "Background + Context Menu (Extension Core)",
+   "description": "Service worker, BYOK_CHAT messaging, context menu primitives",
+   "files": [
+    "js/background.js",
+    "js/context_menu.js"
+   ],
+   "component_key": "js/background",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/background.js",
+   "test_paths": [
+    "test/unit/background.test.js"
+   ]
+  }
+ ]
+}

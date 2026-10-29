@@ -1,0 +1,26 @@
+{
+ "track_id": "track-11",
+ "code_count": 1,
+ "component_keys": [
+  "js/print_styles"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/print_styles.js"
+ ],
+ "units": [
+  {
+   "id": "feature_06_print_styles",
+   "name": "Print Styles (Print CSS + Layout Bounds)",
+   "description": "Print CSS generation, layout-bounds, page separators, compact styles, full-height enforcement",
+   "files": [
+    "js/print_styles.js"
+   ],
+   "component_key": "js/print_styles",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/print_styles.js",
+   "test_paths": [
+    "test/unit/print_styles.test.js",
+    "test/browser_e2e/print_styles.spec.js"
+   ]
+  }
+ ]
+}

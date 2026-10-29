@@ -1,0 +1,1 @@
+{"code": "feature_03_layer_management", "test_path": "test/browser_e2e/layer_print_visibility.spec.js", "batch_id": "batch-layers", "disposition": "tested", "commit_shas": ["768a20b"], "commit_note": "adopted pre-existing (layer certs originate at 768a20b, pre-fleet Master Revamp #40 \u2014 re-verified green at integration, no fleet commit landed them)"}

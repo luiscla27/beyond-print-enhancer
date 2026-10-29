@@ -1,0 +1,25 @@
+{
+ "track_id": "track-12",
+ "code_count": 1,
+ "component_keys": [
+  "js/properties_panel"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhace/js/properties_panel.js"
+ ],
+ "units": [
+  {
+   "id": "feature_12_properties_panel",
+   "name": "Properties Panel (Active Section State)",
+   "description": "Active section state management, properties panel updates",
+   "files": [
+    "js/properties_panel.js"
+   ],
+   "component_key": "js/properties_panel",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhace/js/properties_panel.js",
+   "test_paths": [
+    "test/unit/encapsulation_debt/properties_panel.test.js"
+   ]
+  }
+ ]
+}

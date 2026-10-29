@@ -1,0 +1,26 @@
+{
+ "track_id": "track-06",
+ "code_count": 1,
+ "component_keys": [
+  "js/filters"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/filters.js"
+ ],
+ "units": [
+  {
+   "id": "feature_14_filters",
+   "name": "Filters (Global Filter CSS + Border Styles)",
+   "description": "Global filter CSS, border-style helpers, decoration filter",
+   "files": [
+    "js/filters.js",
+    "js/icons.js"
+   ],
+   "component_key": "js/filters",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/filters.js",
+   "test_paths": [
+    "test/unit/filters.test.js"
+   ]
+  }
+ ]
+}

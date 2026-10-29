@@ -1,0 +1,25 @@
+{
+ "track_id": "track-03",
+ "code_count": 1,
+ "component_keys": [
+  "js/controls"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/controls.js"
+ ],
+ "units": [
+  {
+   "id": "feature_05_controls_panel",
+   "name": "Controls Panel (Fixed Panel with Filters/Color Picker)",
+   "description": "Fixed control panel with collapsible trays, filter sliders, color picker, action buttons",
+   "files": [
+    "js/controls.js"
+   ],
+   "component_key": "js/controls",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/controls.js",
+   "test_paths": [
+    "test/unit/encapsulation_debt/controls_panel.test.js"
+   ]
+  }
+ ]
+}

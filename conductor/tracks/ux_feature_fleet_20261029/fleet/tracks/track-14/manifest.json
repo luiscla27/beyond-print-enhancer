@@ -1,0 +1,26 @@
+{
+ "track_id": "track-14",
+ "code_count": 1,
+ "component_keys": [
+  "js/shape_picker"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/shape_picker.js"
+ ],
+ "units": [
+  {
+   "id": "feature_04_shape_picker",
+   "name": "Shape Picker (Asset Grid Modal)",
+   "description": "Unified asset picker for borders/shapes/custom uploads plus Section Styles surface",
+   "files": [
+    "js/shape_picker.js",
+    "js/asset_catalog.js"
+   ],
+   "component_key": "js/shape_picker",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/shape_picker.js",
+   "test_paths": [
+    "test/unit/asset_catalog.test.js"
+   ]
+  }
+ ]
+}

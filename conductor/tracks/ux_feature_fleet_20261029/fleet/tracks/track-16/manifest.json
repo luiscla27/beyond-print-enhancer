@@ -1,0 +1,25 @@
+{
+ "track_id": "track-16",
+ "code_count": 1,
+ "component_keys": [
+  "js/ui_theme"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/ui_theme.js"
+ ],
+ "units": [
+  {
+   "id": "feature_13_ui_theme",
+   "name": "UI Theme (Theme Management)",
+   "description": "Theme management, CSS variables, visual consistency",
+   "files": [
+    "js/ui_theme.js"
+   ],
+   "component_key": "js/ui_theme",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/ui_theme.js",
+   "test_paths": [
+    "test/unit/ui_theme.test.js"
+   ]
+  }
+ ]
+}
