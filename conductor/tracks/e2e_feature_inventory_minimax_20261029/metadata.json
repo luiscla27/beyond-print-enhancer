@@ -1,0 +1,68 @@
+{
+  "name": "E2E feature-inventory verification with MiniMax-3.1-Flash video certification",
+  "id": "e2e_feature_inventory_minimax_20261029",
+  "created": "2026-10-29",
+  "status": "IN PROGRESS",
+  "release": "no release - this track's product is a verification verdict (documentation + video evidence), never product code",
+  "operator_directive": "Create a track to test all features inventory on e2e tests, make minimax 3.1 flash as the one to certify that is working by sending him visual evidence of each one. Send him full videos, use the official minimax api",
+  "deliberation": "required",
+  "task_fit": {
+    "mode": "alternatives",
+    "bounds": {
+      "max_candidates": 2,
+      "max_depth": 1,
+      "max_fanout": 82,
+      "max_judge_calls": 18,
+      "max_cost_usd": 60
+    }
+  },
+  "execution": {
+    "shape": "one separate Reasonix session, sequential (POOL_SIZE=1) - deliberation candidate A ADOPTED, candidate B (fleet pool) inadmissible on AC-6 singular-seat + AC-2 bundle-split",
+    "launcher": "conductor/tracks/e2e_feature_inventory_minimax_20261029/track_launcher.json",
+    "launch_prompt": "LAUNCH-PROMPT.md beside this file",
+    "inventory_gate": "test/browser_e2e/spec_inventory.json (82 spec files, 432 tests, 88 loaded js files)",
+    "certifier_seat": "minimax 3.1 flash - pinned at execution start to the exact model id the official api.minimax.ai accepts; resolution or mismatch is recorded in the verdict (operative clause in spec.md)",
+    "certifier_api": "official MiniMax API only (api.minimax.ai) - no router/relay proxy substitution without an explicit verdict note",
+    "evidence_class": "FULL VIDEO per feature (Playwright video capture of the whole suite context) - not screenshots, not strips",
+    "feature_grouping": "conductor/tracks/ux_feature_fleet_20261029/units.json (18 fleet features -> their e2e spec files); remaining inventory files grouped as cross-cutting suites"
+  },
+  "acceptance": [
+    "AC-1: all 82 spec files run live against the unpacked MV3 extension (per-suite timeout 900s), per-suite pass/fail counts recorded in progress.jsonl",
+    "AC-2: a full video artifact exists for EVERY feature in the inventory, retained under execution/evidence/<feature>/",
+    "AC-3: each feature is certified by the pinned MiniMax model via the OFFICIAL MiniMax API, which receives that feature's full video(s) as visual evidence; API request, resolved model id, and verbatim verdict recorded per feature",
+    "AC-4: no js/**, no manifest.json, and no EXISTING test file is modified (git status -- js/ empty at close; any mutation aborts the run and is reported)",
+    "AC-5: the track's product is verdict.md + progress.jsonl (+ evidence pointers) inside this track directory; explicit-path local commit, never push",
+    "AC-6: the certifier seat is MiniMax-3.1-Flash ONLY (pinned id); every verdict row cites the video artifact it judged and the API response that produced it"
+  ],
+  "track_id": "e2e_feature_inventory_minimax_20261029",
+  "acceptance_criteria": {
+    "track": "e2e_feature_inventory_minimax_20261029",
+    "sealed_utc": "2026-10-29T22:07:19Z",
+    "criteria": {
+      "[AC-1]": {
+        "sha256": "464bbfa248829d4b2712f5db69312ffcfcb3b5496db876fc622638221490b483",
+        "text": "**[AC-1]** \u2014 every one of the 82 spec files in `test/browser_e2e/spec_inventory.json` executes live against the unpacked extension (mocha, per-suite timeout 900 s per `package.json`'s `test:e2e`), and each suite's result (pass/fail counts) is recorded. Falsifiable: a suite that is missing from the run, or a count that disagrees with mocha's own stats, fails AC-1."
+      },
+      "[AC-2]": {
+        "sha256": "6e0da1fc0955e91579bd9e57b6faa7e4a799e9fedbf84df4ec08747394a7ae37",
+        "text": "**[AC-2]** \u2014 a full video (Playwright `video` capture of the entire suite context) is produced and retained for EVERY feature in the inventory, not screenshots; videos live under this track's evidence directory. Falsifiable: any feature with no video artifact on disk fails AC-2."
+      },
+      "[AC-3]": {
+        "sha256": "eb4c2b44e27a4f835a9671e5be39a1d1c3a2e81510a6b1b2d1e3b239e0d4020f",
+        "text": "**[AC-3]** \u2014 each feature is certified by the MiniMax model through the OFFICIAL MiniMax API (api.minimax.ai), which receives the full video(s) of that feature as visual evidence; the API call, the resolved model id, and the verdict text are recorded per feature. Falsifiable: a feature with no recorded API verdict, or a verdict not backed by an API response body, fails AC-3."
+      },
+      "[AC-4]": {
+        "sha256": "40706b96b4702da107c9f07bc30b624c16fa254adb3d8e8dc9ae0fef363014a1",
+        "text": "**[AC-4]** \u2014 no file under `js/**`, no `manifest.json`, and no EXISTING test file is modified by the run (`git status -- js/` empty at close). New launcher/videography code is confined to this track's execution scope. Falsifiable: any mutation outside the track directory aborts the run."
+      },
+      "[AC-5]": {
+        "sha256": "3922b306bf80d4b7d4384af3fed59c3a92a57bb8a3d877994ae9c9dac860b299",
+        "text": "**[AC-5]** \u2014 the track's product is `verdict.md` + `progress.jsonl` (+ evidence pointers) inside this track directory; close-out follows the house guard (sealed criteria, explicit-path commit, local-only, never push)."
+      },
+      "[AC-6]": {
+        "sha256": "f5839229ee991ffd8e0334744c632854aa2ad0ce8dba3546d1bbb3b9b2c8ecac",
+        "text": "**[AC-6]** \u2014 the certifier seat is MiniMax-3.1-Flash (pinned id) and only MiniMax \u2014 no Gemini/ Muse/DeepSeek seat substitutes for it in AC-3's verdicts, and each verdict cites the video artifact it judged. Falsifiable: a verdict row whose certifier is a different provider fails AC-6."
+      }
+    }
+  }
+}
