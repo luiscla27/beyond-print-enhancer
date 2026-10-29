@@ -356,6 +356,12 @@ async function main() {
         console.error(`  ${c.file}: expected ${c.expected} test(s), collected ${c.collected}`);
       }
       console.error(`artifact: ${path.relative(ROOT, p)} (NOT green)`);
+      // THE EXIT FUNNEL. `exit` starts at 1, so this assignment is what makes the rejection
+      // REACH `process.exit(exit)` below: without it, `return` skipped everything after the
+      // try/finally and the process ended 0 over an artifact that said `green: false,
+      // exit_code: 1` (the 2026-10-28 audit findings 1-2; pinned by
+      // test/unit/browser_gate_exit_code.test.js case 1).
+      exit = artifact.exit_code;
       return;
     }
 
@@ -487,6 +493,7 @@ async function main() {
           `accounted ${coverage.accounted_tests}, empty shards ${shardsEmpty}/${plans.length}`,
       );
       console.error(`artifact: ${path.relative(ROOT, p)} (NOT green)`);
+      exit = artifact.exit_code; // a `return` must not outrun the exit (see the collection path)
       return;
     }
     artifact.host_canary = { boot_tolerated: canary };
@@ -550,8 +557,17 @@ async function main() {
     } catch {
       /* already gone */
     }
+    // THE EXIT FUNNEL. This MUST live inside `finally`, not after it: every
+    // rejection path in the body ends with `return`, and a `return` inside
+    // `try` runs the `finally` but then RETURNS — so code after the
+    // try/finally block (where this used to be) was skipped and the process
+    // ended 0 over an artifact that said `green: false, exit_code: 1`
+    // (2026-10-28 audit findings 1-2; pinned by
+    // test/unit/browser_gate_exit_code.test.js case 1). `exit` is seeded to 1
+    // (the rejection default) and overwritten to `artifact.exit_code` at each
+    // write site, so a path that forgets to set it still fails closed.
+    process.exit(exit);
   }
-  process.exit(exit);
 }
 
 main();

@@ -61,6 +61,34 @@ function allJs(dir, rel) {
   return out;
 }
 
+/**
+ * Extract the JSON object that mocha's `--reporter json` writes to stdout, even
+ * when spec files print non-JSON lines at REQUIRE time (console.log banners,
+ * debug traces, etc.). Mocha emits the report as a single top-level JSON object
+ * starting at the first `{` that begins a line and running to the final `}` that
+ * ends the stream. Everything before that is noise (findings 3).
+ */
+function extractJson(out) {
+  const start = out.indexOf("\n{");
+  let begin = start === -1 ? (out.charAt(0) === "{" ? 0 : -1) : start + 1;
+  if (begin === -1) throw new SyntaxError("no JSON object found in mocha output");
+  const slice = out.slice(begin).trimEnd();
+  // Walk from the start to find the matching closing brace of the top-level object.
+  let depth = 0, end = -1, inStr = false, esc = false;
+  for (let i = 0; i < slice.length; i++) {
+    const c = slice[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === "{") { depth++; if (depth === 1) begin = begin + i; }
+    else if (c === "}") { depth--; if (depth === 0) { end = i + 1; break; } }
+  }
+  if (end === -1) throw new SyntaxError("incomplete JSON object in mocha output");
+  return JSON.parse(slice.slice(0, end));
+}
+
 /** Collect the suite WITHOUT executing it (a dry run still requires every spec file). */
 function collect() {
   const given = arg("--dry-run-path");
@@ -79,7 +107,13 @@ function collect() {
     ],
     { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
   );
-  return JSON.parse(out);
+  // A spec file can print to stdout at REQUIRE time (console.log, banner, etc.),
+  // which precedes the JSON reporter's output. Mocha's json reporter emits a
+  // single JSON object starting at the first '{' on a line that begins with '{'
+  // and ending at the matching close. Extract that block rather than parsing
+  // the whole stdout — a bare JSON.parse would choke on the banner lines
+  // (2026-10-28 audit finding 3; pinned by test/unit/browser_gate_exit_code.test.js case 2).
+  return extractJson(out);
 }
 
 function main() {

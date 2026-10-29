@@ -238,3 +238,5 @@ __pycache__/
 # Addendum A). The negation is kept so the intent survives a future prefix pattern.
 !/reasonix.toml.example
 # <<< modelstack vendor overlay (generated) <<<
+/conductor/tracks/ux_feature_fleet_20261029/fleet/runtime
+/conductor/tracks/ux_feature_fleet_20261029/fleet/logs
