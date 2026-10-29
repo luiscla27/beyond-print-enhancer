@@ -1,0 +1,109 @@
+{
+  "name": "Sequential unit-track re-verification fleet",
+  "id": "unit_track_sequencer_20261029",
+  "created": "2026-10-29",
+  "status": "IN PROGRESS",
+  "release": "no release - this track's product is a verification verdict file (documentation), never code",
+  "operator_directive": "Create new track to sequentially run all those tracks on a separate reasonix session, that is meant so you don't run out of context on this session",
+  "deliberation": "required",
+  "criteria_sealed": "2026-10-29T17:30:00Z",
+  "task_fit": {
+    "mode": "alternatives",
+    "bounds": {
+      "max_candidates": 2,
+      "max_depth": 1,
+      "max_fanout": 18,
+      "max_judge_calls": 2,
+      "max_cost_usd": 25
+    }
+  },
+  "acceptance": [
+    "AC-1: a separate Reasonix session (fresh context, not this session) is launched by the track's launcher and executes ALL 18 unit tracks sequentially, in the declared order",
+    "AC-2: every unit track's verification is re-run live on the current tree: its certificate files are executed with npx mocha and the result (pass/fail/count) is recorded per track in sequencer_verdict.md",
+    "AC-3: the full unit suite is re-run live (npx mocha --recursive test/unit --timeout 30000) once, after all per-track runs, and its final counts are recorded",
+    "AC-4: no file under js/**, no manifest.json, and no test file is modified by the sequencer run (git status -- js/ must remain empty; any modification aborts the run and is reported)",
+    "AC-5: the sequencer session writes exactly two artifacts: sequencer_verdict.md and progress.jsonl (both inside this track's directory) - nothing else is committed",
+    "AC-6: housekeeping guard (python vendor/housekeeping_guard.py check) reports no issue/track debt attributable to this track at close-out",
+    "AC-7: the run lands as a local commit only (Conventional Commits template, explicit paths, never git add -A) - no push, per house rule"
+  ],
+  "execution": {
+    "shape": "one separate Reasonix session, sequential (POOL_SIZE=1)",
+    "launcher": "conductor/tracks/unit_track_sequencer_20261029/track_launcher.json",
+    "launch_prompt": "LAUNCH-PROMPT.md beside this file",
+    "track_order": [
+      "feature_01_ai_arrange",
+      "feature_02_ai_borders",
+      "feature_03_layer_management",
+      "feature_04_shape_picker",
+      "feature_05_controls_panel",
+      "feature_06_print_styles",
+      "feature_07_persistence",
+      "feature_08_layout_operations",
+      "feature_09_section_cloning",
+      "feature_10_undo_system",
+      "feature_11_spells_ui",
+      "feature_12_properties_panel",
+      "feature_13_ui_theme",
+      "feature_14_filters",
+      "feature_15_modals",
+      "feature_16_background_context",
+      "feature_17_dnd",
+      "feature_18_image_processor"
+    ],
+    "landed_shas_from_fleet_run": {
+      "feature_01_ai_arrange": "1059ad3",
+      "feature_02_ai_borders": "e201be9",
+      "feature_03_layer_management": "768a20b",
+      "feature_04_shape_picker": "b9684a3",
+      "feature_05_controls_panel": "153e2df",
+      "feature_06_print_styles": "5506076",
+      "feature_07_persistence": "40920f8",
+      "feature_08_layout_operations": "0f3132f",
+      "feature_09_section_cloning": "be39009",
+      "feature_10_undo_system": "f8755b0",
+      "feature_11_spells_ui": "0b627e0",
+      "feature_12_properties_panel": "9fa4cdc",
+      "feature_13_ui_theme": "13b3a8d",
+      "feature_14_filters": "a50a977",
+      "feature_15_modals": "f0773ff",
+      "feature_16_background_context": "1cc9c01",
+      "feature_17_dnd": "f167c3f",
+      "feature_18_image_processor": "0b6c98b"
+    }
+  },
+  "track_id": "unit_track_sequencer_20261029",
+  "acceptance_criteria": {
+    "track": "unit_track_sequencer_20261029",
+    "sealed_utc": "2026-10-29T18:55:54Z",
+    "criteria": {
+      "#1": {
+        "sha256": "20204edf410cb1b2d53b67b0bd850065906aba45d6cd120da89eb1930cd7112b",
+        "text": "**AC-1** \u2014 a separate Reasonix session (fresh context, not the session that created this track) is launched by the launcher and executes ALL 18 unit tracks sequentially, in the order in `metadata.json`'s `execution.track_order`."
+      },
+      "#2": {
+        "sha256": "177fb6791cef88eb60dcc00ca10e8514231b1b6f8274daaa67c1a1963855a348",
+        "text": "**AC-2** \u2014 every unit track's certificate files are executed live with `npx mocha` and the result (pass/fail/count) is recorded per track in `sequencer_verdict.md`."
+      },
+      "#3": {
+        "sha256": "876287398e43e9a00325b4f30931a90657f33a5623b6e823f1451f67e27165ae",
+        "text": "**AC-3** \u2014 the full unit suite is re-run live once, after the per-track runs (`npx mocha --recursive test/unit --timeout 30000`), final counts recorded."
+      },
+      "#4": {
+        "sha256": "f652b5d965338d2ac4897404a1370ba900a1c0131b9d559f6e01a25ab21fb14d",
+        "text": "**AC-4** \u2014 no file under `js/**`, no `manifest.json`, and no test file is modified by the sequencer run (`git status -- js/` must remain empty; any modification aborts the run and is reported in the verdict)."
+      },
+      "#5": {
+        "sha256": "bba3f2cc4507bc1096efe6dd78bf0f4c0c4d5606f1a1d1ebbc700fd64e7d4181",
+        "text": "**AC-5** \u2014 the sequencer session writes exactly two artifacts: `sequencer_verdict.md` and `progress.jsonl` (both inside this track's directory) \u2014 nothing else is committed."
+      },
+      "#6": {
+        "sha256": "1462957b0a61d989227864bed3b9c927024267e62037caf85f82af714a7de124",
+        "text": "**AC-6** \u2014 `python vendor/housekeeping_guard.py check` reports no issue/track debt attributable to this track at close-out."
+      },
+      "#7": {
+        "sha256": "6755b0583aac5e1beac4f7b274b71a2846dce4fdf8bc46df72faab9e6cd72540",
+        "text": "**AC-7** \u2014 the run lands as a local commit only (Conventional Commits, explicit paths, never `git add -A`), no push."
+      }
+    }
+  }
+}
