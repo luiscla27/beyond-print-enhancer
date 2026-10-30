@@ -27,8 +27,10 @@ LEFT, and the pinning/solve results so a relaunch never re-derives them.
   `api.minimax.ai` does NOT resolve from this network (curl 000 / DNS fail); `api.minimax.io`
   returns 200 and a real completion. base_url (OpenAI-compatible) = https://api.minimax.io/v1 ;
   Anthropic-compatible = https://api.minimax.io/anthropic.
-- **ACTION REQUIRED:** correct the host in track spec.md/README.md/LAUNCH-PROMPT.md and in the
-  SKILL.md (they all say api.minimax.ai). Record the .ai->.io resolution in verdict.md appendix.
+- **RESOLVED (2026-10-30):** the host is corrected to `api.minimax.io` in track
+  spec.md/README.md/LAUNCH-PROMPT.md/plan.md/index.md/deliberation + SKILL.md (grep: zero
+  `api.minimax.ai` occurrences remain in tracked docs). The .ai->.io resolution is also recorded
+  in verdict.md's model-id appendix.
 - Credential: env `MINIMAX_API_KEY` is set and live-verified (smoke call returned
   "MINIMAX_API_OK", usage accounted). NEVER commit the key.
 
@@ -65,21 +67,34 @@ Playwright screencast => `.webm` (VP8/VP9). MiniMax video input accepts ONLY MP4
   on a green suite is real evidence about VIDEO SAMPLING, not proof the feature is broken.
 
 ## LEFT TO DO
-- Phase 2: run remaining **52 suites** (224 tests). Resume with:
-  E2E runner: `node scripts/e2e_inventory_runner.js --outdir
-  conductor/tracks/e2e_feature_inventory_minimax_20261029/execution --resume`
-  (resume set = suites whose LATEST row has failing>=0 AND video AND video_bytes>0; a video
-  GAP is retried, so the 20 gap-row suites from the early runs MUST be re-run to fill AC-2).
-- Phase 3: confirm a .webm exists per feature (18 units + cross-cutting). Currently only
-  cross-cutting/ has curated videos; feature_01/02/07 dirs are empty; the other 15 feature
-  dirs never created. Mapping source: conductor/tracks/ux_feature_fleet_20261029/units.json.
-- Phase 4: per-feature bundle: transcode each .webm -> .mp4, upload via Files API,
-  chat with a per-feature prompt (read the spec's describe blocks), record verbatim in
-  execution/minimax/<feature>.json {endpoint, model, request (key redacted), file_id, verdict}.
-- Phase 5: verdict.md — per-feature table (mocha counts, video path, MiniMax verdict quote,
-  regression flag), model-id resolution appendix (with the .ai->.io note), overall line.
-- Phase 6: close-out — git status -- js/ manifest.json test/ MUST be empty; housekeeping guard;
-  commit verdict artifacts with explicit paths, msg `docs(e2e-minimax): ...`, NEVER push.
+- **NONE — the track COMPLETED 2026-10-30.** (This section is kept as the resume record's
+  historical half; see ## COMPLETION below.)
+
+## COMPLETION (2026-10-30, this file's original author session resumed after a host interruption)
+- Phase 2 finished: all 82 suites ran (249 of 255 progress rows); unique-suite AC-1 totals
+  **passing=422 failing=11** (432 inventory tests). The 11 RED tests are all in 5 cross-cutting
+  `*_visual_capture` suites that had NEVER run under a prior fleet gate — first-ever-run findings,
+  not regressions. Verdicts + verbatim failure text: `verdict.md` §"The 11 RED tests".
+- The RED-suite recording bug was fixed mid-run: `execFileSync` threw on mocha's rc≠0 and the
+  catch branch clobbered real stats with failing=-1 while discarding captured videos; the runner
+  now uses `spawnSync` (rc + report without throwing) and the five misrecorded suites were
+  REPAIRED from their on-disk report.json + video dirs ("repaired" flag on each progress row).
+- Phases 3-4 finished: every suite carries retained .webm (840 page videos, 323 MB, gitignored by
+  operator decision — the textual record is the committed half); 19 bundle judge calls to
+  MiniMax-M3.1-Flash through the OFFICIAL api.minimax.io (Files API purpose=video_understanding
+  + chat completions, reasoning=low/max_completion_tokens=8000/detail=default/fps=5 — the knobs
+  measured from probes A-F after the feature_07 truncation); verdicts 0 WORKING / 7 PARTIAL /
+  12 NOT-VISIBLE, all recorded verbatim under `execution/minimax/` (+ summary.json).
+- Phase 5: `verdict.md` written (per-feature table, RED-test analysis, regression-class
+  analysis, model-id appendix incl. the measured .ai→.io host correction, call-pattern appendix
+  reconciling the 19th call vs the authored max_judge_calls=18).
+- Phase 6 close-out: AC-4 audit empty (`git status -- js/ manifest.json test/`); housekeeping
+  guard GREEN after refreshing the YouTrack receipt via the documented path
+  (`python vendor/youtrack/reader.py read --root .` — it had gone stale, which is a refusal by
+  name, not a fallback); explicit-path local commit, NEVER pushed.
+- Durability: the certification pass is resume-safe — `python temp/scratch/certify_features.py`
+  skips any feature whose on-disk record is certified with a parseable verdict (the 19 records
+  are all such), so a future rerun only pays API cost for genuinely missing rows.
 
 ## COST/BUDGET WATCH
 metadata bounds: max_judge_calls=18, max_cost_usd=60. Per-call usage measured ~4-5k

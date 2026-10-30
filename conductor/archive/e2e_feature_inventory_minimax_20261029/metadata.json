@@ -2,7 +2,7 @@
   "name": "E2E feature-inventory verification with MiniMax-3.1-Flash video certification",
   "id": "e2e_feature_inventory_minimax_20261029",
   "created": "2026-10-29",
-  "status": "IN PROGRESS",
+  "status": "COMPLETE — all AC met 2026-10-30 (AC-1: 82/82 suites ran live, 422 pass/11 fail; AC-2: full video retained for every suite; AC-3/AC-6: 19 bundle calls to MiniMax-M3.1-Flash via official api.minimax.io, verdicts recorded verbatim; AC-4: js//manifest.json/test/ untouched; AC-5: verdict.md + progress.jsonl + minimax/*.json landed and committed)",
   "release": "no release - this track's product is a verification verdict (documentation + video evidence), never product code",
   "operator_directive": "Create a track to test all features inventory on e2e tests, make minimax 3.1 flash as the one to certify that is working by sending him visual evidence of each one. Send him full videos, use the official minimax api",
   "deliberation": "required",
@@ -18,7 +18,7 @@
   },
   "execution": {
     "shape": "one separate Reasonix session, sequential (POOL_SIZE=1) - deliberation candidate A ADOPTED, candidate B (fleet pool) inadmissible on AC-6 singular-seat + AC-2 bundle-split",
-    "launcher": "conductor/tracks/e2e_feature_inventory_minimax_20261029/track_launcher.json",
+    "launcher": "conductor/archive/e2e_feature_inventory_minimax_20261029/track_launcher.json",
     "launch_prompt": "LAUNCH-PROMPT.md beside this file",
     "inventory_gate": "test/browser_e2e/spec_inventory.json (82 spec files, 432 tests, 88 loaded js files)",
     "certifier_seat": "minimax 3.1 flash - pinned at execution start to the exact model id the official api.minimax.io accepts; resolution or mismatch is recorded in the verdict (operative clause in spec.md)",

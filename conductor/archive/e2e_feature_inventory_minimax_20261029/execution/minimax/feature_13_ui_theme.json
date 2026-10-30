@@ -1,0 +1,71 @@
+{
+ "feature": "feature_13_ui_theme",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "icons_privacy_surface.spec.js",
+   "file_id": "457965051244895",
+   "mp4_bytes": 851122,
+   "upload_response": {
+    "file": {
+     "file_id": 457965051244895,
+     "bytes": 851122,
+     "created_at": 1793361103,
+     "filename": "icons_privacy_surface.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "icons_privacy_surface.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\icons_privacy_surface.webm",
+   "webm_bytes": 2637258
+  }
+ ],
+ "usage": {
+  "total_tokens": 34854,
+  "total_characters": 0,
+  "prompt_tokens": 34406,
+  "completion_tokens": 448,
+  "completion_tokens_details": {
+   "reasoning_tokens": 196
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "1. **Panel present:** The D&D Beyond character sheet for \u201cCorvo Saggio\u201d loads, first behind a \u201cYour Privacy Choices\u201d cookie dialog and then unobstructed. Near the end of the video, the extension opens a dark **\u201cBEYOND P\u2026\u201d** panel on the left and a **\u201cLAYER MANAGEMENT\u201d** panel on the right.\n2. **Feature controls/actions:** The left panel visibly contains layout controls such as **Templates**, **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, and output/print options. The right panel shows section and shape layers. A notification states, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n3. **Visible result on the sheet:** The sheet changes from the original red-accented D&D Beyond layout to an ornate grayscale fantasy-themed layout with decorative borders and a character portrait.\n\nHowever, the video does not visibly show the extension\u2019s theme controls being used to create, apply, or undo a theme, nor does it show a dialog for that theme workflow. It only shows the extension panel loading the default template and the resulting sheet appearance.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: icons_privacy_surface.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361141208
+}

@@ -1,0 +1,99 @@
+{
+ "feature": "feature_03_layer_management",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+ "certified": true,
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "medium",
+  "max_completion_tokens": 1600,
+  "video_parts": [
+   {
+    "video_url": {
+     "url": "mm_file://457928646259235",
+     "detail": "default",
+     "fps": 5
+    }
+   },
+   {
+    "video_url": {
+     "url": "mm_file://457930541302212",
+     "detail": "default",
+     "fps": 5
+    }
+   }
+  ],
+  "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite layer_print_visibility \u2014 PR #28 Layer manager hidden on print + print-disabled layers (Playwright e2e); its cases assert: the Layer Management panel is hidden inside @media print; locked layers are forced fully opaque on print; Disable on Print marks the layer container and hides it in print CSS; re-enabling a layer clears data-print-disabled and its hide rule; AC-1: every layer group carries the three-state strip, naming all three modes; AC-1: `Print only` hides the layer on screen and UNDOES that hide at print time; AC-1: `Screen only` stays visible now and is skipped on print; AC-1: `Both` clears both flags and both print rules (the three states are ONE choice)\nSuite layer_reorder_keyboard \u2014 AC-6 (BEYOND-15) layer reorder polish + keyboard alternative (ux_quick_wins_20261025 Phase 5); its cases assert: ArrowUp moves the tail layer exactly one slot toward the head \u2014 through the row's own keydown handler; ArrowDown moves a layer one slot toward the tail \u2014 the two directions write mirror-image stacks; three rapid presses in a row \u2014 \u2191 then \u2193 then \u2191 \u2014 all land on the SAME layer without a manual re-click (restoreRowFocus); Home and End bookend the stack in ONE press (Home \u2192 head, End \u2192 tail) \u2014 through the same keydown handler; a locked row's arrows are a NO-OP \u2014 the handler refuses before the manager is even called, no stack change, NO undo entry; already-at-the-boundary presses are safe no-ops (tail's ArrowDown, head's ArrowUp) \u2014 depth untouched; the stack the keyboard writes is POSITIONALLY IDENTICAL to the stack a drag drop writes for the same swap (keyboard and mouse are the same edit)\n\nThese 2 videos each record a browser e2e suite exercising the extension's feature_03_layer_management feature family. Watch the FULL videos: the extension's panel is present on the real demo sheet; each suite drives the feature through its real UI. Describe, per video, what you visibly observe the extension doing (panel -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction across the videos.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "file_id": "457928646259235",
+   "mp4_bytes": 859071,
+   "upload_response": {
+    "file": {
+     "file_id": 457928646259235,
+     "bytes": 859071,
+     "created_at": 1793352329,
+     "filename": "layer_print_visibility.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "file_id": "457930541302212",
+   "mp4_bytes": 1336750,
+   "upload_response": {
+    "file": {
+     "file_id": 457930541302212,
+     "bytes": 1336750,
+     "created_at": 1793352333,
+     "filename": "layer_reorder_keyboard.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_print_visibility.webm",
+   "webm_bytes": 2876135
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_reorder_keyboard.webm",
+   "webm_bytes": 4804188
+  }
+ ],
+ "usage": {
+  "total_tokens": 96934,
+  "total_characters": 0,
+  "prompt_tokens": 95389,
+  "completion_tokens": 1545,
+  "completion_tokens_details": {
+   "reasoning_tokens": 875
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `layer_print_visibility`\n\n- The video loads the D&D Beyond character sheet and eventually scrolls to the extension controls.\n- A **Layer Management** panel is visibly present on the right, alongside a separate extension panel on the left. The sheet\u2019s character portrait, statistics, and sections are visible behind them.\n- In the Layer Management panel, the **Shapes** group shows the three-state controls **\u201cPrint only,\u201d \u201cBoth,\u201d** and **\u201cScreen only.\u201d** Section and shape rows, including small visibility/lock-style icons, are also visible.\n- The left extension panel visibly contains output controls such as **\u201cPRINT\u201d** and **\u201cPrint settings.\u201d**\n- No visible selection or change is made to any of the three print/screen modes. No layer is visibly locked or unlocked, and no print-disabled state is visibly applied and then cleared.\n- The video never visibly enters a print preview or print-media view, so it does not show the Layer Management panel disappearing in print output, a disabled layer disappearing from print output, a screen-only layer being skipped, or a print-only layer returning for printing.\n- There is also no visible sheet result demonstrating any of the asserted print behavior.\n\n**Per-video result: NOT-VISIBLE.** The required controls are present, but the print-mode interactions and their print results are not witnessed.\n\n### Video 2 \u2014 `layer_reorder_keyboard`\n\n- The video loads the same character sheet and eventually reveals the extension\u2019s left panel and the **Layer Management** panel on the right.\n- The Layer Management panel visibly lists the **Sections (22)** and **Shapes (3)** groups. The Shapes group contains multiple named rows, and the three-state **\u201cPrint only / Both / Screen only\u201d** strip remains visible.\n- At approximately 30.6 seconds, a dark toast appears at the top center reading **\u201cLayer order updated.\u201d** It persists for several seconds and then fades.\n- That toast is visible evidence that a layer-order edit completed. The sheet remains visible behind the panels.\n- However, no keyboard key press, focused row, arrow-key movement, Home/End movement, or rapid \u2191/\u2193/\u2191 sequence is directly visible. The sampled frames do not clearly show a layer changing position in the list, so the exact move and final stack cannot be verified visually.\n- No visible drag-and-drop operation is shown for comparison with the keyboard result.\n- No clearly distinguishable locked-row attempt demonstrates that arrows are refused, no visible boundary no-op is demonstrated, and no undo-history inspection is shown.\n- Consequently, the broader keyboard contract\u2014including mirror-image ArrowUp/ArrowDown behavior, retained row focus, one-press Home/End movement, locked-row refusal, boundary safety, and positional identity with drag-and-drop\u2014is not fully witnessed.\n\n**Per-video result: PARTIAL.** A layer-order update and its success toast are visible, but the specific keyboard interactions and their required invariants are not visibly demonstrated.\n\nAcross the two videos, the panel and its controls are present, and one layer-order update is visibly confirmed. The print-visibility behavior is not shown, and only a small portion of the keyboard-reorder behavior is directly evidenced. The feature therefore does not visibly complete the full end-to-end behavioral contract across these videos.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793352358677
+}

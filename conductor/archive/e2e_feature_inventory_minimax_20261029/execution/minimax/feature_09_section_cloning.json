@@ -1,0 +1,71 @@
+{
+ "feature": "feature_09_section_cloning",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "section_cloning.spec.js",
+   "file_id": "457965011149134",
+   "mp4_bytes": 974468,
+   "upload_response": {
+    "file": {
+     "file_id": 457965011149134,
+     "bytes": 974468,
+     "created_at": 1793360929,
+     "filename": "section_cloning.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "section_cloning.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_cloning.webm",
+   "webm_bytes": 2840005
+  }
+ ],
+ "usage": {
+  "total_tokens": 34385,
+  "total_characters": 0,
+  "prompt_tokens": 34037,
+  "completion_tokens": 348,
+  "completion_tokens_details": {
+   "reasoning_tokens": 88
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 197
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "The video visibly shows the D&D Beyond page loading, followed by the real character sheet for \u201cCorvo Saggio.\u201d A privacy-cookie panel appears and is dismissed, after which the character sheet is displayed with the Print Enhancer controls overlaid. The sheet contains the character\u2019s statistics, actions, spells, inventory, and other character information.\n\nThe extension UI becomes visible later in the video:\n\n- A left-side \u201cBEYOND P\u2026\u201d panel shows layout controls such as \u201cLoad,\u201d \u201cReset to Default,\u201d \u201cManage Clones,\u201d \u201cAdd Shape,\u201d and \u201cManage Compact.\u201d\n- A right-side \u201cLAYER MANAGEMENT\u201d panel shows \u201cSECTIONS (22)\u201d and a list of existing sections.\n- The sheet is highlighted with red outlines around its visible sections.\n- A centered modal titled \u201cCLONE SECTION\u201d opens. It says, \u201cEnter a name for this Section 1 clone:\u201d and displays the default name \u201cSection 1 (Clone),\u201d with \u201cCancel\u201d and \u201cContinue\u201d buttons.\n- The modal remains visible through the final sampled frame.\n\nNo visible action confirms the clone, and the video does not show a titled clone appearing on the sheet, content-preservation/exclusion behavior, double-click renaming, or deletion via a visible Delete control.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: section_cloning.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793360941071
+}

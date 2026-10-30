@@ -1,6 +1,6 @@
 # Evaluation matrix — e2e_feature_inventory_minimax_20261029 execution shape
 
-**Basis:** admissibility FIRST against the sealed criteria in `conductor/tracks/e2e_feature_inventory_minimax_20261029/spec.md`, then utility (which admissible candidate costs less / fails less often). The rubric below is applied to both candidates in the same order, so a candidate that cannot satisfy [AC-6] or [AC-2] is eliminated before any cost comparison — ranking an inadmissible candidate is a confidently wrong decision. **Basis tie:** the track's sealed acceptance criteria from that spec.md: [AC-1]=464bbfa24882, [AC-2]=6e0da1fc0955, [AC-3]=eb4c2b44e27a, [AC-4]=40706b96b470, [AC-5]=3922b306bf80, [AC-6]=f5839229ee99 — the rubric's rows are those six criteria verbatim.
+**Basis:** admissibility FIRST against the sealed criteria in `conductor/archive/e2e_feature_inventory_minimax_20261029/spec.md`, then utility (which admissible candidate costs less / fails less often). The rubric below is applied to both candidates in the same order, so a candidate that cannot satisfy [AC-6] or [AC-2] is eliminated before any cost comparison — ranking an inadmissible candidate is a confidently wrong decision. **Basis tie:** the track's sealed acceptance criteria from that spec.md: [AC-1]=464bbfa24882, [AC-2]=6e0da1fc0955, [AC-3]=eb4c2b44e27a, [AC-4]=40706b96b470, [AC-5]=3922b306bf80, [AC-6]=f5839229ee99 — the rubric's rows are those six criteria verbatim.
 
 Both candidates were drafted from `spec.md` alone, before either was compared with the other.
 

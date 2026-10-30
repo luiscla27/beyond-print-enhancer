@@ -1,0 +1,71 @@
+{
+ "feature": "feature_14_filters",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_filter_identity_probe.spec.js",
+   "file_id": "457964773126496",
+   "mp4_bytes": 1318402,
+   "upload_response": {
+    "file": {
+     "file_id": 457964773126496,
+     "bytes": 1318402,
+     "created_at": 1793361145,
+     "filename": "print_filter_identity_probe.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_filter_identity_probe.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_filter_identity_probe.webm",
+   "webm_bytes": 5155076
+  }
+ ],
+ "usage": {
+  "total_tokens": 59708,
+  "total_characters": 0,
+  "prompt_tokens": 59294,
+  "completion_tokens": 414,
+  "completion_tokens_details": {
+   "reasoning_tokens": 117
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "The video visibly shows:\n\n- The D&D Beyond site loading, including a centered loading overlay and a transient \u201cYour Privacy Choices\u201d cookie dialog. The real character sheet for **Corvo Saggio** then appears.\n- The extension panel becomes present on the left side of the sheet. It contains **Templates**, **Layout**, and **Output** sections, including a prominent **PRINT** button, **Print settings**, and **Save to Browser**.\n- A **Layer Management** panel is open on the right, listing **Sections (22)** and **Shapes (1)**, with controls for selecting and coloring layers.\n- The sheet\u2019s decorative layer visibly changes color while the panels remain open: it first appears red, then green, then purple/blue, and finally returns to a dark gray/black appearance. The character portrait and the red-highlighted sheet elements remain visible during these changes.\n- A message appears near the top stating, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n\nNo visible controls or actions establish the filter behaviors in the behavioral contract. In particular, the video does not visibly show a filter panel with Greyscale, saturation, or hue sliders; a Greyscale 0% adjustment; hue emission; an apply/undo sequence; or printed output for comparison. Consequently, the identity-chain, neutral-default, colour-cost, user-setting, and byte-identical-default assertions cannot be witnessed from these frames.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_filter_identity_probe.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361162470
+}

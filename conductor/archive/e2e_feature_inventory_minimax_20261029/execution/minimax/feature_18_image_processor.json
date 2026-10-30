@@ -1,0 +1,71 @@
+{
+ "feature": "feature_18_image_processor",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "webp_assets.spec.js",
+   "file_id": "457966256292375",
+   "mp4_bytes": 980671,
+   "upload_response": {
+    "file": {
+     "file_id": 457966256292375,
+     "bytes": 980671,
+     "created_at": 1793361268,
+     "filename": "webp_assets.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "webp_assets.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\webp_assets.webm",
+   "webm_bytes": 3009842
+  }
+ ],
+ "usage": {
+  "total_tokens": 36009,
+  "total_characters": 0,
+  "prompt_tokens": 35603,
+  "completion_tokens": 406,
+  "completion_tokens_details": {
+   "reasoning_tokens": 104
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 190
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- The video begins on the D&D Beyond site, loads the real character sheet, and displays a \u201cCorvo Saggio\u201d Level 5 Fighter sheet.\n- After the cookie overlay disappears, the sheet is visible with its standard character information, ability scores, skills, senses, defenses, and actions.\n- The extension interface then appears over the sheet: a dark Print Enhancer control panel on the left and a \u201cLayer Management\u201d panel on the right. The sheet view changes to a grayscale layout with a portrait frame.\n- A \u201cShapes (Default) Selected\u201d notification is briefly shown.\n- The \u201cAdd Shape\u201d control opens a centered \u201cSelect Decorative Shape\u201d dialog. The dialog shows tabs for \u201cBorders,\u201d \u201cShapes,\u201d and \u201cCustom,\u201d category filters, a search field, and three visibly rendered Archer previews labeled \u201cArcher Accent A,\u201d \u201cArcher Accent B,\u201d and \u201cArcher Divider.\u201d \u201cCancel\u201d and a disabled-looking \u201cAdd Shape\u201d button are also visible.\n- The video ends while this picker remains open. No shape is visibly added, no Apply or Undo flow occurs, and no resulting decorative shape appears on the sheet. The sampled frames also do not expose asset URLs, so the use of `.webp` assets and the absence of `.gif` references cannot be visually verified.\n\nThe feature\u2019s picker and previews are visible, but its end-to-end interaction is not completed in the provided video.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: webp_assets.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361280006
+}

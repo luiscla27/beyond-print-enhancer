@@ -4,8 +4,8 @@
   "created": "2026-10-29",
   "launcher_kind": "single-session sequential (deliberation/ADOPTED candidate A; candidate B fleet pool REJECTED on AC-6 singular-seat + AC-2 bundle-split)",
   "repo_root": "C:\\luiscla27\\projects\\dndbeyond-printenhance",
-  "track_dir": "conductor/tracks/e2e_feature_inventory_minimax_20261029",
-  "launch_prompt": "conductor/tracks/e2e_feature_inventory_minimax_20261029/LAUNCH-PROMPT.md",
+  "track_dir": "conductor/archive/e2e_feature_inventory_minimax_20261029",
+  "launch_prompt": "conductor/archive/e2e_feature_inventory_minimax_20261029/LAUNCH-PROMPT.md",
   "operator_actions_required": [
     "start one fresh Reasonix session (separate chat/session) against this repo",
     "paste the LAUNCH-PROMPT.md body as the session's task",
@@ -14,10 +14,10 @@
     "relaunch and re-paste the same prompt to resume from progress.jsonl's last row"
   ],
   "expected_artifacts": [
-    "conductor/tracks/e2e_feature_inventory_minimax_20261029/verdict.md",
-    "conductor/tracks/e2e_feature_inventory_minimax_20261029/progress.jsonl",
-    "conductor/tracks/e2e_feature_inventory_minimax_20261029/execution/evidence/<feature>/<video> (full Playwright videos, retained)",
-    "conductor/tracks/e2e_feature_inventory_minimax_20261029/execution/minimax/<feature>.json (request, resolved model id, verbatim verdict)"
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/verdict.md",
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/progress.jsonl",
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/execution/evidence/<feature>/<video> (full Playwright videos, retained)",
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/execution/minimax/<feature>.json (request, resolved model id, verbatim verdict)"
   ],
   "safeguards": [
     "session must not modify js/**, manifest.json, or any EXISTING test file (AC-4 aborts on any)",

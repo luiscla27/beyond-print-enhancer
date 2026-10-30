@@ -1,0 +1,69 @@
+{
+ "feature": "feature_01_ai_arrange",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+ "certified": true,
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "medium",
+  "max_completion_tokens": 1600,
+  "video_parts": [
+   {
+    "video_url": {
+     "url": "mm_file://457929205391837",
+     "detail": "default",
+     "fps": 5
+    }
+   }
+  ],
+  "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite byok_arrange_roundtrip \u2014 BYOK arrange \u2014 the apply round-trip in the real page, zero network (Phase 4); its cases assert: the flow is WIRED in the live page, and its single request is served by the worker stub \u2014 so nothing leaves the machine; AC-2: a rejected patch leaves the live record byte-identical, gains no undo entry, saves nothing, and applies nothing; AC-2's other half: Cancel on a VALID patch touches nothing, and the ghosts are gone; the ghost preview is INVISIBLE to a live scanLayout: the layout is read while the overlay is on screen; AC-3: an accepted patch applies once, saves once, and ONE real Ctrl+Z keystroke restores the pre-AI layout byte for byte; O-2: the AI Arrange row is present and DISABLED with no key, its click dials nothing, and storing a key enables it without a reload; AC-V1 evidence: one real arrangement photographed before, with its ghosts, and after\n\nThis video records one browser e2e test suite for the extension's feature_01_ai_arrange feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_arrange_roundtrip.spec.js",
+   "file_id": "457929205391837",
+   "mp4_bytes": 1271158,
+   "upload_response": {
+    "file": {
+     "file_id": 457929205391837,
+     "bytes": 1271158,
+     "created_at": 1793352259,
+     "filename": "byok_arrange_roundtrip.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_arrange_roundtrip.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_01_ai_arrange\\byok_arrange_roundtrip.webm",
+   "webm_bytes": 3837869
+  }
+ ],
+ "usage": {
+  "total_tokens": 43805,
+  "total_characters": 0,
+  "prompt_tokens": 42836,
+  "completion_tokens": 969,
+  "completion_tokens_details": {
+   "reasoning_tokens": 664
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- The video loads the D&D Beyond demo character sheet for \u201cCorvo Saggio.\u201d A cookie-choices overlay appears and is dismissed.\n- The sheet remains visible until the unpacked Print Enhancer extension appears. Its left panel contains layout controls including **AI Arrange**, while a **Layer Management** panel is open on the right.\n- The **AI Arrange** control is visibly present. After it is activated, a toast states **\u201cAI proposed no changes.\u201d**\n- A dialog titled **\u201cPREVIEW THE AI ARRANGEMENT\u201d** appears, reporting that the arrangement will move **1 section** and **0 pixels**. It provides **Cancel** and **Apply** buttons.\n- After that preview is dismissed, a **\u201cSaved to browser\u201d** toast appears.\n- A second **\u201cPREVIEW THE AI ARRANGEMENT\u201d** dialog appears. During this preview, a temporary ghost-like **Dexterity 17** block is briefly visible near the lower-left portion of the sheet, then disappears.\n- No visibly rearranged final layout is shown. The video also does not visibly show a key being stored, an enabled state changing without reload, a successful applied arrangement, a save associated with an accepted arrangement, or a Ctrl+Z restoring a changed layout. The requested before/ghost/after visual evidence is therefore not fully present.\n\nThe feature\u2019s controls and preview interaction are visible, including a brief ghost preview, but the full accepted apply-and-undo round trip is not visibly completed.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793352277219
+}

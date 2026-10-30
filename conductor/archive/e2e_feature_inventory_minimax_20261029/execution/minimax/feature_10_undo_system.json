@@ -1,0 +1,94 @@
+{
+ "feature": "feature_10_undo_system",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "undo_stack_visual_capture.spec.js",
+   "file_id": "457963567915374",
+   "mp4_bytes": 1113403,
+   "upload_response": {
+    "file": {
+     "file_id": 457963567915374,
+     "bytes": 1113403,
+     "created_at": 1793360946,
+     "filename": "undo_stack_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "undo_stack_class_verification.spec.js",
+   "file_id": "457961410286140",
+   "mp4_bytes": 2701317,
+   "upload_response": {
+    "file": {
+     "file_id": 457961410286140,
+     "bytes": 2701317,
+     "created_at": 1793360949,
+     "filename": "undo_stack_class_verification.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "undo_stack_visual_capture.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_visual_capture.webm",
+   "webm_bytes": 3902251
+  },
+  {
+   "suite": "undo_stack_class_verification.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_class_verification.webm",
+   "webm_bytes": 7665661
+  }
+ ],
+ "usage": {
+  "total_tokens": 117906,
+  "total_characters": 0,
+  "prompt_tokens": 116050,
+  "completion_tokens": 1856,
+  "completion_tokens_details": {
+   "reasoning_tokens": 1189
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `undo_stack_visual_capture` (AC-V1)\n\n**Observed behavior**\n\n- The video loads the D&D Beyond character sheet, then opens the Print Enhancer panel on the left and a **Layer Management** panel on the right.\n- The left panel\u2019s **OUTPUT** section contains an **Undo** affordance. Initially, a toast states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- After a compact-mode action, a toast reads **\u201cCompact mode ON,\u201d** and the sheet\u2019s lower content visibly reflows into a denser compact layout.\n- The panel\u2019s undo entry becomes specific to the performed action, displaying **\u201cUndo: Toggle \u2018Actions\u2019\u201d**. On-screen notifications also show named undo entries such as **\u201cUndo: Move Section 1\u201d** and **\u201cLayout saved.\u201d**\n- The sheet remains visible behind the panels while these undo states and notifications appear.\n\n**Not visibly witnessed**\n\n- The sampled frames do not show a distinct keyboard keystroke or keyboard-event state for the undo affordance.\n- They also do not present a clearly separated visual-capture gallery explicitly showing all four asserted captures\u2014idle, named, applied, and keyboard\u2014as four distinguishable states.\n\n### Video 2 \u2014 `undo_stack_class_verification` (AC-3)\n\n**Observed behavior**\n\n- The Print Enhancer and Layer Management panels are shown around the real character sheet.\n- A section movement produces **\u201cUndo: Move Section 1\u201d** and **\u201cLayout saved\u201d** notifications.\n- Position changes produce **\u201cUndo: Position \u2018Actions\u2019\u201d**, again accompanied by a saved-layout notification.\n- A rotation operation shows the visible rotation tool and then **\u201cUndo: Rotate \u2018Section-Section-1\u2019\u201d**.\n- A border operation produces **\u201cUndo: Border \u2018Section-Section-1\u2019\u201d**.\n- Layer-management actions visibly report:\n  - **\u201cLayer order updated\u201d**\n  - **\u201cMoved to layer \u2018New Layer\u2019\u201d**\n  - **\u201cUndo: Reorder layers\u201d**\n- Section print, hide, and lock operations produce corresponding notifications:\n  - **\u201cUndo: Print \u2018Sections\u2019\u201d**\n  - **\u201cUndo: Hide \u2018Sections\u2019\u201d**\n  - **\u201cUndo: Lock \u2018Sections\u2019\u201d**\n- The sheet visibly changes as sections are hidden, unlocked, and restored.\n- Other visible undo actions include **\u201cUndo: Rename \u2018Renamed in Browser\u2019\u201d** and **\u201cUndo: Clone shape.\u201d**\n- Compact mode is also exercised again: **\u201cCompact mode ON\u201d** appears, followed by **\u201cUndo: Toggle \u2018Actions\u2019\u201d**, and the sheet\u2019s content is visibly compacted.\n\n**Not visibly witnessed**\n\n- The frames clearly demonstrate several real UI actions and their undo results, but they do not visibly establish every one of the eight specifically named round-trip cases. In particular, a distinct keyboard-nudge event, a clearly identifiable corner-resize operation, and a clearly identifiable chip-reparenting operation are not directly shown in the sampled frames.\n\nAcross the two videos, the undo affordance, named undo entries, applied-action notifications, saved-layout states, and multiple visible sheet reversions are demonstrated. The evidence is substantial but does not visibly cover every specifically asserted capture and round-trip case.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: undo_stack_visual_capture.spec.js, undo_stack_class_verification.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361020565
+}

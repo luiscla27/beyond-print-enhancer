@@ -1,0 +1,69 @@
+{
+ "feature": "feature_02_ai_borders",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+ "certified": true,
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "medium",
+  "max_completion_tokens": 1600,
+  "video_parts": [
+   {
+    "video_url": {
+     "url": "mm_file://457927173075499",
+     "detail": "default",
+     "fps": 5
+    }
+   }
+  ],
+  "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite byok_border_gallery \u2014 BYOK SVG border gallery \u2014 FROZEN corpus through the real choke point, real page; AC-2 refinement loop (option A) \u2014 through the real choke point; its cases assert: window.AiBorder is live in the ISOLATED world (the world the product's own code runs in); the README's demo sheet exposes a section a border can actually be SEEN on; renders ; exposes adjust/transform/canAdjust on the isolated-world AiBorder seam; adjusts a stroke-bearing border in place: weight +1.5x increases the painted stroke-width, original preserved; DISABLES refinement on a fill-only border: adjustBorder returns not_adjustable and paints NOTHING new; captures a labelled frame for every accepted design\n\nThis video records one browser e2e test suite for the extension's feature_02_ai_borders feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "file_id": "457927173075499",
+   "mp4_bytes": 2837410,
+   "upload_response": {
+    "file": {
+     "file_id": 457927173075499,
+     "bytes": 2837410,
+     "created_at": 1793352283,
+     "filename": "byok_border_gallery.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_02_ai_borders\\byok_border_gallery.webm",
+   "webm_bytes": 8545389
+  }
+ ],
+ "usage": {
+  "total_tokens": 149393,
+  "total_characters": 0,
+  "prompt_tokens": 148371,
+  "completion_tokens": 1022,
+  "completion_tokens_details": {
+   "reasoning_tokens": 623
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 197
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- **0:00\u20130:06:** The D&D Beyond site loads from a blank page. A D&D Beyond splash screen appears, followed by the site header and a \u201cYour Privacy Choices\u201d cookie dialog.\n- **0:06\u20130:29:** The real demo sheet loads, showing a character sheet for \u201cCorvo Saggio.\u201d Numerous red outlines are already visible around individual sheet elements. The sheet then scrolls downward to its descriptive text sections.\n- **0:29\u20130:34:** The unpacked extension\u2019s interface becomes visible: a dark panel titled \u201cBEYOND P\u2026\u201d on the left and \u201cLAYER MANAGEMENT\u201d on the right. The left panel visibly includes general sections such as \u201cTEMPLATES,\u201d \u201cLAYOUT,\u201d and \u201cOUTPUT,\u201d while the right panel lists sections and shapes. A notice states that no layout has been saved and the default template is loaded.\n- **0:34\u20132:17:** The view changes to another portion of the demo sheet containing character/spell tables and a pale-blue area. The sheet remains mostly static while the page is shown at a reduced scale.\n- **2:17\u20132:29:** The extension panel and Layer Management panel reappear over a largely blank portion of the sheet. Additional settings are visible in the left panel, but no clearly readable AI-border gallery, border-design dialog, refinement controls, apply action, or undo action is shown.\n- **2:29\u2013end:** The panels remain visible without a visible AI-border selection, stroke-weight adjustment, generated design, applied SVG border, or other result attributable to the AI-border feature.\n\nThe extension panel is present, but the specified AI-border end-to-end interaction is not visibly witnessed. The video does not show a selected gallery design, adjustment/refinement controls, an apply/undo flow, or a newly visible border on the sheet. Therefore, the core feature completion cannot be certified from this evidence.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793352325553
+}

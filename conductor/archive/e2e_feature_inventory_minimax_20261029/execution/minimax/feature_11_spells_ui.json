@@ -1,0 +1,71 @@
+{
+ "feature": "feature_11_spells_ui",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "file_id": "457963286422067",
+   "mp4_bytes": 957879,
+   "upload_response": {
+    "file": {
+     "file_id": 457963286422067,
+     "bytes": 957879,
+     "created_at": 1793361031,
+     "filename": "spell_detail_sections.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\spell_detail_sections.webm",
+   "webm_bytes": 3132768
+  }
+ ],
+ "usage": {
+  "total_tokens": 36703,
+  "total_characters": 0,
+  "prompt_tokens": 36389,
+  "completion_tokens": 314,
+  "completion_tokens_details": {
+   "reasoning_tokens": 144
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "The video initially shows the D&D Beyond page loading and then the real character sheet for \u201cCorvo Saggio,\u201d with the character\u2019s stats, skills, actions, and other sheet sections visible.\n\nAt about 27 seconds, the extension interface appears over the sheet. A left-side panel shows controls such as Templates, Layout, Output, and Print, while a right-side \u201cLayer Management\u201d panel lists sections and shapes. The sheet remains visible behind these panels, including the Actions tab and spell/attack-related content such as \u201cLongbow of Warning.\u201d\n\nNo visible \u201cDetails\u201d trigger is shown on a spell row, no floating spell detail section is opened, and no repeated request, loaded spell-detail content, retry state, or delete error state is demonstrated. The remaining video shows the extension panels and sheet largely unchanged.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: spell_detail_sections.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361069136
+}

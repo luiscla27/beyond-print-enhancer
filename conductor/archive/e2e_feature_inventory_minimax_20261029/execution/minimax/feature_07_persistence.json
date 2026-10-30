@@ -1,0 +1,117 @@
+{
+ "feature": "feature_07_persistence",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_settings_persistence.spec.js",
+   "file_id": "457964709056975",
+   "mp4_bytes": 1291956,
+   "upload_response": {
+    "file": {
+     "file_id": 457964709056975,
+     "bytes": 1291956,
+     "created_at": 1793360877,
+     "filename": "byok_settings_persistence.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "byok_settings_persistence_types.spec.js",
+   "file_id": "457960981746167",
+   "mp4_bytes": 1022089,
+   "upload_response": {
+    "file": {
+     "file_id": 457960981746167,
+     "bytes": 1022089,
+     "created_at": 1793360880,
+     "filename": "byok_settings_persistence_types.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "persistence_panel.spec.js",
+   "file_id": "457962565546542",
+   "mp4_bytes": 759873,
+   "upload_response": {
+    "file": {
+     "file_id": 457962565546542,
+     "bytes": 759873,
+     "created_at": 1793360882,
+     "filename": "persistence_panel.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_settings_persistence.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_persistence.webm",
+   "webm_bytes": 4144763
+  },
+  {
+   "suite": "byok_settings_persistence_types.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_07_persistence\\byok_settings_persistence_types.webm",
+   "webm_bytes": 3843324
+  },
+  {
+   "suite": "persistence_panel.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\persistence_panel.webm",
+   "webm_bytes": 2821678
+  }
+ ],
+ "usage": {
+  "total_tokens": 122135,
+  "total_characters": 0,
+  "prompt_tokens": 120994,
+  "completion_tokens": 1141,
+  "completion_tokens_details": {
+   "reasoning_tokens": 487
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `byok_settings_persistence`\n\n- The D&D Beyond demo character sheet loads, followed by the extension\u2019s dark control panel and Layer Management panel.\n- An **AI Layout Settings** modal is visible. It shows provider **OpenAI**, model **gpt-4o-mini**, and the controls **Test connection**, **Remove key**, **Cancel**, and **Save**.\n- The modal initially reports **\u201cA key is stored on this device.\u201d**\n- The page is reloaded and the extension UI reappears. The same settings modal then reports **\u201cNo key stored yet - AI arrange stays off until you add one.\u201d** and **\u201cKey removed.\u201d**\n- Thus, the visible interaction confirms that removing the stored key leaves the settings in a no-key state after reloading.\n- **NOT-VISIBLE:** no credential is entered through the UI, no `chrome.storage` or `chrome.storage.local` inspection is shown, and no storage keys, safe record, `keyPresent:false`, close/reopen field state, or re-injection readback can be verified from the frames.\n\n### Video 2 \u2014 `byok_settings_persistence_types`\n\n- The demo sheet loads with the extension panel on the left and Layer Management on the right.\n- An initial toast says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- After a page reload and re-injection, the extension shows **\u201cRestored your saved layout.\u201d**\n- The restored view visibly contains the extension\u2019s section-management interface, including **Sections (22)** and a **Shapes (0)** section.\n- This is visible evidence that a saved layout can be announced and restored after reload.\n- **NOT-VISIBLE:** the video does not visibly show creating a custom shape, selecting a custom border, changing a shape layer to Screen-only, applying a template, inspecting IndexedDB, reading a saved layout record, or observing a zero-depth undo stack. The persistence of each customization type is therefore not visually witnessed.\n\n### Video 3 \u2014 `persistence_panel`\n\n- The extension\u2019s control panel is visible on the left of the demo sheet. Under **OUTPUT**, it exposes **Print**, **Print settings**, **Save to Browser**, **Save to PC**, **Import settings**, and **Export settings**. The Layout section visibly includes **Load**, **Reset to Default**, and other layout-management actions.\n- A toast later reads **\u201cSaved to browser!\u201d**, visibly confirming the browser-save action completes without a page error.\n- The **Load** control is visibly prefixed by an action icon rather than an emoji.\n- **NOT-VISIBLE:** no PC JSON download is shown, no saved JSON contents are displayed, no clearly visible wrapper-sizing or page-separator result appears on the sheet, and the relocated \u201casks\u201d are not shown being opened from the action-icon menu.\n\nThe videos visibly establish credential removal after reload, saved-layout restoration after reload, and successful browser persistence through the control panel. However, several required storage-level and type-specific behaviors, plus the PC export and menu-reachability cases, are not visually demonstrated. Therefore, the feature family does not visibly complete the entire contracted end-to-end interaction.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793360902528
+}

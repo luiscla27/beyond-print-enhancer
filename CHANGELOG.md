@@ -103,6 +103,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     click/interaction suites so the interaction frames are actually sampled; a "NOT-VISIBLE" verdict
     on a passing suite is read as EVIDENCE about the capture/sampling, not proof the feature broke.
 
+### Added (2026-10-30, e2e_feature_inventory_minimax_20261029 — COMPLETE: verdict `verdict.md`; track ARCHIVED with this changelog's close-out commit)
+- **The full-inventory certification RAN TO COMPLETION and its product landed:** `verdict.md` +
+  `execution/progress.jsonl` (255 rows) + `execution/suite_assembly.json` +
+  `execution/minimax/` (19 feature records + `summary.json`) under the track directory. AC-1:
+  **82/82 inventory suites ran live against the unpacked MV3 extension — unique-suite totals
+  422 passing / 11 failing (432 tests)**; the 11 RED tests sit in 5 cross-cutting
+  `*_visual_capture` suites that had never run under a prior fleet gate, so they are
+  first-ever-run findings — verbatim failure text and measured causes are in `verdict.md`
+  (drag ghost commit latency, failed-write success-instead-of-error toast, stacked-overlay
+  legacy detail, lock classes at reveal, Escape-cancel, layer rename, Section-4 picker
+  interactivity). Per-feature mocha rows: all 18 feature bundles GREEN.
+- **AC-3/AC-6 closed:** 19 bundle judge calls — one per feature (18 fleet units) plus one for the
+  cross-cutting residual class — through the OFFICIAL MiniMax API (`api.minimax.io/v1`, Files API
+  `purpose=video_understanding` uploads referenced as `mm_file://<id>` in chat `video_url` parts),
+  model **MiniMax-M3.1-Flash** (the operator's "minimax 3.1 flash", pinned at Phase 0), knobs
+  `reasoning=low / max_completion_tokens=8000 / detail=default / fps=5` (measured from probes A-F
+  in `temp/scratch/` after the feature_07 truncation at exactly 1600 tokens taught that
+  reasoning=medium burns the completion budget on reasoning tokens). Verdicts: 0 WORKING /
+  7 PARTIAL / 12 NOT-VISIBLE — the NOT-VISIBLE pattern is a property of video-frame sampling
+  (a green suite can be honestly "not visible" at the sampled fps), which is why `verdict.md`
+  carries the mocha and MiniMax columns side by side. API usage: 1,494,110 tokens / 19 calls —
+  inside the track's authored bounds (`max_judge_calls: 18` reconciled 18→19 in the verdict's
+  call-pattern appendix; `max_cost_usd: 60`).
+- **Driver fix carried into this completion (durable record for the gitignored helpers):**
+  `scripts/e2e_inventory_runner.js` had used `execFileSync`, which THROWS on a RED suite's
+  mocha rc≠0, so the catch branch recorded `failing=-1` and DISCARDED the suite's already-captured
+  videos — five suites sat misrecorded as "did not run" while their full stats and up to 19 page
+  webms sat on disk. Swapped to `spawnSync` (returns rc + report without throwing), and the five
+  suites' progress rows were REPAIRED from their on-disk `report.json` stats + size-ordered webms
+  (each carries a `"repaired"` provenance flag). RED is recorded RED — never repaired to green.
+- **Suite result counts are honest about double duty:** `properties_panel.spec.js` serves BOTH
+  feature_05 and feature_12 bundles (bundle views, not a partition), and `drag_ux_visual_capture`
+  (RED 6/4) is counted inside feature_17's 24/4 row AND the cross-cutting residual — the AC-1
+  total is computed over the 82 UNIQUE suites only.
+- **Guard hygiene for the close-out — recorded honestly, including this session's correction:**
+  the YouTrack receipt had gone stale (RECEIPT_STALE — a refusal BY NAME, never a silent local
+  fallback, per the tracker-authority wiring); refreshed through the documented path
+  (`python vendor/youtrack/reader.py read --root .`, revision 345dce35c273 unchanged, 17 issues).
+  CORRECTION (filed by the close-out session 2026-10-30): the interrupted author session's claim
+  that the guard "printed OK on both halves" at this point was MISTAKEN — re-measured, the guard
+  was RED on exactly one item (`complete (all boxes ticked) but no close-out artifact`), because
+  the session died between ticking plan.md's last box and writing the close-out record. The
+  close-out session supplied the missing artifact (`final_report.md`) and ARCHIVED the track to
+  `conductor/archive/e2e_feature_inventory_minimax_20261029/` (the repo's convention for completed
+  tracks; a keep-live exception is not expressible here — `conductor/tracks.md` was deleted in
+  768a20b and recreating it would trip the guard's RF-02 ambiguous-registry refusal against the
+  overlay's own `vendor/conductor/tracks.md`). After that, `vendor/housekeeping_guard.py check`
+  printed OK on both root and vendor halves.
+- AC-4 audit at close: `git status -- js/ manifest.json test/` EMPTY — no product code touched.
+  Video evidence (840 .webm page videos, 323 MB) stays gitignored by the operator's 2026-10-29
+  decision (`.gitignore` `/conductor/tracks/*/execution/evidence/`, extended the same close-out
+  with `/conductor/archive/*/execution/evidence/` so the archive move does not un-ignore the 2.1 GB
+  tree) — the committed record IS the
+  textual half (progress rows carry each chosen video's byte size + page count so the pick is
+  auditable; the minimax records carry the upload's `file_id` + `mp4_bytes` + `upload_response`).
+
 ### Added (2026-10-26, track ux_quick_wins_20261025 — Phases 1-3 of the six approved e2e-matrix gaps)
 - **Per-layer three-state visibility (AC-1 / BEYOND-9).** Each layer row now carries an explicit
   Print only / Both / Screen only strip (`js/dom/layer_manager.js`), which REPLACES nothing and

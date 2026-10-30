@@ -1,0 +1,71 @@
+{
+ "feature": "feature_15_modals",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "modal_primitive_visual_capture.spec.js",
+   "file_id": "457966963867969",
+   "mp4_bytes": 1366284,
+   "upload_response": {
+    "file": {
+     "file_id": 457966963867969,
+     "bytes": 1366284,
+     "created_at": 1793361167,
+     "filename": "modal_primitive_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "modal_primitive_visual_capture.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\modal_primitive_visual_capture.webm",
+   "webm_bytes": 3823050
+  }
+ ],
+ "usage": {
+  "total_tokens": 42568,
+  "total_characters": 0,
+  "prompt_tokens": 41872,
+  "completion_tokens": 696,
+  "completion_tokens_details": {
+   "reasoning_tokens": 359
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 308
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "The video begins by loading the real D&D Beyond site. After the site navigation, loading animation, and privacy banner appear, the demo sheet loads as a character sheet with red print-enhancer outlines around many sections.\n\nAround 30 seconds, the extension\u2019s dark **Beyond Print Enhancer** panel appears on the left, while a **Layer Management** panel appears on the right. A toast states, \u201cNo saved layout yet \u2014 the default template is loaded,\u201d and the sheet visibly changes from the red print view to a black-and-white template layout.\n\nThe following modal interactions are visibly shown:\n\n1. A **Rename Layer** dialog opens with the current name \u201cShapes (Default).\u201d The name field is cleared, and pressing **Continue** produces the visible validation message: \u201cEnter a name to continue \u2014 the field cannot be empty.\u201d The modal then closes.\n2. A **Select Decorative Shape** modal opens, showing border/style filters, a search field, and decorative shape thumbnails such as Archer Ability, Archer Finial, Archer Header, and Archer Outline. It is then closed without a clearly visible selection.\n3. A **Templates** modal opens with visible **Basic Template** and **Archiver Template** entries, layout options, preview thumbnails, and a **Cancel** button. This modal remains open when the video ends.\n\nNo visible capture artifact, screenshot export, or completed migrated-dialog placement on the sheet is shown. The video does visibly demonstrate multiple modal openings, one input-validation affordance, modal dismissal, and the template-loaded sheet state, but the asserted \u201ccaptures the migrated dialog, the untouched dialogs\u201d behavior is not visibly completed.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: modal_primitive_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361206034
+}

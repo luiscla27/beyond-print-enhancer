@@ -9,7 +9,7 @@ directives this decision must honor.
 **Basis tie:** the operator directive's own words — "make minimax 3.1 flash as the one to
 certify" (singular certifier seat), "Send him full videos" (whole-video evidence class), "all
 features inventory" (the 82-file inventory, not the 18-unit subset) — projected onto the track's
-sealed acceptance criteria from `conductor/tracks/e2e_feature_inventory_minimax_20261029/spec.md`:
+sealed acceptance criteria from `conductor/archive/e2e_feature_inventory_minimax_20261029/spec.md`:
 [AC-1]=464bbfa24882, [AC-2]=6e0da1fc0955, [AC-3]=eb4c2b44e27a, [AC-4]=40706b96b470,
 [AC-5]=3922b306bf80, [AC-6]=f5839229ee99. AC-6 binds the seat, AC-2 binds the evidence class,
 AC-1 binds the scope.
