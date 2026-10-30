@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-10-29, e2e_feature_inventory_minimax_20261029 — reusable full-inventory video-certification skill)
+- **A reusable skill for running the whole e2e feature inventory with full-video evidence and
+  MiniMax certification: `vendor/.reasonix/skills/e2e-feature-inventory-minimax/SKILL.md`**
+  (declared local in `governance.yaml`, discovered via `[skills] paths`). Distilled from track
+  `e2e_feature_inventory_minimax_20261029` (commit `19a4552`): drive all 82 `test/browser_e2e`
+  specs (432 tests) against the unpacked MV3 extension, capture a FULL video of every suite's
+  browser page, then certify each of the 18 fleet features by sending its complete video to
+  MiniMax-3.1-Flash through the OFFICIAL MiniMax API as the single certifier seat, with the
+  requested id "minimax 3.1 flash" pinned to the real API model name at run time. Because the
+  two driver helpers are gitignored project-authored harness helpers (per the house convention),
+  THIS changelog entry is their only durable record — including their measured corrections:
+  **`scripts/e2e_inventory_runner.js`** — sequential, resume-safe mocha driver that groups each
+  suite to its fleet feature via `ux_feature_fleet_20261029/units.json`, runs each spec in a child
+  process at the `npm run test:e2e` timeout (900 s), reads the mocha JSON report from a FILE
+  (`--reporter-option output=`, not stdout — a spec's console output corrupts stdout-JSON,
+  measured 2026-10-29), keeps the suite's representative `.webm` at a stable path under
+  `<outdir>/evidence/<feature>/`, and appends one `progress.jsonl` row per suite
+  (`{suite, feature, passing, failing, pending, video, video_missing, video_status, video_bytes,
+  pages_captured, ts}`). Two MEASURED corrections landed in the same session after the first run
+  was interrupted: **(a)** the video picker was `readdirSync(...)[0]`, i.e. arbitrary directory
+  order, while one suite boots one page per case — so all 9 suites that had captured a video were
+  storing an unrepresentative page
+  (`icons_privacy_surface` kept 176 KB with a 2681 KB page available; `byok_settings_storage`
+  181 KB vs 3517 KB), which would have certified a blank tab; it is now SIZE-ORDERED and the
+  chosen size plus the page count go on the row so the choice is auditable. **(b)** `--resume`
+  keyed on the suite NAME alone, which froze the 20 instrumentation-era video gaps forever and
+  would have converted a capture bug into a permanent AC-2 failure; the resume set is now built
+  from the LATEST row per suite and counts a suite done only when it both ran (`failing >= 0`) and
+  produced a video, so a gap is retried. And **`scripts/e2e_video_preload.js`** — a mocha
+  `--require` preload that instruments every page the harness's own launcher opens, so capture
+  exists WITHOUT editing the tracked harness (`test/browser_e2e/_helpers/dom.js` stays
+  read-only). Its mechanism is NOT the context-level `video: { dir }` option: MEASURED on
+  Playwright 1.63.0 that option silently produces no file (the server-side recorder never starts —
+  `DEBUG=PW:video*` emits nothing even for a plain `newContext({video})`). The working mechanism is
+  the page-level screencast (`page.screencast.start({path, size})` / `.stop()`), and the FLUSH
+  ORDER is the whole file: `page.on("close", stop)` fails because by the time that event fires the
+  CDP session is gone (`screencast.stop: Target page, context or browser has been closed`, no
+  `.webm` written — reproduced four ways), so the preload wraps `page.close()` and `context.close()`
+  to `await stop()` FIRST. A 615,169-byte `.webm` of the live demo sheet was reproduced through
+  exactly that path. The preload is process-scoped and inert when `E2E_VIDEO_DIR` is unset, so a
+  plain `npm run test:e2e` is unaffected; capture works headless (the harness boots `--headless=new`).
+  To run the procedure:
+  `node scripts/e2e_inventory_runner.js --outdir <track>/execution [--resume] [--suite <file>]`.
+  Smoke-tested twice: `icons_privacy_surface.spec.js` → 3/3 passing, 2,637,258-byte video across 2
+  pages; `absolute_positioning.spec.js` → 4/4 passing but `video_missing`, which is
+  the gap class fix (b) above now retries instead of skipping.
+
 ### Added (2026-10-26, track ux_quick_wins_20261025 — Phases 1-3 of the six approved e2e-matrix gaps)
 - **Per-layer three-state visibility (AC-1 / BEYOND-9).** Each layer row now carries an explicit
   Print only / Both / Screen only strip (`js/dom/layer_manager.js`), which REPLACES nothing and
