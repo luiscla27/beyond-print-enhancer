@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-10-31, visual_capture_red_closure_20261031 — closure of the 11 RED browser_e2e visual-capture findings; product fixes in js/)
+- **Two product fixes in the shipped content scripts, closing the behavioural half of the 11 RED
+  findings** (the e2e inventory certification, archived `e2e_feature_inventory_minimax_20261029`,
+  was the first run ever to execute the 5 `*_visual_capture` suites — 422/432 passed, 11 RED):
+  - **`js/print_styles.js` — a shape wrapper on a layer that is LOCKED and NOT the active layer
+    (and its whole subtree) now steps out of the hit test** (`pointer-events: none !important`,
+    scoped `:not(.be-active-layer)`). MEASURED defect: the sheet's decorative shapes sit on
+    `#print-enhance-shapes-layer` (z-index 1001, ABOVE the sections layer's 1000), and that layer
+    boots LOCKED with `pointer-events: auto` — so its frames swallowed every pointer event over
+    the sections they framed: sections could not be dragged at all (mouse OR touch) and the 🎯
+    "select section" button in a section's own action rail was unclickable (hit-test
+    interception). Measured after the fix on a real boot: `elementFromPoint` at 6 section-wrapper
+    centres returns sheet content (`fromShapesOverlay: false` ×6), and a dispatched pointer
+    sequence commits `.be-section-wrapper.dragging` MID-GESTURE on both `pointerType: "mouse"`
+    and `"touch"` — the two RED phase-1 assertions and the phase-4 click, closed. The rule's two
+    scope bounds are load-bearing and documented at the rule: SHAPE wrappers only (a shape layer
+    is the only thing that legally paints above the active layer; section wrappers keep every bit
+    of U-7's pinned pointer interaction), and `:not(.be-active-layer)` (isLocked and "is the
+    insertion target" are independent — the layer you are WORKING on keeps full interaction,
+    dimmed-but-hittable). U-7's requirement (a lock is not a trap) survives whole: its escape
+    hatch is the layer manager's ROW, which lives outside every `.pe-layer` and is untouched.
+  - **`js/shape_picker.js` — Escape in the asset-picker search field is now two-step**: a
+    NON-empty query is cleared and the modal stays open (the field owns that Esc); an EMPTY field
+    leaves the event to bubble to the modal's own window handler (`onModalKey`), which closes the
+    sheet. It used to `stopPropagation()` unconditionally, and the picker opens with that field
+    focused — so Escape NEVER cancelled the sheet from its default state (picker_ux RED phase 3,
+    "Esc closed the modal: false !== true"). Enter still never commits the modal.
+- **Eight stale-assertion corrections in 3 `*_visual_capture` spec files (operator ruling
+  2026-10-31, Option A — "fix all 6 real gaps in js/, and update those 5 stale assertions
+  minimally in the spec files, documented as superseded behavior")**, each marked SUPERSEDED
+  BEHAVIOUR in-place with its product citation, and each re-checked against the shipped source in
+  `conductor/archive/visual_capture_red_closure_20261031/verification.md` before the verdict:
+  (1) `indexedDB.open("DDBPrintEnhancerDB", 4)` ×3 → open WITHOUT a frozen version — the product
+  ships `DB_VERSION = 5` (`js/storage.js`), and opening a live v5 database at v4 throws
+  `VersionError`, so the corruption/clean-reset those tests plant never landed (the boot
+  restore-failure card therefore legitimately never rendered); (2) first-`.be-feedback` toast
+  selection → THE action's toast by its text — `announceBootRestore`
+  (`js/persistence.js`) emits a legitimate `"Restored your saved layout.", "success"` toast at
+  every restoring boot and toasts stack in one lane, so it can sit in front; the assertion still
+  requires the save toast's `be-feedback-info` class; (3) Reset gate `role === "dialog"` →
+  accepts `alertdialog` — the shared destructive-gate primitive (`js/recovery_ui.js`) has
+  announced destructive surfaces as `alertdialog` since track `modal_primitive_20260910`;
+  (4)+(5) phase-2 lock state — the exclusive-lock paradigm (`_toggleLayerLockNow` locks every
+  OTHER layer on unlock, pinned by `test/unit/layer_manager.test.js`) makes "no layer stays
+  locked" unreachable BY DESIGN, so the assertion now checks the invariant the reveal needs (no
+  `be-lock-shapes-default` on `<body>`, the shape's layer unlocked and active), and the reveal
+  step resolves the shape's OWN layer and clicks the lock only when that layer is actually LOCKED
+  (it used to blind-toggle and RE-LOCK the already-unlocked layer — measured live); (6) catalog
+  "legacy detail stacks a second overlay" (`nOverlays >= 2`) → `strictEqual(nOverlays, 1)` + an
+  in-modal detail check — `js/catalog_service.js` has rendered detail inside the single overlay
+  (`setView("detail")`, `renderDetail`) for a long time; (7)+(8) confirm buttons found by
+  `.be-modal-ok` class instead of text-content matches that can never fire (`textContent === "OK"`
+  ×2, `/apply/i` ×1) — the ratifying label is "Continue"/"Continue…" (`js/modals.js`,
+  `js/catalog_service.js`), pinned by `test/unit/ia_consistency.test.js`'s RATIFIED set.
+
+### Fixed (2026-10-31, same track — verification evidence)
+- 45/45 green across the 5 suites in real-browser Playwright runs through the shipped MV3 harness
+  boot, using the inventory runner's exact mocha invocation with each suite's SHOTS flag on
+  (drag_ux 10/10, ui_ux_audit 4/4, custom_templates 6/6, picker_ux 18/18, shape_layer_ps 7/7;
+  was 34/45) — per-case `.webm` + per-suite JSON reports retained under
+  `temp/scratch/verify-*/` (scratch, gitignored). `npm run lint` green; `npm test` composite
+  2235 passing / 0 failing. Track record: `conductor/archive/visual_capture_red_closure_20261031/`
+  (spec + plan + verification + deliberation/; registry row in `vendor/conductor/tracks.md`).
+
 ### Added (2026-10-29, e2e_feature_inventory_minimax_20261029 — reusable full-inventory video-certification skill)
 - **A reusable skill for running the whole e2e feature inventory with full-video evidence and
   MiniMax certification: `vendor/.reasonix/skills/e2e-feature-inventory-minimax/SKILL.md`**

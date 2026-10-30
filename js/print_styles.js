@@ -926,6 +926,46 @@ function enforceFullHeight() {
          ONLY, for every layer state, so the one reveal rule below (scoped to
          .be-active-layer) is the only mechanism. */
 
+      /* THE LAYER YOU ARE NOT WORKING ON MUST NOT EAT THE POINTER.
+         MEASURED DEFECT (2026-10-30, closing the 11 RED browser_e2e findings): the sheet's
+         decorative shapes sit on a layer that boots LOCKED, and that layer paints ABOVE the
+         sections layer (#print-enhance-shapes-layer z-index 1001 vs 1000). Because a locked
+         wrapper kept pointer-events: auto (U-7's fix, below), those frames swallowed every
+         pointer event over the sections they frame: measured on the demo sheet, the topmost
+         element at six different section centres — and at the 🎯 'select section' button in a
+         section's own action rail — was a node from the shapes overlay. The result was that
+         sections could not be dragged at all and their action buttons could not be clicked.
+
+         The rule that resolves it, scoped as narrowly as the two requirements allow: a SHAPE
+         wrapper on a layer that is locked and is NOT the active one steps out of the hit test,
+         so the press lands on the content sheet underneath. Two bounds on the scope, both
+         load-bearing:
+
+         - SHAPE wrappers only. A shape layer is the only thing that legally paints ABOVE the
+           active layer (#print-enhance-shapes-layer z-index 1001 vs the sections layer's 1000),
+           so it is the only thing that can steal a press from it. Section wrappers keep every
+           bit of the pointer interaction U-7 pinned for them, and ui_ux_audit_visual_capture's
+           "a locked wrapper stays interactive" probe measures exactly that.
+         - :not(.be-active-layer). isLocked and "is the insertion target" are INDEPENDENT
+           (js/dom/layer_manager.js toggleLayerLock vs applyInsertionTarget): a layer can be both,
+           and the one you are working on must keep its pointer interaction so its own rail stays
+           usable.
+
+         U-7 survives whole. Its requirement was that a lock is not a TRAP — the unlock/hide/
+         delete controls must stay reachable — and the escape hatch it needs is the layer's own
+         ROW in the layer-manager panel (js/dom/layer_manager.js), which is not inside any
+         .pe-layer and is untouched here. A non-active shape layer's hover-revealed action bar
+         was never reachable anyway: that reveal is scoped to .be-active-layer (the rule
+         below), and the moment such a layer BECOMES the active one this rule stops applying and
+         its wrappers are fully interactive again — dimmed-but-hittable, exactly as before. This
+         is the same posture the legacy Shapes-Mode lockdown already takes for the whole shapes
+         layer (pointer-events: none !important, below), applied per-LAYER instead of
+         all-or-nothing. */
+      .be-layer-locked:not(.be-active-layer) .be-shape-wrapper,
+      .be-layer-locked:not(.be-active-layer) .be-shape-wrapper * {
+          pointer-events: none !important;
+      }
+
       /* ISSUE_drag_and_drop.md (2026-09-14): the GREEN HOVER GLOW is gone. This rule
          used to paint filter: drop-shadow(0 0 15px #28a745) twice over the hovered
          section — a filter repaints the whole subtree (every border, background and
