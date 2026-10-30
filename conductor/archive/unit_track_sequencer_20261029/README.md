@@ -1,8 +1,9 @@
 # Track: Sequential unit-track re-verification fleet (unit_track_sequencer_20261029)
 
-**Status:** IN PROGRESS — spec and plan sealed; execution is delegated to a SEPARATE
-Reasonix session (see LAUNCH-PROMPT.md beside this file), so this session does not burn
-context running 18 verification suites.
+**Status:** COMPLETE — all 7 acceptance criteria met; execution was delegated to a SEPARATE
+Reasonix session (see LAUNCH-PROMPT.md), which landed `sequencer_verdict.md` + `progress.jsonl`
+(committed `f96349a`, 2026-10-29) proving 18/18 certificates green (648 live passing), full suite
+green (2229/0), browser-gate collection green (432/82, zero drift), AC-4 disjointness proven.
 
 **Operator directive (verbatim):** "Create new track to sequentially run all those tracks
 on a separate reasonix session, that is meant so you don't run out of context on this session."
