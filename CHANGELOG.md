@@ -34,8 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   chosen size plus the page count go on the row so the choice is auditable. **(b)** `--resume`
   keyed on the suite NAME alone, which froze the 20 instrumentation-era video gaps forever and
   would have converted a capture bug into a permanent AC-2 failure; the resume set is now built
-  from the LATEST row per suite and counts a suite done only when it both ran (`failing >= 0`) and
-  produced a video, so a gap is retried. And **`scripts/e2e_video_preload.js`** — a mocha
+  from the LATEST row per suite and counts a suite done only when it ran (`failing >= 0`), produced
+  a video, AND recorded its byte size — the last term is what makes the 7 pre-fix rows (which name a
+  video whose representativeness nobody can show) retry too, so a gap or a stale pick can never
+  harden into a permanent AC-2 failure. And **`scripts/e2e_video_preload.js`** — a mocha
   `--require` preload that instruments every page the harness's own launcher opens, so capture
   exists WITHOUT editing the tracked harness (`test/browser_e2e/_helpers/dom.js` stays
   read-only). Its mechanism is NOT the context-level `video: { dir }` option: MEASURED on
