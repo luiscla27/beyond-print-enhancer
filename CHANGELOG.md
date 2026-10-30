@@ -55,6 +55,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Smoke-tested twice: `icons_privacy_surface.spec.js` → 3/3 passing, 2,637,258-byte video across 2
   pages; `absolute_positioning.spec.js` → 4/4 passing but `video_missing`, which is
   the gap class fix (b) above now retries instead of skipping.
+  **2026-10-30 resume — Phase 0 model-id pinning RESOLVED + the Phase 4 certification pipeline
+  SOLVED and LIVE-TESTED (both had been the open unknowns; recorded here because the driver and
+  the certifier are the durable surface):**
+  - **Model id pinned:** the operator's "minimax 3.1 flash" = the official **`MiniMax-M3.1-Flash`**
+    (announced 2026-10-19; 1M-context frontier multimodal coding model; supports text + image +
+    VIDEO understanding). Confirmed against `platform.minimax.io` docs AND a live smoke call
+    (`MINIMAX_API_OK`, usage accounted). The credential is the env `MINIMAX_API_KEY` (live-
+    verified; NEVER committed).
+  - **HOST CORRECTION `.ai` -> `.io` (measured, guard-re-sealed):** the LIVE official host is
+    `https://api.minimax.io` — `api.minimax.ai` does NOT resolve from this network (curl 000 /
+    DNS failure) while `api.minimax.io` returns 200 + real completions. base_url (OpenAI-compatible)
+    `https://api.minimax.io/v1`; Anthropic-compatible `https://api.minimax.io/anthropic`. Corrected
+    in `index.md`/`README.md`/`LAUNCH-PROMPT.md`/`plan.md`/`spec.md`/`metadata.json` and the skill
+    `SKILL.md`; the track's sealed criteria re-locked via
+    `python vendor/housekeeping_guard.py seal --track e2e_feature_inventory_minimax_20261029`
+    (AC-3 sha256 moved `464bbfa2…` -> `38a1855…`; the criterion's MEANING is unchanged — "official
+    MiniMax API + resolved id recorded" — only the host literal was corrected, and the .ai->.io
+    resolution is recorded in the verdict appendix). Guard `check` exit 0, criteria lock green.
+  - **THE BLOCKER the sources never stated: Playwright screencast emits `.webm` (VP8/VP9), but the
+    official API accepts ONLY MP4/AVI/MOV/MKV for video input** (docs `MessageContentPart.video_url`
+    inline AND the Files API `purpose=video_understanding` list "MP4, AVI, MOV, MKV"). `.webm` is
+    rejected by BOTH delivery forms, so every captured video must be TRANSCODED before it can be
+    sent. No system ffmpeg is on PATH; the static binary inside Python 3.12's already-installed
+    `imageio-ffmpeg` package supplies it: `imageio_ffmpeg.get_ffmpeg_exe()` ->
+    `...\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v7.1.exe` (ffmpeg 7.1), which
+    DECODES vp8/vp9 and ENCODES libx264/aac. Verified webm->mp4:
+    `-c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p -movflags +faststart -an`
+    (rc 0; 2.8 MB webm -> 1.16 MB mp4; all feature videos land 48 KB-1 MB mp4).
+  - **Two OFFICIAL delivery forms, BOTH live-tested returning genuine verdicts:** **(a) Files API**
+    (recommended) `POST /v1/files/upload` multipart `{purpose:"video_understanding", file}` ->
+    `{file:{file_id}}`, then reference it as `mm_file://{file_id}` in a chat `video_url` part
+    (supports video up to 512 MB, retained 7 days; avoids multi-MB base64 bodies for the ~1 MB
+    feature videos). Live-verified: uploaded `color_picker.mp4` -> `file_id 457885394072006`, and a
+    follow-up chat returned a real video-grounded verdict through the `mm_file://` reference.
+    **(b) base64 data URL** `data:video/mp4;base64,<B64>` inline in the `video_url.url` (request
+    body <= 64 MB, video <= 50 MB) — live-verified on the 48 KB smoke video. Chat call shape
+    (OpenAI-compatible), verified: `POST /v1/chat/completions`, `model:"MiniMax-M3.1-Flash"`,
+    `reasoning_effort`, `messages[].content[] = [{type:"text",…},{type:"video_url",
+    video_url:{url:REF,"detail":"low","fps":1}}]`; `fps` default 1, range [0.2,5]; `detail`
+    low|default|high.
+  - **Honest-evidence caveat (measured, not hidden):** at `fps:1`/`detail:"low"` the model sampled
+    too sparsely to see color_picker's click SEQUENCE and honestly returned **NOT-VISIBLE** even
+    though that suite passed 4/4 — so a green suite can get a video-sampling-driven "not visible"
+    verdict. The certifier prompt therefore asks the model to describe what it ACTUALLY sees before
+    giving a verdict, and the driver should use `fps>=2` (optionally `detail:"default"`) for
+    click/interaction suites so the interaction frames are actually sampled; a "NOT-VISIBLE" verdict
+    on a passing suite is read as EVIDENCE about the capture/sampling, not proof the feature broke.
 
 ### Added (2026-10-26, track ux_quick_wins_20261025 — Phases 1-3 of the six approved e2e-matrix gaps)
 - **Per-layer three-state visibility (AC-1 / BEYOND-9).** Each layer row now carries an explicit

@@ -11,7 +11,7 @@ each one. Send him full videos, use the official minimax api."
 **What this track is:** an e2e verification fleet over the ENTIRE browser_e2e inventory
 (82 spec files / 432 tests / 88 loaded js files — `test/browser_e2e/spec_inventory.json`), run
 live against the unpacked MV3 extension with FULL-VIDEO capture per suite, then certified by the
-MiniMax model ("minimax 3.1 flash", pinned to the exact id the official api.minimax.ai accepts)
+MiniMax model ("minimax 3.1 flash", pinned to the exact id the official api.minimax.io accepts)
 via the OFFICIAL MiniMax API, which receives each feature's full video(s) as visual evidence.
 
 **What it is NOT:** not a re-run of the unit suite (f96349a already verdicted that); not a

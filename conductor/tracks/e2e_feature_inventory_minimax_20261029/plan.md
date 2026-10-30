@@ -9,7 +9,7 @@ are the delegated session's work.
 - [ ] **Phase 0 — Orientation + model-id pinning.** Read spec.md, metadata.json,
   `test/browser_e2e/spec_inventory.json`, `conductor/tracks/ux_feature_fleet_20261029/units.json`.
   Resolve the requested "minimax 3.1 flash" to the EXACT model id the official MiniMax API
-  (api.minimax.ai) accepts (query its published model list); record the resolution or the mismatch.
+  (api.minimax.io) accepts (query its published model list); record the resolution or the mismatch.
 - [ ] **Phase 1 — Videography launcher.** Author the track's own launcher (under this track's
   directory, e.g. `execution/run_inventory_e2e.js`) that boots the harness's
   `launchExtensionContext` with Playwright `video: "on"` and replays the 82 inventory specs

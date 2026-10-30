@@ -21,8 +21,8 @@
     "launcher": "conductor/tracks/e2e_feature_inventory_minimax_20261029/track_launcher.json",
     "launch_prompt": "LAUNCH-PROMPT.md beside this file",
     "inventory_gate": "test/browser_e2e/spec_inventory.json (82 spec files, 432 tests, 88 loaded js files)",
-    "certifier_seat": "minimax 3.1 flash - pinned at execution start to the exact model id the official api.minimax.ai accepts; resolution or mismatch is recorded in the verdict (operative clause in spec.md)",
-    "certifier_api": "official MiniMax API only (api.minimax.ai) - no router/relay proxy substitution without an explicit verdict note",
+    "certifier_seat": "minimax 3.1 flash - pinned at execution start to the exact model id the official api.minimax.io accepts; resolution or mismatch is recorded in the verdict (operative clause in spec.md)",
+    "certifier_api": "official MiniMax API only (api.minimax.io) - no router/relay proxy substitution without an explicit verdict note",
     "evidence_class": "FULL VIDEO per feature (Playwright video capture of the whole suite context) - not screenshots, not strips",
     "feature_grouping": "conductor/tracks/ux_feature_fleet_20261029/units.json (18 fleet features -> their e2e spec files); remaining inventory files grouped as cross-cutting suites"
   },
@@ -37,7 +37,7 @@
   "track_id": "e2e_feature_inventory_minimax_20261029",
   "acceptance_criteria": {
     "track": "e2e_feature_inventory_minimax_20261029",
-    "sealed_utc": "2026-10-29T22:07:19Z",
+    "sealed_utc": "2026-10-30T06:28:47Z",
     "criteria": {
       "[AC-1]": {
         "sha256": "464bbfa248829d4b2712f5db69312ffcfcb3b5496db876fc622638221490b483",
@@ -48,8 +48,8 @@
         "text": "**[AC-2]** \u2014 a full video (Playwright `video` capture of the entire suite context) is produced and retained for EVERY feature in the inventory, not screenshots; videos live under this track's evidence directory. Falsifiable: any feature with no video artifact on disk fails AC-2."
       },
       "[AC-3]": {
-        "sha256": "eb4c2b44e27a4f835a9671e5be39a1d1c3a2e81510a6b1b2d1e3b239e0d4020f",
-        "text": "**[AC-3]** \u2014 each feature is certified by the MiniMax model through the OFFICIAL MiniMax API (api.minimax.ai), which receives the full video(s) of that feature as visual evidence; the API call, the resolved model id, and the verdict text are recorded per feature. Falsifiable: a feature with no recorded API verdict, or a verdict not backed by an API response body, fails AC-3."
+        "sha256": "38a18551407f12f47685e292f4e416d89438547d957388b9537529918f3deddc",
+        "text": "**[AC-3]** \u2014 each feature is certified by the MiniMax model through the OFFICIAL MiniMax API (api.minimax.io), which receives the full video(s) of that feature as visual evidence; the API call, the resolved model id, and the verdict text are recorded per feature. Falsifiable: a feature with no recorded API verdict, or a verdict not backed by an API response body, fails AC-3."
       },
       "[AC-4]": {
         "sha256": "40706b96b4702da107c9f07bc30b624c16fa254adb3d8e8dc9ae0fef363014a1",

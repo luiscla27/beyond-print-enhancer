@@ -35,7 +35,7 @@ full-video evidence + 1 MiniMax certification per feature, written into the trac
    `test/browser_e2e/spec_inventory.json` (82 files / 432 tests / 88 js files), and
    `conductor/tracks/ux_feature_fleet_20261029/units.json` (the 18 feature -> spec map).
 2. **Pin the certifier id.** The operator asked for "minimax 3.1 flash" through the OFFICIAL
-   MiniMax API (api.minimax.ai). Resolve that to the exact model id the official API accepts —
+   MiniMax API (api.minimax.io). Resolve that to the exact model id the official API accepts —
    query the official model list/documentation and record the resolution process. If
    "3.1 flash" is not a name the official API exposes, record the mismatch verbatim, name the
    closest official id, and proceed with the official id — the verdict must show the resolution,
@@ -64,7 +64,7 @@ video fails AC-2 — recorded, not fabricated.
 ## Phase 4 — MiniMax certification (AC-3, AC-6)
 
 For each feature, send its FULL video(s) to the pinned MiniMax model via the OFFICIAL MiniMax
-API (api.minimax.ai), as VISUAL evidence of the feature working. Record per feature under
+API (api.minimax.io), as VISUAL evidence of the feature working. Record per feature under
 `execution/minimax/<feature>.json`: the endpoint used, the resolved model id, the request you
 sent (redact the API key — never commit a secret), and the VERBATIM verdict text. Ask the model
 to judge, from the video, whether the feature's e2e behavior visibly completes its intended

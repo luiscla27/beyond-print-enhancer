@@ -25,7 +25,7 @@ one agent, never a cross-session merge; (3) the 82 inventory spec files are read
 no js/, manifest.json, or existing test file is written by the run ([AC-4]); (4) the track's
 product is verdict.md + progress.jsonl inside the track directory, resume-safe from the last
 progress row; (5) the requested model id "minimax 3.1 flash" is pinned to the exact id the
-official api.minimax.ai accepts, with the resolution (or mismatch) recorded — never a silent
+official api.minimax.io accepts, with the resolution (or mismatch) recorded — never a silent
 substitution.
 
 **Expected observable outcomes:** 82 progress.jsonl rows (one per suite, each with its mocha

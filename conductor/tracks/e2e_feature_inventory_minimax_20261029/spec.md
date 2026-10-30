@@ -49,7 +49,7 @@ each one. Send him full videos, use the official minimax api"
 **Model-id pinning (operative clause):** The requested id "minimax 3.1 flash" is pinned at
 execution start to the exact model name the OFFICIAL MiniMax API accepts (the fleet's relay
 integrates the MiniMax provider family, `vendor/relay/model_catalog.py:~1450`, and the concrete
-model id is resolved against api.minimax.ai's published model list at run time — the actual id
+model id is resolved against api.minimax.io's published model list at run time — the actual id
 string, e.g. the M-series variant the docs expose, is recorded in the verdict with the API
 response proving resolution). If "3.1 flash" does not resolve to a real MiniMax model id, the
 run records the mismatch and names the closest official id instead of silently substituting.
@@ -62,7 +62,7 @@ run records the mismatch and names the closest official id instead of silently s
   and retained for EVERY feature in the inventory, not screenshots; videos live under this
   track's evidence directory. Falsifiable: any feature with no video artifact on disk fails AC-2.
 - **[AC-3]** — each feature is certified by the MiniMax model through the OFFICIAL MiniMax API
-  (api.minimax.ai), which receives the full video(s) of that feature as visual evidence; the API
+  (api.minimax.io), which receives the full video(s) of that feature as visual evidence; the API
   call, the resolved model id, and the verdict text are recorded per feature. Falsifiable: a
   feature with no recorded API verdict, or a verdict not backed by an API response body, fails
   AC-3.
