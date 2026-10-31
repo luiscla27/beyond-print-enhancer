@@ -1,0 +1,71 @@
+{
+ "feature": "feature_04_shape_picker",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "custom_shapes_upload.spec.js",
+   "file_id": "458221491339633",
+   "mp4_bytes": 959011,
+   "upload_response": {
+    "file": {
+     "file_id": 458221491339633,
+     "bytes": 959011,
+     "created_at": 1793424348,
+     "filename": "custom_shapes_upload.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "custom_shapes_upload.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\custom_shapes_upload.webm",
+   "webm_bytes": 2986481
+  }
+ ],
+ "usage": {
+  "total_tokens": 34539,
+  "total_characters": 0,
+  "prompt_tokens": 34049,
+  "completion_tokens": 490,
+  "completion_tokens_details": {
+   "reasoning_tokens": 159
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "The video visibly shows:\n\n- The D&D Beyond demo sheet loading in the browser, with a privacy/cookie notice appearing briefly and then disappearing.\n- The real character sheet for \u201cCorvo Saggio\u201d loads and remains visible.\n- The unpacked Print Enhancer extension panel is present on the left. Its **LAYOUT** section visibly includes **Add Shape**, along with **PRINT!**, **Print Settings**, and **Save to Browser**.\n- A **LAYER MANAGEMENT** panel is also visible on the right, listing **Sections (22)** and **Shapes (1)**.\n- The extension\u2019s **Add Shape** control opens a centered **SELECT DECORATIVE SHAPE** dialog.\n- The dialog initially shows tabs for **BORDERS**, **SHAPES**, and **CUSTOM**, along with a search field and three visible archetype thumbnails.\n- The **CUSTOM** tab is then visibly selected. It exposes an **Upload from disk** action, explanatory text for supported image files, the message **\u201cNo custom shapes uploaded yet.\u201d**, and **Cancel** and **Add Shape** buttons.\n- The **Add Shape** button appears disabled while no custom upload is shown.\n- The video ends while the Custom tab and empty upload area are still displayed. No local-file selection, uploaded preview, OK/addition to the sheet, Cancel-after-upload behavior, or base64 asset is visibly demonstrated. The character sheet itself shows no newly placed custom shape.\n\nBecause the supplied frames do not visibly witness the file upload or the resulting shape placement, the end-to-end upload behavior cannot be certified from this video.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: custom_shapes_upload.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424355688
+}

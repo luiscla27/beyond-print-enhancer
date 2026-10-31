@@ -1,0 +1,71 @@
+{
+ "feature": "feature_15_modals",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "modal_primitive_visual_capture.spec.js",
+   "file_id": "458222374142324",
+   "mp4_bytes": 1366284,
+   "upload_response": {
+    "file": {
+     "file_id": 458222374142324,
+     "bytes": 1366284,
+     "created_at": 1793424573,
+     "filename": "modal_primitive_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "modal_primitive_visual_capture.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\modal_primitive_visual_capture.webm",
+   "webm_bytes": 3823050
+  }
+ ],
+ "usage": {
+  "total_tokens": 42699,
+  "total_characters": 0,
+  "prompt_tokens": 41872,
+  "completion_tokens": 827,
+  "completion_tokens_details": {
+   "reasoning_tokens": 452
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "1. **Page and panel:** The video begins on the D&D Beyond site with its header and navigation visible. A loading screen and privacy-choices panel appear, followed by the character sheet for \u201cCorvo Saggio.\u201d At roughly 30 seconds, the unpacked Print Enhancer interface appears over the sheet: a dark **Beyond Print** control panel on the left and a **Layer Management** panel on the right.\n\n2. **Visible result on the sheet:** Behind the panels, the character sheet transitions to a redesigned/default template. The visible sheet includes bordered ability-score panels, a central character portrait with decorative framing, initiative and proficiency sections, defenses/conditions, and an actions table. A notice states that no saved layout was found and the default template was loaded.\n\n3. **Dialog interaction:** A centered **RENAME LAYER** dialog opens over the dimmed interface. The existing name is cleared, and the form visibly shows the error: \u201cEnter a name to continue \u2014 the field cannot be empty.\u201d The dialog is then closed without a rename being submitted.\n\n4. **Other dialogs/affordances:** A centered **SELECT DECORATIVE SHAPE** dialog appears, showing border/shape/custom tabs, category filters, a search field, and Archer shape choices. It is closed without visibly adding a shape. A **TEMPLATES** dialog then appears with \u201cBasic Template\u201d and \u201cAnchor Template\u201d options and a Cancel button; it remains open at the end of the video.\n\n5. **Overall assessment:** The extension panel is visibly present, multiple modal dialogs are displayed over the actual sheet, the rename dialog\u2019s empty-field validation is exercised, and the decorative-shape and template dialogs are visibly opened. The video does not show a successful rename, a shape being added, or a template being applied.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: modal_primitive_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424591058
+}

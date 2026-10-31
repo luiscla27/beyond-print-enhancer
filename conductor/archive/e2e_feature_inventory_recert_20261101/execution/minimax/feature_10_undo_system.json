@@ -1,0 +1,94 @@
+{
+ "feature": "feature_10_undo_system",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "undo_stack_visual_capture.spec.js",
+   "file_id": "458225728758214",
+   "mp4_bytes": 1113403,
+   "upload_response": {
+    "file": {
+     "file_id": 458225728758214,
+     "bytes": 1113403,
+     "created_at": 1793424484,
+     "filename": "undo_stack_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "undo_stack_class_verification.spec.js",
+   "file_id": "458219969057336",
+   "mp4_bytes": 2701317,
+   "upload_response": {
+    "file": {
+     "file_id": 458219969057336,
+     "bytes": 2701317,
+     "created_at": 1793424488,
+     "filename": "undo_stack_class_verification.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "undo_stack_visual_capture.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_visual_capture.webm",
+   "webm_bytes": 3902251
+  },
+  {
+   "suite": "undo_stack_class_verification.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_class_verification.webm",
+   "webm_bytes": 7665661
+  }
+ ],
+ "usage": {
+  "total_tokens": 117142,
+  "total_characters": 0,
+  "prompt_tokens": 116050,
+  "completion_tokens": 1092,
+  "completion_tokens_details": {
+   "reasoning_tokens": 402
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `undo_stack_visual_capture`\n\n- The recording opens on the D&D Beyond character sheet, then the Print Enhancer interface appears with a left control panel and a right **Layer Management** panel.\n- The sheet visibly shows red editing outlines around sections and individual elements.\n- The left panel includes **Manage Compact**, **Undo**, and **Restore Backup** controls. The right panel exposes section and shape layer controls.\n- A compact-mode action is visibly applied: the toast **\u201cCompact mode ON\u201d** appears, and the actions area on the sheet becomes more condensed.\n- The undo affordance then reports **\u201cUndo: Toggle \u2018Actions\u2019\u201d**, visibly restoring the less-compact layout. Later frames show **\u201cUndo: Toggle \u2018Actions\u2019\u201d** and **\u201cCompact mode ON\u201d** again as the compact state is toggled back.\n- The recording therefore visibly demonstrates idle/disabled undo, named undo feedback, an applied compact-mode change, and the resulting sheet/control state. It does not show a clearly identifiable keyboard-only undo event, so that specific capture is not separately visible.\n\n### Video 2 \u2014 `undo_stack_class_verification`\n\n- The same extension panels are visibly present around the real character sheet. The right panel\u2019s **Sections (22)** and **Shapes** groups expose per-item controls, while the left panel exposes **Undo** and named undo choices.\n- Section-level actions are exercised. The sheet visibly changes between sections, including **\u201cLayout saved\u201d**, **\u201cUndo: Move Section 1\u201d**, and later **\u201cUndo: Layout saved\u201d**. The affected content shifts back toward its earlier position.\n- Shape-level actions are also exercised. Visible feedback includes **\u201cShapes: (Default) Unlocked\u201d**, **\u201cUndo: Move shape\u2026\u201d**, **\u201cRotation tool shown\u201d**, **\u201cLayer order updated\u201d**, and **\u201cUndo: Reorder layers\u201d**. These coincide with visible changes to selected decorative shapes and their stacking.\n- Section visibility and printing are round-tripped: **\u201cSections Print Disabled\u201d** removes the section content from the visible sheet, and **\u201cSections Hidden\u201d** hides the section; undo notices such as **\u201cUndo: Print \u2018Sections\u2019\u201d**, **\u201cUndo: Hide \u2018Sections\u2019\u201d**, **\u201cSections Unlocked\u201d**, and **\u201cSections Unlocked\u201d** are subsequently shown as the content returns.\n- Additional visible shape and border operations include **\u201cShape cloned\u201d**, **\u201cUndo: Clone shape\u201d**, **\u201cBorder applied: ability_border\u201d**, **\u201cUndo: Border\u2026\u201d**, and **\u201cLayer renamed to \u2018Renamed in Browser\u2019\u201d** with its corresponding undo.\n- Compact mode is again exercised, with **\u201cCompact mode ON\u201d** and **\u201cUndo: Toggle \u2018Actions\u2019\u201d** visible and the actions area changing density.\n- The sampled frames clearly show multiple successful action-and-undo round trips for layout, sections, shapes, borders, ordering, visibility, renaming, and compact mode. However, the frames do not unambiguously expose every separately named case in the eight-case contract\u2014particularly real-pointer corner resize, real-pointer rotation, keyboard nudge, position-field editing, and chip reparenting.\n\nThe feature visibly completes end-to-end undo behavior across the recordings for the actions that are clearly shown, but the complete set of eight per-class round trips is not individually visible in the sampled frames.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: undo_stack_visual_capture.spec.js, undo_stack_class_verification.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424515899
+}

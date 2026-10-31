@@ -1,0 +1,117 @@
+{
+ "feature": "feature_07_persistence",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_settings_persistence.spec.js",
+   "file_id": "458224404955607",
+   "mp4_bytes": 1291956,
+   "upload_response": {
+    "file": {
+     "file_id": 458224404955607,
+     "bytes": 1291956,
+     "created_at": 1793424425,
+     "filename": "byok_settings_persistence.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "byok_settings_persistence_types.spec.js",
+   "file_id": "458225746858505",
+   "mp4_bytes": 1022089,
+   "upload_response": {
+    "file": {
+     "file_id": 458225746858505,
+     "bytes": 1022089,
+     "created_at": 1793424428,
+     "filename": "byok_settings_persistence_types.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "persistence_panel.spec.js",
+   "file_id": "458225486352845",
+   "mp4_bytes": 759873,
+   "upload_response": {
+    "file": {
+     "file_id": 458225486352845,
+     "bytes": 759873,
+     "created_at": 1793424431,
+     "filename": "persistence_panel.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_settings_persistence.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_persistence.webm",
+   "webm_bytes": 4144763
+  },
+  {
+   "suite": "byok_settings_persistence_types.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_07_persistence\\byok_settings_persistence_types.webm",
+   "webm_bytes": 3843324
+  },
+  {
+   "suite": "persistence_panel.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\persistence_panel.webm",
+   "webm_bytes": 2821678
+  }
+ ],
+ "usage": {
+  "total_tokens": 122387,
+  "total_characters": 0,
+  "prompt_tokens": 120994,
+  "completion_tokens": 1393,
+  "completion_tokens_details": {
+   "reasoning_tokens": 603
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `byok_settings_persistence`\n\n- The real D&D Beyond sheet loads with the extension\u2019s **Beyond Print** control panel on the left and **Layer Management** panel on the right.\n- An **AI LAYOUT SETTINGS** modal opens. It visibly contains:\n  - Provider: **OpenAI**\n  - Model: **gpt-4o-mini**\n  - A **Test connection** button\n  - **Remove key**, **Cancel**, and **Save** buttons\n  - A status reading **\u201cA key is stored on this device.\u201d**\n- The page then visibly reloads through the D&D Beyond loading screen and returns to the same sheet.\n- After the reload, the extension panels are present again. The AI settings modal is shown once more, but its status now reads **\u201cNo key stored yet \u2014 AI arrange stays off until you add one.\u201d** and **\u201cKey removed. AI arrange stays off until you add one.\u201d**\n- The sampled frames do **not** visibly show the exact save/removal click, do not expose `chrome.storage.local` or its key layout, and do not show a separate settings-record value such as `keyPresent:false`. Therefore the real-store assertions and the complete set\u2192reload\u2192remove round trip are not directly witnessed.\n\n### Video 2 \u2014 `byok_settings_persistence_types`\n\n- The extension\u2019s left panel and right **Layer Management** panel appear over the real character sheet.\n- On the first panel appearance, a toast states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The sheet visibly reloads through the D&D Beyond loading screen and is subsequently re-injected with both extension panels present.\n- After the reload, a toast states **\u201cRestored your saved layout.\u201d** This visibly demonstrates that a saved layout record was recognized and restored during boot.\n- The visible sheet retains the character-sheet layout, with red-outlined sections and the layer manager listing sections and shapes.\n- The frames do not separately show a custom shape being created and read back from IndexedDB, a custom border being read from the reuse library, a Screen-only layer state being restored, a template\u2019s complete contents being read from the saved record, or the undo stack depth. Only the general saved-layout restoration and its announcement are directly visible.\n\n### Video 3 \u2014 `persistence_panel`\n\n- The extension control panel visibly exposes persistence-related controls:\n  - Under **LAYOUT**: **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, and **All Settings**\n  - Under **OUTPUT**: **PRINT**, **Print settings**, **Save to Browser**, **Save to PC**, and **Import Settings**\n- The **Save to Browser** control is visibly activated, and a toast appears reading **\u201cSaved to browser.\u201d**\n- The character sheet remains rendered behind the panels with its red-outlined layout sections, and no visible error overlay appears after the save.\n- The **Save to PC** control is present, but the sampled frames do not visibly show a JSON download or browser download UI.\n- The **Load** action is visible as icon-labelled text without an emoji prefix.\n- No action-icon menu is visibly opened in the sampled frames, so relocated asks are not directly witnessed as reachable from that menu.\n- Page-separator rendering and fit-to-wrapper sizing are not clearly demonstrated as a distinct before/after result.\n\nAcross the three videos, the extension visibly opens its real panels, exposes the relevant settings and persistence controls, performs a browser save with a success toast, and restores a saved layout after reload with a visible restoration toast. However, several required round-trip details\u2014real storage contents, credential removal mechanics, every customization type, the PC download, separators, and the relocated action-menu items\u2014are not visibly completed.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793424455915
+}

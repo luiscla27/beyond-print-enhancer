@@ -1,0 +1,71 @@
+{
+ "feature": "feature_16_background_context",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "sheet_autoscroll.spec.js",
+   "file_id": "458225746858509",
+   "mp4_bytes": 1721349,
+   "upload_response": {
+    "file": {
+     "file_id": 458225746858509,
+     "bytes": 1721349,
+     "created_at": 1793424595,
+     "filename": "sheet_autoscroll.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "sheet_autoscroll.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\sheet_autoscroll.webm",
+   "webm_bytes": 5819491
+  }
+ ],
+ "usage": {
+  "total_tokens": 73732,
+  "total_characters": 0,
+  "prompt_tokens": 73014,
+  "completion_tokens": 718,
+  "completion_tokens_details": {
+   "reasoning_tokens": 446
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- The video loads the D&D Beyond demo sheet for **Corvo Saggio**. A privacy-choices overlay appears briefly, then the real character sheet becomes visible.\n- At about 31.4 seconds, the unpacked extension\u2019s UI appears: a dark **BEYOND P\u2026** panel on the left with **Templates**, **Layout**, and **Output** controls, and a **Layer Management** panel on the right listing sections and shapes. A notice states, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The character sheet remains visible between the panels, showing the character portrait, ability scores, skills, defenses, and actions.\n- Around 34.4 seconds, the visible portion of the sheet changes to a different scroll position, revealing more of the upper ability-score boxes and shifting the sheet content. Afterward, the panel layout and sheet remain largely stationary.\n- No visible pointer action identifies which control was activated, and no dialog, Apply, or Undo flow is shown. Most importantly for the stated auto-scroll contract, no drag toward the viewport\u2019s bottom edge is visibly performed, and no held drag causing the sheet to auto-scroll can be witnessed.\n\nThe extension panels and a changed sheet scroll position are visible, but the end-to-end auto-scroll interaction itself is not visibly demonstrated.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: sheet_autoscroll.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424607748
+}

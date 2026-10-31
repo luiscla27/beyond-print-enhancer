@@ -1,0 +1,232 @@
+{
+ "feature": "cross-cutting",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 8 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "color_picker.spec.js",
+   "file_id": "458223940956713",
+   "mp4_bytes": 833059,
+   "upload_response": {
+    "file": {
+     "file_id": 458223940956713,
+     "bytes": 833059,
+     "created_at": 1793424683,
+     "filename": "color_picker.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "manual_verification_phase2.spec.js",
+   "file_id": "458223702368745",
+   "mp4_bytes": 964643,
+   "upload_response": {
+    "file": {
+     "file_id": 458223702368745,
+     "bytes": 964643,
+     "created_at": 1793424686,
+     "filename": "manual_verification_phase2.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "shape_layer_management.spec.js",
+   "file_id": "458226192302416",
+   "mp4_bytes": 878280,
+   "upload_response": {
+    "file": {
+     "file_id": 458226192302416,
+     "bytes": 878280,
+     "created_at": 1793424689,
+     "filename": "shape_layer_management.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "byok_settings_storage.spec.js",
+   "file_id": "458225376743969",
+   "mp4_bytes": 1627497,
+   "upload_response": {
+    "file": {
+     "file_id": 458225376743969,
+     "bytes": 1627497,
+     "created_at": 1793424692,
+     "filename": "byok_settings_storage.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "settings_export_import.spec.js",
+   "file_id": "458224174678559",
+   "mp4_bytes": 721487,
+   "upload_response": {
+    "file": {
+     "file_id": 458224174678559,
+     "bytes": 721487,
+     "created_at": 1793424694,
+     "filename": "settings_export_import.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "quick_switch_print.spec.js",
+   "file_id": "458226661290313",
+   "mp4_bytes": 821491,
+   "upload_response": {
+    "file": {
+     "file_id": 458226661290313,
+     "bytes": 821491,
+     "created_at": 1793424697,
+     "filename": "quick_switch_print.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "release_1_4_0.spec.js",
+   "file_id": "458222502834731",
+   "mp4_bytes": 759496,
+   "upload_response": {
+    "file": {
+     "file_id": 458222502834731,
+     "bytes": 759496,
+     "created_at": 1793424699,
+     "filename": "release_1_4_0.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "dom_refactor_guarantees.spec.js",
+   "file_id": "458226770534728",
+   "mp4_bytes": 890960,
+   "upload_response": {
+    "file": {
+     "file_id": 458226770534728,
+     "bytes": 890960,
+     "created_at": 1793424702,
+     "filename": "dom_refactor_guarantees.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "color_picker.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\color_picker.webm",
+   "webm_bytes": 2838589
+  },
+  {
+   "suite": "manual_verification_phase2.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\manual_verification_phase2.webm",
+   "webm_bytes": 3258061
+  },
+  {
+   "suite": "shape_layer_management.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\shape_layer_management.webm",
+   "webm_bytes": 3013616
+  },
+  {
+   "suite": "byok_settings_storage.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_storage.webm",
+   "webm_bytes": 3531690
+  },
+  {
+   "suite": "settings_export_import.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\settings_export_import.webm",
+   "webm_bytes": 2828954
+  },
+  {
+   "suite": "quick_switch_print.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\quick_switch_print.webm",
+   "webm_bytes": 2752207
+  },
+  {
+   "suite": "release_1_4_0.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\release_1_4_0.webm",
+   "webm_bytes": 2759316
+  },
+  {
+   "suite": "dom_refactor_guarantees.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\dom_refactor_guarantees.webm",
+   "webm_bytes": 2738195
+  }
+ ],
+ "usage": {
+  "total_tokens": 277360,
+  "total_characters": 0,
+  "prompt_tokens": 275810,
+  "completion_tokens": 1550,
+  "completion_tokens_details": {
+   "reasoning_tokens": 269
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### 1. `color_picker` \u2014 Color Picker / hue shift\n- The video shows the D&D Beyond site loading and the character sheet for \u201cCorvo Saggio\u201d becoming enhanced with the extension\u2019s red-outlined print layout.\n- The control panel is visible with layout, output, and layer-management surfaces. However, no visible **Color Picker** button is opened.\n- No 2D color grid, swatches, greyscale strip, swatch selection, hue preview, **Continue**, or **Reset All Filters** interaction is visible.\n- **Verdict: NOT-VISIBLE.**\n\n### 2. `manual_verification_phase2` \u2014 First-run discoverability\n- The video shows the site loading, the privacy overlay appearing, and the enhanced character sheet.\n- The extension\u2019s control panel and layer-management UI are visible, but no first-run walkthrough appears.\n- None of the four walkthrough steps, instructional highlights, progression controls, or completion state are visible.\n- **Verdict: NOT-VISIBLE.**\n\n### 3. `shape_layer_management` \u2014 Shape layer management\n- The enhanced Corvo Saggio sheet is shown with the extension\u2019s left control panel and right **LAYER MANAGEMENT** panel.\n- The right panel visibly contains **SECTIONS (22)** and **SHAPES (1)**. Under Shapes, decorative-shape entries are shown with per-item control icons, and **Add Shape** is available.\n- A centered **SELECT DECORATIVE SHAPE** modal opens. It has **BORDERS**, **SHAPES**, and **CUSTOM** tabs, a filter/search area, decorative thumbnails, **Cancel**, and **Add Shape**. The Shapes tab is visibly selected and displays shape thumbnails such as **Archer Accent E**, **Archer Accent F**, and **Archer Divider**.\n- After the modal closes, a **Shape added** toast appears and the Shapes count changes from **(1)** to **(2)**. The sheet itself remains visible with its character artwork and stats.\n- A dedicated default shape-layer container is suggested by the **SHAPES (1)** section, but the video does not visibly show **Add new Layer**, a second shape-layer container becoming active, or a shape being placed into a newly created layer.\n- **Verdict: PARTIAL.**\n\n### 4. `byok_settings_storage` \u2014 BYOK store and dialog\n- An **AI LAYOUT SETTINGS** modal is visibly opened over the enhanced sheet.\n- The dialog shows Provider, Model, a **Compatible base URL (optional)** field, explanatory text, **Reveal**, **Remove key**, **Cancel**, and **Save** controls. It also states that no key is stored yet.\n- The base URL field is populated with an invalid-looking value, and a red error message appears: **\u201cThe base URL must be https.\u201d** The error is visibly attached to the base-URL field rather than another input.\n- The key field remains masked with no stored credential revealed. The visible DOM does not display a credential-shaped value.\n- The video does not visibly show a successful save, field clearing, persisted store state, a page-world visibility probe, or a typed key remaining in the DOM.\n- **Verdict: PARTIAL.**\n\n### 5. `settings_export_import` \u2014 Settings export/import\n- The video shows the extension panel and character sheet, including visible **Export Settings** and **Import Settings** entries in the panel\u2019s output/settings area.\n- No visible activation of **Export Settings**, downloaded JSON file, exported bundle contents, malformed-bundle validation, import merge, library-preservation behavior, or export \u2192 mutate \u2192 import restoration sequence is shown.\n- **Verdict: NOT-VISIBLE.**\n\n### 6. `quick_switch_print` \u2014 Quick switch and print opacity\n- The video shows the enhanced sheet and the extension\u2019s layer-management interface, including a **Switch Shape Asset** control beside shape entries.\n- No visible activation of **Switch Shape Asset**, no shape-picker opening, no evidence of a Shapes-only prefilter, no asset replacement, and no visible before/after transform or path comparison are shown.\n- The video also does not visibly enter print mode or demonstrate opaque shapes and hidden UI chrome.\n- **Verdict: NOT-VISIBLE.**\n\n### 7. `release_1_4_0` \u2014 Release-surface smoke\n- The extension boots on the real Corvo Saggio sheet, which remains visible and enhanced.\n- The control panel visibly exposes layout/output actions such as **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, **PRINT**, **Print settings**, **Save to Browser**, and later **Export Settings**/**Import Settings**.\n- The right panel visibly exposes the **LAYER MANAGEMENT** surface with **SECTIONS (22)** and **SHAPES (1)**, including the decorative character artwork used as a shape.\n- A **Shape added** toast and an increase to **SHAPES (2)** are also visibly demonstrated in this footage.\n- The footage clearly supports clean boot, continued sheet visibility, and presence of headline/layout and decoration/layer surfaces. It does not separately label the controls as \u201c1.4.0.\u201d\n- **Verdict: WORKING.**\n\n### 8. `dom_refactor_guarantees` \u2014 DOM selector refactor\n- The enhanced character sheet is visible with wrapped, bordered sections, the ability-score list, Actions/Spells tabs, character artwork, and the extension\u2019s control and layer panels.\n- The live **ACTIONS / SPELLS / INVENTORY / FEATURES & TRAITS / EXTRAS** tabs are visible, and the sheet remains laid out cleanly.\n- No visible interaction with the Spells tab filter is shown, so continued interactivity cannot be confirmed.\n- No modal above the cleaned layout is opened, and no spell-row **Details** trigger is visibly activated or clearly presented.\n- **Verdict: NOT-VISIBLE.**\n\nAcross the eight videos, the clearest end-to-end completions are the release-surface smoke behavior and the decorative-shape add flow. Shape-layer creation/active-layer placement, BYOK persistence, and several other asserted interactions are either only partly shown or not visible enough to certify.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": "cross-cutting is the inventory's residual suite class, not one feature; certified via a purpose-annotated representative set of 8 suite(s) spanning the class's distinct behaviors: color_picker.spec.js, manual_verification_phase2.spec.js, shape_layer_management.spec.js, byok_settings_storage.spec.js, settings_export_import.spec.js, quick_switch_print.spec.js, release_1_4_0.spec.js, dom_refactor_guarantees.spec.js. The other 68 cross-cutting suites are covered by their mocha rows (AC-1) and retained .webm evidence (AC-2) under evidence/cross-cutting/, not crammed into this one call.",
+ "ts": 1793424741124
+}

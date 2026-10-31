@@ -1,0 +1,94 @@
+{
+ "feature": "feature_03_layer_management",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "file_id": "458222671553054",
+   "mp4_bytes": 859071,
+   "upload_response": {
+    "file": {
+     "file_id": 458222671553054,
+     "bytes": 859071,
+     "created_at": 1793424326,
+     "filename": "layer_print_visibility.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "file_id": "458221574873446",
+   "mp4_bytes": 1336750,
+   "upload_response": {
+    "file": {
+     "file_id": 458221574873446,
+     "bytes": 1336750,
+     "created_at": 1793424329,
+     "filename": "layer_reorder_keyboard.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_print_visibility.webm",
+   "webm_bytes": 2876135
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_reorder_keyboard.webm",
+   "webm_bytes": 4804188
+  }
+ ],
+ "usage": {
+  "total_tokens": 96706,
+  "total_characters": 0,
+  "prompt_tokens": 95399,
+  "completion_tokens": 1307,
+  "completion_tokens_details": {
+   "reasoning_tokens": 816
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 Print visibility suite\n- The video loads the D&D Beyond character sheet and displays the character sheet content.\n- Near the end, the extension panels become visible: a left-side Print Enhancer panel with a prominent **PRINT** button, and a right-side **LAYER MANAGEMENT** panel.\n- The Layer Management panel shows **SECTIONS (22)** and a **SHAPES (1)** group. The Shapes group visibly has the three-state strip labeled **Print only**, **Both**, and **Screen only**.\n- A notice says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- No visible interaction changes the three-state choice, no layer becomes hidden or restored, no locked-layer opacity change is shown, and the video does not visibly enter print-preview or print-media output. The sheet\u2019s visible layout also does not materially change.\n- **Video verdict: NOT-VISIBLE.** The required print-visibility interactions and their screen/print results are not witnessed.\n\n### Video 2 \u2014 Layer reorder keyboard suite\n- The video loads the same character sheet and then opens the extension\u2019s left Print Enhancer panel and right **LAYER MANAGEMENT** panel.\n- The Layer Management panel visibly includes **SECTIONS (22)** and **SHAPES (3)**. Its Shapes group again displays the three-state strip: **Print only**, **Both**, and **Screen only**, with **Both** visibly selected.\n- During the run, a dark toast appears over the sheet reading **\u201cLayer order updated.\u201d**\n- After that toast, the character sheet remains visible and the header boxes are presented in an updated arrangement. The toast and changed header arrangement visibly connect a layer-order edit to the resulting sheet layout.\n- However, no actual ArrowUp, ArrowDown, Home, or End press is visible, no focused layer row is visible, and no lock/boundary no-op, undo behavior, or keyboard-versus-drag positional comparison is demonstrated. The three-state print controls are not exercised either.\n- **Video verdict: PARTIAL.** A layer-order update is visibly confirmed and reflected on the sheet, but most of the keyboard-specific interaction contract is not directly witnessed.\n\nAcross the two videos, the extension and its real sheet are visible, and one reorder update is visibly confirmed. The print-visibility behavior and the detailed keyboard-reorder assertions are not visibly completed end to end.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793424345085
+}

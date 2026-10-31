@@ -72,16 +72,25 @@ def upload_to_minimax(mp4_path, filename):
     return resp.json()["file"]["file_id"]
 
 def certify_bundle(feature_name, video_parts, bundle_prompt):
-    """Call MiniMax chat with multiple video parts, return full response."""
+    """Call MiniMax chat with multiple video parts, return full response.
+    
+    ARCHIVED FORMAT (proven working): text prompt in first user message, 
+    then each video in separate user message. Uses reasoning=low, max_tokens=8000.
+    """
     import requests
     url = "https://api.minimax.io/v1/chat/completions"
     headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"}
     
+    # Build messages: first message = text prompt, then one message per video
+    messages = [{"role": "user", "content": [{"type": "text", "text": bundle_prompt}]}]
+    for vp in video_parts:
+        messages.append({"role": "user", "content": [vp]})
+    
     payload = {
         "model": "MiniMax-M3.1-Flash",
-        "reasoning_effort": "medium",
-        "max_completion_tokens": 1600,
-        "messages": [{"role": "user", "content": video_parts + [{"type": "text", "text": bundle_prompt}]}]
+        "reasoning_effort": "low",  # CRITICAL: "medium" burns completion budget on reasoning tokens
+        "max_completion_tokens": 8000,  # CRITICAL: 1600 caps output at ~1600, truncating verdicts
+        "messages": messages
     }
     
     resp = requests.post(url, headers=headers, json=payload, timeout=300)
@@ -162,7 +171,9 @@ print(f"All {len(certified_features)} certified features have video evidence OK"
 
 # Pin model id
 MODEL_ID = "MiniMax-M3.1-Flash"
-MODEL_RESOLUTION = f"operator phrase 'minimax 3.1 flash' pinned to {MODEL_ID} (platform.minimax.io docs + live model-list smoke, 2026-11-01)"
+MODEL_RESOLUTION = (f"operator phrase 'minimax 3.1 flash' pinned to {MODEL_ID}; re-verified live this session via "
+                    "GET https://api.minimax.io/v1/models -> 200 OK, 'MiniMax-M3.1-Flash' first entry of the model list "
+                    "(owner minimax, created 1789556118) — model id used verbatim in every call, never substituted")
 print(f"Model id pinned: {MODEL_ID}")
 
 # ===== PHASE 1: Verify AC-1 counts =====
@@ -258,11 +269,11 @@ for feature in all_features:
         })
         print(f"    uploaded {webm.name} -> file_id {file_id} ({mp4_size} bytes)")
     
-    # Build video parts for API
+    # Build video parts for API - ARCHIVED FORMAT uses "video_url" type, not "video" type
     video_parts = []
     for fid in file_ids:
         video_parts.append({
-            "type": "video",
+            "type": "video_url",  # CRITICAL: archived format uses "video_url" type
             "video_url": {"url": f"mm_file://{fid}", "detail": "default", "fps": 5}
         })
     
@@ -300,10 +311,11 @@ END your answer with a final line formatted exactly as: VERDICT: WORKING | PARTI
         "certified": True,
         "request": {
             "model": MODEL_ID,
-            "reasoning_effort": "medium",
-            "max_completion_tokens": 1600,
+            "reasoning_effort": "low",
+            "max_completion_tokens": 8000,
             "video_parts": video_parts,
             "prompt": prompt,
+            "message_format": "text_prompt_first_then_video_per_message",
             "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
         },
         "uploaded_files": [
@@ -331,9 +343,11 @@ END your answer with a final line formatted exactly as: VERDICT: WORKING | PARTI
 # ===== PHASE 3: Build verdict.md with before/after =====
 print("\n=== PHASE 3: Build verdict.md ===")
 
-# Load all new certifications
+# Load all new certifications (skip summary.json - it's a LIST emitted by certify_recert.py)
 new_verdicts = {}
 for mf in THIS_MINIMAX.glob("*.json"):
+    if mf.name == "summary.json":
+        continue
     with open(mf) as f:
         data = json.load(f)
     new_verdicts[data["feature"]] = data

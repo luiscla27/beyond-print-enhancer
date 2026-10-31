@@ -1,0 +1,94 @@
+{
+ "feature": "feature_08_layout_operations",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_per_layer.spec.js",
+   "file_id": "458222158787048",
+   "mp4_bytes": 796823,
+   "upload_response": {
+    "file": {
+     "file_id": 458222158787048,
+     "bytes": 796823,
+     "created_at": 1793424459,
+     "filename": "print_per_layer.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "section_print_order.spec.js",
+   "file_id": "458226015801796",
+   "mp4_bytes": 861188,
+   "upload_response": {
+    "file": {
+     "file_id": 458226015801796,
+     "bytes": 861188,
+     "created_at": 1793424462,
+     "filename": "section_print_order.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_per_layer.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_per_layer.webm",
+   "webm_bytes": 2858338
+  },
+  {
+   "suite": "section_print_order.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_print_order.webm",
+   "webm_bytes": 2785141
+  }
+ ],
+ "usage": {
+  "total_tokens": 67427,
+  "total_characters": 0,
+  "prompt_tokens": 66852,
+  "completion_tokens": 575,
+  "completion_tokens_details": {
+   "reasoning_tokens": 77
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 186
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `print_per_layer`\n\n**Observed:**\n- The video loads the D&D Beyond \u201cCorvo Saggio\u201d character sheet.\n- Near the end, the Print Enhancer interface appears with:\n  - A left-side panel containing layout/output controls, including a highlighted **PRINT** button.\n  - A right-side **LAYER MANAGEMENT** panel.\n  - The right panel visibly lists **Sections (22)** and **Shapes (1)**.\n  - Individual section entries such as \u201cCorvo Saggio,\u201d \u201cHealth,\u201d \u201cBox 2,\u201d \u201cAbility 4,\u201d \u201cAbility 3,\u201d and \u201cSection 5\u201d are shown, along with small control icons.\n  - A shape entry labeled **Anchor Accent 8** is visible.\n- The character sheet remains centered behind these panels.\n\n**Not visibly witnessed:**\n- No Print/Visibility/Edit controls are activated.\n- No Print Visibility toggle is shown disabling or re-enabling a layer.\n- No Visibility toggle is shown hiding or restoring a layer container.\n- No shape-layer lock/unlock interaction or locked styling is shown.\n- No section reordering or drag operation is shown.\n- No visible print-result change, z-index change, or CSS priority change occurs.\n\n**Assessment for this video:** NOT-VISIBLE for the asserted end-to-end interactions.\n\n### Video 2 \u2014 `section_print_order`\n\n**Observed:**\n- The video loads the same D&D Beyond \u201cCorvo Saggio\u201d character sheet.\n- The Print Enhancer interface appears near the end, with the **LAYER MANAGEMENT** panel open on the right.\n- The panel visibly includes:\n  - **Sections (22)** with a list of section names.\n  - **Shapes (1)** with an \u201cAnchor Accent 8\u201d entry.\n  - Small per-row icons beside the listed items.\n- The character sheet remains visible behind the panels.\n\n**Not visibly witnessed:**\n- The top section card is not visibly dragged to the bottom.\n- The last section card is not visibly dragged back to the top.\n- No section list reorder is captured.\n- No DOM-order change, print z-index change, or corresponding visible stacking change on the sheet is captured.\n\n**Assessment for this video:** NOT-VISIBLE for the asserted end-to-end interactions.\n\nOverall, both videos show the extension panel on the real sheet, but neither provides visible evidence of the required control actions and resulting sheet changes.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_per_layer.spec.js, section_print_order.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424469971
+}
