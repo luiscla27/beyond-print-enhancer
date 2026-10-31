@@ -1,0 +1,118 @@
+{
+ "feature": "feature_07_persistence",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_settings_persistence.spec.js",
+   "file_id": "458411384430920",
+   "mp4_bytes": 1291956,
+   "upload_response": {
+    "file": {
+     "file_id": 458411384430920,
+     "bytes": 1291956,
+     "created_at": 1793469738,
+     "filename": "byok_settings_persistence.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "byok_settings_persistence_types.spec.js",
+   "file_id": "458408185782819",
+   "mp4_bytes": 1022089,
+   "upload_response": {
+    "file": {
+     "file_id": 458408185782819,
+     "bytes": 1022089,
+     "created_at": 1793469745,
+     "filename": "byok_settings_persistence_types.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "persistence_panel.spec.js",
+   "file_id": "458409565557206",
+   "mp4_bytes": 759873,
+   "upload_response": {
+    "file": {
+     "file_id": 458409565557206,
+     "bytes": 759873,
+     "created_at": 1793469748,
+     "filename": "persistence_panel.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_settings_persistence.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_persistence.webm",
+   "webm_bytes": 4144763
+  },
+  {
+   "suite": "byok_settings_persistence_types.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_07_persistence\\byok_settings_persistence_types.webm",
+   "webm_bytes": 3843324
+  },
+  {
+   "suite": "persistence_panel.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\persistence_panel.webm",
+   "webm_bytes": 2821678
+  }
+ ],
+ "usage": {
+  "total_tokens": 124480,
+  "total_characters": 0,
+  "prompt_tokens": 121602,
+  "completion_tokens": 2878,
+  "completion_tokens_details": {
+   "reasoning_tokens": 511
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 `byok_settings_persistence` (AC-4)\n\n### What is visibly observed\n- **Website surface:** The video opens on the D&D Beyond site, including its header, loading screen, privacy dialog, and character sheet. These are not extension work.\n- **Extension work:** After the sheet loads, Beyond Print Enhancer appears with its dark control panel, layer-management panel, and bordered character-sheet sections.\n- **Extension work:** An **\u201cAI LAYOUT SETTINGS\u201d** dialog is opened. It contains an OpenAI provider selector, model selector, optional base-URL field, key controls, and buttons including **\u201cRemove key,\u201d \u201cCancel,\u201d** and **\u201cSave.\u201d**\n- **Extension work:** One state of the dialog says **\u201cA key is stored on this device,\u201d** while another says **\u201cNo key stored yet \u2013 AI arrange stays off until you add one.\u201d** The latter also reports **\u201cKey removed.\u201d**\n- **Extension work:** A page reload/re-injection occurs, and the settings UI is shown again with the key absent.\n- **Extension work:** The extension control panel remains visually distinct from the D&D Beyond sheet through its dark codex/workbench styling and gold accents.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n- `chrome.storage` exists in the content world: **NOT-VISIBLE** \u2014 no browser API/developer surface is shown.\n- Setting a credential puts it under its own key in `chrome.storage.local`, and not in the safe record: **NOT-VISIBLE** \u2014 the storage contents and key names are not shown.\n- Closing and reopening the settings still reads the stored value while the field remains empty: **NOT-VISIBLE** \u2014 no close/reopen sequence with a stored credential is visibly sampled.\n- Reload and re-injection still read the same stored value: **NOT-VISIBLE** \u2014 the reload is visible, but the underlying stored value cannot be verified.\n- Removing the key removes both the credential and settings record from the real store: **NOT-VISIBLE** \u2014 \u201cKey removed\u201d is visible, but store deletion is not.\n- Saving with no key stores a record that says `keyPresent:false`: **NOT-VISIBLE** \u2014 the serialized record and flag are not shown.\n\n**Layer 1 result: NOT-VISIBLE for the real storage round-trip.** Only extension-facing key-status messages are visible.\n\n### Layer 2 \u2014 Product-aim conformance\n**Basic affordances working**\n- The AI settings dialog opens over a dimmed extension workspace.\n- Provider, model, base URL, key-presence state, Remove key, Cancel, and Save controls are visibly presented.\n- The extension clearly distinguishes its controls from the underlying website.\n- The page reload provides a visible re-injection path.\n- A key-stored status and a key-removed/no-key status provide useful feedback.\n\n**Missing or rough**\n- No visible success feedback follows a Save action in the settings dialog.\n- The underlying storage result, stored key identity, and safe-record exclusion cannot be audited from the camera.\n- The key-presence messaging is visually shown, but there is no visible credential value, masking indicator, or explicit explanation tying the on-screen state to the local storage record.\n- No error state is shown for a failed save or store write.\n- The recording does not visibly demonstrate the close/reopen round-trip with the credential retained.\n- The transition from \u201cA key is stored on this device\u201d to \u201cKey removed\u201d is clear in the dialog, but the surrounding UI remains static and provides no additional explanation.\n\n**Video 1 verdict: NOT-VISIBLE** for the asserted storage behavior, notwithstanding the visible settings UI.\n\n---\n\n## Video 2 \u2014 `byok_settings_persistence_types` (AC-5 / BEYOND-14)\n\n### What is visibly observed\n- **Website surface:** The opening D&D Beyond header, loading screen, character sheet, stats, artwork, and website layout are D&D Beyond\u2019s product.\n- **Extension work:** Beyond Print Enhancer adds its dark floating control panel and layer-management panel, plus bordered sheet sections and a large decorative character-frame shape.\n- **Extension work:** The layer-management panel displays a **Shapes (1)** section and a shape thumbnail.\n- **Extension work:** A toast says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- **Extension work:** After a page reload and re-injection, the extension panels return and a toast announces **\u201cRestored your saved layout.\u201d**\n- **Extension work:** The restored view includes a saved layout containing at least one decorative shape and the bordered sheet sections.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n- A custom shape survives a reload, with both IndexedDB and the layout record reading it back: **NOT-VISIBLE** \u2014 the shape is visible after reload, but neither IndexedDB nor the layout record can be inspected on camera.\n- A custom border selection survives a reload and is returned by the reuse library: **NOT-VISIBLE** \u2014 bordered sections are visible, but no custom-border creation/reuse-library round-trip is shown.\n- A Screen-only mode on a shape layer survives a reload: **NOT-VISIBLE** \u2014 the layer UI exposes mode-related controls, but the camera does not show setting Screen-only on a specific shape and reading it back after reload.\n- A template application persists its shapes, sections, and borders in the saved layout record after reload: **NOT-VISIBLE** \u2014 restored layout is visible, but the saved record\u2019s contents and the template-application operation are not shown.\n- The undo stack is zero-deep after reload: **NOT-VISIBLE** \u2014 no undo depth or post-reload undo interaction is shown.\n- The boot-restore toast announces the saved record: **VISIBLE** \u2014 the toast explicitly says **\u201cRestored your saved layout.\u201d**\n\n**Layer 1 result: Only the boot-restore toast is directly visible; the storage-level and type-specific persistence assertions are not.**\n\n### Layer 2 \u2014 Product-aim conformance\n**Basic affordances working**\n- The extension clearly separates its own UI from the base website through dark panels, gold borders, and distinctive section framing.\n- The first-run/default-state toast provides useful feedback: **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The reload transition is accompanied by a clear restoration toast: **\u201cRestored your saved layout.\u201d**\n- The extension restores a visibly customized layout containing a decorative shape and styled sections.\n- The layer-management panel remains available after restoration and shows the restored shape.\n- The modal panels can be dismissed to reveal the sheet, and the extension\u2019s own panel state is visually understandable.\n\n**Missing or rough**\n- No visible undo interaction or undo-depth indication is shown, so the required zero-depth undo state cannot be confirmed.\n- The recording does not visibly create the custom shape, custom border, Screen-only layer state, or template; their survival is therefore not independently demonstrated.\n- No use of the reuse library is shown.\n- No visible success detail identifies which saved components were restored.\n- No visible error state occurs for corrupt or incompatible saved layouts.\n- The restored shape is small in the layer thumbnails and not prominently identified in the restored sheet, making verification of exact shape identity somewhat rough.\n\n**Video 2 verdict: PARTIAL**\n\n---\n\n## Video 3 \u2014 `persistence_panel` (PR #5)\n\n### What is visibly observed\n- **Website surface:** The video begins with D&D Beyond\u2019s header, loading indicator, character sheet, and standard character data.\n- **Extension work:** Beyond Print Enhancer adds its floating control panel, layer-management panel, section borders, and a decorative central character frame.\n- **Extension work:** The control panel exposes persistence-related actions:\n  - **Load**\n  - **Save to Browser**\n  - **Save to PC**\n  - **Import Settings**\n- **Extension work:** The Load action uses a small action icon beside the word **\u201cLoad\u201d**; no emoji prefix is visible.\n- **Extension work:** A save operation produces a toast reading **\u201cSaved to browser.\u201d**\n- **Extension work:** The saved view shows visible page/print boundaries: vertical separator lines and a bounded layout wrapper over the sheet.\n- **Extension work:** The layer-management panel lists sections and the saved decorative shape.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n- The control panel exposes the persistence controls: **VISIBLE** \u2014 Load, Save to Browser, Save to PC, and Import Settings are shown.\n- Save on Browser persists without a page error: **VISIBLE** \u2014 the **\u201cSaved to browser\u201d** toast appears, with no visible page error.\n- Save on PC downloads the layout as a JSON file: **NOT-VISIBLE** \u2014 the control is present, but no download notification, file name, JSON content, or browser download UI appears.\n- The layout wrapper is sized to fit and page separators are drawn: **VISIBLE** \u2014 a bounded print/layout region and vertical page-separator lines are visibly drawn.\n- The Load control is the icon-labelled action with no emoji prefix: **VISIBLE** \u2014 an icon accompanies the text \u201cLoad,\u201d and no emoji prefix is seen.\n- The relocated asks remain reachable from the action-icon menu: **NOT-VISIBLE** \u2014 the relevant action-icon menu is never opened, so relocated menu entries cannot be confirmed.\n\n**Layer 1 result: Core panel exposure, browser-save feedback, wrapper/separator rendering, and the Load-label requirement are visible; PC download and action-menu reachability are not.**\n\n### Layer 2 \u2014 Product-aim conformance\n**Basic affordances working**\n- The extension\u2019s control panel is unmistakably separate from D&D Beyond\u2019s own UI.\n- Persistence actions are grouped in the OUTPUT section and are clearly labeled.\n- Browser save provides immediate, readable confirmation through **\u201cSaved to browser.\u201d**\n- The saved layout is represented visibly through decorated sections, a shape, and print boundaries.\n- Page separators and the layout wrapper render legibly.\n- The Load action has an icon plus text label rather than an emoji prefix.\n- The extension panels remain usable without hiding the underlying character sheet entirely.\n\n**Missing or rough**\n- Save to PC is exposed, but the actual file download and JSON output are not demonstrated.\n- The action-icon menu is not opened; relocated asks are therefore not shown as reachable.\n- No visible download progress or download-success confirmation appears.\n- No visible Load action occurs, so a loaded layout cannot be compared with the saved layout.\n- No error state is shown for a failed browser save, failed file export, invalid JSON, or import failure.\n- The **\u201cSaved to browser\u201d** toast overlaps the top-center content area, making it somewhat prominent over the sheet.\n- The first extension view initially reports **\u201cNo saved layout yet \u2014 the default template is loaded,\u201d** but the precise meaning of \u201cdefault template\u201d versus an empty saved state is not explained on camera.\n- No explicit disabled state is visible for persistence actions that may be unavailable.\n\n**Video 3 verdict: PARTIAL**\n\n---\n\n## Overall assessment\n\nThe extension\u2019s own UI is strongly distinguishable from D&D Beyond through its dark codex/workbench panels, gold hairlines, decorative framing, and extension-specific toasts. The browser-save path and boot-restore feedback work visibly, and persistence controls are exposed. However, the camera does not expose the real Chrome storage, IndexedDB, saved layout records, credential round-trip details, undo depth, JSON download, or action-icon menu contents. Those are substantial gaps under the stated contract.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793469769393
+}

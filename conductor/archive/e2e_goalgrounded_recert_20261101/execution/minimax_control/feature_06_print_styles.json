@@ -1,0 +1,72 @@
+{
+ "feature": "feature_06_print_styles",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_styles.spec.js",
+   "file_id": "458411011973575",
+   "mp4_bytes": 808172,
+   "upload_response": {
+    "file": {
+     "file_id": 458411011973575,
+     "bytes": 808172,
+     "created_at": 1793469720,
+     "filename": "print_styles.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_styles.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_06_print_styles\\print_styles.webm",
+   "webm_bytes": 2764552
+  }
+ ],
+ "usage": {
+  "total_tokens": 35703,
+  "total_characters": 0,
+  "prompt_tokens": 34284,
+  "completion_tokens": 1419,
+  "completion_tokens_details": {
+   "reasoning_tokens": 229
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 921
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed, in order\n\n1. **0.0\u20135.0s \u2014 Website loading and consent UI**\n   - The browser initially shows a blank page and then the **D&D Beyond website\u2019s own** navigation bar, promotional banner, loading indicator, and \u201cYour Privacy Choices\u201d cookie dialog.\n   - These are **WEBSITE surfaces**, not extension work.\n\n2. **5.0\u20136.8s \u2014 Character sheet loads**\n   - The **WEBSITE\u2019s own** D&D Beyond character sheet for Corvo Saggio appears, initially beneath the consent overlay.\n   - The cookie dialog is then dismissed, revealing the ordinary sheet.\n   - This loading and consent behavior belongs to the **WEBSITE**.\n\n3. **6.8\u201328.2s \u2014 Extension enhancement appears**\n   - The character-sheet sections acquire thin **red/pink borders and outlined containers**. These added outlines are **EXTENSION work**, because they are not part of the plain D&D Beyond presentation shown earlier.\n   - The underlying character artwork, statistics, abilities, actions, inventory, and sheet layout remain the **WEBSITE\u2019s own content and structure**.\n   - The view remains essentially static during this long interval. No print dialog, print preview, print-media view, page separator, selection highlight, disabled-layer comparison, or toolbar print interaction is shown.\n\n4. **28.4\u201329.2s \u2014 Viewport/content change**\n   - The visible region shifts to a lower or narrower portion of the sheet. Much of the center is blank while portions of the enhanced sheet remain visible.\n   - The retained red/pink section outlines are **EXTENSION work**; the remaining character-sheet information is **WEBSITE content**.\n   - No visible print transition or preview is produced.\n\n5. **29.4\u201333.4s \u2014 Extension control surfaces appear**\n   - Two dark, gold-accented **EXTENSION** panels appear:\n     - A left control panel with **LAYOUT** and **OUTPUT** sections.\n     - A right **LAYER MANAGEMENT** panel with sections and shapes.\n   - An extension-styled hint card is visible near the top, stating that no layout has yet been saved and that the default template is loaded.\n   - The left panel exposes a prominent gold **\u201cPRINT\u201d** button, plus \u201cPrint settings\u201d and \u201cSave to Browser.\u201d\n   - The right panel visibly lists sections and shapes with controls such as print/screen options and archive-related affordances.\n   - The panels and hint card are clearly distinguishable from D&D Beyond\u2019s white/red character-sheet styling.\n   - However, the **PRINT** button is not visibly activated, no print settings dialog opens, and no print output or print-specific state appears before the video ends.\n\n## Layer 1 \u2014 Asserted-Behavior Evidence\n\n- **Injected `@media print` hides the Layer Management panel and selection highlights \u2014 NOT-VISIBLE.**  \n  The Layer Management panel is visibly present on screen, but the video never enters a print-media view or otherwise demonstrates its print hiding.\n\n- **Print CSS forces full opacity for locked layers and sets layer ordering \u2014 NOT-VISIBLE.**  \n  No locked-layer opacity state or print-specific ordering result is shown.\n\n- **`data-print-z` elements get z-index overrides and disabled layers get hide rules \u2014 NOT-VISIBLE.**  \n  No print z-index override, disabled-layer hiding, or print rendering is demonstrated.\n\n- **Layout bounds and page separators are computed (`updateLayoutBounds` / `drawPageSeparators`) \u2014 NOT-VISIBLE.**  \n  No visible page separators or print-layout pagination appear. The large blank area after the viewport change is not sufficient evidence of a computed separator.\n\n- **Tool-owned surfaces are hidden in print, including panel controls, feedback, separators, and overlays \u2014 NOT-VISIBLE.**  \n  The extension\u2019s panel and hint card remain visible in the sampled frames; no print preview is shown in which they would be hidden.\n\n## Layer 2 \u2014 Product-Aim Conformance\n\n### Basic affordances observed working\n\n- **Extension activation is visibly distinguishable:** the sheet changes from the plain presentation to bordered/boxed sheet sections.\n- **The floating extension control panel opens and renders clearly** in a dark, gold-accented style.\n- **The Layer Management panel opens and renders clearly**, showing section and shape management controls.\n- **The first-run/default-layout hint card is visible** and clearly communicates the current layout state.\n- **The PRINT entry point is clearly exposed** in the OUTPUT section.\n- The **extension styling is strongly differentiated** from the underlying D&D Beyond sheet through dark panels, gold accents, and red/pink enhancement outlines.\n\n### Basic affordances observed missing or rough\n\n- The **PRINT button is not exercised**, so its actual behavior is not demonstrated.\n- **No print settings dialog is shown** despite a visible \u201cPrint settings\u201d affordance.\n- **No browser print dialog or extension print preview is shown.**\n- **No loading/transition state for printing** is demonstrated.\n- **No print success, completion, or error feedback** is shown.\n- **No disabled-state behavior** is demonstrated for controls that might be unavailable during printing.\n- **No visible selection-highlight removal** is demonstrated.\n- **No page separators or print pagination result** is demonstrated.\n- **No locked-layer opacity correction** is demonstrated.\n- **No disabled-layer hiding behavior** is demonstrated.\n- The **Layer Management panel and extension hint card remain visible in the final state**, and the video ends before any print-specific hiding can be witnessed.\n- The long static enhanced-sheet interval and the viewport shift into a mostly blank central area make the feature\u2019s print outcome particularly difficult to evaluate.\n\nBecause the asserted print behavior itself is never sampled on camera, the visible extension UI cannot establish that the feature under certification works.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793469732486
+}

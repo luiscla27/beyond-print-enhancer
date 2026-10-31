@@ -1,0 +1,95 @@
+{
+ "feature": "feature_03_layer_management",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "file_id": "458406623928872",
+   "mp4_bytes": 859071,
+   "upload_response": {
+    "file": {
+     "file_id": 458406623928872,
+     "bytes": 859071,
+     "created_at": 1793469628,
+     "filename": "layer_print_visibility.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "file_id": "458409638433231",
+   "mp4_bytes": 1336750,
+   "upload_response": {
+    "file": {
+     "file_id": 458409638433231,
+     "bytes": 1336750,
+     "created_at": 1793469631,
+     "filename": "layer_reorder_keyboard.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_print_visibility.webm",
+   "webm_bytes": 2876135
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_reorder_keyboard.webm",
+   "webm_bytes": 4804188
+  }
+ ],
+ "usage": {
+  "total_tokens": 98526,
+  "total_characters": 0,
+  "prompt_tokens": 96007,
+  "completion_tokens": 2519,
+  "completion_tokens_details": {
+   "reasoning_tokens": 447
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 `layer_print_visibility`\n\n### What is visibly observed\n\n- **WEBSITE:** The recording begins with the plain D&D Beyond page loading, including D&D Beyond\u2019s navigation, loading splash, and \u201cYour Privacy Choices\u201d cookie dialog.\n- **WEBSITE:** The ordinary character sheet for \u201cCorvo Saggio\u201d appears with the site\u2019s navigation, statistics, actions, inventory, and other character content.\n- **EXTENSION:** The sheet is enhanced with outlined/resizable section boxes and decorative treatment. These enhancements are visibly distinct from D&D Beyond\u2019s normal sheet.\n- **EXTENSION:** A dark floating control panel appears on the left with **LAYOUT**, **OUTPUT**, and related controls. A separate dark **LAYER MANAGEMENT** panel appears on the right, matching the extension\u2019s codex/workbench styling.\n- **EXTENSION:** The Layer Management panel visibly contains:\n  - **SECTIONS (22)**\n  - A three-state strip labeled **\u201cPrint only\u201d**, **\u201cBoth\u201d**, and **\u201cScreen only\u201d**\n  - Shape controls beneath it\n- **EXTENSION:** A toast reads **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- No browser print preview, print-media view, print dialog, or clearly demonstrated print-mode transition is shown.\n- No visible interaction demonstrates changing a layer\u2019s print state, disabling a layer for print, re-enabling it, or moving the layer stack.\n\n### LAYER 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Evidence on camera |\n|---|---|\n| Layer Management panel is hidden inside `@media print` | **NOT-VISIBLE** \u2014 the panel is shown on screen, but no print-media view is sampled. |\n| Locked layers are forced fully opaque on print | **NOT-VISIBLE** \u2014 no print view or locked-layer opacity comparison is shown. |\n| \u201cDisable on Print\u201d marks the layer container and hides it in print CSS | **NOT-VISIBLE** \u2014 the control may be present, but no activation or print result is shown. |\n| Re-enabling clears `data-print-disabled` and its hide rule | **NOT-VISIBLE** \u2014 no re-enable interaction or resulting state is shown. |\n| Every layer group carries the three-state strip, naming all three modes | **VISIBLE** \u2014 the Layer Management panel visibly names **Print only**, **Both**, and **Screen only**. Only the shapes subsection is clearly exposed, so coverage across every individual layer group is not independently demonstrable. |\n| `Print only` hides the layer on screen and restores it at print time | **NOT-VISIBLE** \u2014 neither the screen hiding nor print restoration is shown. |\n| `Screen only` stays visible on screen and is skipped on print | **NOT-VISIBLE** \u2014 no mode selection or print result is shown. |\n| `Both` clears both flags and both print rules | **NOT-VISIBLE** \u2014 no state transition is shown. |\n\n**Layer 1 conclusion:** Only the presence and naming of the three-state controls are visible. The central print-visibility behavior is not witnessed on camera.\n\n### LAYER 2 \u2014 Product-aim conformance\n\n**Extension UI distinguishability:** Strong. The dark floating panels, gold/red hairlines, outlined sheet sections, and extension-styled toast are clearly distinguishable from D&D Beyond\u2019s white-and-red website UI.\n\n**Basic affordances observed working**\n\n1. The extension panels load and become usable.\n2. The Layer Management panel opens with sections and print-mode controls visible.\n3. The three-state print control is visibly labeled.\n4. The \u201cNo saved layout yet \u2014 the default template is loaded\u201d status toast provides useful state feedback.\n5. The enhanced sheet visibly reflects the extension\u2019s section-box treatment.\n\n**Basic affordances missing or rough**\n\n1. No print preview or print-media state is demonstrated, so the feature\u2019s main output is absent from the recording.\n2. No visible feedback occurs when the user changes **Print only**, **Screen only**, or **Both**.\n3. No error state is shown for an invalid or unsupported print configuration.\n4. No disabled state is shown for controls that cannot be used in the current context.\n5. The Layer Management panel is not visibly collapsible or demonstrably focusable in these frames.\n6. No explanation or tooltip is visible explaining how the three modes affect on-screen and printed output.\n7. The recording spends most of its duration on a static enhanced sheet, so the asserted print workflow is not meaningfully sampled.\n\n**Video 1 verdict:** **NOT-VISIBLE** for the print-visibility behavior; the frames are populated, but they never sample the print-mode interaction that is the subject of the suite.\n\n---\n\n## Video 2 \u2014 `layer_reorder_keyboard`\n\n### What is visibly observed\n\n- **WEBSITE:** The recording begins with D&D Beyond\u2019s page load and its branded loading splash.\n- **WEBSITE:** The plain character sheet appears, showing the normal site navigation, character header, ability scores, skills, senses, and actions.\n- **EXTENSION:** The sheet is enhanced with section borders/boxes, the left floating control panel, and the right **LAYER MANAGEMENT** panel.\n- **EXTENSION:** The Layer Management panel clearly shows section groups and their order. The **Sections** strip visibly includes **Print only**, **Both**, and **Screen only**.\n- **EXTENSION:** A toast appears reading **\u201cLayer order updated\u201d**, confirming that a layer-order edit occurred.\n- Following that update, the visible ordering of the top sheet sections changes: **Walking Speed** appears before **Proficiency**, whereas **Proficiency** appeared before **Walking Speed** earlier.\n- The toast later fades.\n- No keypress overlay, visible keyboard event, focused-row indicator, or highlighted dragged row is shown. Therefore, the video visually establishes a successful reorder and its toast, but not which keyboard command caused it.\n- No separate mouse drag/drop operation is visibly demonstrated for comparison.\n- No locked row is visibly engaged in a keyboard operation, and no boundary no-op or undo-history behavior can be seen.\n\n### LAYER 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Evidence on camera |\n|---|---|\n| ArrowUp moves the tail layer exactly one slot toward the head through the row\u2019s keydown handler | **NOT-VISIBLE** \u2014 an order change and toast are visible, but no ArrowUp press or row-level keydown handling is shown. |\n| ArrowDown moves a layer one slot toward the tail; directions write mirror-image stacks | **NOT-VISIBLE** \u2014 no ArrowDown press is visibly demonstrated. |\n| Three rapid presses\u2014\u2191, \u2193, \u2191\u2014all land on the same layer without re-clicking (`restoreRowFocus`) | **NOT-VISIBLE** \u2014 no key sequence or focus retention is shown. |\n| Home and End bookend the stack in one press through the same handler | **NOT-VISIBLE** \u2014 neither Home nor End is visibly demonstrated. |\n| A locked row\u2019s arrows are a no-op; handler refuses before the manager call; no stack change or undo entry | **NOT-VISIBLE** \u2014 no locked-row keyboard attempt or undo-state inspection is shown. |\n| Boundary presses are safe no-ops: tail ArrowDown and head ArrowUp leave depth untouched | **NOT-VISIBLE** \u2014 no boundary operation is shown. |\n| The keyboard-written stack is positionally identical to a drag/drop-written stack for the same swap | **NOT-VISIBLE** \u2014 a keyboard-driven reorder is suggested by the suite context and toast, but no corresponding drag/drop comparison is performed on camera. |\n\n**Layer 1 conclusion:** The video visibly confirms that an order update occurred and that the extension reports it with **\u201cLayer order updated.\u201d** It does not visually witness the asserted key combinations, row focus behavior, locked-row refusal, boundary no-ops, undo suppression, or keyboard-versus-drag parity.\n\n### LAYER 2 \u2014 Product-aim conformance\n\n**Extension UI distinguishability:** Strong. The extension\u2019s black workbench panels, gold/red outlines, section controls, and toast are immediately distinct from D&D Beyond\u2019s own page.\n\n**Basic affordances observed working**\n\n1. The extension enhances the sheet and exposes movable/section-box treatment.\n2. Both extension panels load successfully.\n3. The Layer Management panel exposes the layer stack and print-state controls.\n4. A layer-order edit is reflected in the visible sheet ordering.\n5. The extension provides immediate success feedback through the **\u201cLayer order updated\u201d** toast.\n6. The toast fades away without obscuring the controls permanently.\n\n**Basic affordances missing or rough**\n\n1. No visible keyboard shortcut hints are shown for ArrowUp, ArrowDown, Home, or End.\n2. No persistent or clearly visible focus indicator shows which layer row currently owns keyboard focus.\n3. `restoreRowFocus` is not visually evident because the rapid \u2191/\u2193/\u2191 sequence and continued focus are not shown.\n4. No visible locked-row state explains why keyboard arrows are unavailable for that row.\n5. No disabled-state treatment is shown for boundary rows or locked rows.\n6. No error or failure toast is shown; only the successful update path is sampled.\n7. No visible undo affordance or undo-entry feedback is demonstrated.\n8. The mouse drag/drop path is not shown, so equivalence between drag/drop and keyboard ordering cannot be assessed.\n9. The update toast confirms that something changed but does not identify the moved layer or destination, which is less informative than an item-specific status message.\n\n**Video 2 verdict:** **PARTIAL** \u2014 the extension\u2019s reorder operation and success feedback are visible, but nearly all specific keyboard-handler assertions remain unwitnessed.\n\n## Overall certification result\n\n- The extension is clearly distinguishable from the base website.\n- The Layer Management UI and section enhancements are visibly present.\n- The second video shows a working reorder and an appropriate success toast.\n- The first video does not sample the print behavior it is meant to certify.\n- Neither video visibly demonstrates the complete keyboard-reorder contract, and the second video exposes notable missing feedback/focus affordances.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793469661891
+}

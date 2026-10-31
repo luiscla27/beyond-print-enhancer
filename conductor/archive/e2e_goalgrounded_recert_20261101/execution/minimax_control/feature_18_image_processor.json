@@ -1,0 +1,72 @@
+{
+ "feature": "feature_18_image_processor",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "webp_assets.spec.js",
+   "file_id": "458411816964424",
+   "mp4_bytes": 980671,
+   "upload_response": {
+    "file": {
+     "file_id": 458411816964424,
+     "bytes": 980671,
+     "created_at": 1793469969,
+     "filename": "webp_assets.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "webp_assets.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\webp_assets.webm",
+   "webm_bytes": 3009842
+  }
+ ],
+ "usage": {
+  "total_tokens": 38131,
+  "total_characters": 0,
+  "prompt_tokens": 36220,
+  "completion_tokens": 1911,
+  "completion_tokens_details": {
+   "reasoning_tokens": 481
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations in order\n\n1. **0.0\u20131.4 s \u2014 WEBSITE loading surface:**  \n   The frame is almost entirely blank, with a gray band along the bottom. This is loading chrome rather than identifiable extension work.\n\n2. **1.4\u20134.0 s \u2014 WEBSITE navigation:**  \n   The D&D Beyond header and logo appear, followed by navigation links, search, sign-in, and **CREATE ACCOUNT**. These are the website\u2019s own surfaces.\n\n3. **4.0\u20136.8 s \u2014 WEBSITE loading and privacy dialog:**  \n   A D&D Beyond loading card and spinner appear. The site then displays its own **\u201cYour Privacy Choices\u201d** panel with \u201cCookie Settings,\u201d \u201cAccept All,\u201d and \u201cReject Non-Essential Cookies.\u201d The cookie panel and buttons are website work, not extension work.\n\n4. **6.2\u201329.2 s \u2014 WEBSITE character sheet with EXTENSION enhancement:**  \n   The character sheet for **Corvo Saggio** loads. Its artwork, portrait, abilities, skills, actions, inventory, hit points, and other sheet content are website work. Over those website elements, thin red rounded outlines and drag-related styling appear. These enhanced borders/guides are attributable to the extension, although they do not use the described dark-and-gold \u201ccodex\u201d treatment. The privacy panel is dismissed around 7.8 s, but that dismissal itself is not clearly shown.\n\n5. **29.2\u201330.2 s \u2014 EXTENSION-enhanced sheet viewport:**  \n   The view shifts downward and crops the sheet into a mostly whitespace-heavy layout. Red outlines still identify extension-managed elements. No extension control panel is yet visible in this cropped view.\n\n6. **30.2\u201333.6 s \u2014 EXTENSION control panel and LAYER MANAGEMENT panel:**  \n   Two clearly extension-authored dark panels appear:\n   - Left: a floating panel with **LAYOUT** and **OUTPUT**, including Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, AI Settings, Print, Print Settings, and Save to Browser.\n   - Right: **LAYER MANAGEMENT**, listing **SECTIONS (22)** and **SHAPES (1)**, with section and shape entries.\n   \n   An extension toast states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** A separate **\u201cShapes (Default) loaded\u201d** status also appears. The layer manager shows several shape thumbnails, including labels such as \u201cArcher Accent A,\u201d \u201cArcher Accent B,\u201d and \u201cArcher Divider.\u201d\n\n7. **33.2\u201333.8 s \u2014 EXTENSION template/status behavior:**  \n   The sheet visibly changes to an ornate decorative template, accompanied by **\u201cShapes (Default) loaded.\u201d** This is an extension-driven template/shape rendering.\n\n8. **33.8\u2013end \u2014 EXTENSION shape picker:**  \n   A centered dark **\u201cSELECT DECORATIVE SHAPE\u201d** dialog opens with BORDERS, SHAPES, and CUSTOM tabs, category filters, a search field, and an ARCHER group containing three visible thumbnail previews. The thumbnails render on camera. **Add Shape** is visibly disabled because no item appears selected. The video ends with the picker still open, so no shape is actually added.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Assertion | Result | On-camera basis |\n|---|---|---|\n| A shape added from the picker renders from a `.webp` asset | **NOT-VISIBLE** | The picker opens and its previews render, but the test never selects or adds a shape before the video ends. No added shape is shown, and the asset format cannot be established visually. |\n| Picker previews load from `.webp` assets, with no `.gif` references | **NOT-VISIBLE** | Three picker previews visibly load, but camera frames cannot reveal whether their URL or MIME type is `.webp`; no `.gif` reference is shown either, so the contract is not demonstrated. |\n| Layer Manager shape thumbnails point to `.webp` assets that load | **NOT-VISIBLE** | Shape thumbnails are visibly present in the Layer Manager and appear loaded, but their backing asset paths cannot be confirmed as `.webp` from the recording. |\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Extension UI distinguishability\nThe extension is clearly distinguishable from the base website when its panels appear: both the floating control panel and Layer Management use dark workbench-style surfaces, while the D&D Beyond page remains white/red. The shape picker is likewise clearly extension-authored and visually distinct.\n\nThe sheet enhancement itself is less distinctive: the visible extension treatment is mainly thin red rounded outlines around otherwise ordinary D&D Beyond sections. No clearly visible gold hairlines, dark codex styling, drag grips, or alignment guides appear in the sampled enhanced-sheet views.\n\n### Basic affordances observed working\n- The extension\u2019s floating panel opens and exposes LAYOUT and OUTPUT sections.\n- Layer Management opens and visibly lists sections and shapes.\n- A \u201cno saved layout yet\u201d informational toast appears.\n- A \u201cShapes (Default) loaded\u201d status/toast appears.\n- A decorative template/shape rendering appears on the sheet after the loaded status.\n- The shape picker opens with tabs, category filters, a search field, and a searchable asset group.\n- Three shape preview images visibly load.\n- The **Add Shape** button has a clear disabled state while no picker item is selected.\n- The **Cancel** button is visibly available for dismissing the picker.\n\n### Basic affordances observed missing or rough\n- The requested shape-add completion is missing: the recording ends with the picker open and **Add Shape** disabled.\n- No applied shape is shown after selection, so the add flow, success toast, and resulting page rendering are not demonstrated.\n- No undo flow is visible.\n- No error state is visible.\n- No extension loading or transition animation is clearly shown.\n- No toolbar icon or visible **ON badge** is shown.\n- No explicit activation transition from the plain sheet to the enhanced sheet is captured; the enhancement simply appears as the page loads.\n- The \u201cShapes (Default) loaded\u201d message appears while the visible sheet changes to a different ornate template, making the status wording somewhat ambiguous.\n- The sheet enhancement is visually subtle and primarily red-on-white, unlike the extension panels\u2019 dark-and-gold workbench styling.\n- The picker\u2019s underlying layer-manager shape previews are small, making asset rendering difficult to inspect.\n- Although a hover tooltip says **\u201cDrag to move\u201d** and **\u201cDrag corners to resize\u201d**, no actual dragging or resizing interaction is visibly exercised.\n\nBecause the video records substantial extension UI and visible image rendering, this is not a blank or too-few-frame recording. However, none of the format-specific WebP assertions can be established from camera evidence, and the principal shape-add interaction is left unfinished.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: webp_assets.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793469984667
+}

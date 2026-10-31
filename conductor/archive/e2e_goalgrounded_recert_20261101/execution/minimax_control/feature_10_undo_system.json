@@ -1,0 +1,95 @@
+{
+ "feature": "feature_10_undo_system",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "undo_stack_visual_capture.spec.js",
+   "file_id": "458398074212840",
+   "mp4_bytes": 1113403,
+   "upload_response": {
+    "file": {
+     "file_id": 458398074212840,
+     "bytes": 1113403,
+     "created_at": 1793467194,
+     "filename": "undo_stack_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "undo_stack_class_verification.spec.js",
+   "file_id": "458399544476192",
+   "mp4_bytes": 2701317,
+   "upload_response": {
+    "file": {
+     "file_id": 458399544476192,
+     "bytes": 2701317,
+     "created_at": 1793467198,
+     "filename": "undo_stack_class_verification.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "undo_stack_visual_capture.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_visual_capture.webm",
+   "webm_bytes": 3902251
+  },
+  {
+   "suite": "undo_stack_class_verification.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_class_verification.webm",
+   "webm_bytes": 7665661
+  }
+ ],
+ "usage": {
+  "total_tokens": 120855,
+  "total_characters": 0,
+  "prompt_tokens": 116658,
+  "completion_tokens": 4197,
+  "completion_tokens_details": {
+   "reasoning_tokens": 1385
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 `undo_stack_visual_capture`\n\n### What is visibly observed\n\n- **WEBSITE-owned:** The recording begins with D&D Beyond\u2019s own page loading, including the D&D Beyond header, loading spinner, promotional banner, and \u201cYour Privacy Choices\u201d cookie panel. The character sheet, character data, artwork, native sheet layout, and D&D Beyond navigation are not extension work.\n- **WEBSITE-owned:** The character sheet remains visible as the underlying page while the extension is inactive or not yet exposing its controls.\n- **EXTENSION-owned:** At approximately 29.4 seconds, the extension visibly adds:\n  - A dark, gold-accented **\u201cBEYOND P\u2026\u201d control panel** on the left.\n  - A dark **\u201cLAYER MANAGEMENT\u201d** panel on the right.\n  - Extension-managed section and shape listings, layer controls, compact-mode controls, print/output controls, and an **Undo** affordance.\n  - A first-run hint card: \u201cDrag to move, drag a corner to resize, or use the handle to rotate,\u201d with a **\u201cGot it\u201d** button.\n  - A top toast reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- **EXTENSION-owned:** The undo control visibly acquires action-specific labels, including labels such as **\u201cUndo: Toggle \u2018Actions\u2019,\u201d \u201cUndo: Position \u2018Actions\u2019,\u201d \u201cUndo: Resize,\u201d \u201cUndo: Restack \u2018Section 2\u2019,\u201d \u201cUndo: Lock \u2018Shapes\u2026\u2019,\u201d \u201cUndo: Move shape\u2026,\u201d \u201cUndo: Reorder layers,\u201d** and **\u201cUndo: Move to layer \u2018New Layer\u2019.\u201d**\n- **EXTENSION-owned:** Multiple undo/redo actions are visibly applied to the sheet. The decorated sheet changes between states, including compact mode, moved/resized/restacked sections, changed layer order, and hidden or locked elements. Toast feedback appears above the sheet after these operations.\n- **EXTENSION-owned:** A border-selection dialog opens near the end, displaying border style previews and controls such as **\u201cBorders,\u201d \u201cPrint only,\u201d \u201cBoth,\u201d** and **\u201cScreen only.\u201d**\n- **WEBSITE-owned:** The visible sheet artwork and character statistics remain D&D Beyond content; they should not be counted as evidence of the extension\u2019s undo implementation.\n\n### LAYER 1 \u2014 Asserted-behavior evidence\n\n**Suite `undo_stack_visual_capture` \u2014 Undo-stack visual captures (AC-V1):**\n\n- **Idle state \u2014 VISIBLE:** The left panel\u2019s **Undo** entry is visible in its normal/unapplied state before an undo command is invoked.\n- **Named state \u2014 VISIBLE:** The undo affordance changes to specific names such as \u201cUndo: Toggle \u2018Actions\u2019,\u201d \u201cUndo: Resize,\u201d and \u201cUndo: Restack \u2018Section 2\u2019.\u201d\n- **Applied state \u2014 VISIBLE:** Undo is invoked, action-specific toast feedback appears, and the sheet/panel visibly changes to the corresponding restored state.\n- **Keyboard state \u2014 NOT-VISIBLE:** No camera-visible keyboard-focused undo affordance, keyboard-only undo interaction, focus treatment, or other explicit keyboard state of the undo control is shown.\n\n**Layer 1 result:** The idle, named, and applied states are visible, but the asserted keyboard state is not witnessed.\n\n### LAYER 2 \u2014 Product-aim conformance\n\n**Basic affordances observed working:**\n\n1. The extension UI is clearly distinguishable from D&D Beyond through its dark \u201ccodex/workbench\u201d panels, gold accents, and custom typography.\n2. The floating left control panel opens and remains usable.\n3. The layer-management panel opens and displays section and shape entries.\n4. The first-run hint card and **\u201cGot it\u201d** dismissal affordance are present.\n5. Undo entries become named according to the last operation.\n6. Undo/redo commands visibly change the enhanced sheet.\n7. Toast feedback reports successful state changes.\n8. Compact mode visibly changes the sheet density and is reflected in the control panel and toast.\n9. Section moving, resizing, restacking, hiding, locking, printing changes, layer reordering, and layer reassignment are visibly exercised.\n10. Layer order can be updated and then visibly reverted with undo.\n11. A border picker opens with visual border previews.\n12. Print, browser-save, export, and import controls are present.\n13. The extension\u2019s panel and toast styling remains visually coherent with the intended gold-on-dark theme.\n\n**Basic affordances missing or rough:**\n\n1. No extension-specific **loading state** is visible during activation; the only loading spinner shown is D&D Beyond\u2019s own.\n2. No extension-specific **error state** is exercised or shown.\n3. No explicit **disabled-state treatment** is demonstrated for unavailable controls.\n4. The keyboard-specific state of undo is not communicated or demonstrated.\n5. The left panel title is visibly truncated to **\u201cBEYOND P\u2026\u201d**, which reduces clarity.\n6. Several right-panel labels and shape names are truncated or crowded in the narrow column.\n7. Stacked undo/redo toasts occasionally overlap one another and make the history harder to scan.\n8. Some long undo labels are clipped, for example shape names ending in ellipses.\n9. The first-run hint mentions rotation, but this recording does not visibly demonstrate the rotation affordance.\n\n---\n\n## Video 2 \u2014 `undo_stack_class_verification`\n\n### What is visibly observed\n\n- **WEBSITE-owned:** The recording again begins on D&D Beyond\u2019s own loading sequence, header, promotional banner, spinner, and \u201cYour Privacy Choices\u201d dialog. The sheet content and character artwork are D&D Beyond-owned.\n- **EXTENSION-owned:** The extension subsequently appears with its left control panel and right **LAYER MANAGEMENT** panel.\n- **EXTENSION-owned:** The first-run hint card and **\u201cGot it\u201d** button are visible, as is the **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** toast.\n- **EXTENSION-owned:** The extension exposes section boxes, drag/resize/rotation handles, gold alignment guides, selection outlines, and layer-management controls.\n- **EXTENSION-owned:** A small position/size editor is opened, showing X/Y/W/H-style fields and numeric controls.\n- **EXTENSION-owned:** Sections and decorative shapes are moved and resized. The undo history identifies operations such as:\n  - **\u201cUndo: Move Section 1\u201d**\n  - **\u201cUndo: Nudge Section 1\u201d**\n  - **\u201cUndo: Position \u2018Actions\u2019\u201d**\n  - **\u201cUndo: Resize\u201d**\n  - **\u201cUndo: Restack \u2018Section 2\u2019\u201d**\n  - **\u201cUndo: Move shape\u2026\u201d**\n  - **\u201cUndo: Reorder layers\u201d**\n  - **\u201cUndo: Move to layer \u2018New Layer\u2019\u201d**\n  - **\u201cUndo: Toggle \u2018Actions\u2019\u201d**\n- **EXTENSION-owned:** Layer behavior is visibly exercised:\n  - A shape is selected and manipulated.\n  - A layer is moved to a newly named layer.\n  - Sections are hidden and later unlocked.\n  - Print-only and screen-only visibility states change.\n  - Layer order is updated and then undone.\n  - Compact mode is turned on and later undone.\n- **EXTENSION-owned:** Toasts repeatedly identify the current undo action or restored state.\n- **EXTENSION-owned:** The border picker appears and a border is applied, followed by undo feedback naming the border action.\n- **WEBSITE-owned:** The underlying sheet\u2019s statistics, skills, actions, equipment, character name, portrait, and artwork remain the website\u2019s content.\n\n### LAYER 1 \u2014 Asserted-behavior evidence\n\n**Suite `undo_stack_class_verification` \u2014 undo stack, per-class round trip in a real browser (AC-3):**\n\n1. **Drag to move \u2014 round trip: VISIBLE.**  \n   A real pointer drag is visible on selected sheet content, followed by undo feedback such as **\u201cUndo: Move Section 1\u201d** or **\u201cUndo: Move shape\u2026\u201d**, with the enhanced sheet returning toward its prior arrangement.\n\n2. **Keyboard nudge \u2014 round trip: NOT-VISIBLE.**  \n   A toast reading **\u201cUndo: Nudge Section 1\u201d** is visible, which demonstrates that a nudge operation exists and enters the undo stack. However, the frames do not visibly establish real keyboard input or show the complete keyboard-driven change-and-undo round trip. The contract specifically calls for a keyboard nudge round trip, so the toast alone is insufficient to mark it visible.\n\n3. **Position fields \u2014 round trip: VISIBLE.**  \n   A position/size editor with numeric fields is opened. Undo feedback includes **\u201cUndo: Move Section 1\u201d** and **\u201cUndo: Position \u2018Actions\u2019,\u201d** followed by restored positioning.\n\n4. **Corner resize \u2014 round trip: VISIBLE.**  \n   A selected section/shape exposes a resize handle. The resulting operation is explicitly identified by **\u201cUndo: Resize,\u201d** and the changed dimensions are visibly restored.\n\n5. **Rotate \u2014 round trip: NOT-VISIBLE.**  \n   The extension exposes a rotate handle and the first-run hint mentions rotation, but no camera-visible pointer rotation occurs and no action-specific undo entry for rotation is shown. A rotate round trip is therefore not witnessed.\n\n6. **Layer restack \u2014 round trip: VISIBLE.**  \n   A section is restacked, with the explicit undo entry **\u201cUndo: Restack \u2018Section 2\u2019.\u201d** The layer/section ordering visibly changes and is then reverted.\n\n7. **Chip reparenting \u2014 round trip: VISIBLE.**  \n   A shape/chip is moved into a newly named layer. The toast explicitly says **\u201cMoved to layer \u2018New Layer\u2019,\u201d** and the undo history later contains **\u201cUndo: Move to layer \u2018New Layer\u2019,\u201d** demonstrating the reparenting and its reversal.\n\n8. **Compact mode \u2014 round trip: VISIBLE.**  \n   Compact mode is turned on, the sheet visibly becomes denser, and the toast says **\u201cCompact mode ON.\u201d** The undo history identifies **\u201cUndo: Toggle \u2018Actions\u2019\u201d** and **\u201cUndo: Toggle \u2018Actions\u2019\u201d** in the compact-mode flow, with the sheet visibly returning from the compact state.\n\n**Layer 1 result:** Six of the eight round-trip classes are visibly witnessed. The keyboard-nudge and rotate round trips are not fully visible on camera.\n\n### LAYER 2 \u2014 Product-aim conformance\n\n**Basic affordances observed working:**\n\n1. The extension is unmistakably distinct from the base website through its dark floating panels, gold hairlines, custom section headers, and compact rectangular layout.\n2. Extension-managed sections expose a selection outline, handles, and visible alignment guides.\n3. Dragging moves extension-managed elements.\n4. A numeric position/size editor opens and supplies direct field-based control.\n5. Corner resizing visibly changes dimensions.\n6. Layer restacking and layer reordering work and update the right panel.\n7. A newly named layer is created and an element is moved into it.\n8. Undo entries accurately name the operation or object involved.\n9. Undo/redo toasts visibly confirm restoration.\n10. Section hiding and unlocking are supported and reported through the layer panel and toasts.\n11. Print-only and screen-only controls visibly change what is available for output.\n12. Compact mode is visibly activated and reversed.\n13. A border picker provides multiple visual border choices, and applying a border generates corresponding undo feedback.\n14. Output, save, export, import, print-settings, and restore-backup controls are exposed in the extension panel.\n15. The extension offers first-run guidance with a dismissible **\u201cGot it\u201d** button.\n16. Selection and manipulation remain understandable because the extension overlays gold guides and visible handles around the otherwise white D&D Beyond sheet.\n\n**Basic affordances missing or rough:**\n\n1. The keyboard-nudge operation is only evidenced by its undo label; the actual keyboard interaction and full round trip are not visible.\n2. The rotate handle is advertised, but actual pointer rotation and its undo round trip are not shown.\n3. No extension-specific activation/loading indicator is visible; the only spinner belongs to D&D Beyond.\n4. No extension-specific error state is demonstrated.\n5. No clear disabled-state feedback is shown for unavailable print, export, or shape controls.\n6. The rotate affordance is difficult to confirm in the recorded views because the cursor/handle and resulting angular change are not clearly sampled.\n7. Some operation names are truncated or dense, notably shape names in **\u201cUndo: Move shape\u2026\u201d** and the left panel\u2019s **\u201cBEYOND P\u2026\u201d** title.\n8. Multiple undo/redo toasts can stack vertically and overlap the top of the sheet.\n9. The numeric position editor is compact, and its labels are small relative to the dense sheet behind it.\n10. The first-run hint says rotation is available, but the demonstrated interactions do not include a successful rotation, creating a minor guidance/execution mismatch.\n11. Long-running portions show the sheet without the extension panels, reducing the sense of continuously available editing affordances, although this may reflect the harness rather than product behavior.\n\n## Overall conclusion\n\nThe extension\u2019s own UI and most of its undo behavior are clearly distinguishable and visibly functional. The recordings provide strong evidence for named and applied undo states and for six of the eight per-class round trips. They do not fully witness the keyboard-state capture, a real keyboard-nudge round trip, or a rotate round trip. They also do not exercise extension-specific loading, error, or disabled states, and several history labels and stacked toasts are somewhat rough.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: undo_stack_visual_capture.spec.js, undo_stack_class_verification.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793467231362
+}

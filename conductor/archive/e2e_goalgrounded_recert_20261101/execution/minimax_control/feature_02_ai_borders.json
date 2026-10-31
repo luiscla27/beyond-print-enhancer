@@ -1,0 +1,72 @@
+{
+ "feature": "feature_02_ai_borders",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "file_id": "458399978652170",
+   "mp4_bytes": 2837410,
+   "upload_response": {
+    "file": {
+     "file_id": 458399978652170,
+     "bytes": 2837410,
+     "created_at": 1793467038,
+     "filename": "byok_border_gallery.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_02_ai_borders\\byok_border_gallery.webm",
+   "webm_bytes": 8545389
+  }
+ ],
+ "usage": {
+  "total_tokens": 150959,
+  "total_characters": 0,
+  "prompt_tokens": 148993,
+  "completion_tokens": 1966,
+  "completion_tokens_details": {
+   "reasoning_tokens": 569
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed, in order\n\n1. **WEBSITE:** The video opens on a mostly blank D&D Beyond page while the site loads. The D&D Beyond navigation bar, promotional banner, loading spinner, and \u201cYour Privacy Choices\u201d cookie dialog are all **website-owned surfaces**, not extension work.\n2. **WEBSITE:** The character sheet for \u201cCorvo Saggio\u201d loads with its normal stats, abilities, actions, inventory, and other D&D Beyond content. No extension panel or enhancement is initially present.\n3. **EXTENSION:** After activation, the sheet becomes visually enhanced: sections receive ornamental borders, the character portrait is surrounded by a decorative frame, and the sheet adopts a more codex-like appearance. A dark floating **\u201cBEYOND P\u2026\u201d control panel** appears on the left, and a dark **\u201cLAYER MANAGEMENT\u201d** panel appears on the right. Both are clearly distinguishable from D&D Beyond\u2019s own UI.\n4. **EXTENSION:** The left panel visibly contains sections such as **LAYOUT** and **OUTPUT**, with actions including Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, AI Settings, Print, Print settings, Save to Browser, Save to PC, Export Settings, Import Settings, Undo, and Restore Backup. The right panel contains **SECTIONS (22)** and **SHAPES (1)** lists.\n5. **EXTENSION:** A centered extension toast states, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** This is extension feedback rather than a website dialog.\n6. **EXTENSION:** The camera shows the enhanced sheet with ornamental section outlines and an ornamented portrait frame. A small red decorative flourish is also visible around the Proficiency Bonus area.\n7. **EXTENSION/OUTPUT FLOW:** The view changes to a long print-oriented sheet layout. The left panel\u2019s **PRINT** control is highlighted, and the sheet appears in a print-preview-style arrangement. A yellow warning triangle appears in the upper-right corner of the printed content. The right Layer Management panel remains available.\n8. **WEBSITE/PRINT VIEW:** Much of the video then remains on the same static, very tall print layout. The sheet content is narrow relative to the available canvas, with a large empty blue-gray region to the right.\n9. **EXTENSION:** Near the end, the enhanced-sheet panels return over a largely blank canvas. The left control panel and right Layer Management panel remain visible, but no AI-border gallery or border-adjustment workflow is shown.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Assertion | Visible on camera | Evidence |\n|---|---|---|\n| `window.AiBorder` is live in the isolated world | **NOT-VISIBLE** | No isolated-world API, console, or seam is shown on camera. |\n| The README demo sheet exposes a section on which a border can actually be seen | **VISIBLE** | Ornamental borders and a framed character portrait are visible on the enhanced demo sheet. |\n| \u201crenders\u201d | **NOT-VISIBLE** | The malformed/truncated assertion cannot be tied to a specific visible rendering operation. Although decorated borders are visible, the specific asserted gallery render is not shown. |\n| Exposes `adjust` / `transform` / `canAdjust` on the isolated-world `AiBorder` seam | **NOT-VISIBLE** | No such API or controls appear on camera. |\n| Adjusts a stroke-bearing border in place: weight \u00d71.5 increases painted stroke width and preserves the original | **NOT-VISIBLE** | No border weight adjustment, before/after comparison, or preserved original is shown. |\n| Disables refinement on a fill-only border: returns `not_adjustable` and paints nothing new | **NOT-VISIBLE** | No fill-only border, refusal message, or unchanged-paint comparison is shown. |\n| Captures a labelled frame for every accepted design | **NOT-VISIBLE** | No gallery acceptance flow or labelled capture presentation is shown. |\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Extension affordances observed working\n\n- **Activation/enhancement transition:** The plain D&D Beyond sheet is visible first; afterward the extension\u2019s decorative borders, enhanced styling, and control panels appear.\n- **Floating control panel:** The dark, gold-accented left panel is clearly extension-owned and visually distinct from the website.\n- **Layer Management panel:** The right panel lists 22 sections and one shape and remains usable-looking throughout the enhanced views.\n- **Default-layout feedback:** The extension toast, **\u201cNo saved layout yet \u2014 the default template is loaded,\u201d** provides clear status feedback.\n- **Print/output action:** Selecting or entering the highlighted PRINT flow opens a long print-oriented rendering while keeping the extension controls visible.\n- **Enhancement visibility:** Ornamental section borders, the portrait frame, and a small flourish are visibly distinct from the plain site.\n\n### Missing or rough affordances\n\n- **No AI-border gallery is shown.** Although this suite is specifically for the AI-border feature, no border gallery, BYOK SVG chooser, design thumbnails, or border-picker flow appears in the sampled frames.\n- **No border-refinement controls are shown.** There is no visible weight adjustment, transform control, `canAdjust` status, or apply/undo operation for an AI border.\n- **No rejected/refinement-disabled state is shown.** The fill-only `not_adjustable` behavior and its \u201cpaints nothing new\u201d guarantee are not demonstrated.\n- **No acceptance/capture feedback is shown.** There is no accepted-design toast, labelled design frame, or visible confirmation corresponding to the required frame capture.\n- **No error state is shown.** The small print-warning triangle is visible, but no extension-specific error message or recovery affordance is demonstrated.\n- **No disabled state is shown.** In particular, the camera never shows what the AI-border controls look like when refinement is unavailable.\n- **No success toast for a border operation is shown.** The only clearly readable extension toast concerns the default template.\n- **Toolbar ON badge is not visible.** The browser toolbar is not shown clearly enough to verify the promised active-state badge.\n- **Activation from the toolbar is not shown.** The harness evidently activates the extension, but the actual toolbar click is outside the visible evidence.\n- **The print presentation is rough.** The content remains extremely small and narrow beside a large empty blue-gray area, with only a tiny warning icon conveying the issue. There is no explanatory message or recovery guidance.\n- **Most of the runtime is static.** The long print view does not expose the feature under certification, limiting meaningful product review of the AI-border flow.\n\nThe extension\u2019s visible chrome and enhancement are clearly distinguishable and generally coherent, but the specified AI-border behavior and its supporting affordances are largely absent from the camera evidence.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793467132941
+}
