@@ -1579,6 +1579,75 @@ div[style*="z-index: 20000"] label {
 .be-ai-preview-note {
   font-style: italic;
 }
+/* Activation overlay (BEYOND-18, track activation-overlay-be18). The certified
+ * gap was ATTRIBUTION: during the plain-sheet -> enhanced-sheet transition the
+ * only spinner on screen belonged to D&D Beyond, so a first-run user watched
+ * the website load and then a wholly new UI appear with no indication an
+ * extension did it. The overlay is the extension's own claim on that middle of
+ * the boot — leather ground, bone text, antique-gold spinner, blind-tooled
+ * seam — with a brass focus ring on its focusable, dismissible surface. It is
+ * a full-viewport claim (z-index 2147483000, above the section-utils band's
+ * 10000 and the feedback lane's 800: the transition owns the whole screen
+ * until the sheet is enhanced), and it is print-reinforced hidden like every
+ * other chrome surface below — the overlay must never reach paper. */
+.be-activation-overlay {
+  position: fixed;
+  inset: 0;
+  /* 2147483646 = one under INT32_MAX: the host page's own chrome (consent
+   * banners, modals) can claim 2147483647, and this overlay must sit ABOVE
+   * every one of them for the whole transition — the certified gap was the
+   * extension being invisible during exactly this window. */
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 13, 10, 0.82);
+  cursor: pointer;
+}
+.be-activation-overlay[data-be-activation-state="dismissed"] {
+  display: none !important;
+}
+.be-activation-overlay-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 26px;
+  background: ${TOKENS.groundModal};
+  border: 1px solid ${TOKENS.hairGold};
+  border-radius: ${TOKENS.radius};
+  box-shadow: 0 0 0 4px ${TOKENS.seamDeep};
+}
+.be-activation-overlay:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px ${TOKENS.goldHi};
+}
+.be-activation-overlay-spinner {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid ${TOKENS.hairGold};
+  border-top-color: ${TOKENS.goldHi};
+  animation: be-activation-spin 0.9s linear infinite;
+}
+@keyframes be-activation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.be-activation-overlay-line {
+  color: ${TOKENS.bone};
+  font-family: ${TOKENS.fontTitle};
+  font-size: 18px;
+}
+.be-activation-overlay-sub {
+  margin-top: 2px;
+  color: ${TOKENS.taupe};
+  font-family: ${TOKENS.fontTool};
+  font-size: 12px;
+}
+/* Print reinforcement lives with the chrome print block below — do not add a
+ * second @media print rule here (see .be-activation-overlay there). */
 /* The hint text used to be reachable only as a <p> (.be-modal p), which is why
  * it never needed a rule. The dialog's key-state line is a span inside a row, and
  * a status line is a live region — both must read as secondary text, not as the
@@ -2149,6 +2218,7 @@ ${ornamentSurface(
   .be-modal,
   .be-context-menu,
   .be-color-picker-popup,
+  .be-activation-overlay,
   div[style*="z-index: 20000"] {
     display: none !important;
   }

@@ -164,8 +164,18 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // deliberately: the module's ten members are `AiBorder.*` (counted as namespace members
     // below), because publishing each as its own `window.*` would multiply the re-rot surface
     // without adding a reader.
-    assert.strictEqual(SUMMARY.directExports, 164, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 163, "of which module exports");
+    // +3 (164 -> 167): BEYOND-18 (track activation-overlay-be18) adds js/activation_overlay.js
+    // with three direct seams. `mountActivationOverlay` and `dismissActivationOverlay` are the
+    // two halves of the certified activation-transition affordance — main.js calls both by name
+    // (mount before Storage.init(), dismiss after announceBootRestore + on the re-run-prompt
+    // refusal path), so both are `live` with product readers. `window.__DDBActivationOverlay`
+    // is the module's own idempotence guard surface (the IIFE re-entering on re-injection reads
+    // it back) plus the harness's handle for the closure camera assertions in
+    // test/browser_e2e/beyond18_activation_overlay_repro.spec.js — a seam whose reader exists
+    // in this repo's own e2e, not only in tests, because the filing's acceptance criteria make
+    // the overlay's on-camera presence and dismissal the closure evidence.
+    assert.strictEqual(SUMMARY.directExports, 167, "direct `window.*` assignments");
+    assert.strictEqual(SUMMARY.moduleExports, 166, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

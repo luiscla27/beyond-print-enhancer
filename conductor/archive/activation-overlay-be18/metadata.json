@@ -1,0 +1,54 @@
+{
+  "id": "activation-overlay-be18",
+  "title": "Extension-owned activation overlay (BEYOND-18)",
+  "deliberation": "required",
+  "status": "complete",
+  "created": "2026-11-01",
+  "source_issue": "BEYOND-18",
+  "msf_key": "BEYOND-CERT-ACTIVATION-TRANSITION-OVERLAY-20261101-GOALGROUNDED-RECERT",
+  "acceptance_criteria_project": [
+    "a1 (filing): The defect class (no extension-owned activation/loading affordance) is reproduced by the project's own e2e verification BEFORE the fix — the judge record is filing evidence, not closure evidence.",
+    "a2 (filing): Closure evidence attached to BEYOND-18 demonstrating the new affordance (e2e result / build artifact), or a documented product-brief correction where the finding was over-stated scope."
+  ],
+  "track_id": "activation-overlay-be18",
+  "acceptance_criteria": {
+    "track": "activation-overlay-be18",
+    "sealed_utc": "2026-10-31T20:59:27Z",
+    "criteria": {
+      "[AC-1]": {
+        "sha256": "dbf2d3fb4cb7911f7f623636c88cfdebd7bacb1634f9feb70163314f4f77fc39",
+        "text": "[AC-1] **reproduce before fixing.** The absence class is proven by this repo's own instrument on the pre-fix tree — not by re-reading the judge record. Instrument: the production injection list parsed from `js/background.js` carries no activation affordance, and the real host boot exposes no extension-owned loading node. Evidence: the recorded pre-fix run and its result in verification.md §1."
+      },
+      "[AC-2]": {
+        "sha256": "ca68b36ef59325c0a5261ca5d4c89cf5a158cc952ee0eb98c08cea41dd670d08",
+        "text": "[AC-2] **extension-owned affordance.** A DOM node `#be-activation-overlay` exists, mounted before any boot work (ahead of `await Storage.init()`), carrying `data-be-activation-state=\"active\"`."
+      },
+      "[AC-3]": {
+        "sha256": "ae0549c45f00a6021ec38a8b36ab689397dc630232a1f076e97e259de681ff2f",
+        "text": "[AC-3] **attribution.** The overlay names the work it is doing (\"Enhancing sheet…\") AND the extension (\"Print Enhancer\") — the certified gap was precisely that the only visible spinner belonged to D&D Beyond and nothing told the user an extension had changed the sheet."
+      },
+      "[AC-4]": {
+        "sha256": "2c426aa72b41dfac6ee91b7b0663dc164019f71ac936992e5f1f8d1487be8496",
+        "text": "[AC-4] **dismissal + witnessability.** The overlay is dismissed on completion (state flips to `dismissed`, node retained so a camera can witness both halves), is click- and Esc-dismissible, and never wedges on the re-run-confirmation refusal path."
+      },
+      "[AC-5]": {
+        "sha256": "7f62e9f525183c66e798ebb9ac367a2f8a51bdb3be2fd0c6ff01da3ceca76a30",
+        "text": "[AC-5] **theme + print integrity.** Styling is owned by the locked theme stylesheet (`js/ui_theme.js`), not a parallel sheet, and the overlay is hidden by the print-reinforcement block."
+      },
+      "[AC-6]": {
+        "sha256": "34ef52a3788fe3195967d8938d5eab7b4c097516d7e4230ea5c326dcdf46d32b",
+        "text": "[AC-6] **fail-open.** Evaluating the module without a `document` neither throws nor mounts (the peer module convention that keeps standalone/mjsdom harness boots alive)."
+      },
+      "[AC-7]": {
+        "sha256": "76fd44c668ef80c2303dda7409e6d67ee4ab89957c68da21fc0e93986ed30ca0",
+        "text": "[AC-7] **on-camera proof.** A captured frame taken while the overlay is `active` passes a self-verifying pixel check (its own box corners are the overlay's backdrop), and a post-boot frame shows it gone. Artifacts attached to BEYOND-18."
+      },
+      "[AC-8]": {
+        "sha256": "ed8747ed2a204b5324112e82ec1ab90e6e96d0119dc2f1805537134510d73d47",
+        "text": "[AC-8] **no regression.** The full unit/e2e suite and the low-risk smoke set stay green; the dead-export count bump for the new seams is justified in-line where the count is asserted."
+      }
+    }
+  },
+  "completed": "2026-11-01",
+  "archived": "2026-11-01"
+}

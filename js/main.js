@@ -3216,6 +3216,18 @@ Licensed under Blue Oak Model License 1.0.0
   (async () => {
     if (window.__DDB_TEST_MODE__) return;
 
+    // BEYOND-18 (track activation-overlay-be18): the extension-owned activation
+    // overlay mounts BEFORE any boot work begins. The goal-grounded
+    // certification (unprimed control arm, 12/19 bundles) priced the absence
+    // of any extension-owned loading affordance here — the plain sheet's last
+    // frames and the enhanced UI's first frames were separated by nothing the
+    // user could attribute to us, and the only spinner on screen was D&D
+    // Beyond's own. The overlay module mounts itself on evaluation; the seam
+    // is kept explicit so this comment and the call sites are findable.
+    if (typeof window.mountActivationOverlay === "function") {
+      window.mountActivationOverlay();
+    }
+
     // Initialize storage first
     try {
       await Storage.init();
@@ -3235,6 +3247,12 @@ Licensed under Blue Oak Model License 1.0.0
         message: "You need to reload to apply changes again. Reload now?",
         confirmLabel: "Continue",
       });
+      // BEYOND-18: whatever the user chooses, the transition is over — the
+      // overlay must not wedge onto a page whose boot sequence has ended
+      // (dismissal is idempotent: flipping a hidden node again is a no-op).
+      if (typeof window.dismissActivationOverlay === "function") {
+        window.dismissActivationOverlay({ rerunPrompt: true });
+      }
       if (okToReload) {
         window.location.reload();
         return;
@@ -3313,6 +3331,17 @@ Licensed under Blue Oak Model License 1.0.0
     // not look the same. Silent on the failure branch above, which the recovery
     // card owns.
     if (typeof announceBootRestore === "function") announceBootRestore(restoreResult);
+
+    // BEYOND-18 (track activation-overlay-be18): the transition is OVER — the
+    // sheet is enhanced, the layout is restored or defaulted, and the user
+    // knows which. Dismiss the activation overlay last: it existed to own the
+    // plain-sheet -> enhanced-sheet middle, and dismissing before the restore
+    // announcement would re-open exactly the unowned gap the certification
+    // priced. The node flips to data-be-activation-state="dismissed" (it is
+    // hidden, not removed, so the e2e camera can witness both halves).
+    if (typeof window.dismissActivationOverlay === "function") {
+      window.dismissActivationOverlay(restoreResult);
+    }
 
     // Default to Shapes Mode OFF
     toggleShapesMode(false);

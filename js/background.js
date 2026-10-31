@@ -177,6 +177,13 @@ chrome.action.onClicked.addListener(function(tab) {
       'js/recovery_ui.js',
       'js/persistence.js',
       'js/dnd.js',
+      // BEYOND-18 (track activation-overlay-be18): the overlay module loads
+      // immediately before js/main.js. Its whole job is to own the plain
+      // sheet -> enhanced sheet transition, so it must be mounted before the
+      // boot async work (Storage.init, layout restore) starts - the certified
+      // gap was exactly this middle being extension-invisible. js/main.js
+      // dismisses it once restore/apply + announceBootRestore settle.
+      'js/activation_overlay.js',
       'js/main.js'
     ]
   }).then(function () {
