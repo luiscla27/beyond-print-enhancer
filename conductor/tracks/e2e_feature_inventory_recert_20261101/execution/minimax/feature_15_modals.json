@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458168509874531",
+          "url": "mm_file://458201462346206",
           "detail": "default",
           "fps": 5
         }
@@ -26,7 +26,7 @@
   "uploaded_files": [
     {
       "suite": "modal_primitive_visual_capture",
-      "file_id": 458168509874531,
+      "file_id": 458201462346206,
       "mp4_bytes": 1898851,
       "webm_bytes": 3823050
     }
@@ -37,23 +37,23 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\modal_primitive_visual_capture.webm",
       "webm_bytes": 3823050,
       "mp4_bytes": 1898851,
-      "file_id": 458168509874531
+      "file_id": 458201462346206
     }
   ],
   "usage": {
-    "total_tokens": 647,
+    "total_tokens": 618,
     "total_characters": 0,
     "prompt_tokens": 480,
-    "completion_tokens": 167,
+    "completion_tokens": 138,
     "completion_tokens_details": {
-      "reasoning_tokens": 110
+      "reasoning_tokens": 81
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames or playable video evidence are available in the provided context, so I cannot visibly verify the extension panel, modal controls, actions, or resulting changes on the demo sheet. The end-to-end interaction therefore cannot be certified from the evidence shown.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames are visible in the provided evidence, so the extension panel, modal controls, dialogs/layers, apply/undo interactions, and resulting sheet changes cannot be observed. The end-to-end interaction therefore cannot be certified from the supplied material.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411490290
+  "ts": 1793419126405
 }

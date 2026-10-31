@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458166637335037",
+          "url": "mm_file://458201146999255",
           "detail": "default",
           "fps": 5
         }
@@ -26,7 +26,7 @@
   "uploaded_files": [
     {
       "suite": "byok_arrange_roundtrip",
-      "file_id": 458166637335037,
+      "file_id": 458201146999255,
       "mp4_bytes": 1462311,
       "webm_bytes": 3837869
     }
@@ -37,23 +37,23 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_01_ai_arrange\\byok_arrange_roundtrip.webm",
       "webm_bytes": 3837869,
       "mp4_bytes": 1462311,
-      "file_id": 458166637335037
+      "file_id": 458201146999255
     }
   ],
   "usage": {
-    "total_tokens": 860,
+    "total_tokens": 827,
     "total_characters": 0,
     "prompt_tokens": 678,
-    "completion_tokens": 182,
+    "completion_tokens": 149,
     "completion_tokens_details": {
-      "reasoning_tokens": 128
+      "reasoning_tokens": 95
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames are visible in the provided content, so I cannot directly observe the extension panel, AI Arrange controls, dialogs, apply/undo behavior, or resulting sheet changes. The supplied test description and contract are not visual evidence.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames or playable video were included, so I cannot observe the extension panel, BYOK Arrange controls, apply/undo behavior, or the resulting sheet layout. The end-to-end interaction is therefore not verifiable from the provided evidence.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411329134
+  "ts": 1793418896792
 }

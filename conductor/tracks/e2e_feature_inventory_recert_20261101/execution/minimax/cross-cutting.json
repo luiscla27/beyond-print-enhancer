@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458170841481766",
+          "url": "mm_file://458202561425752",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458169458598365",
+          "url": "mm_file://458202012000606",
           "detail": "default",
           "fps": 5
         }
@@ -30,7 +30,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458171681669584",
+          "url": "mm_file://458201109864822",
           "detail": "default",
           "fps": 5
         }
@@ -38,7 +38,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458167451488820",
+          "url": "mm_file://458200195527021",
           "detail": "default",
           "fps": 5
         }
@@ -46,7 +46,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458169685684581",
+          "url": "mm_file://458201982325077",
           "detail": "default",
           "fps": 5
         }
@@ -54,7 +54,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458170624750054",
+          "url": "mm_file://458200199328240",
           "detail": "default",
           "fps": 5
         }
@@ -62,7 +62,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458173171904966",
+          "url": "mm_file://458203768185291",
           "detail": "default",
           "fps": 5
         }
@@ -70,7 +70,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458169281606111",
+          "url": "mm_file://458202752651735",
           "detail": "default",
           "fps": 5
         }
@@ -82,49 +82,49 @@
   "uploaded_files": [
     {
       "suite": "color_picker",
-      "file_id": 458170841481766,
+      "file_id": 458202561425752,
       "mp4_bytes": 1028498,
       "webm_bytes": 2838589
     },
     {
       "suite": "manual_verification_phase2",
-      "file_id": 458169458598365,
+      "file_id": 458202012000606,
       "mp4_bytes": 1259789,
       "webm_bytes": 3258061
     },
     {
       "suite": "shape_layer_management",
-      "file_id": 458171681669584,
+      "file_id": 458201109864822,
       "mp4_bytes": 1417342,
       "webm_bytes": 3013616
     },
     {
       "suite": "byok_settings_storage",
-      "file_id": 458167451488820,
+      "file_id": 458200195527021,
       "mp4_bytes": 1686239,
       "webm_bytes": 3531690
     },
     {
       "suite": "settings_export_import",
-      "file_id": 458169685684581,
+      "file_id": 458201982325077,
       "mp4_bytes": 1067116,
       "webm_bytes": 2828954
     },
     {
       "suite": "quick_switch_print",
-      "file_id": 458170624750054,
+      "file_id": 458200199328240,
       "mp4_bytes": 1006382,
       "webm_bytes": 2752207
     },
     {
       "suite": "release_1_4_0",
-      "file_id": 458173171904966,
+      "file_id": 458203768185291,
       "mp4_bytes": 1067271,
       "webm_bytes": 2759316
     },
     {
       "suite": "dom_refactor_guarantees",
-      "file_id": 458169281606111,
+      "file_id": 458202752651735,
       "mp4_bytes": 981047,
       "webm_bytes": 2738195
     }
@@ -135,72 +135,72 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\color_picker.webm",
       "webm_bytes": 2838589,
       "mp4_bytes": 1028498,
-      "file_id": 458170841481766
+      "file_id": 458202561425752
     },
     {
       "suite": "manual_verification_phase2",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\manual_verification_phase2.webm",
       "webm_bytes": 3258061,
       "mp4_bytes": 1259789,
-      "file_id": 458169458598365
+      "file_id": 458202012000606
     },
     {
       "suite": "shape_layer_management",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\shape_layer_management.webm",
       "webm_bytes": 3013616,
       "mp4_bytes": 1417342,
-      "file_id": 458171681669584
+      "file_id": 458201109864822
     },
     {
       "suite": "byok_settings_storage",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_storage.webm",
       "webm_bytes": 3531690,
       "mp4_bytes": 1686239,
-      "file_id": 458167451488820
+      "file_id": 458200195527021
     },
     {
       "suite": "settings_export_import",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\settings_export_import.webm",
       "webm_bytes": 2828954,
       "mp4_bytes": 1067116,
-      "file_id": 458169685684581
+      "file_id": 458201982325077
     },
     {
       "suite": "quick_switch_print",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\quick_switch_print.webm",
       "webm_bytes": 2752207,
       "mp4_bytes": 1006382,
-      "file_id": 458170624750054
+      "file_id": 458200199328240
     },
     {
       "suite": "release_1_4_0",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\release_1_4_0.webm",
       "webm_bytes": 2759316,
       "mp4_bytes": 1067271,
-      "file_id": 458173171904966
+      "file_id": 458203768185291
     },
     {
       "suite": "dom_refactor_guarantees",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\dom_refactor_guarantees.webm",
       "webm_bytes": 2738195,
       "mp4_bytes": 981047,
-      "file_id": 458169281606111
+      "file_id": 458202752651735
     }
   ],
   "usage": {
-    "total_tokens": 612,
+    "total_tokens": 752,
     "total_characters": 0,
     "prompt_tokens": 471,
-    "completion_tokens": 141,
+    "completion_tokens": 281,
     "completion_tokens_details": {
-      "reasoning_tokens": 98
+      "reasoning_tokens": 219
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames were provided, so I cannot observe the demo sheet loading, the unpacked extension panel, any feature controls or dialogs, or the resulting changes on the sheet.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames are visible in the provided evidence, so I cannot observe the demo sheet loading, the unpacked extension panel, any controls or dialogs, or an apply/undo result on the sheet. The end-to-end interaction therefore cannot be visually certified from this evidence.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411574002
+  "ts": 1793419206996
 }

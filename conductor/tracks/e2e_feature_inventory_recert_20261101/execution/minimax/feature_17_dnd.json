@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458170561249758",
+          "url": "mm_file://458198956306812",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458172393394641",
+          "url": "mm_file://458204245864966",
           "detail": "default",
           "fps": 5
         }
@@ -30,7 +30,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458167900131703",
+          "url": "mm_file://458202233451035",
           "detail": "default",
           "fps": 5
         }
@@ -42,19 +42,19 @@
   "uploaded_files": [
     {
       "suite": "affordance_drag_hover_shadows",
-      "file_id": 458170561249758,
+      "file_id": 458198956306812,
       "mp4_bytes": 2073952,
       "webm_bytes": 4031242
     },
     {
       "suite": "drag_glow_layers",
-      "file_id": 458172393394641,
+      "file_id": 458204245864966,
       "mp4_bytes": 1131780,
       "webm_bytes": 2963235
     },
     {
       "suite": "drag_ux_visual_capture",
-      "file_id": 458167900131703,
+      "file_id": 458202233451035,
       "mp4_bytes": 2211891,
       "webm_bytes": 4678026
     }
@@ -65,37 +65,37 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\affordance_drag_hover_shadows.webm",
       "webm_bytes": 4031242,
       "mp4_bytes": 2073952,
-      "file_id": 458170561249758
+      "file_id": 458198956306812
     },
     {
       "suite": "drag_glow_layers",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_glow_layers.webm",
       "webm_bytes": 2963235,
       "mp4_bytes": 1131780,
-      "file_id": 458172393394641
+      "file_id": 458204245864966
     },
     {
       "suite": "drag_ux_visual_capture",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm",
       "webm_bytes": 4678026,
       "mp4_bytes": 2211891,
-      "file_id": 458167900131703
+      "file_id": 458202233451035
     }
   ],
   "usage": {
-    "total_tokens": 724,
+    "total_tokens": 730,
     "total_characters": 0,
     "prompt_tokens": 493,
-    "completion_tokens": 231,
+    "completion_tokens": 237,
     "completion_tokens_details": {
-      "reasoning_tokens": 169
+      "reasoning_tokens": 178
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames are visible in the provided evidence. Therefore, I cannot observe the demo sheet loading, the unpacked extension panel appearing, the feature\u2019s controls or actions, or any resulting change on the sheet. The end-to-end interaction cannot be verified from the material provided.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames were available to inspect, so I cannot visibly confirm the demo sheet loading, the extension panel appearing, the D&D controls being used, or any resulting change on the sheet. The end-to-end interaction is therefore not verifiable from the provided evidence.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411520628
+  "ts": 1793419153782
 }

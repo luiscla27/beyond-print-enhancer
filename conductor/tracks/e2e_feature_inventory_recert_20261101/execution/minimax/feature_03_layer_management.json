@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458167215391219",
+          "url": "mm_file://458201513120213",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458171804312073",
+          "url": "mm_file://458202110558538",
           "detail": "default",
           "fps": 5
         }
@@ -34,13 +34,13 @@
   "uploaded_files": [
     {
       "suite": "layer_print_visibility",
-      "file_id": 458167215391219,
+      "file_id": 458201513120213,
       "mp4_bytes": 1092589,
       "webm_bytes": 2876135
     },
     {
       "suite": "layer_reorder_keyboard",
-      "file_id": 458171804312073,
+      "file_id": 458202110558538,
       "mp4_bytes": 1745917,
       "webm_bytes": 4804188
     }
@@ -51,30 +51,30 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_print_visibility.webm",
       "webm_bytes": 2876135,
       "mp4_bytes": 1092589,
-      "file_id": 458167215391219
+      "file_id": 458201513120213
     },
     {
       "suite": "layer_reorder_keyboard",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_reorder_keyboard.webm",
       "webm_bytes": 4804188,
       "mp4_bytes": 1745917,
-      "file_id": 458171804312073
+      "file_id": 458202110558538
     }
   ],
   "usage": {
-    "total_tokens": 1147,
+    "total_tokens": 1105,
     "total_characters": 0,
     "prompt_tokens": 829,
-    "completion_tokens": 318,
+    "completion_tokens": 276,
     "completion_tokens_details": {
-      "reasoning_tokens": 188
+      "reasoning_tokens": 156
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "- **Suite `layer_print_visibility` \u2014 NOT-VISIBLE:** No video frames are available in the supplied conversation, so I cannot observe the Layer Management panel, its three-state controls, print-specific actions, or the resulting sheet behavior.\n- **Suite `layer_reorder_keyboard` \u2014 NOT-VISIBLE:** No video frames are available in the supplied conversation, so I cannot observe the layer stack, keyboard interactions, focus restoration, locked-row behavior, boundary no-ops, or visible reorder results.\n\nBecause neither suite provides visible evidence of its end-to-end interaction, overall completion cannot be verified from the provided material.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "### `layer_print_visibility` video\nNo video frames are available in the provided evidence, so the extension panel, print/screen visibility controls, layer states, and resulting sheet changes cannot be visibly verified.\n\n### `layer_reorder_keyboard` video\nNo video frames are available in the provided evidence, so the Layer Management panel, keyboard reorder actions, focus restoration, locked-row behavior, boundary no-ops, and resulting layer order cannot be visibly verified.\n\nBecause neither interaction is witnessed in accessible frames, end-to-end completion cannot be certified from the supplied evidence.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411356056
+  "ts": 1793418921334
 }

@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458168672379257",
+          "url": "mm_file://458204245864962",
           "detail": "default",
           "fps": 5
         }
@@ -26,7 +26,7 @@
   "uploaded_files": [
     {
       "suite": "print_filter_identity_probe",
-      "file_id": 458168672379257,
+      "file_id": 458204245864962,
       "mp4_bytes": 2005950,
       "webm_bytes": 5155076
     }
@@ -37,23 +37,23 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_filter_identity_probe.webm",
       "webm_bytes": 5155076,
       "mp4_bytes": 2005950,
-      "file_id": 458168672379257
+      "file_id": 458204245864962
     }
   ],
   "usage": {
-    "total_tokens": 650,
+    "total_tokens": 693,
     "total_characters": 0,
     "prompt_tokens": 478,
-    "completion_tokens": 172,
+    "completion_tokens": 215,
     "completion_tokens_details": {
-      "reasoning_tokens": 107
+      "reasoning_tokens": 151
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames or attachment are visible in the provided evidence, so I cannot observe the demo sheet loading, the extension panel controls, any dialogs/layers, apply/undo actions, or the resulting sheet changes. The end-to-end interaction is therefore not visually verifiable from the material provided.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames are visible in the provided evidence. I cannot observe the demo sheet loading, the extension panel and filter controls appearing, any apply/undo interaction, or a resulting change on the sheet. Therefore, the feature\u2019s end-to-end interaction cannot be certified from the available material.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411481981
+  "ts": 1793419118770
 }

@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458167642587495",
+          "url": "mm_file://458201852346829",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458170187452757",
+          "url": "mm_file://458203137773890",
           "detail": "default",
           "fps": 5
         }
@@ -34,13 +34,13 @@
   "uploaded_files": [
     {
       "suite": "panel_measure",
-      "file_id": 458167642587495,
+      "file_id": 458201852346829,
       "mp4_bytes": 1186272,
       "webm_bytes": 3218965
     },
     {
       "suite": "properties_panel",
-      "file_id": 458170187452757,
+      "file_id": 458203137773890,
       "mp4_bytes": 1122210,
       "webm_bytes": 2835737
     }
@@ -51,30 +51,30 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\panel_measure.webm",
       "webm_bytes": 3218965,
       "mp4_bytes": 1186272,
-      "file_id": 458167642587495
+      "file_id": 458201852346829
     },
     {
       "suite": "properties_panel",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\properties_panel.webm",
       "webm_bytes": 2835737,
       "mp4_bytes": 1122210,
-      "file_id": 458170187452757
+      "file_id": 458203137773890
     }
   ],
   "usage": {
-    "total_tokens": 671,
+    "total_tokens": 654,
     "total_characters": 0,
     "prompt_tokens": 487,
-    "completion_tokens": 184,
+    "completion_tokens": 167,
     "completion_tokens_details": {
-      "reasoning_tokens": 138
+      "reasoning_tokens": 113
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames or playable video attachment are available in the provided evidence. Therefore, I cannot visibly verify the extension panel loading, the controls/actions being exercised, or any resulting changes to the sheet.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video or sampled frames are visible in the provided content, so the required sequence\u2014panel present, controls/actions exercised, and resulting sheet change\u2014cannot be observed. The end-to-end interaction is therefore not verifiable from the available evidence.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411377424
+  "ts": 1793418942702
 }

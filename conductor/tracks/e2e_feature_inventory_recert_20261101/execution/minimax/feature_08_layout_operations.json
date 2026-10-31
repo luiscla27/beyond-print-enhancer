@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458168364589425",
+          "url": "mm_file://458201467539999",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458171428405771",
+          "url": "mm_file://458201872142805",
           "detail": "default",
           "fps": 5
         }
@@ -34,13 +34,13 @@
   "uploaded_files": [
     {
       "suite": "print_per_layer",
-      "file_id": 458168364589425,
+      "file_id": 458201467539999,
       "mp4_bytes": 1039017,
       "webm_bytes": 2858338
     },
     {
       "suite": "section_print_order",
-      "file_id": 458171428405771,
+      "file_id": 458201872142805,
       "mp4_bytes": 1018289,
       "webm_bytes": 2785141
     }
@@ -51,30 +51,30 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_per_layer.webm",
       "webm_bytes": 2858338,
       "mp4_bytes": 1039017,
-      "file_id": 458168364589425
+      "file_id": 458201467539999
     },
     {
       "suite": "section_print_order",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_print_order.webm",
       "webm_bytes": 2785141,
       "mp4_bytes": 1018289,
-      "file_id": 458171428405771
+      "file_id": 458201872142805
     }
   ],
   "usage": {
-    "total_tokens": 864,
+    "total_tokens": 642,
     "total_characters": 0,
     "prompt_tokens": 488,
-    "completion_tokens": 376,
+    "completion_tokens": 154,
     "completion_tokens_details": {
-      "reasoning_tokens": 321
+      "reasoning_tokens": 93
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames or browser interaction are visible in the provided evidence, so I cannot verify that the real demo sheet loads, that the extension panel is present, or that the feature\u2019s controls produce and undo a visible layout change on the sheet.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames are visible in the provided evidence, so the demo sheet load, unpacked extension panel, layout-operation controls, dialogs, apply/undo actions, and resulting sheet changes cannot be observed. The end-to-end interaction therefore cannot be certified from this video.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411420012
+  "ts": 1793418981110
 }

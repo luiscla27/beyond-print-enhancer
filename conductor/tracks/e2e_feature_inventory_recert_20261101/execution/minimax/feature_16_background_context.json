@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458166270112305",
+          "url": "mm_file://458204229001540",
           "detail": "default",
           "fps": 5
         }
@@ -26,7 +26,7 @@
   "uploaded_files": [
     {
       "suite": "sheet_autoscroll",
-      "file_id": 458166270112305,
+      "file_id": 458204229001540,
       "mp4_bytes": 1664687,
       "webm_bytes": 5819491
     }
@@ -37,23 +37,23 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\sheet_autoscroll.webm",
       "webm_bytes": 5819491,
       "mp4_bytes": 1664687,
-      "file_id": 458166270112305
+      "file_id": 458204229001540
     }
   ],
   "usage": {
-    "total_tokens": 605,
+    "total_tokens": 634,
     "total_characters": 0,
     "prompt_tokens": 480,
-    "completion_tokens": 125,
+    "completion_tokens": 154,
     "completion_tokens_details": {
-      "reasoning_tokens": 76
+      "reasoning_tokens": 103
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames or playable video evidence are visible in the provided material. The page load, unpacked extension panel, feature controls, interactions, and resulting changes on the demo sheet therefore cannot be observed or verified.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames or video attachment are visible in the provided evidence, so the extension panel, feature controls, interactions, and resulting sheet changes cannot be observed. The end-to-end interaction cannot be certified from the supplied material.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411498247
+  "ts": 1793419134376
 }

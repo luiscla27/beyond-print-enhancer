@@ -1,0 +1,2 @@
+{"suite":"drag_ux_visual_capture.spec.js","feature":"cross-cutting","passing":0,"failing":0,"pending":10,"video":null,"video_missing":true,"video_status":"MISSING","video_bytes":0,"pages_captured":0,"ts":1793418552671}
+{"suite":"drag_ux_visual_capture.spec.js","feature":"cross-cutting","passing":3,"failing":0,"pending":7,"video":"conductor\\tracks\\e2e_feature_inventory_recert_20261101\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm","video_missing":false,"video_status":"captured","video_bytes":3143529,"pages_captured":4,"ts":1793418669512}

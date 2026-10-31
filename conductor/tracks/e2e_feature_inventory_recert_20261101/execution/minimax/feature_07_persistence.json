@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458167319552497",
+          "url": "mm_file://458201122529641",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458170556223964",
+          "url": "mm_file://458203227595207",
           "detail": "default",
           "fps": 5
         }
@@ -30,7 +30,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458170033922400",
+          "url": "mm_file://458200210174500",
           "detail": "default",
           "fps": 5
         }
@@ -42,19 +42,19 @@
   "uploaded_files": [
     {
       "suite": "byok_settings_persistence",
-      "file_id": 458167319552497,
+      "file_id": 458201122529641,
       "mp4_bytes": 1850784,
       "webm_bytes": 4144763
     },
     {
       "suite": "byok_settings_persistence_types",
-      "file_id": 458170556223964,
+      "file_id": 458203227595207,
       "mp4_bytes": 1538167,
       "webm_bytes": 3843324
     },
     {
       "suite": "persistence_panel",
-      "file_id": 458170033922400,
+      "file_id": 458200210174500,
       "mp4_bytes": 1273303,
       "webm_bytes": 2821678
     }
@@ -65,37 +65,37 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_persistence.webm",
       "webm_bytes": 4144763,
       "mp4_bytes": 1850784,
-      "file_id": 458167319552497
+      "file_id": 458201122529641
     },
     {
       "suite": "byok_settings_persistence_types",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_07_persistence\\byok_settings_persistence_types.webm",
       "webm_bytes": 3843324,
       "mp4_bytes": 1538167,
-      "file_id": 458170556223964
+      "file_id": 458203227595207
     },
     {
       "suite": "persistence_panel",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\persistence_panel.webm",
       "webm_bytes": 2821678,
       "mp4_bytes": 1273303,
-      "file_id": 458170033922400
+      "file_id": 458200210174500
     }
   ],
   "usage": {
-    "total_tokens": 663,
+    "total_tokens": 636,
     "total_characters": 0,
     "prompt_tokens": 493,
-    "completion_tokens": 170,
+    "completion_tokens": 143,
     "completion_tokens_details": {
-      "reasoning_tokens": 136
+      "reasoning_tokens": 77
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames were available to observe. I cannot verify the extension panel, persistence controls, or any resulting change on the demo sheet.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames or video attachment are visible in the provided material. Therefore, I cannot observe the demo sheet loading, the unpacked extension panel appearing, any persistence controls or dialogs, or the resulting changes on the sheet. The end-to-end interaction cannot be certified from the evidence available here.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411405205
+  "ts": 1793418968910
 }

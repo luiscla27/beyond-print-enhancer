@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458168697459170",
+          "url": "mm_file://458202191680013",
           "detail": "default",
           "fps": 5
         }
@@ -26,7 +26,7 @@
   "uploaded_files": [
     {
       "suite": "byok_border_gallery",
-      "file_id": 458168697459170,
+      "file_id": 458202191680013,
       "mp4_bytes": 2730508,
       "webm_bytes": 8545389
     }
@@ -37,23 +37,23 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_02_ai_borders\\byok_border_gallery.webm",
       "webm_bytes": 8545389,
       "mp4_bytes": 2730508,
-      "file_id": 458168697459170
+      "file_id": 458202191680013
     }
   ],
   "usage": {
-    "total_tokens": 915,
+    "total_tokens": 866,
     "total_characters": 0,
     "prompt_tokens": 621,
-    "completion_tokens": 294,
+    "completion_tokens": 245,
     "completion_tokens_details": {
-      "reasoning_tokens": 234
+      "reasoning_tokens": 154
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No browser frames are visibly available in the provided video evidence. Therefore I cannot observe the extension panel appearing, any AI-border controls or dialogs being used, or a resulting border on the demo sheet. The end-to-end interaction cannot be visually verified from this evidence.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "- **Panel present:** No browser frames are visible in the supplied material, so the unpacked extension panel cannot be confirmed.\n- **Feature controls/actions:** No panel buttons, dialogs, layers, or apply/undo interactions are visibly observable.\n- **Result on the demo sheet:** No rendered border or resulting sheet change is visible.\n\nThe video evidence therefore does not visibly demonstrate the feature completing its end-to-end interaction.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411340931
+  "ts": 1793418907211
 }

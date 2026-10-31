@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458171591361039",
+          "url": "mm_file://458201654985059",
           "detail": "default",
           "fps": 5
         }
@@ -26,7 +26,7 @@
   "uploaded_files": [
     {
       "suite": "webp_assets",
-      "file_id": 458171591361039,
+      "file_id": 458201654985059,
       "mp4_bytes": 1284423,
       "webm_bytes": 3009842
     }
@@ -37,23 +37,23 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\webp_assets.webm",
       "webm_bytes": 3009842,
       "mp4_bytes": 1284423,
-      "file_id": 458171591361039
+      "file_id": 458201654985059
     }
   ],
   "usage": {
-    "total_tokens": 722,
+    "total_tokens": 617,
     "total_characters": 0,
     "prompt_tokens": 480,
-    "completion_tokens": 242,
+    "completion_tokens": 137,
     "completion_tokens_details": {
-      "reasoning_tokens": 174
+      "reasoning_tokens": 101
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames are visible or accessible in the provided evidence. Therefore, I cannot verify that the extension panel loads, that the image-processor controls and dialogs are used, or that any applied result appears on the demo sheet. The feature\u2019s end-to-end interaction is not visible in the supplied material.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames were provided or visible for inspection, so I cannot verify the extension panel, feature controls, or resulting changes to the demo sheet.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411530283
+  "ts": 1793419161131
 }

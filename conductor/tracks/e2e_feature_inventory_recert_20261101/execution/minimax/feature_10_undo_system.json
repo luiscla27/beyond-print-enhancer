@@ -14,7 +14,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458169322406353",
+          "url": "mm_file://458201523773784",
           "detail": "default",
           "fps": 5
         }
@@ -22,7 +22,7 @@
       {
         "type": "video",
         "video_url": {
-          "url": "mm_file://458166765716029",
+          "url": "mm_file://458200089432622",
           "detail": "default",
           "fps": 5
         }
@@ -34,13 +34,13 @@
   "uploaded_files": [
     {
       "suite": "undo_stack_visual_capture",
-      "file_id": 458169322406353,
+      "file_id": 458201523773784,
       "mp4_bytes": 1593458,
       "webm_bytes": 3902251
     },
     {
       "suite": "undo_stack_class_verification",
-      "file_id": 458166765716029,
+      "file_id": 458200089432622,
       "mp4_bytes": 4103193,
       "webm_bytes": 7665661
     }
@@ -51,30 +51,30 @@
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_visual_capture.webm",
       "webm_bytes": 3902251,
       "mp4_bytes": 1593458,
-      "file_id": 458169322406353
+      "file_id": 458201523773784
     },
     {
       "suite": "undo_stack_class_verification",
       "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_class_verification.webm",
       "webm_bytes": 7665661,
       "mp4_bytes": 4103193,
-      "file_id": 458166765716029
+      "file_id": 458200089432622
     }
   ],
   "usage": {
-    "total_tokens": 658,
+    "total_tokens": 686,
     "total_characters": 0,
     "prompt_tokens": 490,
-    "completion_tokens": 168,
+    "completion_tokens": 196,
     "completion_tokens_details": {
-      "reasoning_tokens": 110
+      "reasoning_tokens": 154
     },
     "prompt_tokens_details": {
       "cached_tokens": 195
     }
   },
   "finish_reason": "stop",
-  "verbatim_verdict_text": "No video frames are visible in the supplied evidence, so I cannot observe the demo sheet loading, the unpacked extension panel appearing, the undo-system controls being used, or any resulting change on the sheet. The end-to-end interaction therefore cannot be verified.\n\nVERDICT: NOT-VISIBLE",
+  "verbatim_verdict_text": "No video frames are available in the provided evidence, so the extension panel, undo controls, dialogs, apply/undo actions, and resulting sheet changes cannot be visibly verified.\n\nVERDICT: NOT-VISIBLE",
   "parsed_verdict": "NOT-VISIBLE",
-  "ts": 1793411448249
+  "ts": 1793419005968
 }
