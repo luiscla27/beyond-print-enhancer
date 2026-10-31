@@ -1,0 +1,72 @@
+{
+ "feature": "feature_01_ai_arrange",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_arrange_roundtrip.spec.js",
+   "file_id": "458384945881658",
+   "mp4_bytes": 1271158,
+   "upload_response": {
+    "file": {
+     "file_id": 458384945881658,
+     "bytes": 1271158,
+     "created_at": 1793464211,
+     "filename": "byok_arrange_roundtrip.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_arrange_roundtrip.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_01_ai_arrange\\byok_arrange_roundtrip.webm",
+   "webm_bytes": 3837869
+  }
+ ],
+ "usage": {
+  "total_tokens": 46014,
+  "total_characters": 0,
+  "prompt_tokens": 43534,
+  "completion_tokens": 2480,
+  "completion_tokens_details": {
+   "reasoning_tokens": 945
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed, in order\n\n1. **Website surface:** The recording opens on a blank page, then the D&D Beyond navigation header and loading screen appear. A D&D Beyond cookie/privacy dialog and \u201cYour Privacy Choices\u201d panel are shown, followed by the character sheet for \u201cCorvo Saggio.\u201d The artwork, character statistics, abilities, spell lists, and general sheet layout are **website-owned**.\n\n2. **Extension enhancement:** Once the sheet appears, many sections have thin red borders and circular drag/selection grips. These are **extension-added**, not native D&D Beyond features. There is no visible loading overlay or other dedicated transition explaining when the enhancement is applied; the enhanced framing appears while the page is still resolving behind the website\u2019s loading/cookie UI.\n\n3. **Extension interface:** After the page is scrolled, a dark gold-accented control panel appears on the left and a \u201cLAYER MANAGEMENT\u201d panel appears on the right. Both are clearly **extension-owned** and visually distinct from the website. The left panel includes LAYOUT and OUTPUT sections, including \u201cAI Arrange,\u201d \u201cReset to Default,\u201d print controls, and save controls. The right panel lists sections and shapes and exposes shape-layer controls.\n\n4. **Extension status feedback:** A toast says, \u201cNo saved layout yet \u2014 the default template is loaded.\u201d Later, another toast says, \u201cThe AI proposed no changes.\u201d These are **extension-owned**.\n\n5. **Reset flow:** The user activates \u201cReset to Default.\u201d An extension dialog asks for confirmation and states that the default template will be loaded. After confirmation, the sheet returns to a baseline arrangement and the toast \u201cSaved to browser\u201d appears. This is **extension-owned behavior**. The video does not independently prove byte-level persistence, but it visibly shows a coherent reset/confirmation/save sequence.\n\n6. **AI Arrange disabled state:** The \u201cAI Arrange\u201d row is visibly present in the LAYOUT section in a dimmed/disabled appearance. It is **extension-owned**.\n\n7. **AI Arrange attempt:** Activating the disabled-looking AI Arrange row produces the extension toast \u201cThe AI proposed no changes,\u201d rather than an arrangement. No loading/progress indicator, network status, or detailed failure explanation is shown. This is **extension-owned**.\n\n8. **AI preview dialog:** Another AI Arrange action opens an extension dialog titled \u201cPREVIEW THE AI ARRANGEMENT.\u201d It contains \u201cCancel\u201d and \u201cApply\u201d buttons. A gold outlined ghost card labeled \u201cDEXTERITY 17\u201d is then visible over a lower portion of the sheet while the existing top-right Dexterity section remains in place. This ghost/preview treatment is **extension-owned**. The recording remains on this preview state through the end; no accepted apply, save confirmation, or Ctrl+Z restoration is shown.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Result | On-camera evidence |\n|---|---|---|\n| Flow is wired in the live page, and its single request is served by the worker stub with zero network leakage | **NOT-VISIBLE** | AI Arrange is present and reaches a preview/error flow, but neither the request nor worker-stub service nor zero-network property is observable. |\n| A rejected patch leaves the live record byte-identical, adds no undo entry, saves nothing, and applies nothing | **NOT-VISIBLE** | \u201cThe AI proposed no changes\u201d is visible, but byte identity, undo history, save count, and non-application cannot be established visually. |\n| Cancel on a valid patch touches nothing and the ghosts are gone | **NOT-VISIBLE** | Cancel exists in the preview dialog, but no completed cancel-and-after comparison is shown. |\n| Ghost preview is invisible to a live `scanLayout` | **NOT-VISIBLE** | A ghost is visible, but no live layout scan or scan result is shown. |\n| An accepted patch applies once, saves once, and one real Ctrl+Z restores the pre-AI layout byte for byte | **NOT-VISIBLE** | Apply is present, but no acceptance, save, undo keystroke, or restored state is shown. |\n| AI Arrange row is present and disabled without a key | **VISIBLE** | The row is visibly present and appears disabled/dimmed. |\n| Clicking the disabled row with no key dials nothing | **NOT-VISIBLE** | The row is clicked and the extension reports that the AI proposed no changes, but \u201cdials nothing\u201d itself is not directly observable. |\n| Storing a key enables AI Arrange without a reload | **NOT-VISIBLE** | No key-storage interaction or enabled-without-reload transition is shown. |\n| AC-V1: one real arrangement is photographed before, with ghosts, and after | **NOT-VISIBLE** | A ghost preview is photographed, but no accepted before-and-after arrangement is shown. |\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Working basic affordances observed\n\n- The extension UI is **clearly distinguishable** from D&D Beyond through its dark panels, gold accents, custom typography, and separate Layer Management interface.\n- Section borders, selection borders, and circular drag grips are visibly applied by the extension.\n- The LAYOUT and OUTPUT panel hierarchy is clear and provides relevant actions.\n- The disabled appearance of \u201cAI Arrange\u201d communicates that configuration is unavailable.\n- Extension toasts provide feedback for \u201cNo saved layout yet,\u201d \u201cThe AI proposed no changes,\u201d and \u201cSaved to browser.\u201d\n- The reset confirmation dialog explains the consequence and provides a clear Cancel/Apply-style decision.\n- The AI preview dialog provides explicit Cancel and Apply controls.\n- A distinct gold ghost preview communicates a proposed relocation before acceptance.\n- The Layer Management panel visibly exposes section and shape lists, filters, visibility controls, and an Add Shape affordance.\n\n### Missing or rough basic affordances observed\n\n- **No smooth extension activation transition:** there is no brief extension-specific loading/processing overlay; the enhanced sheet and panels appear abruptly or are already present behind the website\u2019s loading/cookie layers.\n- **No AI request progress state:** the AI flow provides no visible spinner, progress indicator, or \u201cchecking configuration/requesting arrangement\u201d status.\n- **No explanatory error treatment:** \u201cThe AI proposed no changes\u201d is shown, but it does not explain whether the cause is a missing API key, rejection, or another condition.\n- **No visible key-management path:** although AI Arrange is disabled without a key, the video does not show where a user enters or stores that key.\n- **No visible accepted-apply feedback:** the recording ends with the preview/ghost state, so there is no \u201cArrangement applied,\u201d save confirmation, or equivalent success toast.\n- **No visible undo behavior or undo affordance:** the contract requires a real Ctrl+Z restore, but no undo action, restored state, or undo feedback is shown.\n- **No visible rejected/cancel aftermath:** no before-and-after comparison demonstrates that the live layout remained untouched or that ghosts disappeared.\n- **No clearly visible error-state treatment for network/request failure.**\n- The toolbar icon and its ON badge are outside the captured area, so activation state cannot be judged on camera.\n- A clean reload in the extension\u2019s OFF state is not convincingly isolated: the sampled early sheet is obscured by website loading/cookie UI, while extension borders are already visible.\n\nThe extension\u2019s visual identity and several feedback mechanisms work well, but the core accepted/rejected/cancel/undo round-trip is not completed on camera, and the activation and in-flight AI states are notably absent.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793464240274
+}

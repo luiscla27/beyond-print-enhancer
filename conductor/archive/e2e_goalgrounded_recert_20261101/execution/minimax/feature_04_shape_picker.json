@@ -1,0 +1,72 @@
+{
+ "feature": "feature_04_shape_picker",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "custom_shapes_upload.spec.js",
+   "file_id": "458387487666721",
+   "mp4_bytes": 959011,
+   "upload_response": {
+    "file": {
+     "file_id": 458387487666721,
+     "bytes": 959011,
+     "created_at": 1793464471,
+     "filename": "custom_shapes_upload.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "custom_shapes_upload.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\custom_shapes_upload.webm",
+   "webm_bytes": 2986481
+  }
+ ],
+ "usage": {
+  "total_tokens": 36265,
+  "total_characters": 0,
+  "prompt_tokens": 34742,
+  "completion_tokens": 1523,
+  "completion_tokens_details": {
+   "reasoning_tokens": 360
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed, in order\n\n1. **Opening seconds \u2014 WEBSITE/loading surface:** The recording begins with a mostly blank white page and a gray band along the bottom. The D&D Beyond header gradually appears, followed by the site\u2019s loading screen and promotional banner.\n2. **Around 2.4\u20136.4s \u2014 WEBSITE\u2019s own surface:** A D&D Beyond loading splash, cookie/privacy panel, navigation bar, promotional banner, and eventually the character sheet appear. These are website elements and do not count as extension work.\n3. **Around 6.6\u201327.8s \u2014 MIXED, but mostly WEBSITE content:** The D&D Beyond character sheet for \u201cCorvo Saggio\u201d is visible with statistics, skills, senses, defenses, actions, and other character information. The red/gray styled layout and outlined regions are visible, but the frames do not show the extension\u2019s controls during this long interval. The sheet content itself remains D&D Beyond\u2019s product.\n4. **Around 28.8s \u2014 EXTENSION work:** The extension\u2019s dark \u201ccodex on the workbench\u201d interface appears:\n   - a left control panel with **LAYOUT** and **OUTPUT** sections;\n   - a right **LAYER MANAGEMENT** panel;\n   - gold-accented styling and shape thumbnails;\n   - a centered extension toast saying, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n   \n   The enhancement and panels appear without a visible loading overlay or transitional state; this is a **Layer 2 absence finding**.\n5. **Around 32.0s \u2014 EXTENSION work:** A toast reports **\u201cShapes (Default) Unlocked.\u201d** A decorative shape is visibly placed in the enhanced character-sheet layout, behind the character artwork.\n6. **Around 32.4s \u2014 EXTENSION work:** Clicking **Add Shape** opens a dark **SELECT DECORATIVE SHAPE** modal. The initial **SHAPES** tab shows filters and built-in shape thumbnails.\n7. **Around 32.6\u201333.6s \u2014 EXTENSION work:** The **CUSTOM** tab is opened. It visibly exposes an **\u201cUpload from disk\u201d** action, explanatory PNG/JPEG/WebP/SVG text, the empty-state message **\u201cNo custom shapes uploaded yet.\u201d**, a **Cancel** button, and a disabled **Add Shape** button.\n8. **End of the video:** No operating-system file chooser, selected image, uploaded thumbnail, successful placement, cancel-after-upload flow, or stored asset data is shown.\n\n## LAYER 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Camera evidence |\n|---|---|\n| The Add Shape picker offers a **Custom** tab | **VISIBLE** \u2014 the CUSTOM tab appears in the extension\u2019s shape-picker modal. |\n| The Custom tab exposes an **Upload from disk** action | **VISIBLE** \u2014 clearly shown under CUSTOM. |\n| Choosing a local image keeps the picker open and preselects it | **NOT-VISIBLE** \u2014 no local image is visibly chosen, and no selected-image preview or filename is shown. |\n| **OK/Add Shape places the uploaded shape** | **NOT-VISIBLE** \u2014 the Add Shape button remains disabled with no upload, and no uploaded shape is placed. |\n| **Cancel after upload leaves the sheet untouched** | **NOT-VISIBLE** \u2014 no upload followed by Cancel is sampled. |\n| The uploaded custom shape carries the base64 image as its asset | **NOT-VISIBLE** \u2014 no uploaded asset exists on camera, and base64 asset data cannot be visually confirmed. |\n\n## LAYER 2 \u2014 Product-aim conformance\n\n### Working or visible affordances\n\n- The extension UI is **clearly distinguishable** from D&D Beyond: dark codex-like panels, gold hairlines, extension-specific typography, and custom modal styling.\n- The **Add Shape** control successfully opens a dedicated extension dialog.\n- The shape picker supports **tabbed navigation**, and the CUSTOM tab is visibly selectable.\n- The CUSTOM tab provides a clear **Upload from disk** action with supported-format guidance.\n- The empty library has an understandable **\u201cNo custom shapes uploaded yet\u201d** state.\n- **Add Shape is visibly disabled** while no custom upload exists, which is appropriate disabled-state feedback.\n- The extension provides a dismissible informational toast for the default layout and a success-style toast for unlocking shapes.\n- The enhanced sheet visibly supports decorative shape placement and extension-managed section/layer presentation.\n\n### Missing or rough affordances\n\n- There is **no visible loading or transition state during activation**. The enhanced sheet and panels appear abruptly after a long static website view.\n- The **file-selection flow is not demonstrated**: no native chooser, selected filename, image preview, progress indication, or upload confirmation appears.\n- There is **no visible upload error state** or guidance for an invalid file, oversized file, unsupported format, or failed read.\n- There is **no visible success feedback for an uploaded custom shape**, such as a thumbnail, selected preview, filename, or upload-complete toast.\n- The video does not show the enabled **Add Shape** state after a valid upload, so the final placement interaction is not demonstrated.\n- The Cancel action is visible but not exercised after an upload, leaving the required cancellation behavior unwitnessed.\n- No confirmation or indication is shown that canceling an upload would preserve a library-only asset while leaving the sheet untouched.\n\nThe extension\u2019s styling and picker structure conform well to the intended distinct \u201cworkbench\u201d identity, but the core upload-to-placement behavior and its associated feedback/error affordances are not demonstrated.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: custom_shapes_upload.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464495588
+}

@@ -1,0 +1,95 @@
+{
+ "feature": "feature_03_layer_management",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "file_id": "458387982500189",
+   "mp4_bytes": 859071,
+   "upload_response": {
+    "file": {
+     "file_id": 458387982500189,
+     "bytes": 859071,
+     "created_at": 1793464398,
+     "filename": "layer_print_visibility.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "file_id": "458387567862308",
+   "mp4_bytes": 1336750,
+   "upload_response": {
+    "file": {
+     "file_id": 458387567862308,
+     "bytes": 1336750,
+     "created_at": 1793464401,
+     "filename": "layer_reorder_keyboard.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "layer_print_visibility.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_print_visibility.webm",
+   "webm_bytes": 2876135
+  },
+  {
+   "suite": "layer_reorder_keyboard.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_reorder_keyboard.webm",
+   "webm_bytes": 4804188
+  }
+ ],
+ "usage": {
+  "total_tokens": 98747,
+  "total_characters": 0,
+  "prompt_tokens": 96083,
+  "completion_tokens": 2664,
+  "completion_tokens_details": {
+   "reasoning_tokens": 840
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 `layer_print_visibility`\n\n### What is visible\n\n- **Website surface:** The D&D Beyond navigation, loading splash, cookie/privacy dialog, character artwork, statistics, actions, and ordinary character-sheet layout are D&D Beyond\u2019s own product.\n- **Extension work:** By approximately 31 seconds, the extension adds:\n  - A dark, gold-accented control panel on the left with sections such as **LAYOUT** and **OUTPUT**.\n  - A dark **LAYER MANAGEMENT** panel on the right.\n  - A **SHAPES** group in that panel with the three-state control labeled **Print only**, **Both**, and **Screen only**.\n  - A first-run hint card explaining how to drag sections, with a **Got it** button.\n  - A dark notice stating **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n  - Gold/red outlines around enhanced sheet sections, making the extension\u2019s modifications distinguishable from the base website.\n- Around 30 seconds, the recording switches to a print-oriented rendering:\n  - The extension\u2019s floating control panel and Layer Management panel are absent.\n  - A largely white print page remains, with some enhanced sheet sections visible at the top and left.\n- No extension-owned \u201cloading\u2026\u201d or other activation-transition overlay is shown. The loading spinner belongs to the **D&D Beyond website**, not the extension.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n\n| Assertion | On-camera status | Observation |\n|---|---|---|\n| Layer Management panel is hidden inside `@media print` | **VISIBLE** | The print rendering does not show the extension\u2019s Layer Management panel or other floating extension controls. |\n| Locked layers are forced fully opaque on print | **NOT-VISIBLE** | No clearly locked layer and its before/after print opacity are visibly identified. |\n| \u201cDisable on Print\u201d marks the layer container and hides it in print CSS | **NOT-VISIBLE** | No Disable on Print operation or resulting marked container is shown. |\n| Re-enabling clears `data-print-disabled` and its hide rule | **NOT-VISIBLE** | No re-enabling operation is shown, and DOM attributes/rules cannot be verified visually. |\n| Every layer group carries the three-state strip, naming all three modes | **NOT-VISIBLE** | One **SHAPES** group visibly offers **Print only / Both / Screen only**, but the video does not establish that every layer group has the strip. |\n| **Print only** hides the layer on screen and undoes that hide at print time | **NOT-VISIBLE** | The mode is visible, but no associated screen-hide and print-reveal comparison is shown. |\n| **Screen only** stays visible now and is skipped on print | **NOT-VISIBLE** | The mode is visible, but no associated screen/print behavior is demonstrated. |\n| **Both** clears both flags and both print rules | **NOT-VISIBLE** | The option is visible, but selecting it and clearing the resulting behavior are not shown. |\n\n### Layer 2 \u2014 Product-aim conformance\n\n**Working affordances observed:**\n\n- The extension UI is clearly distinguishable from D&D Beyond through its dark codex/workbench styling, gold hairlines, and custom typography.\n- The Layer Management panel provides organized **SECTIONS** and **SHAPES** groups.\n- The three print modes are labeled in a compact, understandable strip.\n- The first-run hint is clearly styled and includes an actionable **Got it** control.\n- The \u201cNo saved layout yet\u201d notice communicates the default-template state.\n- The print rendering successfully omits the extension\u2019s screen-only management UI.\n\n**Missing or rough affordances:**\n\n- **No extension-owned activation/loading transition is visible.** The enhancement and panels appear without a brief \u201cEnhancing\u2026\u201d or equivalent state. The D&D Beyond spinner is website behavior and cannot count as extension feedback.\n- No error state is demonstrated.\n- Disabled controls are visible\u2014particularly the muted left-panel controls\u2014but the video does not show whether attempting to use them explains why they are disabled.\n- The three-state control is shown only for Shapes; its consistency across every layer group is not demonstrated.\n- The print behavior is only weakly illustrated: the panel disappears, but individual layer-mode outcomes are not shown clearly enough to verify the contract.\n\n**Video verdict: PARTIAL.** The print-hidden manager is visibly demonstrated, but most asserted print-mode behaviors are absent or not visually verifiable.\n\n---\n\n## Video 2 \u2014 `layer_reorder_keyboard`\n\n### What is visible\n\n- **Website surface:** The D&D Beyond loading splash, navigation bar, character artwork, character name, abilities, actions, and base sheet content are the website\u2019s own surfaces.\n- **Extension work:**\n  - The same dark left control panel and right Layer Management panel appear.\n  - The sheet is enhanced with outlined and repositioned section containers.\n  - A centered dark toast appears reading **\u201cLayer order updated.\u201d**\n  - The toast is accompanied by a small gold square/icon and later fades away.\n  - The top row of sheet sections changes horizontal order around the same time as the toast.\n- The keyboard presses themselves, focused row, highlighted rows, locked-row state, and mouse drag interaction are not visibly identifiable on camera.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n\n| Assertion | On-camera status | Observation |\n|---|---|---|\n| ArrowUp moves the tail layer exactly one slot toward the head through the row\u2019s keydown handler | **NOT-VISIBLE** | A reorder and \u201cLayer order updated\u201d toast are visible, but the pressed key, focused row, and exact one-slot ArrowUp operation are not shown. |\n| ArrowDown moves a layer one slot toward the tail, with mirror-image stacks | **NOT-VISIBLE** | The ArrowDown operation and resulting mirror-image stack are not visibly demonstrated. |\n| Three rapid presses\u2014Up, Down, Up\u2014leave all actions on the same layer without manual re-clicking (`restoreRowFocus`) | **NOT-VISIBLE** | No rapid sequence or retained focus is shown. A single toast cannot establish the required sequence or focus restoration. |\n| Home moves a layer to the head in one press | **NOT-VISIBLE** | No Home-key operation is shown. |\n| End moves a layer to the tail in one press | **NOT-VISIBLE** | No End-key operation is shown. |\n| A locked row\u2019s arrows are a no-op, with no stack change and no undo entry | **NOT-VISIBLE** | No clearly locked row is operated with an arrow key, and undo history is not shown. |\n| Already-at-boundary arrow presses are safe no-ops with depth untouched | **NOT-VISIBLE** | No boundary operation or depth measurement is shown. |\n| Keyboard writes a stack positionally identical to a drag/drop write for the same swap | **NOT-VISIBLE** | No mouse drag/drop comparison is shown. |\n\n### Layer 2 \u2014 Product-aim conformance\n\n**Working affordances observed:**\n\n- The extension is visually unmistakable against the D&D Beyond page: dark floating panels, gold dividers, gold accents, and outlined sheet boxes.\n- The **\u201cLayer order updated\u201d** toast gives clear feedback after a reorder and disappears after a short interval.\n- The layer groups and section lists are organized into a dedicated management panel rather than mixing controls into the website.\n- The enhanced sheet\u2019s moved/outlined sections provide visual feedback in the page itself.\n- A first-run hint card and \u201cGot it\u201d action are available.\n- Muted controls visibly indicate disabled states in the left panel.\n\n**Missing or rough affordances:**\n\n- **No extension-owned activation/loading transition is visible.** The panels and enhanced layout pop in without a dedicated \u201cEnhancing\u2026\u201d or \u201cLoading\u2026\u201d state.\n- The reorder feedback is present, but there is no visible focus indicator or keyboard-help affordance explaining ArrowUp, ArrowDown, Home, and End.\n- The \u201cLayer order updated\u201d toast does not identify which layer moved or where it moved, so the feedback is less informative than the behavior being tested.\n- No keyboard focus restoration is visibly demonstrated.\n- Locked-row feedback, boundary no-op feedback, and undo behavior are not demonstrated.\n- No error state is shown.\n- The toolbar ON badge is not visible in the sampled frames, so the extension\u2019s active/inactive state cannot be reviewed here.\n\n**Video verdict: PARTIAL.** The camera shows a real extension-driven reorder and a working toast, but it does not witness the specified keyboard behaviors or their required edge cases.\n\n## Overall certification result\n\nThe extension UI is strongly distinguishable from the website, and the Layer Management panel, first-run hint, disabled states, print-panel hiding, and reorder toast are visible. However, the videos do not visibly demonstrate most of the precise print-mode and keyboard-reorder assertions. Both also lack a dedicated extension-owned activation/loading transition.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793464467869
+}

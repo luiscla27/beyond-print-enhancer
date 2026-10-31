@@ -1,0 +1,72 @@
+{
+ "feature": "feature_06_print_styles",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_styles.spec.js",
+   "file_id": "458387582628328",
+   "mp4_bytes": 808172,
+   "upload_response": {
+    "file": {
+     "file_id": 458387582628328,
+     "bytes": 808172,
+     "created_at": 1793464527,
+     "filename": "print_styles.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_styles.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_06_print_styles\\print_styles.webm",
+   "webm_bytes": 2764552
+  }
+ ],
+ "usage": {
+  "total_tokens": 36134,
+  "total_characters": 0,
+  "prompt_tokens": 34360,
+  "completion_tokens": 1774,
+  "completion_tokens_details": {
+   "reasoning_tokens": 382
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visible, in order\n\n1. **0.0\u20131.0 s \u2014 Website loading:**  \n   A mostly blank white page loads. This is **website-owned**, not extension work.\n\n2. **1.0\u20133.0 s \u2014 D&D Beyond navigation:**  \n   The D&D Beyond header, logo, navigation menus, search, sign-in, and account controls appear over a blank content area. These are **website-owned**.\n\n3. **3.0\u20135.0 s \u2014 Website splash/loading overlay:**  \n   A centered D&D Beyond logo with a circular loading indicator appears, followed by a dimmed page and a promotional banner. These are **website-owned**.\n\n4. **3.6\u20136.8 s \u2014 Website privacy dialog:**  \n   The \u201cYour Privacy Choices\u201d panel appears in the lower-left with cookie controls. The sheet becomes faintly visible behind it. The dialog is **website-owned**, not the extension\u2019s styling.\n\n5. **5.0\u20136.8 s \u2014 Character sheet appears:**  \n   The Corvo Saggio character sheet loads behind the website dialog and loading overlay. The statistics, character name, action list, and sheet layout are **website-owned**. The extension\u2019s red/gold outlines and reorganized card treatment appear to be **extension-applied enhancement**, but no extension control panel is yet visible.\n\n6. **6.8\u201329.2 s \u2014 Enhanced sheet without visible extension panels:**  \n   The character sheet remains on screen with numerous red borders, gold-toned rules, boxed statistics, and rearranged/boxed sections. These visual changes are **extension work**. The underlying character data and artwork remain **website-owned**. No floating extension panel, Layer Management panel, print preview, print dialog, or browser print view is shown during this long interval.\n\n7. **Around 29.2\u201329.4 s \u2014 Extension interface appears:**  \n   The view shifts to a zoomed/cropped portion of the sheet, then the extension\u2019s dark control surfaces appear:\n   - A left floating **Beyond Print Enhancer** panel with **LAYOUT** and **OUTPUT** sections.\n   - A right **LAYER MANAGEMENT** panel listing **SECTIONS (22)** and **SHAPES (1)**.\n   - A top-center extension notice reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n   - A first-use hint in the left panel: **\u201cDrag to move the sections or to resize, or use the handle to rotate\u201d**, with a **\u201cGot it\u201d** button.\n   \n   All of these are **extension-owned**.\n\n8. **29.4\u201333.2 s \u2014 Extension UI remains static:**  \n   The left panel visibly offers **PRINT**, **Print settings**, and **Save to Browser**, alongside layout commands such as Load, Reset to Default, Manage Clones, Add Shape, and Manage Compact. The Layer Management panel shows section names and shape controls. No visible click, selection change, print invocation, preview, or state change occurs before the video ends.\n\n## LAYER 1 \u2014 Asserted-behavior evidence\n\nEach suite assertion is assessed only from the visible frames:\n\n1. **Injected `@media print` hides the Layer Management panel and selection highlights \u2014 NOT-VISIBLE.**  \n   A Layer Management panel is visible on screen, but the video never enters a print rendering context, so print-time hiding cannot be witnessed.\n\n2. **Print CSS forces full opacity for locked layers and sets layer ordering \u2014 NOT-VISIBLE.**  \n   No print-media rendering, locked-layer comparison, or ordering change is shown.\n\n3. **`data-print-z` elements get z-index overrides and disabled layers get hide rules \u2014 NOT-VISIBLE.**  \n   The frames do not show print CSS being applied, a disabled layer, or print-specific z-index behavior.\n\n4. **Layout bounds and page separators are computed (`updateLayoutBounds` / `drawPageSeparators`) \u2014 NOT-VISIBLE.**  \n   No page-separator rendering or layout-bound calculation is visible. The red section outlines are enhancement styling, not proof of print page separators.\n\n5. **The tool\u2019s own surfaces are hidden in print \u2014 NOT-VISIBLE.**  \n   The extension panel, Layer Management panel, hint/notice, and other extension surfaces are visible in the editing view, but the video never shows a print rendering where they should disappear.\n\n## LAYER 2 \u2014 Product-aim conformance\n\n### Basic affordances observed working\n\n- **Extension UI is clearly distinguishable from the base website:** the dark \u201ccodex on the workbench\u201d styling and gold accents are visibly unlike D&D Beyond\u2019s native chrome.\n- **The floating control panel loads successfully:** LAYOUT and OUTPUT sections are legible.\n- **The Layer Management panel loads successfully:** it exposes section and shape management in the extension\u2019s own styling.\n- **A first-use hint is present:** it explains dragging/resizing and provides a visible \u201cGot it\u201d action.\n- **A default-state notice is present:** \u201cNo saved layout yet \u2014 the default template is loaded.\u201d\n- **The print entry point is visibly available:** the OUTPUT section contains a prominent PRINT button, along with Print settings and Save to Browser.\n- **The enhanced sheet remains usable and visually coherent on camera:** its sections retain readable content and distinct borders.\n\n### Basic affordances missing or rough\n\n- **Activation has no visible loading or transition affordance.** The sheet is plain or partially loaded at first, and the extension enhancement/panels simply appear later. There is no brief \u201cLoading\u2026,\u201d skeleton, progress indicator, or other transition communicating that activation is in progress.\n- **The video does not show the PRINT control being used.** Consequently, the principal affordance under certification is only visible as a button, not demonstrated as working.\n- **No print preview, browser print dialog, or print-media output is shown.**\n- **No toast feedback is observed.** The visible \u201cNo saved layout yet\u2026\u201d message looks like a static status notice rather than demonstrated transient feedback.\n- **No disabled states are demonstrated.** Layer lock/disable controls may exist, but their disabled appearance and behavior cannot be seen.\n- **No error state or failure feedback is demonstrated.**\n- **No selection-highlight behavior is visibly exercised**, despite the Layer Management panel listing section and shape controls.\n- **No layer mutation is visibly completed.** The panels remain essentially static, so ordering, hiding, cloning, locking, and print-layer operations cannot be evaluated.\n- **The long static interval does not provide behavioral coverage.** Having the extension UI on screen is not enough to verify the print-style contract.\n\nBecause the asserted print behaviors are never sampled in a print context, while the extension\u2019s presence and entry-point UI are visible, the video is **NOT-VISIBLE for the contracted feature behavior**.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793464568673
+}

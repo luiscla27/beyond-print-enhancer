@@ -1,0 +1,84 @@
+# Verdict — goal-grounded e2e certification re-run (e2e_goalgrounded_recert_20261101)
+
+**Date:** 2026-11-01 · **Certifier:** MiniMax-M3.1-Flash ONLY, official `api.minimax.io` (AC-6, no relay substitution) · **Corpus:** the archived 2026-10-30 webms, byte-verbatim (`conductor/archive/e2e_feature_inventory_minimax_20261029/execution/evidence/`) · **Prompt:** v2 GOAL-GROUNDED (see "What changed" below) · **Calls:** 19 (one bundle call per feature, same measured knobs as the recert: `reasoning=low`, `max_completion_tokens=8000`, `detail=default`, `fps=5`) · **Result:** 19/19 certified, every call `finish=stop`, 1,491,133 prompt tokens / 39,892 completion tokens total.
+
+## Why this re-run exists (the operator's challenge, upheld)
+
+The operator reviewed the two activation clips (`release_1_4_0.webm`, `first_run_card_verify.webm`) and challenged the recert's verdicts: the model was scoring **the D&D Beyond character sheet itself** — which fills the first frames of every clip — as if it were the extension's work, and never flagged the most basic missing activation affordance (a **"loading…" overlay** smoothing the plain-sheet → enhanced-UI transition). Root cause, verified against `temp/scratch/certify_recert.py::judge_prompt_for`: the v1 prompt contained one clause of product context, grounded the "behavioral contract" ONLY in the suites' own describe/it titles, never defined the verdict scale, never said the base sheet is NOT the extension's work, and rule (1) ("never invent UI you cannot see") actively discouraged absence findings. A suite-assertion evidence check was presented as a product certification. **The challenge is upheld on both counts** (see the two-layer results below).
+
+## What changed (v2 prompt)
+
+Same wire shape, same videos, same seat — ONLY the judge prompt changed, so every verdict delta is attributable to the prompt. v2 (`temp/scratch/certify_goalgrounded.py::judge_prompt_for`, deterministic from `suite_titles.json`) adds:
+
+1. **PRODUCT BRIEF** — what Beyond Print Enhancer IS (MV3 extension on top of the D&D Beyond site), with the explicit exclusion: *the website's sheet/artwork/loading/cookie UI is D&D Beyond's product — NONE of it is the extension's work*; an inventory of what the extension's own work looks like (dark codex-style panels, gold hairlines, red/gold section grips, toasts, dialogs, OFF state).
+2. **ACTIVATION ARC** — videos begin on the plain sheet; the extension then enhances. A missing smooth-activation transition (loading overlay class) is explicitly named as a LAYER 2 absence finding the judge is REQUIRED to report.
+3. **TWO-LAYER RUBRIC** — LAYER 1: the suite assertions (as before), each marked VISIBLE/NOT-VISIBLE. LAYER 2: product-aim conformance — distinguishability from the base site + basic affordances on camera, with **absence findings REQUIRED, not optional** ("a certificate that only lists what worked is incomplete").
+4. **DEFINED VERDICT SCALE** — WORKING / PARTIAL / NOT-VISIBLE with explicit criteria, and: *"Never award WORKING for activity that is the website's, not the extension's."*
+
+## Verdict table — three-way comparison (same 19 bundles, same videos)
+
+| bundle | original run (v1 prompt) | recert 2026-11-01 (v1 prompt) | **goal-grounded (v2 prompt)** | delta |
+|---|---|---|---|---|
+| feature_01_ai_arrange | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_02_ai_borders | NOT-VISIBLE | NOT-VISIBLE | **PARTIAL** | ↑ |
+| feature_03_layer_management | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_04_shape_picker | NOT-VISIBLE | NOT-VISIBLE | **PARTIAL** | ↑ |
+| feature_05_controls_panel | PARTIAL | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_06_print_styles | NOT-VISIBLE | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_07_persistence | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_08_layout_operations | NOT-VISIBLE | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_09_section_cloning | NOT-VISIBLE | PARTIAL | PARTIAL | — |
+| feature_10_undo_system | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_11_spells_ui | NOT-VISIBLE | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_12_properties_panel | NOT-VISIBLE | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_13_ui_theme | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_14_filters | NOT-VISIBLE | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_15_modals | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_16_background_context | NOT-VISIBLE | NOT-VISIBLE | NOT-VISIBLE | — |
+| feature_17_dnd | PARTIAL | PARTIAL | PARTIAL | — |
+| feature_18_image_processor | NOT-VISIBLE | PARTIAL | PARTIAL | — |
+| cross-cutting (8-suite representative bundle) | PARTIAL | PARTIAL | PARTIAL | — |
+
+Distribution: original PARTIAL ×10 / NOT-VISIBLE ×9 → recert PARTIAL ×10 / NOT-VISIBLE ×9 → **goal-grounded PARTIAL ×12 / NOT-VISIBLE ×7**. The two ↑ moves (feature_02, feature_04) are LAYER 1 gains: under v2 the judge attends to the extension's own on-camera actions (border gallery interactions; shape picker upload/preview) that the v1 prompt's assertion-only grounding under-weighted. Every verdict's verbatim text, usage, file ids and request record: `execution/minimax/<feature>.json`.
+
+**Reading the stability honestly:** 17/19 verdicts did NOT change. The video corpus genuinely samples each suite's asserted interactions, and where frames never sample an assertion (e.g. feature_05's Properties-panel measurements, feature_12, feature_14, feature_16), NO prompt can conjure evidence — those stay NOT-VISIBLE on the merits. What v2 changes is not the pass/fail column but **what the certificate now says**: every record separates WEBSITE-OWNED from EXTENSION-OWNED observations, and every record carries explicit absence findings.
+
+## LAYER 2 — the affordance findings the v1 certificate never made
+
+Recurring absences across the 19 goal-grounded records (verbatim-faithful summaries; full text in each JSON):
+
+- **Activation/loading transition missing — 13/19 bundles** (cross-cutting, f01, f02, f05, f07, f08, f09, f10, f11, f12, f13, f17, f18). Representative, verbatim: *"No smooth extension activation transition: there is no brief extension-specific loading/processing overlay; the enhanced sheet and panels appear abruptly"* (f01); *"the enhancement and both panels appear abruptly"* (cross-cutting). **This is the exact gap the operator named, and it is real: the v1 10/10-style recert verdicts never priced it because no suite asserts it.** The website's own spinner is repeatedly and correctly attributed to D&D Beyond, not to us.
+- **Error-state/progress feedback rough — 17/19**: e.g. *"No AI request progress state"* + *"The AI proposed no changes … does not explain whether the cause is a missing API key, rejection, or another condition"* (f01); disabled AI Arrange row is well-communicated, but no key-management path is shown.
+- **No end-of-flow success feedback — 5/19** (f01, f02, f08, f09, f15): recordings end on preview/pending states with no "applied" toast on camera.
+- **Toolbar ON badge unjudgeable — 4/19** (f01, f03, f13, f15): the e2e capture area excludes the Chrome toolbar, so activation state is off-camera by construction (a capture harness limitation, not a product defect).
+- **LAYER 2 working findings (also now on record):** extension UI *"clearly distinguishable from the base website"* in every sampled bundle; toasts (`Saved to browser`, `Section selected for editing`, `No saved layout yet`), confirm dialogs, disabled states, ghost previews, and the layer panel's controls are all positively witnessed.
+
+## Answers to the operator's three questions, directly
+
+1. **"Did you explain to MiniMax why it was supposed to happen and what we are aiming at?"** — No. The v1 prompt grounded the judge in the suites' own assertion titles and never stated the product's aim. That was the defect; it is fixed and measured in this track.
+2. **"Did MiniMax evaluate the actual D&D character sheet instead of our extension?"** — Largely yes for scoring purposes: with no product brief and no base-sheet exclusion, the website's rendering dominated the evidence the judge described, and the verdict scale was undefined. The v2 records now attribute every observation to WEBSITE-OWNED vs EXTENSION-OWNED, and the missing loading overlay — invisible to v1 — is found in 13/19 bundles.
+3. **"Was the first-run 10/10 biased?"** — The recert never issued a 10/10 (its scale was WORKING/PARTIAL/NOT-VISIBLE, and `first_run_card_verify` rode the cross-cutting bundle at PARTIAL); but the SPIRIT of the concern is confirmed: v1 verdicts under-priced product-aim gaps that no suite asserts. The goal-grounded re-run is the corrected instrument.
+
+## Best-scored clips for the operator (unchanged, now with the caveat priced)
+
+The two clips the operator reviewed remain the best activation evidence, and v2 confirms rather than overturns their use as *activation* clips — while documenting their limits:
+
+- `release_1_4_0.webm` (2,759,316 B) — release-surface smoke: boot, headline actions, decoration/layer surfaces; v2 LAYER 1: boot + surfaces VISIBLE, version-label NOT FULLY VERIFIABLE on camera.
+- `first_run_card_verify.webm` (4,107,170 B) — first-run hint card gestures + reference route.
+- Caveat both now carry (v2, on the record): no activation loading/transition overlay exists in the product, and the enhancement appears abruptly on camera. That is a **certified product gap**, not an evidence artifact.
+
+## Coverage honesty (what this certificate is and is not)
+
+- The corpus is the 2026-10-30 e2e run's page-level screencasts; assertions whose interactions the frames never sample remain NOT-VISIBLE under ANY prompt (f05 properties measurements, f12, f14, f16 are the clearest cases). The certificate's NOT-VISIBLE rows are evidence-sampling verdicts, not product-failure verdicts.
+- Cross-cutting remains a purpose-annotated 8-suite representative bundle (composition unchanged from the recert); the other 46 cross-cutting suites are covered by their mocha rows + retained webms, not by this call.
+- Toolbar/badge state is off-camera by harness construction (4/19 records note it).
+
+## Cost accounting
+
+19 judge calls, 1,491,133 prompt + 39,892 completion tokens (per-call 33,571–276,494 prompt), all `finish=stop` first-try (no concise-retry needed — the v2 prompt's structured sections fit the ~1600-token observed output cap). This is the same magnitude as the recert's adopted pass (1.36M) — the price of answering the operator's challenge with the SAME corpus and ONLY the prompt changed.
+
+## Method-correction log (cumulative approaches — Muse-First protocol)
+
+1. **v1 assertion-grounded prompt** (recert, adopted from the archived track): 19/19 verdicts, but no product brief, no base-sheet exclusion, no absence duty → the operator's challenge upheld. Disposition: REPLACED by v2 for product certification; v1 remains valid ONLY as a suite-assertion evidence check.
+2. **v2 goal-grounded prompt, pilot `feature_01_ai_arrange`**: WEBSITE/EXTENSION attribution + explicit loading-overlay absence finding on the first bundle; finish=stop. Disposition: ADOPTED (operator chose full re-run + both-layer rubric in-session).
+3. **v2 full pass, 18 remaining bundles**: 19/19 certified, 2 LAYER-1 verdict moves, 13/19 loading-overlay absence findings, zero truncations. Disposition: ADOPTED — this verdict.md.

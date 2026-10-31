@@ -1,0 +1,72 @@
+{
+ "feature": "feature_16_background_context",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "sheet_autoscroll.spec.js",
+   "file_id": "458390960329233",
+   "mp4_bytes": 1721349,
+   "upload_response": {
+    "file": {
+     "file_id": 458390960329233,
+     "bytes": 1721349,
+     "created_at": 1793464847,
+     "filename": "sheet_autoscroll.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "sheet_autoscroll.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\sheet_autoscroll.webm",
+   "webm_bytes": 5819491
+  }
+ ],
+ "usage": {
+  "total_tokens": 75098,
+  "total_characters": 0,
+  "prompt_tokens": 73707,
+  "completion_tokens": 1391,
+  "completion_tokens_details": {
+   "reasoning_tokens": 293
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations, in order\n\n1. **0.0\u20131.2s \u2014 Website surface:** The recording opens on a mostly blank white page with a gray band at the bottom. No extension UI is visible.\n2. **1.2\u20134.8s \u2014 Website surface:** The D&D Beyond header and page background load. The visible navigation, logo, search, sign-in, and \u201cCREATE ACCOUNT\u201d controls are D&D Beyond\u2019s own UI.\n3. **4.8\u20137.0s \u2014 Website surface:** A D&D Beyond loading overlay and spinner appear in the center. This is the website\u2019s loading activity, not an extension transition.\n4. **5.6\u20138.8s \u2014 Website surface:** D&D Beyond\u2019s \u201cYour Privacy Choices\u201d cookie/privacy panel appears in the lower-left. This is explicitly website-owned, not the extension\u2019s.\n5. **7.0\u20138.8s \u2014 Website surface:** The character sheet for \u201cCorvo Saggio\u201d renders behind the privacy panel, showing the character\u2019s stats and sections.\n6. **8.8\u201330.0s \u2014 Website surface:** The privacy panel disappears, leaving the enhanced-looking character sheet. Numerous red outlines, handles, and section borders are visible around the sheet elements. These are the extension\u2019s enhancement work applied to D&D Beyond content.\n7. **30.2\u201331.2s \u2014 Extension work:** The visible sheet area changes to show a lower/left portion of the enhanced sheet with a red decorative circular element near the \u201cPROFICIENCY BONUS\u201d section. There is a large blank region on the right, suggesting a changed scroll or layout position, but no clear drag gesture or sustained edge-drag interaction is visible.\n8. **31.4s onward \u2014 Extension work:** The extension\u2019s dark control surfaces appear:\n   - A left **LAYOUT / OUTPUT** control panel.\n   - A right **LAYER MANAGEMENT** panel with section and shape lists.\n   - A first-run hint card reading approximately \u201cDrag to move any section. Ctrl to resize, or use the handle to rotate,\u201d with a **Got it** button.\n   - A dark toast reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n   - The sheet remains in the extension\u2019s decorative monochrome/gold visual treatment, with outlined section boxes.\n9. **31.4\u201373.4s \u2014 Extension work with no further interaction:** The two side panels and the toast remain visible while the sheet stays essentially static. The toast eventually disappears, but no clear drag toward the viewport\u2019s bottom edge, no obvious drag grip movement, and no demonstrable held auto-scroll sequence is shown.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n**Suite `sheet_autoscroll` \u2014 \u201cSheet auto-scroll\u201d**\n\n- **The sections layer is a natively scrollable screen scrollport \u2014 NOT-VISIBLE.**  \n  The frames show an enhanced sheet and a later change in visible sheet position, but they do not visibly demonstrate native scrolling of the sections layer through a wheel, scrollbar, keyboard, or other direct scroll interaction.\n\n- **Dragging toward the viewport bottom edge auto-scrolls the sheet while held \u2014 NOT-VISIBLE.**  \n  No drag toward the bottom edge is sampled, and there is no visible sustained drag during which the sheet advances.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Working affordances visibly demonstrated\n\n- The extension\u2019s UI is clearly distinguishable from D&D Beyond\u2019s own interface: the black/codex-style side panels, gold accents, and typography are visually distinct from the website.\n- The floating **LAYOUT / OUTPUT** panel and **LAYER MANAGEMENT** panel appear successfully.\n- The extension visibly converts sheet regions into bordered/decorated boxes and applies a monochrome ornamental treatment.\n- A first-run instructional hint card is present, with understandable drag/resize/rotate guidance and a visible **Got it** action.\n- A toast communicates **\u201cNo saved layout yet \u2014 the default template is loaded,\u201d** giving the user a default-state explanation.\n- The extension\u2019s layer list shows categorized **Sections (22)** and **Shapes (1)** content.\n\n### Missing or rough affordances\n\n- **No extension loading/transition affordance is visible.** The enhancement and panels appear without a brief \u201cEnhancing sheet\u2026\u201d or similar extension-owned transition state. The central D&D Beyond spinner seen earlier belongs to the website and cannot count as the extension\u2019s transition affordance.\n- **No error state is demonstrated.** The \u201cNo saved layout yet\u201d message is informational rather than an error, and no failure, recovery, or blocking-condition state is shown.\n- **No disabled-state behavior is demonstrated.** The controls are visible, but the recording does not show an unavailable action or explain why it is disabled.\n- **No drag grip is visibly manipulated.** The hint tells the user to drag sections, but the video does not show a grip being held or moved.\n- **The asserted edge auto-scroll behavior is not demonstrated on camera.** Although the sheet view changes, the frames do not establish that this resulted from dragging toward the bottom edge while held.\n- The large blank area to the right after the viewport/layout change looks visually unfinished or at least unclear in context.\n\nBecause the core asserted drag/auto-scroll behavior is never visibly sampled, the video does not satisfy Layer 1.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: sheet_autoscroll.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464896827
+}

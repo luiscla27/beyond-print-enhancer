@@ -1,0 +1,72 @@
+{
+ "feature": "feature_11_spells_ui",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "file_id": "458387525710306",
+   "mp4_bytes": 957879,
+   "upload_response": {
+    "file": {
+     "file_id": 458387525710306,
+     "bytes": 957879,
+     "created_at": 1793464693,
+     "filename": "spell_detail_sections.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\spell_detail_sections.webm",
+   "webm_bytes": 3132768
+  }
+ ],
+ "usage": {
+  "total_tokens": 38251,
+  "total_characters": 0,
+  "prompt_tokens": 37082,
+  "completion_tokens": 1169,
+  "completion_tokens_details": {
+   "reasoning_tokens": 240
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What I observe, in order\n\n1. **Website surface (0.0\u20132.0s):** The recording opens on a blank/loading page, followed by D&D Beyond\u2019s own navigation and a centered **D&D Beyond loading spinner**. These are website elements, not extension work.\n2. **Website surface (2.0\u201326.0s):** The D&D Beyond character sheet for \u201cCorvo Saggio\u201d loads. The sheet contains the character\u2019s stats, ability scores, skills, senses, defenses, actions, and other D&D Beyond content. These are the website\u2019s product and are not credited to the extension.\n3. **Extension work (2.0\u201326.0s):** The visible sheet has been enhanced with red/accented section borders, altered card geometry, and a decorative styled layout. These modifications are visibly distinct from the plain website presentation.\n4. **Website surface (26.0\u201327.0s):** The recording scrolls/repositions to another part of the sheet.\n5. **Extension work (27.0\u201336.2s):** The extension\u2019s dark floating control panel appears on the left, with **LAYOUT**, **OUTPUT**, and related controls. A separate **LAYER MANAGEMENT** panel appears on the right with sections and shapes. Both use the extension\u2019s dark, gold-accented visual treatment.\n6. **Extension work (27.2\u201330.2s):** A first-run/hint card appears near the top center stating **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** It later disappears.\n7. **Extension work (30.4s onward):** The enhanced sheet remains visible between the two extension panels, now including a decorative black ornamental frame and art around the character portrait.\n\nThe **D&D Beyond loading spinner should not be counted as an extension loading affordance**. No extension-specific \u201cloading\u2026\u201d overlay or other transition indicator is visible when the enhanced UI appears.\n\n## LAYER 1 \u2014 Asserted-behavior evidence\n\n- **Spell rows expose a Details trigger \u2014 NOT-VISIBLE.**  \n  No spell row with a visible **Details** trigger is shown.\n\n- **Clicking Details creates a floating spell detail section \u2014 NOT-VISIBLE.**  \n  No Details click and no resulting floating spell-detail section are shown.\n\n- **Re-requesting the same spell does not duplicate the section \u2014 NOT-VISIBLE.**  \n  No repeated spell request or comparison of section counts is shown.\n\n- **The opened spell detail eventually shows content or a retry/delete error state \u2014 NOT-VISIBLE.**  \n  No opened spell-detail content, loading state, retry control, or delete/error state is shown.\n\nThe frames sample the sheet and extension layout panels, but they do not sample the asserted spell-detail interaction.\n\n## LAYER 2 \u2014 Product-aim conformance\n\n### Extension UI differentiation\n- **Working:** The extension is clearly distinguishable from D&D Beyond.\n- **Working:** The left control panel and right **LAYER MANAGEMENT** panel have a dark workbench/codex-like presentation with gold accents, unlike the base website.\n- **Working:** The sheet enhancement\u2014outlined and reorganized sections, decorative framing, borders, and stylized cards\u2014is visibly separate from the underlying D&D Beyond content.\n\n### Basic affordances observed working\n- **Working:** The floating control panel is visible and legible.\n- **Working:** The layer-management panel is visible and populated with sections and shapes.\n- **Working:** A first-run/hint card appears with a clear status message and a close control.\n- **Working:** The hint card later disappears, indicating dismissal behavior.\n- **Working:** The enhanced page remains coherent while both panels are open, with the sheet still visible between them.\n\n### Basic affordances missing or rough\n- **Missing:** No extension-specific loading or activation transition is visible. The enhancement and panels effectively appear without a brief \u201cloading\u2026\u201d/applying state. The earlier spinner belongs to D&D Beyond and cannot satisfy this requirement.\n- **Not witnessed:** No extension toast is shown.\n- **Not witnessed:** No extension error state is shown.\n- **Not witnessed:** No disabled-state treatment is demonstrated.\n- **Not witnessed:** No spell-detail loading, content, retry, or delete/error affordance is demonstrated.\n- **Potentially rough:** The extension\u2019s panels occupy substantial screen area and cover parts of the sheet, though the central enhanced content remains readable.\n\nBecause the asserted spell-detail workflow is never sampled, this video cannot establish that the suite behavior is visible.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: spell_detail_sections.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464703259
+}

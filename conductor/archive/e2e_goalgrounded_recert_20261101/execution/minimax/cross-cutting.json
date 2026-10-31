@@ -1,0 +1,233 @@
+{
+ "feature": "cross-cutting",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 8 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "color_picker.spec.js",
+   "file_id": "458390787531287",
+   "mp4_bytes": 833059,
+   "upload_response": {
+    "file": {
+     "file_id": 458390787531287,
+     "bytes": 833059,
+     "created_at": 1793465020,
+     "filename": "color_picker.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "manual_verification_phase2.spec.js",
+   "file_id": "458389731557917",
+   "mp4_bytes": 964643,
+   "upload_response": {
+    "file": {
+     "file_id": 458389731557917,
+     "bytes": 964643,
+     "created_at": 1793465023,
+     "filename": "manual_verification_phase2.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "shape_layer_management.spec.js",
+   "file_id": "458392073880070",
+   "mp4_bytes": 878280,
+   "upload_response": {
+    "file": {
+     "file_id": 458392073880070,
+     "bytes": 878280,
+     "created_at": 1793465026,
+     "filename": "shape_layer_management.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "byok_settings_storage.spec.js",
+   "file_id": "458389462979046",
+   "mp4_bytes": 1627497,
+   "upload_response": {
+    "file": {
+     "file_id": 458389462979046,
+     "bytes": 1627497,
+     "created_at": 1793465029,
+     "filename": "byok_settings_storage.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "settings_export_import.spec.js",
+   "file_id": "458392306520386",
+   "mp4_bytes": 721487,
+   "upload_response": {
+    "file": {
+     "file_id": 458392306520386,
+     "bytes": 721487,
+     "created_at": 1793465032,
+     "filename": "settings_export_import.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "quick_switch_print.spec.js",
+   "file_id": "458390530851295",
+   "mp4_bytes": 821491,
+   "upload_response": {
+    "file": {
+     "file_id": 458390530851295,
+     "bytes": 821491,
+     "created_at": 1793465035,
+     "filename": "quick_switch_print.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "release_1_4_0.spec.js",
+   "file_id": "458388432638457",
+   "mp4_bytes": 759496,
+   "upload_response": {
+    "file": {
+     "file_id": 458388432638457,
+     "bytes": 759496,
+     "created_at": 1793465038,
+     "filename": "release_1_4_0.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "dom_refactor_guarantees.spec.js",
+   "file_id": "458391901798727",
+   "mp4_bytes": 890960,
+   "upload_response": {
+    "file": {
+     "file_id": 458391901798727,
+     "bytes": 890960,
+     "created_at": 1793465042,
+     "filename": "dom_refactor_guarantees.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "color_picker.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\color_picker.webm",
+   "webm_bytes": 2838589
+  },
+  {
+   "suite": "manual_verification_phase2.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\manual_verification_phase2.webm",
+   "webm_bytes": 3258061
+  },
+  {
+   "suite": "shape_layer_management.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\shape_layer_management.webm",
+   "webm_bytes": 3013616
+  },
+  {
+   "suite": "byok_settings_storage.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_storage.webm",
+   "webm_bytes": 3531690
+  },
+  {
+   "suite": "settings_export_import.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\settings_export_import.webm",
+   "webm_bytes": 2828954
+  },
+  {
+   "suite": "quick_switch_print.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\quick_switch_print.webm",
+   "webm_bytes": 2752207
+  },
+  {
+   "suite": "release_1_4_0.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\release_1_4_0.webm",
+   "webm_bytes": 2759316
+  },
+  {
+   "suite": "dom_refactor_guarantees.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\dom_refactor_guarantees.webm",
+   "webm_bytes": 2738195
+  }
+ ],
+ "usage": {
+  "total_tokens": 281243,
+  "total_characters": 0,
+  "prompt_tokens": 276494,
+  "completion_tokens": 4749,
+  "completion_tokens_details": {
+   "reasoning_tokens": 1614
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 997
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 color_picker\n\n**What is visible**\n\n- **Website surface:** The video opens on D&D Beyond\u2019s own loading screen, navigation, promotional banner, and \u201cYour Privacy Choices\u201d cookie panel. The character sheet for Corvo Saggio then renders with D&D Beyond\u2019s artwork, statistics, tabs, and red section outlines.\n- **Extension surface:** Around 29 seconds, the extension\u2019s dark, gold-accented control panel and separate **LAYER MANAGEMENT** panel appear. The sheet is enhanced with a decorative character frame and extension-styled borders.\n- **Extension interaction:** A **SELECT DECORATIVE SHAPE** modal opens. It contains `BORDERS`, `SHAPES`, and `CUSTOM` tabs, category filters, decorative thumbnails, **Cancel**, and **Add Shape**. A decorative shape is selected and added; a **\u201cShape added\u201d** toast appears. The shape count in Layer Management changes from one to two.\n- This is a decorative-shape workflow, not a color-picker workflow.\n\n**Layer 1 \u2014 asserted behavior**\n\n- Control panel exposes **Color Picker** and filter controls: **NOT-VISIBLE**.\n- Color Picker opens a 2D grid with swatches, greyscale, and **Continue**: **NOT-VISIBLE**.\n- Choosing a swatch previews the hue and **Continue** closes the picker: **NOT-VISIBLE**.\n- **Reset All Filters** restores default filter values: **NOT-VISIBLE**.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: the extension UI is clearly distinguishable through its dark \u201ccodex/workbench\u201d styling and gold accents; the sheet decoration is visibly distinct from D&D Beyond\u2019s base layout; the shape picker has clear tabs, filters, thumbnails, **Cancel**, and **Add Shape**; the **\u201cShape added\u201d** toast provides useful confirmation.\n- Missing/rough: no loading or transition affordance is visible between the plain sheet and the enhanced result\u2014the enhancement and both panels appear abruptly. No first-run hint card is visible. The color/filter surface named by the suite is not shown in the recorded segment.\n\n---\n\n## Video 2 \u2014 manual_verification_phase2\n\n**What is visible**\n\n- **Website surface:** D&D Beyond loads, displays its own cookie banner and character-sheet content, then removes the cookie overlay.\n- **Extension surface:** The extension adds its floating control panel, enhanced borders, decorative artwork, and Layer Management panel.\n- **Extension interaction:** The control panel is shown with **LAYOUT** and **OUTPUT** sections. Visible actions include **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, **PRINT**, **Print settings**, and **Save to Browser**. A notice states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The panel is later scrolled so **PROPERTIES** becomes visible.\n- No first-run walkthrough appears.\n\n**Layer 1 \u2014 asserted behavior**\n\n- The four-step discoverability walkthrough behaves as documented: **NOT-VISIBLE**.\n- No individual step, step indicator, next/back navigation, or walkthrough completion state is sampled.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: the extension is visually distinct from the base website; grouped sections make layout, output, and properties discoverable; the \u201cno saved layout yet\u201d notice explains why no saved template is active; the panel provides many clearly labeled actions.\n- Missing/rough: the required first-run discovery experience is not shown. No activation loading overlay is visible; the extension panels and enhancements appear suddenly. The control panel is tall and dense, and some controls are small and low-contrast. No explanatory first-run card is observed.\n\n---\n\n## Video 3 \u2014 shape_layer_management\n\n**What is visible**\n\n- **Website surface:** The base D&D Beyond sheet loads behind D&D Beyond\u2019s own cookie panel and spinner.\n- **Extension surface:** The enhanced sheet appears with the extension\u2019s dark control panel and Layer Management panel.\n- **Extension interaction:** **Add Shape** opens the extension\u2019s **SELECT DECORATIVE SHAPE** picker. The picker switches to the **SHAPES** tab, displays shape thumbnails, allows one to be selected, and then closes after **Add Shape**. A **\u201cShape added\u201d** toast appears.\n- Layer Management shows a dedicated **SHAPES** subsection, shape thumbnails, print/visibility/edit-style controls, and an **Add Shape** action. The count changes from one shape to two.\n\n**Layer 1 \u2014 asserted behavior**\n\n- Shapes live in a dedicated default shape-layer container: **VISIBLE** \u2014 Layer Management has a dedicated **SHAPES** section and shape entries.\n- **Add new Layer** creates a second shape-layer container that becomes active: **NOT-VISIBLE** \u2014 no **Add new Layer** action or second layer container is shown.\n- Adding a shape while the new layer is active places it into that layer: **NOT-VISIBLE** \u2014 a shape is added, but no newly created/active layer is demonstrated.\n- Shape-layer rows provide per-layer Print/Visibility/Edit controls: **VISIBLE** \u2014 compact per-row controls are visible in the Shapes section, though their individual labels/icons are small.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: the decorative-shape picker is clearly extension-owned and stylistically distinct; the tabbed picker, filters, thumbnails, **Cancel**, and **Add Shape** are understandable; the **\u201cShape added\u201d** toast confirms completion; shape management is clearly separated from ordinary sheet sections.\n- Missing/rough: the core \u201cnew shape layer becomes active\u201d workflow is not shown. No loading/transition overlay appears before the enhanced state. The per-row icons are visually small and lack obvious text labels on camera, which makes their exact Print/Visibility/Edit meanings less immediately discoverable.\n\n---\n\n## Video 4 \u2014 byok_settings_storage\n\n**What is visible**\n\n- **Website surface:** D&D Beyond loads its own cookie banner and character sheet.\n- **Extension surface:** The extension\u2019s control panel, Layer Management panel, sheet decoration, and borders appear.\n- **Extension interaction:** An extension-styled **AI LAYOUT SETTINGS** modal opens. It exposes provider, model, a **Compatible base URL** field, explanatory text, a key-related section, and **Reveal**, **Remove key**, **Cancel**, and **Save** actions.\n- The base URL is edited to a non-HTTPS value. The dialog then displays **\u201cThe base URL must be https.\u201d** in red, and the base URL field receives a red invalid border. This is a working validation/error state.\n\n**Layer 1 \u2014 asserted behavior**\n\n- `js/ai_settings.js` is injected and the real permission set matches the specification: **NOT-VISIBLE**.\n- The real BYOK dialog is the shared shell, masked at first paint, and non-alarming: **NOT-VISIBLE** \u2014 the shown dialog is AI layout configuration, not a demonstrably masked BYOK credential dialog.\n- Reveal masks/unmasks without revealing a stored value: **NOT-VISIBLE**.\n- A successful save persists, clears the field, and leaves nothing invalid: **NOT-VISIBLE**.\n- A rejected base URL marks the **BASE** field rather than the first input: **VISIBLE** for the AI layout base URL\u2014the base URL field itself is marked, not another field.\n- The credential stays out of the layout record and host storage: **NOT-VISIBLE**.\n- The store is invisible to the page world: **NOT-VISIBLE**.\n- A typed key is not recorded: **NOT-VISIBLE**.\n- After successful save, no credential-shaped content remains in the shared DOM: **NOT-VISIBLE**.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: the modal is clearly extension-owned; field-level validation is visible and targets the correct base URL field; the error text is specific; destructive/key controls are separated from normal settings; the extension remains clearly distinguishable from D&D Beyond\u2019s UI.\n- Missing/rough: the shown AI Layout Settings dialog does not visibly provide a complete BYOK credential reveal/save flow, so the core credential guarantees cannot be reviewed on camera. There is no activation transition overlay. The long explanatory copy is dense at the captured size, and the disabled/error treatment of the bottom action buttons is not consistently clear.\n\n---\n\n## Video 5 \u2014 settings_export_import\n\n**What is visible**\n\n- **Website surface:** D&D Beyond\u2019s loading sequence, cookie banner, and plain character sheet are shown.\n- **Extension surface:** The extension adds its control panel, Layer Management panel, decorative frame, and enhanced borders.\n- The **OUTPUT** section of the control panel exposes both **Export Settings** and **Import Settings**.\n- A notice says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- No export or import interaction is completed on camera.\n\n**Layer 1 \u2014 asserted behavior**\n\n- Control panel exposes **Export Settings** and **Import Settings**: **VISIBLE**.\n- Export Settings downloads a JSON settings file: **NOT-VISIBLE**.\n- Exported bundle carries every required customization type: **NOT-VISIBLE**.\n- `validateSettingsBundle` rejects a malformed bundle by name and accepts a real one: **NOT-VISIBLE**.\n- Import merges filters and AI settings without wiping reuse libraries: **NOT-VISIBLE**.\n- Export \u2192 mutate \u2192 import restores exported values: **NOT-VISIBLE**.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: Export/Import are clearly exposed in a logical Output group; the extension\u2019s visual identity remains clear; the \u201cno saved layout\u201d notice supplies useful state context.\n- Missing/rough: no export confirmation, downloaded filename, JSON contents, import validation feedback, merge result, or persistence confirmation is shown. No loading/transition affordance appears during activation. The panel\u2019s small type and dense vertical layout reduce readability.\n\n---\n\n## Video 6 \u2014 quick_switch_print\n\n**What is visible**\n\n- **Website surface:** D&D Beyond\u2019s own loading UI, cookie panel, character sheet, and character artwork.\n- **Extension surface:** The extension enhances the sheet and presents the dark control panel and Layer Management panel.\n- The extension panel contains print-related actions such as **PRINT**, **Print settings**, and **Save to Browser**, and the Layer Management panel contains Print/Visibility-style controls for sections and shapes.\n- No shape asset is switched, no print preview is opened, and no printed output is shown.\n\n**Layer 1 \u2014 asserted behavior**\n\n- **Switch Shape Asset** opens the picker pre-filtered to **Shapes**: **NOT-VISIBLE**.\n- Switching a shape\u2019s asset preserves its transform and updates the path: **NOT-VISIBLE**.\n- Print CSS makes shapes fully opaque and hides UI chrome: **NOT-VISIBLE**.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: print-related controls are exposed; the extension is clearly distinguishable from the base site; the Layer Management panel provides per-item print controls.\n- Missing/rough: the central asset-switching and print-output behaviors are not shown. There is no print preview, print-state transition, confirmation that chrome is hidden, or visible opacity comparison. No loading/transition affordance appears during activation.\n\n---\n\n## Video 7 \u2014 release_1_4_0\n\n**What is visible**\n\n- **Website surface:** The base D&D Beyond character sheet, its loading spinner, promotional banner, cookie dialog, and character artwork.\n- **Extension surface:** The extension adds the control panel, Layer Management panel, red/gold sheet borders, a decorative frame, and a selectable **DEFENSES** section.\n- The control panel exposes layout, output, and properties groups, including **Add Shape** and print/export-related actions.\n- Layer Management reports **SECTIONS (22)** and **SHAPES (1)** and shows per-section and per-shape controls.\n\n**Layer 1 \u2014 asserted behavior**\n\n- Extension boots cleanly and the character sheet stays visible: **VISIBLE** \u2014 after the base site loads, the enhanced sheet remains visible and usable-looking.\n- Control panel shows the **1.4.0 headline actions**: **PARTIALLY VISIBLE / NOT FULLY VERIFIABLE** \u2014 major actions such as **Add Shape**, **PRINT**, **Export Settings**, **Import Settings**, and related controls are visible, but no explicit version label or complete enumeration of the asserted headline-action set is shown.\n- The 1.4.0 decoration/layer surfaces are present: **VISIBLE** \u2014 decorative frame/shape tooling and the Layer Management panel are present.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: the release surface is coherent and distinguishable; extension decorations and layer surfaces coexist with the sheet; the panel\u2019s hierarchy is apparent.\n- Missing/rough: no explicit **1.4.0** version identifier is visible in the sampled frames, so the release branding itself is not established. There is no activation loading overlay; the enhancement appears abruptly. No detailed first-run or release-tour affordance is visible.\n\n---\n\n## Video 8 \u2014 dom_refactor_guarantees\n\n**What is visible**\n\n- **Website surface:** D&D Beyond\u2019s own loader, navigation, cookie banner, and character sheet appear first.\n- **Extension surface:** The sheet becomes a set of wrapped, red-bordered extension sections. The extension\u2019s control panel and Layer Management panel overlay the sheet. A decorative frame and character portrait are applied.\n- The actions tab remains visible, but no spells-tab filtering, modal opening, or spell-row Details interaction is sampled.\n\n**Layer 1 \u2014 asserted behavior**\n\n- Sheet enhances with wrapped sections after selector migration: **VISIBLE** \u2014 the character sheet is divided into extension-wrapped, bordered boxes.\n- Live **Spells** node keeps its tab filter interactive: **NOT-VISIBLE** \u2014 the Spells tab is visible, but no filter interaction is shown.\n- Modal UI remains usable above the cleaned layout and sidebar portal is not hidden: **NOT-VISIBLE**.\n- Spell rows expose extension **Details** triggers: **NOT-VISIBLE**.\n\n**Layer 2 \u2014 product-aim conformance**\n\n- Working: the extension\u2019s wrapping and border treatment is visibly distinct from D&D Beyond\u2019s original presentation; the sheet content remains readable; the floating panels coexist with the transformed layout.\n- Missing/rough: the key interaction guarantees are not demonstrated: no live tab filtering, no modal-above-layout test, and no Details trigger. The enhancement appears without a loading/transition overlay. The large control and layer panels occupy substantial screen area, which could make the wrapped sheet harder to use on smaller displays.\n\n## Overall assessment\n\n- The extension\u2019s own UI and sheet enhancements are visibly distinct from D&D Beyond\u2019s website.\n- Working affordances observed include the dark codex-style panels, the Layer Management surface, the decorative shape picker, selection/disabled states, the **\u201cShape added\u201d** toast, the \u201cno saved layout\u201d notice, and field-level URL validation.\n- Across the videos, **no smooth activation/loading transition is visible**; the enhanced state appears abruptly. The first-run discoverability walkthrough is also not witnessed.\n- Several asserted behaviors are either absent from the sampled frames or only represented by static UI rather than exercised interactions.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": "cross-cutting is the inventory's residual suite class, not one feature; certified via a purpose-annotated representative set of 8 suite(s) spanning the class's distinct behaviors: color_picker.spec.js, manual_verification_phase2.spec.js, shape_layer_management.spec.js, byok_settings_storage.spec.js, settings_export_import.spec.js, quick_switch_print.spec.js, release_1_4_0.spec.js, dom_refactor_guarantees.spec.js. The other 68 cross-cutting suites are covered by their mocha rows (AC-1) and retained .webm evidence (AC-2) under evidence/cross-cutting/, not crammed into this one call.",
+ "ts": 1793465088820
+}

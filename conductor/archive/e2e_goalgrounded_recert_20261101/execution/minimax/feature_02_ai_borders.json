@@ -1,0 +1,72 @@
+{
+ "feature": "feature_02_ai_borders",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "file_id": "458386309923367",
+   "mp4_bytes": 2837410,
+   "upload_response": {
+    "file": {
+     "file_id": 458386309923367,
+     "bytes": 2837410,
+     "created_at": 1793464326,
+     "filename": "byok_border_gallery.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_02_ai_borders\\byok_border_gallery.webm",
+   "webm_bytes": 8545389
+  }
+ ],
+ "usage": {
+  "total_tokens": 151235,
+  "total_characters": 0,
+  "prompt_tokens": 149069,
+  "completion_tokens": 2166,
+  "completion_tokens_details": {
+   "reasoning_tokens": 509
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed, in order\n\n1. **Website-owned loading and shell**\n   - The video begins on D&D Beyond\u2019s white page and then its dark navigation bar with the **D&D Beyond logo**, menus, search, sign-in, and account controls. These are **website surfaces**.\n   - A centered D&D Beyond loading graphic and D&D Beyond\u2019s \u201cPrivacy Choices\u201d cookie dialog appear. The cookie banner and promotional strip are **website-owned**, not extension work.\n\n2. **Plain D&D Beyond character sheet**\n   - The character sheet for \u201cCorvo Saggio\u201d loads with ordinary D&D Beyond content: ability scores, skills, senses, hit points, defenses, actions, inventory, equipment, and other sheet text. This content and layout are **website-owned**.\n   - The dark site header remains visible and should not be credited to the extension.\n\n3. **Extension enhancement appears**\n   - By about 7.4 seconds, many sheet regions have thin red outlines and the sheet has shifted into a more decorative monochrome presentation. The red region outlines and enhanced presentation are **extension work**.\n   - The enhancement appears without a visible \u201cloading\u2026,\u201d \u201capplying layout,\u201d or similar transitional overlay. The sampled frames go from the plain sheet to the enhanced sheet without a visible activation-progress affordance. This is a **Layer 2 absence**.\n   - There is no visible first-run hint card at this activation point. A different instructional hint appears later in the extension panel.\n\n4. **Extension control surfaces**\n   - At approximately 29.8 seconds, two dark, gold-accented extension panels appear:\n     - a left floating control panel containing **LAYOUT** and **OUTPUT** sections;\n     - a right **LAYER MANAGEMENT** panel listing sections and shapes.\n   - These panels are clearly **extension work** and are visually distinct from D&D Beyond\u2019s own interface.\n   - The left panel includes a small instructional hint card explaining how to drag a section, along with a **Got it** button. This is an **extension affordance**.\n   - The right panel visibly exposes **SECTIONS (22)** and **SHAPES**, along with print-only/both/screen-only filtering and a grid of shape thumbnails. This is also **extension work**.\n   - A dark toast reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** appears at the top of the sheet. This is an **extension toast**, and it provides useful feedback about the default state.\n\n5. **Print/output flow**\n   - The extension\u2019s left panel shows output commands such as **PRINT**, **Print settings**, **Save to Browser**, **Save to PC**, **Export Settings**, **Import Settings**, **Undo**, and **Restore backup\u2026**.\n   - The screen changes to a very long, zoomed-out, multi-page printable character sheet. The generated document composition and print workflow are **extension output**, while the underlying character statistics and rules text originate from the **website\u2019s character sheet**.\n   - The output remains mostly static for a long interval. Numerous subtle framing and crop changes occur, but no visible AI-border gallery operation, border picker, adjustment control, apply action, undo action, or border-related toast is shown.\n   - Near the end, the view returns to a largely blank sheet canvas with both extension panels visible. The LAYER MANAGEMENT panel still shows its shape thumbnails, but no border gallery or border-selection interaction is demonstrated.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | On-camera status | Evidence |\n|---|---|---|\n| `window.AiBorder` is live in the ISOLATED world | **NOT-VISIBLE** | No isolated-world object, console, debugger, or equivalent on-camera evidence is shown. |\n| The README demo sheet exposes a section on which a border can actually be seen | **VISIBLE** | The enhanced character sheet visibly contains outlined sections, including a large central content region. However, the frames do not establish that these are accepted BYOK gallery designs rather than general enhancement outlines. |\n| The gallery/design **renders** | **NOT-VISIBLE** | No distinct BYOK SVG border-gallery result is visibly presented or selected. The general red outlines cannot prove the specific gallery corpus/render assertion. |\n| `adjust` / `transform` / `canAdjust` are exposed on the isolated-world `AiBorder` seam | **NOT-VISIBLE** | No seam, method list, inspector, or on-camera API evidence appears. |\n| A stroke-bearing border can be adjusted in place; weight +1.5\u00d7 increases painted stroke width; original is preserved | **NOT-VISIBLE** | No weight control, before/after stroke comparison, transform operation, or preserved-original demonstration is shown. |\n| Refinement is disabled for a fill-only border: `adjustBorder` returns `not_adjustable` and paints nothing new | **NOT-VISIBLE** | No fill-only border case, disabled state, return status, or no-paint comparison is shown. |\n| A labelled frame is captured for every accepted design | **NOT-VISIBLE** | No accepted-design gallery sequence, capture notification, or labelled captured frame is shown. |\n\nThe \u201crenders\u201d assertion and the isolated-world/API/refinement assertions therefore cannot be certified from these frames. The long printable output does not substitute for evidence of the AI-border feature.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Working extension affordances observed\n\n- **Strong visual separation from the base website:** The black, gold-accented floating panels and LAYER MANAGEMENT panel are unmistakably extension UI rather than D&D Beyond UI.\n- **Clear panel hierarchy:** LAYOUT and OUTPUT are visibly grouped in the left panel; SECTIONS and SHAPES are grouped in the right panel.\n- **Informational toast:** \u201cNo saved layout yet \u2014 the default template is loaded.\u201d clearly communicates the current template state.\n- **Instructional hint card:** The panel provides drag guidance and a **Got it** dismissal button.\n- **Layer visibility controls:** Print-only/both/screen-only filters and visible lists of sections and shapes provide useful organization.\n- **Output affordances:** Print, save, export/import, undo, and restore commands are visibly available.\n- **Enhanced sheet presentation:** Outlined, movable-section-style regions and the decorated sheet treatment are visibly distinct from the plain base sheet.\n\n### Missing or rough extension affordances observed\n\n- **No activation/loading transition affordance:** The enhancement appears without a visible \u201cloading\u2026,\u201d \u201capplying enhancement,\u201d progress indicator, or transitional overlay. This is a significant Layer 2 absence.\n- **No visible AI-border gallery:** Although this suite is specifically for the BYOK SVG border gallery, no gallery dialog or grid of border designs appears.\n- **No visible border-selection and acceptance flow:** There is no visible choose/apply/accept interaction for an AI border.\n- **No visible adjustment controls:** Stroke weight, transform, and adjustment affordances are not shown.\n- **No visible undo/apply result for a border:** The panel contains an Undo command, but no border-specific apply or undo is demonstrated.\n- **No visible disabled/error feedback for unsupported borders:** The fill-only, `not_adjustable` path is not surfaced to the user on camera, and no explanatory disabled or error state is shown.\n- **No border-related toast:** The only visible toast concerns the lack of a saved layout. There is no success/error feedback for border selection or refinement.\n- **No evident drag/resize interaction:** Although the enhancement implies movable sections and the hint card gives drag instructions, the sampled frames do not visibly demonstrate a drag, resize, or alignment-guide interaction.\n- **Feature coverage is disconnected from the recorded suite:** Much of the video is devoted to a long static print-output document, while the feature named by the suite\u2014AI/BYOK border refinement\u2014is not visibly driven.\n\nBecause the extension\u2019s visual identity and several general UI affordances work, but the asserted AI-border behavior is largely not witnessed and the activation transition is missing, this cannot be certified as fully working.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793464393778
+}

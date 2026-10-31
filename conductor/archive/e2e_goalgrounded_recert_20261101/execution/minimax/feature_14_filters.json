@@ -1,0 +1,72 @@
+{
+ "feature": "feature_14_filters",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_filter_identity_probe.spec.js",
+   "file_id": "458387082277372",
+   "mp4_bytes": 1318402,
+   "upload_response": {
+    "file": {
+     "file_id": 458387082277372,
+     "bytes": 1318402,
+     "created_at": 1793464771,
+     "filename": "print_filter_identity_probe.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_filter_identity_probe.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_filter_identity_probe.webm",
+   "webm_bytes": 5155076
+  }
+ ],
+ "usage": {
+  "total_tokens": 61563,
+  "total_characters": 0,
+  "prompt_tokens": 59987,
+  "completion_tokens": 1576,
+  "completion_tokens_details": {
+   "reasoning_tokens": 356
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations, in order\n\n1. **0.0\u20139.0 seconds \u2014 WEBSITE loading surface.**  \n   The frames show D&D Beyond\u2019s own navigation bar, loading artwork, spinner, and privacy-choice dialog. These are website surfaces, not extension work.\n\n2. **9.2\u201329.6 seconds \u2014 WEBSITE character sheet.**  \n   The D&D Beyond sheet for \u201cCorvo Saggio\u201d appears with the character\u2019s statistics, sections, and a red-and-white theme. At first it is plain, without extension controls. The character artwork, stats, section content, and D&D Beyond header are the website\u2019s product.\n\n3. **Around 29.8 seconds \u2014 EXTENSION work appears.**  \n   The sheet suddenly changes into an enhanced layout:\n   - a dark floating control panel appears on the left with **LAYOUT** and **OUTPUT**;\n   - a dark **LAYER MANAGEMENT** panel appears on the right;\n   - sheet sections have red outlines and decorative borders;\n   - a dark toast appears at the top stating **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**  \n   These are clearly extension-added elements and are visually distinguishable from D&D Beyond.\n\n4. **30.0\u201337.2 seconds \u2014 EXTENSION layout state.**  \n   The left panel exposes layout operations including **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, and **AI Settings**. The OUTPUT section shows a prominent **PRINT** button, plus **Print Settings** and **Save to Browser**. The right panel lists **SECTIONS (22)** and **SHAPES (1)**. The enhancement remains visible around the website content.\n\n5. **37.4\u201345.6 seconds \u2014 EXTENSION border/theme change.**  \n   The selected section borders and the large decorative frame around the character artwork change from dark/gray to red. The right-side Layer Management panel remains open. This visibly demonstrates an extension-controlled border appearance, but it is not evidence about print-filter identity.\n\n6. **46.0\u201349.6 seconds \u2014 EXTENSION border/theme change again.**  \n   The same enhanced sections and decorative frame change to green.\n\n7. **49.8\u201359.4 seconds \u2014 EXTENSION returns to gray/black outlines.**  \n   The enhanced sheet remains visible with the two dark extension panels. No print output, paper preview, filter-chain inspection, canvas-filter slider interaction, or printed raster result is shown.\n\n### Activation-transition absence\n\nThere is **no visible loading/transition affordance** for enhancement activation. The plain sheet is visible through approximately 29.6 seconds, and the enhanced sheet and both panels appear abruptly at approximately 29.8 seconds. No brief \u201cloading\u2026\u201d overlay, progress indicator, fade, or explanatory transition is sampled. This is a **Layer 2 absence**.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n1. **Identity chains are `none`, and the sheet\u2019s own type reaches the paper \u2014 NOT-VISIBLE.**  \n   The video never shows a print preview, paper output, print DOM, filter-chain inspection, or evidence that the sheet\u2019s type reaches the output.\n\n2. **All sliders at their defaults is not neutral and costs colour \u2014 NOT-VISIBLE.**  \n   No Canvas Filters section, filter sliders, default-state comparison, or colour-cost comparison is shown.\n\n3. **A user\u2019s Greyscale 0% setting still reaches the paper \u2014 NOT-VISIBLE.**  \n   No greyscale slider is shown or operated, and no printed output is displayed.\n\n4. **A real hue is emitted again rather than neutralised \u2014 NOT-VISIBLE.**  \n   Although extension border colors visibly change from gray to red to green, that only demonstrates live page-border theming. It does not establish that a print filter emits a hue to paper.\n\n5. **Defaults come back byte-identical \u2014 NOT-VISIBLE.**  \n   There is no before/after default print output or byte-level visual comparison available on camera.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Working or visible basic affordances\n\n- The extension\u2019s control panel and Layer Management panel are **clearly distinguishable** from the base website through their dark codex/workbench styling, gold accents, and bespoke controls.\n- The **OUTPUT section and PRINT button** are visibly exposed.\n- A contextual toast\u2014**\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\u2014provides useful state feedback.\n- The enhanced sections visibly support **theme/border color changes**, with observable gray/black, red, green, and return-to-gray states.\n- The extension\u2019s section-management affordances are visibly populated, including section count, shape count, print/screen visibility controls, and section/shape lists.\n\n### Missing or rough basic affordances\n\n- **Missing activation transition:** the enhancement pops in abruptly without a loading overlay or other transition feedback.\n- **Missing CANVAS FILTERS UI:** the specified floating panel\u2019s CANVAS FILTERS section is never shown in the sampled frames, despite this suite being a filter-identity test.\n- **Missing print-result feedback:** the PRINT button is visible, but no print dialog, paper preview, printed sheet, print-progress state, or print completion/error feedback is shown.\n- **Missing filter feedback:** there is no visible applied-filter summary, neutral-state explanation, print-chain indication, or warning that defaults are not colour-neutral.\n- **No demonstrated error or disabled states** for print, filter, or output operations.\n- The long static interval before enhancement appears, followed by an instantaneous UI pop-in, feels abrupt rather than a smooth activation experience.\n- The changing border colours are visually clear, but without a toast or immediate explanation they could be ambiguous between a theme preview, a selection state, and a committed page change.\n\nBecause the actual filter and print-paper behaviors under certification are never sampled, the extension\u2019s visible layout work cannot establish conformance with the print-filter identity contract.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_filter_identity_probe.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464822866
+}
