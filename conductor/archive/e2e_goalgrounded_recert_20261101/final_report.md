@@ -45,3 +45,25 @@ Results: **the judge finds the activation/loading-transition absence class unpro
 3. The claimed "the judge found what the product lacks" is true for this class but was not true as originally narrated — a correction now on the record.
 
 **Action item unchanged:** an extension-owned "Enhancing sheet…" activation overlay remains the product fix this evidence points at; NOT implemented here (verification-only track; new product work needs its own track).
+
+## Tracker dispositions (filed this session, BEYOND/YouTrack)
+
+The 11 distinct absence classes the **unprimed control arm (v3)** surfaced were distilled into 11 issues via the framework's file_issue CLI (PLAN dry-run for all 11 first, then `--apply`), each description quoting verbatim judge text from `execution/minimax_control/*.json` and cross-linking the related existing UX issues (BEYOND-9…15) instead of near-duplicate refilings:
+
+| issue | class | priority |
+|---|---|---|
+| BEYOND-18 | activation-transition overlay absent (12/19 bundles unprompted) | Major |
+| BEYOND-19 | state-invisible work: no progress/error/transition feedback | Major |
+| BEYOND-20 | no success confirmation after Save | Major |
+| BEYOND-21 | print path never exercised end-to-end (headline aim) | Critical |
+| BEYOND-22 | canvas-filters surface never shown open | Major |
+| BEYOND-23 | undo-history UX (depth invisible, clipping, toast stacking) | Minor |
+| BEYOND-24 | rotate + keyboard-nudge round trips unwitnessed | Minor |
+| BEYOND-25 | upload lifecycle states undemonstrated | Minor |
+| BEYOND-26 | spells Details flow never demonstrated | Minor |
+| BEYOND-27 | panel real-estate: crowding, icon-only controls, title truncation | Minor |
+| BEYOND-28 | export/import round trip never on camera | Minor |
+
+All State=Triage, Kind=Defect, Type=Task; msf_key prefix `BEYOND-CERT-…-20261101-GOALGROUNDED-RECERT`; receipts `temp/issue_filings/BEYOND-{18..28}.json`; spec sources `temp/scratch/yt_specs/*.json`. Each issue's acceptance criteria are verification-gated: the class must be re-reproduced by this project's own e2e verification (the judge record is filing evidence, not closure evidence) plus attached closure artifacts.
+
+**Status:** COMPLETE — archived to `conductor/archive/e2e_goalgrounded_recert_20261101/`, registry row in `vendor/conductor/tracks.md`, local commits a5db709 (certification) + the filing commit. Not pushed (never-push rule).
