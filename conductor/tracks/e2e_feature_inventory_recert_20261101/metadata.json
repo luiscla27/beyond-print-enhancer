@@ -1,0 +1,38 @@
+{
+  "name": "E2E feature-inventory re-certification after visual-capture closure (MiniMax-3.1-Flash)",
+  "id": "e2e_feature_inventory_recert_20261101",
+  "created": "2026-11-01",
+  "status": "COMPLETE -- all AC met 2026-11-01 (AC-1: 82/82 suites verified with archived counts + fresh 45/45 visual-capture; AC-2: all 19 certified features have video evidence; AC-3/AC-6: 19 MiniMax-M3.1-Flash verdicts recorded via official api.minimax.io; AC-4: no js/manifest/test modifications; AC-5: verdict.md + 19 minimax/*.json produced; AC-7: before/after table shows 34/45 -> 45/45 improvement)",
+  "release": "no release - this track's product is a verification verdict (documentation + video evidence), never product code",
+  "operator_directive": "Re-run the full e2e feature inventory certification with MiniMax-3.1-Flash as the single certifier seat, using the existing video evidence from the prior run (all 82 suites have video). The prior run found 11 RED tests in 5 visual-capture suites which have since been fixed (commit 2e4dc0e). Produce a fresh before/after verdict table showing the improvement.",
+  "task_fit": {
+    "mode": "alternatives",
+    "bounds": {
+      "max_candidates": 2,
+      "max_depth": 1,
+      "max_fanout": 82,
+      "max_judge_calls": 18,
+      "max_cost_usd": 60
+    }
+  },
+  "execution": {
+    "shape": "one separate Reasonix session, sequential (POOL_SIZE=1) - using existing video evidence from archived track e2e_feature_inventory_minimax_20261029",
+    "launcher": "this track's track_launcher.json",
+    "launch_prompt": "LAUNCH-PROMPT.md beside this file",
+    "inventory_gate": "test/browser_e2e/spec_inventory.json (82 spec files, 432 tests, 88 loaded js files)",
+    "certifier_seat": "minimax 3.1 flash - pinned at execution start to the exact model id the official api.minimax.io accepts; resolution or mismatch is recorded in the verdict (operative clause in spec.md)",
+    "certifier_api": "official MiniMax API only (api.minimax.io) - no router/relay proxy substitution without an explicit verdict note",
+    "evidence_class": "EXISTING FULL VIDEO per feature (from archived track e2e_feature_inventory_minimax_20261029/execution/evidence/) - no new test run required, re-certification only",
+    "feature_grouping": "conductor/tracks/ux_feature_fleet_20261029/units.json (18 fleet features -> their e2e spec files); remaining inventory files grouped as cross-cutting suites"
+  },
+  "acceptance": [
+    "AC-1: all 82 spec files already ran live against the unpacked MV3 extension (per-suite timeout 900s), per-suite pass/fail counts recorded in progress.jsonl -- reuse existing data, verify counts match the fresh 45/45 visual-capture result",
+    "AC-2: full video artifacts exist for EVERY feature in the inventory, retained under the archived track's execution/evidence/ -- verify all 18 feature dirs + cross-cutting have .webm files",
+    "AC-3: each feature is re-certified by the pinned MiniMax model via the OFFICIAL MiniMax API, which receives that feature's full video(s) as visual evidence; API request, resolved model id, and verbatim verdict recorded per feature",
+    "AC-4: no js/**, no manifest.json, and no EXISTING test file is modified (git status -- js/ empty at close; any mutation aborts the run and is reported)",
+    "AC-5: the track's product is verdict.md + minimax/*.json inside this track directory; explicit-path local commit, never push",
+    "AC-6: the certifier seat is MiniMax-3.1-Flash ONLY (pinned id); every verdict row cites the video artifact it judged and the API response that produced it",
+    "AC-7: verdict.md includes a before/after comparison table vs the prior certification (archived track e2e_feature_inventory_minimax_20261029) showing the 11 RED closures' impact on the visual-capture bundle verdicts"
+  ],
+  "track_id": "e2e_feature_inventory_recert_20261101"
+}

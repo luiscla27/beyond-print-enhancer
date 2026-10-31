@@ -1,0 +1,59 @@
+{
+  "feature": "feature_01_ai_arrange",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-11-01)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+  "certified": true,
+  "request": {
+    "model": "MiniMax-M3.1-Flash",
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "video_parts": [
+      {
+        "type": "video",
+        "video_url": {
+          "url": "mm_file://458166637335037",
+          "detail": "default",
+          "fps": 5
+        }
+      }
+    ],
+    "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite byok_arrange_roundtrip \u2014 BYOK arrange \u2014 the apply round-trip in the real page, zero network (Phase 4); its cases assert: the flow is WIRED in the live page, and its single request is served by the worker stub \u2014 so nothing leaves the machine; AC-2: a rejected patch leaves the live record byte-identical, gains no undo entry, saves nothing, and applies nothing; AC-2's other half: Cancel on a VALID patch touches nothing, and the ghosts are gone; the ghost preview is INVISIBLE to a live scanLayout: the layout is read while the overlay is on screen; AC-3: an accepted patch applies once, saves once, and ONE real Ctrl+Z keystroke restores the pre-AI layout byte for byte; O-2: the AI Arrange row is present and DISABLED with no key, its click dials nothing, and storing a key enables it without a reload; AC-V1 evidence: one real arrangement photographed before, with its ghosts, and after\n\nThis video records one browser e2e test suite for the extension's feature_01_ai_arrange feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+    "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+    {
+      "suite": "byok_arrange_roundtrip",
+      "file_id": 458166637335037,
+      "mp4_bytes": 1462311,
+      "webm_bytes": 3837869
+    }
+  ],
+  "video_evidence": [
+    {
+      "suite": "byok_arrange_roundtrip",
+      "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_01_ai_arrange\\byok_arrange_roundtrip.webm",
+      "webm_bytes": 3837869,
+      "mp4_bytes": 1462311,
+      "file_id": 458166637335037
+    }
+  ],
+  "usage": {
+    "total_tokens": 860,
+    "total_characters": 0,
+    "prompt_tokens": 678,
+    "completion_tokens": 182,
+    "completion_tokens_details": {
+      "reasoning_tokens": 128
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 195
+    }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "No video frames are visible in the provided content, so I cannot directly observe the extension panel, AI Arrange controls, dialogs, apply/undo behavior, or resulting sheet changes. The supplied test description and contract are not visual evidence.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "ts": 1793411329134
+}

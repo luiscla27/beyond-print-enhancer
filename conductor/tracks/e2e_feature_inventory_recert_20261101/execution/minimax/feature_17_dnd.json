@@ -1,0 +1,101 @@
+{
+  "feature": "feature_17_dnd",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-11-01)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+  "certified": true,
+  "request": {
+    "model": "MiniMax-M3.1-Flash",
+    "reasoning_effort": "medium",
+    "max_completion_tokens": 1600,
+    "video_parts": [
+      {
+        "type": "video",
+        "video_url": {
+          "url": "mm_file://458170561249758",
+          "detail": "default",
+          "fps": 5
+        }
+      },
+      {
+        "type": "video",
+        "video_url": {
+          "url": "mm_file://458172393394641",
+          "detail": "default",
+          "fps": 5
+        }
+      },
+      {
+        "type": "video",
+        "video_url": {
+          "url": "mm_file://458167900131703",
+          "detail": "default",
+          "fps": 5
+        }
+      }
+    ],
+    "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nFeature feature_17_dnd: test/unit/dnd.test.js test/browser_e2e/layer_reorder_keyboard.spec.js\nThis video records browser e2e test suite(s) for the extension's feature_17_dnd feature. Watch the FULL video(s): the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+    "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+    {
+      "suite": "affordance_drag_hover_shadows",
+      "file_id": 458170561249758,
+      "mp4_bytes": 2073952,
+      "webm_bytes": 4031242
+    },
+    {
+      "suite": "drag_glow_layers",
+      "file_id": 458172393394641,
+      "mp4_bytes": 1131780,
+      "webm_bytes": 2963235
+    },
+    {
+      "suite": "drag_ux_visual_capture",
+      "file_id": 458167900131703,
+      "mp4_bytes": 2211891,
+      "webm_bytes": 4678026
+    }
+  ],
+  "video_evidence": [
+    {
+      "suite": "affordance_drag_hover_shadows",
+      "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\affordance_drag_hover_shadows.webm",
+      "webm_bytes": 4031242,
+      "mp4_bytes": 2073952,
+      "file_id": 458170561249758
+    },
+    {
+      "suite": "drag_glow_layers",
+      "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_glow_layers.webm",
+      "webm_bytes": 2963235,
+      "mp4_bytes": 1131780,
+      "file_id": 458172393394641
+    },
+    {
+      "suite": "drag_ux_visual_capture",
+      "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm",
+      "webm_bytes": 4678026,
+      "mp4_bytes": 2211891,
+      "file_id": 458167900131703
+    }
+  ],
+  "usage": {
+    "total_tokens": 724,
+    "total_characters": 0,
+    "prompt_tokens": 493,
+    "completion_tokens": 231,
+    "completion_tokens_details": {
+      "reasoning_tokens": 169
+    },
+    "prompt_tokens_details": {
+      "cached_tokens": 195
+    }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "No video frames are visible in the provided evidence. Therefore, I cannot observe the demo sheet loading, the unpacked extension panel appearing, the feature\u2019s controls or actions, or any resulting change on the sheet. The end-to-end interaction cannot be verified from the material provided.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "ts": 1793411520628
+}
