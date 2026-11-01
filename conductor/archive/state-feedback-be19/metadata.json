@@ -1,14 +1,15 @@
 {
+  "name": "state-feedback-be19",
   "id": "state-feedback-be19",
-  "name": "State feedback \u2014 progress/error visibility (BEYOND-19)",
-  "type": "remediation",
-  "parent": "e2e_goalgrounded_recert_20261101",
-  "goal": "Close BEYOND-19: ensure every extension operation that crosses a latency boundary shows progress, every failure path shows an error toast, and state transitions are explained to the user",
-  "status": "COMPLETE",
-  "deliberation": "required",
-  "created": "2026-11-02T00:00:00Z",
+  "msf_key": "BEYOND-STATE-FEEDBACK-20261031",
+  "parent": "BEYOND-19",
   "tracked_issue": "BEYOND-19",
-  "msf_key": "BEYOND-CERT-STATE-FEEDBACK-PROGRESS-ERROR-20261101-GOALGROUNDED-RECERT",
+  "type": "remediation",
+  "deliberation": "required",
+  "created": "2026-10-31",
+  "completed": "2026-10-31",
+  "status": "COMPLETE",
+  "goal": "Close BEYOND-19: ensure every extension operation that crosses a latency boundary shows progress, every failure path shows an error toast, and state transitions are explained to the user",
   "accepted_findings": [
     "No progress feedback during AI arrange/borders round trips",
     "No error toasts for failed save/store writes (persistence)",
@@ -18,20 +19,23 @@
     "Success feedback missing after Save in settings dialog",
     "Disabled state not shown for action icons in filter panel"
   ],
-  "completed": "2026-11-02T00:00:00Z",
+  "deferred": [
+    "AC-7 mid-session assembly marker: synchronous applyLayout never paints a marker; needs an event-loop yield inside js/layout_apply.js — carried over, diagnosis recorded"
+  ],
+  "evidence": {
+    "unit": "test/unit/state_feedback_contract.test.js — 10 passing (sha256: 58495ab5b8817cd46875aef1a09c5cf5c77a8600a00646fcbb5b110c1e618a02)",
+    "e2e": "test/browser_e2e/state_feedback_ai_arrange.spec.js — 1 passing (busyDuring:true busyCleared:true)",
+    "e2e_ac2_own": "test/browser_e2e/state_feedback_ai_borders.spec.js — 1 passing (border-only capability set + selectedSectionId + real patch through the 2s stub; busyDuring:true busyCleared:true)",
+    "e2e_ac5_own": "test/browser_e2e/state_feedback_save_to_browser.spec.js — markers '0 1 0' sampled from INSIDE __DDBStorage.saveGlobalLayout (wrapped +400ms), proving showProgress('Saving layout…') spans the real IndexedDB write",
+    "verification": "conductor/archive/state-feedback-be19/verification.md (sha256: 9d25e2c664242dfab4d753002aa4f30e654ef1d99f6496b6a51104bb9592ebd3) — amended post-closeout by ba33744 to cite the 2707f02 AC-2/AC-5 proof specs",
+    "fix_commits": ["b5af846 (marker + print/filter error paths)", "2707f02 (AC-2/AC-5 own-spec proof)"]
+  },
   "delivery": {
     "commits": [
-      "local only"
+      "b5af846",
+      "2707f02",
+      "ba33744"
     ],
     "pushed": false
-  },
-  "evidence": {
-    "unit": "test/unit/state_feedback_contract.test.js \u2014 9 passing",
-    "e2e": "test/browser_e2e/state_feedback_ai_arrange.spec.js \u2014 1 passing (busyDuring:true busyCleared:true)",
-    "full_suite": "npm test \u2014 2250 passing, 0 failing",
-    "verification": "conductor/archive/state-feedback-be19/verification.md"
-  },
-  "deferred": [
-    "AC-7 mid-session assembly marker: synchronous applyLayout never paints a marker; needs an event-loop yield inside js/layout_apply.js \u2014 carried over, diagnosis recorded"
-  ]
+  }
 }
