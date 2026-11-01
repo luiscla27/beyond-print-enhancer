@@ -12,11 +12,11 @@ project's own machinery.
 | AC | Claim | Evidence | Result |
 |----|-------|----------|--------|
 | AC-1 | AI arrange shows an in-flight marker across the provider round trip and clears it before the preview dialog is readable | `npx mocha test/browser_e2e/state_feedback_ai_arrange.spec.js` — service-worker `self.fetch` stubbed to a **2 s delay**, marker polled from the main world, zero network | **PASS** — `busyDuring: true busyCleared: true` |
-| AC-2 | AI borders rides the same in-flight path (one `showBusy` for every BYOK round trip) | same spec path + `js/ai_arrange.js:793/806` — the marker wraps `sendByokChat` for **every** capability combination, border included | **PASS (by construction, one seam)** |
+| AC-2 | AI borders rides the same in-flight path (one `showBusy` for every BYOK round trip) | `npx mocha test/browser_e2e/state_feedback_ai_borders.spec.js` — its OWN spec: border-only capability set (`arrange:false, border:true`) + `selectedSectionId`, a **real border patch** answered through the 2 s stub | **PASS** — `busyDuring: true busyCleared: true`. (The earlier "by construction" row was replaced with a real drive-through after the operator's standard: a claim proved by reading one seam is not the same as one proved by exercising it.) |
 | AC-3 | Print has a lifecycle: a marker raised before `window.print()`, cleared on the browser's own `afterprint` | `npx mocha test/unit/state_feedback_contract.test.js` cases 7–8 (call ORDER asserted, not appearance) | **PASS** |
 | AC-4 | A filter commit reports a failed store write; the drag path is untouched | contract case 9 (`Storage.saveFilter` REJECTS — asserted via the catch shape, and the source comment records why a truthiness check would be dead code) | **PASS** |
-| AC-5 | Settings save already carries distinct success/error copy | pre-existing (`js/ai_settings.js` `aiSaveErrorMessage` ×5 + `status.textContent`); NOT re-implemented — the judge's bundle only saw the dialog without a save | **already present** |
-| AC-6 | Shape add / layout save already toast | pre-existing (`js/controls.js` "Shape added", `js/dnd.js` "Layout saved") | **already present** |
+| AC-5 | Save-to-browser shows an in-flight marker across a REAL store write, and still reports the outcome | `npx mocha test/browser_e2e/state_feedback_save_to_browser.spec.js` — the marker is sampled from INSIDE `__DDBStorage.saveGlobalLayout` (wrapped + 400 ms, never replaced), which is the only moment that proves the raise preceded the await | **PASS** — `markers before/during/after: 0 1 0`, toast `Saved to browser!` unchanged |
+| AC-6 | Shape add / layout save already toast | pre-existing (`js/controls.js` "Shape added", `js/dnd.js` "Layout saved") | **already present** — and `createShape` is SYNCHRONOUS, so a marker there would clear before a frame painted; ruled explicitly in the source rather than silently skipped |
 | AC-7 | Any assembly that blanks the sheet shows a marker | **NOT implemented this pass** — see the honest gap below | **DEFERRED** |
 
 ## The honesty section (what this pass did NOT close)
@@ -31,10 +31,12 @@ that inside this track, unverified against the full e2e corpus, would be exactly
 looks right and regresses quietly" this project's rules exist to prevent. It is filed as a
 carry-over rather than claimed.
 
-**AC-2 rides AC-1's seam rather than getting its own spec.** That is a real claim, not a
-shortcut: `arrangeWithAi` wraps `sendByokChat` — the single transport both flows use — so a
-marker defect would break both and the AC-1 spec would see it. A second spec driving a border
-round trip would assert the same node from the same seam.
+**AC-2 rides AC-1's seam rather than getting its own spec.** ~~That is a real claim, not a
+shortcut~~ — SUPERSEDED later in the same session: the operator's standard is that a claim proved
+by reading one seam is not the same as one proved by exercising it, so AC-2 now has its own
+spec (`state_feedback_ai_borders.spec.js`) driving a border-only capability set through the same
+2 s stub. It passes. The seam argument stands as an explanation of WHY both would break together,
+not as a substitute for the measurement.
 
 ## Files changed
 

@@ -1524,6 +1524,15 @@ Licensed under Blue Oak Model License 1.0.0
 
   /**
    * Creates a floating decorative shape.
+   *
+   * NO in-flight marker here, and that is a ruling rather than an omission (BEYOND-19 AC-6):
+   * this function is SYNCHRONOUS. It builds the wrapper and appends it in one task, so a
+   * `showProgress` marker raised at the top would be cleared before the browser ever painted a
+   * frame — invisible to the user, and DOM churn in the product's hot path. The user-visible
+   * feedback for this operation is the outcome, which `js/controls.js` already raises
+   * ("Shape added"), plus the shape itself appearing. The certification's "no success feedback"
+   * class is closed for the ASYNC operations (save, filter commit, AI round trips, print), which
+   * is where a real latency boundary exists.
    */
   function createShape(assetPath, restoreData = null, targetLayerId = null) {
     const id = restoreData ? restoreData.id : `shape-${Date.now()}`;

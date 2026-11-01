@@ -13,6 +13,10 @@
 
 async function handleSaveBrowser() {
   window.safeLog?.("log", "[DDB Print] handleSaveBrowser: starting...");
+  // BEYOND-19 AC-5: show progress during the async store write
+  const marker = typeof window.showProgress === "function"
+    ? window.showProgress("Saving to browser…")
+    : null;
   try {
     await window.__DDBStorage.init();
     const layout = await window.scanLayout();
@@ -35,6 +39,8 @@ async function handleSaveBrowser() {
   } catch (err) {
     _safeLog("error", "[DDB Print] Save failed", err);
     window.showFeedback("Failed to save layout to your browser.", "error");
+  } finally {
+    if (marker && typeof window.clearProgress === "function") window.clearProgress(marker);
   }
 }
 

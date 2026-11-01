@@ -209,4 +209,45 @@ describe("BEYOND-19 state-feedback contract", function () {
       assert.match(handler, /clearProgress\(/, "the marker is cleared in a finally");
     });
   });
+
+  /**
+   * WHY THIS BLOCK IS SOURCE-READ AND NOT A DOM RUN. `handleSaveBrowser` is an `async` function
+   * whose whole job is to AWAIT three seams (`__DDBStorage.init`, `scanLayout`,
+   * `saveGlobalLayout`). Driving it end to end needs that entire store stack under jsdom — which
+   * is exactly what the e2e already does against the real IndexedDB. What can silently rot here
+   * is narrower and structural: is the marker raised BEFORE the first await, and is it cleared on
+   * EVERY exit (a `catch`-only clear leaks the marker on the success path, and a pre-await-less
+   * raise never covers the very latency it exists for).
+   */
+  describe("the save-to-browser lifecycle (js/persistence.js)", function () {
+    const PERSISTENCE_SRC = fs.readFileSync(path.join(ROOT, "js/persistence.js"), "utf8");
+
+    it("raises the marker BEFORE the first await and clears it in a finally", function () {
+      const start = PERSISTENCE_SRC.indexOf("async function handleSaveBrowser");
+      assert.ok(start > 0, "precondition: handleSaveBrowser is still declared");
+      const end = PERSISTENCE_SRC.indexOf("async function handleSavePC");
+      assert.ok(end > start, "precondition: handleSavePC follows it");
+      const body = PERSISTENCE_SRC.slice(start, end);
+
+      const raiseAt = body.indexOf("showProgress(");
+      const firstAwaitAt = body.search(/\bawait\b/);
+      assert.ok(raiseAt > 0, "the save raises the shared in-flight marker");
+      assert.ok(firstAwaitAt > 0, "precondition: the save crosses an await");
+      assert.ok(
+        raiseAt < firstAwaitAt,
+        "the marker must be raised BEFORE the first await — raised after it, the user sees " +
+          "nothing for exactly the window it exists to cover",
+      );
+      assert.match(
+        body,
+        /\}\s*finally\s*\{[\s\S]{0,200}clearProgress\(/,
+        "the marker is cleared in a finally, so the success path cannot leak it",
+      );
+      assert.match(
+        body,
+        /could not be|Failed to save[\s\S]{0,80}"error"/,
+        "a rejected write must still produce an error toast",
+      );
+    });
+  });
 });

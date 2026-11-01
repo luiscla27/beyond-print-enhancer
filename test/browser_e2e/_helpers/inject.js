@@ -112,6 +112,8 @@ const CONTENT_PROBE_NAMES = [
   "writeGlobalFiltersProbe",
   "readAiSettingsProbe",
   "writeAiSettingsProbe",
+  // BEYOND-19 AC-5 — the save-to-browser in-flight marker (content-script world).
+  "saveBrowserProbe",
 ];
 /**
  * Run a named probe INSIDE the extension's isolated world — the world the
@@ -2216,6 +2218,60 @@ async function contentCall(ctx, name, args = []) {
           } catch (err) {
             return { ok: false, why: String(err && err.message ? err.message : err) };
           }
+        },
+        /**
+         * BEYOND-19 AC-5 — the save-to-browser in-flight marker, driven from the world that
+         * OWNS `window.handleSaveBrowser`.
+         *
+         * WHY A PROBE AND NOT `page.evaluate`. `handleSaveBrowser` is a content-script-world
+         * global: `page.evaluate` runs in the page's MAIN world where it reads `undefined`
+         * (MEASURED — the first version of this spec drove it that way and every read came back
+         * `undefined`, which looks exactly like a missing seam). A probe runs in the isolated
+         * world, the same one the product runs in.
+         *
+         * HOW THE LATENCY WINDOW IS MADE REAL. `__DDBStorage.saveGlobalLayout` is WRAPPED (count
+         * + 400 ms delay + forward), never replaced: the write still happens through the
+         * product's own IndexedDB path, so the marker is observed around a real store write
+         * rather than a stub that returns immediately. The marker is sampled by the wrap itself —
+         * once when the save is IN FLIGHT (the only moment that can prove the raise preceded the
+         * await) and once after it settles.
+         */
+        saveBrowserProbe: async (opts) => {
+          const o = opts || {};
+          if (typeof window.handleSaveBrowser !== "function") {
+            return { ok: false, why: "no window.handleSaveBrowser in this world" };
+          }
+          const storage = window.__DDBStorage;
+          if (!storage || typeof storage.saveGlobalLayout !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveGlobalLayout in this world" };
+          }
+          const markers = () => document.querySelectorAll(".be-progress").length;
+          const orig = storage.saveGlobalLayout;
+          const seen = { duringWrite: null };
+          storage.saveGlobalLayout = async function (layout) {
+            // The seam is entered AFTER the marker's raise and BEFORE the write resolves, so a
+            // count here is the in-flight truth — not a sample taken too early or too late.
+            if (seen.duringWrite === null) seen.duringWrite = markers();
+            await new Promise((r) => setTimeout(r, o.delayMs || 400));
+            return orig.call(this, layout);
+          };
+          const before = markers();
+          try {
+            await window.handleSaveBrowser();
+          } finally {
+            storage.saveGlobalLayout = orig;
+          }
+          await new Promise((r) => setTimeout(r, 50));
+          const toast = Array.from(document.querySelectorAll(".be-feedback"))
+            .map((n) => n.textContent)
+            .join(" / ");
+          return {
+            ok: true,
+            markersBefore: before,
+            markersDuringWrite: seen.duringWrite,
+            markersAfter: markers(),
+            toast,
+          };
         },
       };
       const probe = probes[probeName];

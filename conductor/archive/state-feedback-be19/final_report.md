@@ -45,11 +45,11 @@ time repeats on every printed page.
 | AC | Result | Proof |
 |----|--------|-------|
 | AC-1 | **PASS** | e2e with a real 2 s provider latency: `busyDuring: true busyCleared: true` |
-| AC-2 | **PASS (shared seam)** | one `showBusy` wraps `sendByokChat`, which both flows use |
+| AC-2 | **PASS** | its OWN e2e: border-only capability set + `selectedSectionId` driven through the same 2 s stub — `busyDuring: true busyCleared: true` (the earlier "shared seam" reasoning was replaced by a measurement after operator challenge) |
 | AC-3 | **PASS** | unit case asserts the **call order**, not the appearance |
 | AC-4 | **PASS** | unit case asserts the reject path; `Storage.saveFilter` rejects, documented in-source |
-| AC-5 | **already present** | `js/ai_settings.js` had distinct success/error copy; audited, not re-written |
-| AC-6 | **already present** | "Shape added" / "Layout saved" toasts; audited, not re-written |
+| AC-5 | **PASS** | e2e samples the marker from INSIDE `__DDBStorage.saveGlobalLayout` (wrapped +400 ms): `0 → 1 → 0`, outcome toast unchanged |
+| AC-6 | **already present** | "Shape added" / "Layout saved" toasts; `createShape` is SYNCHRONOUS so a marker there would never paint — ruled in-source |
 | AC-7 | **DEFERRED** | see below |
 
 ## The honest gap
@@ -62,9 +62,12 @@ depends on. Landing that inside this track without running the full e2e corpus a
 be the quiet-regression pattern this project's rules exist to block. It stays open as a
 carry-over with its diagnosis already written down.
 
-**AC-2 rides AC-1's spec, deliberately.** Both capabilities share `arrangeWithAi` →
-`sendByokChat`; a marker defect breaks both and the AC-1 spec sees it. A second spec driving a
-border round trip would assert the same node from the same seam — ceremony, not evidence.
+**AC-2 now has its own spec, superseding the earlier reasoning.** Both capabilities share
+`arrangeWithAi` → `sendByokChat`, so a marker defect would have broken both — but "one seam means
+one spec" is a claim about code shape, not a measurement of the border path. `state_feedback_ai_borders.spec.js`
+drives a border-only capability set with a real `selectedSectionId` through the same 2 s stub and
+passes, which is the evidence the operator asked for. The seam argument survives as an explanation
+of why the two would fail together, not as a substitute for running it.
 
 ## Cumulative-approach record (Muse-First protocol)
 
