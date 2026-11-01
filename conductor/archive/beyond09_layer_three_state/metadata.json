@@ -55,7 +55,7 @@
     "The fourth corner of the two-flag space (hidden on screen AND skipped on print) lights no strip segment by design; pinned by a case, not given a fourth mode."
   ],
   "delivery": {
-    "commits": [],
+    "commits": ["e20a02c"],
     "pushed": false
   }
 }

@@ -1,6 +1,7 @@
 # plan — BEYOND-9 / SC-C2 per-layer three-state control
 
-Track: `beyond09_layer_three_state` · parent **BEYOND-9** · deliberation: **required**
+Track: `beyond09_layer_three_state` · parent **BEYOND-9** · deliberation: **required** ·
+status **COMPLETE** · archived at `conductor/archive/beyond09_layer_three_state/` · commit `e20a02c`
 Verification vehicles: `test/browser_e2e/layer_print_visibility.spec.js` (the card's own spec),
 `test/unit/layer_mode_persist_request.test.js` (the contract half), `npm run lint`, `node --check` on
 every touched `js/` file, `npm test` (unit composite),
@@ -57,7 +58,10 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit SHA appende
 - [x] Flip every box in this plan and append the commit SHA per completed step.
 - [x] Write `verification.md` (exact commands + exact counts + the RED→GREEN evidence) and
       `final_report.md`.
-- [x] Local commit only — the exact files touched plus this track record. **NEVER `git push`.**
+- [x] Local commit only — the exact files touched plus this track record: **`e20a02c`** — the track
+      was then ARCHIVED to `conductor/archive/beyond09_layer_three_state/` because the housekeeping guard
+      refuses a COMPLETE track that is neither archived nor named in the (nonexistent here)
+      `conductor/tracks.md`. **NEVER `git push`** — nothing was pushed.
 - [x] Write the orchestrator report to
       `conductor/tracks/orchestrator_backlog_sweep_20261101/reports/phase1_be9.md`.
 

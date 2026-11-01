@@ -1,6 +1,7 @@
 # verification — BEYOND-9 / SC-C2 per-layer three-state control
 
-Track `beyond09_layer_three_state` · 2026-11-01 · every number below is from a command that actually
+Track `beyond09_layer_three_state` · 2026-11-01 · commit `e20a02c` (archived at
+`conductor/archive/beyond09_layer_three_state/`) · every number below is from a command that actually
 ran in this session, on this tree.
 
 ## The headline
