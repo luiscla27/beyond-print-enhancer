@@ -3,14 +3,14 @@
   "provenance": {
     "produced_by": "node scripts/gen_spec_inventory.js",
     "collects_with": "mocha test/browser_e2e --recursive --dry-run --reporter json",
-    "measured_at": "2026-10-29",
+    "measured_at": "2026-11-01",
     "tracked_by": "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
     "pending_is_runtime": "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME (this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending expectation lives beside this file in spec_pending.json, read from a REAL run."
   },
   "expected": {
-    "loaded_js_files": 88,
-    "spec_files": 82,
-    "tests_collected": 432
+    "loaded_js_files": 93,
+    "spec_files": 87,
+    "tests_collected": 448
   },
   "spec_files": [
     {
@@ -26,6 +26,14 @@
       "tests": 13
     },
     {
+      "file": "beyond18_activation_overlay_capture.spec.js",
+      "tests": 2
+    },
+    {
+      "file": "beyond18_activation_overlay_repro.spec.js",
+      "tests": 3
+    },
+    {
       "file": "border_picker_base.spec.js",
       "tests": 4
     },
@@ -39,7 +47,7 @@
     },
     {
       "file": "byok_border_gallery.spec.js",
-      "tests": 62
+      "tests": 66
     },
     {
       "file": "byok_border_roundtrip.spec.js",
@@ -135,7 +143,7 @@
     },
     {
       "file": "layer_print_visibility.spec.js",
-      "tests": 10
+      "tests": 14
     },
     {
       "file": "layer_reorder_keyboard.spec.js",
@@ -308,6 +316,18 @@
     {
       "file": "spell_detail_sections.spec.js",
       "tests": 4
+    },
+    {
+      "file": "state_feedback_ai_arrange.spec.js",
+      "tests": 1
+    },
+    {
+      "file": "state_feedback_ai_borders.spec.js",
+      "tests": 1
+    },
+    {
+      "file": "state_feedback_save_to_browser.spec.js",
+      "tests": 1
     },
     {
       "file": "svg_removal_styling.spec.js",

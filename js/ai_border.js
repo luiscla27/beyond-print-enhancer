@@ -249,6 +249,99 @@ function storage() {
 }
 
 /**
+ * The three record markers the refinement loop added (BEYOND-10, SC-D2).
+ *
+ * WHY THE DESIGN IS KEPT BESIDE THE PAINTED BYTES
+ * -----------------------------------------------
+ * The refinement loop's parameters are ABSOLUTE, not relative: weight 1.5 means "1.5x the DESIGN",
+ * never "1.5x whatever is painted right now". Without the design, `adjustBorderSvg` could only ever
+ * multiply what it finds — measured, 1.5x applied twice painted 2.25x, the surface had no way to say
+ * what a border was set to, and "compare the refined result against the original" (the card's AC-2)
+ * had nothing to compare against. With the design stored, re-applying a weight is idempotent,
+ * `revert` is one call, and compare is a byte comparison of two strings the module already holds.
+ *
+ * The markers ride the section's own dataset — the same carrier `borderRawSvg` uses — so the record
+ * `js/layout_scan.js` writes and the state the DOM holds cannot disagree, and no new storage key
+ * family is introduced.
+ */
+const BORDER_ADJUST_MARKERS = Object.freeze({
+  base: "borderBaseSvg", // data-border-base-svg — the DESIGN the refinement was derived from
+  weight: "borderWeight", // data-border-weight — the absolute multiplicative weight (default 1)
+  styleIndex: "borderStyleIndex", // data-border-style — 0 solid / 1 dashed / 2 dotted
+});
+
+/** The absolute refinement state of a section: `{weight, styleIndex, base, adjusted}`.
+ *
+ *  `base` is the DESIGN (the bytes the user's variant was), never the refined result: every read of
+ *  this module's state flows through here, so "what is this border set to?" has exactly one answer.
+ *  A record with no marker (every border painted before this track) reports weight 1 / style 0 and
+ *  a base equal to what is painted — i.e. "unrefined", which is true.
+ *
+ *  @param {Element} section
+ *  @returns {{weight: number, styleIndex: number, base: string|null, adjusted: boolean}}
+ */
+function readBorderAdjust(section) {
+  if (!section || !section.dataset) {
+    return { weight: 1, styleIndex: 0, base: null, adjusted: false };
+  }
+  const painted = section.dataset.borderRawSvg || null;
+  const base = section.dataset[BORDER_ADJUST_MARKERS.base] || painted;
+  const rawWeight = Number(section.dataset[BORDER_ADJUST_MARKERS.weight]);
+  const rawStyle = Number(section.dataset[BORDER_ADJUST_MARKERS.styleIndex]);
+  const weight = Number.isFinite(rawWeight) && rawWeight > 0 ? Math.round(rawWeight * 1000) / 1000 : 1;
+  const styleIndex =
+    Number.isInteger(rawStyle) && rawStyle >= 0 && rawStyle < DASH_CYCLE.length ? rawStyle : 0;
+  return { weight, styleIndex, base, adjusted: weight !== 1 || styleIndex !== 0 };
+}
+
+/**
+ * Record a refinement state WITHOUT painting — the rehydrate half of AC-3.
+ *
+ * A saved record carries the refined bytes (as `borderSvg`) AND the design they were derived from.
+ * Restoring the bytes is `renderBorderSvg`'s job; restoring the PARAMETERS is this one, and it is
+ * separate because a restore must not re-run the transform (the bytes on disk are already the
+ * transformed ones — re-deriving them would compound if the transform ever changed).
+ *
+ * The design string is UNTRUSTED here exactly like every other border string: it is only a record
+ * field, but a hand-edited layout or an imported bundle can carry anything, so it goes through the
+ * trust root before it is allowed to sit on the element. On refusal NOTHING is written and the
+ * caller's already-restored artwork stands untouched.
+ *
+ * @param {Element} section
+ * @param {{base?: string, weight?: number, styleIndex?: number}|null} adjust
+ * @returns {{ok: boolean, error: string|null, reason: string|null}}
+ */
+function restoreBorderAdjust(section, adjust) {
+  if (!section || !section.dataset) {
+    return { ok: false, error: null, reason: "no_section" };
+  }
+  if (!adjust || typeof adjust !== "object") {
+    return { ok: true, error: null, reason: "none" };
+  }
+  const weight = Number(adjust.weight);
+  const styleIndex = Number(adjust.styleIndex);
+  const candidate = typeof adjust.base === "string" ? adjust.base : "";
+  if (!candidate) {
+    // No design stored: the parameters describe bytes we cannot re-derive, so recording them would
+    // be a claim the module cannot honour. Leave the section exactly as the record's borderSvg left it.
+    return { ok: false, error: "no_base", reason: "no_base" };
+  }
+  const validate = trustRoot();
+  const verdict = validate ? validate(candidate) : { ok: false, error: "unavailable" };
+  if (!verdict || verdict.ok !== true) {
+    return { ok: false, error: (verdict && verdict.error) || "non_svg_root", reason: "rejected" };
+  }
+  section.dataset[BORDER_ADJUST_MARKERS.base] = verdict.sanitized;
+  section.dataset[BORDER_ADJUST_MARKERS.weight] = String(
+    Number.isFinite(weight) && weight > 0 ? Math.round(weight * 1000) / 1000 : 1,
+  );
+  section.dataset[BORDER_ADJUST_MARKERS.styleIndex] = String(
+    Number.isInteger(styleIndex) && styleIndex >= 0 && styleIndex < DASH_CYCLE.length ? styleIndex : 0,
+  );
+  return { ok: true, error: null, reason: "restored" };
+}
+
+/**
  * `renderBorderSvg(section, rawSvg)` — THE ONLY WRITER of a border.
  *
  * Sanitizes INTERNALLY (the argument is always treated as untrusted), then and only
@@ -305,6 +398,13 @@ function renderBorderSvg(section, rawSvg) {
   // F undo, G ghost).
   const sanitized = verdict.sanitized;
   section.dataset.borderRawSvg = sanitized;
+  // A FRESH paint is an UNREFINED border: the design it paints becomes the base every later
+  // refinement is derived from, and the parameters go back to their defaults (weight 1 / solid).
+  // This is what makes a newly applied design drop any refinement the section was carrying —
+  // otherwise a refine of the NEW design would multiply the OLD one's weight.
+  section.dataset[BORDER_ADJUST_MARKERS.base] = sanitized;
+  delete section.dataset[BORDER_ADJUST_MARKERS.weight];
+  delete section.dataset[BORDER_ADJUST_MARKERS.styleIndex];
   section.style.setProperty("--border-img", borderImageValue(sanitized));
   section.style.setProperty("--border-img-slice", BORDER_IMAGE_KNOBS.slice);
   section.style.setProperty("--border-img-width", BORDER_IMAGE_KNOBS.width);
@@ -349,24 +449,78 @@ function adjustBorderSvg(section, params) {
   if (!original) {
     return { ok: false, error: null, reason: "no_border", sanitized: null, adjustable: false, original: null };
   }
-  const adjustable = canAdjustBorder(original);
+  // THE DESIGN, not the painted bytes (BEYOND-10): the parameters are absolute, so every refinement
+  // re-derives from what the user picked. Falls back to the painted bytes for a border painted
+  // before this track, which is exactly "unrefined, base = what is shown".
+  const base = readBorderAdjust(section).base || original;
+  const adjustable = canAdjustBorder(base);
   if (!adjustable) {
     // The controls are disabled by the gate before this is reached; this is defensive — fail
     // closed: a border we cannot transform paints NOTHING rather than painting garbage.
     return { ok: false, error: null, reason: "not_adjustable", sanitized: null, adjustable: false, original: null };
   }
-  const transformed = transformBorderSvg(original, params || {});
+  const normalized = normalizeAdjust(params);
+  if (!normalized.ok) {
+    // A weight the transform cannot honour (0, negative, NaN) would delete the art. Refusing here
+    // rather than letting `transformBorderSvg` skip the declaration keeps the surface honest: the
+    // record must never claim a parameter that was not applied.
+    return {
+      ok: false,
+      error: null,
+      reason: normalized.reason,
+      sanitized: null,
+      adjustable: true,
+      original: base,
+    };
+  }
+  const transformed = transformBorderSvg(base, normalized);
   // Re-render through the choke point: the transformed bytes are re-validated by the trust root.
   const res = renderBorderSvg(section, transformed);
+  if (res.ok) {
+    // …and then record WHAT WAS ASKED FOR, beside the design it was derived from. `renderBorderSvg`
+    // just treated this paint as a fresh design, so the three markers are rewritten here — this is
+    // the only place in the module that writes them for an adjustment.
+    section.dataset[BORDER_ADJUST_MARKERS.base] = base;
+    section.dataset[BORDER_ADJUST_MARKERS.weight] = String(normalized.weight);
+    section.dataset[BORDER_ADJUST_MARKERS.styleIndex] = String(normalized.styleIndex);
+  }
   return {
     ok: res.ok,
     error: res.error,
     reason: res.reason,
     sanitized: res.sanitized,
     adjustable: true,
-    original, // the un-adjusted bytes, for the gallery's compare view
+    original: base, // the design, for the surface's compare view
+    weight: normalized.weight,
+    styleIndex: normalized.styleIndex,
+    changed: transformed !== base,
   };
 }
+
+/**
+ * Normalize a refinement request to the two parameters the transform understands.
+ *
+ * Kept beside `transformBorderSvg` rather than inside it so the PURE transform stays a pure function
+ * of two numbers (it is unit-tested that way) while the SEAM — which is allowed to refuse a caller —
+ * owns the policy: a weight must be a positive finite number (0 or NaN would delete the art), and a
+ * style index must be one of the three the cycle defines.
+ *
+ * @param {{weight?: number, styleIndex?: number}|undefined} params
+ * @returns {{ok: boolean, reason: string|null, weight: number, styleIndex: number}}
+ */
+function normalizeAdjust(params) {
+  const rawWeight = params && params.weight !== undefined ? params.weight : 1;
+  const weight = typeof rawWeight === "number" ? rawWeight : NaN;
+  if (!Number.isFinite(weight) || weight <= 0) {
+    return { ok: false, reason: "invalid_weight", weight: 1, styleIndex: 0 };
+  }
+  const rawStyle = params && params.styleIndex !== undefined ? params.styleIndex : 0;
+  const styleNum = typeof rawStyle === "number" ? rawStyle : NaN;
+  const styleIndex =
+    Number.isInteger(styleNum) && styleNum >= 0 && styleNum < DASH_CYCLE.length ? styleNum : 0;
+  return { ok: true, reason: null, weight: Math.round(weight * 1000) / 1000, styleIndex };
+}
+
 
 /**
  * `readBorderSvg(section)` — the border's raw SVG as a record field, or `null`.
@@ -392,6 +546,11 @@ function clearBorderSvg(section) {
   if (!section || !section.dataset) return false;
   const had = !!section.dataset.borderRawSvg;
   delete section.dataset.borderRawSvg;
+  // The refinement markers go with the border: a section with no border has no parameters to
+  // describe, and a stale weight would make the next design's refinement multiply the old one's.
+  delete section.dataset[BORDER_ADJUST_MARKERS.base];
+  delete section.dataset[BORDER_ADJUST_MARKERS.weight];
+  delete section.dataset[BORDER_ADJUST_MARKERS.styleIndex];
   for (const prop of BORDER_IMAGE_PROPS) {
     if (section.style.removeProperty) section.style.removeProperty(prop);
   }
@@ -522,6 +681,16 @@ const AiBorder = {
   transformBorderSvg,
   // `canAdjustBorder` — AC-2 capability gate: false for fill-only borders, disables the controls with a reason.
   canAdjustBorder,
+  // Test seam (track beyond10_ai_border_refine_loop, AC-5): G-DETECT's measurement host
+  // (`scripts/border_refine_gdetect.js`) paints the design and its refinement through the SAME four
+  // knobs the product's `::before` slot consumes (js/print_styles.js:1226). Exposed so the gate reads
+  // the PRODUCT's numbers instead of a copy of them that could drift.
+  BORDER_IMAGE_KNOBS,
+  // `readBorderAdjust` — AC-3: the absolute refinement state (design + weight + style) of a section.
+  // Product reader: js/border_refine.js (the refine surface) and js/layout_scan.js (the record).
+  readBorderAdjust,
+  // `restoreBorderAdjust` — AC-3 rehydrate half. Product reader: js/layout_apply.js's restore loop.
+  restoreBorderAdjust,
   // `readBorderSvg` — called by js/layout_scan.js, js/layout_apply.js.
   readBorderSvg,
   // `clearBorderSvg` — called by js/ai_border.js's own fail-closed paths and by the rehydrate gate.

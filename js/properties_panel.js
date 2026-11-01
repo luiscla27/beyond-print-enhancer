@@ -621,6 +621,43 @@ function updatePropertiesPanel(panelElement = null) {
 
   borderContainer.appendChild(borderBtn);
   panel.appendChild(borderContainer);
+
+  // 4b. AI border refinement (BEYOND-10, AC-1). This row exists ONLY for a section that carries an
+  // AI border: a "Refine AI border" control on a section with no AI border would be a dead button,
+  // and the surface it opens needs a design to refine. `hasBorderSvg` is the choke point's own
+  // reader, so the row appears exactly when the border module says there is something to refine.
+  const aiBorderApi = window.AiBorder;
+  const hasAiBorder =
+    !!aiBorderApi &&
+    typeof aiBorderApi.hasBorderSvg === "function" &&
+    aiBorderApi.hasBorderSvg(activeTarget);
+  if (hasAiBorder && window.BorderRefine && typeof window.BorderRefine.open === "function") {
+    const refineContainer = document.createElement("div");
+    refineContainer.className = "be-prop-control";
+    refineContainer.style.display = "flex";
+    refineContainer.style.alignItems = "center";
+    refineContainer.style.justifyContent = "space-between";
+    refineContainer.style.padding = "4px 0";
+
+    const refineLabel = document.createElement("label");
+    refineLabel.textContent = "AI Border";
+    refineLabel.style.fontSize = "12px";
+    refineLabel.style.color = "#ccc";
+    refineContainer.appendChild(refineLabel);
+
+    const refineBtn = document.createElement("button");
+    refineBtn.className = "be-prop-border-refine";
+    refineBtn.type = "button";
+    refineBtn.textContent = "Refine";
+    refineBtn.title = "Refine AI border";
+    refineBtn.setAttribute("aria-label", "Refine AI border");
+    refineBtn.style.cssText =
+      "width:60px;height:28px;padding:2px 4px;border:1px solid #444;background-color:#222;" +
+      "color:#ddd;cursor:pointer;border-radius:4px;font-size:11px";
+    refineBtn.onclick = () => window.BorderRefine.open(activeTarget);
+    refineContainer.appendChild(refineBtn);
+    panel.appendChild(refineContainer);
+  }
 }
 
 /** Legacy handle (main.js + the active_section suite): the same single value. */

@@ -1154,6 +1154,114 @@ async function contentCall(ctx, name, args = []) {
             };
           }
 
+          // BEYOND-10 (AC-1/AC-2/AC-3): the refinement LOOP, driven through the surface the product
+          // renders. The probe never calls the seam "instead of" the UI — every `click` op dispatches
+          // a real click on a real button inside the surface, so what is measured is the wiring the
+          // user has, not a private path. `open` and `close` exist because a probe cannot reach into
+          // a closed surface; the section comes from the caller (a real scanned section id).
+          if (o.action === "refineBorder") {
+            const api = window.BorderRefine;
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            const surface = () => document.querySelector("[data-be-border-refine]");
+            const facts = () => {
+              const root = surface();
+              if (!root) return { open: false, state: api ? api.getState() : null };
+              const attr = (sel, name) => {
+                const n = root.querySelector(sel);
+                return n ? n.getAttribute(name) : null;
+              };
+              return {
+                open: true,
+                state: api ? api.getState() : null,
+                weights: Array.from(root.querySelectorAll("[data-be-refine-weight]")).map((n) =>
+                  n.getAttribute("data-be-refine-weight"),
+                ),
+                styles: Array.from(root.querySelectorAll("[data-be-refine-style]")).map((n) =>
+                  n.getAttribute("data-be-refine-style"),
+                ),
+                variants: Array.from(root.querySelectorAll("[data-be-refine-variant]")).map((n) =>
+                  n.getAttribute("data-be-refine-variant"),
+                ),
+                pressedWeight: attr('[data-be-refine-weight][aria-pressed="true"]', "data-be-refine-weight"),
+                pressedStyle: attr('[data-be-refine-style][aria-pressed="true"]', "data-be-refine-style"),
+                reason: (root.querySelector("[data-be-refine-reason]") || {}).textContent || "",
+                diff: (root.querySelector("[data-be-refine-diff]") || {}).textContent || "",
+                regenerateDisabled: !!(() => {
+                  const b = root.querySelector("[data-be-refine-regenerate]");
+                  return b && b.disabled;
+                })(),
+              };
+            };
+            if (o.op === "open") {
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              if (!api || typeof api.open !== "function") return { ok: false, reason: "no_BorderRefine" };
+              api.open(section);
+              return Object.assign({ ok: true }, facts());
+            }
+            if (o.op === "close") {
+              if (api && typeof api.close === "function") api.close();
+              return { ok: true, open: !!surface() };
+            }
+            if (o.op === "panelRow") {
+              // The PRODUCT's own affordance: the properties panel's "Refine AI border" row, rendered
+              // by the real panel for the real selected section (AC-1's discoverability half).
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              const panel = document.getElementById("print-enhance-properties-panel");
+              if (!window.PropertiesPanel || !panel) return { ok: false, reason: "no_panel" };
+              window.PropertiesPanel.setActiveSection(section);
+              window.PropertiesPanel.updatePropertiesPanel(panel);
+              const row = panel.querySelector(".be-prop-border-refine");
+              return {
+                ok: !!row,
+                label: row ? String(row.textContent || "") : null,
+                title: row ? row.getAttribute("title") : null,
+              };
+            }
+            if (o.op === "state") return Object.assign({ ok: !!api }, facts());
+            if (o.op === "click") {
+              const root = surface();
+              if (!root) return { ok: false, reason: "no_surface" };
+              const node = root.querySelector(o.selector);
+              if (!node) return { ok: false, reason: "no_control", selector: o.selector };
+              if (node.disabled) return Object.assign({ ok: false, reason: "control_disabled" }, facts());
+              node.click();
+              return Object.assign({ ok: true }, facts());
+            }
+            if (o.op === "record") {
+              // THE SETTINGS HALF OF AC-3, read through the product's OWN scan: what would be
+              // written by the debounced autosave is exactly this record.
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              if (typeof window.scanLayout !== "function") return { ok: false, reason: "no_scanLayout" };
+              return window.scanLayout().then((layout) => {
+                const rec = (layout && layout.sections && layout.sections[sid]) || null;
+                const painted = window.AiBorder.readBorderSvg(section);
+                return {
+                  ok: !!rec,
+                  borderSvgSw: painted ? (painted.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                  borderSvgDash: painted ? (painted.match(/stroke-dasharray="([^"]*)"/) || [])[1] || null : null,
+                  borderAdjust: rec ? rec.borderAdjust : null,
+                  recordBorderSvgSw: rec && rec.borderSvg ? (rec.borderSvg.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                };
+              });
+            }
+            if (o.op === "compare") {
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              if (!api || typeof api.compare !== "function") return { ok: false, reason: "no_BorderRefine" };
+              const cmp = api.compare(section);
+              return {
+                ok: cmp.ok,
+                differs: cmp.differs,
+                weight: cmp.weight,
+                styleIndex: cmp.styleIndex,
+                originalSw: cmp.original ? (cmp.original.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                refinedSw: cmp.refined ? (cmp.refined.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                refinedDash: cmp.refined ? (cmp.refined.match(/stroke-dasharray="([^"]*)"/) || [])[1] || null : null,
+              };
+            }
+            return { ok: false, reason: "unknown_op", op: o.op };
+          }
+
           if (o.action === "printState") {
             // AC-9a path H — the PRINT pipeline. The probe reads what the border looks like
             // while the page is emulating print media: the ::before slot's COMPUTED border

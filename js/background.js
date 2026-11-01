@@ -165,6 +165,13 @@ chrome.action.onClicked.addListener(function(tab) {
       // undo) and its readers resolve `window.AiBorder` at CALL time anyway, so its
       // position in this list is tidiness rather than a correctness constraint.
       'js/ai_border.js',
+      // Track beyond10_ai_border_refine_loop (BEYOND-10, AC-1): the refinement LOOP surface. It
+      // reads/writes borders ONLY through `window.AiBorder`, so it must load after the choke point;
+      // `js/properties_panel.js` (below) is its product caller and resolves it at CALL time anyway.
+      // NOTE: no quote marks of any kind in this comment. `test/browser_e2e/_helpers/dom.js`
+      // rebuilds this file list by scanning the array for single-quoted tokens, so a stray quote in
+      // a comment becomes a bogus "file" and every e2e boot dies with "Could not load file".
+      'js/border_refine.js',
       'js/shape_picker.js',
       'js/properties_panel.js',
       'js/controls.js',

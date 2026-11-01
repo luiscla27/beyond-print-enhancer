@@ -457,9 +457,32 @@ function snapshotSectionFlags() {
         ((window.AssetCatalog && window.AssetCatalog.ALL_BORDER_STYLES) || [])
           .find((style) => el.classList.contains(style)) || null,
       borderSvg: readBorderSvgForUndo(el),
+      // BEYOND-10 (AC-3, and undo correctness): the refinement PARAMETERS. Without them an undo
+      // would restore the prior ARTWORK and leave the surface claiming the undone weight — the same
+      // state-drift class the borderSvg member above exists to prevent.
+      borderAdjust: readBorderAdjustForUndo(el),
     };
   });
   return map;
+}
+
+/**
+ * Read a section's absolute refinement state through the choke point, or `null`.
+ *
+ * Same discipline as `readBorderSvgForUndo`: resolved at CALL time, absent module degrades to "no
+ * adjustment recorded" rather than throwing inside an undo capture. Only a REFINED border records
+ * anything — `{weight: 1, styleIndex: 0}` is the unrefined state and owes the snapshot nothing.
+ */
+function readBorderAdjustForUndo(el) {
+  const api = typeof window !== "undefined" ? window.AiBorder : null;
+  if (!api || typeof api.readBorderAdjust !== "function") return null;
+  try {
+    const adj = api.readBorderAdjust(el);
+    if (!adj || !adj.adjusted || !adj.base) return null;
+    return { base: adj.base, weight: adj.weight, styleIndex: adj.styleIndex };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -489,6 +512,9 @@ function repairSectionFlags(layout, snap) {
     // AC-7/F: without this the undo record would carry the OLD geometry and the NEW
     // border, so `applyLayout` would repaint the border the user just undid.
     entry.borderSvg = snap[id].borderSvg;
+    // BEYOND-10: the parameters travel with the artwork, for the same reason (and because
+    // `applyLayout` restores them from this field).
+    entry.borderAdjust = snap[id].borderAdjust;
   };
   Object.keys(layout.sections || {}).forEach((id) => put(layout.sections[id], id));
   ["clones", "extractions"].forEach((key) => {

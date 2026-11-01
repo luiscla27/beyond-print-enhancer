@@ -393,6 +393,161 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
     }
   });
 
+  // BEYOND-10 (SC-D2, AC-1..AC-4) — the refinement FLOW, driven through the surface the PRODUCT
+  // renders, in the real page.
+  //
+  // WHY THIS IS NOT THE BLOCK ABOVE. The AC-2 block drives `AiBorder.adjustBorderSvg` directly: it is
+  // a SEAM test, and it would stay green even if every control in `js/border_refine.js` were deleted.
+  // The card's AC-1/AC-2 are about a USER reaching the loop, so this block clicks the real buttons the
+  // surface builds (`[data-be-refine-weight]`, `[data-be-refine-style]`, `[data-be-refine-regenerate]`,
+  // `[data-be-refine-compare]`) and then reads what the product would SAVE through its own
+  // `window.scanLayout()`. A break anywhere along surface → seam → choke point → record reddens here.
+  //
+  // Run just this block (one spec file, one mocha process — the harness rule):
+  //   BORDER_GALLERY_SHOTS=1 npx mocha test/browser_e2e/byok_border_gallery.spec.js \
+  //     --timeout 900000 --grep "BEYOND-10 refinement flow"
+  describe("BEYOND-10 refinement flow — the controls, in the real page", function () {
+    const design = (loaded.designs || []).find((d) => d.id === "01-gilded-frame");
+    const fillOnly = (loaded.designs || []).find((d) => d.id === "08-flame-crest");
+
+    const probe = (op, extra) =>
+      contentCall(ctx, "aiArrangeProbe", [Object.assign({ action: "refineBorder", op }, extra || {})]);
+
+    /** A clean target with the frozen design painted through the choke point. */
+    async function targetWithDesign(rawSvg) {
+      const pick = await contentCall(ctx, "aiArrangeProbe", [{ action: "pickBorderTarget" }]);
+      assert.ok(pick && pick.ok, "no section to refine");
+      const sectionId = pick.pick.id;
+      await probe("close");
+      const applied = await contentCall(ctx, "aiArrangeProbe", [
+        { action: "applyBorder", sectionId, rawSvg },
+      ]);
+      assert.ok(applied && applied.ok, "the design would not render: " + JSON.stringify(applied));
+      return { sectionId, applied };
+    }
+
+    afterEach(async function () {
+      await probe("close").catch(() => {});
+    });
+
+    it("AC-1 the product offers the refine control, and the surface exposes weight + style", async function () {
+      if (!design) return this.skip();
+      const { sectionId } = await targetWithDesign(design.svg);
+
+      // (a) The DISCOVERABLE affordance: the properties panel's own row for the selected section.
+      const row = await probe("panelRow", { sectionId });
+      assert.ok(row && row.ok, "the properties panel offers no refine control: " + JSON.stringify(row));
+      assert.match(String(row.label), /refine/i, "the control names itself: " + row.label);
+
+      // (b) The surface it opens, with BOTH adjustment vocabularies and the live position.
+      const opened = await probe("open", { sectionId });
+      assert.ok(opened && opened.open, "the surface did not open: " + JSON.stringify(opened));
+      assert.deepStrictEqual(opened.weights, ["0.5", "0.75", "1", "1.25", "1.5"], "the weight steps");
+      assert.deepStrictEqual(opened.styles, ["solid", "dashed", "dotted"], "the style steps");
+      assert.strictEqual(opened.pressedWeight, "1", "an unrefined border sits at 1x");
+      assert.strictEqual(opened.pressedStyle, "solid", "…and solid");
+      assert.strictEqual(opened.reason, "", "an adjustable border states no reason");
+      assert.strictEqual(opened.regenerateDisabled, false, "…and its controls are live");
+      assert.ok(
+        opened.variants.indexOf("current") >= 0,
+        "the loop offers the variant currently painted: " + JSON.stringify(opened.variants),
+      );
+    });
+
+    it("AC-2 select → adjust → regenerate → compare changes the artwork, and the surface says so", async function () {
+      if (!design) return this.skip();
+      const { sectionId } = await targetWithDesign(design.svg);
+
+      const before = await probe("record", { sectionId });
+      const baseSw = Number(before.borderSvgSw);
+      assert.ok(Number.isFinite(baseSw) && baseSw > 0, "the design carries a stroke: " + before.borderSvgSw);
+
+      const opened = await probe("open", { sectionId });
+      assert.ok(opened.open, "the surface did not open");
+
+      // SELECT the variant that is currently painted (the loop's first step).
+      const selected = await probe("click", { selector: '[data-be-refine-variant="current"]' });
+      assert.ok(selected.ok, "selecting the current variant failed: " + JSON.stringify(selected));
+
+      // ADJUST: weight 1.5x, style dashed. The selection moves; the artwork does not (Regenerate paints).
+      const weighed = await probe("click", { selector: '[data-be-refine-weight="1.5"]' });
+      assert.strictEqual(weighed.pressedWeight, "1.5", "the selection follows the click");
+      const styled = await probe("click", { selector: '[data-be-refine-style="dashed"]' });
+      assert.strictEqual(styled.pressedStyle, "dashed", "the style selection follows the click");
+
+      // REGENERATE.
+      const regenerated = await probe("click", { selector: "[data-be-refine-regenerate]" });
+      assert.ok(regenerated && regenerated.open, "regenerate closed the surface: " + JSON.stringify(regenerated));
+      assert.strictEqual(regenerated.state.weight, 1.5);
+      assert.strictEqual(regenerated.state.styleIndex, 1);
+
+      const after = await probe("record", { sectionId });
+      const expected = Math.round(baseSw * 1.5 * 1000) / 1000;
+      assert.strictEqual(Number(after.borderSvgSw), expected, "painted stroke is 1.5x the design: " + JSON.stringify(after));
+      assert.strictEqual(after.borderSvgDash, "4 2", "the dashed cycle reached the paint");
+
+      // COMPARE: design vs refined, as bytes and as a rendered line in the surface.
+      const cmp = await probe("compare", { sectionId });
+      assert.strictEqual(cmp.ok, true, JSON.stringify(cmp));
+      assert.strictEqual(cmp.differs, true, "the refined border differs from the design");
+      assert.strictEqual(Number(cmp.originalSw), baseSw, "compare holds the design");
+      assert.strictEqual(Number(cmp.refinedSw), expected, "compare holds the refined artwork");
+      const compared = await probe("click", { selector: "[data-be-refine-compare]" });
+      assert.match(compared.diff, /1\.5/, "the surface reports the weight it compared: " + compared.diff);
+      assert.match(compared.diff, /dashed/, "…and the style: " + compared.diff);
+    });
+
+    it("AC-3 the adjustment reaches the product's OWN record, and survives a reopen", async function () {
+      if (!design) return this.skip();
+      const { sectionId } = await targetWithDesign(design.svg);
+
+      const base = await probe("record", { sectionId });
+      assert.strictEqual(base.borderAdjust, null, "an unrefined border stores no adjustment");
+
+      await probe("open", { sectionId });
+      await probe("click", { selector: '[data-be-refine-weight="1.25"]' });
+      await probe("click", { selector: "[data-be-refine-regenerate]" });
+      const saved = await probe("record", { sectionId });
+      assert.ok(saved.borderAdjust, "the record carries no parameters: " + JSON.stringify(saved));
+      assert.strictEqual(saved.borderAdjust.weight, 1.25, "the weight is in the record");
+      assert.strictEqual(saved.borderAdjust.styleIndex, 0, "the style is in the record");
+      assert.ok(saved.borderAdjust.base, "the record carries the design the refinement came from");
+      assert.strictEqual(
+        Number(saved.recordBorderSvgSw),
+        Math.round(Number(base.borderSvgSw) * 1.25 * 1000) / 1000,
+        "the record's own borderSvg is the refined artwork",
+      );
+
+      // SESSION: closing and reopening the surface reads the parameters back, not a default.
+      const closed = await probe("close");
+      assert.strictEqual(closed.open, false, "close left the surface in the document");
+      const reopened = await probe("open", { sectionId });
+      assert.ok(reopened.open, "the surface did not reopen");
+      assert.strictEqual(reopened.pressedWeight, "1.25", "the reopened surface shows the live weight");
+      assert.strictEqual(reopened.pressedStyle, "solid", "…and the live style");
+      assert.strictEqual(reopened.state.weight, 1.25, "…through the seam, not just the badge");
+    });
+
+    it("AC-1 a fill-only border opens with every adjustment DISABLED and an inline reason", async function () {
+      if (!fillOnly) return this.skip();
+      const { sectionId, applied } = await targetWithDesign(fillOnly.svg);
+      const opened = await probe("open", { sectionId });
+      assert.ok(opened.open, "the surface did not open on a fill-only border");
+      assert.strictEqual(opened.regenerateDisabled, true, "regenerate must be disabled on a fill-only border");
+      assert.strictEqual(opened.state.adjustable, false);
+      assert.strictEqual(opened.state.reason, "not_adjustable");
+      assert.match(opened.reason, /stroke/i, "the inline reason names what the design lacks: " + opened.reason);
+
+      // …and pressing it anyway cannot paint: the gate refuses, and the artwork is untouched.
+      const pressed = await probe("click", { selector: "[data-be-refine-regenerate]" });
+      assert.strictEqual(pressed.ok, false, "a disabled control must not act: " + JSON.stringify(pressed));
+      assert.strictEqual(pressed.reason, "control_disabled");
+      const after = await probe("record", { sectionId });
+      assert.strictEqual(after.borderSvgSw, applied.read ? (applied.read.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null);
+      assert.strictEqual(after.borderAdjust, null, "nothing was recorded for a border that cannot be refined");
+    });
+  });
+
   if (CAPTURING && designs.length > 0) {
     it("captures a labelled frame for every accepted design", async function () {
       const pick = await contentCall(ctx, "aiArrangeProbe", [{ action: "pickBorderTarget" }]);

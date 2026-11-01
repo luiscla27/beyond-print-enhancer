@@ -185,8 +185,20 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // track did. They are TWO seams and not one namespace deliberately: `.be-progress` is a single
     // DOM node per operation, so mount and clear are paired calls at different places in the same
     // handler, not a member lookup on a shared object.
-    assert.strictEqual(SUMMARY.directExports, 169, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 168, "of which module exports");
+    // +1 (169 -> 170): BEYOND-10 (track beyond10_ai_border_refine_loop) adds `window.BorderRefine` —
+    // the AI border refinement LOOP's surface. ONE namespace rather than seven `window.*` seams for
+    // exactly the reason `window.AiBorder` above is one: the loops members (`open`, `close`,
+    // `applyAdjust`, `compare`, `revert`, `getState`, and the two step vocabularies) are reached as
+    // `BorderRefine.*` from the module's own DOM handlers and from the orchestration surfaces, and
+    // publishing each as its own global would multiply the re-rot surface without adding a reader.
+    // Its product reader is real and shipped in the same commit: `js/properties_panel.js` renders a
+    // "Refine AI border" row whose click calls `window.BorderRefine.open`. The namespace is READ by
+    // `js/` only through that row, which is what keeps the re-rot guard below satisfied without an
+    // annotation excuse for the module as a whole.
+    assert.strictEqual(SUMMARY.directExports, 170, "direct `window.*` assignments");
+    // 168 -> 169 with the same +1: `window.BorderRefine` is a module export (the module assigns
+    // `window.BorderRefine = BorderRefine`, exactly like `window.AiBorder`), not a bare global.
+    assert.strictEqual(SUMMARY.moduleExports, 169, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

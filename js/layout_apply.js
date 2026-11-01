@@ -202,6 +202,21 @@ async function applyLayout(layout) {
       window.AiBorder.renderBorderSvg(section, styles.borderSvg ?? null);
     }
 
+    // BEYOND-10 (AC-3) path B, second half: the refinement PARAMETERS. `renderBorderSvg` above
+    // restored the refined BYTES (the record's `borderSvg` is what was painted), and this restores
+    // the design they were derived from plus the weight/style that produced them — so a reloaded
+    // session can keep refining from the same design instead of compounding on top of a result it
+    // cannot explain. Order matters: the markers are written AFTER the paint, because the choke
+    // point treats every fresh paint as unrefined (which is what makes a new design reset them).
+    if (
+      styles.borderAdjust &&
+      typeof window.AiBorder?.restoreBorderAdjust === "function"
+    ) {
+      // Fail-soft on refusal, never fail-open: a base the trust root rejects leaves the artwork the
+      // record's `borderSvg` already painted, and records no parameters at all.
+      window.AiBorder.restoreBorderAdjust(section, styles.borderAdjust);
+    }
+
     // Apply main styles.
     //
     // track undo_stack_20260911 (Phase 2 verification): these were TRUTHINESS guards, so a
