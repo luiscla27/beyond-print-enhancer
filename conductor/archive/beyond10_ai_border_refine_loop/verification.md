@@ -28,7 +28,7 @@ properties panel offering no refine row, `AiBorder.restoreBorderAdjust` missing,
 
 ## 2. GREEN — the new contract
 
-`npx mocha test/unit/border_refine_loop.test.js --reporter dot` → **15 passing / 0 failing**.
+`npx mocha test/unit/border_refine_loop.test.js --reporter dot` → **18 passing / 0 failing**.
 
 | AC | the case that proves it | what it measures |
 |----|-------------------------|------------------|
@@ -50,7 +50,7 @@ properties panel offering no refine row, `AiBorder.restoreBorderAdjust` missing,
 
 The shipped contract is still green under the new absolute model:
 `npx mocha test/unit/ai_border_refine_ac2.test.js` → **20 passing / 0 failing** (the two files together:
-**35 passing**).
+**38 passing**).
 
 ## 3. G-DETECT (AC-5) — measured on PIXELS
 

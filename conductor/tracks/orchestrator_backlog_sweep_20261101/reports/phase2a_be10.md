@@ -126,7 +126,7 @@ Implementation commit: **`3ccd5fe`** · track record + report commit: _docs comm
 |---------|--------|
 | `npx mocha test/unit/border_refine_loop.test.js --reporter dot` | **RED before: 0 passing / 15 failing → GREEN after: 18 passing / 0 failing** |
 | `npx mocha test/unit/ai_border_refine_ac2.test.js --reporter dot` | **20 passing / 0 failing** (unchanged under the absolute model) |
-| `npx mocha test/unit/border_refine_loop.test.js test/unit/ai_border_refine_ac2.test.js` | **35 passing** |
+| `npx mocha test/unit/border_refine_loop.test.js test/unit/ai_border_refine_ac2.test.js` | **38 passing** |
 | `npx mocha test/browser_e2e/byok_border_gallery.spec.js --timeout 900000 --reporter dot` | **0 passing / 66 pending** (was 62; flag-gated suite) |
 | `BORDER_GALLERY_SHOTS=1 npx mocha … --grep "BEYOND-10 refinement flow"` | **BLOCKED BY HOST** — `bootPage` timeout (see STRUGGLES 1) |
 | `npx mocha test/browser_e2e/border_picker_base.spec.js` (untouched control) | **1 passing / 3 failing** — same `bootPage` timeout ⇒ host-wide |

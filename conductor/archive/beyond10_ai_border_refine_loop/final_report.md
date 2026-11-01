@@ -42,7 +42,7 @@ host with a working e2e boot (see §4).
 
 ## Measured evidence (exact commands in `verification.md`)
 
-- `npx mocha test/unit/border_refine_loop.test.js` → **17 passing / 0 failing** (RED before: 0/15).
+- `npx mocha test/unit/border_refine_loop.test.js` → **18 passing / 0 failing** (RED before: 0/15).
 - `npx mocha test/unit/ai_border_refine_ac2.test.js` → **20 passing** — the shipped contract survives the
   absolute model unchanged.
 - `node scripts/border_refine_gdetect.js` → **G-DETECT PASS** (numbers above; artifacts under
