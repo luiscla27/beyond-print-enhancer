@@ -1185,7 +1185,11 @@ async function contentCall(ctx, name, args = []) {
                 ),
                 pressedWeight: attr('[data-be-refine-weight][aria-pressed="true"]', "data-be-refine-weight"),
                 pressedStyle: attr('[data-be-refine-style][aria-pressed="true"]', "data-be-refine-style"),
-                reason: (root.querySelector("[data-be-refine-reason]") || {}).textContent || "",
+                // The surface's INLINE reason text, kept under its own key. It must not be called
+                // `reason`: this object is spread into every op's return value, and a refusal op
+                // (`click` on a disabled control) has a machine `reason` of its own — the collision
+                // overwrote "control_disabled" with the prose and made the fill-only case unreadable.
+                inlineReason: (root.querySelector("[data-be-refine-reason]") || {}).textContent || "",
                 diff: (root.querySelector("[data-be-refine-diff]") || {}).textContent || "",
                 regenerateDisabled: !!(() => {
                   const b = root.querySelector("[data-be-refine-regenerate]");

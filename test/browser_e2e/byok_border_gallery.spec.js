@@ -446,7 +446,7 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
       assert.deepStrictEqual(opened.styles, ["solid", "dashed", "dotted"], "the style steps");
       assert.strictEqual(opened.pressedWeight, "1", "an unrefined border sits at 1x");
       assert.strictEqual(opened.pressedStyle, "solid", "…and solid");
-      assert.strictEqual(opened.reason, "", "an adjustable border states no reason");
+      assert.strictEqual(opened.inlineReason, "", "an adjustable border states no reason");
       assert.strictEqual(opened.regenerateDisabled, false, "…and its controls are live");
       assert.ok(
         opened.variants.indexOf("current") >= 0,
@@ -536,7 +536,7 @@ describe("BYOK SVG border gallery — FROZEN corpus through the real choke point
       assert.strictEqual(opened.regenerateDisabled, true, "regenerate must be disabled on a fill-only border");
       assert.strictEqual(opened.state.adjustable, false);
       assert.strictEqual(opened.state.reason, "not_adjustable");
-      assert.match(opened.reason, /stroke/i, "the inline reason names what the design lacks: " + opened.reason);
+      assert.match(opened.inlineReason, /stroke/i, "the inline reason names what the design lacks: " + opened.inlineReason);
 
       // …and pressing it anyway cannot paint: the gate refuses, and the artwork is untouched.
       const pressed = await probe("click", { selector: "[data-be-refine-regenerate]" });
