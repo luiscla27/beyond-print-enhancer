@@ -1,0 +1,61 @@
+{
+  "name": "beyond09_layer_three_state",
+  "id": "beyond09_layer_three_state",
+  "msf_key": "BEYOND-9-LAYER-THREE-STATE-20261101",
+  "parent": "BEYOND-9",
+  "tracked_issue": "BEYOND-9",
+  "type": "ux-gap-certification",
+  "deliberation": "required",
+  "created": "2026-11-01",
+  "completed": "2026-11-01",
+  "status": "COMPLETE",
+  "goal": "Close BEYOND-9 (SC-C2): the per-layer three-state control (Print only / Both / Screen only) must be visible per layer, respected by the print path, and restored across a reload — each of the three measured, not reasoned about",
+  "card": "[UX Gap] SC-C2: Per-layer three-state control (Print Only / Screen Only / Both) missing — test shows basic enable/disable only",
+  "acceptance_criteria": [
+    "AC-1 Layer panel shows three-state selector per layer (Print Only / Screen Only / Both)",
+    "AC-2 Print preview respects Print Only / Screen Only states correctly",
+    "AC-3 Settings persist three-state selection across reloads",
+    "AC-4 E2E test layer_print_visibility.spec.js extended to cover all three states",
+    "AC-5 Gate G-PIX-OVERFLOW and G-PERSIST pass for the new states"
+  ],
+  "stale_card_premises": [
+    "The card says the mechanism does not exist; commit ac3c72f (track ux_quick_wins_20261025, 2026-10-26) shipped it as that track's AC-1 — js/dom/layer_manager.js LAYER_MODES/layerModeOf/setLayerMode/syncModeStrip, js/print_styles.js print-only undo, js/ui_theme.js strip theme.",
+    "The card's 'Quick win: YES — UI addition only' is half true: the UI addition was cheap but not UI-only (a new !important print rule was required), while the storage path did already carry both per-layer flags unchanged."
+  ],
+  "gaps_found_and_closed": [
+    "AC-3 was a REAL product gap: a layer-panel edit never persisted itself (only drag/nudge/property commits did), so a picked mode was discarded by a reload. Fixed by LayerManager.requestLayerPersist() called from the four layer-flag writers.",
+    "AC-2 was a COVERAGE gap, not a product gap: it was asserted against the injected stylesheet text instead of the rendered print media. Now measured with page.emulateMedia({media:'print'}) + getComputedStyle.",
+    "AC-1 was a COVERAGE gap: only the sections layer group was ever inspected. Now every group is, and the shapes group's own strip is driven."
+  ],
+  "verification_vehicles": {
+    "e2e": "test/browser_e2e/layer_print_visibility.spec.js",
+    "unit_contract": "test/unit/layer_mode_persist_request.test.js",
+    "unit": "npm test (smoke + mocha test/unit test/e2e test/manifest.test.js)",
+    "lint": "npm run lint",
+    "syntax": "node --check js/dom/layer_manager.js",
+    "guard": "python vendor/housekeeping_guard.py check"
+  },
+  "evidence": {
+    "e2e_own_spec_before": "10 passing / 0 failing (5m) — npx mocha test/browser_e2e/layer_print_visibility.spec.js",
+    "e2e_own_spec_after": "14 passing / 0 failing (8m) — same command",
+    "e2e_certification_pass": "4 passing / 0 failing — same spec, --grep \"BEYOND-9 certification pass\"",
+    "red_e2e": "first run of the new cases: 3 passing / 1 failing — AC-3 'the reloaded page restores Print only' returned ['both']",
+    "red_unit": "fix stashed: test/unit/layer_mode_persist_request.test.js 2 failing / 2 passing ('asked 0')",
+    "unit_contract_after": "4 passing / 0 failing",
+    "unit_composite_before": "2249 passing / 2 failing",
+    "unit_composite_after": "2253 passing / 2 failing — the same 2 pre-existing input_budget_alignment failures, proved pre-existing by stashing the product change",
+    "regression_e2e": "print_per_layer.spec.js 7/7 passing; byok_settings_persistence_types.spec.js 5/5 passing in its own process",
+    "lint": "npm run lint clean (35 checks passed, 0 violations; SCRIPTS HYGIENE OK)",
+    "guard": "HOUSEKEEPING GUARD OK — no issues/tracks debt; deliberation ADMITTED",
+    "verification": "conductor/archive/beyond09_layer_three_state/verification.md"
+  },
+  "known_non_blockers_recorded": [
+    "Two e2e spec files in ONE mocha process break the harness's reinject() after page.reload() (all 5 reload cases in byok_settings_persistence_types fail; each file alone passes). The project's scripts run one spec per process.",
+    "input_budget_alignment.test.js is red on a clean tree (2 failing) — model window / prompt budget arithmetic, unrelated to this track.",
+    "The fourth corner of the two-flag space (hidden on screen AND skipped on print) lights no strip segment by design; pinned by a case, not given a fourth mode."
+  ],
+  "delivery": {
+    "commits": [],
+    "pushed": false
+  }
+}

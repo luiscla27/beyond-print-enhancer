@@ -526,6 +526,10 @@ class LayerManager {
         layer.isHidden = mode === "print";
         layer.isDisabledOnPrint = mode === "screen";
         this.refreshUI();
+        // AC-3 (BEYOND-9): the mode IS the pair of persisted flags, so choosing one owes the
+        // same write the two legacy toggles owe. Without this the strip looked correct and the
+        // storage record kept the previous mode — a reload reverted the user's choice.
+        this.requestLayerPersist();
         if (window.showFeedback) {
             const copy = LAYER_MODES.find((m) => m.id === mode);
             window.showFeedback(`${layer.label} — ${copy ? copy.label : mode}`);
@@ -1839,9 +1843,34 @@ class LayerManager {
         return layout;
     }
 
+    /**
+     * BEYOND-9 AC-3 (track `beyond09_layer_three_state`): a layer-flag edit is a PERSISTED
+     * edit, so it must ask for the product's own debounced write.
+     *
+     * WHY THIS EXISTS. Every row control in this panel wrote the in-memory flag and repainted,
+     * and that was the whole of it: the two places that DO persist are trigger-based —
+     * `js/dnd.js:654` on a drop and on a keyboard nudge, `js/properties_panel.js:234` on a
+     * property commit — and a layer-panel click is neither. So a mode the user picked was live
+     * and unsaved, and a reload put the OLD mode back. Measured RED in
+     * `test/browser_e2e/layer_print_visibility.spec.js` ("AC-3: the mode a user picks survives a
+     * RELOAD with no Save click"): the in-memory record said `isHidden:true` while the STORED
+     * record still said both-visible, and the reloaded page came back on `Both`.
+     *
+     * The seam is the SAME one `js/properties_panel.js` uses — resolved at CALL time and
+     * fail-open, because the unit harnesses boot this module without `js/dnd.js`, where
+     * `scheduleAutosave` does not exist and a 1s write would be a test artifact anyway.
+     */
+    requestLayerPersist() {
+        if (typeof window !== "undefined" && typeof window.scheduleAutosave === "function") {
+            window.scheduleAutosave();
+        }
+    }
+
     _toggleLayerPrintNow(layer) {
         layer.isDisabledOnPrint = !layer.isDisabledOnPrint;
         this.refreshUI();
+        // AC-3: the flag is persisted per layer (`js/layout_scan.js`), so the click owes a write.
+        this.requestLayerPersist();
         if (window.showFeedback) window.showFeedback(`${layer.label} Print ${layer.isDisabledOnPrint ? 'Disabled' : 'Enabled'}`);
     }
 
@@ -1892,6 +1921,10 @@ class LayerManager {
             ? window.beginMutation(this.snapshotLayerFlags())
             : null;
         this._toggleLayerLockNow(layer, btn);
+        // AC-3 (BEYOND-9): `isLocked` is persisted per layer too (`js/layout_scan.js`), so the
+        // lock row button owes the same write as the other three flags. Kept in the WRAPPER
+        // rather than the body so `_toggleLayerLockNow` stays the documented verbatim body.
+        this.requestLayerPersist();
         if (mut && window.pushMutation) {
             window.pushMutation(mut, `Lock "${layer.label}"`, window.MUTATION_CLASSES.LAYER_FLAG,
                 (layout, snap) => this.repairLayerFlags(layout, snap));
@@ -1937,6 +1970,8 @@ class LayerManager {
             : null;
         layer.isHidden = !layer.isHidden;
         this.refreshUI();
+        // AC-3 (BEYOND-9): `isHidden` is persisted per layer — the eye button owes a write too.
+        this.requestLayerPersist();
         if (mut && window.pushMutation) {
             window.pushMutation(mut, `Hide "${layer.label}"`, window.MUTATION_CLASSES.LAYER_FLAG,
                 (layout, snap) => this.repairLayerFlags(layout, snap));
