@@ -872,6 +872,28 @@ async function contentCall(ctx, name, args = []) {
             return Object.assign({ ok: true, seen, out: st.out }, count());
           }
 
+          if (o.action === "async_start") {
+            await S.setApiKey(o.key);
+            await S.saveSettings({ provider: "openai", model: o.model || "gpt-4o-mini" });
+            st.applies = 0;
+            st.saves = 0;
+            st.out = undefined;
+            st.running = api.arrangeWithAi(o.instruction, {
+              capabilities: o.capabilities,
+              selectedSectionId: o.selectedSectionId,
+            });
+            st.running.then(
+              (r) => {
+                st.out = r;
+              },
+              (err) => {
+                st.out = { ok: false, stage: "threw", code: String((err && err.message) || err) };
+              },
+            );
+            // Return immediately without waiting - caller will poll with "await"
+            return Object.assign({ ok: true, started: true }, count());
+          }
+
           if (o.action === "answer") {
             const sel = o.accept ? ".be-ai-preview-accept" : ".be-ai-preview-cancel";
             const node = document.querySelector(sel);

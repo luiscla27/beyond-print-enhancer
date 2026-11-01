@@ -1853,6 +1853,8 @@ function enforceFullHeight() {
           #be-feedback-announcer,
           .be-modal-overlay,
           .be-ai-ghost,
+          .be-progress,
+          .be-ai-busy,
           .be-context-menu {
               display: none !important;
               visibility: hidden !important;

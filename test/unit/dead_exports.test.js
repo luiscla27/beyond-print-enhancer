@@ -174,8 +174,19 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // test/browser_e2e/beyond18_activation_overlay_repro.spec.js — a seam whose reader exists
     // in this repo's own e2e, not only in tests, because the filing's acceptance criteria make
     // the overlay's on-camera presence and dismissal the closure evidence.
-    assert.strictEqual(SUMMARY.directExports, 167, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 166, "of which module exports");
+    // +2 (167 -> 169): BEYOND-19 (track state-feedback-be19) adds `window.showProgress` and
+    // `window.clearProgress` — the SHARED in-flight marker, published from js/main.js beside
+    // `showFeedback` because they are the same kind of seam (a non-modular caller reaching a
+    // surface it resolves at call time). Both are `live` with real product readers in
+    // js/controls.js: the Print control raises/clears the marker around an unchanged
+    // `window.print()`, and the filter commit raises it around the store write. No annotation
+    // excuse applies to either — a seam with only a test reader would be deleted by the re-rot
+    // guard below, so shipping them was conditional on wiring both call sites, which is what the
+    // track did. They are TWO seams and not one namespace deliberately: `.be-progress` is a single
+    // DOM node per operation, so mount and clear are paired calls at different places in the same
+    // handler, not a member lookup on a shared object.
+    assert.strictEqual(SUMMARY.directExports, 169, "direct `window.*` assignments");
+    assert.strictEqual(SUMMARY.moduleExports, 168, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

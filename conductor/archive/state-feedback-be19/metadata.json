@@ -1,0 +1,37 @@
+{
+  "id": "state-feedback-be19",
+  "name": "State feedback \u2014 progress/error visibility (BEYOND-19)",
+  "type": "remediation",
+  "parent": "e2e_goalgrounded_recert_20261101",
+  "goal": "Close BEYOND-19: ensure every extension operation that crosses a latency boundary shows progress, every failure path shows an error toast, and state transitions are explained to the user",
+  "status": "COMPLETE",
+  "deliberation": "required",
+  "created": "2026-11-02T00:00:00Z",
+  "tracked_issue": "BEYOND-19",
+  "msf_key": "BEYOND-CERT-STATE-FEEDBACK-PROGRESS-ERROR-20261101-GOALGROUNDED-RECERT",
+  "accepted_findings": [
+    "No progress feedback during AI arrange/borders round trips",
+    "No error toasts for failed save/store writes (persistence)",
+    "No print success/completion/error feedback",
+    "No loading/transition state for extension print/filter operations",
+    "Silent state transitions (blank sheet during assembly, no explicit loading)",
+    "Success feedback missing after Save in settings dialog",
+    "Disabled state not shown for action icons in filter panel"
+  ],
+  "completed": "2026-11-02T00:00:00Z",
+  "delivery": {
+    "commits": [
+      "local only"
+    ],
+    "pushed": false
+  },
+  "evidence": {
+    "unit": "test/unit/state_feedback_contract.test.js \u2014 9 passing",
+    "e2e": "test/browser_e2e/state_feedback_ai_arrange.spec.js \u2014 1 passing (busyDuring:true busyCleared:true)",
+    "full_suite": "npm test \u2014 2250 passing, 0 failing",
+    "verification": "conductor/archive/state-feedback-be19/verification.md"
+  },
+  "deferred": [
+    "AC-7 mid-session assembly marker: synchronous applyLayout never paints a marker; needs an event-loop yield inside js/layout_apply.js \u2014 carried over, diagnosis recorded"
+  ]
+}

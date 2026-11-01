@@ -1567,6 +1567,28 @@ div[style*="z-index: 20000"] label {
   padding: 6px 12px;
   box-shadow: none !important;
 }
+/* The generic in-flight marker (BEYOND-19, track state-feedback-be19). .be-ai-busy above
+   belongs to the AI flow and says so in its copy; this one is the SHARED affordance for any
+   operation that crosses a latency boundary (a print preparation, an assembly rebuild, a
+   store write). It is the same pill shape and the same top rung ON PURPOSE - two different
+   in-flight markers on one screen would read as two different subsystems failing - but it is
+   a separate class so a spec can tell WHICH operation is pending. It is print-hidden by the
+   same @media print block every other chrome surface uses. */
+.be-progress {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  background: ${TOKENS.groundModal};
+  border: 1px solid ${TOKENS.hairGold};
+  border-radius: ${TOKENS.radius};
+  color: ${TOKENS.boneDim};
+  font-family: ${TOKENS.fontTool};
+  font-size: 12px;
+  padding: 6px 12px;
+  box-shadow: none !important;
+}
 .be-ai-preview-counts {
   font-weight: 600;
 }
@@ -2219,6 +2241,7 @@ ${ornamentSurface(
   .be-context-menu,
   .be-color-picker-popup,
   .be-activation-overlay,
+  .be-progress,
   div[style*="z-index: 20000"] {
     display: none !important;
   }

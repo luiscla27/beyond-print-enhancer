@@ -88,7 +88,7 @@ Licensed under Blue Oak Model License 1.0.0
   // and the shape/border asset picker). Loaded before main.js in the
   // production script list and the shared harness boot.
   const Modals = window.Modals || {};
-  const { showInputModal, showFallbackModal, showFeedback } = Modals;
+  const { showInputModal, showFallbackModal, showFeedback, showProgress, clearProgress } = Modals;
 
   /**
    * AC-5 (U-17): show a persistent "nothing found" state.
@@ -3182,6 +3182,12 @@ Licensed under Blue Oak Model License 1.0.0
   window.handleLoadFile = handleLoadFile;
   window.restoreLayout = restoreLayout;
   window.showFeedback = showFeedback;
+  // BEYOND-19 (track state-feedback-be19): the SHARED in-flight marker. Exposed here beside
+  // showFeedback because the two are the same kind of seam - a non-modular caller reaching a
+  // surface - and every caller that already resolves `window.showFeedback` at call time can
+  // now also say "this is happening" rather than only "this happened".
+  window.showProgress = showProgress;
+  window.clearProgress = clearProgress;
   window.createControls = createControls;
   window.showFallbackModal = showFallbackModal;
   window.showInputModal = showInputModal;
