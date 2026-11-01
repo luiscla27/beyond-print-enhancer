@@ -83,7 +83,8 @@ that drives the surface's real buttons and reads what the product would SAVE thr
 - `test/browser_e2e/spec_pending.json` per-file count 62 → 66, read from a REAL flag-less run of that
   one spec (`--reporter json`, `stats.pending`), with the provenance amended to say exactly that.
 
-**The real-browser run of the new cases is BLOCKED BY THE HOST, not by the tests** — see §6.
+**The real-browser run of the new cases was first recorded as BLOCKED BY THE HOST — that record was
+WRONG, and §8 has the correction, the A/B that falsified it and the executed run (4 passing).**
 
 ## 5. Gates
 
@@ -91,7 +92,7 @@ that drives the surface's real buttons and reads what the product would SAVE thr
 |------|---------|--------|
 | lint | `npm run lint` | clean — 36 check(s) passed, 0 violations; SCRIPTS HYGIENE OK |
 | syntax | `node --check` on every touched `js/` file + the two specs | clean |
-| unit composite | `npm test` | see §6 (the 2 known-red `input_budget_alignment` cases are the fleet baseline) |
+| unit composite | `npm test` | see §7/§8 (the 2 known-red `input_budget_alignment` cases are the fleet baseline) |
 | housekeeping | `python vendor/housekeeping_guard.py check` | OK — no debt, deliberation ADMITTED |
 | G-DETECT | `node scripts/border_refine_gdetect.js` | PASS (numbers in §3) |
 
@@ -117,16 +118,77 @@ build-time guard as the machine-checked half:
 
 ## 7. What is NOT proven, stated rather than smoothed over
 
-1. **The four new e2e cases have never executed in a real browser here.** `bootPage` times out waiting
-   for `READY_SELECTOR` on `<div class="ct-subsections" id="print-layout-wrapper">` (60s, 114-116
-   locator resolutions, not visible). This is **host-wide, not track-specific**: the untouched
-   `test/browser_e2e/border_picker_base.spec.js` fails IDENTICALLY on this tree (`1 passing / 3 failing`,
-   all three failures the same `bootPage` timeout), and so does the gallery spec as a whole. The evidence
-   for the loop itself is therefore the unit contract (18 cases, real product code in jsdom) + G-DETECT
-   (real Chromium pixels) — both green — plus a spec that COLLECTS its cases. A re-run on a host where
-   `bootPage` reaches `READY_SELECTOR` is the outstanding step, and the exact command is recorded in the
-   orchestrator report.
-2. **`npm test` composite:** measured **2271 passing / 2 failing**, and both failures are the
-   pre-existing `input_budget_alignment` F4/F8 findings (unrelated to this track; named in the launch
-   card as the fleet baseline).
+1. ~~**The four new e2e cases have never executed in a real browser here.**~~ **SUPERSEDED BY §8: they
+   executed on 2026-11-01, session 2 — 4 passing / 0 failing.** The reason they had not executed was
+   `js/border_refine.js`'s top-level `const state`, which collided with `js/dnd.js:437`'s `let state` in
+   the injected file list's shared global scope and killed dnd.js outright, leaving the layout wrapper
+   at height 0. NOT a host defect: the untouched `border_picker_base.spec.js` failed the same way only
+   because it boots through the same list, and it now passes 4/4.
+2. **`npm test` composite:** measured **2276 passing / 2 failing** (§8 re-measured it on the fixed
+   tree), and both failures are the pre-existing `input_budget_alignment` F4/F8 findings (unrelated to
+   this track; named in the launch card as the fleet baseline).
+
+## 8. Session 2 — the AC-4 run, and the boot defect that had been read as a broken host
+
+### 8.1 What the first record said, and the A/B that falsified it
+
+The first session closed with "`bootPage` times out at `READY_SELECTOR` for EVERY spec here → host-wide,
+not track-specific". The symptom is real; the diagnosis was not. Reproduced on session 2 with the
+production list and the same page, MINUS the new module:
+
+| injection set | `window.initDragAndDrop` | `window.scheduleAutosave` | page errors | `#print-layout-wrapper` |
+|---------------|--------------------------|---------------------------|-------------|--------------------------|
+| production list **minus** `js/border_refine.js` | `function` | `function` | none | `1306x5458` after 9s |
+| production list as `js/background.js` declares it | `undefined` | `undefined` | `Identifier 'state' has already been declared`, `initDragAndDrop is not defined` | height **0** |
+
+Root cause: `chrome.scripting.executeScript({ files })` evaluates every listed file as a CLASSIC SCRIPT
+in ONE global scope. `js/border_refine.js:67` declared `const state = {…}`; `js/dnd.js:437` declares
+`let state = null`, and dnd.js is injected LATER — so dnd.js died at parse time with a fatal
+`SyntaxError`, never published its seams, and `js/main.js`'s boot threw at `initDragAndDrop()`. A
+zero-height wrapper is "not visible" to Playwright, which is exactly what `waitForSelector(READY_SELECTOR)`
+(default `state: 'visible'`) waits for — hence a 60s timeout that looks like a dead demo host.
+
+The class is not new to this repo: `js/undo.js` and `js/recovery_ui.js` both carry the same measured
+note for `_safeLog` ("Identifier '_safeLog' has already been declared", and the layout never appeared).
+
+### 8.2 The fix, and the guard that stops the third occurrence
+
+- `js/border_refine.js`: every top-level binding is uniquely named (`const state` → `refineSurfaceState`,
+  `refine*` on the rest). `open`/`close` are renamed too — a top-level function declaration of a
+  `window` member overwrites it for every other file in the shared scope. No exported API name changed.
+- `test/unit/injected_scope_collision.test.js` (new, 5 cases) parses the injected list the way the
+  harness parses it and fails when two modules declare the same top-level binding: the LEXICAL case
+  (`let`/`const`/`class` — the fatal one) is separated from the `var`/`function` shadowing case (frozen,
+  reasoned, exact in both directions), plus a window-shadow check and a falsifiability case that feeds
+  the detector the measured collision. RED on the pre-fix module: **2 failing** (the `state` collision
+  AND `open`/`close` shadowing a window member); GREEN after: **5 passing**.
+- The e2e probe's `facts()` returned its inline text under `reason`, clobbering the click op's own
+  refusal reason, so the fill-only case compared prose against `"control_disabled"`. The inline text is
+  now `inlineReason`; the post-mortem reason keeps its key. (Harness defect — the product's behaviour
+  was correct.)
+
+### 8.3 Measured, on the fixed tree (commit `75829a0`)
+
+| command | before | after |
+|---------|--------|-------|
+| `BORDER_GALLERY_SHOTS=1 npx mocha test/browser_e2e/byok_border_gallery.spec.js --timeout 900000 --grep "BEYOND-10 refinement flow"` | never reached the cases (`bootPage` timeout) | **4 passing / 0 failing (37s)** — AC-1 controls, AC-2 select→adjust→regenerate→compare, AC-3 record + reopen, AC-1 fill-only disabled-with-reason |
+| `npx mocha test/browser_e2e/border_picker_base.spec.js --timeout 900000` (untouched control) | 1 passing / 3 failing (same timeout) | **4 passing / 0 failing** |
+| `npx mocha test/unit/injected_scope_collision.test.js` | (did not exist) | **5 passing**; RED 2 failing on the pre-fix module |
+| `npx mocha test/unit/border_refine_loop.test.js` | 18 passing | **18 passing** |
+| `npx mocha test/unit/ai_border_refine_ac2.test.js` | 20 passing | **20 passing** |
+| `npm test` | 2271 passing / 2 failing | **2276 passing / 2 failing** (+5 = the guard; the 2 are the F4/F8 baseline) |
+| `npm run lint` | clean | **clean** (36 checks, 0 violations; SCRIPTS HYGIENE OK) |
+| `node scripts/check_dead_exports.js` | 400 exports, 0 violations | **401 exports, 0 violations** |
+| `node scripts/border_refine_gdetect.js` | PASS | **PASS** — 6541/306240 px (2.136%), ink 5364 → 7392 (+2028); `--weight 1 --style 0` still refuses |
+| `npx mocha test/browser_e2e/byok_border_gallery.spec.js` (flag off) | 0 passing / 66 pending | **0 passing / 66 pending** (collection unchanged — `spec_inventory.json`/`spec_pending.json` already said 66) |
+| `PYTHONDONTWRITEBYTECODE=1 python vendor/housekeeping_guard.py check` | OK / ADMITTED | **OK / ADMITTED** |
+
+**One more thing the census could not see before.** With the namespace's members written as shorthand
+(`applyAdjust,`), `scripts/audit_dead_exports.js` never created rows for them — a shorthand property
+carries no `name: value` pair to census. Writing them as `applyAdjust: refineApplyAdjust` made them
+visible, which immediately surfaced two genuinely dead exports (`WEIGHT_STEPS`, `STYLE_STEPS`: no reader
+anywhere, including the contract, which asserts the vocabulary through the buttons' own
+`data-be-refine-*` attributes). They were RETIRED, not allowlisted, and the false "asserted by the
+contract" comment was replaced with the reason.
+
 

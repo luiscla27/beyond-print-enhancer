@@ -77,11 +77,27 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (with what was meas
       `conductor/tracks/orchestrator_backlog_sweep_20261101/reports/phase2a_be10.md` — all three
       written in this session and committed with the record.
 
-## Owed to a healthy e2e host (stated, not hidden)
+## Owed to a healthy e2e host — DISCHARGED in session 2 (it was never the host)
 
-The four new e2e cases COLLECT (66 pending, up from 62) but have not executed on this host: `bootPage`
-times out at `READY_SELECTOR` for every spec here, including untouched ones
-(`border_picker_base.spec.js` → 1 passing / 3 failing, all three the same timeout). Re-run with:
+Session 1 recorded the four new e2e cases as collecting (66 pending, up from 62) but never executing,
+because `bootPage` timed out at `READY_SELECTOR` for every spec here, including untouched ones
+(`border_picker_base.spec.js` → 1 passing / 3 failing). Session 2 proved that was a PRODUCT defect from
+this track's own new module, not the host, and closed it:
 
-    BORDER_GALLERY_SHOTS=1 npx mocha test/browser_e2e/byok_border_gallery.spec.js --timeout 900000 \
-      --grep "BEYOND-10 refinement flow"
+- [x] `js/border_refine.js`: a top-level `const state` collided with `js/dnd.js:437`'s `let state` in the
+      injected file list's ONE shared global scope, so `js/dnd.js` died at parse time
+      (`Identifier 'state' has already been declared`), `window.initDragAndDrop` / `window.scheduleAutosave`
+      were never published, `js/main.js`'s boot threw, and `#print-layout-wrapper` stayed at height 0 —
+      "not visible" to Playwright, hence the 60s `waitForSelector` timeout in EVERY spec. Every top-level
+      binding is now uniquely named (`refine*`), including `open`/`close` (window members).
+- [x] `test/unit/injected_scope_collision.test.js` (new, 5 cases): the fast-suite guard for the class —
+      RED 2 failing on the pre-fix module (the `state` collision + `open`/`close` window shadowing),
+      GREEN 5 passing.
+- [x] The e2e probe's `facts()` returned its inline text under `reason`, clobbering the click refusal's
+      own `reason`; renamed to `inlineReason` (harness defect — the product was correct).
+- [x] **The flow cases EXECUTED: 4 passing / 0 failing (37s)**, and the untouched control spec the first
+      record blamed went **1 passing / 3 failing → 4 passing / 0 failing**.
+- [x] A/B proof, same browser and page: production list minus `js/border_refine.js` →
+      `initDragAndDrop: function`, no page errors, wrapper `1306x5458`; list as declared → both seams
+      `undefined`, both page errors, wrapper height `0`. Full measurement table in `verification.md` §8.
+

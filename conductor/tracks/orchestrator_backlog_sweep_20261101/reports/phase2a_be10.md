@@ -10,15 +10,16 @@ sources: [conductor/archive/beyond10_ai_border_refine_loop/spec.md, conductor/ar
 
 # Phase 2a — BEYOND-10 (SC-D2): AI border refinement loop — ORCHESTRATOR REPORT
 
-## OUTCOME: COMPLETE (one verification item owed to a healthy e2e host)
+## OUTCOME: COMPLETE (all five criteria, AC-4 EXECUTED — see the session-2 addendum at the end)
 
 | AC | verdict | proof |
 |----|---------|-------|
-| AC-1 gallery UI exposes weight/style controls | **MET** | New surface `js/border_refine.js` (5 weight steps, 3 style steps) opened from a new "Refine AI border" row in `js/properties_panel.js` that appears exactly when the section carries an AI border. Unit cases 1-3 + e2e `panelRow`/`open` probe assertions. |
-| AC-2 select → adjust → regenerate → compare | **MET** | Variant list from the product's own `custom_borders` library; `Regenerate` re-derives from the DESIGN (absolute parameters); `Compare` returns the design and the refined bytes + `differs`; `Revert` returns weight 1 / solid. Unit cases 4-8. |
-| AC-3 persist in session and settings | **MET** | `borderAdjust {base, weight, styleIndex}` in the section record (`js/layout_scan.js`), restored by `js/layout_apply.js`, carried by the undo snapshot (`js/undo.js`), carried by the settings bundle (`collectSettingsBundle → layout`, measured), and every refine write asks `window.scheduleAutosave()`. Unit cases 9-14. |
-| AC-4 `byok_border_gallery.spec.js` extended with the refinement flow | **MET AS AUTHORED + COLLECTED; FLOW RUN OWED** | `BEYOND-10 refinement flow — the controls, in the real page` (4 cases) drives the real buttons and reads the record via `window.scanLayout()`. Collected 62 → 66. **Not executed on this host** — see STRUGGLES. |
+| AC-1 gallery UI exposes weight/style controls | **MET** | New surface `js/border_refine.js` (5 weight steps, 3 style steps) opened from a new "Refine AI border" row in `js/properties_panel.js` that appears exactly when the section carries an AI border. Unit cases 1-3 + e2e `panelRow`/`open` probe assertions — **executed in a real browser**. |
+| AC-2 select → adjust → regenerate → compare | **MET** | Variant list from the product's own `custom_borders` library; `Regenerate` re-derives from the DESIGN (absolute parameters); `Compare` returns the design and the refined bytes + `differs`; `Revert` returns weight 1 / solid. Unit cases 4-8 + e2e case 2 — **executed**. |
+| AC-3 persist in session and settings | **MET** | `borderAdjust {base, weight, styleIndex}` in the section record (`js/layout_scan.js`), restored by `js/layout_apply.js`, carried by the undo snapshot (`js/undo.js`), carried by the settings bundle (`collectSettingsBundle → layout`, measured), and every refine write asks `window.scheduleAutosave()`. Unit cases 9-14 + e2e case 3 — **executed**. |
+| AC-4 `byok_border_gallery.spec.js` extended with the refinement flow | **MET (AUTHORED + COLLECTED + EXECUTED)** | `BEYOND-10 refinement flow — the controls, in the real page` (4 cases) drives the real buttons and reads the record via `window.scanLayout()`. Collected 62 → 66. **4 passing / 0 failing in a real browser** — after session 2 fixed the boot defect that had been misread as a host failure (addendum §A). |
 | AC-5 G-DETECT passes for refined border output | **MET (measured)** | `node scripts/border_refine_gdetect.js` → **PASS**: 6541 / 306240 px changed (2.136%), ink 5364 → 7392 (+2028). Negative control (`--weight 1 --style 0`) refuses to report a pass. |
+
 
 ## NEW CODE
 
@@ -142,3 +143,101 @@ nothing was pushed to any remote.
 **Token handoff: not needed** — the card finished inside the budget. No `ORCHESTRATOR_HANDOFF.md` was
 written, and `temp/wip/beyond10_ai_border_refine_loop/` holds only scratch (the two pending-map /
 coverage helpers live under gitignored `temp/scratch/`).
+
+---
+
+# SESSION 2 ADDENDUM — the "host" was the product, and AC-4 now executes
+
+Written by the resumed seat. Context: this file and the record above were produced by a worker that was
+reaped mid-session; the orchestrator re-spawned the phase. On arrival the tree already carried the
+worker's five commits (`3ccd5fe`, `8c615c0`, `7d524ba`, `5684221`, `f8b6813`), so this addendum does not
+re-describe the card — it corrects ONE claim in it and finishes the item it left owed.
+
+## A. THE CORRECTION: STRUGGLES §1 was a misdiagnosis
+
+The record above says the e2e flow "could not execute on this host: `bootPage` times out at
+READY_SELECTOR for EVERY spec here", and cites the untouched `border_picker_base.spec.js`
+(1 passing / 3 failing) as proof the problem was environmental. **Both halves were wrong.**
+
+It was a product defect introduced by this track's own new module, and the untouched spec failed for
+the same reason every other spec did — they all boot through one injected file list.
+
+    js/border_refine.js:67   const state = { … }        ← this track's new module
+    js/dnd.js:437            let state = null;          ← injected AFTER it
+
+`chrome.scripting.executeScript({ files })` evaluates the listed files as CLASSIC SCRIPTS in ONE shared
+global scope, so the second declaration is a fatal `SyntaxError` that kills the WHOLE file that loses the
+race. `js/dnd.js` lost it: `window.initDragAndDrop` and `window.scheduleAutosave` were never published,
+`js/main.js`'s boot threw at `initDragAndDrop()`, and `#print-layout-wrapper` stayed at **height 0** —
+which Playwright reports as "not visible", which is exactly what `waitForSelector(READY_SELECTOR)`
+(default `state: 'visible'`) waits for. A 60-second timeout that reads like a dead demo host.
+
+The A/B that settled it (same browser, same page, same profile shape):
+
+| injection set | `initDragAndDrop` | `scheduleAutosave` | page errors | `#print-layout-wrapper` after 9s |
+|---|---|---|---|---|
+| production list **minus** `js/border_refine.js` | `function` | `function` | none | `1306x5458` |
+| production list as `js/background.js` declares it | `undefined` | `undefined` | `Identifier 'state' has already been declared`, `initDragAndDrop is not defined` | height **0** |
+
+This is the third occurrence of the class in this repo: `js/undo.js` and `js/recovery_ui.js` both carry
+the same measured note for `_safeLog`. The rule was already written down; nothing enforced it.
+
+## B. WHAT SESSION 2 SHIPPED (commit `75829a0`)
+
+| file | change |
+|------|--------|
+| `js/border_refine.js` | every top-level binding uniquely named (`const state` → `refineSurfaceState`, `refine*` on the rest). `open`/`close` renamed too — a top-level function declaration of a `window` member overwrites it for every file in the shared scope. **No exported API name changed.** |
+| `test/unit/injected_scope_collision.test.js` (new, 5 cases) | the class's fast-suite guard: parses the injected list the way the harness parses it, fails on a duplicate top-level binding, separates the FATAL lexical case (`let`/`const`/`class`) from the tolerated `var`/`function` shadowing case (frozen + reasoned, exact in both directions), checks window-shadowing, and carries a falsifiability case that feeds the detector the measured collision so a green run means "detected nothing" rather than "cannot detect". |
+| `test/browser_e2e/_helpers/inject.js` | `facts()` returned its inline text under `reason`, clobbering the click op's own refusal `reason` — the fill-only case compared prose against `"control_disabled"` and could never pass. Renamed to `inlineReason`. (Harness defect; the product's disabled state was correct.) |
+| `test/browser_e2e/byok_border_gallery.spec.js` | the two assertions that read that field. |
+
+Two exports were also RETIRED, not allowlisted: `BorderRefine.WEIGHT_STEPS` / `.STYLE_STEPS` had no
+reader anywhere. They were invisible to `scripts/audit_dead_exports.js` while the namespace members were
+written as shorthand (`applyAdjust,` carries no `name: value` pair to census); writing them as
+`applyAdjust: refineApplyAdjust` made the census see them and the audit immediately reported both as dead.
+The header comment claiming "asserted by the contract" was false — the contract asserts the vocabulary
+through the buttons' own `data-be-refine-*` attributes — so it was replaced with the reason.
+
+## C. GATE RESULTS ON THE FIXED TREE
+
+| command | result |
+|---------|--------|
+| `BORDER_GALLERY_SHOTS=1 npx mocha test/browser_e2e/byok_border_gallery.spec.js --timeout 900000 --grep "BEYOND-10 refinement flow"` | **4 passing / 0 failing (37s)** — AC-1 controls, AC-2 select→adjust→regenerate→compare, AC-3 record + reopen, AC-1 fill-only disabled-with-reason. AC-4 is now EXECUTED, not merely collected. |
+| `npx mocha test/browser_e2e/border_picker_base.spec.js --timeout 900000` (untouched control) | **4 passing / 0 failing** — was 1 passing / 3 failing. The number the first record read as proof of a broken host. |
+| `npx mocha test/unit/injected_scope_collision.test.js` | **5 passing**; RED **2 failing** on the pre-fix module (the `state` collision AND `open`/`close` shadowing window members). |
+| `npx mocha test/unit/border_refine_loop.test.js` | **18 passing** |
+| `npx mocha test/unit/ai_border_refine_ac2.test.js` | **20 passing** |
+| `npm test` | **2276 passing / 2 failing** — the 2 are the pre-existing `input_budget_alignment` F4/F8 baseline |
+| `npm run lint` | **clean** — 36 checks, 0 violations; SCRIPTS HYGIENE OK |
+| `node scripts/check_dead_exports.js` | **401 exports, 0 violations** |
+| `node scripts/border_refine_gdetect.js` | **PASS** — 6541/306240 px (2.136%), ink 5364 → 7392 (+2028) |
+| `node scripts/border_refine_gdetect.js --weight 1 --style 0` | **refused** — the gate cannot pass vacuously |
+| `npx mocha test/browser_e2e/byok_border_gallery.spec.js` (flag off) | **0 passing / 66 pending** — collection unchanged, so `spec_inventory.json` / `spec_pending.json` needed no regeneration |
+| `PYTHONDONTWRITEBYTECODE=1 python vendor/housekeeping_guard.py check` | **OK** — no debt, deliberation **ADMITTED** |
+
+## D. KNOWLEDGE TO PERSIST (this is the one that will bite again)
+
+- **The injected file list is ONE global scope.** Any two files in it declaring the same top-level
+  binding is a fatal `SyntaxError` that silently deletes a whole module — and the symptom is an e2e boot
+  timeout, i.e. it looks like infrastructure. `test/unit/injected_scope_collision.test.js` now fails in
+  the fast suite instead.
+- **Name module-locals uniquely** (the documented rule from `undo.js`/`recovery_ui.js`), and never
+  declare a top-level function named after a `window` member (`open`, `close`, `focus`, `print`, …).
+- **A zero-height `#print-layout-wrapper` is the signature of an aborted boot**, and
+  `waitForSelector(READY_SELECTOR)` needs a non-empty box. If a spec times out there, check
+  `typeof window.initDragAndDrop` in the isolated world before blaming the host.
+- **`scripts/audit_dead_exports.js` cannot see shorthand namespace members** (`{ applyAdjust }`), only
+  `name: value` pairs. A namespace written in shorthand is uncensused.
+- The pre-existing duplicate pair `function fail` in `js/ai_layout.js:1278` and `js/ai_arrange.js:968` is
+  frozen with a reason in the new guard's `TOLERATED_DUPLICATES`. `var`/`function` redeclaration is legal
+  but the later file silently wins, so one module's callers get the other's arity. Worth a follow-up card;
+  it is not this track's file and it was not touched.
+
+## E. DELIVERY
+
+Local commits only, `noPushPerformed: true` — nothing was pushed to any remote.
+
+1. `3ccd5fe` — the refinement loop (session 1).
+2. **`75829a0`** — the boot fix, the scope-collision guard, the probe `inlineReason` fix, the two dead
+   exports retired (session 2).
+3. Track record: `8c615c0`, `7d524ba`, `5684221`, and this correction (session 2).
