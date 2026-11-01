@@ -1,0 +1,86 @@
+{
+  "name": "beyond10_ai_border_refine_loop",
+  "id": "beyond10_ai_border_refine_loop",
+  "msf_key": "BEYOND-10-AI-BORDER-REFINE-LOOP-20261101",
+  "parent": "BEYOND-10",
+  "tracked_issue": "BEYOND-10",
+  "type": "ux-gap-feature-completion",
+  "deliberation": "required",
+  "created": "2026-11-01",
+  "completed": "2026-11-01",
+  "status": "COMPLETE",
+  "archived_at": "conductor/archive/beyond10_ai_border_refine_loop/",
+  "goal": "Close BEYOND-10 (SC-D2): the AI border can be refined in the product \u2014 pick a variant, set weight and style, regenerate the artwork from those parameters, compare against the design it came from \u2014 and both the artwork and the parameters survive a reload; G-DETECT measured on the refined output",
+  "card": "[UX Gap] SC-D2: AI border refinement loop missing \u2014 gallery shows variants but no weight/style adjustment",
+  "acceptance_criteria": {
+    "track": "beyond10_ai_border_refine_loop",
+    "sealed_utc": "2026-11-01T17:08:42Z",
+    "criteria": {
+      "#1": {
+        "sha256": "7049071dfa7274eb681e87ba7fd2f8ddc2716a12c456ceba9820f24e07c810e7",
+        "text": "**AC-1** \u2014 Border gallery UI exposes weight/style adjustment controls."
+      },
+      "#2": {
+        "sha256": "61640bbcc6f8d3034bdb93c7876d30e1acf8aaa2f683076052cd79e85ea45852",
+        "text": "**AC-2** \u2014 Refinement loop: select variant \u2192 adjust parameters \u2192 regenerate \u2192 compare."
+      },
+      "#3": {
+        "sha256": "e20fa40104b8391088e3a3c5d25120eddb2ddcaa8fdf717e98c197917434e8ef",
+        "text": "**AC-3** \u2014 Adjustments persist in session and settings."
+      },
+      "#4": {
+        "sha256": "b2a6abe1bc7d8364841bc788334cdc26b3727c83109b8595ef2498763e8e732c",
+        "text": "**AC-4** \u2014 E2E test `byok_border_gallery.spec.js` extended with refinement flow."
+      },
+      "#5": {
+        "sha256": "ba223029ccad6bffd1d9e608418c57d9dd386d941830bb6c6986ce36b815dc52",
+        "text": "**AC-5** \u2014 Gate G-DETECT passes for refined border output."
+      }
+    }
+  },
+  "stale_card_premises": [
+    "The card names a 'border gallery UI' to extend. The product has no border gallery: the only gallery is the e2e capture harness test/browser_e2e/byok_border_gallery.spec.js. The in-product surface that owns a section's border is the properties panel's Border Style row (js/properties_panel.js:559), so the controls land there plus a self-contained refine surface.",
+    "'Quick win: parameter adjustment UI + refinement loop, leverages existing gallery' is half true: the pure transform already shipped (js/ai_border.js:141 transformBorderSvg, :199 canAdjustBorder, :347 adjustBorderSvg) with NO product caller anywhere in js/ \u2014 the library half exists, the user-reachable half does not.",
+    "AC-2's 'regenerate' is read as re-derive the painted artwork from the chosen parameters, not as another model call: the generator is non-deterministic (see the header of test/fixtures/byok_border_corpus.json) and a re-roll would destroy the comparison the same criterion asks for."
+  ],
+  "gaps_found_and_closed": [
+    "AC-1 was a REAL product gap: the transform, the capability gate and the choke-point seam shipped in js/ai_border.js with NO product caller anywhere in js/, so no control could be pressed. Closed by js/border_refine.js (the surface) + the properties panel's 'Refine AI border' row (the product caller).",
+    "AC-2 was PARTIALLY missing and its state model was wrong: the shipped adjustBorderSvg was RELATIVE, so 1.5x applied twice painted 2.25x and nothing could say what a border was set to. Closed by the ABSOLUTE model (data-border-base-svg beside the painted bytes).",
+    "AC-3 was a REAL gap for the PARAMETERS: the adjusted bytes persisted (the record's borderSvg) but the weight/style existed nowhere and no writer asked for a save. Closed by borderAdjust in the section record + js/layout_apply.js's restore + undo's snapshot + window.scheduleAutosave() from every refine write.",
+    "AC-4 was a COVERAGE gap: the spec had a SEAM block that would stay green with the whole surface deleted. Closed with a 4-case refinement FLOW that clicks the real controls (collected, host-blocked from executing here).",
+    "AC-5 was MISSING entirely: no G-DETECT measurement existed in this tree. Closed by scripts/border_refine_gdetect.js — PASS 6541/306240 px (2.136%), ink 5364 -> 7392."
+  ],
+  "evidence": {
+    "red_unit": "test/unit/border_refine_loop.test.js: 0 passing / 15 failing on the pre-change tree (each case on its own assertion)",
+    "green_unit": "test/unit/border_refine_loop.test.js: 18 passing / 0 failing",
+    "shipped_contract_still_green": "test/unit/ai_border_refine_ac2.test.js: 20 passing / 0 failing (35 with the new file)",
+    "owning_spec_collection": "test/browser_e2e/byok_border_gallery.spec.js: 0 passing / 66 pending (was 62) — one spec, one mocha process",
+    "owning_spec_flow_run": "BLOCKED BY HOST: bootPage times out at READY_SELECTOR for every spec here; the untouched border_picker_base.spec.js fails 3/4 the same way. Command to re-run is in verification.md.",
+    "g_detect": "node scripts/border_refine_gdetect.js -> PASS: changed_px 6541/306240 (2.136%), ink 5364 -> 7392 (+2028); negative control --weight 1 --style 0 refuses to report a pass",
+    "coverage": "js/border_refine.js: 94.4% of functions, 99.8% of bytes (V8 coverage; no runner in devDependencies)",
+    "unit_composite": "npm test: 2271 passing / 2 failing — both pre-existing input_budget_alignment F4/F8 findings",
+    "lint": "npm run lint clean (36 checks, 0 violations; SCRIPTS HYGIENE OK)",
+    "guard": "python vendor/housekeeping_guard.py check -> OK, no debt, deliberation ADMITTED",
+    "security_review": "seat-run on the staged diff (the subagent skill could not be invoked: host error 'run_skill … requires arguments' for every arg shape). check_border_svg_injection 36/36, no new markup sinks, untrusted record base validated by the trust root. No findings."
+  },  "verification_vehicles": {
+    "e2e": "test/browser_e2e/byok_border_gallery.spec.js (the card's own spec, extended in place)",
+    "unit_contract": "test/unit/border_refine_loop.test.js",
+    "unit_certification": "test/unit/ai_border_refine_ac2.test.js (20 cases, pre-existing)",
+    "unit": "npm test (smoke + mocha test/unit test/e2e test/manifest.test.js)",
+    "gate_g_detect": "node scripts/border_refine_gdetect.js (measured pixel diff on the refined output)",
+    "lint": "npm run lint",
+    "syntax": "node --check on every touched js/ file",
+    "guard": "python vendor/housekeeping_guard.py check"
+  },
+  "evidence": {},
+  "known_non_blockers_recorded": [
+    "test/unit/input_budget_alignment.test.js is red on a CLEAN tree (2 pre-existing failures) \u2014 the fleet baseline, proved by stash.",
+    "NEVER batch two e2e spec files in ONE mocha process: reinject() breaks after page.reload() and reload cases fail cross-file (BEYOND-9 finding)."
+  ],
+  "delivery": {
+    "commits": ["3ccd5fe"],
+    "pushed": false,
+    "noPushPerformed": true
+  },
+  "track_id": "beyond10_ai_border_refine_loop"
+}
