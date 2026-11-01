@@ -82,8 +82,27 @@ rule):
 ## Commands run
 
 ```
-npx mocha test/unit/state_feedback_contract.test.js            # 9 passing
+npx mocha test/unit/state_feedback_contract.test.js            # 10 passing (9 shipped in b5af846
+                                                               # + 1 added in 2707f02: the AC-5
+                                                               # marker-lifetime contract)
 npx mocha test/browser_e2e/state_feedback_ai_arrange.spec.js   # 1 passing (busyDuring/busyCleared both true)
 node --check js/{modals,main,controls,ui_theme,print_styles,ai_arrange}.js   # all clean
 npm test                                                        # full suite
 ```
+
+## Post-closeout amendment (commit `2707f02`, same session)
+
+The operator's standard — *a claim proved by reading one seam is not the same as one proved by
+exercising it* — was applied to the two ACs this record had originally closed with a "rides the
+seam" argument:
+
+- **AC-2** gained its own e2e (`state_feedback_ai_borders.spec.js`): border-only capability set
+  with a REAL `selectedSectionId` (the border generator refuses an empty selection), driven
+  through the same 2 s service-worker stub. Result `busyDuring: true busyCleared: true`.
+- **AC-5** gained its own e2e (`state_feedback_save_to_browser.spec.js`): markers sampled
+  before/during/after a REAL IndexedDB write (the save path is wrapped and delayed 400 ms, never
+  replaced) = `0 1 0`, with the toasts "No saved layout yet…" / "Saved to browser!" unchanged.
+- **AC-6** was ruled, not skipped: `createShape` is synchronous, so a marker raised around it
+  would clear before a frame ever painted; that is now stated in the AC table above.
+
+All of the above is green at HEAD `2707f02`; nothing in this record claims otherwise.
