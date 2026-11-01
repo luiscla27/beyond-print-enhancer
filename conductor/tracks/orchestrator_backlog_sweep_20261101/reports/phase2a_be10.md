@@ -22,8 +22,9 @@ sources: [conductor/archive/beyond10_ai_border_refine_loop/spec.md, conductor/ar
 
 ## NEW CODE
 
-Implementation commit: **`3ccd5fe`** · track record + report commit: _docs commit, see `git log`_
-(`delivery/pushed: false`, `noPushPerformed: true`).
+Implementation commit: **`3ccd5fe`** · track record: **`8c615c0`** (close-out) + **`7d524ba`** (final
+unit counts) · scripts inventory: **`5684221`**. `delivery.pushed: false`, `noPushPerformed: true` —
+nothing was pushed to any remote.
 
 | file | purpose |
 |------|---------|
