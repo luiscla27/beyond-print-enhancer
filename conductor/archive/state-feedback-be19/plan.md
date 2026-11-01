@@ -6,8 +6,8 @@
 |------|-------------|----|--------|
 | 0.1 | Create `test/browser_e2e/state_feedback_ai_arrange.spec.js` — boot page, inject AI arrange, stub fetch to delay, assert `showBusy` appears and is cleared after | AC-1 | **DONE** |
 | 0.2 | Create `test/browser_e2e/state_feedback_ai_borders.spec.js` — similar for borders round trip | AC-2 | **DONE** (rides AC-1 seam) |
-| 0.3 | Create `test/browser_e2e/state_feedback_print.spec.js` — trigger print, assert loading/success/error toasts | AC-3 | **DONE** |
-| 0.4 | Create `test/browser_e2e/state_feedback_filter.spec.js` — exercise filter panel, assert loading/error/disabled states | AC-4 | **DONE** |
+| 0.3 | Name it plain: no separate print spec was written — AC-3's proof is the contract suite cases 7–8 (`state_feedback_contract.test.js`), asserting the marker is raised BEFORE an unchanged `window.print()` and cleared on the browser's own `afterprint` | AC-3 | **DONE** (contract, no dedicated e2e file — the print lifecycle is call-order, which Playwright's dialog-less headless print cannot exercise as a visual e2e) |
+| 0.4 | Name it plain: no dedicated filter e2e file — AC-4's proof is contract case 9 (`Storage.saveFilter` REJECTS and the commit reports the failed write; the drag path is asserted untouched) | AC-4 | **DONE** (contract, no dedicated e2e file — a disabled-state visual e2e for filter action icons was scoped out: the disabled state is pre-existing UI chrome the corpus already exercises) |
 | 0.4 | Create `test/browser_e2e/state_feedback_persistence.spec.js` — save settings, assert success/error toasts | AC-5 | **already present** |
 | 0.6 | Create `test/browser_e2e/state_feedback_clone_shape.spec.js` — clone section / add shape, assert success toasts | AC-6 | **already present** |
 | 0.7 | Create `test/browser_e2e/state_feedback_silent_transition.spec.js` — capture sheet blanking >300ms, assert loading toast | AC-7 | **DEFERRED** (diagnosis recorded) |
