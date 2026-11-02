@@ -191,6 +191,13 @@ chrome.action.onClicked.addListener(function(tab) {
       // gap was exactly this middle being extension-invisible. js/main.js
       // dismisses it once restore/apply + announceBootRestore settle.
       'js/activation_overlay.js',
+      // Track refactor_surface_20261101 (Phase 1): the boot orchestration extracted out of
+      // js/main.js. It loads immediately before js/main.js, the only caller: main.js keeps the
+      // overlay mount and the re-run gate, then delegates the rest of startup to the boot module.
+      // Every main.js symbol it drives is resolved through window at CALL time, so its position
+      // in this list is tidiness rather than a correctness constraint - which is exactly what
+      // makes the extraction safe for the harness, whose boot order mirrors this one.
+      'js/boot.js',
       'js/main.js'
     ]
   }).then(function () {

@@ -163,7 +163,7 @@ Licensed under Blue Oak Model License 1.0.0
   // serialization/apply). Loaded before main.js in the production script
   // list and the shared harness boot.
   const Persistence = window.Persistence || {};
-  const { handleSaveBrowser, handleSavePC, handleLoadFile, restoreLayout, applyDefaultLayout, handleLoadDefault, restoreFailureCard: showRestoreFailureCard, announceBootRestore } = Persistence;
+  const { handleSaveBrowser, handleSavePC, handleLoadFile, restoreLayout, applyDefaultLayout, handleLoadDefault } = Persistence;
 
   const LayoutScan = window.LayoutScan || {};
   const { scanLayout, migrateLayout, currentExtractionIds } = LayoutScan;
@@ -3180,6 +3180,13 @@ Licensed under Blue Oak Model License 1.0.0
   window.suppressResizeEvents = suppressResizeEvents;
   window.separateAbilities = separateAbilities;
   window.separateQuickInfoBoxes = separateQuickInfoBoxes;
+  // Track refactor_surface_20261101 (Phase 1): exposed HERE because the extracted boot module
+  // drives every init step through `window` at call time (the range's established pattern), and
+  // this was the ONE mutation its own IIFE called as a local — extracting the IIFE without
+  // publishing it would have skipped the interactive-tidbit section silently, because a
+  // call-time seam that is absent is SKIPPED, not fatal (see js/boot.js `bootStep`). Its caller
+  // is js/boot.js's init sequence; the dead-export audit sees that reference.
+  window.addInteractiveTidbitSection = addInteractiveTidbitSection;
   window.adjustInnerContentWidth = adjustInnerContentWidth;
   window.scanLayout = scanLayout;
   window.migrateLayout = migrateLayout;
@@ -3243,123 +3250,53 @@ Licensed under Blue Oak Model License 1.0.0
       window.mountActivationOverlay();
     }
 
-    // Initialize storage first
-    try {
-      await Storage.init();
-    } catch (err) {
-      safeLog("error", "[DDB Print] Failed to initialize storage:", err);
+    // Delegate the startup orchestration to the extracted boot module
+    // (track refactor_surface_20261101, Phase 1).
+    //
+    // WHAT MOVED: Storage.init -> suppressResizeEvents -> the init mutations ->
+    // createControls -> the DDB_IS_ON message -> restoreLayout's three branches ->
+    // dismissActivationOverlay -> toggleShapesMode(false). All of it now lives in
+    // js/boot.js, which loads immediately before this file.
+    //
+    // WHAT STAYED, AND WHY: the re-run gate below. It is the one step that needs
+    // `askConfirm`, a main.js-local (and main.js's OWN debug-panel job), so it is
+    // handed to boot() as the `beforeMutations` hook: boot has already run
+    // Storage.init + suppressResizeEvents by then, exactly the original order, and
+    // returning false halts the boot the way the original `return` did.
+    //
+    // There is deliberately NO duplicated inline fallback. A silently divergent
+    // second copy of the boot sequence is a worse failure than a loud one — the
+    // landing page would run a stale startup path nobody tests. A missing Boot
+    // module is a load-order bug, and it says so.
+    if (!window.Boot || typeof window.Boot.boot !== "function") {
+      safeLog("error", "[DDB Print] js/boot.js did not load — startup sequence skipped");
+      return;
     }
 
-    // Stabilize layout by suppressing global resize events
-    suppressResizeEvents();
+    const bootCompleted = await window.Boot.boot(async () => {
+      // Idempotency: cleanup previous run if exists
+      const existingWrapper = document.getElementById("print-layout-wrapper");
+      if (!existingWrapper) return true;
 
-    // Idempotency: cleanup previous run if exists
-    const existingWrapper = document.getElementById("print-layout-wrapper");
-    if (existingWrapper) {
       // User Request: Confirmation for re-run
       const okToReload = await askConfirm({
         title: "Reload page",
         message: "You need to reload to apply changes again. Reload now?",
         confirmLabel: "Continue",
       });
-      // BEYOND-18: whatever the user chooses, the transition is over — the
-      // overlay must not wedge onto a page whose boot sequence has ended
-      // (dismissal is idempotent: flipping a hidden node again is a no-op).
+      // BEYOND-18: whatever the user chooses, the transition is over — the overlay must
+      // not wedge onto a page whose boot sequence has ended (dismissal is idempotent:
+      // flipping a hidden node again is a no-op).
       if (typeof window.dismissActivationOverlay === "function") {
         window.dismissActivationOverlay({ rerunPrompt: true });
       }
       if (okToReload) {
         window.location.reload();
-        return;
-      } else {
-        return; // Do nothing
       }
-    }
+      return false; // either way this boot ends here, exactly as the inline `return` did
+    });
 
-    enforceFullHeight();
-    await injectClonesIntoSpellsView();
-    moveDefenses();
-    tweakStyles();
-    injectCompactStyles();
-    removeSearchBoxes();
-    movePortrait(); // User Request: Move portrait at the end
-    moveQuickInfo(); // User Request: Make Quick Info draggable
-    separateAbilities();
-    separateQuickInfoBoxes();
-    addInteractiveTidbitSection();
-    injectCloneButtons();
-    flagExtractableElements();
-    initDragAndDrop();
-    // AC-8 (undo_stack_20260911): the keyboard path. Bound once at boot; inert while a
-    // text field has focus and a no-op when the stack is empty (both asserted).
-    if (typeof window.installUndoShortcut === "function") {
-      window.installUndoShortcut();
-      safeLog("log", "[DDB Print] Undo shortcut bound (Ctrl/Cmd+Z)");
-    }
-    if (window.injectDnDStyles) {
-      window.injectDnDStyles();
-      safeLog("log", "[DDB Print] DnD Styles Injected");
-    }
-    initResponsiveScaling();
-    initZIndexManagement();
-    initResizeLogic();
-
-    // UI Controls
-    createControls();
-
-    // AC-4 (first_run_and_panel_20260911): tell the extension's own service worker that the
-    // enhancer is RUNNING on this page, so the toolbar icon can say so.
-    //
-    // WHY THIS IS A MESSAGE RATHER THAN WORK DONE IN `chrome.action.onClicked`. The first version
-    // set the badge from the click handler, and the browser suite measured it reporting "" instead
-    // of "ON" — because a click handler knows an injection was REQUESTED, not that it happened, and
-    // the test harness (like any other programmatic injection) never goes through that handler at
-    // all. Announcing from the content script ties the badge to the one fact it is supposed to
-    // report — this script actually booted in this tab — and it makes every injection path
-    // equivalent, which is what lets the suite verify the real thing instead of a parallel copy.
-    //
-    // Fenced and best-effort: a page with no extension runtime (jsdom, a standalone boot) must still
-    // run the whole init sequence.
-    try {
-      window.chrome?.runtime?.sendMessage?.({ type: "DDB_IS_ON" });
-    } catch {
-      /* no runtime to tell: the enhancer still works */
-    }
-
-    // AC-1/Edge 4: restoreLayout returns a RESULT OBJECT. A layout that
-    // exists but FAILED to load must surface an error card — never silently
-    // downgrade to the default template (which looked like data loss).
-    const restoreResult = await restoreLayout();
-    if (restoreResult && restoreResult.restored) {
-      updateLayoutBounds();
-    } else if (restoreResult && restoreResult.reason && restoreResult.reason !== "empty") {
-      // Consultant risk #3: never leave a blank sheet. Establish a usable,
-      // printable default and THEN explain what happened — the saved layout is
-      // untouched (nothing re-persists it) and the card offers recovery.
-      await applyDefaultLayout();
-      showRestoreFailureCard(restoreResult);
-    } else {
-      await applyDefaultLayout();
-    }
-    // AC-2 (U-15): one confirmation of which layout the sheet is showing —
-    // "restored" and "there was nothing to restore, here is the default" must
-    // not look the same. Silent on the failure branch above, which the recovery
-    // card owns.
-    if (typeof announceBootRestore === "function") announceBootRestore(restoreResult);
-
-    // BEYOND-18 (track activation-overlay-be18): the transition is OVER — the
-    // sheet is enhanced, the layout is restored or defaulted, and the user
-    // knows which. Dismiss the activation overlay last: it existed to own the
-    // plain-sheet -> enhanced-sheet middle, and dismissing before the restore
-    // announcement would re-open exactly the unowned gap the certification
-    // priced. The node flips to data-be-activation-state="dismissed" (it is
-    // hidden, not removed, so the e2e camera can witness both halves).
-    if (typeof window.dismissActivationOverlay === "function") {
-      window.dismissActivationOverlay(restoreResult);
-    }
-
-    // Default to Shapes Mode OFF
-    toggleShapesMode(false);
+    if (!bootCompleted) return;
 
     // Export for testing and cross-script access
     window.createShape = createShape;

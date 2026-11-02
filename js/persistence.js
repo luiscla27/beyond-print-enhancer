@@ -1149,11 +1149,11 @@ if (typeof window !== "undefined") {
   window.pruneBackups = pruneBackups;
   window.detectLegacyLayout = detectLegacyLayout;
   window.versionNotice = versionNotice;
-  // Test seam (track dead_exports_20260910 — the ONLY reader; KEEP): the boot
-  // path calls the internal showRestoreFailureCard directly, so this alias is
-  // reached by test/unit/persistence_backup.test.js:217 to drive the card
-  // without a full boot. Remove only together with that assertion.
   // AC-2 (U-15) seam: the boot glue in js/main.js (loaded after this file)
-  // resolves it lazily; also the seam the unit suite drives.
+  // resolves restoreFailureCard lazily via window.Persistence, and announces
+  // boot restore via announceBootRestore; both are also the seams the unit suite drives.
+  // window.restoreFailureCard is already published by js/recovery_ui.js (the canonical
+  // assignment for this seam); do NOT re-publish it here under window — that is the
+  // duplication the split guard checks for.
   window.announceBootRestore = announceBootRestore;
 }

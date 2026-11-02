@@ -195,10 +195,14 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // "Refine AI border" row whose click calls `window.BorderRefine.open`. The namespace is READ by
     // `js/` only through that row, which is what keeps the re-rot guard below satisfied without an
     // annotation excuse for the module as a whole.
-    assert.strictEqual(SUMMARY.directExports, 170, "direct `window.*` assignments");
+    // +1 (170 -> 171): refactor_surface_20261101 (Phase 1) adds `window.Boot` — the boot orchestration
+    // seam (`js/boot.js`). ONE binding (`window.Boot = { boot }`), exactly like `window.AiBorder`
+    // and `window.BorderRefine`: the module's only top-level assignment, and its product reader is
+    // `js/main.js`, which calls `await window.Boot.boot()`. Live, with a real product caller.
+    assert.strictEqual(SUMMARY.directExports, 172, "direct `window.*` assignments");
     // 168 -> 169 with the same +1: `window.BorderRefine` is a module export (the module assigns
     // `window.BorderRefine = BorderRefine`, exactly like `window.AiBorder`), not a bare global.
-    assert.strictEqual(SUMMARY.moduleExports, 169, "of which module exports");
+    assert.strictEqual(SUMMARY.moduleExports, 171, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,
