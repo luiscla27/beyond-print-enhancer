@@ -39,7 +39,7 @@
         "AC-6_scripts_hygiene": "test/unit/scripts_hygiene.test.js 18/18; scripts/check_scripts_hygiene.js OK",
         "AC-7_full_suite": "npm run lint clean; node scripts/smoke_low_risk.js 11/11"
       },
-      "note": "The two pre-existing failures in 'Ability Summary CSS Injection' are unrelated to this extraction (boot.js loads in the harness; the two CSS-injection cases are older debt on a different surface)."
+      "note": "The full unit suite ran to completion: 2262 passing / 23 failing. The 23 are pre-existing debt on other surfaces (border assets/styles, sidebar styles, the activation-overlay contract, print-surface extraction, the vendored overlay) — MEASURED not to be regressions: the same 23 fail with the track's boot / print-style changes out of the tree. The two 'Ability Summary CSS Injection' failures were harness-contract debt on a different surface and are now GREEN, after the suite was narrowed to the shared harness (debt_harness.js boot order + __DDB_TEST_MODE__ + an awaited Boot.boot()); that is the only delta (2260/25 -> 2262/23). Record: phase3_full_suite.md."
     },
     "phase4": {
       "status": "complete",

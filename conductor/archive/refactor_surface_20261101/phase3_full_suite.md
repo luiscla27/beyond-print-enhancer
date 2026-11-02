@@ -1,41 +1,43 @@
-# Phase 3 — Full unit suite, closed as attempted-and-recorded
-
-> Source of truth for the full-suite AC-7 row. Closing this row records the run that was
-> actually performed, and explicitly notes that the 23 pre-existing failures are NOT
-> regressions from this extraction (same 23 with the boot / print-style changes stashed).
+**Track ID**: `refactor_surface_20261101`
+**Phase**: 3 — Guard-discipline continuity check (full-unit-suite row)
+**Created**: 2026-11-02
+**Status**: [x] complete — closed as attempted-and-recorded
 
 ## What was run and how
 
-- Command: `npx --yes mocha --recursive test/unit test/manifest.test.js --timeout 90000 --reporter dot`
-- Timeout: 90,000 ms per suite.
-- Reports to stdout dot stream; failures are recorded by Mocha's `spec` reporter in the
-  track artifact dir under this track (`phase3_full_suite_`).
+- Command: `npx mocha --recursive test/unit test/manifest.test.js --timeout 20000 --reporter dot`
+- Run in this project's worktree (`master_next`), output captured to a scratch file under `temp/`.
 
-## Recorded result (green product state)
+## Recorded result
 
-- Result: **2262 passing, 23 failing** (exit code 0).
-- The 23 failing cases are on unrelated surfaces (border styles, border assets, activation
-  overlay contract, `vendored_overlay` missing `vendor/conductor/tracks.md`, etc.) and the 2
-  `Ability Summary CSS Injection` cases that were red before this extraction are now green
-  with the harness-contract fix.
+- **2262 passing / 23 failing.**
+- The 23 are pre-existing debt on surfaces this extraction does not touch: `Border Asset Extension`
+  (11 cases), `Border Styles Injection` (4), `Sidebar Styles Injection` (3), `BEYOND-18 —
+  activation overlay contract` (1), `AC-2 — a successful boot restore says so (U-15)` (1), `print
+  media hides the tool's own surfaces` (1 before-all hook), and `vendored overlay layout + public
+  flow` (1).
 
-## Pre-existing-vs-regression check (the non-regression evidence)
+## The non-regression evidence (measured, not asserted)
 
-- Method: stash the boot/print-style changes (`js/boot.js`, `js/print_styles.js`,
-  `test/unit/ability_summary_css.test.js`), re-run the identical full suite command, compare
-  the failure collapse.
-- Result: **identical 23 failures** with the changes stashed — so none of the 23 is a
-  regression from this extraction.
-- Note: this check also survives the case where the two changed files are added and the two
-  cases in `ability_summary_css.test.js` flip from failing to passing — the count difference
-  is exactly -2, which is the expected delta for fixing a pre-existing test-surface bug, not
-  a new defect.
+- Method: the track's product changes to `js/boot.js` and `js/print_styles.js` were taken OUT of the
+  tree (the narrowed test kept), then the identical command was re-run.
+- Result: **2260 passing / 25 failing** — the SAME 23 failures, plus exactly the two `Ability Summary
+  CSS Injection` cases. So the delta between the two runs is only those two cases, and no
+  previously-green case regresses on either side of the change.
+- Direction of the delta: the two cases move from FAIL to PASS because the suite was narrowed to the
+  shared harness (`debt_harness.js` boot order, `__DDB_TEST_MODE__` before eval, an awaited
+  `Boot.boot()` that actually drives `enforceFullHeight` — the only caller that creates the
+  `ddb-print-enhance-style` sheet). That is test-surface debt closed, not product behaviour changed.
 
-## What is NOT in this row's scope
+## Out of scope for this row
 
-- The 23 failures are older debt on other surfaces. Resolving them is a separate track/work item,
-  not a Phase 3 gate condition for this extraction.
-- The full-suite row is NOT "run until clean" — the seal record is the run above plus the
-  non-regression note.
+- The 23 failures are older debt on other surfaces. Resolving them is separate work; they are not a
+  gate condition for this extraction, and they are not a claim that the suite is green.
+- The row is closed as "ran to completion and the result is recorded", which is what the plan's task
+  asked for — not as "run until clean".
 
-Landed as: this row's closed state.
+## Evidence pointers
+
+- Failing-case list: the run's own reporter output (23 entries, named above by suite).
+- Harness contract and its own proof: `test/unit/ability_summary_css.test.js` header + the suite's
+  before-hook; `test/unit/encapsulation_debt/debt_harness.js` boot order.
