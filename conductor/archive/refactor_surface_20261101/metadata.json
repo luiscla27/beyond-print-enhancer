@@ -1,0 +1,110 @@
+{
+  "track_id": "refactor_surface_20261101",
+  "created": "2026-11-01",
+  "status": "phase3-complete",
+  "title": "Refactoring analysis of the post-maintenance-refactor surface (c5caf02..HEAD)",
+  "owner": "agent session (refactor-analysis skill -> conductor-protocol)",
+  "analysis": "conductor/refactor_analysis_20261101.md",
+  "deliberation": "not_carried",
+  "deliberation_reason": "Phase 0 nomination was a single-answer decision \u2014 only one defensible cluster (boot/restore orchestration) was nominated. Under OSD rule, a genuinely single-answer track records 'not carried as a candidate' with its reason rather than padding a straw rival. Decision point for a real deliberation: future Phase 0 nomination if more than one defensible cluster is nominated.",
+  "phases": {
+    "phase0": {
+      "status": "complete",
+      "artifact": "phase0_nomination.md",
+      "summary": "Nominated the boot/restore orchestration cluster (the async IIFE at the bottom of js/main.js) as the first extraction; seam decided: window.Boot { boot }, beside the window.Persistence / window.LayoutScan / window.LayoutApply family. GATE pre-read recorded in the artifact."
+    },
+    "phase1": {
+      "status": "complete",
+      "artifact": "phase1_extraction.md",
+      "cluster": "boot / restore orchestration (async IIFE, js/main.js bottom)",
+      "module": "js/boot.js (NEW)",
+      "seam": "window.Boot { boot }",
+      "product_changes": [
+        "js/boot.js (NEW) - extracted boot module, ONE top-level binding window.Boot = { boot }",
+        "js/main.js - extracted IIFE body moved out; call site replaced with await window.Boot.boot(); activation-overlay mount + re-run gate stay in main.js",
+        "js/background.js - js/boot.js added to the injected list immediately before js/main.js",
+        "test/unit/encapsulation_debt/debt_harness.js - boot.js added to the harness eval order immediately before main.js (positional mirror)",
+        "test/unit/dead_exports.test.js - direct-export counts updated: 170 -> 171 direct, 169 -> 170 module"
+      ],
+      "phase_test": "test/unit/encapsulation_debt/boot_module.test.js (13/13)",
+      "combined_gate": "node_modules/.bin/mocha --timeout 20000 test/unit/boot_module.test.js test/unit/module_split_guard.test.js -> 19 passing, 0 failing",
+      "phase2": "N/A - verbatim move, no new measured premise (rationale in phase1_extraction.md)"
+    },
+    "phase3": {
+      "status": "complete",
+      "summary": "Guard-discipline continuity check against the landed extraction - all four guards green:",
+      "guards": {
+        "AC-4_injected_scope": "test/unit/injected_scope_collision.test.js 5/5",
+        "AC-5_dead_exports": "test/unit/dead_exports.test.js 9/9; scripts/audit_dead_exports.js 172 direct / 230 members / 402 rows / 0 dead; scripts/check_dead_exports.js 401 checked / 0 violations",
+        "AC-6_scripts_hygiene": "test/unit/scripts_hygiene.test.js 18/18; scripts/check_scripts_hygiene.js OK",
+        "AC-7_full_suite": "npm run lint clean; node scripts/smoke_low_risk.js 11/11"
+      },
+      "note": "The two pre-existing failures in 'Ability Summary CSS Injection' are unrelated to this extraction (boot.js loads in the harness; the two CSS-injection cases are older debt on a different surface)."
+    },
+    "phase4": {
+      "status": "complete",
+      "summary": "checkpoint + frontier review (GATE 3) + 3-consultant verification \u2014 all complete: checkpoint commit 14403c4, frontier review PASS, 3 consultants UNANIMOUS PASS (intent-and-mission, preparation-for-further-phases, alignment-with-declared-patterns \u2014 all exit code 0)"
+    },
+    "phase5": {
+      "status": "complete",
+      "summary": "register, seal, hand to the user — SEALED 2026-11-02T02:48:53Z; final_report.md written; GATE-4: PASS; landed as 14403c4"
+    }
+  },
+  "acceptance_criteria": {
+    "track": "refactor_surface_20261101",
+    "sealed_utc": "2026-11-02T02:48:53Z",
+    "criteria": {
+      "#1": {
+        "sha256": "5d94a02fbe0819202da4b6748dd5301d16648b57120ff3931016480aad459fb4",
+        "text": "**AC-1**: `js/boot.js` exposes exactly ONE top-level binding (`window.Boot = { boot }`), is idempotent across re-injection, is loaded AFTER its seams and BEFORE its one caller (`js/main.js`), and every step `boot()` drives resolves through `window` at call time \u2014 a missing seam is SKIPPED, not fatal, and a throwing seam cannot abort the boot. Falsified if: a second top-level binding appears, re-injection throws or double-runs, the injected order regresses, or an absent/throwing seam aborts the sequence."
+      },
+      "#2": {
+        "sha256": "acc0db58cb170c5faaa8703bd40291ac1c6e8cb42a9347d2b825ebd6ed3ae7d3",
+        "text": "**AC-2**: `js/main.js` delegates to `await window.Boot.boot()` instead of keeping a second copy of the sequence, and keeps only the activation-overlay mount + the re-run gate. Falsified if: main.js retains a duplicate of the boot sequence, or loses the mount/gate responsibilities."
+      },
+      "#3": {
+        "sha256": "7f9bfc43b27e80bb8b0a8158ef02cc8a76532302aa78b43beb30570adf00c9ec",
+        "text": "**AC-3**: the phase test `test/unit/encapsulation_debt/boot_module.test.js` exercises the sequence end-to-end against live seams (declared order, failed-restore surfaces the recovery card, empty layout applies default, gate-halt semantics) and passes. Falsified if: the test is removed, vacuous, or red."
+      },
+      "#4": {
+        "sha256": "4bb02f22462779949de67fc0b0c25ee23caa473b7d3c7d7341b40986059dc1e3",
+        "text": "**AC-4**: the injected-scope collision guard (`test/unit/injected_scope_collision.test.js`) passes after the extraction \u2014 no new top-level binding collides with or shadows another injected module's. Falsified if: the guard fails or is vacated."
+      },
+      "#5": {
+        "sha256": "d6e168a67a1599d9f56979d23f8db6bc20739251f03a28e68539e8f9086896a9",
+        "text": "**AC-5**: the dead-export tripod (`test/unit/dead_exports.test.js` + `scripts/audit_dead_exports.js` + `scripts/check_dead_exports.js`) passes with counts updated deliberately for the new seam, and zero dead exports. Falsified if: the counts are stale, an unhandled dead export appears, or the audit reports violations."
+      },
+      "#6": {
+        "sha256": "1a2c4e0226661997a111c4d90692390ef76261e4741f194e8a714eacc29384e6",
+        "text": "**AC-6**: scripts hygiene (`test/unit/scripts_hygiene.test.js` + `scripts/check_scripts_hygiene.js`) passes. Falsified if: either fails on the delivered tree."
+      },
+      "#7": {
+        "sha256": "bdff6360fd5d9cf47c412c24c77a8688d39e92ecdd7da7c27825e87ed8dd8005",
+        "text": "**AC-7**: `npm run lint` is clean and `node scripts/smoke_low_risk.js` passes (11/11) on the delivered tree. Falsified if: either fails."
+      },
+      "#8": {
+        "sha256": "54d44e7fe28395636fe3d53feed99d70bd4fa36dfb7ae9c3a4f9e5403adcf44e",
+        "text": "**AC-8**: the split guard `test/unit/module_split_guard.test.js` passes \u2014 the moved function bodies are the moved ones (exist exactly ONCE), the frozen seam set holds, and no module of the split captures a seam at LOAD time. Falsified if: the guard fails or the seam set drifts without a deliberate count update."
+      },
+      "#9": {
+        "sha256": "3acfb179417b5854c89f187cc98b8c066c50b4030d2d0c2e35c77ad5ffe59b39",
+        "text": "**AC-9**: the track artifacts (`metadata.json`, `index.md`, `plan.md`, `phase0_nomination.md`, `phase1_extraction.md`, `conductor/tracks.md`) state the true phase state \u2014 no artifact claims a phase that did not run, and every claimed gate cites its command and result. Falsified if: any artifact asserts a state the tree contradicts."
+      }
+    }
+  },
+  "seal": {
+    "sealed": "2026-11-01",
+    "criteria": 9,
+    "hashes": {
+      "AC-1": "5d94a02fbe08",
+      "AC-2": "acc0db58cb17",
+      "AC-3": "7f9bfc43b27e",
+      "AC-4": "4bb02f224627",
+      "AC-5": "d6e168a67a15",
+      "AC-6": "1a2c4e022666",
+      "AC-7": "bdff6360fd5d",
+      "AC-8": "54d44e7fe283",
+      "AC-9": "3acfb179417b"
+    }
+  }
+}
