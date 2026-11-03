@@ -5,6 +5,12 @@
 
 ## Active
 
+### orchestrator_backlog_sweep_20261101 — ...
+
+### ux_feature_fleet_20261029 — ...
+
+## Archived
+
 ### refactor_surface_20261101 — Refactoring analysis of the post-maintenance-refactor surface (c5caf02..HEAD)
 
 - **Created**: 2026-11-01
