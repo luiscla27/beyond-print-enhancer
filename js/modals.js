@@ -319,6 +319,7 @@ function showInputModal(title, message, defaultValue) {
       okBtn.className = "be-modal-ok";
       okBtn.type = "button";
       okBtn.textContent = "Continue";
+      okBtn.setAttribute("aria-label", "Continue");
       ctx.actionsRow.appendChild(okBtn);
       okBtn.addEventListener("click", submit);
 
@@ -409,6 +410,7 @@ function confirmAction(opts) {
       okBtn.className = "be-modal-ok" + (danger ? " be-modal-danger" : "");
       okBtn.type = "button";
       okBtn.textContent = confirmLabel;
+      okBtn.setAttribute("aria-label", confirmLabel);
       ctx.actionsRow.appendChild(okBtn);
       okBtn.addEventListener("click", () => handle.close(true));
     },
@@ -452,6 +454,7 @@ function showFallbackModal(jsonData) {
       copyBtn.className = "be-modal-ok";
       copyBtn.type = "button";
       copyBtn.textContent = "Copy to Clipboard";
+      copyBtn.setAttribute("aria-label", "Copy to Clipboard");
       ctx.actionsRow.appendChild(copyBtn);
       copyBtn.addEventListener("click", copyJson);
     },
@@ -590,6 +593,7 @@ function showEmptyStateDialog(opts) {
       // AC-8: the informational dialog's single control is an affirmative
       // commit, so it uses the ratified commit verb like every other one.
       ok.textContent = o.confirmLabel || "Continue";
+      ok.setAttribute("aria-label", o.confirmLabel || "Continue");
       ctx.actionsRow.appendChild(ok);
       ok.addEventListener("click", () => handle.close(null));
     },

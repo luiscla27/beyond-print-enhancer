@@ -2812,6 +2812,7 @@ Licensed under Blue Oak Model License 1.0.0
           ? window.Icons.svg(svgIcon, 14)
           : icon;
         btn.title = title;
+        btn.setAttribute("aria-label", title);
         if (/delete/i.test(title) && className.indexOf("delete") !== -1) {
           btn.dataset.danger = "true";
         }

@@ -70,6 +70,11 @@ function makeCollapsibleHead(labelText, groupId) {
   caret.setAttribute("aria-hidden", "true");
   hdr.appendChild(caret);
 
+  // AC-5 (accessibility_improvement_20261103, Phase 1): the tray head now also carries
+  // an explicit aria-label mirroring the visible label text, so the accessible name is
+  // deterministic for a screen reader rather than relying on the child span's text content.
+  hdr.setAttribute("aria-label", labelText);
+
   hdr.addEventListener("click", () => {
     // The group is the header's parent (a tray or a band). Toggling the class is the whole state.
     const group = hdr.parentElement;
@@ -320,6 +325,8 @@ function createControls() {
   templatesBtn.id = "be-btn-templates";
   templatesBtn.textContent = "TEMPLATES";
   templatesBtn.className = "be-ctl-chip be-ctl-templates";
+  templatesBtn.title = "TEMPLATES";
+  templatesBtn.setAttribute("aria-label", "TEMPLATES");
   templatesBtn.onclick = () => window.showPremadeCatalogModal();
 
   // ---- Tray-based IA (round 1/6): header + LAYOUT/OUTPUT/HELP trays ----
@@ -427,6 +434,7 @@ function createControls() {
     // AC-5: the full label always survives in the tooltip, so a clipped label
     // never loses meaning.
     btn.title = btnInfo.title || btnInfo.label;
+    btn.setAttribute("aria-label", btnInfo.title || btnInfo.label);
     btn.addEventListener("click", async (e) => {
       window.safeLog?.("log", `[DDB Print] Button Clicked: ${btnInfo.label}`);
       try {
@@ -551,6 +559,7 @@ function createControls() {
     resetBtn.style.padding = "0";
     resetBtn.style.lineHeight = "1";
     resetBtn.title = `Reset ${labelStr}`;
+    resetBtn.setAttribute("aria-label", `Reset ${labelStr}`);
 
     resetBtn.addEventListener("click", async () => {
       slider.value = defaultValue.toString();
@@ -633,6 +642,7 @@ function createControls() {
   colorPickerBtn.style.padding = "4px 8px";
   colorPickerBtn.style.width = "100%";
   colorPickerBtn.className = "be-modal-ok"; // Use consistent style
+  colorPickerBtn.setAttribute("aria-label", "Color Picker");
   sliders.hue.row.appendChild(colorPickerBtn);
 
   const huePicker = document.createElement("div");
@@ -801,6 +811,7 @@ function createControls() {
 
   const acceptBtn = document.createElement("button");
   acceptBtn.textContent = "Continue";
+  acceptBtn.setAttribute("aria-label", "Continue");
   acceptBtn.className = "be-modal-ok";
   acceptBtn.style.fontSize = "10px";
   acceptBtn.style.padding = "4px";
@@ -826,6 +837,7 @@ function createControls() {
   // O-2: shortened so it cannot wrap in the tray; the full text is the tooltip.
   resetAllBtn.textContent = "Reset Filters";
   resetAllBtn.title = "Reset All Filters (excl. Hue)";
+  resetAllBtn.setAttribute("aria-label", "Reset All Filters (excl. Hue)");
   resetAllBtn.className = "be-modal-ok"; // Reusing existing style
   resetAllBtn.style.marginTop = "8px";
   resetAllBtn.style.width = "100%";
@@ -1279,6 +1291,7 @@ function showHelpSurface() {
       ok.type = "button";
       ok.className = "be-modal-ok be-help-close";
       ok.textContent = "Got it";
+      ok.setAttribute("aria-label", "Got it");
       ctx.actionsRow.appendChild(ok);
       ok.addEventListener("click", () => handle.close(null));
       return null;
@@ -1452,6 +1465,7 @@ function showPrintSettingsSurface() {
       ok.type = "button";
       ok.className = "be-modal-ok be-print-settings-close";
       ok.textContent = "Got it";
+      ok.setAttribute("aria-label", "Got it");
       ctx.actionsRow.appendChild(ok);
       ok.addEventListener("click", () => handle.close(null));
       return null;
@@ -1517,6 +1531,7 @@ function showTurnOffSurface() {
       ok.className = "be-modal-ok";
       ok.id = "be-turn-off-confirm";
       ok.textContent = "Turn off";
+      ok.setAttribute("aria-label", "Turn off the print enhancer for this page");
       ok.addEventListener("click", async () => {
         handle.close(null);
         // SAVE FIRST, and tolerate a failed save: the user asked to turn the tool off, so refusing

@@ -1,0 +1,54 @@
+{
+  "track_id": "sidebar_controls_improvement_20261103",
+  "created": "2026-11-03",
+  "status": "draft",
+  "title": "Sidebar Controls improvement — raise criterion from 82 to 90+ (UX scoring matrix)",
+  "owner": "agent session (to be assigned)",
+  "deliberation": "required",
+  "deliberation_reason": "New track created per UX scoring matrix gap analysis; multiple defensible approaches exist (control density, grouping, discoverability, responsive behavior). Must run OSD before committing to a cluster.",
+  "analysis": "vendor/.reasonix/skills/ux-scoring-matrix/matrix.json",
+  "phases": {
+    "phase0": {
+      "status": "pending",
+      "summary": "Nominate the Sidebar Controls cluster(s) to improve. Candidates: (a) control density/progressive disclosure — collapse advanced controls behind 'More' or accordion, reduce initial cognitive load, (b) logical grouping — visually group related controls (layout, print, appearance, advanced) with clear section headers, (c) discoverability — tooltip onboarding, empty-state hints, keyboard shortcut hints, (d) responsive behavior — sidebar adapts to narrow viewports, controls reflow without horizontal scroll. Run OSD to pick one cluster for Phase 1."
+    },
+    "phase1": {
+      "status": "pending",
+      "summary": "Implement the nominated Sidebar Controls improvement cluster. Likely extends js/controls_panel.js or js/properties_panel.js behind existing window.Controls or window.Properties seam. Must pass: eslint clean, npm run lint, all existing unit tests (no regressions), controls_panel.test.js (63 cases) and properties_panel.test.js (38 cases) stay green."
+    },
+    "phase2": {
+      "status": "pending",
+      "summary": "N/A unless new measured premise (e.g., task completion time metric validated)."
+    },
+    "phase3": {
+      "status": "pending",
+      "summary": "Guard-discipline continuity: injected-scope collision, dead-exports, scripts hygiene, full suite, lint, smoke — all green. Add Sidebar Controls regression test(s) for the new capability."
+    },
+    "phase4": {
+      "status": "pending",
+      "summary": "Checkpoint + frontier review + consultant verification (3 consultants)."
+    },
+    "phase5": {
+      "status": "pending",
+      "summary": "Register, seal, hand-over. Target: Sidebar Control Quality criterion >= 90 on next UX scoring run."
+    }
+  },
+  "context": {
+    "ux_matrix_origin": "Codex-Sol consultation 2026-10-29 (gpt-5.6-sol)",
+    "current_rating": 82,
+    "target_rating": 90,
+    "weight": 8,
+    "gap_analysis": "Sidebar control efficiency rates 82. Likely gaps: control density (too many visible at once), grouping (related controls not visually grouped), discoverability (hidden features), responsive behavior (narrow viewport handling).",
+    "fleet_certification": "ux_feature_fleet_20261029 completed 18/18 tracks; track-03 (controls) at 153e2df, track-12 (properties_panel) at 9fa4cdc",
+    "relevant_files": [
+      "js/controls_panel.js",
+      "js/properties_panel.js",
+      "test/unit/encapsulation_debt/controls_panel.test.js",
+      "test/unit/encapsulation_debt/properties_panel.test.js",
+      "js/main.js"
+    ],
+    "handoff_instructions": "Fresh session: read this spec + matrix.json + controls_panel.test.js + properties_panel.test.js + js/controls_panel.js + js/properties_panel.js. Run OSD (subspace-deliberation skill) to nominate Phase 1 cluster. Then execute Phase 1 improvement per conductor-protocol."
+  },
+  "criteria_sealed": false,
+  "criteria_note": "Draft track: acceptance criteria live in spec.md as [AC-1]..[AC-4] and are NOT sealed. Seal at Phase 5 with `python housekeeping_guard.py seal --track sidebar_controls_improvement_20261103`."
+}

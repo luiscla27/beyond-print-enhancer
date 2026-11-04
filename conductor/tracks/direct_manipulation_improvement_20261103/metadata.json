@@ -1,0 +1,54 @@
+{
+  "track_id": "direct_manipulation_improvement_20261103",
+  "created": "2026-11-03",
+  "status": "draft",
+  "title": "Direct Manipulation improvement — raise criterion from 80 to 90+ (UX scoring matrix)",
+  "owner": "agent session (to be assigned)",
+  "deliberation": "required",
+  "deliberation_reason": "New track created per UX scoring matrix gap analysis; highest weight (12%) among lower-rated items. Multiple defensible approaches exist (drag initiation threshold, drop targeting, visual feedback, keyboard alternative). Must run OSD before committing to a cluster.",
+  "analysis": "vendor/.reasonix/skills/ux-scoring-matrix/matrix.json",
+  "phases": {
+    "phase0": {
+      "status": "pending",
+      "summary": "Nominate the Direct Manipulation cluster(s) to improve. Candidates: (a) drag initiation threshold — reduce accidental drags, add press-delay or distance threshold, (b) drop targeting — improve drop zone visualization, snap-to-slot, clearer valid/invalid targets, (c) visual feedback during drag — ghost preview, section outline, page-break indicators, (d) keyboard alternative — full drag-reorder via keyboard (arrow keys + modifier), meeting accessibility requirements. Run OSD to pick one cluster for Phase 1."
+    },
+    "phase1": {
+      "status": "pending",
+      "summary": "Implement the nominated Direct Manipulation improvement cluster. Likely extends js/dnd.js or js/controls_panel.js behind existing window.DND or window.Controls seam. Must pass: eslint clean, npm run lint, all existing unit tests (no regressions), dnd.test.js (33 cases) and controls_panel.test.js (63 cases) stay green."
+    },
+    "phase2": {
+      "status": "pending",
+      "summary": "N/A unless new measured premise (e.g., drag latency metric validated)."
+    },
+    "phase3": {
+      "status": "pending",
+      "summary": "Guard-discipline continuity: injected-scope collision, dead-exports, scripts hygiene, full suite, lint, smoke — all green. Add Direct Manipulation regression test(s) for the new capability."
+    },
+    "phase4": {
+      "status": "pending",
+      "summary": "Checkpoint + frontier review + consultant verification (3 consultants)."
+    },
+    "phase5": {
+      "status": "pending",
+      "summary": "Register, seal, hand-over. Target: Direct Manipulation criterion >= 90 on next UX scoring run."
+    }
+  },
+  "context": {
+    "ux_matrix_origin": "Codex-Sol consultation 2026-10-29 (gpt-5.6-sol)",
+    "current_rating": 80,
+    "target_rating": 90,
+    "weight": 12,
+    "gap_analysis": "Highest weight (12%) among the lower-rated items. Drag-and-reorder in-sheet experience has friction: initiation threshold, drop targeting, visual feedback during drag, keyboard alternative.",
+    "fleet_certification": "ux_feature_fleet_20261029 completed 18/18 tracks; track-03 (controls) at 153e2df, track-04 (dnd) at f167c3f",
+    "relevant_files": [
+      "js/dnd.js",
+      "js/controls_panel.js",
+      "test/unit/dnd.test.js",
+      "test/unit/encapsulation_debt/controls_panel.test.js",
+      "js/main.js"
+    ],
+    "handoff_instructions": "Fresh session: read this spec + matrix.json + dnd.test.js + controls_panel.test.js + js/dnd.js + js/controls_panel.js. Run OSD (subspace-deliberation skill) to nominate Phase 1 cluster. Then execute Phase 1 improvement per conductor-protocol."
+  },
+  "criteria_sealed": false,
+  "criteria_note": "Draft track: acceptance criteria live in spec.md as [AC-1]..[AC-4] and are NOT sealed. Seal at Phase 5 with `python housekeeping_guard.py seal --track direct_manipulation_improvement_20261103`."
+}

@@ -1,0 +1,12 @@
+{
+  "track_id": "accessibility_improvement_20261103",
+  "question": "which accessibility cluster (ARIA remediation vs Focus management) raises the Accessibility criterion from 75 -> 90+ with the fewest new surface concepts, given the UX scoring matrix gap analysis?",
+  "summary": "OSD nomination (2026-11-03): 2 candidates (A: ARIA remediation; B: Focus management). A ADOPTED for Phase 1 (weighted 4.2/5; targets screen-reader gap; additive attributes; low regression risk). B REJECTED for Phase 1 (3.6/5; behavioral focus changes; regression risk in drag-reorder + modals; core-flow accessibility gate already green). C (contrast) and D (screen-reader labels) dispositions recorded in the nomination, not in this 2-candidate OSD \u2014 C deferred to contrast track, D absorbed into A. Note: Phase 0 nomination later reconciled the spec's ~30-element estimate down to the measured surface.",
+  "candidates": [
+    "candidate_a.md",
+    "candidate_b.md"
+  ],
+  "decision": "candidate_a",
+  "decision_summary": "ADOPTED: Candidate A (ARIA remediation) for Phase 1. REJECTED (Phase 1): Candidate B (Focus management). See evaluation_matrix.md and counterfactual_ledger.md.",
+  "matrix_sha256": "see vendor/.reasonix/skills/ux-scoring-matrix/matrix.json"
+}

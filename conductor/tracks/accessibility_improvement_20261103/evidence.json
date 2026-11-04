@@ -1,0 +1,35 @@
+{
+  "track_id": "accessibility_improvement_20261103",
+  "evidence_attached": true,
+  "evidence": {
+    "origin": "temp/ux_matrix/ evidence store, scored 2026-10-26, re-verified + SC-C2 rescored 2026-10-27",
+    "primary_evidence_file": "temp/ux_matrix/evidence_current.json",
+    "baseline_evidence_file": "temp/ux_matrix/evidence_baseline_corrected.json",
+    "score_run_record": "temp/ux_matrix/score_run_20261029.json",
+    "matrix_source": "temp/e2e_test_matrix_scored.md",
+    "runner": "python vendor/.reasonix/skills/ux-scoring-matrix/run.py score --evidence temp/ux_matrix/evidence_current.json",
+    "live_recompute": {
+      "raw_score": 83.92,
+      "gate_caps": {"zero_click": 84, "data_safety": 100, "accessibility": 100},
+      "severity_penalties": {"critical": 0, "major": -4, "minor": -2, "total": -6},
+      "final_score": 78,
+      "score_band": "Good",
+      "note": "This is the live run from evidence_current.json against run.py. It is the machine-verifiable form of the current score."
+    },
+    "current_rating_proof": {
+      "criterion": "accessibility",
+      "rating": 62,
+      "evidence": "evidence_current.json criterion_ratings.accessibility = 62",
+      "derived_from": "mean of mapped scenario dimensions SC-A1, SC-A2, SC-A3, SC-B1, SC-C1, SC-C2, SC-C3, SC-D1, SC-H1, SC-H3, SC-G1, SC-J2 (x20 scale, per score_evidence_20261029.json scenario_dimension_map)",
+      "anchor_meaning": "75 anchor = 'Core flows meet accessibility expectations'. Current 62 is below that anchor.",
+      "why_low": "SC-H3 (high contrast) is scored 1.0 and pulls the accessibility mean down; the other accessibility-mapped scenarios are mid-to-high. The track gap analysis is consistent with this: core flows work, finer inclusive-interaction details need polish."
+    },
+    "gap_between_baseline_and_current": {
+      "accessibility_baseline_corrected": 60,
+      "accessibility_current": 62,
+      "accessibility_delta": 2,
+      "note": "Accessibility barely moved (60 to 62). The quick-wins landings that moved the matrix were mostly sidebar_control_quality, layer_visibility, and ai_arrange; accessibility was not a primary beneficiary."
+    },
+    "important_caveat": "This evidence is an AUTOMATED derivation from an e2e scenario matrix scaled x20 onto the 1-100 anchored matrix. It is NOT a human usability study (none exists on this tree) and it does NOT measure the matrix's zero-click gate on 10 representative sheets. The score_run_20261029.json disposition records this explicitly. A fresh session inherits the number as the current best evidence, not as a vetted usability-study score."
+  }
+}

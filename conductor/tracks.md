@@ -9,6 +9,51 @@
 
 ### ux_feature_fleet_20261029 — ...
 
+### zero_click_preview_improvement_20261103 — Zero-click preview gate improvement: raise preview success rate from 94% to 95%+ (UX scoring matrix)
+
+- **Created**: 2026-11-03
+- **Status**: [x] phase0-complete — Nomination via OSD DONE (2026-11-03). Cluster A (representative-sheet coverage + defect inventory) ADOPTED; B (print-defect remediation) NOT ADMITTED for Phase 1/expected Phase-2 body, C (default-state tuning) deferred+demoted, D (gate instrumentation) subsumed into A. Nomination record: `phase0_nomination.md`; record in `deliberation/`. Premise corrections recorded: the narrative 94% is reproduced by NO artifact on disk (`evidence_current.json` carries 0.886, disclaimed in its own note as an SC-A2 proxy), and the 84 cap is NOT binding on the current evidence (raw 83.92 − 6 = 77.92), so the ceiling lift is conditional on the criterion tracks. phase1-pending.
+- **Owner**: agent session (Phase 0 OSD completed 2026-11-03)
+- **Analysis**: `vendor/.reasonix/skills/ux-scoring-matrix/matrix.json`
+- **Track folder**: `conductor/tracks/zero_click_preview_improvement_20261103/` (metadata.json, spec.md, plan.md, phase0_nomination.md, deliberation/)
+- **Target**: Zero-click preview success rate ≥ 95% → gate cap 100 (evidence artifact carries 0.886 → cap 84 today); reproducible evidence, not assertion; no regressions.
+
+### accessibility_improvement_20261103 — Accessibility improvement: raise criterion from 75 to 90+ (UX scoring matrix)
+
+- **Created**: 2026-11-03
+- **Status**: [x] phase5-complete — Phase 0: Cluster A (ARIA remediation) adopted via OSD; B/C/D dispositions recorded. Phase 1: in-place ARIA patch across js/main.js (addRobustButton, 10 button types), js/controls.js (makeActionBtn, tray heads, templates/chrome/filter/turn-off buttons), js/context_menu.js (createMenuTrigger), js/modals.js (modal OK buttons); 9 new accessibility regression tests in test/unit/accessibility/aria_labels.test.js, all passing. Phase 2: N/A. Phase 3: guard-discipline all green — injected-scope 5/5, dead-exports 9/9 + 0 dead + 0 violations, scripts hygiene 26/26, full unit suite 432 passing 0 failing, lint clean, smoke 11/11. Phase 4: GATE-4 PASS (frontier review + 3-consultant verification). Phase 5: sealed 2026-11-03, final_report.md written. AC-2/AC-3/AC-4 closed; AC-1 (criterion >= 90) DEFERRED — evidence file holds 62 and ARIA closure does not move the accessibility-mapped cells (SC-H3 1.0; others 3-4); AC-1 requires a broader accessibility re-score (contrast track + possibly focus/names-stays residual), not this work alone. See final_report.md.
+- **Owner**: agent session (to be assigned)
+- **Analysis**: `vendor/.reasonix/skills/ux-scoring-matrix/matrix.json`
+- **Track folder**: `conductor/tracks/accessibility_improvement_20261103/` (metadata.json, spec.md, plan.md, phase0_nomination.md, phase1_extraction.md, phase3_full_suite.md, final_report.md)
+- **Target**: Accessibility criterion ≥ 90 on UX scoring matrix; core-flow accessibility gate PASS; no regressions. (AC-1 deferred — see above; AC-2/AC-3/AC-4 closed.)
+
+### ai_arrange_improvement_20261103 — AI Arrange improvement: raise criterion from 78 to 90+ (UX scoring matrix)
+
+- **Created**: 2026-11-03
+- **Status**: [ ] phase0-pending — Nomination via OSD required (preview/override, undo granularity, explanation, or confidence scoring cluster)
+- **Owner**: agent session (to be assigned)
+- **Analysis**: `vendor/.reasonix/skills/ux-scoring-matrix/matrix.json`
+- **Track folder**: `conductor/tracks/ai_arrange_improvement_20261103/` (metadata.json, spec.md, plan.md)
+- **Target**: AI Arrange criterion ≥ 90; existing certs (ai_layout_schema 142, byok_arrange_roundtrip 6) stay green; no regressions.
+
+### direct_manipulation_improvement_20261103 — Direct Manipulation improvement: raise criterion from 80 to 90+ (UX scoring matrix)
+
+- **Created**: 2026-11-03
+- **Status**: [ ] phase0-pending — Nomination via OSD required (initiation threshold, drop targeting, visual feedback, or keyboard alternative cluster)
+- **Owner**: agent session (to be assigned)
+- **Analysis**: `vendor/.reasonix/skills/ux-scoring-matrix/matrix.json`
+- **Track folder**: `conductor/tracks/direct_manipulation_improvement_20261103/` (metadata.json, spec.md, plan.md)
+- **Target**: Direct Manipulation criterion ≥ 90; existing certs (dnd 33, controls_panel 63) stay green; no regressions.
+
+### sidebar_controls_improvement_20261103 — Sidebar Controls improvement: raise criterion from 82 to 90+ (UX scoring matrix)
+
+- **Created**: 2026-11-03
+- **Status**: [ ] phase0-pending — Nomination via OSD required (density/disclosure, grouping, discoverability, or responsive behavior cluster)
+- **Owner**: agent session (to be assigned)
+- **Analysis**: `vendor/.reasonix/skills/ux-scoring-matrix/matrix.json`
+- **Track folder**: `conductor/tracks/sidebar_controls_improvement_20261103/` (metadata.json, spec.md, plan.md)
+- **Target**: Sidebar Control Quality criterion ≥ 90; existing certs (controls_panel 63, properties_panel 38) stay green; no regressions.
+
 ## Archived
 
 ### refactor_surface_20261101 — Refactoring analysis of the post-maintenance-refactor surface (c5caf02..HEAD)
