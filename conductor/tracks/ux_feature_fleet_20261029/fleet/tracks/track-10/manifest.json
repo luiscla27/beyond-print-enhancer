@@ -1,0 +1,27 @@
+{
+ "track_id": "track-10",
+ "code_count": 1,
+ "component_keys": [
+  "js/persistence"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/persistence.js"
+ ],
+ "units": [
+  {
+   "id": "feature_07_persistence",
+   "name": "Persistence (Save/Load + Layout Serialization)",
+   "description": "User save/load flows, DOM<->layout-data serialization, applyLayout, custom shapes/borders, spell cache",
+   "files": [
+    "js/persistence.js",
+    "js/storage.js"
+   ],
+   "component_key": "js/persistence",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/persistence.js",
+   "test_paths": [
+    "test/unit/persistence.test.js",
+    "test/browser_e2e/byok_settings_persistence_types.spec.js"
+   ]
+  }
+ ]
+}

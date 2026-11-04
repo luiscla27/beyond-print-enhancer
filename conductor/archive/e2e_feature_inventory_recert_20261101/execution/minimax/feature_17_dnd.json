@@ -1,0 +1,117 @@
+{
+ "feature": "feature_17_dnd",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "affordance_drag_hover_shadows.spec.js",
+   "file_id": "458223083668007",
+   "mp4_bytes": 1308157,
+   "upload_response": {
+    "file": {
+     "file_id": 458223083668007,
+     "bytes": 1308157,
+     "created_at": 1793424613,
+     "filename": "affordance_drag_hover_shadows.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "drag_glow_layers.spec.js",
+   "file_id": "458224877404688",
+   "mp4_bytes": 812517,
+   "upload_response": {
+    "file": {
+     "file_id": 458224877404688,
+     "bytes": 812517,
+     "created_at": 1793424616,
+     "filename": "drag_glow_layers.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "drag_ux_visual_capture.spec.js",
+   "file_id": "458225867821585",
+   "mp4_bytes": 1629183,
+   "upload_response": {
+    "file": {
+     "file_id": 458225867821585,
+     "bytes": 1629183,
+     "created_at": 1793424619,
+     "filename": "drag_ux_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "affordance_drag_hover_shadows.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\affordance_drag_hover_shadows.webm",
+   "webm_bytes": 4031242
+  },
+  {
+   "suite": "drag_glow_layers.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_glow_layers.webm",
+   "webm_bytes": 2963235
+  },
+  {
+   "suite": "drag_ux_visual_capture.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm",
+   "webm_bytes": 4678026
+  }
+ ],
+ "usage": {
+  "total_tokens": 129144,
+  "total_characters": 0,
+  "prompt_tokens": 127740,
+  "completion_tokens": 1404,
+  "completion_tokens_details": {
+   "reasoning_tokens": 406
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `affordance_drag_hover_shadows`\n\n**Observed:**\n\n- The browser loads the D&D Beyond character sheet for \u201cCorvo Saggio.\u201d\n- The extension UI appears:\n  - A left **Beyond Print** panel with Layout, Output, Print, Print settings, and Save options.\n  - A right **Layer Management** panel listing **22 sections**, named sections such as Corvo Saggio, Health, Box 2, Ability 4, Features & Traits, and several generic \u201cSection\u201d entries.\n  - A **Shapes (1)** area with print/screen-only options, shape thumbnails, and an **Add Shape** button.\n- A toast reads **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- After the view changes to the default, pale character-sheet layout, the extension exposes black hover toolbars on multiple sheet regions. These toolbars include small action icons positioned near sheet elements.\n- A subsequent toast reads **\u201cShape: Default Hidden.\u201d**\n- The sheet is scrolled through several areas while the extension panels remain fixed. Hover action bars appear over different regions, including the character portrait, initiative area, defenses/conditions area, upper statistics, and hit-point area.\n- The sheet content visibly moves vertically as the page is scrolled, while the left and right extension panels stay in place.\n- Several black action bars appear to reposition with their associated sheet regions as the view changes. Some small red pointer/ghost-like marks are briefly visible during these interactions.\n\n**Not visibly demonstrated:**\n\n- No clear before/after pair establishes that a section wrapper was actually dragged to a new position.\n- A nine-dot handle and its exact rail-slot placement are not consistently distinguishable at this sampling.\n- No visible locked-layer hover test, click-versus-drag test, or decisive proof of the asserted hue isolation.\n\n**Video status:** PARTIAL \u2014 hover affordances and their interaction with the sheet are visible, but the complete drag contract is not visibly established.\n\n---\n\n### Video 2 \u2014 `drag_glow_layers`\n\n**Observed:**\n\n- The browser again loads the \u201cCorvo Saggio\u201d D&D Beyond character sheet.\n- The extension appears near the end of the video:\n  - The left **Beyond Print** panel contains Layout controls such as Load, Reset to Default, Manage Clones, Add Shape, and Manage Compact.\n  - The right **Layer Management** panel lists **22 sections** and **one shape**.\n  - The sheet switches to the pale default template, and a toast states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The default character-sheet layout is shown behind the panels, including the portrait, ability list, initiative and action areas, defenses/conditions, and hit points.\n\n**Not visibly demonstrated:**\n\n- No visible pointer drag is armed or completed.\n- No wrapper background versus action-bar/button interaction is shown.\n- No locked-layer styling or drag safety is visibly exercised.\n- No hover/active glow styling is visibly demonstrated.\n- No visible minimization and restoration of the Layer Management panel occurs in this video.\n\n**Video status:** NOT-VISIBLE \u2014 the panel is present, but the asserted drag/glow interactions are not witnessed in the sampled frames.\n\n---\n\n### Video 3 \u2014 `drag_ux_visual_capture`\n\n**Observed:**\n\n- The video loads the same D&D Beyond character sheet and then opens the extension.\n- The **Beyond Print** panel is visible on the left and **Layer Management** on the right, with **22 sections**, **one shape**, section visibility controls, shape thumbnails, and **Add Shape**.\n- A toast again states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The default sheet is displayed and the page scrolls between upper, middle, and lower character-sheet sections.\n- The extension panels remain fixed while the sheet content moves behind them.\n- The Layer Management panel continues to show its section and shape lists throughout.\n\n**Not visibly demonstrated:**\n\n- No custom drag ghost is visible.\n- No mouse-pointer drag, touch-pointer drag, or pointer-type distinction is shown.\n- No gold alignment guides or zero-jump snapping are visible.\n- No autosave toast appears after a drop.\n- No locked-layer dimmed state is shown.\n- No drop is visibly clamped at the sheet origin, and no negative-position check is shown.\n- No source-restored/wrapper-moved before-and-after pair is visible.\n\n**Video status:** NOT-VISIBLE \u2014 scrolling and panel presence are visible, but the visual-capture suite\u2019s drag interactions are not witnessed.\n\nAcross the three videos, the extension and its layer controls are visibly present, and the first video shows hover action affordances on the real sheet. However, the sampled evidence does not visibly complete the required mouse/touch dragging, snapping, save, locking, and origin-clamping interactions end to end.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: affordance_drag_hover_shadows.spec.js, drag_glow_layers.spec.js, drag_ux_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424637098
+}

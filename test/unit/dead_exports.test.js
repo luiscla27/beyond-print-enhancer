@@ -157,8 +157,52 @@ describe("AC-1/AC-2 — the audit classifies every export on both surfaces", fun
     // a seam with no outside reader is what the re-rot guard below deletes. `currentExtractionIds`
     // is also NOT a `window.*` of its own; it joins the `LayoutScan` namespace (a member, counted
     // below), which is the surface js/main.js already destructures.
-    assert.strictEqual(SUMMARY.directExports, 163, "direct `window.*` assignments");
-    assert.strictEqual(SUMMARY.moduleExports, 162, "of which module exports");
+    // +1 (163 -> 164): track byok_svg_borders_20260927, Phase 2, adds `window.AiBorder` — the
+    // AC-9 choke point (`renderBorderSvg`) plus the AC-7 reuse library, a namespace with real
+    // `js/` readers (js/layout_apply.js, js/section_cloning.js, js/layout_scan.js), which is why
+    // this is a count bump with no annotation excuse. It is ONE seam for the whole module
+    // deliberately: the module's ten members are `AiBorder.*` (counted as namespace members
+    // below), because publishing each as its own `window.*` would multiply the re-rot surface
+    // without adding a reader.
+    // +3 (164 -> 167): BEYOND-18 (track activation-overlay-be18) adds js/activation_overlay.js
+    // with three direct seams. `mountActivationOverlay` and `dismissActivationOverlay` are the
+    // two halves of the certified activation-transition affordance — main.js calls both by name
+    // (mount before Storage.init(), dismiss after announceBootRestore + on the re-run-prompt
+    // refusal path), so both are `live` with product readers. `window.__DDBActivationOverlay`
+    // is the module's own idempotence guard surface (the IIFE re-entering on re-injection reads
+    // it back) plus the harness's handle for the closure camera assertions in
+    // test/browser_e2e/beyond18_activation_overlay_repro.spec.js — a seam whose reader exists
+    // in this repo's own e2e, not only in tests, because the filing's acceptance criteria make
+    // the overlay's on-camera presence and dismissal the closure evidence.
+    // +2 (167 -> 169): BEYOND-19 (track state-feedback-be19) adds `window.showProgress` and
+    // `window.clearProgress` — the SHARED in-flight marker, published from js/main.js beside
+    // `showFeedback` because they are the same kind of seam (a non-modular caller reaching a
+    // surface it resolves at call time). Both are `live` with real product readers in
+    // js/controls.js: the Print control raises/clears the marker around an unchanged
+    // `window.print()`, and the filter commit raises it around the store write. No annotation
+    // excuse applies to either — a seam with only a test reader would be deleted by the re-rot
+    // guard below, so shipping them was conditional on wiring both call sites, which is what the
+    // track did. They are TWO seams and not one namespace deliberately: `.be-progress` is a single
+    // DOM node per operation, so mount and clear are paired calls at different places in the same
+    // handler, not a member lookup on a shared object.
+    // +1 (169 -> 170): BEYOND-10 (track beyond10_ai_border_refine_loop) adds `window.BorderRefine` —
+    // the AI border refinement LOOP's surface. ONE namespace rather than seven `window.*` seams for
+    // exactly the reason `window.AiBorder` above is one: the loops members (`open`, `close`,
+    // `applyAdjust`, `compare`, `revert`, `getState`, and the two step vocabularies) are reached as
+    // `BorderRefine.*` from the module's own DOM handlers and from the orchestration surfaces, and
+    // publishing each as its own global would multiply the re-rot surface without adding a reader.
+    // Its product reader is real and shipped in the same commit: `js/properties_panel.js` renders a
+    // "Refine AI border" row whose click calls `window.BorderRefine.open`. The namespace is READ by
+    // `js/` only through that row, which is what keeps the re-rot guard below satisfied without an
+    // annotation excuse for the module as a whole.
+    // +1 (170 -> 171): refactor_surface_20261101 (Phase 1) adds `window.Boot` — the boot orchestration
+    // seam (`js/boot.js`). ONE binding (`window.Boot = { boot }`), exactly like `window.AiBorder`
+    // and `window.BorderRefine`: the module's only top-level assignment, and its product reader is
+    // `js/main.js`, which calls `await window.Boot.boot()`. Live, with a real product caller.
+    assert.strictEqual(SUMMARY.directExports, 172, "direct `window.*` assignments");
+    // 168 -> 169 with the same +1: `window.BorderRefine` is a module export (the module assigns
+    // `window.BorderRefine = BorderRefine`, exactly like `window.AiBorder`), not a bare global.
+    assert.strictEqual(SUMMARY.moduleExports, 171, "of which module exports");
     assert.strictEqual(SUMMARY.hostProperties, 1, "of which host-object properties");
     assert.ok(
       SUMMARY.namespaceMembers > 50,

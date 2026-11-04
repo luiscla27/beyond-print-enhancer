@@ -3,14 +3,14 @@
   "provenance": {
     "produced_by": "node scripts/gen_spec_inventory.js",
     "collects_with": "mocha test/browser_e2e --recursive --dry-run --reporter json",
-    "measured_at": "2026-09-23",
+    "measured_at": "2026-11-01",
     "tracked_by": "vendor/conductor/tracks/gate_coverage_20260912 (Phase 0 deliverable; asserted by AC-3)",
     "pending_is_runtime": "A dry run CANNOT see the pending set: the flag-gated capture/probe specs skip at RUNTIME (this.skip() inside the test body), so `stats.pending` is 0 here — MEASURED. The pending expectation lives beside this file in spec_pending.json, read from a REAL run."
   },
   "expected": {
-    "loaded_js_files": 81,
-    "spec_files": 75,
-    "tests_collected": 330
+    "loaded_js_files": 93,
+    "spec_files": 87,
+    "tests_collected": 448
   },
   "spec_files": [
     {
@@ -26,6 +26,14 @@
       "tests": 13
     },
     {
+      "file": "beyond18_activation_overlay_capture.spec.js",
+      "tests": 2
+    },
+    {
+      "file": "beyond18_activation_overlay_repro.spec.js",
+      "tests": 3
+    },
+    {
       "file": "border_picker_base.spec.js",
       "tests": 4
     },
@@ -38,12 +46,24 @@
       "tests": 7
     },
     {
+      "file": "byok_border_gallery.spec.js",
+      "tests": 66
+    },
+    {
+      "file": "byok_border_roundtrip.spec.js",
+      "tests": 7
+    },
+    {
       "file": "byok_relay.spec.js",
-      "tests": 11
+      "tests": 14
     },
     {
       "file": "byok_settings_persistence.spec.js",
       "tests": 6
+    },
+    {
+      "file": "byok_settings_persistence_types.spec.js",
+      "tests": 5
     },
     {
       "file": "byok_settings_storage.spec.js",
@@ -123,7 +143,11 @@
     },
     {
       "file": "layer_print_visibility.spec.js",
-      "tests": 4
+      "tests": 14
+    },
+    {
+      "file": "layer_reorder_keyboard.spec.js",
+      "tests": 7
     },
     {
       "file": "lock_handle_visibility.spec.js",
@@ -206,6 +230,10 @@
       "tests": 3
     },
     {
+      "file": "print_styles.spec.js",
+      "tests": 5
+    },
+    {
       "file": "properties_panel.spec.js",
       "tests": 6
     },
@@ -254,6 +282,10 @@
       "tests": 3
     },
     {
+      "file": "settings_export_import.spec.js",
+      "tests": 6
+    },
+    {
       "file": "shape_decoration.spec.js",
       "tests": 4
     },
@@ -286,6 +318,18 @@
       "tests": 4
     },
     {
+      "file": "state_feedback_ai_arrange.spec.js",
+      "tests": 1
+    },
+    {
+      "file": "state_feedback_ai_borders.spec.js",
+      "tests": 1
+    },
+    {
+      "file": "state_feedback_save_to_browser.spec.js",
+      "tests": 1
+    },
+    {
       "file": "svg_removal_styling.spec.js",
       "tests": 3
     },
@@ -312,6 +356,10 @@
     {
       "file": "webp_assets.spec.js",
       "tests": 3
+    },
+    {
+      "file": "zz_border_diag.spec.js",
+      "tests": 1
     }
   ],
   "loader_only_files": [

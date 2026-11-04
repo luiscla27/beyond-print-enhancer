@@ -1,0 +1,27 @@
+{
+ "track_id": "track-01",
+ "code_count": 1,
+ "component_keys": [
+  "js/ai_border"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/ai_border.js"
+ ],
+ "units": [
+  {
+   "id": "feature_02_ai_borders",
+   "name": "AI Borders (SVG Border Generation)",
+   "description": "AI-generated SVG borders with centralized render choke point (renderBorderSvg), border-image CSS slot",
+   "files": [
+    "js/ai_border.js",
+    "js/ai_settings.js"
+   ],
+   "component_key": "js/ai_border",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/ai_border.js",
+   "test_paths": [
+    "test/browser_e2e/byok_border_gallery.spec.js",
+    "test/unit/border_metric.test.js"
+   ]
+  }
+ ]
+}

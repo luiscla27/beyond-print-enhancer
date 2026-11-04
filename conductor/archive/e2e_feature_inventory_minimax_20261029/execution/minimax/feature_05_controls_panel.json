@@ -1,0 +1,94 @@
+{
+ "feature": "feature_05_controls_panel",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "panel_measure.spec.js",
+   "file_id": "457965533155779",
+   "mp4_bytes": 817442,
+   "upload_response": {
+    "file": {
+     "file_id": 457965533155779,
+     "bytes": 817442,
+     "created_at": 1793360853,
+     "filename": "panel_measure.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "properties_panel.spec.js",
+   "file_id": "457962551591288",
+   "mp4_bytes": 838904,
+   "upload_response": {
+    "file": {
+     "file_id": 457962551591288,
+     "bytes": 838904,
+     "created_at": 1793360856,
+     "filename": "properties_panel.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "panel_measure.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\panel_measure.webm",
+   "webm_bytes": 3218965
+  },
+  {
+   "suite": "properties_panel.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\properties_panel.webm",
+   "webm_bytes": 2835737
+  }
+ ],
+ "usage": {
+  "total_tokens": 69506,
+  "total_characters": 0,
+  "prompt_tokens": 68758,
+  "completion_tokens": 748,
+  "completion_tokens_details": {
+   "reasoning_tokens": 448
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 190
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `panel_measure`\n- The video loads the D&D Beyond demo character sheet, showing the \u201cCorvo Saggio\u201d sheet with its stat blocks, skills, defenses, and actions.\n- The extension is subsequently opened over the sheet. A **Beyond Print** panel appears on the left, while **Layer Management** appears on the right.\n- A toast states that the default template has been loaded, and the character sheet remains visible behind the extension panels.\n- No visible measurement control, dimension readout, measurement gesture, or visible change demonstrating that the panel\u2019s default surface was measured is shown. The relevant end-to-end measurement result is therefore **NOT-VISIBLE**.\n\n### Video 2 \u2014 `properties_panel`\n- The same real D&D Beyond demo sheet loads and the extension\u2019s left and right panels appear over it.\n- A visible toast changes to **\u201cSection selected for editing,\u201d** indicating that a section has been activated.\n- However, no properties panel containing **Font size**, **Compact**, or **Border** controls is visibly shown. No slider movement, section sync, compact-mode toggle, border-style picker, or resulting change to the sheet or preview is witnessed.\n- The only clearly visible interaction result is the selection toast; the properties-panel workflow itself is **NOT-VISIBLE**.\n\nBecause neither video visibly demonstrates the required end-to-end controls and their resulting sheet changes, the feature family cannot be certified as visibly complete from this evidence.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: panel_measure.spec.js, properties_panel.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793360871444
+}

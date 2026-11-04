@@ -1,0 +1,30 @@
+{
+  "track": "visual_capture_red_closure_20261031",
+  "title": "Close the 11 RED browser_e2e visual-capture findings (real missing UI behaviors)",
+  "created": "2026-10-31",
+  "status": "COMPLETE",
+  "resolved": "2026-10-31",
+  "resolution": "ALL 7 ACs met - 45/45 browser_e2e green (real Chromium, shipped harness boot), lint green, unit 2235/0. See verification.md.",
+  "owner": "reasonix-agent",
+  "deliberation": "required",
+  "origin": "conductor/archive/e2e_feature_inventory_minimax_20261029 (AC-1 residual: 11 RED of 432)",
+  "operator_ruling": {
+    "date": "2026-10-31",
+    "decision": "Option A",
+    "verbatim": "Fix all 6 real gaps in js/, and update those 5 stale assertions minimally in the spec files (documented as superseded behavior; they stay the acceptance harness, still asserting the intended end state)",
+    "supersedes": "this track's original scope boundary 'the 5 spec files are NOT modified'"
+  },
+  "scope": {
+    "touched": ["js/", "test/browser_e2e/*_visual_capture.spec.js (5 stale assertions only, marked SUPERSEDED BEHAVIOUR)"],
+    "never": ["manifest.json", "vendor/"]
+  },
+  "red_tests": 11,
+  "red_suites": [
+    "drag_ux_visual_capture.spec.js (4)",
+    "ui_ux_audit_visual_capture.spec.js (3)",
+    "custom_templates_visual_capture.spec.js (2)",
+    "picker_ux_visual_capture.spec.js (1)",
+    "shape_layer_ps_visual_capture.spec.js (1)"
+  ],
+  "dependencies": []
+}

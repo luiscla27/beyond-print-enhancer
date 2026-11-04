@@ -114,7 +114,22 @@ describe("Custom upload + templates visual captures", function () {
         });
         await page.waitForTimeout(600);
         const nOverlays = await page.evaluate(() => document.querySelectorAll(".be-modal-overlay").length);
-        assert.ok(nOverlays >= 2, "legacy detail stacks a second overlay");
+        // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator ruling
+        // 2026-10-31): this assertion used to require `nOverlays >= 2` — the LEGACY detail
+        // view, which stacked a second overlay on top of the catalog. The shipped product
+        // renders the detail IN the same overlay (`CatalogService.setView("detail")`,
+        // js/catalog_service.js renderDetail), so the legacy double-overlay this phase-0
+        // capture recorded no longer exists and re-asserting it would demand a regression.
+        // The intended end state — one overlay, detail visible inside it — is what phase 2
+        // asserts; here it is captured. Kept as an assertion (not a skip) so the baseline
+        // frame still cannot go silently blank.
+        assert.strictEqual(nOverlays, 1, "the detail renders in-modal, not as a second overlay");
+        const detailVisible = await page.evaluate(() =>
+          Array.from(document.querySelectorAll(".be-modal button")).some((b) =>
+            /continue/i.test(b.textContent || ""),
+          ),
+        );
+        assert.ok(detailVisible, "the in-modal detail view is showing");
         await frame(page, "shots-before", "02-templates-detail-stacked.png");
       } finally {
         await page.close().catch(() => {});
@@ -215,9 +230,18 @@ describe("Custom upload + templates visual captures", function () {
         await frame(page, "shots-phase2", "21-template-detail.png");
         // Apply → in-modal confirm
         const applied = await page.evaluate(() => {
-          const b = Array.from(document.querySelectorAll(".be-modal button")).find(
-            (x) => /apply/i.test(x.textContent || ""),
-          );
+          // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator ruling
+          // 2026-10-31): this used to look for a button whose text matched /apply/i. The
+          // shipped confirm vocabulary is ratified ("Continue", pinned by
+          // test/unit/ia_consistency.test.js — the catalog's apply control is
+          // `applyBtn.textContent = "Continue…"`), so the verb this spec looked for does not
+          // and must not exist. The assertion now finds the primary control by its class,
+          // which is what the copy-agnostic harness should have used from the start.
+          const b =
+            document.querySelector(".be-modal .be-modal-ok") ||
+            Array.from(document.querySelectorAll(".be-modal button")).find((x) =>
+              /continue/i.test(x.textContent || ""),
+            );
           if (b) b.click();
           return !!b;
         });

@@ -1,0 +1,76 @@
+{
+  "track_id": "zero_click_preview_improvement_20261103",
+  "created": "2026-11-03",
+  "status": "phase1-pending",
+  "title": "Zero-click preview gate improvement: raise preview success rate from 94% to 95%+ (UX scoring matrix)",
+  "owner": "agent session (Phase 0 OSD completed 2026-11-03)",
+  "deliberation": "required",
+  "deliberation_reason": "New track created per UX scoring matrix gap analysis (zero-click preview gate at 94% -> cap 84; target 95%+ -> cap 100). Multiple defensible approaches exist (representative-sheet coverage, print-defect remediation, default-state tuning, gate instrumentation). Must run OSD before committing to a cluster.",
+  "analysis": "vendor/.reasonix/skills/ux-scoring-matrix/matrix.json",
+  "phases": {
+    "phase0": {
+      "status": "complete",
+      "summary": "Nominate the zero-click preview cluster(s) to improve. The target is the critical gate, not a criterion per se: raise the representative-sheet zero-click print-ready rate from 94% to >=95% so the gate cap moves from 84 to 100. Candidates from gap analysis: (a) representative-sheet coverage and current defect inventory \u00e2\u20ac\u201d identify which sheets or sheet-classes are still failing the zero-click test and why, (b) print-defect root-cause remediation \u00e2\u20ac\u201d fix the recurring blocking defects that require user adjustment (clipping, overlapping, blank/hidden content, pagination, defaults), (c) default-state tuning \u00e2\u20ac\u201d print styles, pagination, margins, scale, colors, borders, and saved-preference application so the first open is print-safe, (d) print-preview gate instrumentation \u00e2\u20ac\u201d make the 94%/95% rate itself measurable and reproducible from an evidence artifact, not just a number in a consultation. Run OSD to pick one cluster for Phase 1.",
+      "decision": "candidate_a",
+      "record": "phase0_nomination.md"
+    },
+    "phase1": {
+      "status": "pending",
+      "summary": "Improve the nominated zero-click preview cluster. This work is likely to touch js/print_styles.js, print-preview initialization, defaults application from saved preferences, and/or the representative-sheet defect inventory. Must pass: eslint clean, npm run lint, all existing unit tests (no regressions), and existing print E2E where present."
+    },
+    "phase2": {
+      "status": "pending",
+      "summary": "Likely applicable here: the gate itself is a measured premise. If the track changes the rate, the change must be evidenced, not asserted. Add/update an evidence artifact that reproduces the rate from representative sheets and defect counts."
+    },
+    "phase3": {
+      "status": "pending",
+      "summary": "Guard-discipline continuity: injected-scope collision, dead-exports, scripts hygiene, full suite, lint, smoke \u00e2\u20ac\u201d all green. Add regression evidence for the zero-click gate so future sessions can re-run the same rate."
+    },
+    "phase4": {
+      "status": "pending",
+      "summary": "Checkpoint + frontier review + consultant verification (3 consultants)."
+    },
+    "phase5": {
+      "status": "pending",
+      "summary": "Register, seal, hand-over. Target: zero-click preview success rate >=95% on the next UX scoring run, printing the cap at 100."
+    }
+  },
+  "context": {
+    "ux_matrix_origin": "Codex-Sol consultation 2026-10-29 (gpt-5.6-sol)",
+    "current_rating_note": "This is a critical gate, not a criterion. Its rating does not enter the weighted sum directly; it caps the whole score.",
+    "current_gate_rate_note": "0.94 is the narrative figure; temp/ux_matrix/evidence_current.json carries 0.886 and disclaims it as an SC-A2 proxy, not a matrix-valid representative-sheet measurement. Phase 1 must replace the proxy with a re-runnable measurement before any code change is credited.",
+    "current_gate_rate": 0.886,
+    "target_gate_rate": 0.95,
+    "current_cap": 84,
+    "target_cap": 100,
+    "gap_analysis": "The zero-click preview gate caps the entire UX score at 84 while the rate is in 85-94% range. Pushing the print-ready-without-adjustment rate from 94% to >=95% lifts the cap to 100, which raises the final score to ~88-89 (Strong, bordering Excellent) even without criterion changes. This is the highest-leverage single move in the matrix because the criterion is weighted 25% and the gate caps everything else.",
+    "scoring_contract": {
+      "gate_id": "zero-click preview success rate",
+      "matrix_path": "vendor/.reasonix/skills/ux-scoring-matrix/matrix.json",
+      "runner": "python vendor/.reasonix/skills/ux-scoring-matrix/run.py score --evidence <evidence.json>",
+      "gate_field": "gate_results.zero_click_preview_success_rate (float 0-1)",
+      "thresholds": {
+        "below_70_percent": 49,
+        "70_to_84_percent": 69,
+        "85_to_94_percent": 84,
+        "95_percent_or_above": 100
+      },
+      "formula_note": "final_score = max(1, min(applicable_gate_caps, raw_score + severity_penalties, 100))"
+    },
+    "fleet_certification": "ux_feature_fleet_20261029 completed 18/18 tracks; 2229 unit tests passing",
+    "relevant_files": [
+      "js/print_styles.js",
+      "js/main.js",
+      "js/controls_panel.js",
+      "test/unit/print_styles.test.js",
+      "test/browser_e2e/print_output_audit.spec.js",
+      "test/browser_e2e/print_per_layer.spec.js",
+      "test/browser_e2e/layer_print_visibility.spec.js",
+      "vendor/.reasonix/skills/ux-scoring-matrix/matrix.json",
+      "vendor/.reasonix/skills/ux-scoring-matrix/run.py"
+    ],
+    "handoff_instructions": "Fresh session: read this spec + matrix.json + run.py + the existing print E2E/unit tests listed in relevant_files. Read the UX scoring matrix contract first \u00e2\u20ac\u201d this track is a gate, not a criterion. The acceptance target is a measured rate, not a code change by itself. Run OSD (subspace-deliberation skill) to nominate Phase 1 cluster. Then execute Phase 1 improvement per conductor-protocol. Do not claim 95%+ from a number in prose; re-run the rate from an evidence artifact and score it with run.py."
+  },
+  "criteria_sealed": false,
+  "criteria_note": "Draft track: acceptance criteria live in spec.md as [AC-1]..[AC-4] and are NOT sealed. Seal at Phase 5 with `python housekeeping_guard.py seal --track zero_click_preview_improvement_20261103`."
+}

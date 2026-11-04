@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+// perfect_finalize.js - one-off: isolate black ink lines from a white background and recolor them to
+// the target red; batch_finalize.js drives it over the archer asset list. Its inputs are absent.
 const sharp = require('sharp');
 
 /**

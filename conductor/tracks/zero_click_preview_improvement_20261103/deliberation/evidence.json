@@ -1,0 +1,24 @@
+{
+  "track_id": "zero_click_preview_improvement_20261103",
+  "question": "how to raise the zero-click preview success rate from its current measured value toward 95%+ (UX scoring matrix critical gate: cap 84 -> 100)?",
+  "summary": "OSD nomination completed 2026-11-03: 4 candidates (A: representative-sheet coverage + defect inventory; B: print-defect root-cause remediation; C: default-state tuning; D: gate instrumentation / evidence artifact). A ADOPTED for Phase 1 — the only cluster satisfying R1 (moves the rate), R2 (reproducible) and R3 (resolves the 94% vs 0.886 measurement gap) together, and the only one with zero product surface. B NOT ADMITTED for Phase 1 (deferred): the only direct R1 mover but cannot satisfy R2/R3 alone — it is the expected Phase-2 body once A produces the defect inventory. C NOT ADMITTED for Phase 1 (deferred and demoted): satisfies R1 only conditionally, fails R2/R3, and nothing on this tree can currently distinguish a default-driven failure from a sheet-specific one. D NOT ADMITTED as a standalone cluster (subsumed): satisfies R2/R3 and fails R1 by construction, so it is A's deliverable rather than A's alternative.",
+  "candidates": [
+    "candidate_a.md",
+    "candidate_b.md",
+    "candidate_c.md",
+    "candidate_d.md"
+  ],
+  "decision": "candidate_a",
+  "decision_summary": "ADOPTED: Candidate A (representative-sheet coverage and defect inventory) for Phase 1. NOT ADMITTED for Phase 1: B (deferred, expected Phase 2), C (deferred and demoted), D (subsumed into A). Every rejection carries its recall condition in counterfactual_ledger.md.",
+  "rating": {
+    "scheme": "admissibility filter (R1-R5) applied BEFORE utility ranking, per subspace-deliberation R1",
+    "survivors_ranked": ["candidate_a", "candidate_b", "candidate_d", "candidate_c"],
+    "ranking_note": "A > B > D > C by leverage per unit of unverified premise. D ranks above C despite failing R1 because D's failure is structural (it never claims to move the rate) while C's is evidential (it may move the rate with no way to show it)."
+  },
+  "matrix_sha256": "see vendor/.reasonix/skills/ux-scoring-matrix/matrix.json",
+  "premise_corrections": [
+    "The narrative 94% is not reproduced by any artifact on disk; temp/ux_matrix/evidence_current.json carries 0.886 and its own note says that value is an SC-A2 proxy, not a matrix-valid representative-sheet measurement (score_run_20261029.json disposition P3).",
+    "The spec's ceiling-lift claim is conditional: with the current evidence raw_score + severity = 77.92, which is BELOW the 84 cap, so the cap is not binding today and raising it does not by itself raise this evidence's final score.",
+    "The cap contract itself IS verified by run.py: 94% and 88.6% both cap at 84; 95% caps at 100."
+  ]
+}

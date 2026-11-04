@@ -1,0 +1,28 @@
+{
+ "track_id": "track-08",
+ "code_count": 1,
+ "component_keys": [
+  "js/layout_ops"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/layout_scan.js"
+ ],
+ "units": [
+  {
+   "id": "feature_08_layout_operations",
+   "name": "Layout Operations (Scan/Apply/Mutate)",
+   "description": "Layout scanning, migration, application, portrait/defenses/quick-info separation, inner-content width",
+   "files": [
+    "js/layout_scan.js",
+    "js/layout_apply.js",
+    "js/layout_ops.js"
+   ],
+   "component_key": "js/layout_ops",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/layout_scan.js",
+   "test_paths": [
+    "test/unit/layout_scan.test.js",
+    "test/unit/layout_apply.test.js"
+   ]
+  }
+ ]
+}

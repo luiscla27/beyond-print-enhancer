@@ -47,6 +47,42 @@ async function layerManagerDestructiveGate(reason) {
 
 let _shapeLayerSeq = 0;
 
+/**
+ * AC-1 (BEYOND-9): the three modes a layer can be in, in the criterion's own words.
+ *
+ * The three are DERIVED from the two flags the product already persists — `isHidden` (on-sheet
+ * visibility) and `isDisabledOnPrint` (print exclusion) — rather than stored as a fourth field.
+ * That is the operator's decision #4 ("storage schema unchanged") taken literally: every record
+ * written by any previous version keeps meaning exactly what it meant, and a legacy layer with
+ * BOTH flags set still reads honestly as `Hidden` (see `layerModeOf`). No migration, no new key.
+ */
+const LAYER_MODES = [
+    {
+        id: 'print',
+        label: 'Print only',
+        title: 'Print only — hidden on screen, shown on the printed sheet',
+    },
+    {
+        id: 'both',
+        label: 'Both',
+        title: 'Both — visible on screen and on the printed sheet',
+    },
+    {
+        id: 'screen',
+        label: 'Screen only',
+        title: 'Screen only — visible on screen, skipped when printing',
+    },
+];
+
+/** The layer's current mode, derived from the two persisted flags (never a third field). */
+function layerModeOf(layer) {
+    if (!layer) return 'both';
+    if (layer.isHidden && layer.isDisabledOnPrint) return 'hidden'; // legacy both-flags record
+    if (layer.isHidden) return 'print';
+    if (layer.isDisabledOnPrint) return 'screen';
+    return 'both';
+}
+
 class LayerManager {
     constructor() {
         this.dom = window.DomManager.getInstance();
@@ -434,6 +470,70 @@ class LayerManager {
         if (!row) return;
         row.classList.toggle("be-layer-row-hidden", !!layer.isHidden);
         row.dataset.hidden = String(!!layer.isHidden);
+        // AC-1: the row states WHICH hidden it is. `isHidden` alone cannot tell "Screen only"
+        // (visible now, skipped on print) from "Print only" (invisible now, shown on print) —
+        // and those are the two states the new control exists to distinguish.
+        row.dataset.mode = layerModeOf(layer);
+    }
+
+    /**
+     * AC-1: paint the mode strip to match the layer's CURRENT derived mode.
+     *
+     * The strip is a reader of the same two flags the printer/eye buttons write, so it is synced
+     * from the same place they are (`refreshUI`), and neither control can drift from the other:
+     * pressing the printer button re-derives the mode, pressing a mode segment writes the flags.
+     */
+    syncModeStrip(layer) {
+        if (!this.panel) return;
+        const strip = this.panel.querySelector(
+            `.be-layer-mode-strip[data-layer-id="${layer.id}"]`,
+        );
+        if (!strip) return;
+        const mode = layerModeOf(layer);
+        strip.dataset.mode = mode;
+        Array.from(strip.querySelectorAll(".be-layer-mode-seg")).forEach((seg) => {
+            const on = seg.dataset.mode === mode;
+            seg.dataset.state = on ? "on" : "off";
+            seg.setAttribute("aria-pressed", on ? "true" : "false");
+            seg.classList.toggle("be-layer-mode-on", on);
+        });
+    }
+
+    /**
+     * AC-1: set one of the three modes, through the SAME mutation seam the other row toggles use.
+     *
+     * A mode change is a LAYER_FLAG mutation like any other: the snapshot covers both flags, and
+     * `repairLayerFlags` puts them back, which restores the derived mode for free — a fourth stored
+     * field would have needed its own repair path and could disagree with the two it derives from.
+     */
+    setLayerMode(layer, mode) {
+        if (!layer) return null;
+        const next = { both: [false, false], print: [true, false], screen: [false, true] }[mode];
+        if (!next) return null;
+        const mut = window.beginMutation
+            ? window.beginMutation(this.snapshotLayerFlags())
+            : null;
+        this._setLayerModeNow(layer, mode);
+        if (mut && window.pushMutation) {
+            window.pushMutation(mut, `${LAYER_MODES.find((m) => m.id === mode).label} "${layer.label}"`,
+                window.MUTATION_CLASSES.LAYER_FLAG,
+                (layout, snap) => this.repairLayerFlags(layout, snap));
+        }
+        return mode;
+    }
+
+    _setLayerModeNow(layer, mode) {
+        layer.isHidden = mode === "print";
+        layer.isDisabledOnPrint = mode === "screen";
+        this.refreshUI();
+        // AC-3 (BEYOND-9): the mode IS the pair of persisted flags, so choosing one owes the
+        // same write the two legacy toggles owe. Without this the strip looked correct and the
+        // storage record kept the previous mode — a reload reverted the user's choice.
+        this.requestLayerPersist();
+        if (window.showFeedback) {
+            const copy = LAYER_MODES.find((m) => m.id === mode);
+            window.showFeedback(`${layer.label} — ${copy ? copy.label : mode}`);
+        }
     }
 
     renderLayerGroup(layer, parent) {
@@ -545,6 +645,35 @@ class LayerManager {
         this.applyRowState(row, layer);
         this.syncRowHidden(row, layer);
         layerGroup.appendChild(row);
+
+        // AC-1 (BEYOND-9, track ux_quick_wins_20261025): the per-layer THREE-STATE control.
+        //
+        // WHY IT IS ITS OWN LINE. The row's flex line is already full: measured 2026-10-26 in the
+        // real panel (248px panel, 229px row), adding anything beside the printer/eye/lock cluster
+        // costs the label its text at every size tried — 3x16px segments left the sections label
+        // 66px for 83px of content, 3x28px left it 0. This strip costs VERTICAL space only (panel
+        // scrollHeight +20px per group, measured) in a panel that is already a scroller, and it
+        // leaves every existing control — and every spec that pins it by title — untouched. The
+        // measurement record is `temp/scratch/ac1_measure_record.txt`; the decision and the
+        // rejected shapes are in the track's `deliberation/evaluation_matrix.md`.
+        const modeStrip = document.createElement('div');
+        modeStrip.className = 'be-layer-mode-strip';
+        modeStrip.setAttribute('role', 'group');
+        modeStrip.setAttribute('aria-label', `${layer.label} visibility mode`);
+        modeStrip.dataset.layerId = layer.id;
+        LAYER_MODES.forEach((mode) => {
+            const seg = document.createElement('button');
+            seg.type = 'button';
+            seg.className = 'be-layer-mode-seg';
+            seg.dataset.mode = mode.id;
+            seg.textContent = mode.label;
+            seg.title = mode.title;
+            seg.setAttribute('aria-label', `${mode.label} for ${layer.label}`);
+            seg.onclick = () => this.setLayerMode(layer, mode.id);
+            modeStrip.appendChild(seg);
+        });
+        layerGroup.appendChild(modeStrip);
+        this.syncModeStrip(layer);
 
         // Nested List Container
         const list = document.createElement('div');
@@ -684,6 +813,52 @@ class LayerManager {
             this._rowMut = null;
         });
 
+        // AC-6 (BEYOND-15): the keyboard alternative to the drag. The row is a genuine
+        // focus target (tabindex below), and ArrowUp/ArrowDown on it restack it one slot.
+        // Home/End bookend the stack for the same reason — they are the keyboard's own
+        // "send to the very top / very bottom", and the guard that rejects a same-slot
+        // press makes repeating them a safe no-op rather than a repeated mutation.
+        // A handler is bound exactly once per row, and rows are re-created on rebuild,
+        // so there is no accumulation to leak: each rebuild's rows carry one fresh
+        // closure over their own layer.
+        row.setAttribute('tabindex', dragAllowed() ? '0' : '-1');
+        row.setAttribute('role', 'button');
+        row.setAttribute('aria-label', `Layer ${layer.label}. Use arrow keys to reorder.`);
+        row.addEventListener('keydown', (e) => {
+            if (!dragAllowed()) return; // a locked row's arrows do nothing, like its drag
+            const dir = e.key === 'ArrowUp' ? 'up' : e.key === 'ArrowDown' ? 'down' : null;
+            if (dir && !e.altKey && !e.ctrlKey && !e.metaKey) {
+                // Plain arrows only: Ctrl+arrows are the sheet's nudge, and a modifier
+                // must not be hijacked into a restack.
+                e.preventDefault();
+                e.stopPropagation();
+                this.reorderLayerByKeyboard(layer.id, dir);
+                return;
+            }
+            if (e.key === 'Home' || e.key === 'End') {
+                e.preventDefault();
+                e.stopPropagation();
+                // Home ⇒ head: move before the current FIRST layer (or no-op if already first);
+                // End ⇒ tail: move to the end (reorderShapeLayers' null = end).
+                const order = this.snapshotOrder();
+                const from = order.indexOf(layer.id);
+                if (from === -1) return;
+                const beforeId = e.key === 'Home' ? order[0] : null;
+                if (e.key === 'Home' && from === 0) return; // already at the head: a safe no-op
+                const snapshot = this.snapshotStackState();
+                const mut = window.beginMutation ? window.beginMutation(snapshot) : null;
+                const changed = this.reorderShapeLayers(layer.id, beforeId);
+                if (changed) {
+                    this.updatePrintZIndexes();
+                    if (mut && window.pushMutation) {
+                        window.pushMutation(mut, 'Reorder layers (keyboard)', window.MUTATION_CLASSES.RESTACK,
+                            (layout, snap) => this.repairStackState(layout, snap));
+                    }
+                    this.restoreRowFocus(layer.id);
+                }
+            }
+        });
+
         // Dropping a row onto a SHAPE group (never the sections area).
         layerGroup.addEventListener('dragover', (e) => {
             if (!this._draggedLayerId) return;
@@ -764,6 +939,97 @@ class LayerManager {
             const row = this.panel.querySelector(`[data-layer-id="${layer.id}"]`);
             if (row) row.setAttribute('draggable', String(!layer.isLocked));
         });
+    }
+
+    /**
+     * AC-6 (BEYOND-15, track ux_quick_wins_20261025): the keyboard alternative to a
+     * row drag. ArrowUp/ArrowDown on a focused layer row reorders it one slot toward
+     * the head/tail of the stack — the SAME `reorderShapeLayers(this.snapshotOrder()…)`
+     * move a drop commits (`bindRowDrag`'s drop handler, :859), so a keyboard restack
+     * and a mouse restack write the identical `shapeLayers` order and therefore the
+     * identical print-z banding.
+     *
+     * Why it reuses the DROP path rather than mutating on its own: a drop only carries
+     * any undo meaning because `bindRowDrag` opens `window.beginMutation(this.snapshotStackState())`
+     * at dragstart (:761); Ctrl+Z then restores that snapshot. A keyboard move that has
+     * no such snapshot opened would be an UNDOABLE change — a second-class edit. So each
+     * arrow restack opens its own mutation with the pre-move stack snapshot, exactly as
+     * a drag does, and the panel rebuild (`reorderShapeLayers` → `rebuildPanel`) keeps the
+     * focus ring on the row the user just moved (`restoreRowFocus`) so a rapid ↑↑↑ does
+     * not lose the caret between moves.
+     *
+     * Locked rows are exempt for the same reason the drag gulp is (`dragAllowed`, :753):
+     * a lock refusal is a property of the layer, not the gesture. The SECTIONS row (:751)
+     * is never reordered (pinned, and it has no `data-layer-id` slot state to move).
+     * @param {string} layerId
+     * @param {'up'|'down'} dir
+     * @returns {boolean} true when the stack actually changed
+     */
+    reorderLayerByKeyboard(layerId, dir) {
+        const layer = this.shapeLayers.find((l) => l.id === layerId);
+        if (!layer || layer.isLocked) return false; // locked / absent: refuse, like a locked drag
+        const order = this.snapshotOrder();
+        const from = order.indexOf(layerId);
+        // `snapshotOrder` covers every shape layer; a not-in-stack id has no slot to move.
+        if (from === -1) return false;
+        const neighbourIdx = dir === 'up' ? from - 1 : from + 1;
+        if (neighbourIdx < 0 || neighbourIdx >= order.length) return false; // at the head/tail: nothing to swap with
+        // Which layer the moved one must land immediately BEFORE, in `reorderShapeLayers` terms
+        // (null = end of the stack):
+        //   up   → before its PREDECESSOR (`order[from-1]`): swap the two, so `layerId` rises one slot;
+        //   down → before the layer that follows its SUCCESSOR — `order[from+2]` when one exists,
+        //          else null (move to the end): the swap that drops `layerId` one slot toward the tail.
+        // `reorderShapeLayers`' own `to > from` decrement (:877) makes the down-case math correct
+        // after the removal, so no slot arithmetic has to be done twice here.
+        const beforeId = dir === 'up'
+            ? order[from - 1]
+            : (order[from + 2] !== undefined ? order[from + 2] : null);
+        // The undo contract: a drop only carries undo meaning because `bindRowDrag` opens
+        // `window.beginMutation(this.snapshotStackState())` at dragstart (:762). A keyboard
+        // restack opens the SAME record with the pre-move stack snapshot, then pushes it under
+        // the RESTACK class with the same repair the drag-end handler uses (:804-807) — so
+        // Ctrl+Z undoes an arrow-key move exactly as it undoes a drag drop. `beginMutation`
+        // returns `{snap, settled, capture}` (js/undo.js:393) — it has no close, and its record
+        // is only consumed by `pushMutation`/`repair`, so the mutation is simply held local
+        // until the push below; it leaves NO timer or listener behind (the capture promise is
+        // the only async work it starts, and it settles into the record whether or not we read it).
+        const snapshot = this.snapshotStackState();
+        const mut = window.beginMutation ? window.beginMutation(snapshot) : null;
+        const changed = this.reorderShapeLayers(layerId, beforeId);
+        if (changed) {
+            // Same tail as a successful drop: the print-z banding + the undoable record.
+            this.updatePrintZIndexes(); // toast 'Layer order updated'
+            if (mut && window.pushMutation) {
+                window.pushMutation(mut, 'Reorder layers (keyboard)', window.MUTATION_CLASSES.RESTACK,
+                    (layout, snap) => this.repairStackState(layout, snap));
+            }
+            this.restoreRowFocus(layerId);
+        }
+        return changed;
+    }
+
+    /**
+     * The shape-layer ids in current stack order (head first). AC-6's keyboard path
+     * reasons about slots, and `shapeLayers` IS the stack: `reorderShapeLayers` reads
+     * and writes it directly (:870), so no second copy of the order exists to rot.
+     * @returns {string[]}
+     */
+    snapshotOrder() {
+        return this.shapeLayers.map((l) => l.id);
+    }
+
+    /**
+     * Put the focus ring back on the row the user just moved (AC-6). `reorderShapeLayers`
+     * calls `rebuildPanel`, which re-creates the rows — the element that carried focus
+     * is detached by the rebuild itself, so the caret would otherwise drop after the
+     * FIRST arrow and every further press needs a manual re-click. The restored row is
+     * fetched AFTER the rebuild and focused by its (stable) `data-layer-id`.
+     * @param {string} layerId
+     */
+    restoreRowFocus(layerId) {
+        if (!this.panel) return;
+        const row = this.panel.querySelector(`[data-layer-id="${layerId}"]`);
+        if (row && typeof row.focus === 'function') row.focus({ preventScroll: true });
     }
 
     /** Among `groups`, the group whose vertical midpoint the row crossed. */
@@ -1399,6 +1665,7 @@ class LayerManager {
                 if (row) {
                     this.applyRowState(row, layer);
                     this.syncRowHidden(row, layer);
+                    this.syncModeStrip(layer);
                     // The active-row class is written by applyActiveRow() below
                     // (one writer for `be-active-layer`, AC-1).
                 }
@@ -1406,6 +1673,13 @@ class LayerManager {
 
             if (layerEl) {
                 layerEl.dataset.printDisabled = layer.isDisabledOnPrint;
+                // AC-1 (BEYOND-9): the `Print only` mode is `isHidden` ON SCREEN, so the layer
+                // needs the inverse rule at print time — an inline `display:none` is what hides it
+                // here, and only a `!important` print rule can undo that. The flag is written as a
+                // DATASET so the print stylesheet reads one attribute, exactly like
+                // `data-print-disabled` (js/print_styles.js).
+                const printOnly = layerModeOf(layer) === 'print';
+                layerEl.dataset.printOnly = String(printOnly);
                 layerEl.style.display = layer.isHidden ? 'none' : '';
 
                 // Apply Lock Styles (AC-5/U-7, ui_ux_review_20260910). Locking
@@ -1569,9 +1843,34 @@ class LayerManager {
         return layout;
     }
 
+    /**
+     * BEYOND-9 AC-3 (track `beyond09_layer_three_state`): a layer-flag edit is a PERSISTED
+     * edit, so it must ask for the product's own debounced write.
+     *
+     * WHY THIS EXISTS. Every row control in this panel wrote the in-memory flag and repainted,
+     * and that was the whole of it: the two places that DO persist are trigger-based —
+     * `js/dnd.js:654` on a drop and on a keyboard nudge, `js/properties_panel.js:234` on a
+     * property commit — and a layer-panel click is neither. So a mode the user picked was live
+     * and unsaved, and a reload put the OLD mode back. Measured RED in
+     * `test/browser_e2e/layer_print_visibility.spec.js` ("AC-3: the mode a user picks survives a
+     * RELOAD with no Save click"): the in-memory record said `isHidden:true` while the STORED
+     * record still said both-visible, and the reloaded page came back on `Both`.
+     *
+     * The seam is the SAME one `js/properties_panel.js` uses — resolved at CALL time and
+     * fail-open, because the unit harnesses boot this module without `js/dnd.js`, where
+     * `scheduleAutosave` does not exist and a 1s write would be a test artifact anyway.
+     */
+    requestLayerPersist() {
+        if (typeof window !== "undefined" && typeof window.scheduleAutosave === "function") {
+            window.scheduleAutosave();
+        }
+    }
+
     _toggleLayerPrintNow(layer) {
         layer.isDisabledOnPrint = !layer.isDisabledOnPrint;
         this.refreshUI();
+        // AC-3: the flag is persisted per layer (`js/layout_scan.js`), so the click owes a write.
+        this.requestLayerPersist();
         if (window.showFeedback) window.showFeedback(`${layer.label} Print ${layer.isDisabledOnPrint ? 'Disabled' : 'Enabled'}`);
     }
 
@@ -1622,6 +1921,10 @@ class LayerManager {
             ? window.beginMutation(this.snapshotLayerFlags())
             : null;
         this._toggleLayerLockNow(layer, btn);
+        // AC-3 (BEYOND-9): `isLocked` is persisted per layer too (`js/layout_scan.js`), so the
+        // lock row button owes the same write as the other three flags. Kept in the WRAPPER
+        // rather than the body so `_toggleLayerLockNow` stays the documented verbatim body.
+        this.requestLayerPersist();
         if (mut && window.pushMutation) {
             window.pushMutation(mut, `Lock "${layer.label}"`, window.MUTATION_CLASSES.LAYER_FLAG,
                 (layout, snap) => this.repairLayerFlags(layout, snap));
@@ -1667,6 +1970,8 @@ class LayerManager {
             : null;
         layer.isHidden = !layer.isHidden;
         this.refreshUI();
+        // AC-3 (BEYOND-9): `isHidden` is persisted per layer — the eye button owes a write too.
+        this.requestLayerPersist();
         if (mut && window.pushMutation) {
             window.pushMutation(mut, `Hide "${layer.label}"`, window.MUTATION_CLASSES.LAYER_FLAG,
                 (layout, snap) => this.repairLayerFlags(layout, snap));

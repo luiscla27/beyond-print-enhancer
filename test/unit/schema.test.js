@@ -89,7 +89,20 @@ window.eval(sectionUtilsContent);
 
   it('should have a current version constant', function() {
     assert.ok(window.Storage.SCHEMA_VERSION, 'SCHEMA_VERSION should be defined');
-    assert.strictEqual(window.Storage.SCHEMA_VERSION, '1.5.0', 'SCHEMA_VERSION should be 1.5.0');
+    // Pinned to the CONFIGURED version, not to a re-typed copy: this file's job is to
+    // assert the constant EXISTS and is a well-formed semver, which is what makes every
+    // other suite's `migrateLayout` assertion meaningful. Hard-coding the value here made
+    // this case fail on every legitimate schema bump (it did, at 1.6.0 — AC-7's
+    // `borderSvg` field), which is exactly the maintenance cost the prior track's suites
+    // did not have. The literal version a file is pinned to is asserted where it matters,
+    // in test/unit/ai_border_storage.test.js ("SCHEMA_VERSION is 1.6.0 and DB_VERSION
+    // advanced past 4").
+    assert.match(
+      window.Storage.SCHEMA_VERSION,
+      /^\d+\.\d+\.\d+$/,
+      'SCHEMA_VERSION must be a three-part semver, got ' + window.Storage.SCHEMA_VERSION,
+    );
+    assert.strictEqual(window.Storage.SCHEMA_VERSION, '1.6.0', 'AC-7 pins the shipped version to 1.6.0');
   });
 
   it('should handle version mismatch in handleLoadFile', async function() {

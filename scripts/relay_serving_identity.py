@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """relay_serving_identity.py — is the process serving THIS project's relay port
 actually running the relay unit this project has pinned?
 

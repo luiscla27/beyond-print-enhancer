@@ -36,8 +36,10 @@ To test the extension locally:
 fails the fast gate and names the file and line, rather than being caught by somebody noticing:
 
 ```bash
-npm test                                   # lint + unit + integration + the manifest check
-npm run lint                               # eslint js/ test/ scripts/        (~4 s)
+npm test                                   # smoke (11 low-risk tools, ~46-51 s) + lint + unit + integration + the manifest check
+npm run smoke                              # run only the scripts runtime smoke (standalone)
+npm run lint                               # eslint js/ test/ scripts/ + the two script guards
+                                           #   (inventory set + declared shape, python parse, smoke<->inventory cross-check)  ~3-6 s
 npx mocha --recursive test/unit            # just the unit suites            (~30 s)
 npx mocha --recursive test/unit/encapsulation_debt   # the code-debt oracle  (299 cases)
 ```
@@ -295,6 +297,17 @@ PRINT_FILTER_PROBE=1 npx mocha test/browser_e2e/print_filter_identity_probe.spec
     provider you picked, with your key. The only things that leave are the section headings,
     positions and sizes — and on a live sheet a heading can carry a monster's or an NPC's name, so
     "no text ever leaves" would be a lie; see `PRIVACY_POLICY.md` §2.
+22. **AI Border Design — bring your own key** (since 2.2.0). The same AI dialog now carries two
+    ephemeral switches — **Arrange layout** and **Border design** — so you can ask the model for a
+    layout change, a border, or both in one request. When Border design is on and a section is
+    selected, the model can propose a static SVG border for that section; the SVG is validated,
+    sanitized and rendered through a single choke point, and the accepted border is stored on-device
+    as a per-section `borderSvg` field in your regular layout save. You can also save a generated
+    border into a local reusable library (both stored in `chrome.storage.local`). The SVG never
+    leaves your device unless you yourself export or share a layout file. A generated border is
+    painted by the **same** `border-image` pipeline your built-in borders use — the source image and
+    its own slice are the only things that differ — so it prints through the same code path, with
+    the same decoration filter and the same position in your printout.
 
 ### The tool's own chrome (since 1.8.0, ornamented in 1.11.0)
 

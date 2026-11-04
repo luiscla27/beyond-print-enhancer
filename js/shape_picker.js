@@ -274,12 +274,25 @@ function showAssetPickerModal(opts = {}) {
     });
     searchInput.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        // Esc in the field clears the query + focus — never cancels the modal.
-        searchInput.value = "";
-        searchQuery = "";
-        renderAssets(activeTab);
-        e.stopPropagation();
-        e.preventDefault();
+        // Esc in the field is TWO-STEP, and which step depends on whether there
+        // is anything to clear:
+        //   - a non-empty query: clear it and stay in the modal (the field owns
+        //     this Esc — it must not cancel the sheet the user is working in);
+        //   - an EMPTY field: there is nothing left for the field to do, so the
+        //     event is left to bubble and the modal's own window handler
+        //     (onModalKey, registered below) closes the sheet.
+        // It used to stopPropagation unconditionally, which swallowed the cancel
+        // key whenever the search field held the landing focus — the picker
+        // opened with that field focused, so Esc NEVER closed the sheet from the
+        // default state. Reported by the picker_ux visual-capture suite
+        // ("Esc closed the modal: false !== true").
+        if (searchInput.value !== "" || searchQuery !== "") {
+          searchInput.value = "";
+          searchQuery = "";
+          renderAssets(activeTab);
+          e.stopPropagation();
+          e.preventDefault();
+        }
       } else if (e.key === "Enter") {
         // Typing/Enter in the field must not commit the modal.
         e.stopPropagation();

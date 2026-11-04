@@ -204,6 +204,25 @@ __pycache__/
 /test/unit/lanes_aliases.test.js
 /test/unit/input_budget_alignment.test.js
 /test/unit/vendored_overlay.test.js
+/scripts/e2e_inventory_runner.js
+/scripts/e2e_video_preload.js
+
+# Full-inventory e2e video evidence (skill `e2e-feature-inventory-minimax`). A run captures one
+# `.webm` per page per suite; MEASURED 2026-10-29..30 the first run left 143 MB for only 31 of the
+# 82 suites, and this project is declared PUBLIC — binary run output is not product, and it is
+# re-derivable by re-running the procedure. The RECORD of a run is its textual half, which IS
+# committed: `execution/progress.jsonl` (per-suite mocha counts, the chosen video's byte size and
+# page count, so a pick is auditable) and `execution/minimax/*.json` (resolved model id + verbatim
+# verdict). Operator decision 2026-10-29.
+/conductor/tracks/*/execution/evidence/
+# Same evidence class once the track is ARCHIVED (close-out 2026-10-30): the archive move must
+# not un-ignore the 2.1 GB .webm tree under conductor/archive/<track>/execution/evidence/.
+/conductor/archive/*/execution/evidence/
+
+# Ad-hoc probe output from bringing the capture mechanism up (`test_videos*/`, `test_report.json`):
+# the same class, and never re-tested by anything — the measurement lives in the track + CHANGELOG.
+/test_videos*/
+/test_report.json
 
 ##
 ## Reviewer / consultation artifacts — NOT PART OF THE PRODUCT (operator decision, 2026-09-14)
@@ -238,3 +257,5 @@ __pycache__/
 # Addendum A). The negation is kept so the intent survives a future prefix pattern.
 !/reasonix.toml.example
 # <<< modelstack vendor overlay (generated) <<<
+/conductor/tracks/ux_feature_fleet_20261029/fleet/runtime
+/conductor/tracks/ux_feature_fleet_20261029/fleet/logs

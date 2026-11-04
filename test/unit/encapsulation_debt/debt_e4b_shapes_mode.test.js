@@ -217,7 +217,7 @@ describe("E4 8cc8975 — shape layer persistence (Storage)", function () {
       sections: {},
       shapes: [{ id: "s1", path: "assets/shapes/star.webp" }],
     });
-    assert.strictEqual(out.version, "1.5.0");
+    assert.strictEqual(out.version, window.Storage.SCHEMA_VERSION);
     assert.strictEqual(out.shapeLayers.length, 1);
     assert.strictEqual(out.shapeLayers[0].id, "shapes-default");
     assert.strictEqual(out.shapeLayers[0].elements.length, 1);

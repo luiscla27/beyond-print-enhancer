@@ -1,0 +1,74 @@
+{
+  "schema": "perf-budgets/1",
+  "why": "One declared budget source for both runtimes. scripts/perf/model_call_telemetry.py and scripts/perf/model_call_telemetry.js both read THIS file, so a cap can never drift between the two halves of the scripts area; test/unit/model_call_telemetry.test.js pins the parity. The class targets and hard caps are the dossier's own table, verbatim.",
+  "progress": {
+    "threshold_s": 10,
+    "tick_ms": 5000
+  },
+  "classes": {
+    "interactive_user": {
+      "target_p95_s": 60,
+      "hard_cap_s": 75,
+      "per_attempt_s": 75,
+      "session_cap_s": 150,
+      "max_attempts": 2,
+      "retry_on": ["error"],
+      "cacheable": false
+    },
+    "interactive_agent": {
+      "target_p95_s": 90,
+      "hard_cap_s": 105,
+      "per_attempt_s": 105,
+      "session_cap_s": 210,
+      "max_attempts": 2,
+      "retry_on": ["error"],
+      "cacheable": false
+    },
+    "background_maintenance": {
+      "target_p95_s": 180,
+      "hard_cap_s": 210,
+      "per_attempt_s": 210,
+      "session_cap_s": 420,
+      "max_attempts": 2,
+      "retry_on": ["error"],
+      "cacheable": false
+    },
+    "unknown_default": {
+      "target_p95_s": 180,
+      "hard_cap_s": 210,
+      "per_attempt_s": 210,
+      "session_cap_s": 210,
+      "max_attempts": 1,
+      "retry_on": [],
+      "cacheable": false
+    }
+  },
+  "sites": {
+    "scripts/border_design_generator.js": {
+      "request_class": "background_maintenance",
+      "cap_override_s": null,
+      "note": "the only site that takes its class default unmodified: it dials a small chat completion per design sample and declared NO timeout at all before this track (bare fetch), so the new total deadline is the first bound this call has ever had."
+    },
+    "scripts/muse_gate.py": {
+      "request_class": "background_maintenance",
+      "cap_override_s": 600,
+      "override_reason": "NOT WIRED BY THIS TRACK — recorded here so a future track can bound it in one line. `scripts/muse_gate.py` is gitignored by name (`.gitignore:200`), so it is not part of the governed `scripts` surface, it is absent from the worktree this track was executed in, and any edit to it could not be delivered by git. It is the mandated GATE reviewer seat, so it IS a model-call site with a 600 s socket timeout and no terminal telemetry; this entry declares the budget it should take the moment it is wired (its own declared socket timeout, kept as a total deadline).",
+      "not_wired": true
+    },
+    "scripts/byok_vision_gate.py": {
+      "request_class": "background_maintenance",
+      "cap_override_s": 420,
+      "override_reason": "the site dispatches a vision judgement per judged CELL and declared a 420 s socket timeout; no measurement of seat latency exists in this repository, so the declared budget is kept as an enforced total deadline rather than lowered on no evidence. The dossier's 210 s class cap is recorded as NOT MET for this site."
+    },
+    "scripts/drag_ux_visual_gate.py": {
+      "request_class": "background_maintenance",
+      "cap_override_s": 300,
+      "override_reason": "the predecessor drill that byok_vision_gate.py was derived from, with a 300 s declared socket timeout; kept as an enforced total deadline for the same reason. The dossier's 210 s class cap is recorded as NOT MET for this site."
+    },
+    "scripts/codex_text_leg.py": {
+      "request_class": "background_maintenance",
+      "cap_override_s": 900,
+      "override_reason": "its transport is a SUBPROCESS (the codex CLI seat spends a large reasoning budget before emitting content) and it declared a 900 s subprocess timeout; a smaller cap would abort a legitimate corpus leg. The dossier's 210 s class cap is recorded as NOT MET for this site."
+    }
+  }
+}

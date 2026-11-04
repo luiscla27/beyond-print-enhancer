@@ -188,6 +188,35 @@ async function applyLayout(layout) {
       section.classList.add(styles.borderStyle);
     }
 
+    // AC-7/AC-9 path B (track `byok_svg_borders_20260927`): the persisted `borderSvg`
+    // rehydrates through the choke point, which sanitizes INTERNALLY — so a record that
+    // was hand-edited, imported from a template, or written by an older build still
+    // cannot put bytes in the DOM. A record with no `borderSvg` stores `undefined`/null
+    // and the choke point CLEARS the overlay, which is what makes "no border in the
+    // record" authoritative instead of "keep whatever was rendered".
+    //
+    // Reached through `window.AiBorder` at CALL time (never a captured reference): the
+    // module may not be loaded yet in a bare harness, and the absence must degrade to
+    // "no border" rather than a throw from inside the restore loop.
+    if (typeof window.AiBorder?.renderBorderSvg === "function") {
+      window.AiBorder.renderBorderSvg(section, styles.borderSvg ?? null);
+    }
+
+    // BEYOND-10 (AC-3) path B, second half: the refinement PARAMETERS. `renderBorderSvg` above
+    // restored the refined BYTES (the record's `borderSvg` is what was painted), and this restores
+    // the design they were derived from plus the weight/style that produced them — so a reloaded
+    // session can keep refining from the same design instead of compounding on top of a result it
+    // cannot explain. Order matters: the markers are written AFTER the paint, because the choke
+    // point treats every fresh paint as unrefined (which is what makes a new design reset them).
+    if (
+      styles.borderAdjust &&
+      typeof window.AiBorder?.restoreBorderAdjust === "function"
+    ) {
+      // Fail-soft on refusal, never fail-open: a base the trust root rejects leaves the artwork the
+      // record's `borderSvg` already painted, and records no parameters at all.
+      window.AiBorder.restoreBorderAdjust(section, styles.borderAdjust);
+    }
+
     // Apply main styles.
     //
     // track undo_stack_20260911 (Phase 2 verification): these were TRUTHINESS guards, so a

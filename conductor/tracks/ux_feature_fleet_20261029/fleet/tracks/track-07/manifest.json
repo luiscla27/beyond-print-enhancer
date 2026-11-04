@@ -1,0 +1,25 @@
+{
+ "track_id": "track-07",
+ "code_count": 1,
+ "component_keys": [
+  "js/image_processor"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/image_processor.js"
+ ],
+ "units": [
+  {
+   "id": "feature_18_image_processor",
+   "name": "Image Processor (Canvas Operations)",
+   "description": "Canvas read/resize/compress for custom shape/border uploads",
+   "files": [
+    "js/image_processor.js"
+   ],
+   "component_key": "js/image_processor",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/image_processor.js",
+   "test_paths": [
+    "test/unit/image_processor.test.js"
+   ]
+  }
+ ]
+}

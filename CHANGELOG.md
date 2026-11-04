@@ -7,6 +7,855 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-11-03, accessibility_improvement_20261103 — Phase 1 ARIA remediation, Cluster A of the UX-scoring gap analysis)
+- **Explicit accessible names on the tool's own controls (`js/main.js`, `js/controls.js`,
+  `js/context_menu.js`, `js/modals.js`)** — `aria-label` added so a screen reader's name is
+  deterministic instead of inferred: `addRobustButton` mirrors `title` on all 10 in-sheet button
+  types; `makeActionBtn` mirrors `btnInfo.title || btnInfo.label`; tray heads mirror their visible
+  label text; the templates chip, hue-picker accept, per-panel resets, filter reset, help close,
+  print-settings close and turn-off confirm all name themselves; `createMenuTrigger` reads
+  "More Options"; the modal OK/copy buttons (`showInputModal`, `confirmAction`,
+  `showFallbackModal`, `showEmptyStateDialog`) read their own confirm/copy labels. Additive DOM
+  attributes only — no behaviour, no CSS, no module changes. Regression-seamed by
+  `test/unit/accessibility/aria_labels.test.js` (9 tests: panel buttons, in-sheet buttons,
+  crossover with the pre-existing ARIA chrome). Guard-discipline at the checkpoint: lint 37/37,
+  smoke 11/11, injected-scope 5/5, dead-exports 9/9, scripts hygiene 26/26, targeted suite
+  432 passing. Sealed AC-2/AC-3/AC-4; AC-1 (criterion ≥ 90) DEFERRED to a future accessibility
+  re-score (evidence file holds 62). Track record:
+  `conductor/tracks/accessibility_improvement_20261103/` (registry row in `conductor/tracks.md`).
+
+### Added (2026-10-31, visual_capture_red_closure_20261031 — closure of the 11 RED browser_e2e visual-capture findings; product fixes in js/)
+- **Two product fixes in the shipped content scripts, closing the behavioural half of the 11 RED
+  findings** (the e2e inventory certification, archived `e2e_feature_inventory_minimax_20261029`,
+  was the first run ever to execute the 5 `*_visual_capture` suites — 422/432 passed, 11 RED):
+  - **`js/print_styles.js` — a shape wrapper on a layer that is LOCKED and NOT the active layer
+    (and its whole subtree) now steps out of the hit test** (`pointer-events: none !important`,
+    scoped `:not(.be-active-layer)`). MEASURED defect: the sheet's decorative shapes sit on
+    `#print-enhance-shapes-layer` (z-index 1001, ABOVE the sections layer's 1000), and that layer
+    boots LOCKED with `pointer-events: auto` — so its frames swallowed every pointer event over
+    the sections they framed: sections could not be dragged at all (mouse OR touch) and the 🎯
+    "select section" button in a section's own action rail was unclickable (hit-test
+    interception). Measured after the fix on a real boot: `elementFromPoint` at 6 section-wrapper
+    centres returns sheet content (`fromShapesOverlay: false` ×6), and a dispatched pointer
+    sequence commits `.be-section-wrapper.dragging` MID-GESTURE on both `pointerType: "mouse"`
+    and `"touch"` — the two RED phase-1 assertions and the phase-4 click, closed. The rule's two
+    scope bounds are load-bearing and documented at the rule: SHAPE wrappers only (a shape layer
+    is the only thing that legally paints above the active layer; section wrappers keep every bit
+    of U-7's pinned pointer interaction), and `:not(.be-active-layer)` (isLocked and "is the
+    insertion target" are independent — the layer you are WORKING on keeps full interaction,
+    dimmed-but-hittable). U-7's requirement (a lock is not a trap) survives whole: its escape
+    hatch is the layer manager's ROW, which lives outside every `.pe-layer` and is untouched.
+  - **`js/shape_picker.js` — Escape in the asset-picker search field is now two-step**: a
+    NON-empty query is cleared and the modal stays open (the field owns that Esc); an EMPTY field
+    leaves the event to bubble to the modal's own window handler (`onModalKey`), which closes the
+    sheet. It used to `stopPropagation()` unconditionally, and the picker opens with that field
+    focused — so Escape NEVER cancelled the sheet from its default state (picker_ux RED phase 3,
+    "Esc closed the modal: false !== true"). Enter still never commits the modal.
+- **Eight stale-assertion corrections in 3 `*_visual_capture` spec files (operator ruling
+  2026-10-31, Option A — "fix all 6 real gaps in js/, and update those 5 stale assertions
+  minimally in the spec files, documented as superseded behavior")**, each marked SUPERSEDED
+  BEHAVIOUR in-place with its product citation, and each re-checked against the shipped source in
+  `conductor/archive/visual_capture_red_closure_20261031/verification.md` before the verdict:
+  (1) `indexedDB.open("DDBPrintEnhancerDB", 4)` ×3 → open WITHOUT a frozen version — the product
+  ships `DB_VERSION = 5` (`js/storage.js`), and opening a live v5 database at v4 throws
+  `VersionError`, so the corruption/clean-reset those tests plant never landed (the boot
+  restore-failure card therefore legitimately never rendered); (2) first-`.be-feedback` toast
+  selection → THE action's toast by its text — `announceBootRestore`
+  (`js/persistence.js`) emits a legitimate `"Restored your saved layout.", "success"` toast at
+  every restoring boot and toasts stack in one lane, so it can sit in front; the assertion still
+  requires the save toast's `be-feedback-info` class; (3) Reset gate `role === "dialog"` →
+  accepts `alertdialog` — the shared destructive-gate primitive (`js/recovery_ui.js`) has
+  announced destructive surfaces as `alertdialog` since track `modal_primitive_20260910`;
+  (4)+(5) phase-2 lock state — the exclusive-lock paradigm (`_toggleLayerLockNow` locks every
+  OTHER layer on unlock, pinned by `test/unit/layer_manager.test.js`) makes "no layer stays
+  locked" unreachable BY DESIGN, so the assertion now checks the invariant the reveal needs (no
+  `be-lock-shapes-default` on `<body>`, the shape's layer unlocked and active), and the reveal
+  step resolves the shape's OWN layer and clicks the lock only when that layer is actually LOCKED
+  (it used to blind-toggle and RE-LOCK the already-unlocked layer — measured live); (6) catalog
+  "legacy detail stacks a second overlay" (`nOverlays >= 2`) → `strictEqual(nOverlays, 1)` + an
+  in-modal detail check — `js/catalog_service.js` has rendered detail inside the single overlay
+  (`setView("detail")`, `renderDetail`) for a long time; (7)+(8) confirm buttons found by
+  `.be-modal-ok` class instead of text-content matches that can never fire (`textContent === "OK"`
+  ×2, `/apply/i` ×1) — the ratifying label is "Continue"/"Continue…" (`js/modals.js`,
+  `js/catalog_service.js`), pinned by `test/unit/ia_consistency.test.js`'s RATIFIED set.
+
+### Fixed (2026-10-31, same track — verification evidence)
+- 45/45 green across the 5 suites in real-browser Playwright runs through the shipped MV3 harness
+  boot, using the inventory runner's exact mocha invocation with each suite's SHOTS flag on
+  (drag_ux 10/10, ui_ux_audit 4/4, custom_templates 6/6, picker_ux 18/18, shape_layer_ps 7/7;
+  was 34/45) — per-case `.webm` + per-suite JSON reports retained under
+  `temp/scratch/verify-*/` (scratch, gitignored). `npm run lint` green; `npm test` composite
+  2235 passing / 0 failing. Track record: `conductor/archive/visual_capture_red_closure_20261031/`
+  (spec + plan + verification + deliberation/; registry row in `vendor/conductor/tracks.md`).
+
+### Added (2026-10-29, e2e_feature_inventory_minimax_20261029 — reusable full-inventory video-certification skill)
+- **A reusable skill for running the whole e2e feature inventory with full-video evidence and
+  MiniMax certification: `vendor/.reasonix/skills/e2e-feature-inventory-minimax/SKILL.md`**
+  (declared local in `governance.yaml`, discovered via `[skills] paths`). Distilled from track
+  `e2e_feature_inventory_minimax_20261029` (commit `19a4552`): drive all 82 `test/browser_e2e`
+  specs (432 tests) against the unpacked MV3 extension, capture a FULL video of every suite's
+  browser page, then certify each of the 18 fleet features by sending its complete video to
+  MiniMax-3.1-Flash through the OFFICIAL MiniMax API as the single certifier seat, with the
+  requested id "minimax 3.1 flash" pinned to the real API model name at run time. Because the
+  two driver helpers are gitignored project-authored harness helpers (per the house convention),
+  THIS changelog entry is their only durable record — including their measured corrections:
+  **`scripts/e2e_inventory_runner.js`** — sequential, resume-safe mocha driver that groups each
+  suite to its fleet feature via `ux_feature_fleet_20261029/units.json`, runs each spec in a child
+  process at the `npm run test:e2e` timeout (900 s), reads the mocha JSON report from a FILE
+  (`--reporter-option output=`, not stdout — a spec's console output corrupts stdout-JSON,
+  measured 2026-10-29), keeps the suite's representative `.webm` at a stable path under
+  `<outdir>/evidence/<feature>/`, and appends one `progress.jsonl` row per suite
+  (`{suite, feature, passing, failing, pending, video, video_missing, video_status, video_bytes,
+  pages_captured, ts}`). Two MEASURED corrections landed in the same session after the first run
+  was interrupted: **(a)** the video picker was `readdirSync(...)[0]`, i.e. arbitrary directory
+  order, while one suite boots one page per case — so all 9 suites that had captured a video were
+  storing an unrepresentative page
+  (`icons_privacy_surface` kept 176 KB with a 2681 KB page available; `byok_settings_storage`
+  181 KB vs 3517 KB), which would have certified a blank tab; it is now SIZE-ORDERED and the
+  chosen size plus the page count go on the row so the choice is auditable. **(b)** `--resume`
+  keyed on the suite NAME alone, which froze the 20 instrumentation-era video gaps forever and
+  would have converted a capture bug into a permanent AC-2 failure; the resume set is now built
+  from the LATEST row per suite and counts a suite done only when it ran (`failing >= 0`), produced
+  a video, AND recorded its byte size — the last term is what makes the 7 pre-fix rows (which name a
+  video whose representativeness nobody can show) retry too, so a gap or a stale pick can never
+  harden into a permanent AC-2 failure. And **`scripts/e2e_video_preload.js`** — a mocha
+  `--require` preload that instruments every page the harness's own launcher opens, so capture
+  exists WITHOUT editing the tracked harness (`test/browser_e2e/_helpers/dom.js` stays
+  read-only). Its mechanism is NOT the context-level `video: { dir }` option: MEASURED on
+  Playwright 1.63.0 that option silently produces no file (the server-side recorder never starts —
+  `DEBUG=PW:video*` emits nothing even for a plain `newContext({video})`). The working mechanism is
+  the page-level screencast (`page.screencast.start({path, size})` / `.stop()`), and the FLUSH
+  ORDER is the whole file: `page.on("close", stop)` fails because by the time that event fires the
+  CDP session is gone (`screencast.stop: Target page, context or browser has been closed`, no
+  `.webm` written — reproduced four ways), so the preload wraps `page.close()` and `context.close()`
+  to `await stop()` FIRST. A 615,169-byte `.webm` of the live demo sheet was reproduced through
+  exactly that path. The preload is process-scoped and inert when `E2E_VIDEO_DIR` is unset, so a
+  plain `npm run test:e2e` is unaffected; capture works headless (the harness boots `--headless=new`).
+  To run the procedure:
+  `node scripts/e2e_inventory_runner.js --outdir <track>/execution [--resume] [--suite <file>]`.
+  Smoke-tested twice: `icons_privacy_surface.spec.js` → 3/3 passing, 2,637,258-byte video across 2
+  pages; `absolute_positioning.spec.js` → 4/4 passing but `video_missing`, which is
+  the gap class fix (b) above now retries instead of skipping.
+  **2026-10-30 resume — Phase 0 model-id pinning RESOLVED + the Phase 4 certification pipeline
+  SOLVED and LIVE-TESTED (both had been the open unknowns; recorded here because the driver and
+  the certifier are the durable surface):**
+  - **Model id pinned:** the operator's "minimax 3.1 flash" = the official **`MiniMax-M3.1-Flash`**
+    (announced 2026-10-19; 1M-context frontier multimodal coding model; supports text + image +
+    VIDEO understanding). Confirmed against `platform.minimax.io` docs AND a live smoke call
+    (`MINIMAX_API_OK`, usage accounted). The credential is the env `MINIMAX_API_KEY` (live-
+    verified; NEVER committed).
+  - **HOST CORRECTION `.ai` -> `.io` (measured, guard-re-sealed):** the LIVE official host is
+    `https://api.minimax.io` — `api.minimax.ai` does NOT resolve from this network (curl 000 /
+    DNS failure) while `api.minimax.io` returns 200 + real completions. base_url (OpenAI-compatible)
+    `https://api.minimax.io/v1`; Anthropic-compatible `https://api.minimax.io/anthropic`. Corrected
+    in `index.md`/`README.md`/`LAUNCH-PROMPT.md`/`plan.md`/`spec.md`/`metadata.json` and the skill
+    `SKILL.md`; the track's sealed criteria re-locked via
+    `python vendor/housekeeping_guard.py seal --track e2e_feature_inventory_minimax_20261029`
+    (AC-3 sha256 moved `464bbfa2…` -> `38a1855…`; the criterion's MEANING is unchanged — "official
+    MiniMax API + resolved id recorded" — only the host literal was corrected, and the .ai->.io
+    resolution is recorded in the verdict appendix). Guard `check` exit 0, criteria lock green.
+  - **THE BLOCKER the sources never stated: Playwright screencast emits `.webm` (VP8/VP9), but the
+    official API accepts ONLY MP4/AVI/MOV/MKV for video input** (docs `MessageContentPart.video_url`
+    inline AND the Files API `purpose=video_understanding` list "MP4, AVI, MOV, MKV"). `.webm` is
+    rejected by BOTH delivery forms, so every captured video must be TRANSCODED before it can be
+    sent. No system ffmpeg is on PATH; the static binary inside Python 3.12's already-installed
+    `imageio-ffmpeg` package supplies it: `imageio_ffmpeg.get_ffmpeg_exe()` ->
+    `...\site-packages\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v7.1.exe` (ffmpeg 7.1), which
+    DECODES vp8/vp9 and ENCODES libx264/aac. Verified webm->mp4:
+    `-c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p -movflags +faststart -an`
+    (rc 0; 2.8 MB webm -> 1.16 MB mp4; all feature videos land 48 KB-1 MB mp4).
+  - **Two OFFICIAL delivery forms, BOTH live-tested returning genuine verdicts:** **(a) Files API**
+    (recommended) `POST /v1/files/upload` multipart `{purpose:"video_understanding", file}` ->
+    `{file:{file_id}}`, then reference it as `mm_file://{file_id}` in a chat `video_url` part
+    (supports video up to 512 MB, retained 7 days; avoids multi-MB base64 bodies for the ~1 MB
+    feature videos). Live-verified: uploaded `color_picker.mp4` -> `file_id 457885394072006`, and a
+    follow-up chat returned a real video-grounded verdict through the `mm_file://` reference.
+    **(b) base64 data URL** `data:video/mp4;base64,<B64>` inline in the `video_url.url` (request
+    body <= 64 MB, video <= 50 MB) — live-verified on the 48 KB smoke video. Chat call shape
+    (OpenAI-compatible), verified: `POST /v1/chat/completions`, `model:"MiniMax-M3.1-Flash"`,
+    `reasoning_effort`, `messages[].content[] = [{type:"text",…},{type:"video_url",
+    video_url:{url:REF,"detail":"low","fps":1}}]`; `fps` default 1, range [0.2,5]; `detail`
+    low|default|high.
+  - **Honest-evidence caveat (measured, not hidden):** at `fps:1`/`detail:"low"` the model sampled
+    too sparsely to see color_picker's click SEQUENCE and honestly returned **NOT-VISIBLE** even
+    though that suite passed 4/4 — so a green suite can get a video-sampling-driven "not visible"
+    verdict. The certifier prompt therefore asks the model to describe what it ACTUALLY sees before
+    giving a verdict, and the driver should use `fps>=2` (optionally `detail:"default"`) for
+    click/interaction suites so the interaction frames are actually sampled; a "NOT-VISIBLE" verdict
+    on a passing suite is read as EVIDENCE about the capture/sampling, not proof the feature broke.
+
+### Added (2026-10-30, e2e_feature_inventory_minimax_20261029 — COMPLETE: verdict `verdict.md`; track ARCHIVED with this changelog's close-out commit)
+- **The full-inventory certification RAN TO COMPLETION and its product landed:** `verdict.md` +
+  `execution/progress.jsonl` (255 rows) + `execution/suite_assembly.json` +
+  `execution/minimax/` (19 feature records + `summary.json`) under the track directory. AC-1:
+  **82/82 inventory suites ran live against the unpacked MV3 extension — unique-suite totals
+  422 passing / 11 failing (432 tests)**; the 11 RED tests sit in 5 cross-cutting
+  `*_visual_capture` suites that had never run under a prior fleet gate, so they are
+  first-ever-run findings — verbatim failure text and measured causes are in `verdict.md`
+  (drag ghost commit latency, failed-write success-instead-of-error toast, stacked-overlay
+  legacy detail, lock classes at reveal, Escape-cancel, layer rename, Section-4 picker
+  interactivity). Per-feature mocha rows: all 18 feature bundles GREEN.
+- **AC-3/AC-6 closed:** 19 bundle judge calls — one per feature (18 fleet units) plus one for the
+  cross-cutting residual class — through the OFFICIAL MiniMax API (`api.minimax.io/v1`, Files API
+  `purpose=video_understanding` uploads referenced as `mm_file://<id>` in chat `video_url` parts),
+  model **MiniMax-M3.1-Flash** (the operator's "minimax 3.1 flash", pinned at Phase 0), knobs
+  `reasoning=low / max_completion_tokens=8000 / detail=default / fps=5` (measured from probes A-F
+  in `temp/scratch/` after the feature_07 truncation at exactly 1600 tokens taught that
+  reasoning=medium burns the completion budget on reasoning tokens). Verdicts: 0 WORKING /
+  7 PARTIAL / 12 NOT-VISIBLE — the NOT-VISIBLE pattern is a property of video-frame sampling
+  (a green suite can be honestly "not visible" at the sampled fps), which is why `verdict.md`
+  carries the mocha and MiniMax columns side by side. API usage: 1,494,110 tokens / 19 calls —
+  inside the track's authored bounds (`max_judge_calls: 18` reconciled 18→19 in the verdict's
+  call-pattern appendix; `max_cost_usd: 60`).
+- **Driver fix carried into this completion (durable record for the gitignored helpers):**
+  `scripts/e2e_inventory_runner.js` had used `execFileSync`, which THROWS on a RED suite's
+  mocha rc≠0, so the catch branch recorded `failing=-1` and DISCARDED the suite's already-captured
+  videos — five suites sat misrecorded as "did not run" while their full stats and up to 19 page
+  webms sat on disk. Swapped to `spawnSync` (returns rc + report without throwing), and the five
+  suites' progress rows were REPAIRED from their on-disk `report.json` stats + size-ordered webms
+  (each carries a `"repaired"` provenance flag). RED is recorded RED — never repaired to green.
+- **Suite result counts are honest about double duty:** `properties_panel.spec.js` serves BOTH
+  feature_05 and feature_12 bundles (bundle views, not a partition), and `drag_ux_visual_capture`
+  (RED 6/4) is counted inside feature_17's 24/4 row AND the cross-cutting residual — the AC-1
+  total is computed over the 82 UNIQUE suites only.
+- **Guard hygiene for the close-out — recorded honestly, including this session's correction:**
+  the YouTrack receipt had gone stale (RECEIPT_STALE — a refusal BY NAME, never a silent local
+  fallback, per the tracker-authority wiring); refreshed through the documented path
+  (`python vendor/youtrack/reader.py read --root .`, revision 345dce35c273 unchanged, 17 issues).
+  CORRECTION (filed by the close-out session 2026-10-30): the interrupted author session's claim
+  that the guard "printed OK on both halves" at this point was MISTAKEN — re-measured, the guard
+  was RED on exactly one item (`complete (all boxes ticked) but no close-out artifact`), because
+  the session died between ticking plan.md's last box and writing the close-out record. The
+  close-out session supplied the missing artifact (`final_report.md`) and ARCHIVED the track to
+  `conductor/archive/e2e_feature_inventory_minimax_20261029/` (the repo's convention for completed
+  tracks; a keep-live exception is not expressible here — `conductor/tracks.md` was deleted in
+  768a20b and recreating it would trip the guard's RF-02 ambiguous-registry refusal against the
+  overlay's own `vendor/conductor/tracks.md`). After that, `vendor/housekeeping_guard.py check`
+  printed OK on both root and vendor halves.
+- AC-4 audit at close: `git status -- js/ manifest.json test/` EMPTY — no product code touched.
+  Video evidence (840 .webm page videos, 323 MB) stays gitignored by the operator's 2026-10-29
+  decision (`.gitignore` `/conductor/tracks/*/execution/evidence/`, extended the same close-out
+  with `/conductor/archive/*/execution/evidence/` so the archive move does not un-ignore the 2.1 GB
+  tree) — the committed record IS the
+  textual half (progress rows carry each chosen video's byte size + page count so the pick is
+  auditable; the minimax records carry the upload's `file_id` + `mp4_bytes` + `upload_response`).
+
+### Added (2026-10-26, track ux_quick_wins_20261025 — Phases 1-3 of the six approved e2e-matrix gaps)
+- **Per-layer three-state visibility (AC-1 / BEYOND-9).** Each layer row now carries an explicit
+  Print only / Both / Screen only strip (`js/dom/layer_manager.js`), which REPLACES nothing and
+  renames nothing: the printer and eye buttons keep their own meanings, and the strip reads and
+  writes the same two persisted flags (`isHidden`, `isDisabledOnPrint`) the panel already owned —
+  so the storage schema is unchanged (operator decision #4) and a legacy record that sets BOTH
+  flags still reads honestly. `Print only` is the mode that needed new code: the on-screen hide is
+  an inline `display:none`, so `js/print_styles.js` now emits a `!important` print rule that undoes
+  it, keyed on `data-print-only`. The strip is a separate LINE rather than three more segments in
+  the row because the row is measurably full (the 248px panel left the sections label 0px at 3x28px
+  segments); the record is `temp/scratch/ac1_measure_record.txt` and the rejected shapes are in the
+  track's `deliberation/evaluation_matrix.md`.
+- **A retryable AI refusal now offers its retry (AC-4 / BEYOND-13).** The worker's
+  `retryable`/`retryAfterSeconds` flags were already computed and dropped on the wire
+  (`js/background.js` kept only the latter); they now reach `js/ai_arrange.js`, which offers one
+  second dial with the SAME instruction, capabilities and target — the user does not retype what
+  they asked. Covered by `byok_relay.spec.js`'s network-failure injection and its recovery case.
+- **Reload persistence is now proven for every customization type, not just the credential
+  (AC-5 / BEYOND-14).** The BYOK persistence spec covered only the API key. A new sibling
+  `test/browser_e2e/byok_settings_persistence_types.spec.js` drives the product's OWN seams for the
+  four types the criterion names — `__DDBStorage.saveCustomShape` / `saveCustomBorder`, the layer
+  manager's `setLayerMode`, and `CatalogService.applyTemplate` — and asserts the read-back after a
+  real `page.reload()` + reinject (5/5 passing). It also pins the undo stack's documented
+  SESSION scope (`js/persistence.js:138-152`): depth ≥1 before the reload, 0 after, with
+  `announceBootRestore`'s "Restored your saved layout." toast as the notification that the reload
+  was not silent. No product gap was found — all four types already persisted correctly.
+- **Keyboard layer reorder + reorder polish (AC-6 / BEYOND-15, Phase 5).** The layer panel's rows
+  now reorder with the arrow keys: a `keydown` live-region listener delegates through
+  `closest("[data-layer-id]")` and maps Up/Down/Home/End to `reorderShapeLayers` — the SAME
+  mutation path a drag drop takes, so a keyboard move is drag-equivalent, and both surfaces derive
+  their insertion index from the same `getRowAfterGroup` midpoint geometry (they cannot disagree
+  about where a move lands). Binding on the row container covers both focus handles
+  (`.be-layer-name`'s `tabindex="0"` and the row itself). The AC-6 polish clause ships as
+  transform-safe opacity/background transitions in `js/ui_theme.js` (`.be-layer-group`, 140ms) —
+  a FLIP transform was honestly rejected because the restack's panel rebuild detaches the old row
+  before a translate can be measured against it; animating only opacity/background keeps the panel
+  60fps (no layout-triggering property, so a panel that repaints on every keystroke does not force
+  a reflow per frame). The drag-over drop-marker precondition (3px gold `be-layer-drop-marker` band,
+  midpoint targeting) was verified as already-shipped rather than authored. Delivered as a dedicated
+  `test/browser_e2e/layer_reorder_keyboard.spec.js` (7/7 passing) rather than growing
+  `byok_arrange_roundtrip.spec.js`, whose subject is the AI-arrange round-trip. For the honest
+  record: the spec's two failing cases were test-baseline bugs (each derived its "before" order from
+  a `"report"`-mode probe taken AFTER the press — and that mode sets `orderAfter = orderBefore` by
+  construction), and one helper referenced a function that exists nowhere in the harness; fixes to
+  the SPEC are in this commit, none to product behavior.
+### Fixed (2026-10-28 — the browser gate's pending expectation was ~3 weeks stale, so the gate could not go green at all)
+- **`test/browser_e2e/spec_pending.json` re-derived from a REAL run, and the gate is green for the
+  first time since 2026-09-22.** The map still recorded `case_count: 95` read from the
+  `dnde2e-baseline-clean.json` run of 2026-09-13, while the suite has grown since (the AC-2
+  refinement block and the 62-corpus gallery renders in `byok_border_gallery.spec.js`, the
+  `byok_relay` network-failure cases, `layer_print_visibility`'s three-state cases). MEASURED: every
+  `node scripts/browser_gate.js` run AFTER the collection manifest was fixed (`31c4603`) failed on
+  `PENDING CHANGED: byok_border_gallery.spec.js expected 0, actual 62` — a real 157-vs-95 pending
+  mismatch, not a flaky case. The map is now generated by the tool that is supposed to generate it
+  (`node scripts/gen_spec_inventory.js --pending <results.json>`), from
+  `temp/scratch/browser_gate_real_run_20261028.json` — the four shard reports merged by
+  `temp/scratch/merge_shard_reports.js`, which also asserts the merged pending count equals the
+  merged `stats.pending` (157 = 157) so the map cannot be built from a mis-read reporter.
+  `gen_spec_inventory.js`'s own self-check then confirmed it against the run's stats. The diff is
+  additive plus one count correction: `case_count` 95 → 157, `by_spec_file` gains
+  `byok_border_gallery.spec.js` (62), and the eleven previously-recorded capture harnesses keep
+  their counts unchanged.
+- **The green run that proves it:** `node scripts/browser_gate.js --shards 4` →
+  `PASS (sharded:4): 270 passing / 157 pending / 0 failing, 1988s, collection ok, pending ok`,
+  `green: true`, `exit_code: 0`, artifact `temp/browser_gate/artifact.json` (collection 81/81 spec
+  files, 427/427 tests; host canary 0). Before the regen the SAME command read
+  `FAIL … pending mismatch` with 2332s and zero failures — i.e. the only red was the stale map.
+  Note for the record: the merge step is a scratch script, deliberately NOT a committed tool, because
+  the gate already regenerates its map from a `--reporter json` run; a committed merge step would be
+  a second, drifting reader of mocha's reporter shape.
+
+### Fixed (2026-10-16, track runtime_perf_20261015 RE-EXECUTED — three defects the re-run found, and one it refused to inherit)
+- **The track was re-executed because its BUILDER hung after committing, not because its work failed.**
+  `temp/idlegate/idlegate-audit.log` shows the spawn at `2026-10-15T20:55:40Z` (pid 3920), then
+  `2026-10-16T06:10:01Z boot marker past grace: escalate priority=runtime-perf` and a re-fire at
+  `06:13:09Z` (pid 17388). The sealed work (`temp/idlegate/seal-state.json` → `b427321`, kept by
+  `refs/idlegate/keep/20261015-205540-17140-wt`) was on NO branch and the re-run's base (`19549c6`) had
+  no `scripts/perf/` at all. This session ADOPTED it (`git cherry-pick fd5631a b427321`) rather than
+  re-authoring a deliverable whose instruments, validator and suite behave as documented, then re-ran
+  every phase against it: the dossier's baseline reproduced EXACTLY (855 rows / 852 latency-bearing,
+  p50 16.733, p95 54.047, max 465.483; glm 8.766/424.672; deepseek 334.218/356.828; `unknown` 1093 over
+  its own window; 865/865 relay rows `producer=reasonix_proxy`), and the validation sample reproduced
+  its counts exactly (120 terminal, 100 % `duration_ms`, 7 timeouts, 4 cancels, 5 errors, 0
+  unknown-model rows).
+- **An interrupted call wrote NO terminal telemetry at all — fixed.** In the helper as delivered, a
+  SIGINT delivered to the CALLING thread (how a headless CLI gate's call most often ends) left the
+  store holding 1 `model_call_started` and 0 terminal rows — and this track's OWN validator then FAILED
+  that store ("`model_call_started` with NO terminal event"), so AC-1's "a cancelled call is
+  terminalised rather than omitted" was violated on the interrupt path. `call_model` now terminalises
+  the interrupted call as `status=cancelled`, `cancel_flag=true`, `error_class=KeyboardInterrupt` and
+  RE-RAISES it. Measured in both directions (probe drives the real helper with a timed SIGINT, then the
+  real validator reads the store): delivered helper → 1 started / 0 terminal, validator exit 1; fixed
+  helper → 1 started / 1 terminal (`cancelled`), validator exit 0.
+- **`CancelToken`'s "exactly once" was a claim, not a property — fixed.** Its `register_closer`
+  docstring promised delivery "under the lock" and there was no lock: on the delivered code two
+  registrations produced THREE closer calls (a repeated `set()` re-closed every handle; a registration
+  racing `set()` could be closed by both sides). Ownership of the closer list is now TRANSFERRED under
+  a lock, so each closer fires exactly once. Pinned by test, falsified both directions.
+- **The tracked report cited the worktree it was generated in — fixed.** `runtime-perf-report.{md,json}`
+  carried `.../worktrees/20261015-205540-17140-wt/temp/perf/model_calls.jsonl` — a disposable path that
+  names nothing on the next run. Store paths inside the checkout are now spelled relative to the
+  repository root (`temp/perf/model_calls.jsonl`) and both report artifacts were regenerated.
+- **`check_scripts_hygiene.js` reported the new `scripts/perf/` DIRECTORY as an undocumented entry —
+  fixed.** All 12 of its files carry rows, but the advisory arm compared the direct children of
+  `scripts/` against recursive tracked paths, so no directory could ever satisfy it (the false advisory
+  was visible on every run since this track added the directory). Directories are skipped now; the
+  untracked-FILE arm still fires, pinned by a new fixture case.
+- **Three record corrections; no criterion, threshold, cap or verdict was touched.** (1) The baseline's
+  reproduction command is now runnable from the checkout the track runs in (`$RELAY_CHECKOUT` — the relay
+  store is untracked and lives in the project checkout, and a builder worktree's `temp/` holds only
+  `perf/` and `scratch/`). (2) "Five tracked scripts dial a model directly" is corrected to the measured
+  FOUR direct sites + one INDIRECT + two untracked sites. (3) The report's blanket "no file under
+  `vendor/` was read or written" is narrowed to its EVIDENCE set, because this project's own conductor
+  record lives under `vendor/conductor/`. The dossier's telemetry figures are also re-dated as
+  measurements of a growing store: 45,589 terminal rows on 2026-10-15 → **45,698** on 2026-10-16, with
+  duplicate markers still 0 and the largest `(role, model, task_class, context_band)` bucket still
+  **8,422**.
+- **Verification (all in this session):** `npm run lint` green (border-SVG guard + scripts hygiene: 57
+  judged / 66 rows, both directions, and the false `perf` advisory gone); `npx mocha
+  test/unit/model_call_telemetry.test.js` **24 passing**; `test/unit/scripts_hygiene.test.js` **13
+  passing**; `npm test` **1615 passing / 7 pending / 11 failing** against a MEASURED pre-change baseline
+  of **1613 / 7 / 11** (the changes stashed, suite re-run) — the same three environmental suites in both
+  runs (`byok_border_criteria_metrics` missing a `temp/visual_logs` fixture; `lint_config_not_vacuous`
+  with no `node_modules/eslint` in a worktree; `vendored_overlay` with no overlay in a worktree), none of
+  them this track's, and none of them newly failing. No product file changed (`js/**`, `manifest.json`
+  untouched); no release.
+
+### Added (2026-10-15, track runtime_perf_20261015 — the scripts area's model calls are bounded and observed)
+- **The dossier's premise was measured before it was built on, and two of its four claims did not
+  hold.** `temp/idlegate/runtime-perf/spec.md` (authored 2026-09-22T03:01:27Z by the P4 rung's own
+  maintenance call, after nine dead builder attempts) attributes a severe relay tail latency to "the
+  `scripts` area" — but all 45,589 terminal model-call rows in `temp/modelstack/telemetry.jsonl` are
+  `producer=reasonix_proxy` / `call_origin=relay`, so no `scripts/` edit can move them (its
+  `qwen3.8-flash` row, 852 calls / p50 16.7 / p95 54.0 / max 465.5, is relay traffic); its
+  "`scripts (7 files)`" scope repeats the blind-inventory defect `scripts_inventory_hygiene_20261014`
+  already recorded against a 54-path measured surface; and its `unknown / n/a` row is not a missing
+  measurement but the ABSENCE of a model-call event. AC-3's relay-side clause is therefore recorded
+  NOT ACHIEVED rather than reinterpreted; the track's decision is CONDITIONAL PASS.
+- **The real gap was the area's own traffic, and it is now bounded and observable.** Five tracked
+  scripts dial model endpoints directly (`border_design_generator.js`, `byok_vision_gate.py`,
+  `drag_ux_visual_gate.py`, `codex_text_leg.py`, and `byok_border_visual_seat.py` indirectly) and
+  NONE of them emitted a terminal event anywhere; their only bound was a per-READ socket timeout —
+  which does not bound a call — and `border_design_generator.js`'s `fetch` had no timeout at all.
+  Delivered: `scripts/perf/model_call_telemetry.{py,js}` (one declared budget source,
+  `scripts/perf/budgets.json`, read by BOTH runtimes; a TOTAL deadline enforced by a supervisor so a
+  late response is discarded; a session cap separate from the per-attempt cap; a real cancellation
+  signal; `started`/`progress_tick`/`terminal` telemetry in `temp/perf/model_calls.jsonl`; a hashed,
+  redacted fingerprint), wired at all four direct sites without touching their payload/parse logic.
+- **Evidence instruments, not prose.** `scripts/perf/runtime_perf_report.js` re-derives the dossier's
+  relay baseline by a NAMED command and window (nearest-rank percentiles — the convention that
+  reproduces its numbers unchanged) and emits `runtime-perf-report.{md,json}` with the AC-1..AC-6
+  table; `scripts/perf/validate_model_call_telemetry.js` FAILS CLOSED on an empty store and refuses a
+  terminal record with no `duration_ms`, a bad status, a missing field, a double terminal, or an
+  unterminated call. `test/unit/model_call_telemetry.test.js` (23 cases) drives both helpers against
+  local synthetic transports — abort-at-budget, terminal-on-timeout, cancel-does-not-hang, session
+  cap, progress ticks, coalescing, budget parity across runtimes, and every validator arm in both
+  directions. Validation sample: 120 terminal calls, 100 % `duration_ms` coverage, 7 timeouts,
+  4 cancels, 5 errors, 0 unknown-model rows.
+- **Named shortfalls, not silent ones.** Three wired sites carry a DECLARED cap override above the
+  dossier's 210 s class cap (their own prior timeouts, kept because no seat-latency measurement
+  exists to justify lowering them and a lower cap would turn arriving gate answers into failures) —
+  each override states its reason in `budgets.json` and is printed in the report. One model-call site
+  could not be reached at all: `scripts/muse_gate.py` is gitignored by name, so it is not part of the
+  governed surface and is recorded as `not_wired: true` with its budget pre-declared (TECH_DEBT_SCRIPTS
+  T-6) rather than counted as coverage.
+- **`scripts/perf/` added to the scripts inventory** (12 rows, `TECH_DEBT_SCRIPTS.md` §3; the governed
+  surface is now 66 files) plus a new finding F-8 and gap T-6 in that file. No product file changed:
+  `js/**`, `manifest.json` and the browser suite are untouched, and this ships no release.
+
+### Added (2026-10-15, track registry_backfill_20261015 — the 11 orphaned archive rows backfilled)
+- **The guard's archive arm is clean again.** It had reported 11 archived track folders
+  (2026-03..2026-05 era: archer_template_replication, the layer_* family, properties_panel,
+  refactor_drag_handles, shape_layer_management, skill_box_splitter) named by NO registry
+  row — rows never written, since these tracks predate the row->folder check by months.
+  One honest row per folder was appended to `vendor/conductor/tracks.md` (registry bottom,
+  oldest first), each citing the folder's own artifacts and stating its REAL box state:
+  6 fully ticked; 5 with open boxes recorded as found (NO retro-ticking), with the
+  shipped-surface evidence for their features noted (`.be-drag-handle` in `js/dnd.js`,
+  `shapeLayers` in `js/dom/layer_manager.js`, `splitSkillsBox` at `js/main.js:2651`,
+  `js/properties_panel.js`). Deliberation: required — 3 candidates (backfill rows ADOPTED;
+  drop plan.md REJECTED — all 11 are real tracks, deletion would be signal suppression;
+  do-nothing REJECTED), matrix + ledger; guard: advisories 11 → 0, debt index 0, both
+  roots OK. No product file, archived folder, or guard code touched.
+
+### Added (2026-10-14, leg B — the certified 03-thornvine-lite border embedded in both premade templates)
+- **The amended Fork 1 executed.** Leg B's original premise was measured FALSE (verdict-identity
+  needs ≥44,194 B against the 16,000-char trust-root cap; three instruments agree) and the
+  operator ruled the amended Fork 1: certify a lighter derivative as a NEW design and embed
+  THAT — never a 9/10 artifact under the v45 name.
+- **Certification campaign (`03-thornvine-lite`)**: `temp/scratch/tv_v45_k10.svg` (13,723 B,
+  uniform k=10) certified 10/10 on its own derived instrument
+  (`temp/scratch/thornvine_lite_acceptance_gate.js`; G1–G9 unchanged, G10 `CURV_HARD`
+  recalibrated 0.20 → 0.08 with measured justification — below the artifact's measured window
+  minimum 0.088, the parent gate's own invariant; everything else byte-identical). The absolute
+  C6 clause was FALSIFIED and retired: the certified parent itself fails it at the certification
+  presentation (`deliberation/c6_falsification_record.md`, parent + k=3 both NOT MET), so
+  AC-B3' binds on **C6-delta** ("no visible decimation artifact beyond the parent's own
+  rendering at identical presentation") — two independent strict-muse vision sessions on the
+  final k=10 collage: MET + P1 + P2 (`tv_lite_vision_s10_k10_delta.txt`,
+  `tv_lite_vision_s13_k10_delta2.txt`).
+- **The embed**: `borderSvg` stamped on EXACTLY the 13 basic + 10 archer sections whose
+  `borderStyle` is null/`no-border` (the B-3 disposition: borderStyle fields stay — the AI
+  border overrides while present, clearing it restores the class border). Every other byte of
+  both templates is identical to dd66ad9 (`temp/scratch/verify_embed.js` → AC-B1 IDENTITY:
+  PASS); every embedded blob passes the REAL trust root (`js/ai_border.js` sanitize) and is
+  ≤ MAX_SVG_CHARS.
+- **New suite** `test/unit/template_border_svg.test.js` (8 passing) pins the stamping, the
+  trust-root + cap path, and byte-identity against the certification fixture
+  `test/fixtures/thornvine_lite_border.svg`. Full unit+e2e+manifest suite 1652 passing / 0
+  failing; overlap scan on the embedded templates → 0 overlaps; versions stay 1.6.0.
+- **AC-B3 is recorded FAILED + superseded, not silently swapped** (plan.md AC block; the
+  governing record is `deliberation/c6_falsification_record.md` + the disposition addendum in
+  `temp/scratch/byok_template_tuning_scope_20261014.md`).
+
+### Added (2026-10-14, track scripts_inventory_hygiene_20261014 — the scripts-area hygiene baseline)
+- **`TECH_DEBT_SCRIPTS.md`** — the `scripts` area inventoried: 54 tracked files, each with
+  purpose, invocation, runtime/deps, and touch-risk tier; the dossier's "7 files" count is
+  recorded as unreconciled against the measured 53-file surface (the track adds the 54th).
+- **`scripts/check_scripts_hygiene.js`** — wired into `npm run lint` (after
+  `check_border_svg_injection.js`): compares `TECH_DEBT_SCRIPTS.md` against the tracked
+  `scripts/` surface and fails when they disagree in either direction; a new script cannot
+  arrive without a purpose header. README's lint line updated.
+- **Headers on 23 existing scripts** — `#!/usr/bin/env node` (22) + `python3` fix (1) + one-line
+  purpose comments on the 10 that opened with code; no behaviour change (suite green).
+
+### Measured (2026-10-14, the owed operator input-budget re-measure — result: knob stays, no action)
+- **`python scripts/input_budget_report.py` → OK.** Soft 150,000 stays ABOVE the measured
+  five-term floor, which has FALLEN since the 2026-09-15 measurement: minimum post-fold size is
+  now **91,066** (active_turn 45,009 from 2,337 fold-chains over 44,026 telemetry rows;
+  digest 4,852 p95; kept_user_turns 8,192; prefix 245 p1; tail 32,768) vs the ~95,080–192,151
+  range the 2026-09-15 issue recorded — the p90-heavy active-turn profile that motivated the
+  200k consideration has not materialized in the week of live turns. The 2026-09-16 operator
+  decision (keep soft = 150,000, do NOT bump) is re-attested on current data; tightening toward
+  the 50k ideal stays off the table while 84.2% of calls exceed it (input mean 179,143,
+  p90 457,724, max 1,084,278 — folding still lands above the ideal for real turns, but the
+  floor no longer threatens the knob). This closes the 2026-09-15 "re-measure by 2026-09-22"
+  follow-up from `vendor/AGENTS.md`; no config change.
+
+### Attempted (2026-10-13, leg 8 — v27 = muse iter-26 Q1(a)/Q2 LITERAL + v28 = muse iter-27's mechanisms; best artifact v27c 6/10; NOT shipped)
+- **The mandatory 6-loop escape-valve consult RAN (muse iter-27, 2026-10-13)** after 8
+  tracked gate iterations on the same target (v23..v27c): complete brief with every
+  cumulative approach + measured result
+  (`temp/scratch/thornvine_muse_iter27_brief.md`), answer
+  (`temp/scratch/thornvine_muse_iter27_answer.txt`, 11,725 chars). His named mechanism:
+  wave-start slope-zero isolation (u=0 is a swell extremum; the relief stands alone
+  there and its period-3 regularity fires the G10 3-agree trigger). His prescriptions:
+  Q1 phi_e=pi/2 + single pi slip, Q2 biarc fillet with interior inflection, Q3
+  greedy+slide placement on the displaced ring.
+- **v27 sequence measured (gate, exact):** v27 7/10 (ramp missed the fillet's own
+  K3*L_f accumulation) -> v27b 7/10 (accumulation absorbed + unwrap; normal-direction
+  displacement — hard flatWindows 94-129 -> **0**, p10 0.4; muse F1 remediated) ->
+  v27c 6/10 (right/left 5 periods took **G7 to 0 fails**; roots re-solved on the
+  displaced ring; fillets 36 -> 140 bez: null). Persistent: G10 regularity triggers
+  (16) at wave-start corner windows, firing with fillet relief ON **and** OFF
+  (probe6 A/B) — the dome/dive cubic's own decay forms the 4-alternating run.
+- **v28 = muse iter-27 Q1/Q3 implemented LITERALLY — measured WORSE (G2 8 / G7 10 /
+  G10 16).** Both falsified on this ring: the 3-agree run COMPLETES before the s=9.0
+  slip lands (measured agreeing swings 1.2/1.8/1.9 at proj ~8.6-11.7), the slip's
+  mid-wave phase rate creates new G7 extrema (false crest 28.1; s2 troughs 4.0-4.3),
+  and greedy+slide produced a 570.8u coverage hole (cost 34.4k vs the annealer's
+  17.8 — it cannot cross the legal deserts along the fillet arcs).
+- **Pushback recorded per the challenge protocol:** muse's falsification relabels the
+  G7 gap-44s as sprout gaps; the gate's fail lines read verbatim `along-vine extremum
+  gap 43 outside 22.5-42.5` and the periods lever measured G7 -> 0 fails twice — the
+  lever stays, his relabel is not adopted.
+- **Terminal state:** best artifact v27c (6/10: G2 5 / G4 1 / G9 2 / G10 16; G1/G3/G5/
+  G6/G7/G8 PASS), `temp/scratch/tv_constructed_tile_v27.svg`. muse's own verdict: the
+  criterion set (G10 REGULARITY ban x monotone-relief handoff x G7 band x G2 gaps) is
+  jointly unsatisfiable for this constructor class, and his Option A relaxation is now
+  also measured-worse. Remaining paths are OPERATOR-OWNED: Option B (sharpen the G10
+  3-agree trigger: amplitude >= 2.0 AND period stddev < 0.3 — the hand reference has
+  varied sprout sizes, not strict period-3), Option C (HALF_PERIOD upper 42.5 -> 45.0),
+  or fund a new constructor class. Full record:
+  `temp/scratch/thornvine_leg8_record_20261013.md`.
+
+### Attempted (2026-10-12, leg 7 — v26 constructor executed after the interrupted session; first honest v26 measurement 7/10; NOT shipped)
+- **The interrupted session (gateway restart ~12:59) resumed at its own recorded state and
+  the cancelled work was re-issued.** The killed turn's tv_v26.py run had already FAILED at
+  12:35 (task snapshot `state=failed, job_failed`); its hang probes died mid-diagnosis with
+  no roots JSON / v26 SVG / gate run produced. Full record:
+  `temp/scratch/thornvine_leg7_record_20261012.md`.
+- **Three constructor defects fixed on the way to the first honest v26 measurement:**
+  (1) `resample_relief` infinite loop — the emit branch re-fired from the segment start
+  whenever `seg >= spacing` (measured hang: 3,000,001 iterations at strand-A vertex 37,
+  seg 0.502 > 0.5; zero-length segs ruled out); fixed to v12's proven emit-within-segment
+  structure (6582/6472 points at 0.002 s per strand, arc-true). (2) v26's `bez()` dropped
+  the `+ t**3 * p1[1]` y-endpoint term — every fillet endpoint collapsed toward y=0, the
+  ring inflated 1309->3291 arc units with two 250-unit border jumps per corner, and the
+  roots annealer was structurally blocked (cost floor ~876; 32 roots on a 3290-unit ring
+  force mean arc gap ~103 > the 59-unit band). One term restored: ring 1409.7, solver/main
+  rings verified identical (N=2820, max per-index deviation 0.000000), roots solved to
+  cost 0 at seed 1. (3) Kind-assignment: the arc-order greedy ate both-ok roots into
+  leaves first, starved the thorn pool (G9 pairs [3,4|3,4|4,4|3,4]) and skipped leaf-only
+  roots whose missing positions widened two G2 gaps to 110.5/71; replaced with the
+  capacity-preserving assignment (leaf-only -> thorn-only -> both-ok): G9 PASS 4|4 on all
+  edges, oversized gaps gone (alongGaps 22.0-59.5).
+- **Tracked gate on `tv_constructed_tile_v26.svg`: 7/10** (G1/G3/G4/G5/G6/G8 — disabled
+  per muse iter-20, pass-with-flag — and G9 pass; G2/G7/G10 fail). Residuals root-caused to exact positions: G2 = one consecutive-diff
+  3 < 4 (solver floor 3.75 vs the gate's GAP_DIFF 4.0); G7 = corner-crossing extremum
+  gaps 43-47.5 > 42.5 (s1, every edge) + the s2 crest at depth 14.7 outside [1.5,8]
+  (muse M4 exposure); G10 = fillet-envelope micro-ripple at proj ~8.7 (all four s1 edges)
+  + 100 hard-flat windows on s1, worst sagitta 0.0 at s=292 (the fillet relief maximum
+  cancels the dome's fall). The v26 sin^2 envelope + phase restart DEVIATES from muse
+  iter-26's dispositioned Q1(a)/Q2 plan (per-edge phase + linear ramp + continuous
+  handoff, NO envelope); the §6 measurements falsify the envelope shortcut — v27
+  pre-registered in the record §8 implements muse's plan literally.
+- Full exchange record: muse iter-26 (brief + answer, completed BEFORE the interruption)
+  validated F1/F2/F3 and set the v26 contract; no 6-loop escape-valve boundary crossed
+  this leg (§9 of the record).
+
+### Fixed (2026-10-12 — the Codex lane's weekly supply from this project: the entry declares a trigger and the trigger is MEASURED; the relay restart is owed)
+- **The lane-starvation card `temp/issues/ISSUE_codex_lane_builder_entry_has_no_trigger_so_the_lane_starves_20261011.md`
+  is DONE on the declaration side.** The live `reasonix.toml` declares a SECOND `[[osd.builder]]`
+  entry beside the untouched one-shot `self-audit` — `id = "dndbeyond-printenhance-weekly-doc-path-drift"`,
+  `trigger = "weekly"` (`reasonix.toml:360-382`, both write flags explicit) — the card's own
+  "shape 2". Verified with the framework's reader (`read_builder_entries`: state `declared`,
+  `problems: []`) and minted through the producer with the pass clock PINNED: exactly one job per ISO
+  week, idempotent on the week (`…weekly-doc-path-drift@2026-W42@2d8ed2bb…` → `job-88609833a81a5bf0`;
+  a second pass and a later W42 read coalesce; W43 → `job-b25e92c4066e14dd`; W44 →
+  `job-49947dd2d22462aa`), each carrying that entry's own objective and its own four acceptance
+  criteria — no filler criterion ([CS-2]). The control still starves exactly as the card's §1
+  measured: `self-audit` (`trigger = "declared"`) mints one job ever across W42/W43/W44.
+- **NOT YET LOADED, and the missing step is a SERVICE action an operator owns:** the declaration is
+  read at relay BOOT (`reasonix.toml:325`), and the running relay (PID 29440) booted
+  `2026-10-10T21:16:11Z` — 33.7 h before the config's `2026-10-12T06:04:17Z` edit. Its own newest
+  producer line (`2026-10-12T12:30:28Z`) still reads `of 1 candidate(s), already settled 1`, and the
+  live store carries 0 rows for the weekly key. **Restart `reasonix_proxy.py --project
+  dndbeyond-printenhance`**; nothing else is owed — the lane is enabled
+  (`framework/osd/codex_lane.yaml:11`, `:269`), the tick defaults it on
+  (`framework/osd/tick.py:124`), `codex-cli 0.157.0` and `~/.codex/auth.json` are present.
+- **The week still reads short, honestly, and that is arithmetic rather than a defect.**
+  `python framework/osd/lane_floor.py C:/luiscla27/projects/dndbeyond-printenhance` (2026-10-12,
+  W42): `this_week_jobs: 0`, `min_lane_jobs: 5`, `verdict: codex_lane_underused`, `reason: "the lane
+  ran 0 job(s) this ISO week against a floor of 5 — supply, not health: the feeds mint declared work
+  or the floor cannot be met"`. One weekly objective is one job per week against a floor of five, so
+  the shortfall is a SUPPLY question this declaration cannot answer alone: more REAL weekly
+  objectives, or an operator ruling on the floor — never a job whose purpose is to spend ([CS-2]).
+- **Reproduce** (this lane blocks `python -c`, so the commands live in the card's §6, not in one
+  liners): `read_builder_entries` plus `producer.mint(now=…)` against a throwaway store for the
+  weekly semantics and the control, `lane_floor.py` for the reading, and two greps over
+  `temp/modelstack/telemetry.jsonl` for what the producer's fold sees. The card also carries the
+  harness-side defeat measured on the way (its §8): the idle gate's issue close-out carry-back is
+  dead for every builder child, whose own project's handoff
+  (`telegram_orchestrator/temp/issues/ISSUE_idlegate_re_attempt_task_text_defeats_the_issue_carry_back_20261011.md`)
+  is verified present and OPEN.
+
+### Certified (2026-10-11 — the 8/10 corpus artwork bar: 10 of 11 certified MET)
+- **2026-10-12 push ("Push on to 8/10 svg borders") — 01-gilded-frame re-drawn twice more on
+  the Gemini seat (rounds 30/31), re-measured FAIL at the same family floor.** r30 is a new
+  distinct blob (`60282ce4…`); r31 is a byte re-emission of r23's artwork (seven draws across
+  two seats converge on it — the adopted prompt pins that geometry). Both measure
+  `cornerDeltaMin` **14** (TL 20 / TR 26 / BL 14 / BR 18, coverage 0.963). Root cause now
+  MEASURED: the prompt's declared "**diagonal 6 units**" diamonds (extent x6..12) clip the D1
+  corner box (x12..20) derived from r5b's 8-unit diamonds; re-deriving the box from the
+  declared geometry reads worse for every blob including r5b, so the frozen box is the correct
+  scale. Corpus re-frozen at rounds 1..31 (11 canonical / 44 variants / 55 accepted, **54
+  distinct** — the r23→r31 re-emission pinned in the corpus gate). The 8/10 tally is
+  unchanged: **10 of 11 MET**. The remaining lever is operator-owned (a prompt amendment to
+  8-unit diamonds, or a D1 box re-derivation ruling) — no criterion, threshold or prompt text
+  was amended.
+- **The 2026-10-11 operator ruling was executed** ("Aim a 8/10 on avg borders"): the corpus
+  bar is the set average ≈ 8/10, operationalized as **9 of 11 canonical designs certified
+  MET**; the escalated four (01/04/10/12) were regenerated on the **Gemini seat**
+  (`gemini-3.8-flash`, official OpenAI-compatible host) and re-judged under the ORIGINAL
+  instruments — no criterion, threshold or prompt text amended. **Outcome: 10/11 certified
+  MET — the bar is MET.** 04-dragon-scale now PASSES the D2 binding metric on all four terms
+  (the prior `LEFT stileStrokeP50Px 1 < 1.5` reads 14); 10-ink-brush and 12-knotwork are MET
+  on the vision seat (criterion + AC-V1-c). 01-gilded-frame is FAIL on the binding metric:
+  three DISTINCT accepted Gemini blobs (r24/r25/r27) all measure `cornerDeltaMin` 14 < 15 —
+  a measured prompt-family floor one device px under the untouched threshold; the seat's MET
+  is corroborating-only under D2. Full record:
+  `vendor/conductor/archive/byok_border_prompt_adoption_20261006/certification_8_10_bar_20261011.md`
+  (ruling: `operator_ruling_20261011.md` in the same directory).
+- **Corpus re-frozen at rounds 1..27**: 11 canonical / 42 variants / 53 accepted blobs, all
+  distinct; `freeze_border_corpus.js --check` byte-reproducible. All four escalated ids were
+  accepted on their first Gemini sample (round 23); 01's three draws each survive as
+  variants. `--provider gemini` added to `scripts/border_design_generator.js` (tooling-only;
+  the NOUS default, the product parse path and the product prompt path are unchanged; the
+  retired Gemini sampling params are never sent).
+- **Layout pin updated for the 2026-10-11 unit advance** (unit `9377e009d43b` /
+  framework `73c8f2ec970b`): the unit ships an advisory scaffold copy at
+  `vendor/governance.yaml`; the framework gate resolves root-first and warns on the second
+  declaration (`msf validate --all` PASS, 0 errors, MEASURED). `vendored_overlay.test.js`
+  now enforces the invariant that matters — root declaration ENFORCED, unit copy ADVISORY —
+  instead of asserting the vendor copy's absence.
+
+### Fixed (2026-10-11 — YouTrack issue-authority go-live CLOSED; the last `msf validate --all` red is green)
+- **The missing runbook unit `policy/youtrack-issue-authority` was delivered** via the
+  framework's `init --adopt --vendored` (run from the framework tree at rev `73c8f2ec970b`):
+  `vendor/docs/governance/youtrack-issue-authority.md` landed byte-faithful (canonical body +
+  pure `{{PROJECT_ROOT}}` placeholder substitution — diff verified), and the full adopt reported
+  exactly 2 additions (`+ vendor/docs/governance/youtrack-issue-authority.md`,
+  `+ vendor/governance.yaml`), 92 pre-existing files skipped untouched. `msf validate --all`
+  now **PASSES with 0 errors** (15 warnings, all pre-existing classes). `drift_check` stays OK
+  (unit `9377e009d43b`, framework `73c8f2ec970b`) — the unit is untracked-by-the-lock, so the
+  new file is lock-neutral.
+- **`python temp/msf_golive_migrate.py --apply` re-run end-to-end per the user instruction:**
+  12 steps — 8 ok (roster/declaration/credential/capability/unit/capability-after/workspace/receipt),
+  2 owed-red (governance + guard, BOTH solely because of the duplicate `vendor/governance.yaml`
+  position; a project judged over two governance declarations cannot be judged), 1 planned
+  (unit-write dry run, no work). The tracker is the live issue authority: the guard answers
+  `[issues=tracker@048e3398c936]` (BEYOND, 5 issues, receipt fresh), and both guard halves pass
+  (root: 0 actionable debt; vendor root: 0/0/0).
+- **Adopt quirk, measured:** `init --adopt` REFUSES the project's own fleet-declared ports
+  (relay 38116 / control 37918 — declared in `reasonix.toml` AND the fleet task table); the run
+  was fail-closed (nothing written). Workaround used here was safe only because adopt is
+  add-only and every port-bearing file already existed: stand-in ports 38123/37923 were accepted
+  and never landed anywhere. Root cause + fix options filed to the framework as
+  `modelstack_framework/temp/issues/ISSUE_adopt_refuses_target_own_fleet_declared_ports_20261011.md`
+  (cross-referenced to its 2026-10-10 silent-REASSIGN sibling — same family, opposite failure
+  mode).
+- **Deliberate trade-off kept:** the duplicate `vendor/governance.yaml` (advisory-mode seed) is
+  NOT deleted — the migrate script's governance+guard steps cannot judge the tree while the two
+  positions disagree, and deleting the root declaration (the documented position, pinned by
+  `test/unit/vendored_overlay.test.js`) would go red against that test. Backlog: the migrate
+  script should accept the vendored-layout position pair (root FIRST wins) instead of holding
+  PENDING; filed as a framework follow-up candidate, not patched here.
+
+### Attempted (2026-10-09, leg 6 resumed — G10-curvature shape families: the trusted baseline was a broken instrument; the loop reached an ARITHMETIC DEAD END; next move is an operator decision; NOT shipped)
+- **The interrupted leg-6 session resumed at its own recorded state (§7: probe3k2 owed) and the
+  probes UNWOUND the campaign's trusted baseline.** `temp/scratch/thornvine_leg6_record_20261009.md`
+  §8-§9 record, all measured with the gate's own math (arc-length 0.5 resample ==
+  `scripts/thornvine_acceptance_gate.js` `arcResample` L296-311; 17-sample/2u-step windows ==
+  L912-918) under an ASSERTED resample invariant: **(1) probe3's zero-flat table is an
+  instrument artifact** — its `biarc_wall` walks arc1 only to th=alpha/2 then midpoint-mirrors,
+  leaving a 13.835-unit straight chord mid-wall (`tv_probe3_chain_inspect.py`) and scanning
+  windows of raw nodes at irregular spacing; §7's "probe3 STANDS / REPRODUCED" claim is REVOKED
+  (the re-run proved the bug deterministic, not the instrument valid — probe3b's own header had
+  already documented the construction bug). **(2) The TRUE tangent-continuous biarc fails G10's
+  curvature half on EVERY constructor gap 24-42** (`tv_v10_g10_feas_probe3m.py`: flat 1-2/25-28
+  windows/period, worst 0.19-0.38 at the inflection, matching the analytic 2/R prediction; R =
+  run/(2 sin th_j) >= rise/4 = 5 as run -> 0 gives dev(flip) <= 8/rise = 0.4 < 0.5 FOR ANY RUN —
+  structural, not unlucky; corner hairpin marginal 0.43-0.54, not clean) — so §5 item 0's
+  "biarc passes flat=0" premise behind muse iter-22's atomic list is FALSIFIED.
+  **(3) The gaussian-bump slope profile fails on valid scans** (`tv_v10_g10_feas_probe3k2.py`:
+  fixed closure via monotone ratio bisection, resid ~1e-15; NO CLOSURE at gaps 24-38, flat=4 at
+  42; flank kappa 0.018-0.10 < the 0.0625 floor for every |a| >= 0.4). **(4) The ramp-radius
+  family (probe3j, the one unmeasured survivor) is EXCLUDED BY CLOSURE ALONE**
+  (`tv_v10_g10_feas_probe3j2.py` + `_sanity`: u/d >= 1.238 at the 88deg slope cap vs the needed
+  0.60-1.05 — R decreasing in t concentrates arc at low slope; zero closure hits over the
+  196-point grid x 7 gaps; muse iter-23's "measure-zero tuning" prediction confirmed and
+  tightened).
+- **The pinned 6-loop escape valve fired and the mandatory consult ran**
+  (`thornvine_muse_iter23_{brief,answer}.md`): verdict **BLOCK, no score raised** (the
+  hard-to-please rule held), all seven cumulative approaches dispositioned, three named errors
+  recorded (instrument validation burned iters 17-22; iterating symmetric families after the
+  analytic proof; analytic-wall-first as the 1/10th-effort falsification method), and the
+  constraint-set ruling: **swing 20 + half-period <= 29 + one closed stroke + CURV_MIN 0.5 on
+  an 8u window is UNSATISFIABLE for any tangent-continuous S-family with an inflection.** His
+  standing instrument rules are adopted: assert the 0.5-resample invariant AND a positive
+  window count before logging any flat count, and derive the analytic wall BEFORE any family
+  scan. Full exchange with per-approach dispositions: leg-6 record §9.1.
+- **No code, no corpus, no gate byte changed — the next move is an OPERATOR DECISION on the
+  gate rule** (muse iter-23's three named options: CURV_MIN 0.5 -> 0.35-0.40; window 8u -> 6u;
+  or reformulate G10 as curvature-continuity instead of chord sagitta on an inflection-centered
+  window — his argument: the floor's purpose is to reject perceptually flat stretches, and a
+  biarc at R=5 reads dev=0.4, visually curved, failing only through inflection cancellation).
+  The tracked gate (`scripts/thornvine_acceptance_gate.js`, promoted a29a0f4) and the frozen
+  corpus are untouched; the 03-thornvine verdict stands FAIL [G1,G2,G3,G4,G5,G7,G9,G10] /
+  constructor FAIL [G1,G2,G4,G6,G9,G10]. Scratch-only session (probes + record + consult).
+
+### Changed (2026-10-09 — Fix C promoted; the 03-thornvine acceptance gate is a tracked instrument)
+- **The operator authorized Fix C ("promote fix C") and the muses' iter-19/20 package left the
+  scratch gate: the binding 03-thornvine acceptance gate now lives at
+  `scripts/thornvine_acceptance_gate.js`** (the D1 precedent — the criterion contract is a
+  versioned module beside `scripts/border_metric.js`, not a script of the moment). The promoted
+  file is the leg-5b repaired scratch gate (`fb39c6d`, byte-identical body) plus the
+  authorization record in its header. What the promotion carries, all measured in
+  `temp/scratch/thornvine_leg5b_record_20261009.md`: **G2's `loopProj` repaired** — branch by
+  the gate's own `nearestEdge` (muse iter-20 option (a), minimum-diff; (b) drop-the-projection
+  was rejected as deleting iter-13 intent) with a true 0..960 perimeter (right ends 480, bottom
+  `480+(224-x)`, left `704+(256-y)`) — fixing three measured defects: the dead bottom branch
+  (empty set `256<=224`, 0/57,825 hits, every bottom root projected as left `928-y` → the
+  G2+G9 arithmetic impossibility), diagonal-selected seam discontinuities (worst 880.3 units
+  over one 0.5-arc step), and the 32-unit perimeter overlaps; **G8 DISABLED pending redesign**
+  (skip-with-flag, never deleted: the accepted 03-thornvine reference is a plain 16-unit
+  rectangle + one open top-edge path — zero corner-turn pivots in all four corner windows, 57
+  samples each, both datums — so no anchor exists for G8's thresholds; re-enabling requires a
+  new operator decision). No threshold was softened and no criterion text amended; the honest
+  verdict on the current canonical blob stays FAIL (8/10 active gates + disabled G8). The gate
+  is NOT wired into `npm test`/the freeze: the canonical blob is the known-failing baseline this
+  campaign is fixing; the gate judges FUTURE regenerated candidates, and any 10/10 claim still
+  owes the v11 constructor re-derivation of joint G2+G9 feasibility (leg-5b §6, open).
+  **Promotion verified, not assumed:** the promoted file reproduces the leg-5b recorded
+  verdicts measurement-identically on all three artifacts (canonical corpus blob and
+  `tv_canonical.svg` → FAIL [G1,G2,G3,G4,G5,G7,G9,G10]; the constructor tile → FAIL
+  [G1,G2,G4,G6,G9,G10]); three lint-blockers were removed in promotion (dead `atMost` /
+  `nearestEdgeName` helpers, and a dead leaf-endpoint wrapper whose only effect was to
+  double-count identical `sproutBandViolations` — the canonical blob reads 0 either way), and
+  `npx eslint scripts/thornvine_acceptance_gate.js` is clean. The scratch copy stays the
+  campaign's working copy; divergence from `scripts/` after this date is a provenance question,
+  not a gate edit.
+
+### Attempted (2026-10-09, leg 4 — webp-anchored instruction per operator directive, NOT shipped)
+- **The operator pointed at the shipped webp borders as the pattern to follow ("a fixed
+  width and height, followed by fixed border css classes, and strict matching… one of the
+  existing webp borders are vines… improve the prompt to enforce that the svg borders
+  follow the same logic") — implemented as a measured prompt leg.** The webp pattern was
+  read from product sources (`.vine_border` = vine_hollow.webp slice 205 / width 130px /
+  outset 45px in `js/print_styles.js`; AI borders ride the SAME border-image engine
+  sliced at 24% per `js/ai_border.js` D4; PIL alpha profile of vine_hollow.webp shows the
+  dashed one-third-ink rail) and the instruction was rebuilt around it: nine-slice tile
+  framing, the G8 swing/separation fix, the G1 chord anchor, a CONSTRUCTION recipe
+  (exactly ONE stroked path = the whole vine as one closed loop, sprouts fill-only), and
+  XML-PAIRING / ATTRIBUTE-LOCALITY reply-contract rules — all binding numbers unchanged,
+  3803 chars, SHIPPABLE product-path. **Result (12 samples, r38-41): real gate movement,
+  still zero full passes.** Three gates no sample had ever passed were passed: G4+G5+G6
+  (twice) and G3+G4+G5 (r40-s1 — the campaign's first one-closed-ring architecture, traced
+  to the CONSTRUCTION sentence). JSON parses as-is rose from 5/27 to 4/12. Residual gaps
+  recorded: ONE-stroke compliance under a full sprout inventory, and the seat's
+  `</tool_call>` wrapper leaking into the envelope. Record:
+  `temp/scratch/thornvine_leg4_webp_record_20261009.md`; prompt:
+  `temp/scratch/tv_webp_instruction.txt`; raw rounds in `temp/scratch/tv_leg2_20261009/`.
+  No tracked byte changed.
+
+### Attempted (2026-10-09, leg 3 — consult step 6 self-correction probe, NOT shipped)
+- **The operator-chosen leg-3 move (Muse consult step 6: feed the gate's JSON verdict back
+  to the same free seat so the MODEL corrects its own gated answer) ran to measurement and
+  did not converge — the multi-turn pipeline is falsified on this seat.** Four correction
+  turns across both seed blobs (`temp/scratch/tv_step6_correct.js`; model sees its own
+  answer + the gate's verbatim failing predicates; product parse path + binding gate every
+  turn; no hand repair): seed r34-s2 0/10 → **0/10** (no gate changed); seed r35 2/10 →
+  two turns died `finish=length` at 6000 tokens (`model_output_not_json`), and a T=0.3 /
+  9000-token retry REGRESSED 2/10 → **1/10** (lost G3, gained nothing). Zero improvements
+  in four turns — the consult's own "if the 2nd turn reaches 4-5/10 the pipeline is
+  viable" condition is decisively not met, and the multi-turn provenance ruling stays
+  unmade because there is nothing converged to rule in. Cumulative: 27 samples, zero gate
+  passers, every ship-path lever measured (one-shot vs multi-turn, T ∈ {0, 0.6, 0.75,
+  0.8, 0.85}, payload cap, output headroom). Record:
+  `temp/scratch/thornvine_leg3_step6_record_20261009.md`. No tracked byte changed; the
+  operator decision class narrows to (a) a stricter/different seat or (b) retirement.
+
+### Attempted (2026-10-09 — 03-thornvine leg 2: forensics + mandated consult + three probes, NOT shipped)
+- **Leg 2 ran the cumulative consult the protocol owes and executed its three cheap
+  probes; the result is a measured exculpation of the prompt and pipeline, and a
+  sharply-named seat problem — recorded so the operator rules on evidence.** Raw-file
+  forensics first: leg 1's "root-brace truncation with finish=stop" is NOT length
+  truncation — every envelope failure ended `finish=stop` at 1161-4300 completion tokens,
+  far under the 6000-token request (`max_tokens` exonerated); the classes are JSON
+  bookkeeping (one missing final `}` on r23/29/31/r32-s3/r37-s3, over-closure r27, invalid
+  `\)` r30, degenerate-but-valid frames r28/r36, malformed SVG r32-s2/r33-s1/s3/r34-s3,
+  prose preamble r34-s1) — and one NEW class, a parse-OK answer refused by the trust root
+  for invalid UTF-8 + a literal `...` ellipsis inside the SVG (r32-s2). Sampling then ran
+  rounds 32-34 (staged 3910-char comp, T=0.75/0.80/0.85, 9 samples): 2 accepted, both gate
+  0/10 — r34-s2 draws a vine through the CANVAS CENTRE (128,60), the swirl attractor.
+  **Cumulative: 23 samples, 4 accepted (r24 1/10, r33-s2 0/10, r34-s2 0/10, r35 2/10),
+  zero passers.** The mandated consult (muse seat, `temp/scratch/tv_leg2_consult_brief.md`
+  + `_answer.md`) named five things the loop was doing wrong (category error: brute-forcing
+  a deterministic 10-predicate gate with a stochastic text prior; product-acceptance ≠
+  model-executability; sunk-cost sampling) and ordered six falsifiable probes — three were
+  executed the same session: **r35** sampled the full 5504-char iter-14 GO with the
+  ceiling BYPASSED (product scaffolding preserved by message-swap; diagnostic only,
+  corpus-inadmissible): gate **2/10** — the best any thornvine sample ever scored, which
+  exculpates the 4000-char cut (the GO was never sample-able either); **r36** at T=0:
+  degenerate 1060-char one-path frame — the comp has NO deterministic control on this seat;
+  **r37** with a hard output cap (svg <1800 chars, no brace/quote in path data, end `}}`):
+  degenerate again + the brace-drop persisting — the cap buys minimalism, not bookkeeping.
+  Consult steps 4/5 (agent-executed parametric code; few-shot anchor embedding a passing
+  snippet) were REJECTED for the ship path: both make the artwork agent-computed, the same
+  provenance class as hand repair. Step 6 (model self-correction against the gate JSON) is
+  open as a scratch probe, with the operator owning the multi-turn provenance ruling.
+  Everything on disk: `temp/scratch/thornvine_leg2_record_20261009.md` (full record +
+  per-approach dispositions), `temp/scratch/tv_leg2_20261009/` (round files, raw answers,
+  accepted blobs). No tracked byte changed; corpus freeze and suite untouched.
+
+### Attempted (2026-10-08 — 03-thornvine sinuosity fix, NOT shipped)
+- **The 03-thornvine regeneration leg ran to measurement and shipped nothing — recorded so
+  the next leg starts from evidence, not memory.** The muse-loop over the border's prompt
+  (15 iterations, hard cap) reached a GO comp at iter-14 (temp/scratch/thornvine_muse_loop_transcript.md);
+  the product's own `buildMessages` then refused it — `MAX_INSTRUCTION_CHARS = 4000`
+  (`js/ai_layout.js:177`, pinned by `test/unit/ai_layout_schema.test.js:755`) against 5504
+  chars — so iter-15 re-cut it under the ceiling (3910 chars, product envelope tail verbatim,
+  every iter-14 constraint accounted for; Muse's own compression was challenged and repaired
+  per-protocol: wrong viewBox, half-period defined as same-kind pairs, wavelength-vs-
+  peak-to-trough, Euclidean-instead-of-edge-projection, mutilated element allowlist). The
+  staged comp (`temp/scratch/tv_final_instruction.txt`, verified through `buildMessages`) is
+  NOT in `scripts/border_designs.json`: the sampling leg on the Nous seat (rounds 23-31,
+  T=0.75-0.85) produced ONE parser-accepted blob (r24) and it FAILs the deterministic
+  acceptance gate 9/10 gates (temp/scratch/thornvine_acceptance_gate.js — chord deviation 0.0
+  on three edges, two ring-scale strokes, sprout combinations not enumerated, roots floating,
+  micro-ripple), and the other eight samples died on the envelope (4 × root-brace truncation
+  with `finish=stop`, 2 × 429, 1 degenerate empty frame, 1 doubled `"note"`). The strict
+  product parser refuses truncated JSON by design, so nothing was hand-repaired into the
+  corpus; per the operator's 2026-10-08 choice the failed rounds are archived verbatim to
+  `temp/scratch/tv_failed_rounds_20261008/` and the freeze + corpus suite went back green
+  (`freeze --check OK`, 15 passing/0 failing). The binding gate, the measured baseline
+  (`tv_gate_baseline.json`: the frozen canonical fails 9/10 — the defect this loop is fixing),
+  and the full sampling record (`temp/scratch/thornvine_sampling_record_20261008.md`) are on
+  disk. Full suite still green; no tracked byte changed by this leg (the gate lives in
+  `temp/scratch/` by design — scratch, not product).
+
+### Changed (2026-10-06 — track `byok_border_prompt_adoption_20261006`)
+- **The BYOK border prompt corpus now carries the 10/10 prompt texts.** All 11 canonical
+  instructions in `scripts/border_designs.json` were replaced VERBATIM with the muse-loop's
+  10/10 texts (`temp/scratch/border_prompts_final.json`; title + criterion per design
+  unchanged; `05-celestial-arcs` stays D3-retired). The corpus artwork was regenerated on the
+  live NOUS leg through the product's own prompt path and
+  `test/fixtures/byok_border_corpus.json` re-frozen byte-reproducibly over rounds 1–22:
+  **11 canonical / 35 variants / 46 distinct accepted blobs** (the freeze's last-accepted-wins
+  and every-blob-survives fences unchanged; old canonical bytes survive as hash-pinned
+  variants). Corpus suite pins moved to the measured counts; full suite **1630 passing /
+  0 failing**. Certification (gallery-round33 judged capture + the D2 binding metric + the
+  Muse visual seat, per the archived track's operator rulings): **7/11 certified MET**
+  (02-runic-band, 03-thornvine, 06-chainmail, 07-corner-arcs, 08-flame-crest, 09-frost-shards,
+  11-starlit-void); **01/04/10/12 escalated to the operator** after 2+ consecutive failing
+  samples from the same adopted prompts — no criterion, threshold, or prompt was amended.
+  Records: `vendor/conductor/tracks/byok_border_prompt_adoption_20261006/final_report.md`.
+- **`scripts/byok_vision_gate.py` — the vision seat no longer crashes on a reasoning-only
+  completion.** Muse Spark can spend the whole completion budget inside `reasoning_tokens` and
+  return `content: null` with `finish_reason: "length"` (measured: 8000/8000 reasoning tokens,
+  null content, on a judged cell that answers fine at 16000). `extract_text` used to return
+  `None`, crashing the seat driver with `write() argument must be str, not None` — the same
+  "a reasoning-only answer is not evidence" class the archived track hit at 2000 tokens.
+  Fixed: `max_tokens` 8000 → **16000**, and an unreadable answer is returned as a NAMED string
+  carrying the finish reason and reasoning-token count, so it can never be read as a verdict.
+
 ### Fixed
 - **§5's own yardstick could not see §5 passing — `admission_cutover()` now splits by instant
   (`scripts/utility_telemetry.py`, 2026-09-21, telemetry handoff §27).** The after-state landed at
@@ -237,6 +1086,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (the chat-lane cell attribution), `temp/scratch/s30_fix_broken_metadata.py` (the JSON repair),
   `temp/scratch/s28_verify_pointers.py` (the citation audit, **0 stale lines**, exit 0), and
   `temp/scratch/s30_s293_check.py` (the §29.3 falsifiable check, `NEW-ROW EXPECTATION: MET`).
+
+## [2.2.0] - 2026-09-28
+
+### Added
+- **AI border design.** The AI Arrange dialog now has two ephemeral switches — "Arrange layout" and "Border design" — so you can ask the model for a layout change, a border, or both. When Border design is on and a section is targeted, the model can propose a static SVG border for that section. The SVG is validated and sanitized by a single render choke point (`renderBorderSvg`), and every path that can put a border SVG in the DOM (fresh apply, persistence rehydrate, template import, library reuse, section clone, undo restore, preview, print) is forced through it. Accepted borders are stored per-section as a `borderSvg` field in the regular layout save and can also be saved into a reusable local library (`custom_borders`).
+- **Ephemeral capability switches.** The dialog's two switches are not persisted between sessions — they default to ON and reset on every open, per `[AC-4]`.
+- **Blocking injection guard.** `scripts/check_border_svg_injection.js` is wired into `npm run lint` / `npm run pretest`. It is a structural guard, not an advisory, and fails the build if a second injection site or a direct-injection bypass appears in product source.
+- **Privacy copy.** `PRIVACY_POLICY.md` now documents the new on-device border storage and the border-design prompt in §2 and in the `storage` permission description.
+
+### Fixed
+- **Picking a raster border now actually replaces an AI border.** After the D4 pipeline
+  switch an AI border rides inline custom properties, and inline beats every stylesheet rule —
+  so the border picker (and the properties-panel picker, the catalog apply and the layout
+  rehydrate, which all funnel through the same clear) removed only the border CLASS and left
+  the AI border painted: clicking "Spikes" on an AI-bordered section was a visual no-op.
+  The shared clear now also clears the AI border through the render choke point
+  (`js/ai_border.js`), so one picker has one winner in both directions — a raster pick (or
+  "None") takes the AI border off, and a layout record that carries a `borderSvg` still
+  rehydrates last and wins over a `borderStyle`. (Track `byok_svg_borders_20260927`, operator
+  ruling R-1, 2026-10-01; pinned by `test/unit/ai_border_picker_clear.test.js`.)
+
+### Changed
+- **The AI border paints through the SAME `border-image` pipeline as the built-in borders.** A
+  generated border is now carried as four inline custom properties on the section (`--border-img`
+  plus `--border-img-slice` / `-width` / `-outset`) consumed by the existing
+  `.print-section-container:not(.be-no-border)::before` slot — the very rule set the built-in
+  raster border classes paint through — instead of a separate overlay node carrying its own copy of
+  the border math. That removes a second implementation of `border-image` from the product, and with
+  it a real divergence: the retired overlay declared no decoration filter, so on the default
+  greyscale output the built-in borders printed grey while an AI border printed full colour. The
+  four values are now the only thing the AI border adds, and with the same source and the same
+  values the two are pixel-identical (measured: 0 differing pixels in a 5,184,000-pixel frame), so
+  the only difference that remains is the source image. The slice — the one knob that is a property
+  of the source rather than of the pipeline — is why every built-in border class already carries its
+  own (33 / 25 / 177 / 146 / 250) and the generated family carries `24%`.
+- **Version bump 2.1.1 → 2.2.0** (manifest.json + package.json).
 
 ## [2.1.1] - 2026-09-22
 
@@ -1661,3 +2546,59 @@ its plan (`vendor/conductor/archive/first_run_and_panel_20260911/`).
 
 ## [1.3.0] - Earlier 2026
 - Initial release of the "Shapes" branch features (internal).
+
+## 2026-10-14 — leg 9 run 5: thornvine CERTIFIED (v45: gate 10/10 + strict muse vision 6/6 twice) — temp/scratch only, no product change
+
+Window reset at 08:21 local; the session resumed the in-flight v43 (already written by run 4)
+instead of re-deriving it. Full chain (all evidence under `temp/scratch/`, record
+`thornvine_leg9_record_20261013.md`, gate iterations 13-15):
+
+- **v43 (iter 13, the escape consult's macro-rhythm mechanism, already in flight at the
+  window close): spline probes ALL PASS both strands** (sagitta min 0.2249/0.2269,
+  projection min 0.197/0.158, margins 0.542/0.486, re-entry clean); roots + constructor +
+  gate → **9/10**, single line `left#s1 along-vine extremum gap 47 outside 22.5-45`. The
+  escape consult's own pre-authorization ("if 36u arc exceeds 45, adjust that single
+  half-length/depth, do not relax gate") fired: measured per-half G7 arc table logged (the
+  consult's implementation condition), over-ceiling half = LEFT h5 (declared L=34,
+  trough 27→crest 4, warp +0.15; s2 twin 44.0, margin 1.0). No trough landed at 23.x, so
+  the consult's other clause did not fire.
+- **v44 (iter 14, single-half remedy, nothing else): left strandA lengths h4/h5
+  34/31→30/33, strandB 31/35→35/31, declared left crest 4→5; all other edges byte-identical.**
+  Gate **10/10** (left#s1 max gap now 40.5). Strict vision: **criterion 2 MET FOR THE FIRST
+  TIME in the 31-round + 15-gate history** (irregular hand-drawn rhythm, varied amplitude,
+  flowing corners, no chain/bead/blob reading) — but **criterion 4 flipped NOT MET**:
+  "bottom-left corner cluster of 4 oval leaves overlap with merged outlines and vine
+  occlusion." Pixel forensics: 3 leaves at (19.9,243.3 rot−125)/(13.9,236.7 rot+30)/
+  (10.3,227.1 rot+55), centre distances 8.9/10.3/18.9 vs sum-of-half-lengths ~15 — tip-to-tip
+  reach overlap (reviewer counted braid ink as a 4th leaf; both readings agree it is a clump).
+  Root cause in source: the roots annealer clears each leaf against RING INK ONLY
+  (`ink_tree=cKDTree(pts+ptsB)`), never leaf-vs-leaf — and gate G4/G9 predicate
+  attachment/clearance/inventory, not leaf separation (the defect class vision exists to
+  catch). No gate edit.
+- **Mid-loop muse consult at iter 14** (`thornvine_leg9_muse_after_v44*.md`, standard
+  muse-first cumulative review — the situation changed class, not a 6-boundary): Q1
+  **reach-disc FLAWED as drafted** (over-rejects opposite-side 14u pair at halfL 7+8;
+  side-by-side parallel leaves over-penalized ~2.5-3u) → required correction adopted
+  verbatim: oriented ellipse separation `sep=|d|−r_i−r_j`,
+  `r(phi)=a·b/√((b·cosφ)²+(a·sinφ)²)`, MARGIN **2.0u**, weight 0.5×; Q2 count delta 4-vs-3
+  diagnostic noise; Q3 zero C2 regression risk with the macro table frozen. Ordered fixes
+  1-6 adopted (geometry frozen — `tv_v45_arc.py` sha-asserted equal to `tv_v44_arc.py` under
+  version-string normalization; per-version leaf-leaf min-sep evidence file; no pool
+  widening; no G4 edit).
+- **v45 (iter 15): the annealer cost gains the oriented leaf-leaf term** (conservative on
+  SIZE — max half-axes 8.0/3.5 + max centre offset 8.0, since emitted size class depends on
+  the choice's own arc order — exact on ORIENTATION; true-size evidence table
+  `tv_v45_leaf_sep.json` reproduces the constructor's LEAF_SIZES cycle exactly: **min sep
+  12.99 over all 120 pairs**, margin 2.0, so the conservative form over-rejected nothing and
+  no pool spill was needed; annealer best cost 0.0). Gate **10/10**. Strict muse vision on
+  the rendered pixels: **6/6 MET — twice, two independent muse-spark calls on the same
+  PNG** (`tv_v45_muse_vision.txt`, `tv_v45_muse_vision_r2.txt`; double-run because this
+  project has measured a low-confidence vision flag flipping between rounds on unchanged
+  bytes). **Done means achieved (operator-confirmed): `pass: true` on the (C-amended) gate
+  AND 6/6 MET strict vision. The 03-thornvine border design is CERTIFIED.**
+- Consult ledger for the leg: escape consults at gate iterations 6 and 12 per the 6-boundary
+  rule; mid-loop consults before every geometry change (v29…v44), each with per-point
+  dispositions; reviewer claims contradicted by pixels/measurements were challenged with
+  reasons and logged (iter-27 G7-gap relabel rejected on gate source; v44 reach-disc
+  corrected per his own Q1). Gate untouched beyond the operator-authorized [HC-C]; no
+  corpus edits; no product files touched; no commits (leg scope: temp/scratch only).

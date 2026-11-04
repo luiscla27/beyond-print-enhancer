@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Guard: no stray backtick may appear inside the THEME_CSS template literal.
  *

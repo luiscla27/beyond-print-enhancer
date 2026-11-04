@@ -58,6 +58,7 @@ function createMenuTrigger() {
   btn.className = "be-more-options-button";
   btn.innerHTML = "⋮";
   btn.title = "More Options";
+  btn.setAttribute("aria-label", "More Options");
   return btn;
 }
 

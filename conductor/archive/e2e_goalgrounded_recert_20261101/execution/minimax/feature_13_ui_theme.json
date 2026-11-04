@@ -1,0 +1,72 @@
+{
+ "feature": "feature_13_ui_theme",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "icons_privacy_surface.spec.js",
+   "file_id": "458387578909046",
+   "mp4_bytes": 851122,
+   "upload_response": {
+    "file": {
+     "file_id": 458387578909046,
+     "bytes": 851122,
+     "created_at": 1793464727,
+     "filename": "icons_privacy_surface.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "icons_privacy_surface.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\icons_privacy_surface.webm",
+   "webm_bytes": 2637258
+  }
+ ],
+ "usage": {
+  "total_tokens": 36639,
+  "total_characters": 0,
+  "prompt_tokens": 35099,
+  "completion_tokens": 1540,
+  "completion_tokens_details": {
+   "reasoning_tokens": 318
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations in chronological order\n\n1. **0.0\u20134.0s \u2014 WEBSITE surface:** The frame begins mostly blank, then the D&D Beyond site header and navigation appear. No extension UI is visible.\n2. **4.0\u20135.8s \u2014 WEBSITE surface:** A centered D&D Beyond loading card/spinner appears, followed by D&D Beyond\u2019s own \u201cYour Privacy Choices\u201d cookie dialog. These are website surfaces, not extension work.\n3. **5.8\u201329.0s \u2014 WEBSITE base with apparent EXTENSION enhancement:** The Corvo Saggio character sheet loads. Character statistics, actions, inventory, defenses, and other content are D&D Beyond\u2019s own. The sheet\u2019s sections are visibly outlined and decorated with the extension\u2019s colored borders, rounded boxes, and ornamental treatment; these enhancements are extension work. However, no floating control panel or layer-management panel is visible during this long interval.\n4. **29.2\u201330.0s \u2014 EXTENSION work:** The view shifts to a partially blank/working area, with the enhanced sheet visible around its edges and a small circular drag/selection-looking handle near the Proficiency Bonus area.\n5. **30.0s onward \u2014 EXTENSION work:** The extension\u2019s dark floating control panel appears on the left, labeled \u201cBEYOND P\u2026\u201d and containing **TEMPLATES**, **LAYOUT**, and **OUTPUT** sections. Visible controls include Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, AI Settings, Print, Print settings, and Save to Browser.\n6. **30.0s onward \u2014 EXTENSION work:** A separate **LAYER MANAGEMENT** panel appears on the right. It lists **SECTIONS (22)** with named groups such as Corvo Saggio, Health, Box 1/Box 2, Ability groups, Quick Info, Extras, Features & Traits, Inventory, Spells, Actions, and generic Sections; it also shows **SHAPES (1)** with a + Add Shape control.\n7. **30.4s onward \u2014 EXTENSION work:** The sheet has a grayscale ornamental print-style layout. A toast at the top reads **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** This is a working extension status/feedback affordance.\n8. **30.4s\u201334.2s \u2014 EXTENSION work:** The same panel state remains on screen. No actual button activation, shape creation, dialog opening, layer mutation, apply action, or undo action is visibly demonstrated in the sampled frames.\n\n## LAYER 1 \u2014 Asserted-behavior evidence\n\nSuite: **icons_privacy_surface \u2014 PR #7 Icons + privacy policy surface (Playwright e2e)**\n\n- **All manifest-declared icons exist on disk \u2014 NOT-VISIBLE.** The browser toolbar and extension icon are not shown clearly enough to inspect, and disk existence cannot be established from camera frames.\n- **The privacy policy and readme are packaged \u2014 NOT-VISIBLE.** No packaged files, manifest contents, privacy-policy page, or readme are shown.\n- **The extension UI renders on a character sheet \u2014 VISIBLE.** The dark control panel, layer-management panel, enhanced sheet, and extension toast are visibly rendered over a D&D Beyond character sheet.\n\nThe video itself appears to exercise a different feature theme\u2014UI/theme/layout behavior\u2014rather than visibly exercising the two packaging assertions. Those assertions therefore cannot be certified from this recording.\n\n## LAYER 2 \u2014 Product-aim conformance\n\n### Working affordances observed\n\n- The extension UI is **clearly distinguishable** from D&D Beyond through its dark codex-style floating panels, gold-toned dividers, compact uppercase typography, and dedicated **LAYER MANAGEMENT** panel.\n- The enhanced character sheet visibly differs from the plain website through outlined section boxes, rounded containers, decorative framing, and ornamental print styling.\n- The **LAYER MANAGEMENT** panel provides meaningful hierarchy and counts for sections and shapes.\n- The top toast, **\u201cNo saved layout yet \u2014 the default template is loaded,\u201d** gives clear status feedback.\n- The layout visibly demonstrates that the extension can support a dedicated print-style output rather than merely overlaying its controls.\n- The first-run hint card is visible in the control panel, with a \u201cGot it\u201d action and a brief explanation of how to move or resize sections.\n\n### Missing or rough affordances observed\n\n- **No activation/loading transition is visible.** The enhanced sheet and/or extension interface appear without a brief \u201cEnhancing sheet\u2026,\u201d progress indicator, skeleton treatment, or other explicit transition. This is a required Layer 2 absence finding.\n- The extension panels do not appear promptly alongside the enhanced sheet: the sheet is already decorated for many seconds before the main panels become visible. The transition into the full editing workspace is therefore visually rough or incomplete.\n- No **Apply** or **Undo** flow is actually shown on camera, despite the broad enhancement concept including those operations.\n- No section is visibly dragged or resized, no alignment guide appears, and no shape is added through the picker. The controls are present, but the sampled frames do not demonstrate those interactions.\n- No explicit **error state** is observed.\n- No clearly demonstrated **disabled state** is observed. For example, unavailable or context-sensitive actions are not visibly distinguished on camera.\n- The browser toolbar extension icon and its promised **ON badge** are not shown, so the active/off status cannot be verified from the recording.\n- The character-sheet enhancement appears with **red/pink outlines**, while the requested product identity describes **gold hairlines**. The panel treatment is clearly distinct, but the enhancement palette does not consistently demonstrate the specified gold styling.\n- No extension-owned privacy-policy or packaging surface is shown.\n\nThe extension\u2019s core rendering and visual distinction are visible, and the status toast works, but the recording does not witness the disk/package assertions or meaningful editing interactions, and the activation affordance is absent.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: icons_privacy_surface.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464767225
+}

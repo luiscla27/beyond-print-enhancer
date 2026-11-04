@@ -92,6 +92,20 @@ const AI_ARRANGE_REJECT_COPY = Object.freeze({
   derived_width_unchecked:
     "The AI proposed a width that could not be checked against the live sheet.",
   model_output_not_json: AI_ARRANGE_ERROR_COPY.model_output_not_json,
+  // ADDED by track `byok_svg_borders_20260927` (Phase 1) — the three codes the border carrier and
+  // the capability gate introduce. The exhaustiveness gate above is what caught their absence:
+  // without copy, a switched-off capability would have surfaced as the generic "not a layout
+  // patch" sentence about a well-formed answer, which is the exact fall-through this table exists
+  // to prevent.
+  capability_disabled:
+    "The AI tried to use a capability you switched off. Nothing was changed.",
+  border_shape: "The AI sent a border it cannot mean. Nothing was changed.",
+  border_svg_rejected:
+    "The AI's border drawing was refused - it may not contain scripts or links to other sites.",
+  // ADDED by the 2026-10-03 AC-5 ruling: the flow refuses locally, BEFORE any network call, when
+  // Border design is ON and no section is targeted. The sentence names the ACTION the user takes
+  // (select a section), not the mechanism — the same shape as the flow's other local refusals.
+  border_target_required: "Select a section before generating a border.",
 });
 
 /**
@@ -304,6 +318,22 @@ function mergePatchIntoLayout(layout, patch) {
     record.printHidden = true;
     touched += 1;
   }
+  // AC-7/AC-9 (track byok_svg_borders_20260927): the border carrier writes `borderSvg`
+  // into the target section's record so `applyLayout` rehydrates it through the choke
+  // point. Without this, step 1 renders the overlay, then step 3 (`applyLayout`)
+  // re-renders every section and calls `renderBorderSvg(section, null)` — the record has
+  // no `borderSvg`, the null clears the overlay, and the border disappears in the same
+  // frame it was drawn. MEASURED: the roundtrip spec's case 2 ("clean border renders")
+  // passed `answered.out.ok === true` and `answered.applies === 1` but the overlay was
+  // gone from the DOM by the time `readBorderState` checked it.
+  if (patch && patch.border && patch.border.svg) {
+    const targetId = patch._targetSectionId;
+    const record = targetId && layout.sections && layout.sections[targetId];
+    if (record) {
+      record.borderSvg = patch.border.svg;
+      touched += 1;
+    }
+  }
   return touched;
 }
 
@@ -367,15 +397,27 @@ function snapshotAiFields(layout) {
  *
  * @return {Promise<boolean>} true = Accept, false = anything else.
  */
-function showPreviewDialog(patch, summary, layout) {
+function showPreviewDialog(patch, summary, layout, targetId) {
   const api = window.Modals;
   if (!api || typeof api.__createModal !== "function") {
     window.showFeedback?.("Could not open the preview dialog - nothing was changed.", "error");
     return Promise.resolve(false);
   }
   const ghosts = createGhostLayer(patch, layout);
+  // AC-6's ghost half, for the carrier that has no ghost BOX. `createGhostLayer` draws dashed
+  // outlines where MOVED boxes would go; a border has no destination box — it paints inside the
+  // target section, which is already where it is. So the preview's "show me before I commit" for a
+  // border is the border itself, rendered through the SAME choke point (AC-9 path G: the preview
+  // ghost IS `renderBorderSvg`, there is deliberately no second renderer) on the SAME section the
+  // apply will use, with the same overlay node shape.
+  //
+  // It is undone by `clearBorderSvg` — the DOM is restored to its PRE-PREVIEW border rather than
+  // merely emptied: a preview that wiped an existing border on Cancel would be a DOM write on the
+  // Cancel path, which AC-2 forbids. The restore re-renders the bytes read back through the choke
+  // point's own reader, so the round trip cannot launder anything.
+  const ghostBorder = renderBorderGhost(patch, summary, targetId);
   const handle = api.__createModal({
-    title: "Preview the AI arrangement",
+    title: patch && patch.border ? "Preview the AI border" : "Preview the AI arrangement",
     body: (ctx) => {
       const wrap = document.createElement("div");
       wrap.className = "be-ai-preview";
@@ -394,7 +436,7 @@ function showPreviewDialog(patch, summary, layout) {
 
       const list = document.createElement("ul");
       list.className = "be-ai-preview-list";
-      for (const line of describeChanges(patch, layout)) {
+      for (const line of describeChanges(patch, layout, targetId)) {
         const li = document.createElement("li");
         li.textContent = line;
         list.appendChild(li);
@@ -425,8 +467,64 @@ function showPreviewDialog(patch, summary, layout) {
   // which is false below — a Cancel that only the button honoured would be an AC-2 hole.
   return handle.promise.then((result) => {
     removeGhostLayer(ghosts);
+    // The border ghost comes off on EVERY outcome including Accept: the apply below re-renders
+    // through the choke point anyway (and must, so the undo record captures the PRIOR border, not
+    // the preview's), so leaving the preview's copy in place would make the accepted state depend
+    // on which of the two renders landed last.
+    undoBorderGhost(ghostBorder);
     return result === true;
   });
+}
+
+/**
+ * The border half of AC-6's preview: render `patch.border` through the choke point on the target
+ * section, and return the handle that puts the section's PREVIOUS border back.
+ *
+ * WHY THIS IS NOT A SECOND RENDERER. It calls `window.AiBorder.renderBorderSvg` — the one writer
+ * AC-9 allows — and nothing else. `test/unit/ai_border_render_choke.test.js` asserts the seam has
+ * no `/preview/i` member at all ("a separate preview renderer is a second injection site"), and
+ * this function is written to keep that true: the preview IS the choke point, called early.
+ *
+ * It fails SOFT on a rejection rather than refusing the whole preview: a border the trust root
+ * refuses is refused by `validatePatch` long before this line (`border_svg_rejected`), so a
+ * refusal here means the DOM is not in a state the read-back understands — the preview still
+ * shows the counts and the note, and Apply surfaces the refusal from the apply path.
+ *
+ * @returns {{section: Element, prior: string|null}|null}
+ */
+function renderBorderGhost(patch, summary, targetId) {
+  if (!summary || !summary.borders || !targetId) return null;
+  const api = window.AiBorder;
+  if (!api || typeof api.renderBorderSvg !== "function" || typeof document === "undefined") return null;
+  const section = document.getElementById(targetId);
+  if (!section) return null;
+  // Read the PRIOR bytes FIRST: `renderBorderSvg` replaces the overlay's content, so a read taken
+  // after the preview render would return the preview's own border and Cancel would "restore" the
+  // thing it was supposed to remove.
+  let prior = null;
+  try {
+    prior = typeof api.readBorderSvg === "function" ? api.readBorderSvg(section) : null;
+  } catch {
+    prior = null;
+  }
+  try {
+    api.renderBorderSvg(section, patch.border ? patch.border.svg : null);
+  } catch {
+    return null;
+  }
+  return { section, prior: prior || null };
+}
+
+/** Put the section back the way `renderBorderGhost` found it (no-op when it never rendered). */
+function undoBorderGhost(ghost) {
+  if (!ghost || !ghost.section) return;
+  const api = window.AiBorder;
+  if (!api || typeof api.renderBorderSvg !== "function") return;
+  try {
+    api.renderBorderSvg(ghost.section, ghost.prior);
+  } catch {
+    /* a failed restore is an empty border, never a stale one: the apply path re-renders anyway */
+  }
 }
 
 /** What the dialog says the patch will do — from `summarizePatch`, never from a re-count here. */
@@ -436,6 +534,10 @@ function summaryLine(summary) {
   if (summary.resized) parts.push(summary.resized + " resized");
   if (summary.restacked) parts.push(summary.restacked + " restacked");
   if (summary.hides) parts.push(summary.hides + (summary.hides === 1 ? " prints nothing" : " print nothing"));
+  // ADDED with the `borders` counter (this track, Phase 4, MEASURED defect): without it a
+  // border-only preview said "This will change nothing." over a dialog whose whole point is that
+  // something is about to change.
+  if (summary.borders) parts.push("a border is drawn");
   return "This will " + (parts.length ? parts.join(", ") : "change nothing") + ".";
 }
 
@@ -444,7 +546,7 @@ function summaryLine(summary) {
  * ones already shown in the panel's own labels — the sheet's heading text, which is what the model
  * was sent in the first place (O-3).
  */
-function describeChanges(patch, layout) {
+function describeChanges(patch, layout, targetId) {
   const lines = [];
   const moves = patch.moves || {};
   for (const id of Object.keys(moves)) {
@@ -459,6 +561,16 @@ function describeChanges(patch, layout) {
     if (bits.length) lines.push(`${nameOf(id)}: ${bits.join(", ")}`);
   }
   for (const id of patch.hide || []) lines.push(`${nameOf(id)}: hidden from print (undo restores it)`);
+  // A border-only patch has no moves/hides, so the old list was always empty for the shape this
+  // feature exists to produce (D3). Adding ONE descriptive line tells the user which section gets
+  // the border and that it will appear behind the content — the same thing the live border ghost
+  // shows them, but in words too.
+  if (patch.border && targetId) {
+    const svg = patch.border.svg || "";
+    const len = svg.length;
+    const label = len > 0 ? "a border SVG (" + len + " chars)" : "a border";
+    lines.push(`${nameOf(targetId)}: ${label} applied to the section`);
+  }
   return lines;
 }
 
@@ -600,9 +712,11 @@ function removeGhostLayer(layer) {
  * @param {string} instruction what the user asked for.
  * @return {Promise<{ok: boolean, stage?: string, code?: string, message?: string}>}
  */
-async function arrangeWithAi(instruction) {
+async function arrangeWithAi(instruction, opts) {
   const core = window.AiLayout;
   const text = typeof instruction === "string" ? instruction.trim() : "";
+  const caps = (opts && typeof opts === "object") ? opts.capabilities : undefined;
+  const selectedSectionId = (opts && typeof opts === "object") ? opts.selectedSectionId : undefined;
   if (!core) {
     return fail("the AI layout module is not loaded");
   }
@@ -629,6 +743,22 @@ async function arrangeWithAi(instruction) {
   if (typeof window.scanLayout !== "function") {
     return fail("the sheet is not ready yet - nothing was changed.");
   }
+  // AC-5: when Border design is enabled the model needs a selected section to draw on. Refusing
+  // BEFORE `scanLayout` makes the gate visible to the unit test that asserts zero BYOK_CHAT calls
+  // and zero scan calls.
+  // AC-5, ruled 2026-10-03 by the operator (the stricter reading of the gate's split): when
+  // Border design is ON the flow needs a USER-targeted section, and it must refuse BEFORE any
+  // network call. The earlier form of this gate carried an `arrangeOn` exception — with Arrange
+  // also ON the request went through and the target was derived from the scan AFTER the model
+  // answered (`selectedSectionId || Object.keys(layout.sections)[0]`, further down). That
+  // dispatched a `BYOK_CHAT` carrying the border capability with no target section, which is
+  // AC-5's FAIL condition in the criterion's own words, so the exception is REMOVED. The
+  // dialog's two switches still default ON and an arrange-only request (Border OFF) is unaffected.
+  const borderOn = !!(caps && typeof caps === "object" && caps.border === true);
+  if (borderOn && !selectedSectionId) {
+    window.showFeedback?.(AI_ARRANGE_REJECT_COPY.border_target_required, "error");
+    return { ok: false, stage: "target", code: "border_target_required" };
+  }
 
   let layout;
   try {
@@ -645,7 +775,7 @@ async function arrangeWithAi(instruction) {
 
   let messages;
   try {
-    messages = core.buildMessages(collected.rows, text, { liveSectionIds: collected.ids });
+    messages = core.buildMessages(collected.rows, text, { liveSectionIds: collected.ids, capabilities: caps });
   } catch (err) {
     // `buildMessages` throws ONLY for caller mistakes that must never reach the network — an
     // instruction carrying a pasted key, an id not in the scan. Both are refusals with copy.
@@ -677,8 +807,10 @@ async function arrangeWithAi(instruction) {
   }
   if (!reply || reply.ok !== true) {
     const cls = reply && reply.errorClass ? String(reply.errorClass) : "unknown";
+    const retryable = reply && reply.retryable === true;
+    const retryAfterSeconds = reply && typeof reply.retryAfterSeconds === "number" ? reply.retryAfterSeconds : undefined;
     window.showFeedback?.(AI_ARRANGE_ERROR_COPY[cls] || AI_ARRANGE_ERROR_COPY.unknown, "error");
-    return { ok: false, stage: "transport", code: cls };
+    return { ok: false, stage: "transport", code: cls, retryable, retryAfterSeconds };
   }
   // A reply that claims success but carries no text is a transport boundary failure, not a model
   // one: the worker's `byokChatReply` always sets `text` on `ok:true`, so a missing string here is
@@ -689,9 +821,14 @@ async function arrangeWithAi(instruction) {
     return { ok: false, stage: "transport", code: "malformed" };
   }
 
-  // AC-2 begins here: from this line to the preview, NOTHING writes to the DOM or to storage.
+  // AC-2 begins here. `validatePatch`/`parseModelOutput` is pure, so the DOM and storage stay
+  // untouched to this point; the PREVIEW below is the first DOM write on this path, and it is a
+  // transient one (`.be-ai-ghost` — declared in `js/layout_scan.js`'s transient test and hidden in
+  // `@media print` by `js/print_styles.js:1806` — plus the section's own border overlay for a
+  // border patch, restored on every close path). Accept is the moment the change becomes real.
   const verdict = core.parseModelOutput(reply.text, collected.ids, {
     current: layout.sections,
+    capabilities: caps,
   });
   if (!verdict.ok) {
     const first = verdict.errors && verdict.errors.length ? verdict.errors[0] : null;
@@ -702,17 +839,32 @@ async function arrangeWithAi(instruction) {
 
   const patch = verdict.patch;
   const summary = core.summarizePatch(patch);
-  if (!summary.moves && !summary.hides) {
+  // The target section for a border patch. `selectedSectionId` is what the dialog passed through
+  // `opts`, and since the 2026-10-03 AC-5 ruling a border patch can no longer REACH this line
+  // without one: the flow refuses earlier when Border design is ON and no section is targeted, so
+  // there is no scan-derived fallback left to take. The `||` below is a defensive read of the
+  // same value, not a second way in — the empty case is unreachable here.
+  const borderPatch = (borderOn && typeof patch.border === "object" && patch.border !== null && !Array.isArray(patch.border)) ? patch.border : null;
+  const targetSectionId = borderPatch ? (selectedSectionId || null) : null;
+  if (!summary.moves && !summary.hides && !summary.borders) {
     // An empty patch is a refusal like any other: the model answered in shape but proposed
     // nothing. It shares the `envelope_empty` code with the validator, and it must carry the SAME
     // error-kind toast and the SAME copy the rest of the refusals use — an "info" toast that
     // drains in ~3.5 s is exactly the failure mode AC-6's "distinct user-visible message" exists
     // to prevent. Marking it "error" is the fix; the copy comes from the one table, not a literal.
+    //
+    // `summary.borders` IS PART OF "PROPOSED SOMETHING" (MEASURED defect, this track's Phase 4).
+    // The first version of this gate read `!summary.moves && !summary.hides`, so a BORDER-ONLY
+    // patch — the shape the product's own prompt produces with Arrange layout off and Border
+    // design on, i.e. ratified decision D3 and the default the dialog starts from — was refused
+    // HERE, before the preview, as "The AI proposed no changes." A border is a change: it is
+    // carried by `patch.border` (AC-2), it renders, and it is undoable. The gate now asks the
+    // summary's own three carriers, which is also why `summarizePatch` had to learn to count one.
     window.showFeedback?.(AI_ARRANGE_REJECT_COPY.envelope_empty, "error");
     return { ok: false, stage: "preview", code: "envelope_empty" };
   }
 
-  const accepted = await showPreviewDialog(patch, summary, layout);
+  const accepted = await showPreviewDialog(patch, summary, layout, targetSectionId);
   if (!accepted) {
     // AC-2's Cancel half, asserted as a fact about this code path: the ONLY writes below are
     // reached from here, so a cancel cannot have touched anything.
@@ -720,8 +872,42 @@ async function arrangeWithAi(instruction) {
   }
 
   // ---- AC-3: an ordinary mutation, through the machinery every gesture uses ----------------
+  // A border patch is NOT geometry, so it is not merged into the live layout record here — the
+  // layout record carries geometry, and the section's rendered border is owned by the choke point
+  // (AC-9). The patch's `border` carrier only reaches the DOM through `renderBorderSvg` on the
+  // target section, in the same frame as `pushMutation` so an undo captures the prior border.
+  // AC-9 path A: the border is rendered BEFORE the undo snapshot, so the snapshot's repair reads
+  // the PRIOR border (`snapshotSectionFlags` → `readBorderSvg`, js/undo.js:459) and Ctrl+Z restores
+  // it byte-for-byte. MEASURED (this track's Phase 4): the order below used to be the other way
+  // round — `renderBorderSvg` ran AFTER `applyLayout`, which already rehydrates the record's
+  // `borderSvg` (js/layout_apply.js:201) — so the overlay was written twice per apply and the
+  // capture could read the NEW border as the pre-state. Rendering first also means a border the
+  // choke point refuses (a hostile payload that slipped a caller's claim) aborts BEFORE anything
+  // is merged or saved.
+  if (targetSectionId) {
+    const section = typeof document !== "undefined" && document.getElementById(targetSectionId);
+    if (section && typeof window.AiBorder === "object" && window.AiBorder) {
+      const res = window.AiBorder.renderBorderSvg(section, borderPatch ? borderPatch.svg : null);
+      if (!res || res.ok !== true) {
+        window.showFeedback?.(
+          AI_ARRANGE_REJECT_COPY.border_svg_rejected || "Nothing was changed.",
+          "error",
+        );
+        return { ok: false, stage: "apply", code: "border_svg_rejected" };
+      }
+    }
+  }
   const mut = window.beginMutation(snapshotAiFields(layout));
-  mergePatchIntoLayout(layout, patch);
+  // Attach the target section id so `mergePatchIntoLayout` can write `borderSvg` into the
+  // correct section record (AC-7/AC-9 path A). Without this, `applyLayout` re-renders the
+  // section from the OLD record (no `borderSvg`) and clears the overlay that the explicit
+  // `renderBorderSvg` call above just created. The `_targetSectionId` field is not part of
+  // the patch schema — it is internal plumbing between this flow and the merge function.
+  // The patch object from `parseModelOutput` may be frozen, so we attach via a mutable copy.
+  const patchForMerge = borderPatch && targetSectionId
+    ? Object.assign({}, patch, { _targetSectionId: targetSectionId })
+    : patch;
+  mergePatchIntoLayout(layout, patchForMerge);
   if (typeof window.applyLayout !== "function") {
     return fail("the layout apply path is unavailable - nothing was changed.");
   }
@@ -734,8 +920,28 @@ async function arrangeWithAi(instruction) {
     window.showFeedback?.("The arrangement could not be applied - nothing was changed.", "error");
     return { ok: false, stage: "apply", code: "apply_failed" };
   }
-  window.pushMutation(mut, "AI arrange", window.MUTATION_CLASSES.POSITION,
-    (layout, snap) => repairAiLayout(layout, snap));
+  // The undo record: geometry repaired from `snapshotAiFields`, the section's flags — including
+  // its PRIOR `borderSvg` — repaired from the synchronous `snapshotSectionFlags`. MERGED at push
+  // time rather than replacing the repair, because the two cover disjoint field sets: the flags
+  // snapshot exposes only `{compact, borderStyle, borderSvg}` for sections with an id
+  // (`js/undo.js:449`), so it alone would let a late-settling capture keep post-mutation
+  // `left`/`top`/`width`/`zIndex`. `repairSectionFlags` is merged LAST because the border is the
+  // field a late capture is most likely to have read after the mutation.
+  //
+  // Two push sites, not one with a variable: AC-3's static guard requires each pushMutation call
+  // to carry a visible `window.MUTATION_CLASSES.XXX` at the call site, and the guard's extractor
+  // (`scripts/inventory_mutation_tags.py`) resolves the class by text pattern, not by value.
+  const repairFn = (captured, snap) => {
+    repairAiLayout(captured, snap);
+    if (typeof window.repairSectionFlags === "function") {
+      window.repairSectionFlags(captured, window.snapshotSectionFlags());
+    }
+  };
+  if (borderPatch) {
+    window.pushMutation(mut, "AI border", window.MUTATION_CLASSES.BORDER, repairFn);
+  } else {
+    window.pushMutation(mut, "AI arrange", window.MUTATION_CLASSES.POSITION, repairFn);
+  }
   if (typeof window.handleSaveBrowser === "function") {
     await window.handleSaveBrowser();
   } else {
@@ -818,13 +1024,66 @@ function showAiArrangeSurface() {
   // A plain box, NOT a property on `handle`: `body(ctx)` runs INSIDE `__createModal`, before the
   // `const handle` below has been initialised, so touching it here is a TDZ ReferenceError — the
   // same capture hazard `js/ai_settings.js`'s header documents for cross-module seams.
+  //
+  // AC-4: two per-request capability switches, both ON, ephemeral (not persisted), reset on reopen.
+  let caps = { arrange: true, border: true };
+  // AC-5: capture the active section target before any network call. When Border design is ON the
+  // flow refuses locally if no section is targeted, so the dialog never lets a border-only request
+  // reach the worker without a target.
+  let selectedSectionId = null;
+  try {
+    const pp = typeof window !== "undefined" ? window.PropertiesPanel : null;
+    selectedSectionId =
+      (pp && typeof pp.getActiveSection === "function" && pp.getActiveSection() && pp.getActiveSection().id) ||
+      (pp && typeof pp.getActiveTarget === "function" && pp.getActiveTarget() && pp.getActiveTarget().id) ||
+      null;
+  } catch { selectedSectionId = null; }
+
   const refs = {};
   const handle = api.__createModal({
-    title: "Ask your AI to arrange the sheet",
+    title: "Ask your AI",
     body: (ctx) => {
       const wrap = document.createElement("div");
       wrap.className = "be-ai-prompt";
 
+      // ---- capability switches (AC-4) ---------------------------------------------------
+      const sw = document.createElement("div");
+      sw.className = "be-ai-switches";
+      sw.style.display = "flex";
+      sw.style.gap = "16px";
+      sw.style.marginBottom = "8px";
+      const makeSwitch = (labelText, id, checked, onChange) => {
+        const lab = document.createElement("label");
+        lab.style.display = "flex";
+        lab.style.alignItems = "center";
+        lab.style.gap = "6px";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = checked;
+        input.id = id;
+        input.setAttribute("data-test", id);
+        input.addEventListener("change", () => onChange(input.checked));
+        const span = document.createElement("span");
+        span.className = "be-field-label";
+        span.textContent = labelText;
+        span.style.fontSize = "12px";
+        lab.appendChild(input);
+        lab.appendChild(span);
+        return { wrap: lab, input };
+      };
+      const arrSwitch = makeSwitch("Arrange layout", "be-ai-cap-arrange", caps.arrange, (on) => {
+        caps.arrange = on;
+        updateHint();
+      });
+      const borSwitch = makeSwitch("Border design", "be-ai-cap-border", caps.border, (on) => {
+        caps.border = on;
+        updateHint();
+      });
+      sw.appendChild(arrSwitch.wrap);
+      sw.appendChild(borSwitch.wrap);
+      wrap.appendChild(sw);
+
+      // ---- prompt field -----------------------------------------------------------------
       const field = document.createElement("label");
       field.className = "be-field";
       const lab = document.createElement("span");
@@ -843,7 +1102,21 @@ function showAiArrangeSurface() {
 
       const hint = document.createElement("p");
       hint.className = "be-modal-hint be-ai-prompt-hint";
-      hint.textContent = AI_ARRANGE_PRIVACY_HINT;
+      function updateHint() {
+        // AC-3/AC-D1: the privacy sentence describes what leaves the machine; it is widened when
+        // border design is ON (O-3) and narrowed when arrange is OFF.
+        const parts = [];
+        if (caps.arrange) {
+          parts.push("Sends the section headings, positions, sizes and stacking order");
+        }
+        if (caps.border) {
+          parts.push("and one section's border-drawing prompt");
+        }
+        hint.textContent = parts.length
+          ? parts.join(", ") + " to your AI provider. Your key stays on this device and is never sent with it."
+          : AI_ARRANGE_PRIVACY_HINT;
+      }
+      updateHint();
       wrap.appendChild(hint);
       ctx.bodyEl.appendChild(wrap);
       refs.input = input;
@@ -868,7 +1141,12 @@ function showAiArrangeSurface() {
         }
         // Close FIRST, then run: the flow draws its own preview dialog, and two modals stacked
         // on one host would leave the preview underneath the prompt.
-        ctx.close({ instruction: text.trim() });
+        ctx.close({
+          instruction: text.trim(),
+          capabilities: { arrange: !!caps.arrange, border: !!caps.border },
+          selectedSectionId,
+          cancelled: false,
+        });
       });
       cancel.addEventListener("click", () => ctx.close(null));
       ctx.actionsRow.appendChild(cancel);
@@ -881,25 +1159,60 @@ function showAiArrangeSurface() {
   loadRouteHint(handle);
   return handle.promise.then((result) => {
     if (!result || !result.instruction) return undefined;
-    return arrangeWithAi(result.instruction).then((outcome) => {
-      // A refusal from the flow (bad key, prose answer, invalid patch) reopens the prompt with
-      // the sentence IN it, so the user can rephrase without hunting for the button again. A
-      // cancel or a refusal to even start (`stage: "cancelled"`) stays closed — re-asking the
-      // same thing is not what a Cancel means.
-      if (outcome && outcome.ok) return outcome;
-      const stage = outcome ? outcome.stage : "";
-      if (stage === "cancelled" || stage === "preview" || stage === "instruction") return outcome;
-      const copy =
-        AI_ARRANGE_ERROR_COPY[outcome.code] ||
-        AI_ARRANGE_REJECT_COPY[outcome.code] ||
-        "Nothing was changed.";
-      return showAiRefusal(copy).then(() => outcome);
+    return runArrange(result.instruction, {
+      capabilities: result.capabilities,
+      selectedSectionId: result.selectedSectionId,
+    });
+  });
+}
+
+/**
+ * Run one arrangement, and on a REFUSAL offer the retry the AC-4 criterion names.
+ *
+ * The retry re-runs THIS function with the SAME instruction, capabilities and target — the user
+ * does not have to re-type what they asked. A retryable transport error (`network`,
+ * `provider_unavailable`, `rate_limit`) is exactly the case where a second dial can succeed: the
+ * network came back, the provider recovered, the rate window passed. The refusal dialog's Retry
+ * button is how the user reaches that second dial; `onRetry` closing with `{retry:true}` is what
+ * `showAiRefusal` translates into this re-run.
+ */
+function runArrange(instruction, opts) {
+  const capabilities = (opts && opts.capabilities) || { arrange: true, border: true };
+  const selectedSectionId = (opts && opts.selectedSectionId) || null;
+  return arrangeWithAi(instruction, {
+    capabilities,
+    selectedSectionId,
+  }).then((outcome) => {
+    // A refusal from the flow (bad key, prose answer, invalid patch) reopens the prompt with
+    // the sentence IN it, so the user can rephrase without hunting for the button again. A
+    // cancel or a refusal to even start (`stage: "cancelled"`) stays closed — re-asking the
+    // same thing is not what a Cancel means.
+    if (outcome && outcome.ok) return outcome;
+    const stage = outcome ? outcome.stage : "";
+    if (stage === "cancelled" || stage === "preview" || stage === "instruction") return outcome;
+    const copy =
+      AI_ARRANGE_ERROR_COPY[outcome.code] ||
+      AI_ARRANGE_REJECT_COPY[outcome.code] ||
+      "Nothing was changed.";
+    // AC-4: pass the retryable flag (and the retry-after hint) to the refusal dialog so it can
+    // show a Retry button for the errors a second dial can actually fix.
+    const retryable = outcome.retryable === true;
+    const retryAfterSeconds = outcome.retryAfterSeconds;
+    return showAiRefusal(copy, outcome.code, retryable, retryAfterSeconds, () => {
+      // Retry: re-run the SAME arrangement — same instruction, same capabilities, same target.
+      return runArrange(instruction, { capabilities, selectedSectionId });
+    }).then((retried) => {
+      // A retry that ran REPLACES this outcome: the second dial is the answer the surface is
+      // asked about, so reporting the first failure after a successful retry would be a false
+      // negative (measured 2026-10-26: the apply and the save both happened, and the promise
+      // still said `ok:false, code:"network"`). A dismissed refusal changes nothing.
+      return retried && retried.retried ? retried.outcome : outcome;
     });
   });
 }
 
 /** A refusal that keeps the user's place: the copy, and the same Ask/Cancel pair. */
-function showAiRefusal(copy) {
+function showAiRefusal(copy, errorClass, retryable, retryAfterSeconds, onRetry) {
   const api = window.Modals;
   if (!api || typeof api.__createModal !== "function") return Promise.resolve(null);
   const handle = api.__createModal({
@@ -907,10 +1220,26 @@ function showAiRefusal(copy) {
     body: (ctx) => {
       const p = document.createElement("p");
       p.className = "be-modal-hint be-ai-refusal";
-      p.textContent = copy;
+      p.textContent = copy || "Nothing was changed.";
       ctx.bodyEl.appendChild(p);
     },
     actions: (ctx) => {
+      // AC-4: a retryable error (network, provider_unavailable, rate_limit) gets a Retry button
+      // next to OK — the error is one a second dial can fix, so the user is not left with only
+      // "dismiss it and start over".
+      if (retryable && onRetry) {
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "be-modal-ok be-ai-refusal-retry";
+        const label = retryAfterSeconds
+          ? `Retry in ${retryAfterSeconds}s`
+          : "Retry";
+        retry.textContent = label;
+        retry.addEventListener("click", () => {
+          ctx.close({ retry: true });
+        });
+        ctx.actionsRow.appendChild(retry);
+      }
       const ok = document.createElement("button");
       ok.type = "button";
       ok.className = "be-modal-ok be-ai-refusal-ok";
@@ -919,7 +1248,14 @@ function showAiRefusal(copy) {
       ctx.actionsRow.appendChild(ok);
     },
   });
-  return handle.promise;
+  return handle.promise.then((result) => {
+    if (result && result.retry && onRetry) {
+      // The retry RAN: hand its own outcome back, flagged, so the caller can report the run that
+      // actually happened instead of the failure that opened this dialog.
+      return Promise.resolve(onRetry()).then((outcome) => ({ retried: true, outcome }));
+    }
+    return null;
+  });
 }
 
 /**

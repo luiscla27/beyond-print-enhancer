@@ -1,0 +1,34 @@
+{
+  "track_id": "ai_arrange_improvement_20261103",
+  "evidence_attached": true,
+  "evidence": {
+    "origin": "temp/ux_matrix/ evidence store, scored 2026-10-26, re-verified + SC-D2 rescored 2026-10-27",
+    "primary_evidence_file": "temp/ux_matrix/evidence_current.json",
+    "baseline_evidence_file": "temp/ux_matrix/evidence_baseline_corrected.json",
+    "score_run_record": "temp/ux_matrix/score_run_20261029.json",
+    "matrix_source": "temp/e2e_test_matrix_scored.md",
+    "runner": "python vendor/.reasonix/skills/ux-scoring-matrix/run.py score --evidence temp/ux_matrix/evidence_current.json",
+    "live_recompute": {
+      "raw_score": 83.92,
+      "gate_caps": {"zero_click": 84, "data_safety": 100, "accessibility": 100},
+      "severity_penalties": {"critical": 0, "major": -4, "minor": -2, "total": -6},
+      "final_score": 78,
+      "score_band": "Good",
+      "note": "Live run from evidence_current.json against run.py."
+    },
+    "current_rating_proof": {
+      "criterion": "ai_arrange",
+      "rating": 89,
+      "evidence": "evidence_current.json criterion_ratings.ai_arrange = 89",
+      "derived_from": "mean of mapped scenario dimensions SC-D1, SC-D1, SC-D1, SC-D2, SC-D2, SC-J2, SC-J2 (x20 scale, per score_evidence_20261029.json scenario_dimension_map)",
+      "anchor_meaning": "90 anchor = 'Consistently improves layouts while preserving user control'. Current 89 is one point below the anchor.",
+      "why_not_90": "SC-D1 and SC-D2 are high after the quick-wins landings (D1 composite 4.0, D2 composite 3.9), but the mapped dimensions include Error Resistance, Visual Feedback, and Reliability, not the full 'usefulness and user control' story the criterion describes. The rating is high but not at the anchor; the gap analysis points at user override/preview before apply, undo granularity, and explanation of AI decisions."
+    },
+    "existing_certs": {
+      "ai_layout_schema": "test/unit/ai_layout_schema.test.js (142 cases)",
+      "byok_arrange_roundtrip": "test/browser_e2e/byok_arrange_roundtrip.spec.js (6 E2E)",
+      "note": "These certify the arrangement behavior itself, not the usefulness/user-control dimension the criterion rates. They must stay green across the track."
+    },
+    "important_caveat": "Same as accessibility track evidence caveat: automated x20 derivation from an e2e scenario matrix, NOT a human usability study, NOT a measurement of the matrix's zero-click gate on 10 representative sheets."
+  }
+}

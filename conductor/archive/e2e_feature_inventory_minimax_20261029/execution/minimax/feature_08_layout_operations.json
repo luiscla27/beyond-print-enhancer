@@ -1,0 +1,94 @@
+{
+ "feature": "feature_08_layout_operations",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_per_layer.spec.js",
+   "file_id": "457962221437291",
+   "mp4_bytes": 796823,
+   "upload_response": {
+    "file": {
+     "file_id": 457962221437291,
+     "bytes": 796823,
+     "created_at": 1793360906,
+     "filename": "print_per_layer.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "section_print_order.spec.js",
+   "file_id": "457963792097747",
+   "mp4_bytes": 861188,
+   "upload_response": {
+    "file": {
+     "file_id": 457963792097747,
+     "bytes": 861188,
+     "created_at": 1793360914,
+     "filename": "section_print_order.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_per_layer.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_per_layer.webm",
+   "webm_bytes": 2858338
+  },
+  {
+   "suite": "section_print_order.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_print_order.webm",
+   "webm_bytes": 2785141
+  }
+ ],
+ "usage": {
+  "total_tokens": 67419,
+  "total_characters": 0,
+  "prompt_tokens": 66852,
+  "completion_tokens": 567,
+  "completion_tokens_details": {
+   "reasoning_tokens": 160
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `print_per_layer`\n\n**Observed:** The video loads the D&D Beyond Corvo Saggio character sheet, dismisses the cookie notice, and displays the sheet. Near the end, the Print Enhancer interface appears: a left extension panel contains Layout and Output controls, while a right **\u201cLAYER MANAGEMENT\u201d** panel shows a **\u201cSECTIONS (22)\u201d** list and a **\u201cSHAPES (1)\u201d** area with shape entries and small action icons. A banner states that no saved layout is loaded and the default template is used.\n\n**Not visible:** No layer row is opened or manipulated. There is no visible Print Visibility toggle, layer Visibility toggle, lock/unlock action, section reordering, print-preview result, DOM-style change, or print CSS/z-index effect. Consequently, the specified `print_per_layer` interactions and their visible sheet results cannot be witnessed.\n\n### Video 2 \u2014 `section_print_order`\n\n**Observed:** The video again loads the Corvo Saggio sheet and reveals the Print Enhancer interface. The right **Layer Management** panel visibly contains a **Sections (22)** list with section cards such as \u201cCorvo Saggio,\u201d \u201cHealth,\u201d \u201cBox 2,\u201d \u201cAbility 4,\u201d \u201cAbility 3,\u201d \u201cAbility 2,\u201d \u201cAbility 1,\u201d \u201cQuick Info,\u201d \u201cExtras,\u201d \u201cFeatures & Traits,\u201d \u201cInventory,\u201d and several numbered sections. The panel also shows print/screen filters and a Shapes section.\n\n**Not visible:** No section card is dragged. The card order does not visibly change, and there is no visible update to DOM order or print z-index when the top card is moved to the bottom or the last card is moved back to the top. Therefore, the specified `section_print_order` interaction and result are not witnessed.\n\nAcross the two videos, the extension panel is present, but the required control actions and end-to-end visible results are not shown.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_per_layer.spec.js, section_print_order.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793360926921
+}

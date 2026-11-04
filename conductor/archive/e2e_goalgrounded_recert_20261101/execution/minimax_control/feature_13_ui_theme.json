@@ -1,0 +1,72 @@
+{
+ "feature": "feature_13_ui_theme",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "icons_privacy_surface.spec.js",
+   "file_id": "458410028036572",
+   "mp4_bytes": 851122,
+   "upload_response": {
+    "file": {
+     "file_id": 458410028036572,
+     "bytes": 851122,
+     "created_at": 1793469835,
+     "filename": "icons_privacy_surface.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "icons_privacy_surface.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\icons_privacy_surface.webm",
+   "webm_bytes": 2637258
+  }
+ ],
+ "usage": {
+  "total_tokens": 36567,
+  "total_characters": 0,
+  "prompt_tokens": 35023,
+  "completion_tokens": 1544,
+  "completion_tokens_details": {
+   "reasoning_tokens": 286
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### What is visibly observed\n\n- **0.0\u20131.4s \u2014 Website:** The browser shows a largely blank/loading D&D Beyond page with a gray lower area. No extension UI is visible.\n- **1.6\u20134.0s \u2014 Website:** D&D Beyond\u2019s own header and navigation load, including the D&D Beyond logo, \u201cPLAY D&D,\u201d \u201cRULES,\u201d \u201cLIBRARY,\u201d \u201cCOMMUNITY,\u201d \u201cMARKETPLACE,\u201d search, sign-in, and \u201cCREATE ACCOUNT.\u201d These are website surfaces, not extension work.\n- **4.2\u20136.8s \u2014 Website:** A D&D Beyond loading splash with the D&D Beyond logo and spinner appears. This is the website\u2019s loading state, not an extension loading state.\n- **4.8\u20137.6s \u2014 Website:** D&D Beyond\u2019s \u201cYour Privacy Choices\u201d cookie/privacy banner appears at the lower left with \u201cCookie Settings,\u201d \u201cAccept All,\u201d and \u201cReject Non-Essential Cookies.\u201d This is website-owned UI.\n- **6.0\u20137.6s \u2014 Website:** The character sheet for \u201cCorvo Saggio\u201d becomes visible behind the cookie banner. The sheet\u2019s character information, statistics, panels, and red-outlined sections are website content/presentation.\n- **7.8\u201329.2s \u2014 Website:** The plain character sheet remains on screen. It contains the character portrait, ability scores, skills, senses, saves, initiative, defenses, hit points, and actions table. The repeated red outlines and the ordinary sheet layout are visible, but the frames do not establish that these are extension-generated enhancements.\n- **29.4\u201330.0s \u2014 Website/transition:** The view briefly shows a portion of the character sheet with the same ordinary red-bordered sections. No extension controls are visible in these frames.\n- **30.0s onward \u2014 Extension:** The extension UI appears:\n  - A dark floating **\u201cBEYOND P\u2026\u201d** control panel on the left with extension-specific sections such as **LAYOUT**, **OUTPUT**, **Add Shape**, **Manage Clones**, **AI Arrange**, and **PRINT**.\n  - A dark **\u201cLAYER MANAGEMENT\u201d** panel on the right with **SECTIONS (22)** and **SHAPES (1)** listings.\n  - A top-center extension message reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n  - The sheet behind the panels is displayed in a transformed/print-oriented layout.\n  \n  These panels, the message, and the layer-management controls are clearly extension-owned work and are visually distinct from the base website.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n\nThe supplied contract is the **icons_privacy_surface** suite:\n\n1. **All manifest-declared icons exist on disk \u2014 NOT-VISIBLE.**  \n   Disk contents and individual manifest icon files cannot be seen on camera.\n\n2. **The privacy policy and readme are packaged \u2014 NOT-VISIBLE.**  \n   No file browser, package listing, privacy-policy document, or readme document appears on camera.\n\n3. **The extension UI renders on a character sheet \u2014 VISIBLE.**  \n   From approximately 30.0 seconds onward, the extension\u2019s floating control panel and Layer Management panel are visibly rendered over the character sheet.\n\nThe video appears to be labeled as a UI-theme feature test, but the stated behavioral contract consists of the icons/privacy assertions above; only the UI-render assertion is visually witnessed.\n\n### Layer 2 \u2014 Product-aim conformance\n\n#### Working affordances observed\n\n- The extension UI is **clearly distinguishable** from the base website:\n  - Dark black-and-charcoal panels.\n  - Gold/tan separators and headings.\n  - \u201cBEYOND P\u2026\u201d branding and the separate \u201cLAYER MANAGEMENT\u201d panel.\n  - Extension-specific controls such as **Add Shape**, **Manage Clones**, **AI Arrange**, **Print only/Both/Screen only**, and section/shape listings.\n- The extension successfully renders alongside a loaded D&D Beyond character sheet.\n- The Layer Management panel provides visible categorized lists for **SECTIONS (22)** and **SHAPES (1)**.\n- The extension displays a contextual status message: **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The enhanced/print-oriented sheet remains usable behind the panels, with character-sheet content visible and organized into the extension\u2019s layout.\n\n#### Missing or rough affordances observed\n\n- No actual extension-button interaction is visibly demonstrated in the sampled frames. The recording does not show a panel button being clicked or a resulting state change.\n- No **dialog or picker** flow is visibly opened or completed; the request\u2019s mentioned border/shape/color pickers are not shown.\n- No visible **apply** or **undo** operation is demonstrated.\n- No extension toast such as \u201cShape added\u201d or \u201cLayout saved\u201d is witnessed. The only extension message visible is the \u201cNo saved layout yet\u201d notice.\n- No visible **error state** is shown.\n- No visibly distinct **disabled state** is shown. Some entries in the Layer Management panel appear dim, but the frames do not clearly establish whether they are disabled, merely inactive, or visually styled that way.\n- No extension-specific **loading or transition indicator** is shown; the visible D&D Beyond spinner belongs to the website.\n- The extension\u2019s toolbar icon and claimed **ON badge** are not shown, so activation state cannot be verified.\n- The initial plain sheet is visible, but the recording does not visibly demonstrate a user-driven reload-to-plain/off-state transition followed by toolbar reactivation. The extension appears to be activated externally in the harness.\n- The panels occupy substantial screen space and obscure portions of the sheet. That is an observation, but there is insufficient interaction footage to determine whether this materially impairs use.\n\nBecause the extension UI is visibly distinguishable and renders correctly, but the camera does not demonstrate its interactive controls, dialogs, apply/undo flows, toasts, error/disabled states, toolbar activation badge, or the off/reactivation cycle, the evidence is incomplete for a full-working product-aim assessment.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: icons_privacy_surface.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793469846855
+}

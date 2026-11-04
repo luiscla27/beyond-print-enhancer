@@ -1,0 +1,519 @@
+{
+  "schema_version": "runtime-perf-report/1",
+  "generated_utc": "2026-10-17T18:46:57.218Z",
+  "track": "runtime_perf_20261015",
+  "remeasured_by": "runtime_perf_maintenance_20261017",
+  "sample_size": 120,
+  "sample_provenance": "synthetic transport, live code path (scripts/perf/model_call_telemetry.py --sample); no live seat call",
+  "baseline": {
+    "store": "C:/luiscla27/projects/dndbeyond-printenhance/temp/modelstack/telemetry.jsonl",
+    "since": "2026-09-21T16:31:00Z",
+    "until": "2026-09-22T03:01:27Z",
+    "terminal_rows": 865,
+    "non_model_rows": 860,
+    "non_model_rows_over_unknown_window": 1093,
+    "unknown_window_since": "2026-09-21T12:04:57Z",
+    "non_model_rows_without_latency_field": 0,
+    "producers": {
+      "reasonix_proxy": 865
+    },
+    "rows_with_duplicate_marker": 0,
+    "rows": [
+      {
+        "role": "reasonix-agent",
+        "model": "qwen3.8-flash",
+        "calls": 855,
+        "latency_missing": 3,
+        "errors": 3,
+        "p50_s": 16.733,
+        "p95_s": 54.047,
+        "max_s": 465.483,
+        "latency_n": 852
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "deepseek-v4-flash",
+        "calls": 3,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 334.218,
+        "p95_s": 356.828,
+        "max_s": 356.828,
+        "latency_n": 3
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "glm-5.3-flash",
+        "calls": 3,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 8.766,
+        "p95_s": 424.672,
+        "max_s": 424.672,
+        "latency_n": 3
+      },
+      {
+        "role": "maintenance",
+        "model": "qwen3.8-flash",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 120.577,
+        "p95_s": 144.891,
+        "max_s": 144.891,
+        "latency_n": 2
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "mimo-v2.5",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 126.842,
+        "p95_s": 129.186,
+        "max_s": 129.186,
+        "latency_n": 2
+      }
+    ]
+  },
+  "dominant": {
+    "store": "C:/luiscla27/projects/dndbeyond-printenhance/temp/modelstack/telemetry.jsonl",
+    "since": "2026-10-10T00:00:00Z",
+    "until": "2026-10-17T19:00:00Z",
+    "terminal_rows": 5592,
+    "non_model_rows": 24538,
+    "non_model_rows_over_unknown_window": null,
+    "unknown_window_since": null,
+    "non_model_rows_without_latency_field": 19177,
+    "producers": {
+      "reasonix_proxy": 5592
+    },
+    "rows_with_duplicate_marker": 0,
+    "rows": [
+      {
+        "role": "reasonix-agent",
+        "model": "glm-5.3-flash",
+        "calls": 4844,
+        "latency_missing": 0,
+        "errors": 9,
+        "p50_s": 7.64,
+        "p95_s": 116.516,
+        "max_s": 1364.545,
+        "latency_n": 4844
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "deepseek-v4-flash",
+        "calls": 179,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 6.202,
+        "p95_s": 113.733,
+        "max_s": 148.969,
+        "latency_n": 179
+      },
+      {
+        "role": "maintenance",
+        "model": "deepseek-v4-flash",
+        "calls": 134,
+        "latency_missing": 0,
+        "errors": 2,
+        "p50_s": 3.546,
+        "p95_s": 57.515,
+        "max_s": 82.969,
+        "latency_n": 134
+      },
+      {
+        "role": "maintenance",
+        "model": "glm-5.3-flash",
+        "calls": 89,
+        "latency_missing": 0,
+        "errors": 2,
+        "p50_s": 8.109,
+        "p95_s": 30.469,
+        "max_s": 87.828,
+        "latency_n": 89
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "poolside/laguna-s-2.1:free",
+        "calls": 75,
+        "latency_missing": 0,
+        "errors": 3,
+        "p50_s": 12.515,
+        "p95_s": 929.532,
+        "max_s": 1353.079,
+        "latency_n": 75
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "stealth/space-bunny-alpha",
+        "calls": 70,
+        "latency_missing": 0,
+        "errors": 70,
+        "p50_s": 0.875,
+        "p95_s": 14,
+        "max_s": 38.358,
+        "latency_n": 70
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "inclusionai/ling-3.0-flash-fin:free",
+        "calls": 67,
+        "latency_missing": 0,
+        "errors": 67,
+        "p50_s": 1.687,
+        "p95_s": 9.327,
+        "max_s": 44.375,
+        "latency_n": 67
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "inclusionai/ling-3.0-flash-sante:free",
+        "calls": 67,
+        "latency_missing": 0,
+        "errors": 67,
+        "p50_s": 2.796,
+        "p95_s": 10.187,
+        "max_s": 45.171,
+        "latency_n": 67
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "mimo-v2.5",
+        "calls": 37,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 21.233,
+        "p95_s": 61.828,
+        "max_s": 1039.984,
+        "latency_n": 37
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "deepseek-v4-pro",
+        "calls": 11,
+        "latency_missing": 0,
+        "errors": 11,
+        "p50_s": 12.985,
+        "p95_s": 19.671,
+        "max_s": 19.671,
+        "latency_n": 11
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "openai/gpt-5.6-luna",
+        "calls": 3,
+        "latency_missing": 0,
+        "errors": 3,
+        "p50_s": 7.109,
+        "p95_s": 14.641,
+        "max_s": 14.641,
+        "latency_n": 3
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "openai/gpt-5.6-luna-pro",
+        "calls": 3,
+        "latency_missing": 0,
+        "errors": 3,
+        "p50_s": 8.281,
+        "p95_s": 15.5,
+        "max_s": 15.5,
+        "latency_n": 3
+      },
+      {
+        "role": "maintenance",
+        "model": "poolside/laguna-s-2.1:free",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 2,
+        "p50_s": 30.047,
+        "p95_s": 39.25,
+        "max_s": 39.25,
+        "latency_n": 2
+      },
+      {
+        "role": "maintenance",
+        "model": "poolside/laguna-xs-2.1:free",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 40.061,
+        "p95_s": 43.343,
+        "max_s": 43.343,
+        "latency_n": 2
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "poolside/laguna-xs-2.1:free",
+        "calls": 2,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 51.734,
+        "p95_s": 1787.032,
+        "max_s": 1787.032,
+        "latency_n": 2
+      },
+      {
+        "role": "maintenance",
+        "model": "upstage/solar-pro4",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 50.061,
+        "p95_s": 50.061,
+        "max_s": 50.061,
+        "latency_n": 1
+      },
+      {
+        "role": "maintenance",
+        "model": "stepfun/step-3.7-flash",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 60.077,
+        "p95_s": 60.077,
+        "max_s": 60.077,
+        "latency_n": 1
+      },
+      {
+        "role": "maintenance",
+        "model": "mimo-v2.5",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 70.077,
+        "p95_s": 70.077,
+        "max_s": 70.077,
+        "latency_n": 1
+      },
+      {
+        "role": "maintenance",
+        "model": "tencent/hy3",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 80.093,
+        "p95_s": 80.093,
+        "max_s": 80.093,
+        "latency_n": 1
+      },
+      {
+        "role": "maintenance",
+        "model": "mimo-v2.5-pro",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 1,
+        "p50_s": 90.093,
+        "p95_s": 90.093,
+        "max_s": 90.093,
+        "latency_n": 1
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "upstage/solar-pro4",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 1890.594,
+        "p95_s": 1890.594,
+        "max_s": 1890.594,
+        "latency_n": 1
+      },
+      {
+        "role": "reasonix-agent",
+        "model": "mimo-v2.5-pro",
+        "calls": 1,
+        "latency_missing": 0,
+        "errors": 0,
+        "p50_s": 4.203,
+        "p95_s": 4.203,
+        "max_s": 4.203,
+        "latency_n": 1
+      }
+    ]
+  },
+  "after": {
+    "findings": [],
+    "metrics": {
+      "store": "temp/perf/model_calls.jsonl",
+      "events": 246,
+      "terminal": 120,
+      "coverage_pct": 100,
+      "unknown_model_pct": 0,
+      "by_status": {
+        "success": 104,
+        "timeout": 7,
+        "error": 5,
+        "cancelled": 4
+      },
+      "by_class": {
+        "interactive_user": {
+          "n": 40,
+          "p50_ms": 16,
+          "p95_ms": 47,
+          "p99_ms": 109,
+          "max_ms": 109
+        },
+        "interactive_agent": {
+          "n": 40,
+          "p50_ms": 16,
+          "p95_ms": 63,
+          "p99_ms": 109,
+          "max_ms": 109
+        },
+        "background_maintenance": {
+          "n": 40,
+          "p50_ms": 16,
+          "p95_ms": 62,
+          "p99_ms": 108,
+          "max_ms": 108
+        }
+      },
+      "latency": {
+        "n": 120,
+        "p50_ms": 16,
+        "p95_ms": 63,
+        "p99_ms": 109,
+        "max_ms": 109
+      },
+      "timeout_count": 7,
+      "cancel_count": 4,
+      "error_count": 5,
+      "cache_hit_count": 0,
+      "cache_hit_rate": 0,
+      "progress_ticks": 6
+    },
+    "sites": [
+      {
+        "site": "scripts/perf/model_call_telemetry.py#sample",
+        "request_class": "mixed(background_maintenance,interactive_agent,interactive_user)",
+        "effective_cap_s": 210,
+        "class_cap_s": 210,
+        "cap_override_s": null,
+        "measured_budget_s": 0.05,
+        "measured_session_s": 0.12,
+        "exercised": true,
+        "n": 120,
+        "statuses": {
+          "success": 104,
+          "timeout": 7,
+          "error": 5,
+          "cancelled": 4
+        },
+        "max_ms": 109,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/border_design_generator.js",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 210,
+        "class_cap_s": 210,
+        "cap_override_s": null,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/byok_vision_gate.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 420,
+        "class_cap_s": 210,
+        "cap_override_s": 420,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/codex_text_leg.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 900,
+        "class_cap_s": 210,
+        "cap_override_s": 900,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/drag_ux_visual_gate.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 300,
+        "class_cap_s": 210,
+        "cap_override_s": 300,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      },
+      {
+        "site": "scripts/muse_gate.py",
+        "request_class": "background_maintenance",
+        "effective_cap_s": 600,
+        "class_cap_s": 210,
+        "cap_override_s": 600,
+        "measured_budget_s": null,
+        "measured_session_s": null,
+        "exercised": false,
+        "n": 0,
+        "statuses": {},
+        "max_ms": null,
+        "over_cap": false
+      }
+    ]
+  },
+  "criteria": [
+    {
+      "id": "AC-1",
+      "verdict": "PASS",
+      "basis": "120 terminal calls, duration_ms coverage 100%, 0 validator finding(s), unknown-model 0%"
+    },
+    {
+      "id": "AC-2",
+      "verdict": "PASS (WITH DECLARED OVERRIDES)",
+      "basis": "budget mechanism enforced at every site (5 declared site(s)); 4 site(s) carry a declared override above the class cap for the reasons in `scripts/perf/budgets.json`; measured calls over their session cap: 0"
+    },
+    {
+      "id": "AC-3",
+      "verdict": "NOT ACHIEVED — OUT OF SCOPE (relay clause); before/after report MET",
+      "basis": "the criterion's population is relay-served, and 865/865 terminal rows in the dossier window are `producer=reasonix_proxy`; no `scripts/` edit can move that percentile. Measured dominant path over 2026-10-10T00:00:00Z … 2026-10-17T19:00:00Z: reasonix-agent / glm-5.3-flash 4844 calls — p50 7.64 s MET (target <= 20), p95 116.516 s MISS (target <= 60), max 1364.545 s MISS (target <= 75); the dossier's own model appears in that window with 0 call(s). The requested before/after report EXISTS (this file); no p50 comparison is possible because no scripts-originated sample predates the first track"
+    },
+    {
+      "id": "AC-4",
+      "verdict": "PASS",
+      "basis": "6 progress tick(s) measured on the real code path; cancellation and abort-at-budget are asserted in `test/unit/model_call_telemetry.test.js`"
+    },
+    {
+      "id": "AC-5",
+      "verdict": "PASS (RULED OUT, WITH REASONS)",
+      "basis": "the framework's own duplicate markers are unset on 865 relay rows (0 marked); coalescing is implemented and proven by test; caching is disabled by policy because the area's only repeated-request class is the byte-identical re-ask, which the repository requires to be an INDEPENDENT answer (`scripts/perf/redundant-call-analysis.md`)"
+    },
+    {
+      "id": "AC-6",
+      "verdict": "PASS",
+      "basis": "every evidence source is named in this report; the change set is `scripts/perf/**`, the 5 declared call site(s) in scripts/perf/budgets.json (4 of them carry a declared cap override, 5 were not exercised by this sample), one test file, the area's own docs; no excluded tree read or written"
+    }
+  ],
+  "decision": "CONDITIONAL PASS",
+  "decision_reason": "every criterion this scope can move is met on measurements the report cites; AC-3's relay-side clause is recorded NOT ACHIEVED rather than reinterpreted, and the deferred part is named with the instrument that would settle it",
+  "notes": [
+    "AC-2 shortfall, named: 4 of 5 declared site(s) run above their class cap because the cap was below the workload the site was dimensioned for and no measurement exists to justify lowering it — each override states its reason in `scripts/perf/budgets.json` and is printed in the after-table above.",
+    "The sample was produced by driving the REAL helper, supervisor and writer against a LOCAL synthetic transport: it proves the code path and the wiring, not a production latency distribution (no live seat call was made).",
+    "AC-3's settling instrument: a post-restart relay sample over the same window, re-derived by the command in `scripts/perf/runtime-perf-baseline.md`."
+  ]
+}

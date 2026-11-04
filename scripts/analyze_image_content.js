@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+// analyze_image_content.js - one-off: measure a demo sheet's CONTENT bounding box, by scanning a
+// grayscale copy for pixels that are not white, so a crop can be aimed at the ink. Read-only; its
+// input (demo/ignored/sheet_archer.png) is no longer in the tree.
 const sharp = require('sharp');
 
 async function analyzeImage() {

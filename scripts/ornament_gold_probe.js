@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Scratch: decisive test for the corner terminations (AC-2).
  *

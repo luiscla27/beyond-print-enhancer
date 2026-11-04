@@ -319,6 +319,7 @@ function showInputModal(title, message, defaultValue) {
       okBtn.className = "be-modal-ok";
       okBtn.type = "button";
       okBtn.textContent = "Continue";
+      okBtn.setAttribute("aria-label", "Continue");
       ctx.actionsRow.appendChild(okBtn);
       okBtn.addEventListener("click", submit);
 
@@ -409,6 +410,7 @@ function confirmAction(opts) {
       okBtn.className = "be-modal-ok" + (danger ? " be-modal-danger" : "");
       okBtn.type = "button";
       okBtn.textContent = confirmLabel;
+      okBtn.setAttribute("aria-label", confirmLabel);
       ctx.actionsRow.appendChild(okBtn);
       okBtn.addEventListener("click", () => handle.close(true));
     },
@@ -452,6 +454,7 @@ function showFallbackModal(jsonData) {
       copyBtn.className = "be-modal-ok";
       copyBtn.type = "button";
       copyBtn.textContent = "Copy to Clipboard";
+      copyBtn.setAttribute("aria-label", "Copy to Clipboard");
       ctx.actionsRow.appendChild(copyBtn);
       copyBtn.addEventListener("click", copyJson);
     },
@@ -590,6 +593,7 @@ function showEmptyStateDialog(opts) {
       // AC-8: the informational dialog's single control is an affirmative
       // commit, so it uses the ratified commit verb like every other one.
       ok.textContent = o.confirmLabel || "Continue";
+      ok.setAttribute("aria-label", o.confirmLabel || "Continue");
       ctx.actionsRow.appendChild(ok);
       ok.addEventListener("click", () => handle.close(null));
     },
@@ -710,6 +714,45 @@ function showFeedback(msg, type) {
 
 
 /**
+ * The SHARED in-flight marker (BEYOND-19, track state-feedback-be19).
+ *
+ * `showFeedback` is the right surface for "this is what happened"; it is the WRONG surface for
+ * "this is happening". A toast drains after ~3 s, so an operation that outlives it (a provider
+ * round trip, a print preparation, an assembly rebuild) leaves the screen silent while it is still
+ * running — which is precisely the class the goal-grounded judge named, unprompted, in 17 of 19
+ * bundles ("no dedicated loading indicator", "no extension error state", "the enhancement simply
+ * appears"). `js/ai_arrange.js` grew its own `.be-ai-busy` node for exactly that reason; this is
+ * the same affordance for every OTHER operation, in one place, so the next one does not have to
+ * invent a second marker.
+ *
+ * WHY THE SAME RUNG AND THE SAME PILL. Two differently-positioned in-flight markers on one screen
+ * read as two subsystems failing. The class is separate (`.be-progress`, so a spec can say WHICH
+ * operation is pending) but the geometry is the theme's own (`js/ui_theme.js`).
+ *
+ * Returns the node so the caller clears exactly its own marker; `clearProgress` is idempotent
+ * because a `finally` and an `afterprint` can both reach it.
+ *
+ * @param {string} text what is in flight, in the user's words.
+ * @return {HTMLElement|null} the marker, or null when there is no document to mount it in.
+ */
+function showProgress(text) {
+  if (typeof document === "undefined" || !document.body) return null;
+  const node = document.createElement("div");
+  node.className = "be-progress";
+  // `role="status"` + polite: a screen reader is told the operation started, and is NOT
+  // interrupted by it (an interruption is the error path's job, via showFeedback).
+  node.setAttribute("role", "status");
+  node.setAttribute("aria-live", "polite");
+  node.textContent = text;
+  document.body.appendChild(node);
+  return node;
+}
+
+function clearProgress(node) {
+  if (node && node.parentNode) node.parentNode.removeChild(node);
+}
+
+/**
  * The UNDO OFFER (track destructive_recovery_20260911, AC-3).
  *
  * A destructive action that just happened gets one control that reverses it. This
@@ -796,6 +839,8 @@ function showUndoToast(label, onInvoke, opts = {}) {
 }
 
 const Modals = {
+  showProgress,
+  clearProgress,
   // Internal seam (track modal_primitive_20260910). js/persistence.js is loaded
   // BEFORE this file in both js/background.js and the shared test harness, so it
   // cannot reference createModal directly — it resolves this at call time via

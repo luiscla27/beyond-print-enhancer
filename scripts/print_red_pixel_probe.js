@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 /**
  * Counts STRONGLY-RED pixels in each printed-page raster and reports their bounding box, so a claim

@@ -1,0 +1,72 @@
+{
+ "feature": "feature_11_spells_ui",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "file_id": "458408076431848",
+   "mp4_bytes": 957879,
+   "upload_response": {
+    "file": {
+     "file_id": 458408076431848,
+     "bytes": 957879,
+     "created_at": 1793469775,
+     "filename": "spell_detail_sections.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\spell_detail_sections.webm",
+   "webm_bytes": 3132768
+  }
+ ],
+ "usage": {
+  "total_tokens": 38868,
+  "total_characters": 0,
+  "prompt_tokens": 37006,
+  "completion_tokens": 1862,
+  "completion_tokens_details": {
+   "reasoning_tokens": 711
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 921
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What I observed, in order\n\n1. **Website loading surface:** The video opens with a blank white page, then D&D Beyond\u2019s own dark navigation bar and branded loading screen with a rotating red progress indicator appear. This is **the website\u2019s work**, not the extension\u2019s.\n\n2. **Website character sheet:** The character sheet for \u201cCorvo Saggio\u201d loads, showing D&D Beyond\u2019s character information, ability scores, actions, defenses, and navigation tabs. The D&D Beyond navigation, artwork, text, and sheet structure are **the website\u2019s work**.\n\n3. **Early enhancement appearance:** Red outlines and section-shaped borders begin appearing over the sheet while the D&D Beyond loader is still visible. These outlines are **the extension\u2019s work**, layered over the website\u2019s character sheet.\n\n4. **Extension activation:** Around 26.4 seconds, the central sheet area temporarily becomes largely blank while the outlined sections remain around the edges. This appears to be an **extension layout/reflow or loading transition**, though the cause is not explained on camera.\n\n5. **Extension interface appears:** The extension\u2019s dark, gold-accented control panel appears on the left, with **LAYOUT** and **OUTPUT** sections. Options visible include Templates, Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, AI Settings, Print, Print settings, and Save to Browser. This is clearly **the extension\u2019s work**.\n\n6. **Extension layer-management panel:** A second dark panel appears on the right titled **LAYER MANAGEMENT**. It lists **SECTIONS (22)** and **SHAPES (15)**, along with print/screen filters and individual layer names. This is **the extension\u2019s work**.\n\n7. **Extension status message:** A toast states, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** This is **the extension\u2019s work** and is clearly distinguishable from the website.\n\n8. **Enhanced template settles into place:** The sheet returns in a themed layout with red-bordered boxes, including ability, proficiency, walking speed, hit points, initiative, defenses, and actions areas. The central character illustration and underlying sheet content remain **the website\u2019s**, while the enhanced boxes and layout treatment are **the extension\u2019s work**.\n\n9. **No spell-detail interaction is shown:** The video remains on the **ACTIONS** tab. Although a **SPELLS** tab is visible as part of the website\u2019s tab strip, it is never selected. No spell row is opened, and no **Details** trigger is visibly activated.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Evidence on camera |\n|---|---|\n| Spell rows expose a Details trigger | **NOT-VISIBLE** \u2014 no spell list or Details control is shown. |\n| Clicking Details creates a floating spell detail section | **NOT-VISIBLE** \u2014 no Details click or floating spell-detail section appears. |\n| Re-requesting the same spell does not duplicate the section | **NOT-VISIBLE** \u2014 no spell request or second request is demonstrated. |\n| The opened spell detail eventually shows content or a retry/delete error state | **NOT-VISIBLE** \u2014 no opened spell detail, content, loading state, retry control, or delete error state appears. |\n\nThus, **none of the suite\u2019s spell-detail assertions are visibly witnessed**.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Extension work observed working\n\n- The extension\u2019s **left control panel and right Layer Management panel are clearly distinguishable** from D&D Beyond through their dark \u201ccodex/workbench\u201d styling, gold accents, and independent controls.\n- The extension\u2019s **default-layout status toast** is clearly presented and readable.\n- The enhanced sheet is visibly divided into **red-bordered, movable-section-style boxes**, making the extension\u2019s layout treatment distinguishable from the base website.\n- The Layer Management panel provides visible **section and shape inventories**, including a count of 22 sections and 15 shapes.\n- The transition from temporary grid/reflow to the restored themed sheet is visible.\n\n### Affordances missing, unproven, or rough on camera\n\n- The feature under certification\u2014the spell **Details** affordance\u2014is never demonstrated.\n- The **SPELLS** tab is not opened, so spell rows are never shown.\n- No floating spell-detail panel is created.\n- No successful spell-content state is shown.\n- No spell loading/pending state is shown.\n- No spell **retry** or **delete** error state is shown.\n- No duplicate-request protection is demonstrated.\n- The extension\u2019s controls are mostly left untouched; Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, Print, and Save to Browser are only displayed, not behaviorally exercised.\n- No control feedback, pressed/selected state, or disabled state is demonstrated for those controls.\n- No save/success toast beyond the informational \u201cdefault template is loaded\u201d message is shown.\n- No error handling is shown for the extension\u2019s panel actions.\n- The brief mostly blank/reflowed sheet area around 26.4 seconds is visually rough because it provides no explanation or visible progress indicator for the transition.\n- The browser toolbar is not shown clearly enough to confirm the extension\u2019s toolbar icon or its promised **ON badge**.\n- There is no visible demonstration of the extension\u2019s OFF state after reload; the sequence shows activation and enhancement, but not a visible toolbar deactivation and return to the plain sheet.\n\nThe extension\u2019s overall visual identity and layer-management presentation are strong and clearly separated from D&D Beyond, but this recording does not meaningfully exercise the spell-detail feature under certification.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: spell_detail_sections.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793469816115
+}

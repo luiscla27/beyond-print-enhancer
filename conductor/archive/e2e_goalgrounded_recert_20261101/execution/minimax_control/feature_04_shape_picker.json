@@ -1,0 +1,72 @@
+{
+ "feature": "feature_04_shape_picker",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "custom_shapes_upload.spec.js",
+   "file_id": "458407715783200",
+   "mp4_bytes": 959011,
+   "upload_response": {
+    "file": {
+     "file_id": 458407715783200,
+     "bytes": 959011,
+     "created_at": 1793469665,
+     "filename": "custom_shapes_upload.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "custom_shapes_upload.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\custom_shapes_upload.webm",
+   "webm_bytes": 2986481
+  }
+ ],
+ "usage": {
+  "total_tokens": 36117,
+  "total_characters": 0,
+  "prompt_tokens": 34666,
+  "completion_tokens": 1451,
+  "completion_tokens_details": {
+   "reasoning_tokens": 353
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observed sequence\n\n1. **WEBSITE surface:** The video opens on a mostly blank D&D Beyond page, followed by the D&D Beyond header, promotional banner, and loading spinner.\n2. **WEBSITE surface:** D&D Beyond\u2019s own **\u201cYour Privacy Choices\u201d** cookie dialog appears and remains visible during loading. This is not extension work.\n3. **WEBSITE surface:** The character sheet for \u201cCorvo Saggio\u201d loads, showing the portrait, ability scores, skills, senses, initiative, defenses, actions, inventory, and other standard character information.\n4. **EXTENSION work:** The loaded sheet acquires conspicuous red ornamental borders and decorative frame treatments around many of its sections. These borders are not present in D&D Beyond\u2019s normal character sheet and are therefore attributable to Beyond Print Enhancer.\n5. **EXTENSION work:** After a period in which much of the central sheet area appears blank, the extension\u2019s dark, gold-accented control panel and **LAYER MANAGEMENT** panel appear on opposite sides of the screen. The extension styling is clearly distinct from the website.\n6. **EXTENSION work:** A centered toast says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** Another toast says **\u201cShapes (Default) Unlocked.\u201d**\n7. **EXTENSION work:** The **Add Shape** action is used, opening the extension\u2019s **\u201cSELECT DECORATIVE SHAPE\u201d** modal. Its initial **SHAPES** tab shows a searchable list and built-in decorative-shape thumbnails.\n8. **EXTENSION work:** The modal switches to the **CUSTOM** tab. This tab visibly contains an **\u201cUpload from disk\u201d** action, supported-file guidance, an empty-state message (**\u201cNo custom shapes uploaded yet.\u201d**), and **Cancel** and **Add Shape** buttons.\n9. **EXTENSION work:** The **Add Shape** button is visibly disabled in this empty custom state. The video ends here; no native file chooser, selected upload, placement, cancel-after-upload, or uploaded result is shown.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n- **The Add Shape picker offers a Custom tab \u2014 VISIBLE.**  \n  The modal clearly shows the **BORDERS / SHAPES / CUSTOM** tabs, with **CUSTOM** selected later in the sequence.\n\n- **The Custom tab exposes an Upload from disk action \u2014 VISIBLE.**  \n  A prominent **\u201cUpload from disk\u201d** area is visible inside the Custom tab.\n\n- **Choosing a local image keeps the picker open, preselects it, and OK places the shape \u2014 NOT-VISIBLE.**  \n  No local image is visibly chosen, no uploaded preview or selected-file state appears, and no successful OK/add/place flow is shown.\n\n- **Cancel after upload leaves the sheet untouched (library-only save) \u2014 NOT-VISIBLE.**  \n  No upload is shown before Cancel, and Cancel is not activated on camera. Therefore the required library-only behavior cannot be witnessed.\n\n- **The uploaded custom shape carries the base64 image as its asset \u2014 NOT-VISIBLE.**  \n  No upload occurs on camera, and no resulting shape or underlying asset is shown. A base64 asset is not a directly observable camera behavior in any event, but no corresponding visible artifact appears here.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Basic affordances observed working\n\n- The extension\u2019s enhanced treatment is clearly distinguishable from D&D Beyond\u2019s base surface, especially through the red/gold ornamental section borders.\n- The extension\u2019s dark codex-like control panel and LAYER MANAGEMENT panel are visually distinctive.\n- The **Add Shape** button opens the decorative-shape picker.\n- The picker\u2019s **SHAPES** tab exposes a search field and built-in shape thumbnails.\n- The picker successfully switches from **SHAPES** to **CUSTOM**.\n- The **CUSTOM** tab exposes a clear upload affordance and explains accepted image formats.\n- The custom empty state is visible and coherent.\n- The **Add Shape** button demonstrates a sensible disabled state when no custom shape is available.\n- Informational toasts are shown for default-layout status and unlocking the default shape set.\n\n### Basic affordances missing or rough\n\n- The actual **file-selection interaction is not witnessed**; the native chooser never appears on camera.\n- There is no visible **upload progress/loading state**.\n- There is no visible **success state**, selected-file preview, filename, or size indication after upload.\n- There is no visible **validation or error state** for an unsupported or failed image.\n- The flow never reaches an **enabled OK/Add Shape state** after a custom upload.\n- No shape-placement result is shown, so successful addition of a custom image cannot be evaluated.\n- The required **Cancel-after-upload, library-only behavior** is not demonstrated.\n- The large temporarily blank/mostly empty sheet area before the panels appear is visually rough and does not clearly communicate whether it is loading, a layout transition, or a rendering issue.\n- Although the picker\u2019s disabled **Add Shape** button is appropriate for the empty state, no visible explanation directly links that disabled appearance to the absence of a selected custom shape.\n\nThe video contains ample usable frames and clearly demonstrates the picker\u2019s Custom tab and upload action, but it does not sample the central upload, placement, cancellation, or asset-retention behaviors.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: custom_shapes_upload.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793469692987
+}

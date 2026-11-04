@@ -1,0 +1,28 @@
+{
+ "track_id": "track-00",
+ "code_count": 1,
+ "component_keys": [
+  "js/ai_arrange"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/ai_arrange.js"
+ ],
+ "units": [
+  {
+   "id": "feature_01_ai_arrange",
+   "name": "AI Arrange (BYOK Layout Arranger)",
+   "description": "AI-powered layout arrangement - model proposes JSON patch over layout.sections, code disposes via applyLayout/saveLayout",
+   "files": [
+    "js/ai_arrange.js",
+    "js/ai_layout.js",
+    "js/background.js"
+   ],
+   "component_key": "js/ai_arrange",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/ai_arrange.js",
+   "test_paths": [
+    "test/unit/ai_layout_schema.test.js",
+    "test/browser_e2e/byok_arrange_roundtrip.spec.js"
+   ]
+  }
+ ]
+}

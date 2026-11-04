@@ -1,0 +1,72 @@
+{
+ "feature": "feature_12_properties_panel",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "properties_panel.spec.js",
+   "file_id": "458389030228446",
+   "mp4_bytes": 838904,
+   "upload_response": {
+    "file": {
+     "file_id": 458389030228446,
+     "bytes": 838904,
+     "created_at": 1793464706,
+     "filename": "properties_panel.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "properties_panel.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\properties_panel.webm",
+   "webm_bytes": 2835737
+  }
+ ],
+ "usage": {
+  "total_tokens": 34931,
+  "total_characters": 0,
+  "prompt_tokens": 33571,
+  "completion_tokens": 1360,
+  "completion_tokens_details": {
+   "reasoning_tokens": 515
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 997
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed, in order\n\n1. **Website surface:** The recording opens on D&D Beyond\u2019s own loading/splash screen and then the plain character sheet for \u201cCorvo Saggio,\u201d including D&D Beyond\u2019s navigation, character statistics, abilities, senses, defenses, actions, and other sheet content. These are not extension features.\n2. **Extension work:** Around 01.8 seconds, the sheet gains conspicuous extension-style section outlines and decorative framing. The enhancement appears without a visible \u201cloading\u2026\u201d overlay or other activation-transition affordance.\n3. **Extension work:** At about 27.2 seconds, the extension\u2019s dark control panel appears on the left and the dark \u201cLAYER MANAGEMENT\u201d panel appears on the right. These are visually distinct from D&D Beyond\u2019s white-and-red sheet.\n4. **Extension work:** A toast reads, \u201cNo saved layout yet \u2014 the default template is loaded.\u201d The left panel visibly contains **LAYOUT** and **OUTPUT** sections, including Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, AI Settings, Print, Print Settings, and Save to Browser. The right panel lists sections and shapes.\n5. **Extension work:** Near 30.2 seconds, a second toast reads, \u201cSection selected for editing.\u201d Gold outlines/highlights appear around an interface region and on \u201cLoad\u201d/\u201cReset to Default.\u201d\n6. The recording then remains essentially static. No **PROPERTIES** panel or any Font size, Compact, or Border control is shown, and no property picker or property-related apply/undo flow is shown.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n1. **Properties panel shows an empty state until a section is selected \u2014 NOT-VISIBLE.**  \n   No properties panel or empty-state message is shown.\n\n2. **Selecting a section highlights it and fills the panel \u2014 NOT-VISIBLE.**  \n   A \u201cSection selected for editing\u201d toast is visible, but the relevant properties panel is never shown being filled.\n\n3. **Font-size slider live-updates the active section \u2014 NOT-VISIBLE.**  \n   No font-size slider appears, and no live text-size change is demonstrated.\n\n4. **Activating a different section syncs the slider to its font size \u2014 NOT-VISIBLE.**  \n   No slider or second-section font-size synchronization is shown.\n\n5. **Compact-mode toggle toggles `be-compact-mode` on the active section \u2014 NOT-VISIBLE.**  \n   No compact-mode toggle or resulting compact styling is shown.\n\n6. **Border-style button opens the picker and applying updates the section and preview \u2014 NOT-VISIBLE.**  \n   No border-style button, picker, application step, or border preview is shown.\n\n## Layer 2 \u2014 Product-aim conformance\n\n**Working affordances observed:**\n\n- The extension\u2019s dark, gold-accented control and layer-management panels are clearly distinguishable from the D&D Beyond website.\n- The section outlines/decorative treatment make the enhancement visually identifiable.\n- The \u201cNo saved layout yet \u2014 the default template is loaded\u201d toast communicates the default-template state.\n- The \u201cSection selected for editing\u201d toast confirms a section-selection action.\n- The panels expose section/shape management and relevant layout/output actions.\n\n**Missing or rough affordances:**\n\n- **No activation/loading transition is visible.** The enhanced sheet appears without the expected brief loading or transition overlay.\n- The extension panels themselves appear abruptly later, without an intermediate loading state.\n- The required **PROPERTIES** panel is never shown. Consequently, its empty state, populated state, font-size controls, compact toggle, border picker, preview, and application feedback are all missing from the recorded flow.\n- The visible left panel offers **LAYOUT** and **OUTPUT**, but no visible **PROPERTIES** section despite this being a properties-panel suite.\n- No error, disabled-state, invalid-selection, or failed-apply behavior is demonstrated.\n- The recording ends without showing undo/apply feedback for any properties change.\n\nThe core properties-panel interaction is not sampled by the frames, despite the recording containing a long static interval and multiple visible extension affordances elsewhere.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: properties_panel.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464723866
+}

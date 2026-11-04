@@ -1,0 +1,117 @@
+{
+ "feature": "feature_17_dnd",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "affordance_drag_hover_shadows.spec.js",
+   "file_id": "457966913053124",
+   "mp4_bytes": 1308157,
+   "upload_response": {
+    "file": {
+     "file_id": 457966913053124,
+     "bytes": 1308157,
+     "created_at": 1793361236,
+     "filename": "affordance_drag_hover_shadows.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "drag_glow_layers.spec.js",
+   "file_id": "457967076659524",
+   "mp4_bytes": 812517,
+   "upload_response": {
+    "file": {
+     "file_id": 457967076659524,
+     "bytes": 812517,
+     "created_at": 1793361239,
+     "filename": "drag_glow_layers.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "drag_ux_visual_capture.spec.js",
+   "file_id": "457966622147021",
+   "mp4_bytes": 1629183,
+   "upload_response": {
+    "file": {
+     "file_id": 457966622147021,
+     "bytes": 1629183,
+     "created_at": 1793361242,
+     "filename": "drag_ux_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "affordance_drag_hover_shadows.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\affordance_drag_hover_shadows.webm",
+   "webm_bytes": 4031242
+  },
+  {
+   "suite": "drag_glow_layers.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_glow_layers.webm",
+   "webm_bytes": 2963235
+  },
+  {
+   "suite": "drag_ux_visual_capture.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm",
+   "webm_bytes": 4678026
+  }
+ ],
+ "usage": {
+  "total_tokens": 128927,
+  "total_characters": 0,
+  "prompt_tokens": 127740,
+  "completion_tokens": 1187,
+  "completion_tokens_details": {
+   "reasoning_tokens": 356
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 197
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "### Video 1 \u2014 `affordance_drag_hover_shadows`\n\n- The video loads the real D&D Beyond **Corvo Saggio** character sheet and later opens the Print Enhancer\u2019s **Beyond Print** panel.\n- The panel shows layout/output controls on the left and **Layer Management** on the right, including **Sections (22)** and **Shapes (1)**.\n- Hovering over sheet regions visibly reveals small dark action controls. These appear in the first rail slot of hovered sections, including the upper statistics area, the **Hit Points/Current/Max/Temp** box, and the **Defenses/Conditions** area.\n- The revealed controls remain visually separate from the red section borders. A row of three dark action buttons is repeatedly visible over the right-side section, and similar controls appear over other wrappers.\n- The sheet is scrolled down to the large bordered background shape and further into the lower text sections, then returned to the upper sheet.\n- A toast reading **\u201cShapes (Default) Hidden\u201d** appears, and the large decorative background shape is subsequently absent, exposing the white sheet beneath.\n- Red outlines and small red corner markers become visible on hovered or selected regions, including the right-side section and several upper statistics boxes.\n- The video also shows the layer panel\u2019s **Shapes** controls and the sheet\u2019s wrapper borders.\n- However, the sampled frames do **not** clearly show a completed wrapper being dragged to a new position, a click-versus-drag comparison, a custom drag ghost, a locked layer remaining stationary, or a clear before/after moved-section pair. The handle-specific \u201cone handle,\u201d unhittability, lock safety, and hue-isolation assertions therefore are **NOT-VISIBLE**.\n\n### Video 2 \u2014 `drag_glow_layers`\n\n- The video loads the same character sheet and opens the **Beyond Print** and **Layer Management** panels.\n- The visible panel contains layout controls such as **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, **Print**, **Print settings**, and **Save to Browser**.\n- The right panel lists **Sections (22)**, named section entries, and **Shapes (1)** with shape thumbnails and an **Add Shape** button.\n- A notice says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The sheet is shown in its default layout, including the upper statistics, portrait frame, skills list, defenses/conditions section, and actions table.\n- Apart from the sheet scrolling vertically, no clearly visible wrapper-background pointer drag, action-bar exclusion, locked-layer interaction, hover/active glow transition, print-stripping result, or Layer Management minimize/restore interaction is shown in the sampled frames.\n\n**This video\u2019s specified interactions are NOT-VISIBLE.**\n\n### Video 3 \u2014 `drag_ux_visual_capture`\n\n- The video loads the character sheet and opens the same extension panel, again showing the left-side layout/output controls and the right-side **Layer Management** list.\n- The sheet is repeatedly scrolled between the upper character-sheet area and the lower actions/text sections.\n- The sheet retains the same default arrangement. The upper sections and the actions area remain in place throughout the sampled frames.\n- The Layer Management panel remains open and visible.\n- No custom mouse-drag ghost, committed pointer-drag state, source-restore/wrapper-move before-and-after pair, touch-pointer drag, gold alignment guides, zero-jump drop, locked-layer visual state, post-drop autosave toast, or origin-clamped drop is visibly captured.\n\n**This video\u2019s specified visual-capture interactions are NOT-VISIBLE.**\n\nOverall, the extension panel and several hover/action affordances are visibly present in Video 1, and one shape-hiding result is shown there. Across the three videos, however, the full drag-and-drop contract is not visibly demonstrated: the custom drag behavior, lock safety, snapping/alignment guides, touch drag, autosave confirmation, and origin clamping are not visible.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: affordance_drag_hover_shadows.spec.js, drag_glow_layers.spec.js, drag_ux_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793361264869
+}

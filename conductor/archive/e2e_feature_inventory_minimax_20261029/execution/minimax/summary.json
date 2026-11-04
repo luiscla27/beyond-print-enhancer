@@ -1,0 +1,1695 @@
+[
+ {
+  "feature": "feature_01_ai_arrange",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+  "certified": true,
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "medium",
+   "max_completion_tokens": 1600,
+   "video_parts": [
+    {
+     "video_url": {
+      "url": "mm_file://457929205391837",
+      "detail": "default",
+      "fps": 5
+     }
+    }
+   ],
+   "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite byok_arrange_roundtrip \u2014 BYOK arrange \u2014 the apply round-trip in the real page, zero network (Phase 4); its cases assert: the flow is WIRED in the live page, and its single request is served by the worker stub \u2014 so nothing leaves the machine; AC-2: a rejected patch leaves the live record byte-identical, gains no undo entry, saves nothing, and applies nothing; AC-2's other half: Cancel on a VALID patch touches nothing, and the ghosts are gone; the ghost preview is INVISIBLE to a live scanLayout: the layout is read while the overlay is on screen; AC-3: an accepted patch applies once, saves once, and ONE real Ctrl+Z keystroke restores the pre-AI layout byte for byte; O-2: the AI Arrange row is present and DISABLED with no key, its click dials nothing, and storing a key enables it without a reload; AC-V1 evidence: one real arrangement photographed before, with its ghosts, and after\n\nThis video records one browser e2e test suite for the extension's feature_01_ai_arrange feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "byok_arrange_roundtrip.spec.js",
+    "file_id": "457929205391837",
+    "mp4_bytes": 1271158,
+    "upload_response": {
+     "file": {
+      "file_id": 457929205391837,
+      "bytes": 1271158,
+      "created_at": 1793352259,
+      "filename": "byok_arrange_roundtrip.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "byok_arrange_roundtrip.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_01_ai_arrange\\byok_arrange_roundtrip.webm",
+    "webm_bytes": 3837869
+   }
+  ],
+  "usage": {
+   "total_tokens": 43805,
+   "total_characters": 0,
+   "prompt_tokens": 42836,
+   "completion_tokens": 969,
+   "completion_tokens_details": {
+    "reasoning_tokens": 664
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 195
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "- The video loads the D&D Beyond demo character sheet for \u201cCorvo Saggio.\u201d A cookie-choices overlay appears and is dismissed.\n- The sheet remains visible until the unpacked Print Enhancer extension appears. Its left panel contains layout controls including **AI Arrange**, while a **Layer Management** panel is open on the right.\n- The **AI Arrange** control is visibly present. After it is activated, a toast states **\u201cAI proposed no changes.\u201d**\n- A dialog titled **\u201cPREVIEW THE AI ARRANGEMENT\u201d** appears, reporting that the arrangement will move **1 section** and **0 pixels**. It provides **Cancel** and **Apply** buttons.\n- After that preview is dismissed, a **\u201cSaved to browser\u201d** toast appears.\n- A second **\u201cPREVIEW THE AI ARRANGEMENT\u201d** dialog appears. During this preview, a temporary ghost-like **Dexterity 17** block is briefly visible near the lower-left portion of the sheet, then disappears.\n- No visibly rearranged final layout is shown. The video also does not visibly show a key being stored, an enabled state changing without reload, a successful applied arrangement, a save associated with an accepted arrangement, or a Ctrl+Z restoring a changed layout. The requested before/ghost/after visual evidence is therefore not fully present.\n\nThe feature\u2019s controls and preview interaction are visible, including a brief ghost preview, but the full accepted apply-and-undo round trip is not visibly completed.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "adjoined_from_cross_cutting": null,
+  "ts": 1793352277219
+ },
+ {
+  "feature": "feature_02_ai_borders",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+  "certified": true,
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "medium",
+   "max_completion_tokens": 1600,
+   "video_parts": [
+    {
+     "video_url": {
+      "url": "mm_file://457927173075499",
+      "detail": "default",
+      "fps": 5
+     }
+    }
+   ],
+   "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite byok_border_gallery \u2014 BYOK SVG border gallery \u2014 FROZEN corpus through the real choke point, real page; AC-2 refinement loop (option A) \u2014 through the real choke point; its cases assert: window.AiBorder is live in the ISOLATED world (the world the product's own code runs in); the README's demo sheet exposes a section a border can actually be SEEN on; renders ; exposes adjust/transform/canAdjust on the isolated-world AiBorder seam; adjusts a stroke-bearing border in place: weight +1.5x increases the painted stroke-width, original preserved; DISABLES refinement on a fill-only border: adjustBorder returns not_adjustable and paints NOTHING new; captures a labelled frame for every accepted design\n\nThis video records one browser e2e test suite for the extension's feature_02_ai_borders feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "byok_border_gallery.spec.js",
+    "file_id": "457927173075499",
+    "mp4_bytes": 2837410,
+    "upload_response": {
+     "file": {
+      "file_id": 457927173075499,
+      "bytes": 2837410,
+      "created_at": 1793352283,
+      "filename": "byok_border_gallery.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "byok_border_gallery.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_02_ai_borders\\byok_border_gallery.webm",
+    "webm_bytes": 8545389
+   }
+  ],
+  "usage": {
+   "total_tokens": 149393,
+   "total_characters": 0,
+   "prompt_tokens": 148371,
+   "completion_tokens": 1022,
+   "completion_tokens_details": {
+    "reasoning_tokens": 623
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 197
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "- **0:00\u20130:06:** The D&D Beyond site loads from a blank page. A D&D Beyond splash screen appears, followed by the site header and a \u201cYour Privacy Choices\u201d cookie dialog.\n- **0:06\u20130:29:** The real demo sheet loads, showing a character sheet for \u201cCorvo Saggio.\u201d Numerous red outlines are already visible around individual sheet elements. The sheet then scrolls downward to its descriptive text sections.\n- **0:29\u20130:34:** The unpacked extension\u2019s interface becomes visible: a dark panel titled \u201cBEYOND P\u2026\u201d on the left and \u201cLAYER MANAGEMENT\u201d on the right. The left panel visibly includes general sections such as \u201cTEMPLATES,\u201d \u201cLAYOUT,\u201d and \u201cOUTPUT,\u201d while the right panel lists sections and shapes. A notice states that no layout has been saved and the default template is loaded.\n- **0:34\u20132:17:** The view changes to another portion of the demo sheet containing character/spell tables and a pale-blue area. The sheet remains mostly static while the page is shown at a reduced scale.\n- **2:17\u20132:29:** The extension panel and Layer Management panel reappear over a largely blank portion of the sheet. Additional settings are visible in the left panel, but no clearly readable AI-border gallery, border-design dialog, refinement controls, apply action, or undo action is shown.\n- **2:29\u2013end:** The panels remain visible without a visible AI-border selection, stroke-weight adjustment, generated design, applied SVG border, or other result attributable to the AI-border feature.\n\nThe extension panel is present, but the specified AI-border end-to-end interaction is not visibly witnessed. The video does not show a selected gallery design, adjustment/refinement controls, an apply/undo flow, or a newly visible border on the sheet. Therefore, the core feature completion cannot be certified from this evidence.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "adjoined_from_cross_cutting": null,
+  "ts": 1793352325553
+ },
+ {
+  "feature": "feature_03_layer_management",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+  "certified": true,
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "medium",
+   "max_completion_tokens": 1600,
+   "video_parts": [
+    {
+     "video_url": {
+      "url": "mm_file://457928646259235",
+      "detail": "default",
+      "fps": 5
+     }
+    },
+    {
+     "video_url": {
+      "url": "mm_file://457930541302212",
+      "detail": "default",
+      "fps": 5
+     }
+    }
+   ],
+   "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite layer_print_visibility \u2014 PR #28 Layer manager hidden on print + print-disabled layers (Playwright e2e); its cases assert: the Layer Management panel is hidden inside @media print; locked layers are forced fully opaque on print; Disable on Print marks the layer container and hides it in print CSS; re-enabling a layer clears data-print-disabled and its hide rule; AC-1: every layer group carries the three-state strip, naming all three modes; AC-1: `Print only` hides the layer on screen and UNDOES that hide at print time; AC-1: `Screen only` stays visible now and is skipped on print; AC-1: `Both` clears both flags and both print rules (the three states are ONE choice)\nSuite layer_reorder_keyboard \u2014 AC-6 (BEYOND-15) layer reorder polish + keyboard alternative (ux_quick_wins_20261025 Phase 5); its cases assert: ArrowUp moves the tail layer exactly one slot toward the head \u2014 through the row's own keydown handler; ArrowDown moves a layer one slot toward the tail \u2014 the two directions write mirror-image stacks; three rapid presses in a row \u2014 \u2191 then \u2193 then \u2191 \u2014 all land on the SAME layer without a manual re-click (restoreRowFocus); Home and End bookend the stack in ONE press (Home \u2192 head, End \u2192 tail) \u2014 through the same keydown handler; a locked row's arrows are a NO-OP \u2014 the handler refuses before the manager is even called, no stack change, NO undo entry; already-at-the-boundary presses are safe no-ops (tail's ArrowDown, head's ArrowUp) \u2014 depth untouched; the stack the keyboard writes is POSITIONALLY IDENTICAL to the stack a drag drop writes for the same swap (keyboard and mouse are the same edit)\n\nThese 2 videos each record a browser e2e suite exercising the extension's feature_03_layer_management feature family. Watch the FULL videos: the extension's panel is present on the real demo sheet; each suite drives the feature through its real UI. Describe, per video, what you visibly observe the extension doing (panel -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction across the videos.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "layer_print_visibility.spec.js",
+    "file_id": "457928646259235",
+    "mp4_bytes": 859071,
+    "upload_response": {
+     "file": {
+      "file_id": 457928646259235,
+      "bytes": 859071,
+      "created_at": 1793352329,
+      "filename": "layer_print_visibility.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "layer_reorder_keyboard.spec.js",
+    "file_id": "457930541302212",
+    "mp4_bytes": 1336750,
+    "upload_response": {
+     "file": {
+      "file_id": 457930541302212,
+      "bytes": 1336750,
+      "created_at": 1793352333,
+      "filename": "layer_reorder_keyboard.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "layer_print_visibility.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_print_visibility.webm",
+    "webm_bytes": 2876135
+   },
+   {
+    "suite": "layer_reorder_keyboard.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_03_layer_management\\layer_reorder_keyboard.webm",
+    "webm_bytes": 4804188
+   }
+  ],
+  "usage": {
+   "total_tokens": 96934,
+   "total_characters": 0,
+   "prompt_tokens": 95389,
+   "completion_tokens": 1545,
+   "completion_tokens_details": {
+    "reasoning_tokens": 875
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 195
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "### Video 1 \u2014 `layer_print_visibility`\n\n- The video loads the D&D Beyond character sheet and eventually scrolls to the extension controls.\n- A **Layer Management** panel is visibly present on the right, alongside a separate extension panel on the left. The sheet\u2019s character portrait, statistics, and sections are visible behind them.\n- In the Layer Management panel, the **Shapes** group shows the three-state controls **\u201cPrint only,\u201d \u201cBoth,\u201d** and **\u201cScreen only.\u201d** Section and shape rows, including small visibility/lock-style icons, are also visible.\n- The left extension panel visibly contains output controls such as **\u201cPRINT\u201d** and **\u201cPrint settings.\u201d**\n- No visible selection or change is made to any of the three print/screen modes. No layer is visibly locked or unlocked, and no print-disabled state is visibly applied and then cleared.\n- The video never visibly enters a print preview or print-media view, so it does not show the Layer Management panel disappearing in print output, a disabled layer disappearing from print output, a screen-only layer being skipped, or a print-only layer returning for printing.\n- There is also no visible sheet result demonstrating any of the asserted print behavior.\n\n**Per-video result: NOT-VISIBLE.** The required controls are present, but the print-mode interactions and their print results are not witnessed.\n\n### Video 2 \u2014 `layer_reorder_keyboard`\n\n- The video loads the same character sheet and eventually reveals the extension\u2019s left panel and the **Layer Management** panel on the right.\n- The Layer Management panel visibly lists the **Sections (22)** and **Shapes (3)** groups. The Shapes group contains multiple named rows, and the three-state **\u201cPrint only / Both / Screen only\u201d** strip remains visible.\n- At approximately 30.6 seconds, a dark toast appears at the top center reading **\u201cLayer order updated.\u201d** It persists for several seconds and then fades.\n- That toast is visible evidence that a layer-order edit completed. The sheet remains visible behind the panels.\n- However, no keyboard key press, focused row, arrow-key movement, Home/End movement, or rapid \u2191/\u2193/\u2191 sequence is directly visible. The sampled frames do not clearly show a layer changing position in the list, so the exact move and final stack cannot be verified visually.\n- No visible drag-and-drop operation is shown for comparison with the keyboard result.\n- No clearly distinguishable locked-row attempt demonstrates that arrows are refused, no visible boundary no-op is demonstrated, and no undo-history inspection is shown.\n- Consequently, the broader keyboard contract\u2014including mirror-image ArrowUp/ArrowDown behavior, retained row focus, one-press Home/End movement, locked-row refusal, boundary safety, and positional identity with drag-and-drop\u2014is not fully witnessed.\n\n**Per-video result: PARTIAL.** A layer-order update and its success toast are visible, but the specific keyboard interactions and their required invariants are not visibly demonstrated.\n\nAcross the two videos, the panel and its controls are present, and one layer-order update is visibly confirmed. The print-visibility behavior is not shown, and only a small portion of the keyboard-reorder behavior is directly evidenced. The feature therefore does not visibly complete the full end-to-end behavioral contract across these videos.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "adjoined_from_cross_cutting": null,
+  "ts": 1793352358677
+ },
+ {
+  "feature": "feature_04_shape_picker",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "custom_shapes_upload.spec.js",
+    "file_id": "457965044470217",
+    "mp4_bytes": 959011,
+    "upload_response": {
+     "file": {
+      "file_id": 457965044470217,
+      "bytes": 959011,
+      "created_at": 1793360811,
+      "filename": "custom_shapes_upload.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "custom_shapes_upload.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\custom_shapes_upload.webm",
+    "webm_bytes": 2986481
+   }
+  ],
+  "usage": {
+   "total_tokens": 34375,
+   "total_characters": 0,
+   "prompt_tokens": 34049,
+   "completion_tokens": 326,
+   "completion_tokens_details": {
+    "reasoning_tokens": 66
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "- The video initially shows the D&D Beyond site loading, followed by a \u201cYour Privacy Choices\u201d cookie notice. The real demo character sheet then appears and remains unchanged for most of the recording.\n- Near the end, the Print Enhancer extension becomes visible: a left-side control panel includes **Add Shape**, and a right-side **LAYER MANAGEMENT** panel also includes **Add Shape**. A notification states, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The **Add Shape** control opens a **SELECT DECORATIVE SHAPE** dialog with **BORDERS**, **SHAPES**, and **CUSTOM** tabs. The **CUSTOM** tab is visibly selected and exposes an **Upload from disk** area, supporting PNG/JPEG/WebP/SVG, along with **Cancel** and **Add Shape** buttons. The dialog says no custom shapes have been uploaded yet.\n- The recording ends at this Custom-tab state. No local file selection or upload, preselected image, confirmation via **Add Shape**, **Cancel** after upload, placement of a custom shape, sheet change, undo, or base64 asset result is visibly shown.\n\nThe video does not visibly witness the requested upload-to-placement end-to-end interaction.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: custom_shapes_upload.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793360823320
+ },
+ {
+  "feature": "feature_05_controls_panel",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "panel_measure.spec.js",
+    "file_id": "457965533155779",
+    "mp4_bytes": 817442,
+    "upload_response": {
+     "file": {
+      "file_id": 457965533155779,
+      "bytes": 817442,
+      "created_at": 1793360853,
+      "filename": "panel_measure.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "properties_panel.spec.js",
+    "file_id": "457962551591288",
+    "mp4_bytes": 838904,
+    "upload_response": {
+     "file": {
+      "file_id": 457962551591288,
+      "bytes": 838904,
+      "created_at": 1793360856,
+      "filename": "properties_panel.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "panel_measure.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\panel_measure.webm",
+    "webm_bytes": 3218965
+   },
+   {
+    "suite": "properties_panel.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\properties_panel.webm",
+    "webm_bytes": 2835737
+   }
+  ],
+  "usage": {
+   "total_tokens": 69506,
+   "total_characters": 0,
+   "prompt_tokens": 68758,
+   "completion_tokens": 748,
+   "completion_tokens_details": {
+    "reasoning_tokens": 448
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 190
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "### Video 1 \u2014 `panel_measure`\n- The video loads the D&D Beyond demo character sheet, showing the \u201cCorvo Saggio\u201d sheet with its stat blocks, skills, defenses, and actions.\n- The extension is subsequently opened over the sheet. A **Beyond Print** panel appears on the left, while **Layer Management** appears on the right.\n- A toast states that the default template has been loaded, and the character sheet remains visible behind the extension panels.\n- No visible measurement control, dimension readout, measurement gesture, or visible change demonstrating that the panel\u2019s default surface was measured is shown. The relevant end-to-end measurement result is therefore **NOT-VISIBLE**.\n\n### Video 2 \u2014 `properties_panel`\n- The same real D&D Beyond demo sheet loads and the extension\u2019s left and right panels appear over it.\n- A visible toast changes to **\u201cSection selected for editing,\u201d** indicating that a section has been activated.\n- However, no properties panel containing **Font size**, **Compact**, or **Border** controls is visibly shown. No slider movement, section sync, compact-mode toggle, border-style picker, or resulting change to the sheet or preview is witnessed.\n- The only clearly visible interaction result is the selection toast; the properties-panel workflow itself is **NOT-VISIBLE**.\n\nBecause neither video visibly demonstrates the required end-to-end controls and their resulting sheet changes, the feature family cannot be certified as visibly complete from this evidence.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: panel_measure.spec.js, properties_panel.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793360871444
+ },
+ {
+  "feature": "feature_06_print_styles",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+  "certified": true,
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "medium",
+   "max_completion_tokens": 1600,
+   "video_parts": [
+    {
+     "video_url": {
+      "url": "mm_file://457929159131623",
+      "detail": "default",
+      "fps": 5
+     }
+    }
+   ],
+   "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite print_styles \u2014 feature_06_print_styles \u2014 Print CSS + Layout Bounds (Playwright e2e); its cases assert: injected @media print hides the Layer Management panel and selection highlights; print CSS forces full opacity for locked layers and sets layer ordering; data-print-z elements get z-index overrides and disabled layers get hide rules; layout bounds and page separators are computed (updateLayoutBounds / drawPageSeparators); tool's own surfaces are hidden in print (panel controls, feedback, separators, overlays)\n\nThis video records one browser e2e test suite for the extension's feature_06_print_styles feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "print_styles.spec.js",
+    "file_id": "457929159131623",
+    "mp4_bytes": 808172,
+    "upload_response": {
+     "file": {
+      "file_id": 457929159131623,
+      "bytes": 808172,
+      "created_at": 1793352361,
+      "filename": "print_styles.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "print_styles.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_06_print_styles\\print_styles.webm",
+    "webm_bytes": 2764552
+   }
+  ],
+  "usage": {
+   "total_tokens": 34977,
+   "total_characters": 0,
+   "prompt_tokens": 33662,
+   "completion_tokens": 1315,
+   "completion_tokens_details": {
+    "reasoning_tokens": 995
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 197
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "Observed in order:\n\n1. The browser loads the D&D Beyond site: the navigation bar appears, followed by a loading overlay and a \u201cYour Privacy Choices\u201d cookie dialog. The dialog later disappears without a visible click.\n2. The real character sheet loads for **Corvo Saggio**, with the sheet\u2019s statistics, skills, senses, defenses, initiative, and actions visible. Numerous red outlines/highlights are visible around the sheet\u2019s components.\n3. The view later changes to a closer/cropped portion of the sheet. A brief page-like print rendering appears, followed by the extension\u2019s dark interface surfaces:\n   - A left control panel containing sections such as **Templates**, **Layout**, and **Output**, with visible **PRINT**, **Print settings**, and **Save to Browser** controls.\n   - A right **Layer Management** panel listing **Sections (22)** and **Shapes (1)**.\n   - A notification reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n4. From that point through the end, the character sheet and both extension panels remain essentially static. No visible button press, print dialog, apply/undo operation, layer change, or subsequent sheet transformation occurs.\n\nConsequently, the video does not visibly demonstrate the asserted print CSS or layout-bound behavior: panel/highlight hiding, locked-layer opacity, layer ordering, z-index/hide rules, computed layout bounds, or page separators are not observable as completed actions or results. The interface and sheet are visible, but the end-to-end interaction under certification is not.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "adjoined_from_cross_cutting": null,
+  "ts": 1793352408779
+ },
+ {
+  "feature": "feature_07_persistence",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "byok_settings_persistence.spec.js",
+    "file_id": "457964709056975",
+    "mp4_bytes": 1291956,
+    "upload_response": {
+     "file": {
+      "file_id": 457964709056975,
+      "bytes": 1291956,
+      "created_at": 1793360877,
+      "filename": "byok_settings_persistence.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "byok_settings_persistence_types.spec.js",
+    "file_id": "457960981746167",
+    "mp4_bytes": 1022089,
+    "upload_response": {
+     "file": {
+      "file_id": 457960981746167,
+      "bytes": 1022089,
+      "created_at": 1793360880,
+      "filename": "byok_settings_persistence_types.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "persistence_panel.spec.js",
+    "file_id": "457962565546542",
+    "mp4_bytes": 759873,
+    "upload_response": {
+     "file": {
+      "file_id": 457962565546542,
+      "bytes": 759873,
+      "created_at": 1793360882,
+      "filename": "persistence_panel.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "byok_settings_persistence.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_persistence.webm",
+    "webm_bytes": 4144763
+   },
+   {
+    "suite": "byok_settings_persistence_types.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_07_persistence\\byok_settings_persistence_types.webm",
+    "webm_bytes": 3843324
+   },
+   {
+    "suite": "persistence_panel.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\persistence_panel.webm",
+    "webm_bytes": 2821678
+   }
+  ],
+  "usage": {
+   "total_tokens": 122135,
+   "total_characters": 0,
+   "prompt_tokens": 120994,
+   "completion_tokens": 1141,
+   "completion_tokens_details": {
+    "reasoning_tokens": 487
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "### Video 1 \u2014 `byok_settings_persistence`\n\n- The D&D Beyond demo character sheet loads, followed by the extension\u2019s dark control panel and Layer Management panel.\n- An **AI Layout Settings** modal is visible. It shows provider **OpenAI**, model **gpt-4o-mini**, and the controls **Test connection**, **Remove key**, **Cancel**, and **Save**.\n- The modal initially reports **\u201cA key is stored on this device.\u201d**\n- The page is reloaded and the extension UI reappears. The same settings modal then reports **\u201cNo key stored yet - AI arrange stays off until you add one.\u201d** and **\u201cKey removed.\u201d**\n- Thus, the visible interaction confirms that removing the stored key leaves the settings in a no-key state after reloading.\n- **NOT-VISIBLE:** no credential is entered through the UI, no `chrome.storage` or `chrome.storage.local` inspection is shown, and no storage keys, safe record, `keyPresent:false`, close/reopen field state, or re-injection readback can be verified from the frames.\n\n### Video 2 \u2014 `byok_settings_persistence_types`\n\n- The demo sheet loads with the extension panel on the left and Layer Management on the right.\n- An initial toast says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- After a page reload and re-injection, the extension shows **\u201cRestored your saved layout.\u201d**\n- The restored view visibly contains the extension\u2019s section-management interface, including **Sections (22)** and a **Shapes (0)** section.\n- This is visible evidence that a saved layout can be announced and restored after reload.\n- **NOT-VISIBLE:** the video does not visibly show creating a custom shape, selecting a custom border, changing a shape layer to Screen-only, applying a template, inspecting IndexedDB, reading a saved layout record, or observing a zero-depth undo stack. The persistence of each customization type is therefore not visually witnessed.\n\n### Video 3 \u2014 `persistence_panel`\n\n- The extension\u2019s control panel is visible on the left of the demo sheet. Under **OUTPUT**, it exposes **Print**, **Print settings**, **Save to Browser**, **Save to PC**, **Import settings**, and **Export settings**. The Layout section visibly includes **Load**, **Reset to Default**, and other layout-management actions.\n- A toast later reads **\u201cSaved to browser!\u201d**, visibly confirming the browser-save action completes without a page error.\n- The **Load** control is visibly prefixed by an action icon rather than an emoji.\n- **NOT-VISIBLE:** no PC JSON download is shown, no saved JSON contents are displayed, no clearly visible wrapper-sizing or page-separator result appears on the sheet, and the relocated \u201casks\u201d are not shown being opened from the action-icon menu.\n\nThe videos visibly establish credential removal after reload, saved-layout restoration after reload, and successful browser persistence through the control panel. However, several required storage-level and type-specific behaviors, plus the PC export and menu-reachability cases, are not visually demonstrated. Therefore, the feature family does not visibly complete the entire contracted end-to-end interaction.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": false,
+  "adjoined_from_cross_cutting": null,
+  "ts": 1793360902528
+ },
+ {
+  "feature": "feature_08_layout_operations",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "print_per_layer.spec.js",
+    "file_id": "457962221437291",
+    "mp4_bytes": 796823,
+    "upload_response": {
+     "file": {
+      "file_id": 457962221437291,
+      "bytes": 796823,
+      "created_at": 1793360906,
+      "filename": "print_per_layer.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "section_print_order.spec.js",
+    "file_id": "457963792097747",
+    "mp4_bytes": 861188,
+    "upload_response": {
+     "file": {
+      "file_id": 457963792097747,
+      "bytes": 861188,
+      "created_at": 1793360914,
+      "filename": "section_print_order.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "print_per_layer.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_per_layer.webm",
+    "webm_bytes": 2858338
+   },
+   {
+    "suite": "section_print_order.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_print_order.webm",
+    "webm_bytes": 2785141
+   }
+  ],
+  "usage": {
+   "total_tokens": 67419,
+   "total_characters": 0,
+   "prompt_tokens": 66852,
+   "completion_tokens": 567,
+   "completion_tokens_details": {
+    "reasoning_tokens": 160
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "### Video 1 \u2014 `print_per_layer`\n\n**Observed:** The video loads the D&D Beyond Corvo Saggio character sheet, dismisses the cookie notice, and displays the sheet. Near the end, the Print Enhancer interface appears: a left extension panel contains Layout and Output controls, while a right **\u201cLAYER MANAGEMENT\u201d** panel shows a **\u201cSECTIONS (22)\u201d** list and a **\u201cSHAPES (1)\u201d** area with shape entries and small action icons. A banner states that no saved layout is loaded and the default template is used.\n\n**Not visible:** No layer row is opened or manipulated. There is no visible Print Visibility toggle, layer Visibility toggle, lock/unlock action, section reordering, print-preview result, DOM-style change, or print CSS/z-index effect. Consequently, the specified `print_per_layer` interactions and their visible sheet results cannot be witnessed.\n\n### Video 2 \u2014 `section_print_order`\n\n**Observed:** The video again loads the Corvo Saggio sheet and reveals the Print Enhancer interface. The right **Layer Management** panel visibly contains a **Sections (22)** list with section cards such as \u201cCorvo Saggio,\u201d \u201cHealth,\u201d \u201cBox 2,\u201d \u201cAbility 4,\u201d \u201cAbility 3,\u201d \u201cAbility 2,\u201d \u201cAbility 1,\u201d \u201cQuick Info,\u201d \u201cExtras,\u201d \u201cFeatures & Traits,\u201d \u201cInventory,\u201d and several numbered sections. The panel also shows print/screen filters and a Shapes section.\n\n**Not visible:** No section card is dragged. The card order does not visibly change, and there is no visible update to DOM order or print z-index when the top card is moved to the bottom or the last card is moved back to the top. Therefore, the specified `section_print_order` interaction and result are not witnessed.\n\nAcross the two videos, the extension panel is present, but the required control actions and end-to-end visible results are not shown.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_per_layer.spec.js, section_print_order.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793360926921
+ },
+ {
+  "feature": "feature_09_section_cloning",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "section_cloning.spec.js",
+    "file_id": "457965011149134",
+    "mp4_bytes": 974468,
+    "upload_response": {
+     "file": {
+      "file_id": 457965011149134,
+      "bytes": 974468,
+      "created_at": 1793360929,
+      "filename": "section_cloning.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "section_cloning.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_cloning.webm",
+    "webm_bytes": 2840005
+   }
+  ],
+  "usage": {
+   "total_tokens": 34385,
+   "total_characters": 0,
+   "prompt_tokens": 34037,
+   "completion_tokens": 348,
+   "completion_tokens_details": {
+    "reasoning_tokens": 88
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 197
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "The video visibly shows the D&D Beyond page loading, followed by the real character sheet for \u201cCorvo Saggio.\u201d A privacy-cookie panel appears and is dismissed, after which the character sheet is displayed with the Print Enhancer controls overlaid. The sheet contains the character\u2019s statistics, actions, spells, inventory, and other character information.\n\nThe extension UI becomes visible later in the video:\n\n- A left-side \u201cBEYOND P\u2026\u201d panel shows layout controls such as \u201cLoad,\u201d \u201cReset to Default,\u201d \u201cManage Clones,\u201d \u201cAdd Shape,\u201d and \u201cManage Compact.\u201d\n- A right-side \u201cLAYER MANAGEMENT\u201d panel shows \u201cSECTIONS (22)\u201d and a list of existing sections.\n- The sheet is highlighted with red outlines around its visible sections.\n- A centered modal titled \u201cCLONE SECTION\u201d opens. It says, \u201cEnter a name for this Section 1 clone:\u201d and displays the default name \u201cSection 1 (Clone),\u201d with \u201cCancel\u201d and \u201cContinue\u201d buttons.\n- The modal remains visible through the final sampled frame.\n\nNo visible action confirms the clone, and the video does not show a titled clone appearing on the sheet, content-preservation/exclusion behavior, double-click renaming, or deletion via a visible Delete control.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: section_cloning.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793360941071
+ },
+ {
+  "feature": "feature_10_undo_system",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "undo_stack_visual_capture.spec.js",
+    "file_id": "457963567915374",
+    "mp4_bytes": 1113403,
+    "upload_response": {
+     "file": {
+      "file_id": 457963567915374,
+      "bytes": 1113403,
+      "created_at": 1793360946,
+      "filename": "undo_stack_visual_capture.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "undo_stack_class_verification.spec.js",
+    "file_id": "457961410286140",
+    "mp4_bytes": 2701317,
+    "upload_response": {
+     "file": {
+      "file_id": 457961410286140,
+      "bytes": 2701317,
+      "created_at": 1793360949,
+      "filename": "undo_stack_class_verification.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "undo_stack_visual_capture.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_visual_capture.webm",
+    "webm_bytes": 3902251
+   },
+   {
+    "suite": "undo_stack_class_verification.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\undo_stack_class_verification.webm",
+    "webm_bytes": 7665661
+   }
+  ],
+  "usage": {
+   "total_tokens": 117906,
+   "total_characters": 0,
+   "prompt_tokens": 116050,
+   "completion_tokens": 1856,
+   "completion_tokens_details": {
+    "reasoning_tokens": 1189
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 195
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "### Video 1 \u2014 `undo_stack_visual_capture` (AC-V1)\n\n**Observed behavior**\n\n- The video loads the D&D Beyond character sheet, then opens the Print Enhancer panel on the left and a **Layer Management** panel on the right.\n- The left panel\u2019s **OUTPUT** section contains an **Undo** affordance. Initially, a toast states **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- After a compact-mode action, a toast reads **\u201cCompact mode ON,\u201d** and the sheet\u2019s lower content visibly reflows into a denser compact layout.\n- The panel\u2019s undo entry becomes specific to the performed action, displaying **\u201cUndo: Toggle \u2018Actions\u2019\u201d**. On-screen notifications also show named undo entries such as **\u201cUndo: Move Section 1\u201d** and **\u201cLayout saved.\u201d**\n- The sheet remains visible behind the panels while these undo states and notifications appear.\n\n**Not visibly witnessed**\n\n- The sampled frames do not show a distinct keyboard keystroke or keyboard-event state for the undo affordance.\n- They also do not present a clearly separated visual-capture gallery explicitly showing all four asserted captures\u2014idle, named, applied, and keyboard\u2014as four distinguishable states.\n\n### Video 2 \u2014 `undo_stack_class_verification` (AC-3)\n\n**Observed behavior**\n\n- The Print Enhancer and Layer Management panels are shown around the real character sheet.\n- A section movement produces **\u201cUndo: Move Section 1\u201d** and **\u201cLayout saved\u201d** notifications.\n- Position changes produce **\u201cUndo: Position \u2018Actions\u2019\u201d**, again accompanied by a saved-layout notification.\n- A rotation operation shows the visible rotation tool and then **\u201cUndo: Rotate \u2018Section-Section-1\u2019\u201d**.\n- A border operation produces **\u201cUndo: Border \u2018Section-Section-1\u2019\u201d**.\n- Layer-management actions visibly report:\n  - **\u201cLayer order updated\u201d**\n  - **\u201cMoved to layer \u2018New Layer\u2019\u201d**\n  - **\u201cUndo: Reorder layers\u201d**\n- Section print, hide, and lock operations produce corresponding notifications:\n  - **\u201cUndo: Print \u2018Sections\u2019\u201d**\n  - **\u201cUndo: Hide \u2018Sections\u2019\u201d**\n  - **\u201cUndo: Lock \u2018Sections\u2019\u201d**\n- The sheet visibly changes as sections are hidden, unlocked, and restored.\n- Other visible undo actions include **\u201cUndo: Rename \u2018Renamed in Browser\u2019\u201d** and **\u201cUndo: Clone shape.\u201d**\n- Compact mode is also exercised again: **\u201cCompact mode ON\u201d** appears, followed by **\u201cUndo: Toggle \u2018Actions\u2019\u201d**, and the sheet\u2019s content is visibly compacted.\n\n**Not visibly witnessed**\n\n- The frames clearly demonstrate several real UI actions and their undo results, but they do not visibly establish every one of the eight specifically named round-trip cases. In particular, a distinct keyboard-nudge event, a clearly identifiable corner-resize operation, and a clearly identifiable chip-reparenting operation are not directly shown in the sampled frames.\n\nAcross the two videos, the undo affordance, named undo entries, applied-action notifications, saved-layout states, and multiple visible sheet reversions are demonstrated. The evidence is substantial but does not visibly cover every specifically asserted capture and round-trip case.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: undo_stack_visual_capture.spec.js, undo_stack_class_verification.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361020565
+ },
+ {
+  "feature": "feature_11_spells_ui",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "spell_detail_sections.spec.js",
+    "file_id": "457963286422067",
+    "mp4_bytes": 957879,
+    "upload_response": {
+     "file": {
+      "file_id": 457963286422067,
+      "bytes": 957879,
+      "created_at": 1793361031,
+      "filename": "spell_detail_sections.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "spell_detail_sections.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\spell_detail_sections.webm",
+    "webm_bytes": 3132768
+   }
+  ],
+  "usage": {
+   "total_tokens": 36703,
+   "total_characters": 0,
+   "prompt_tokens": 36389,
+   "completion_tokens": 314,
+   "completion_tokens_details": {
+    "reasoning_tokens": 144
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "The video initially shows the D&D Beyond page loading and then the real character sheet for \u201cCorvo Saggio,\u201d with the character\u2019s stats, skills, actions, and other sheet sections visible.\n\nAt about 27 seconds, the extension interface appears over the sheet. A left-side panel shows controls such as Templates, Layout, Output, and Print, while a right-side \u201cLayer Management\u201d panel lists sections and shapes. The sheet remains visible behind these panels, including the Actions tab and spell/attack-related content such as \u201cLongbow of Warning.\u201d\n\nNo visible \u201cDetails\u201d trigger is shown on a spell row, no floating spell detail section is opened, and no repeated request, loaded spell-detail content, retry state, or delete error state is demonstrated. The remaining video shows the extension panels and sheet largely unchanged.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: spell_detail_sections.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361069136
+ },
+ {
+  "feature": "feature_12_properties_panel",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "properties_panel.spec.js",
+    "file_id": "457963675996628",
+    "mp4_bytes": 838904,
+    "upload_response": {
+     "file": {
+      "file_id": 457963675996628,
+      "bytes": 838904,
+      "created_at": 1793361074,
+      "filename": "properties_panel.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "properties_panel.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\properties_panel.webm",
+    "webm_bytes": 2835737
+   }
+  ],
+  "usage": {
+   "total_tokens": 33254,
+   "total_characters": 0,
+   "prompt_tokens": 32878,
+   "completion_tokens": 376,
+   "completion_tokens_details": {
+    "reasoning_tokens": 99
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "The video visibly shows:\n\n1. **Page and sheet load:** The D&D Beyond character sheet loads, followed by a print-enhanced character sheet for \u201cCorvo Saggio.\u201d The sheet contains multiple red-outlined sections.\n2. **Extension panel present:** The unpacked extension\u2019s left-side panel appears with controls such as **Templates**, **Layout**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, **Print**, **Print settings**, and **Save to Browser**. A separate **Layer Management** panel is visible on the right, listing sections and shape layers.\n3. **Section interaction:** The sheet changes from the colored print preview to a monochrome layout, and a toast reports **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** Later, another toast says **\u201cSection selected for editing,\u201d** while the sheet\u2019s layout shifts horizontally.\n4. **Visible result:** Sections remain visible on the sheet, including the character portrait, ability-score list, initiative and AC badges, defenses, and actions table. No visible font-size slider, compact-mode toggle, border-style picker, applied border update, or corresponding live sheet changes appear in the sampled frames.\n\nBecause the properties-panel controls and their asserted end-to-end results are not visibly shown, the feature interaction cannot be certified from this video.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: properties_panel.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361099520
+ },
+ {
+  "feature": "feature_13_ui_theme",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "icons_privacy_surface.spec.js",
+    "file_id": "457965051244895",
+    "mp4_bytes": 851122,
+    "upload_response": {
+     "file": {
+      "file_id": 457965051244895,
+      "bytes": 851122,
+      "created_at": 1793361103,
+      "filename": "icons_privacy_surface.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "icons_privacy_surface.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\icons_privacy_surface.webm",
+    "webm_bytes": 2637258
+   }
+  ],
+  "usage": {
+   "total_tokens": 34854,
+   "total_characters": 0,
+   "prompt_tokens": 34406,
+   "completion_tokens": 448,
+   "completion_tokens_details": {
+    "reasoning_tokens": 196
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "1. **Panel present:** The D&D Beyond character sheet for \u201cCorvo Saggio\u201d loads, first behind a \u201cYour Privacy Choices\u201d cookie dialog and then unobstructed. Near the end of the video, the extension opens a dark **\u201cBEYOND P\u2026\u201d** panel on the left and a **\u201cLAYER MANAGEMENT\u201d** panel on the right.\n2. **Feature controls/actions:** The left panel visibly contains layout controls such as **Templates**, **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, and output/print options. The right panel shows section and shape layers. A notification states, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n3. **Visible result on the sheet:** The sheet changes from the original red-accented D&D Beyond layout to an ornate grayscale fantasy-themed layout with decorative borders and a character portrait.\n\nHowever, the video does not visibly show the extension\u2019s theme controls being used to create, apply, or undo a theme, nor does it show a dialog for that theme workflow. It only shows the extension panel loading the default template and the resulting sheet appearance.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: icons_privacy_surface.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361141208
+ },
+ {
+  "feature": "feature_14_filters",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "print_filter_identity_probe.spec.js",
+    "file_id": "457964773126496",
+    "mp4_bytes": 1318402,
+    "upload_response": {
+     "file": {
+      "file_id": 457964773126496,
+      "bytes": 1318402,
+      "created_at": 1793361145,
+      "filename": "print_filter_identity_probe.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "print_filter_identity_probe.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_filter_identity_probe.webm",
+    "webm_bytes": 5155076
+   }
+  ],
+  "usage": {
+   "total_tokens": 59708,
+   "total_characters": 0,
+   "prompt_tokens": 59294,
+   "completion_tokens": 414,
+   "completion_tokens_details": {
+    "reasoning_tokens": 117
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "The video visibly shows:\n\n- The D&D Beyond site loading, including a centered loading overlay and a transient \u201cYour Privacy Choices\u201d cookie dialog. The real character sheet for **Corvo Saggio** then appears.\n- The extension panel becomes present on the left side of the sheet. It contains **Templates**, **Layout**, and **Output** sections, including a prominent **PRINT** button, **Print settings**, and **Save to Browser**.\n- A **Layer Management** panel is open on the right, listing **Sections (22)** and **Shapes (1)**, with controls for selecting and coloring layers.\n- The sheet\u2019s decorative layer visibly changes color while the panels remain open: it first appears red, then green, then purple/blue, and finally returns to a dark gray/black appearance. The character portrait and the red-highlighted sheet elements remain visible during these changes.\n- A message appears near the top stating, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n\nNo visible controls or actions establish the filter behaviors in the behavioral contract. In particular, the video does not visibly show a filter panel with Greyscale, saturation, or hue sliders; a Greyscale 0% adjustment; hue emission; an apply/undo sequence; or printed output for comparison. Consequently, the identity-chain, neutral-default, colour-cost, user-setting, and byte-identical-default assertions cannot be witnessed from these frames.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_filter_identity_probe.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361162470
+ },
+ {
+  "feature": "feature_15_modals",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "modal_primitive_visual_capture.spec.js",
+    "file_id": "457966963867969",
+    "mp4_bytes": 1366284,
+    "upload_response": {
+     "file": {
+      "file_id": 457966963867969,
+      "bytes": 1366284,
+      "created_at": 1793361167,
+      "filename": "modal_primitive_visual_capture.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "modal_primitive_visual_capture.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\modal_primitive_visual_capture.webm",
+    "webm_bytes": 3823050
+   }
+  ],
+  "usage": {
+   "total_tokens": 42568,
+   "total_characters": 0,
+   "prompt_tokens": 41872,
+   "completion_tokens": 696,
+   "completion_tokens_details": {
+    "reasoning_tokens": 359
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 308
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "The video begins by loading the real D&D Beyond site. After the site navigation, loading animation, and privacy banner appear, the demo sheet loads as a character sheet with red print-enhancer outlines around many sections.\n\nAround 30 seconds, the extension\u2019s dark **Beyond Print Enhancer** panel appears on the left, while a **Layer Management** panel appears on the right. A toast states, \u201cNo saved layout yet \u2014 the default template is loaded,\u201d and the sheet visibly changes from the red print view to a black-and-white template layout.\n\nThe following modal interactions are visibly shown:\n\n1. A **Rename Layer** dialog opens with the current name \u201cShapes (Default).\u201d The name field is cleared, and pressing **Continue** produces the visible validation message: \u201cEnter a name to continue \u2014 the field cannot be empty.\u201d The modal then closes.\n2. A **Select Decorative Shape** modal opens, showing border/style filters, a search field, and decorative shape thumbnails such as Archer Ability, Archer Finial, Archer Header, and Archer Outline. It is then closed without a clearly visible selection.\n3. A **Templates** modal opens with visible **Basic Template** and **Archiver Template** entries, layout options, preview thumbnails, and a **Cancel** button. This modal remains open when the video ends.\n\nNo visible capture artifact, screenshot export, or completed migrated-dialog placement on the sheet is shown. The video does visibly demonstrate multiple modal openings, one input-validation affordance, modal dismissal, and the template-loaded sheet state, but the asserted \u201ccaptures the migrated dialog, the untouched dialogs\u201d behavior is not visibly completed.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: modal_primitive_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361206034
+ },
+ {
+  "feature": "feature_16_background_context",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "sheet_autoscroll.spec.js",
+    "file_id": "457964367978980",
+    "mp4_bytes": 1721349,
+    "upload_response": {
+     "file": {
+      "file_id": 457964367978980,
+      "bytes": 1721349,
+      "created_at": 1793361210,
+      "filename": "sheet_autoscroll.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "sheet_autoscroll.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\sheet_autoscroll.webm",
+    "webm_bytes": 5819491
+   }
+  ],
+  "usage": {
+   "total_tokens": 73583,
+   "total_characters": 0,
+   "prompt_tokens": 73014,
+   "completion_tokens": 569,
+   "completion_tokens_details": {
+    "reasoning_tokens": 380
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 188
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "- The browser loads the D&D Beyond demo sheet, including a privacy-cookie dialog and the character sheet for \u201cCorvo Saggio.\u201d\n- The sheet view changes to a lower portion of the character sheet, revealing the equipment text and saving-throws section.\n- The extension\u2019s interface then appears over the sheet: a left \u201cBeyond Print\u201d panel with Layout and Output controls, and a right \u201cLayer Management\u201d panel listing Sections and Shapes. A notification reads, \u201cNo saved layout yet \u2014 the default template is loaded.\u201d\n- The remaining visible frames show these panels and the sheet remaining essentially static. No visible drag toward the viewport\u2019s bottom edge occurs, and there is no visibly demonstrated movement while a drag is held.\n- Although a shifted sheet viewport is visible, the video does not show that it resulted from edge-drag auto-scrolling. Native scrollport behavior also cannot be verified from the static frames.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: sheet_autoscroll.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361231385
+ },
+ {
+  "feature": "feature_17_dnd",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "affordance_drag_hover_shadows.spec.js",
+    "file_id": "457966913053124",
+    "mp4_bytes": 1308157,
+    "upload_response": {
+     "file": {
+      "file_id": 457966913053124,
+      "bytes": 1308157,
+      "created_at": 1793361236,
+      "filename": "affordance_drag_hover_shadows.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "drag_glow_layers.spec.js",
+    "file_id": "457967076659524",
+    "mp4_bytes": 812517,
+    "upload_response": {
+     "file": {
+      "file_id": 457967076659524,
+      "bytes": 812517,
+      "created_at": 1793361239,
+      "filename": "drag_glow_layers.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "drag_ux_visual_capture.spec.js",
+    "file_id": "457966622147021",
+    "mp4_bytes": 1629183,
+    "upload_response": {
+     "file": {
+      "file_id": 457966622147021,
+      "bytes": 1629183,
+      "created_at": 1793361242,
+      "filename": "drag_ux_visual_capture.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "affordance_drag_hover_shadows.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\affordance_drag_hover_shadows.webm",
+    "webm_bytes": 4031242
+   },
+   {
+    "suite": "drag_glow_layers.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_glow_layers.webm",
+    "webm_bytes": 2963235
+   },
+   {
+    "suite": "drag_ux_visual_capture.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm",
+    "webm_bytes": 4678026
+   }
+  ],
+  "usage": {
+   "total_tokens": 128927,
+   "total_characters": 0,
+   "prompt_tokens": 127740,
+   "completion_tokens": 1187,
+   "completion_tokens_details": {
+    "reasoning_tokens": 356
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 197
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "### Video 1 \u2014 `affordance_drag_hover_shadows`\n\n- The video loads the real D&D Beyond **Corvo Saggio** character sheet and later opens the Print Enhancer\u2019s **Beyond Print** panel.\n- The panel shows layout/output controls on the left and **Layer Management** on the right, including **Sections (22)** and **Shapes (1)**.\n- Hovering over sheet regions visibly reveals small dark action controls. These appear in the first rail slot of hovered sections, including the upper statistics area, the **Hit Points/Current/Max/Temp** box, and the **Defenses/Conditions** area.\n- The revealed controls remain visually separate from the red section borders. A row of three dark action buttons is repeatedly visible over the right-side section, and similar controls appear over other wrappers.\n- The sheet is scrolled down to the large bordered background shape and further into the lower text sections, then returned to the upper sheet.\n- A toast reading **\u201cShapes (Default) Hidden\u201d** appears, and the large decorative background shape is subsequently absent, exposing the white sheet beneath.\n- Red outlines and small red corner markers become visible on hovered or selected regions, including the right-side section and several upper statistics boxes.\n- The video also shows the layer panel\u2019s **Shapes** controls and the sheet\u2019s wrapper borders.\n- However, the sampled frames do **not** clearly show a completed wrapper being dragged to a new position, a click-versus-drag comparison, a custom drag ghost, a locked layer remaining stationary, or a clear before/after moved-section pair. The handle-specific \u201cone handle,\u201d unhittability, lock safety, and hue-isolation assertions therefore are **NOT-VISIBLE**.\n\n### Video 2 \u2014 `drag_glow_layers`\n\n- The video loads the same character sheet and opens the **Beyond Print** and **Layer Management** panels.\n- The visible panel contains layout controls such as **Load**, **Reset to Default**, **Manage Clones**, **Add Shape**, **Manage Compact**, **AI Arrange**, **AI Settings**, **Print**, **Print settings**, and **Save to Browser**.\n- The right panel lists **Sections (22)**, named section entries, and **Shapes (1)** with shape thumbnails and an **Add Shape** button.\n- A notice says **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- The sheet is shown in its default layout, including the upper statistics, portrait frame, skills list, defenses/conditions section, and actions table.\n- Apart from the sheet scrolling vertically, no clearly visible wrapper-background pointer drag, action-bar exclusion, locked-layer interaction, hover/active glow transition, print-stripping result, or Layer Management minimize/restore interaction is shown in the sampled frames.\n\n**This video\u2019s specified interactions are NOT-VISIBLE.**\n\n### Video 3 \u2014 `drag_ux_visual_capture`\n\n- The video loads the character sheet and opens the same extension panel, again showing the left-side layout/output controls and the right-side **Layer Management** list.\n- The sheet is repeatedly scrolled between the upper character-sheet area and the lower actions/text sections.\n- The sheet retains the same default arrangement. The upper sections and the actions area remain in place throughout the sampled frames.\n- The Layer Management panel remains open and visible.\n- No custom mouse-drag ghost, committed pointer-drag state, source-restore/wrapper-move before-and-after pair, touch-pointer drag, gold alignment guides, zero-jump drop, locked-layer visual state, post-drop autosave toast, or origin-clamped drop is visibly captured.\n\n**This video\u2019s specified visual-capture interactions are NOT-VISIBLE.**\n\nOverall, the extension panel and several hover/action affordances are visibly present in Video 1, and one shape-hiding result is shown there. Across the three videos, however, the full drag-and-drop contract is not visibly demonstrated: the custom drag behavior, lock safety, snapping/alignment guides, touch drag, autosave confirmation, and origin clamping are not visible.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: affordance_drag_hover_shadows.spec.js, drag_glow_layers.spec.js, drag_ux_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361264869
+ },
+ {
+  "feature": "feature_18_image_processor",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "webp_assets.spec.js",
+    "file_id": "457966256292375",
+    "mp4_bytes": 980671,
+    "upload_response": {
+     "file": {
+      "file_id": 457966256292375,
+      "bytes": 980671,
+      "created_at": 1793361268,
+      "filename": "webp_assets.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "webp_assets.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\webp_assets.webm",
+    "webm_bytes": 3009842
+   }
+  ],
+  "usage": {
+   "total_tokens": 36009,
+   "total_characters": 0,
+   "prompt_tokens": 35603,
+   "completion_tokens": 406,
+   "completion_tokens_details": {
+    "reasoning_tokens": 104
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 190
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "- The video begins on the D&D Beyond site, loads the real character sheet, and displays a \u201cCorvo Saggio\u201d Level 5 Fighter sheet.\n- After the cookie overlay disappears, the sheet is visible with its standard character information, ability scores, skills, senses, defenses, and actions.\n- The extension interface then appears over the sheet: a dark Print Enhancer control panel on the left and a \u201cLayer Management\u201d panel on the right. The sheet view changes to a grayscale layout with a portrait frame.\n- A \u201cShapes (Default) Selected\u201d notification is briefly shown.\n- The \u201cAdd Shape\u201d control opens a centered \u201cSelect Decorative Shape\u201d dialog. The dialog shows tabs for \u201cBorders,\u201d \u201cShapes,\u201d and \u201cCustom,\u201d category filters, a search field, and three visibly rendered Archer previews labeled \u201cArcher Accent A,\u201d \u201cArcher Accent B,\u201d and \u201cArcher Divider.\u201d \u201cCancel\u201d and a disabled-looking \u201cAdd Shape\u201d button are also visible.\n- The video ends while this picker remains open. No shape is visibly added, no Apply or Undo flow occurs, and no resulting decorative shape appears on the sheet. The sampled frames also do not expose asset URLs, so the use of `.webp` assets and the absence of `.gif` references cannot be visually verified.\n\nThe feature\u2019s picker and previews are visible, but its end-to-end interaction is not completed in the provided video.\n\nVERDICT: NOT-VISIBLE",
+  "parsed_verdict": "NOT-VISIBLE",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": true,
+  "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: webp_assets.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+  "ts": 1793361280006
+ },
+ {
+  "feature": "cross-cutting",
+  "endpoint": "https://api.minimax.io/v1/chat/completions",
+  "files_endpoint": "https://api.minimax.io/v1/files/upload",
+  "model_id": "MiniMax-M3.1-Flash",
+  "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+  "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+  "certified": true,
+  "judge_call_pattern": "bundle (one judge call over all 8 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+  "request": {
+   "model": "MiniMax-M3.1-Flash",
+   "reasoning_effort": "low",
+   "max_completion_tokens": 8000,
+   "sampling": {
+    "detail": "default",
+    "fps": 5
+   },
+   "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+   "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+  },
+  "uploaded_files": [
+   {
+    "suite": "color_picker.spec.js",
+    "file_id": "457966256292376",
+    "mp4_bytes": 833059,
+    "upload_response": {
+     "file": {
+      "file_id": 457966256292376,
+      "bytes": 833059,
+      "created_at": 1793361287,
+      "filename": "color_picker.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "manual_verification_phase2.spec.js",
+    "file_id": "457965407338846",
+    "mp4_bytes": 964643,
+    "upload_response": {
+     "file": {
+      "file_id": 457965407338846,
+      "bytes": 964643,
+      "created_at": 1793361290,
+      "filename": "manual_verification_phase2.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "shape_layer_management.spec.js",
+    "file_id": "457966212125147",
+    "mp4_bytes": 878280,
+    "upload_response": {
+     "file": {
+      "file_id": 457966212125147,
+      "bytes": 878280,
+      "created_at": 1793361292,
+      "filename": "shape_layer_management.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "byok_settings_storage.spec.js",
+    "file_id": "457964821094884",
+    "mp4_bytes": 1627497,
+    "upload_response": {
+     "file": {
+      "file_id": 457964821094884,
+      "bytes": 1627497,
+      "created_at": 1793361295,
+      "filename": "byok_settings_storage.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "settings_export_import.spec.js",
+    "file_id": "457966177194333",
+    "mp4_bytes": 721487,
+    "upload_response": {
+     "file": {
+      "file_id": 457966177194333,
+      "bytes": 721487,
+      "created_at": 1793361298,
+      "filename": "settings_export_import.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "quick_switch_print.spec.js",
+    "file_id": "457965451972969",
+    "mp4_bytes": 821491,
+    "upload_response": {
+     "file": {
+      "file_id": 457965451972969,
+      "bytes": 821491,
+      "created_at": 1793361301,
+      "filename": "quick_switch_print.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "release_1_4_0.spec.js",
+    "file_id": "457966886134283",
+    "mp4_bytes": 759496,
+    "upload_response": {
+     "file": {
+      "file_id": 457966886134283,
+      "bytes": 759496,
+      "created_at": 1793361303,
+      "filename": "release_1_4_0.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   },
+   {
+    "suite": "dom_refactor_guarantees.spec.js",
+    "file_id": "457965005050337",
+    "mp4_bytes": 890960,
+    "upload_response": {
+     "file": {
+      "file_id": 457965005050337,
+      "bytes": 890960,
+      "created_at": 1793361306,
+      "filename": "dom_refactor_guarantees.mp4",
+      "purpose": "video_understanding"
+     },
+     "base_resp": {
+      "status_code": 0,
+      "status_msg": "success"
+     }
+    }
+   }
+  ],
+  "video_evidence": [
+   {
+    "suite": "color_picker.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\color_picker.webm",
+    "webm_bytes": 2838589
+   },
+   {
+    "suite": "manual_verification_phase2.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\manual_verification_phase2.webm",
+    "webm_bytes": 3258061
+   },
+   {
+    "suite": "shape_layer_management.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\shape_layer_management.webm",
+    "webm_bytes": 3013616
+   },
+   {
+    "suite": "byok_settings_storage.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\byok_settings_storage.webm",
+    "webm_bytes": 3531690
+   },
+   {
+    "suite": "settings_export_import.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\settings_export_import.webm",
+    "webm_bytes": 2828954
+   },
+   {
+    "suite": "quick_switch_print.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\quick_switch_print.webm",
+    "webm_bytes": 2752207
+   },
+   {
+    "suite": "release_1_4_0.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\release_1_4_0.webm",
+    "webm_bytes": 2759316
+   },
+   {
+    "suite": "dom_refactor_guarantees.spec.js",
+    "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\dom_refactor_guarantees.webm",
+    "webm_bytes": 2738195
+   }
+  ],
+  "usage": {
+   "total_tokens": 277669,
+   "total_characters": 0,
+   "prompt_tokens": 275810,
+   "completion_tokens": 1859,
+   "completion_tokens_details": {
+    "reasoning_tokens": 642
+   },
+   "prompt_tokens_details": {
+    "cached_tokens": 308
+   }
+  },
+  "finish_reason": "stop",
+  "verbatim_verdict_text": "1. **color_picker**\n   - The video shows the D&D Beyond site loading, followed by the enhanced \u201cCorvo Saggio\u201d character sheet.\n   - The extension\u2019s left control panel and right **Layer Management** panel become visible. The sheet\u2019s enhancement includes red-outlined sections, ability blocks, initiative and proficiency areas, defenses/conditions, hit points, and the actions table.\n   - The right panel exposes section and shape rows with small row controls. However, no **Color Picker** button, filter controls, 2D color grid, swatch selection, hue preview, Continue action, or **Reset All Filters** interaction is visibly witnessed.\n   - **Video verdict: NOT-VISIBLE.**\n\n2. **manual_verification_phase2**\n   - The site loads and the extension-enhanced character sheet appears with the control panel on the left and Layer Management on the right.\n   - The visible sheet remains stable, showing the ability scores, saving throws, skills, defenses, hit points, and actions table.\n   - No first-run walkthrough, four-step discoverability overlay, instructional highlight, step progression, completion state, or dismissal action is visibly shown.\n   - **Video verdict: NOT-VISIBLE.**\n\n3. **shape_layer_management**\n   - The extension panels appear over the real character sheet. The right panel shows **Sections (22)** and a **Shapes (1)** group, with shape thumbnails and per-item control icons.\n   - The **Add Shape** flow opens a modal titled **SELECT DECORATIVE SHAPE**. The modal visibly offers **BORDERS**, **SHAPES**, and **CUSTOM** tabs, category filters, shape thumbnails, **Cancel**, and **Add Shape**.\n   - The **SHAPES** tab is shown with options including **Archer Accent A**, **Archer Accent B**, and **Archer Divider**.\n   - After the modal closes, a toast says **\u201cShape added\u201d**, and the right panel\u2019s shape count increases from **Shapes (1)** to **Shapes (2)**. A new shape thumbnail appears in the shape group.\n   - The dedicated shape container and per-shape controls are visible, but the video does not visibly demonstrate creating a second shape-layer container, making it active, or placing a shape into that new active layer.\n   - **Video verdict: PARTIAL.**\n\n4. **byok_settings_storage**\n   - The sheet and extension panels load as in the other videos.\n   - A centered **AI LAYOUT SETTINGS** dialog opens. It shows provider selection (**OpenAI**), model selection (**gpt-4o-mini**), an optional compatible base URL field, API-key controls, and buttons including **Test Connection**, **Remove key**, **Cancel**, and **Save**.\n   - Text is entered into the base URL field, visibly reading `https://miscan.example/v1`.\n   - The dialog then displays a red validation message, **\u201cThe base URL must be https.\u201d** The base URL field itself is outlined in red, demonstrating that the error is associated with that field.\n   - The key field remains masked with placeholder-style dots, and the dialog includes the statement **\u201cNo key stored yet - AI arrange stays off until you add one.\u201d**\n   - The video does not visibly demonstrate the complete persistence, reveal-toggle, rejected-store, page-world isolation, or credential-erasure portions of the contract.\n   - **Video verdict: PARTIAL.**\n\n5. **settings_export_import**\n   - The enhanced sheet appears with the extension\u2019s left control panel and right Layer Management panel.\n   - The sheet\u2019s wrapped sections and action table remain visible behind the panels.\n   - No visible interaction shows **Export Settings** or **Import Settings**, a JSON download, bundle validation, merge behavior, reuse-library preservation, or an export\u2013mutate\u2013import round trip.\n   - **Video verdict: NOT-VISIBLE.**\n\n6. **quick_switch_print**\n   - The video shows the normal enhanced character sheet and both extension side panels.\n   - The right panel contains shape thumbnails and their row controls, but no visible interaction opens an asset picker or demonstrates **Switch Shape Asset** being pre-filtered to Shapes.\n   - No shape asset replacement, transform preservation, path update, print-preview state, full-opacity shape result, or hiding of extension chrome is visibly witnessed.\n   - **Video verdict: NOT-VISIBLE.**\n\n7. **release_1_4_0**\n   - The extension loads onto the real sheet, and the character sheet remains visible and readable with the extension panels open.\n   - The left panel shows the extension\u2019s layout/output controls, while the right panel shows Layer Management, sections, and shapes.\n   - No clearly visible interaction or result demonstrates the specific 1.4.0 headline actions or the decoration/layer release surface beyond the already visible panels.\n   - **Video verdict: NOT-VISIBLE.**\n\n8. **dom_refactor_guarantees**\n   - The video shows the enhanced sheet with wrapped, red-outlined sections, the left extension panel, and the right Layer Management panel above the sheet.\n   - The Spells tab and actions area are visible, but there is no visible interaction with the spell filter, no modal opened above the layout, and no spell-row **Details** trigger activated.\n   - The underlying sheet and extension panels are visibly present, but the specific DOM-refactor interaction guarantees are not witnessed.\n   - **Video verdict: NOT-VISIBLE.**\n\n**Overall assessment:** The evidence visibly shows successful extension boot and sheet enhancement across all videos. It also visibly demonstrates adding a decorative shape and correctly validating the AI base-URL field in two suites. Most of the named end-to-end interactions\u2014color selection/reset, first-run walkthrough, second shape-layer creation and assignment, full BYOK lifecycle, settings export/import, quick asset switching/print behavior, and DOM-refactor interactions\u2014are not visibly witnessed in the supplied frames.\n\nVERDICT: PARTIAL",
+  "parsed_verdict": "PARTIAL",
+  "call_detail": {
+   "attempts": 1,
+   "concise_retry_used": false
+  },
+  "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+  "unit_only_in_fleet": false,
+  "adjoined_from_cross_cutting": "cross-cutting is the inventory's residual suite class, not one feature; certified via a purpose-annotated representative set of 8 suite(s) spanning the class's distinct behaviors: color_picker.spec.js, manual_verification_phase2.spec.js, shape_layer_management.spec.js, byok_settings_storage.spec.js, settings_export_import.spec.js, quick_switch_print.spec.js, release_1_4_0.spec.js, dom_refactor_guarantees.spec.js. The other 68 cross-cutting suites are covered by their mocha rows (AC-1) and retained .webm evidence (AC-2) under evidence/cross-cutting/, not crammed into this one call.",
+  "ts": 1793361359690
+ }
+]

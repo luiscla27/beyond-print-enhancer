@@ -50,6 +50,7 @@ const UNDO_PATH = path.resolve(__dirname, "../../../js/undo.js");
 const RECOVERY_UI_PATH = path.resolve(__dirname, "../../../js/recovery_ui.js");
 const LAYOUT_SCAN_PATH = path.resolve(__dirname, "../../../js/layout_scan.js");
 const LAYOUT_APPLY_PATH = path.resolve(__dirname, "../../../js/layout_apply.js");
+const BOOT_PATH = path.resolve(__dirname, "../../../js/boot.js");
 
 const MAIN_JS = fs.readFileSync(MAIN_JS_PATH, "utf8");
 const ELEMENT_WRAPPER_JS = fs.readFileSync(ELEMENT_WRAPPER_PATH, "utf8");
@@ -76,6 +77,7 @@ const UNDO_JS = fs.readFileSync(UNDO_PATH, "utf8");
 const RECOVERY_UI_JS = fs.readFileSync(RECOVERY_UI_PATH, "utf8");
 const LAYOUT_SCAN_JS = fs.readFileSync(LAYOUT_SCAN_PATH, "utf8");
 const LAYOUT_APPLY_JS = fs.readFileSync(LAYOUT_APPLY_PATH, "utf8");
+const BOOT_JS = fs.readFileSync(BOOT_PATH, "utf8");
 
 /** Standard D&D Beyond character-sheet skeleton used by most fixture builders. */
 const DDB_SHEET_HTML = `<!DOCTYPE html>
@@ -215,6 +217,7 @@ function boot(html = DDB_SHEET_HTML, opts = {}) {
   window.eval(UNDO_JS);
   window.eval(RECOVERY_UI_JS);
   window.eval(PERSISTENCE_JS);
+  window.eval(BOOT_JS);
   window.eval(MAIN_JS);
   if (opts.catalogService) {
     window.eval(CATALOG_SERVICE_JS);

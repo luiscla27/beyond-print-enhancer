@@ -64,11 +64,25 @@ function captureSectionSnapshot(sectionId) {
   const getBorderStyle = (el) => {
     return styles.find((style) => el.classList.contains(style)) || null;
   };
+  // AC-7/AC-9 path E (track `byok_svg_borders_20260927`): the border SVG travels with the
+  // snapshot as its own FIELD, mirroring `borderStyle` beside it, and is read through the
+  // choke point (`window.AiBorder.readBorderSvg`) rather than by a local selector — the
+  // overlay's shape stays known to one module and the guard can prove it.
+  const readAiBorder = (el) => {
+    const api = typeof window !== "undefined" ? window.AiBorder : null;
+    if (!api || typeof api.readBorderSvg !== "function") return null;
+    try {
+      return api.readBorderSvg(el) || null;
+    } catch {
+      return null;
+    }
+  };
 
   return {
     originalId: sectionId,
     html: sanitizedClone.innerHTML,
     borderStyle: getBorderStyle(section),
+    borderSvg: readAiBorder(section),
     styles: {
       width: section.style.width,
       height: section.style.height,
@@ -221,6 +235,14 @@ function renderClonedSection(snapshot) {
     container.classList.add(snapshot.borderStyle);
   }
 
+  // AC-9 path E (track `byok_svg_borders_20260927`): a cloned/extracted section's border
+  // SVG is re-rendered through the CHOKE POINT — the snapshot field is untrusted input
+  // like any other, so it is handed to `renderBorderSvg` raw. Nothing is injected inline
+  // here (a clone must never carry a copy of the overlay in its `html`).
+  if (typeof window.AiBorder?.renderBorderSvg === "function") {
+    window.AiBorder.renderBorderSvg(container, snapshot.borderSvg ?? null);
+  }
+
   const layoutRoot = window.DomManager.getInstance().getLayoutRoot().element;
   if (layoutRoot) {
     window.DomManager.getInstance().getSectionsLayer().element.appendChild(wrapper);
@@ -309,6 +331,12 @@ function renderExtractedSection(snapshot) {
   }
   if (snapshot.borderStyle) {
     container.classList.add(snapshot.borderStyle);
+  }
+
+  // AC-9 path E, extraction half (track `byok_svg_borders_20260927`): same choke point,
+  // same reason — the snapshot's `borderSvg` is untrusted input by contract.
+  if (typeof window.AiBorder?.renderBorderSvg === "function") {
+    window.AiBorder.renderBorderSvg(container, snapshot.borderSvg ?? null);
   }
 
   // Restore identification class for future merges

@@ -1,0 +1,118 @@
+{
+ "feature": "feature_17_dnd",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 3 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "affordance_drag_hover_shadows.spec.js",
+   "file_id": "458390258950623",
+   "mp4_bytes": 1308157,
+   "upload_response": {
+    "file": {
+     "file_id": 458390258950623,
+     "bytes": 1308157,
+     "created_at": 1793464902,
+     "filename": "affordance_drag_hover_shadows.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "drag_glow_layers.spec.js",
+   "file_id": "458390546457037",
+   "mp4_bytes": 812517,
+   "upload_response": {
+    "file": {
+     "file_id": 458390546457037,
+     "bytes": 812517,
+     "created_at": 1793464905,
+     "filename": "drag_glow_layers.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "drag_ux_visual_capture.spec.js",
+   "file_id": "458387416703358",
+   "mp4_bytes": 1629183,
+   "upload_response": {
+    "file": {
+     "file_id": 458387416703358,
+     "bytes": 1629183,
+     "created_at": 1793464908,
+     "filename": "drag_ux_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "affordance_drag_hover_shadows.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\affordance_drag_hover_shadows.webm",
+   "webm_bytes": 4031242
+  },
+  {
+   "suite": "drag_glow_layers.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_glow_layers.webm",
+   "webm_bytes": 2963235
+  },
+  {
+   "suite": "drag_ux_visual_capture.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\drag_ux_visual_capture.webm",
+   "webm_bytes": 4678026
+  }
+ ],
+ "usage": {
+  "total_tokens": 131613,
+  "total_characters": 0,
+  "prompt_tokens": 128424,
+  "completion_tokens": 3189,
+  "completion_tokens_details": {
+   "reasoning_tokens": 440
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 `affordance_drag_hover_shadows`\n\n### What is visibly observed\n\n- **Website surface:** The video begins with D&D Beyond\u2019s blank/loading page, its logo loader, navigation, and the unmodified Corvo Saggio character sheet. The character artwork, statistics, sections, and red outlines are D&D Beyond\u2019s own product.\n- **Extension work:** Around 26.8 seconds, the extension\u2019s dark, gold-accented control panel appears on the left and the **LAYER MANAGEMENT** panel appears on the right. The sheet is now presented as movable/resizable extension wrappers. Extension action rails, black action buttons, section outlines, and hover affordances appear around the sheet.\n- **Extension work:** The right panel shows **SECTIONS (22)** and **SHAPES (1)**, section/shape visibility controls, and shape thumbnails. The left panel shows extension sections including **LAYOUT**, **OUTPUT**, **PROPERTIES**, and **CANVAS FILTERS**.\n- **Extension work:** At about 31.2 seconds, hiding the decorative/default shape produces an extension toast reading **\u201cShapes (Default) Hidden.\u201d**\n- **Extension work:** Hovering sections exposes black action controls in their rails. A small extension tooltip reading **\u201cChoose Another Section\u201d** is visible near one action control.\n- **Extension work:** Numerous nine-dot-style handles and black action clusters become visible in the rails of different sections as the pointer traverses the sheet.\n- **Extension work:** Around 36 seconds, a wrapper is shown moving with the page/content changing position, and small action controls follow the affected wrapper. The exact pointer-down/up sequence is only sparsely sampled, but a moved wrapper and its controls are visible.\n- **Extension work:** The Layer Management panel remains open; a minimized/restored state is not clearly sampled.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n\n1. **Green hover glow no longer paints on a hovered draggable section \u2014 VISIBLE:** No green hover glow is visible on the sections that expose drag handles/action controls.\n2. **Every section wrapper carries one nine-dot handle in the rail\u2019s first slot, hidden and unhittable at rest \u2014 PARTIALLY VISIBLE / NOT FULLY WITNESSED:** Handles are absent at rest and appear in rail slots during hover. The frames do not permit counting exactly one handle on every wrapper or independently proving that each is unhittable at rest.\n3. **Hovering the ACTIVE layer reveals the handle in the rail\u2019s first slot, grabbable, with no glow \u2014 VISIBLE:** Active sections reveal their rail handles without a green glow. Grabbability is supported by the visible later drag interaction.\n4. **With the decorative layer hidden through its own control, every revealed grip is grabbable \u2014 VISIBLE:** The shape is hidden through the Layer Management control, the toast confirms the state change, and exposed grips remain available; multiple draggable sections are subsequently interacted with.\n5. **An INACTIVE (locked) layer\u2019s section reveals no handle even while hovered \u2014 NOT-VISIBLE:** The frames do not clearly show a hovered locked/inactive layer with no handle.\n6. **A section can really be dragged from the handle \u2014 VISIBLE:** A section wrapper visibly moves while its action controls move with it.\n7. **A click on the handle does not move it \u2014 NOT-VISIBLE:** A stationary click on a handle is not clearly sampled.\n8. **A section hue shift does not travel into the handle\u2019s own chrome \u2014 NOT-VISIBLE:** No controlled hue-change comparison is visibly demonstrated.\n9. **Hovering the ACTIVE layer reveals `.be-section-actions`, visible and clickable \u2014 VISIBLE:** Black action clusters appear in the rails, and one extension tooltip is shown after interacting with those controls.\n10. **Panel shadow \u2014 VISIBLE:** The extension\u2019s floating panels visibly have dark drop shadows separating them from the sheet.\n\n### Layer 2 \u2014 Product-aim conformance\n\n**Working affordances observed**\n\n- The extension UI is clearly distinguishable from D&D Beyond: dark codex-style panels, gold controls, and separate Layer Management UI.\n- Hovering an active section exposes its rail controls without the unwanted green glow.\n- The nine-dot drag affordance is presented in the rail and is visually separated from the section\u2019s own content.\n- The Layer Management panel provides useful section and shape visibility controls.\n- The **\u201cShapes (Default) Hidden\u201d** toast clearly confirms the visibility change.\n- The extension\u2019s first-run hint card is visible and includes a **\u201cGot it\u201d** action.\n- The **\u201cNo saved layout yet \u2014 the default template is loaded\u201d** notice communicates the empty-template state.\n- The extension offers a clearly styled Print action and a visually consistent floating-panel presentation.\n\n**Missing or rough affordances observed**\n\n- **No extension-specific loading/transition state is visible.** The enhanced sheet and panels appear abruptly after the base page has loaded; the earlier spinner and privacy banner belong to D&D Beyond, not to the extension\u2019s activation process.\n- The exact locked/inactive hover behavior is not clearly shown, so its disabled-state presentation cannot be evaluated.\n- The frames do not clearly show the panel minimizing and restoring.\n- The rail controls become visually dense over the pale sheet, although their black background remains distinguishable.\n- No explicit error state is exercised. There is therefore no camera evidence of how the extension handles a failed save or load.\n\n**Video verdict: PARTIAL** \u2014 substantial drag/hover behavior and layer visibility are visible, but several asserted edge cases are not witnessed and the extension activation transition is absent.\n\n---\n\n## Video 2 \u2014 `drag_glow_layers`\n\n### What is visibly observed\n\n- **Website surface:** The video begins on D&D Beyond\u2019s blank page and loading state. A D&D Beyond **\u201cYour Privacy Choices\u201d** cookie panel appears; this is website-owned and is not extension work.\n- **Website surface:** The unmodified character sheet appears and remains visible for most of the recording.\n- **Extension work:** Around 31.0 seconds, the extension\u2019s dark left control panel and right **LAYER MANAGEMENT** panel abruptly appear, and the sheet changes to the enhanced, wrapper-based presentation.\n- **Extension work:** The right panel lists 22 sections, one shape, visibility toggles, and shape thumbnails. The sheet shows extension borders and wrapper structure.\n- **Extension work:** The extension toast **\u201cNo saved layout yet \u2014 the default template is loaded\u201d** is visible.\n- No clear hover, pointer drag, shape toggle, action-bar click, locked-layer test, or layer-panel minimize/restore sequence is sampled after activation.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n\n1. **Sections and shapes are headerless wrappers titled via `data-title` \u2014 NOT-VISIBLE:** The enhanced wrappers and titled Layer Management entries are present, but the DOM-level \u201cheaderless\u201d and `data-title` properties cannot be established from camera frames alone.\n2. **Pointer drags arm on the wrapper background but not on action bars or buttons \u2014 NOT-VISIBLE:** No pointer drag is sampled.\n3. **Locked layers are interaction-safe and styled locked \u2014 NOT-VISIBLE:** No clearly locked section is shown or interacted with.\n4. **Locked layers are never armed for drag \u2014 NOT-VISIBLE:** No locked-layer drag attempt is sampled.\n5. **Hover and active glow highlight styles are injected, and print strips them \u2014 NOT-VISIBLE:** No controlled hover/active glow comparison or print result is shown.\n6. **Layer Management panel minimizes and restores \u2014 NOT-VISIBLE:** The panel appears, but no minimization or restoration is sampled.\n\n### Layer 2 \u2014 Product-aim conformance\n\n**Working affordances observed**\n\n- The extension\u2019s visual identity is clearly separate from D&D Beyond\u2019s white/red character-sheet styling.\n- Both floating panels use a coherent dark codex/workbench treatment with gold accents.\n- The Layer Management panel clearly communicates section and shape counts and provides visibility controls.\n- The first-run hint and empty-layout notice are present and styled as extension UI.\n- The enhanced sheet has visible wrapper borders, making the extension\u2019s transformed state easy to recognize.\n\n**Missing or rough affordances observed**\n\n- **No extension-specific activation transition is visible.** The extension UI pops into an already loaded sheet; the D&D Beyond loader and cookie banner do not constitute an extension loading affordance.\n- The principal interaction behavior under test\u2014hover, drag arming, locked-layer safety, and glow handling\u2014is not demonstrated on camera.\n- No disabled/locked visual state is clearly demonstrated.\n- No minimize/restore behavior is demonstrated.\n- No error, failed-save, or failed-load state is exercised.\n- The extension overlays remain fixed while the sheet is shown at different scroll positions; this is visually coherent, but the recording does not show whether they can be repositioned or whether that behavior is intended.\n\n**Video verdict: PARTIAL** \u2014 the extension\u2019s enhanced state and layer UI are visible, but the asserted drag/glow/locked-layer behaviors are not witnessed.\n\n---\n\n## Video 3 \u2014 `drag_ux_visual_capture`\n\n### What is visibly observed\n\n- **Website surface:** The recording opens on D&D Beyond\u2019s loading sequence and the plain Corvo Saggio sheet. All character statistics, artwork, and native sheet layout are D&D Beyond-owned.\n- **Extension work:** Around 27.0 seconds, the extension\u2019s dark control panel and Layer Management panel appear, and the sheet changes to its enhanced layout.\n- **Extension work:** The right panel shows 22 sections, one shape, visibility toggles, and shape thumbnails. The left panel exposes LAYOUT and OUTPUT controls.\n- **Extension work:** The extension first-run hint card and the **\u201cNo saved layout yet \u2014 the default template is loaded\u201d** notice are visible.\n- **Extension work:** From roughly 30 seconds onward, the page is scrolled up and down while the two extension panels remain fixed. The character sheet\u2019s content moves under them.\n- No custom drag ghost, touch-pointer gesture, live gold snapping guide, zero-jump drop, locked-state comparison, post-drop autosave toast, or origin-clamping demonstration is visibly sampled.\n\n### Layer 1 \u2014 Asserted-behavior evidence\n\n1. **Captures the sheet layout and a wrapper rest/hover state \u2014 PARTIALLY VISIBLE:** The sheet layout is captured, and extension wrappers are visible. A distinct wrapper hover/rest comparison is not clearly shown.\n2. **Captures a committed pointer drag with the custom ghost (mouse) \u2014 NOT-VISIBLE:** No mouse drag or custom ghost appears.\n3. **Captures the same-session before/after pair, with the source restored and wrapper moved \u2014 NOT-VISIBLE:** No clear committed before/after drag pair is shown.\n4. **Captures a touch-pointer drag mid-gesture (`pointerType: touch`) \u2014 NOT-VISIBLE:** No touch drag is sampled.\n5. **Captures a live-snapped drag with gold alignment guides and zero-jump drop \u2014 NOT-VISIBLE:** No drag, guide, or zero-jump drop appears.\n6. **Captures the locked-layer state, with no drag affordance and dimming \u2014 NOT-VISIBLE:** No clearly dimmed locked layer is demonstrated.\n7. **Captures the post-drop autosave toast after release \u2014 NOT-VISIBLE:** No post-drop autosave toast is shown.\n8. **Captures a drop clamped to the sheet origin, never negative \u2014 NOT-VISIBLE:** No boundary-clamping drop is sampled.\n\n### Layer 2 \u2014 Product-aim conformance\n\n**Working affordances observed**\n\n- The extension UI is unmistakably distinct from the base website because of its dark workbench/codex styling and gold controls.\n- The Layer Management panel clearly exposes section and shape organization.\n- The first-run hint includes a visible **\u201cGot it\u201d** action.\n- The empty-layout message explains the current template state.\n- The fixed panels remain readable while the character sheet scrolls, providing a coherent working environment.\n- The enhanced sheet boundaries and wrapper treatment remain visually legible over the pale sheet.\n\n**Missing or rough affordances observed**\n\n- **No extension-specific loading/transition affordance is visible.** The extension panels and enhanced wrappers appear abruptly; the base site\u2019s earlier spinner is not evidence of extension activation feedback.\n- This purported visual-capture recording does not visibly capture the drag states that constitute its core asserted behavior.\n- No custom mouse ghost is shown.\n- No touch-pointer state is shown.\n- No alignment-guide or snapping feedback is shown.\n- No locked/dimmed disabled state is shown.\n- No autosave success toast is shown.\n- No boundary-clamping result is shown.\n- No explicit error state is exercised.\n- The panels consume a meaningful amount of screen width when the sheet is narrow, although this is not clearly shown as a responsive failure.\n\n**Video verdict: PARTIAL** \u2014 extension activation and layer UI are visible, but nearly all drag-capture assertions are absent from the sampled frames.\n\n---\n\n## Overall assessment\n\nThe extension is visually distinct and its major panel-based product aim is recognizable. Video 1 provides meaningful evidence for hover handles, no-green-glow behavior, draggable wrappers, shape visibility control, and toasts. Videos 2 and 3 show the enhanced state but do not visibly exercise most of their asserted interactions. Across all three videos, there is **no extension-specific loading/transition overlay** during activation; the enhancement simply appears.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: affordance_drag_hover_shadows.spec.js, drag_glow_layers.spec.js, drag_ux_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464990790
+}

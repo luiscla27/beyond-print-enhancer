@@ -1,0 +1,20 @@
+{
+ "js/ai_arrange": "track-00",
+ "js/ai_border": "track-01",
+ "js/background": "track-02",
+ "js/controls": "track-03",
+ "js/dnd": "track-04",
+ "js/dom/layer_manager": "track-05",
+ "js/filters": "track-06",
+ "js/image_processor": "track-07",
+ "js/layout_ops": "track-08",
+ "js/modals": "track-09",
+ "js/persistence": "track-10",
+ "js/print_styles": "track-11",
+ "js/properties_panel": "track-12",
+ "js/section_cloning": "track-13",
+ "js/shape_picker": "track-14",
+ "js/spells_ui": "track-15",
+ "js/ui_theme": "track-16",
+ "js/undo": "track-17"
+}

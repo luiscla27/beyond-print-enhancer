@@ -38,6 +38,15 @@
     const hiddenSections = document.querySelectorAll(
       '[data-print-hidden="true"]',
     );
+    // AC-1 (track ux_quick_wins_20261025): a layer in `Print only` mode carries
+    // `data-print-only="true"`. `js/dom/layer_manager.js` hides it on screen with an INLINE
+    // `display:none` (that is what `isHidden` means), so at print time the hide has to be
+    // UNDONE with `!important` — the same substitution rule the disabled-layer branch below
+    // uses in reverse. This is the one rule that makes the third mode a real mode rather than
+    // a rename of "hidden".
+    const printOnlyLayers = document.querySelectorAll(
+      '[data-print-only="true"]',
+    );
 
     let css = "@media print {\n";
 
@@ -60,6 +69,15 @@
     disabledLayers.forEach((layer) => {
       if (layer.id) {
         css += `  #${layer.id} { display: none !important; }\n`;
+      }
+    });
+
+    // UNDO the on-screen hide for a `Print only` layer (AC-1). Order matters: this block is
+    // emitted AFTER the disabled-layer block, and a layer can be in exactly ONE mode, so the two
+    // selectors never target the same element.
+    printOnlyLayers.forEach((layer) => {
+      if (layer.id) {
+        css += `  #${layer.id} { display: block !important; }\n`;
       }
     });
 
@@ -908,6 +926,46 @@ function enforceFullHeight() {
          ONLY, for every layer state, so the one reveal rule below (scoped to
          .be-active-layer) is the only mechanism. */
 
+      /* THE LAYER YOU ARE NOT WORKING ON MUST NOT EAT THE POINTER.
+         MEASURED DEFECT (2026-10-30, closing the 11 RED browser_e2e findings): the sheet's
+         decorative shapes sit on a layer that boots LOCKED, and that layer paints ABOVE the
+         sections layer (#print-enhance-shapes-layer z-index 1001 vs 1000). Because a locked
+         wrapper kept pointer-events: auto (U-7's fix, below), those frames swallowed every
+         pointer event over the sections they frame: measured on the demo sheet, the topmost
+         element at six different section centres — and at the 🎯 'select section' button in a
+         section's own action rail — was a node from the shapes overlay. The result was that
+         sections could not be dragged at all and their action buttons could not be clicked.
+
+         The rule that resolves it, scoped as narrowly as the two requirements allow: a SHAPE
+         wrapper on a layer that is locked and is NOT the active one steps out of the hit test,
+         so the press lands on the content sheet underneath. Two bounds on the scope, both
+         load-bearing:
+
+         - SHAPE wrappers only. A shape layer is the only thing that legally paints ABOVE the
+           active layer (#print-enhance-shapes-layer z-index 1001 vs the sections layer's 1000),
+           so it is the only thing that can steal a press from it. Section wrappers keep every
+           bit of the pointer interaction U-7 pinned for them, and ui_ux_audit_visual_capture's
+           "a locked wrapper stays interactive" probe measures exactly that.
+         - :not(.be-active-layer). isLocked and "is the insertion target" are INDEPENDENT
+           (js/dom/layer_manager.js toggleLayerLock vs applyInsertionTarget): a layer can be both,
+           and the one you are working on must keep its pointer interaction so its own rail stays
+           usable.
+
+         U-7 survives whole. Its requirement was that a lock is not a TRAP — the unlock/hide/
+         delete controls must stay reachable — and the escape hatch it needs is the layer's own
+         ROW in the layer-manager panel (js/dom/layer_manager.js), which is not inside any
+         .pe-layer and is untouched here. A non-active shape layer's hover-revealed action bar
+         was never reachable anyway: that reveal is scoped to .be-active-layer (the rule
+         below), and the moment such a layer BECOMES the active one this rule stops applying and
+         its wrappers are fully interactive again — dimmed-but-hittable, exactly as before. This
+         is the same posture the legacy Shapes-Mode lockdown already takes for the whole shapes
+         layer (pointer-events: none !important, below), applied per-LAYER instead of
+         all-or-nothing. */
+      .be-layer-locked:not(.be-active-layer) .be-shape-wrapper,
+      .be-layer-locked:not(.be-active-layer) .be-shape-wrapper * {
+          pointer-events: none !important;
+      }
+
       /* ISSUE_drag_and_drop.md (2026-09-14): the GREEN HOVER GLOW is gone. This rule
          used to paint filter: drop-shadow(0 0 15px #28a745) twice over the hovered
          section — a filter repaints the whole subtree (every border, background and
@@ -1188,6 +1246,36 @@ function enforceFullHeight() {
           border-style: solid;
           pointer-events: auto;
       }
+
+      /* AC-8 (track byok_svg_borders_20260927, operator decision D4 2026-10-01): the AI
+         border rides THIS slot — the same border-image pipeline the raster
+         'assets/border_*.webp' borders use — not a separate overlay node. The only
+         difference between an AI border and a webp border is the SOURCE IMAGE: the
+         choke point ('renderBorderSvg', js/ai_border.js — the one writer AC-9 allows)
+         sets four INLINE custom properties on the section —
+
+             --border-img:        url("data:image/svg+xml;utf8,<encoded sanitized SVG>")
+             --border-img-slice:  24%
+             --border-img-width:  28px
+             --border-img-outset: 16px
+
+         — and the ::before rule above consumes them through the browser's own
+         border-image engine. Width 28px / outset 16px are this slot's OWN :root
+         defaults; slice 24% is the swept optimum for the generated designs (MEASURED
+         temp/scratch/border_css_vs_composer_geom.js: 24% closes 10/12 corpus designs at
+         656x400, 656x1920 AND 1200x500 against 9/12 for the hand-rolled JS composer
+         under the identical strict metric; the webp's own unit slice closes 6/12 on the
+         same corpus, because slice is a property of the SOURCE image — each webp class
+         carries its own slice for exactly that reason).
+
+         Riding the slot is WHY no new rules live here: geometry (z-index:-1,
+         pointer-events:none, inset 0), the decoration filter, 'no-border' hiding and
+         print behaviour are all inherited from the rules above rather than re-derived.
+         The inline custom properties override any border CLASS on the same section, and
+         'clearBorderSvg' removes them so the class border returns byte-for-byte.
+         scripts/check_border_svg_injection.js R4 permits the data: URI at exactly ONE
+         site — inside the choke point — and fails the build on any other writer. */
+
       .print-shape-container .print-section-content {
           background-color: transparent !important;
       }
@@ -1765,6 +1853,8 @@ function enforceFullHeight() {
           #be-feedback-announcer,
           .be-modal-overlay,
           .be-ai-ghost,
+          .be-progress,
+          .be-ai-busy,
           .be-context-menu {
               display: none !important;
               visibility: hidden !important;

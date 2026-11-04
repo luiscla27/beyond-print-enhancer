@@ -12,6 +12,17 @@
  * half of `byok_settings_storage.spec.js`.
  *
  * Run: npm run test:e2e:byokpersist
+ *
+ * SCOPE NOTE (track ux_quick_wins_20261025, AC-5/BEYOND-14 — "every customization type"):
+ * this file is, and stays, the CREDENTIAL's round-trip. The four OTHER customization types
+ * AC-5 names (custom shapes, border selections, layer states, template selections) are
+ * covered by its sibling `byok_settings_persistence_types.spec.js` (5 cases, run with
+ * `npx mocha test/browser_e2e/byok_settings_persistence_types.spec.js`) rather than by growing
+ * this file: the cases here share
+ * one page fixture booted in `before()`, and a case that reloads the extension would
+ * destroy that fixture for every case that follows. The sibling spec boots a page per case
+ * and drives the product's own storage seams, so "does it survive a reload?" is asked four
+ * times without any of them inheriting another's state.
  */
 
 "use strict";

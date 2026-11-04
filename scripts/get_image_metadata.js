@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+// get_image_metadata.js - print sharp's metadata (dimensions, format, channels) for the image given
+// on argv, defaulting to the demo sheet. Read-only and argument-driven.
 const sharp = require('sharp');
 
 async function getMetadata() {

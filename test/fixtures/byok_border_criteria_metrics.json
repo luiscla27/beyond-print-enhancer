@@ -1,0 +1,117 @@
+{
+  "_comment": [
+    "D4 (operator ruling 2026-10-02) - the formulation gate's data. A criterion may not be",
+    "judged as MET by anything unless it carries, HERE, the frozen judgedScale it is stated at,",
+    "its minFeaturePx (the smallest feature the product's pipeline can still paint at that",
+    "scale), and a deterministic metric term per binding predicate. The corpus gate",
+    "(test/unit/byok_border_corpus.test.js) rejects: a missing entry, a missing field, a",
+    "demand below minFeaturePx, a feature the print decoration pipeline crops away, and a",
+    "binding predicate with no deterministic metric (D4's four rejection clauses).",
+    "",
+    "`metric: null` is NOT a pass - it is the honest declaration that the criterion's binding",
+    "predicates are gestalt prose (or a shape the pipeline does not paint), so per D2 the",
+    "criterion is VOID for binding purposes and per D5 nothing may be published or frozen while",
+    "such an entry exists. Only 01-gilded-frame has a metric today, because only it received a",
+    "clause whose predicates are shape/continuity/coverage - the exact class D2 assigns to the",
+    "metric. The rest stay VOID until each is re-cut the same way; inventing thresholds for",
+    "prose criteria would be the vacuous pass this gate exists to prevent."
+  ],
+  "judgedScale": {
+    "capture2x": true,
+    "sectionCssWidth": 200,
+    "slicePercent": 24,
+    "sourceUnits": 200,
+    "bandDevicePx": 96,
+    "outsideDevicePx": 16,
+    "greyscale": true,
+    "sourceUnitsPerBand": { "x": 61.44, "y": 69.12 }
+  },
+  "criteria": {
+    "01-gilded-frame": {
+      "metric": "two-rule-per-edge",
+      "minFeaturePx": {
+        "ruleThicknessPx": 1,
+        "ruleSeparationPx": 4,
+        "cornerMarkBoxPx": 16,
+        "continuityGapPx": 2
+      },
+      "terms": [
+        { "name": "twoRulePerEdgeCoverageMin", "op": ">=", "value": 0.9, "unit": "fraction" },
+        { "name": "cornerDeltaMin", "op": ">=", "value": 15, "unit": "device px" }
+      ],
+      "cornerMark": {
+        "sourceUnits": { "x": 61.44, "y": 69.12 },
+        "corners": {
+          "TL": { "x": 12, "y": 8, "w": 8, "h": 12 },
+          "TR": { "x": 12, "y": 8, "w": 8, "h": 12 },
+          "BL": { "x": 12, "y": 8, "w": 8, "h": 12 },
+          "BR": { "x": 12, "y": 8, "w": 8, "h": 12 }
+        }
+      },
+      "ruledBy": "D1",
+      "ruledOn": "2026-10-02",
+      "reason": "Operator ruling D1: 01's original criterion is vacated as unverifiable at the judged scale (its two rules are measured present at 95.5-99.0% line coverage and its four corner marks at +41/+22/+32/+19 px over an identical control, yet the seat denies both), so the binding verdict moves to this metric and the seat becomes corroborating. The thresholds are the consultants' converged clause (per-edge coverage >= 90% for two parallel rules; corner mark delta >= 15 device px) with one correction the measurement forced: the corner term is stated as a delta against a CONTROL box on the same rails, because an absolute ink threshold is satisfiable by rail thickness alone (measured: a design with no corner artwork carries 200-340 inked px in the same-size box)."
+    },
+    "02-runic-band": { "metric": null, "voidReason": "binding predicates are gestalt prose (glyph-like marks along the band) with no deterministic metric defined at this scale" },
+    "03-thornvine": { "metric": null, "voidReason": "binding predicates are gestalt prose (organic vine tracing) with no deterministic metric defined at this scale" },
+    "04-dragon-scale": {
+      "metric": "per-edge-band",
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1 },
+      "terms": [
+        { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.9, "unit": "fraction" },
+        { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
+        { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" }
+      ],
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5, measured basis phase4_d3_measurements_20261004.md (reproduced 2026-10-05 on 1577133): AC-V1-c is superseded ONLY for 04/11/05; closure is judged per edge on the judged 2x print capture after the actual border-image-repeat: round rail scaling, which is ANISOTROPIC (~0.146 px/unit horizontal vs ~0.923 vertical on 656x1920) so square-source-unit closure cannot hold on the rails. Round-27 readings: paintedSpan 0.9773/0.9773/0.9919/0.9919, interior gaps 0, stroke p50 rails 6/6, stiles 2/6. The rail/stile minima are the operator's 2026-10-05 ruling (rails >= 3, stiles >= 1.5); the draft's example numbers (rails >= 1.5, stiles >= 3) were REJECTED because they would fail 04's LEFT stile at p50 2px. assumeSquareSourceUnits: false; no four-edge continuity required; corners judged separately as corner marks."
+    },
+    "05-celestial-arcs": {
+      "metric": null,
+      "voidReason": "RETIRED (operator ruling D3, executed 2026-10-05): the clause ordered ONE regeneration via --border-img and then a binding-metric verdict, with retirement (canonical: false) on failure and no amendment of the criterion to fit. The regeneration was performed (round 9, accepted by the product's own parser/sanitizer) and the freshly captured artwork FAILS four of the five stated terms: perEdgePaintedCoverageMin 0.0231 (TOP 0.9084 / BOTTOM 0.0298 / LEFT 0.1402 / RIGHT 0.0231) vs >= 0.85, maxInteriorGapPx 2063 vs <= 8, railStrokeP50Px 2 vs >= 3, solidStrokeP50PxMin 2 vs >= 8; only stileStrokeP50Px passes (8 vs >= 1.5). A retired design has no binding criterion, so its predicates are VOID by construction, not by omission - the terms that produced the verdict stay in reason and in test/fixtures/byok_border_retirements.json, which is also where the retirement is DECLARED as a freeze input. The design is no longer canonical: it is absent from byok_border_corpus.json designs and all five of its accepted blobs (rounds 1, 4b, 5, 6, 9) live in variants.",
+      "terms": [
+        { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.85, "unit": "fraction" },
+        { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
+        { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" },
+        { "name": "solidStrokeP50PxMin", "op": ">=", "value": 8, "unit": "device px" }
+      ],
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1, "solidStrokeP50Px": 8 },
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "retired": {
+        "executedOn": "2026-10-05",
+        "condition": "regenerate once via --border-img, then judge by the binding metric; retire (canonical: false) if the metric fails",
+        "regenerationRound": "9",
+        "judgedRound": "28",
+        "verdict": "FAIL",
+        "measured": "round-9 cell (gallery-round28, dsf 2, print): coverage min 0.0231 (TOP 0.9084 / BOTTOM 0.0298 / LEFT 0.1402 / RIGHT 0.0231); interior gap max 2063 (TOP 14 / BOTTOM 839 / LEFT 334 / RIGHT 2063); rail stroke p50 2 (TOP 10 / BOTTOM 2); stile stroke p50 8 (LEFT 8 / RIGHT 8); solid stroke p50 min 2",
+        "previousCanonicalMeasured": "round-6 cell (gallery-round27): coverage min 0.8061 (0.8061/0.0348/0.1438/0.0208); interior gaps 8/839/334/2063; rail p50 4/4; stile p50 8/5; solid p50 min 4",
+        "declaredIn": "test/fixtures/byok_border_retirements.json (the freeze input that removes the id from the canonical set)",
+        "criterionAmended": false,
+        "productSurface": "js/print_styles.js border-image-repeat: round UNCHANGED (D3's product clause)"
+      },
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5: 05's coverage floor is 0.85 (not 0.90) and it additionally requires a solid arc stroke >= 8 device px, implemented as the solidStrokeP50PxMin term (the clause's own 8 device px; the depth-run share parenthetical of the drafting round is the DRAFT's form and does not bind). The terms above are RETAINED for the record: they are exactly the terms the verdict was read with, and they were the reason the round-6 artwork failed. The ROUTE the clause gave (formulation gate -> ONE --border-img generation -> fresh judged capture -> binding metric on the new cell) was executed on 2026-10-05 and FAILED, so the clause's own retirement branch is what ran. The criterion was NOT amended to fit the artwork - the re-cut class (R-3/R-6/R-7) is not available here because this clause re-cut the criterion once already and then ordered the artwork retried, not the text."
+    },
+    "06-chainmail": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlocking ring pattern) with no deterministic metric defined at this scale" },
+    "07-corner-arcs": { "metric": null, "voidReason": "the criterion's feature (four corner groups) is not covered by an EDGE strip, so no edge-band metric can decide it; a corner-band metric is not defined" },
+    "08-flame-crest": { "metric": null, "voidReason": "binding predicate is a gestalt shape ('tapering to a sharp point') with no metric - the residual the consultants flagged as the operator's to settle" },
+    "09-frost-shards": { "metric": null, "voidReason": "binding predicates are gestalt prose (scattered shard shapes) with no deterministic metric defined at this scale" },
+    "10-ink-brush": { "metric": null, "voidReason": "binding predicates are gestalt prose (brush-stroke texture) with no deterministic metric defined at this scale" },
+    "11-starlit-void": {
+      "metric": "per-edge-band",
+      "minFeaturePx": { "paintedSpanPx": 1, "interiorGapPx": 1, "strokeP50Px": 1 },
+      "terms": [
+        { "name": "perEdgePaintedCoverageMin", "op": ">=", "value": 0.9, "unit": "fraction" },
+        { "name": "maxInteriorGapPx", "op": "<=", "value": 8, "unit": "device px" },
+        { "name": "railStrokeP50Px", "op": ">=", "value": 3, "unit": "device px" },
+        { "name": "stileStrokeP50Px", "op": ">=", "value": 1.5, "unit": "device px" }
+      ],
+      "ruledBy": "D3",
+      "ruledOn": "2026-10-05",
+      "reason": "Operator ruling D3 (2026-10-05), clause = the converged wording of phase4_five_decisions_proposal.md section 5, measured basis phase4_d3_measurements_20261004.md (reproduced 2026-10-05 on 1577133): AC-V1-c is superseded ONLY for 04/11/05. Round-27 readings: paintedSpan 0.9773/0.9773/0.9919/0.9919, interior gaps 0, solid band 31.46-55.13 device px with >= 8px depth-runs on 95.9-100% of span positions - above any plausible minFeaturePx. Rail/stile minima per the operator's 2026-10-05 ruling (rails >= 3, stiles >= 1.5)."
+    },
+    "12-knotwork": { "metric": null, "voidReason": "binding predicates are gestalt prose (interlaced knot) with no deterministic metric defined at this scale" }
+  }
+}

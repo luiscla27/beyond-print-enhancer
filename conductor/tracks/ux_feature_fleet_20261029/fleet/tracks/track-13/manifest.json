@@ -1,0 +1,26 @@
+{
+ "track_id": "track-13",
+ "code_count": 1,
+ "component_keys": [
+  "js/section_cloning"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/section_cloning.js"
+ ],
+ "units": [
+  {
+   "id": "feature_09_section_cloning",
+   "name": "Section Cloning (Extraction + Rollback)",
+   "description": "Section snapshot capture, cloned section rendering, extraction rollback",
+   "files": [
+    "js/section_cloning.js",
+    "js/section_utils.js"
+   ],
+   "component_key": "js/section_cloning",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/section_cloning.js",
+   "test_paths": [
+    "test/unit/section_cloning.test.js"
+   ]
+  }
+ ]
+}

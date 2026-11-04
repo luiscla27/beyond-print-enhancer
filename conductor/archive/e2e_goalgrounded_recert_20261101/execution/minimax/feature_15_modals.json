@@ -1,0 +1,72 @@
+{
+ "feature": "feature_15_modals",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "modal_primitive_visual_capture.spec.js",
+   "file_id": "458389943370255",
+   "mp4_bytes": 1366284,
+   "upload_response": {
+    "file": {
+     "file_id": 458389943370255,
+     "bytes": 1366284,
+     "created_at": 1793464826,
+     "filename": "modal_primitive_visual_capture.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "modal_primitive_visual_capture.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\modal_primitive_visual_capture.webm",
+   "webm_bytes": 3823050
+  }
+ ],
+ "usage": {
+  "total_tokens": 44345,
+  "total_characters": 0,
+  "prompt_tokens": 42565,
+  "completion_tokens": 1780,
+  "completion_tokens_details": {
+   "reasoning_tokens": 420
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## What is visibly observed\n\n1. **Opening/load sequence \u2014 WEBSITE\u2019s own surface**\n   - The recording begins with a blank page and then D&D Beyond\u2019s navigation/header and loading artwork.\n   - The centered D&D Beyond logo and rotating red loading ring are **website loading UI**, not extension work.\n   - A \u201cYour Privacy Choices\u201d cookie panel and D&D Beyond promotional banner are also **website-owned UI**.\n\n2. **Character sheet appears \u2014 mixed base website and EXTENSION enhancement**\n   - The Corvo Saggio character sheet loads with the underlying statistics and content provided by **D&D Beyond**.\n   - The sheet simultaneously appears in an enhanced form: red outlines around many stat blocks and section boundaries, a decorative monochrome portrait treatment, and modified card presentation.\n   - Those borders, decorative treatment, and transformed section layout are **extension work**. The character\u2019s statistics, ability values, class information, actions, and general content remain the **website\u2019s own content**.\n\n3. **Extension control surfaces appear \u2014 EXTENSION work**\n   - The dark left control panel with gold accents, **LAYOUT** and **OUTPUT** sections, and the separate **LAYER MANAGEMENT** panel are unmistakably extension UI.\n   - The left panel includes controls such as Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, All Arrange, All Settings, Print, Print settings, Save to Browser, Export Settings, Undo, and Restore Backup.\n   - The right panel lists sections and decorative shapes and includes tabs/filters such as Print only, Both, and Screen only.\n   - A centered hint toast reads, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** This is an **extension toast** and is a clear working status affordance.\n\n4. **Rename-layer dialog and validation \u2014 EXTENSION work**\n   - An extension-styled modal titled **\u201cRENAME LAYER\u201d** opens over a dimmed extension workspace.\n   - It shows a current name, an editable field, Cancel, Continue, and a close \u201c\u00d7\u201d.\n   - After the field is cleared, a red validation message appears: **\u201cEnter a name to continue \u2014 the field cannot be empty.\u201d**\n   - The field receives a red error outline. This visibly demonstrates both a migrated/extension-styled dialog and a working inline error state.\n\n5. **Decorative-shape picker \u2014 EXTENSION work**\n   - A modal titled **\u201cSELECT DECORATIVE SHAPE\u201d** opens with tabs **BORDERS**, **SHAPES**, and **CUSTOM**.\n   - It provides category filters, a search field, and thumbnail choices labeled Archer Ability, Archer Footer, Archer Header, and Archer Outline.\n   - The **Add Shape** button is visibly disabled until a shape is selected; Cancel is available. The modal is clearly extension-styled.\n\n6. **Template picker \u2014 EXTENSION work**\n   - A **\u201cTEMPLATES\u201d** modal opens over the dimmed workspace.\n   - It shows a Basic Template and an Anchor Template, each with a preview and explanatory copy.\n   - A Cancel button and close \u201c\u00d7\u201d are visible. This demonstrates another extension-styled dialog and a usable selection surface.\n\n7. **End state**\n   - The recording ends with the Templates dialog still open. No successful template application, shape addition, final rename, undo, or successful save confirmation is shown on camera.\n\n## LAYER 1 \u2014 Asserted-behavior evidence\n\nSuite: **modal primitive visual capture \u2014 modal primitive visual captures**\n\n- **Captures the migrated dialog \u2014 VISIBLE.** The extension\u2019s dark, gold-accented Rename Layer modal is clearly captured, including its field, buttons, close control, dimmed backdrop, and empty-field validation state.\n- **The untouched dialogs \u2014 VISIBLE.** Additional extension dialogs are captured without being replaced by native D&D Beyond dialogs: the Select Decorative Shape picker and the Templates picker. The website\u2019s own cookie panel is also visibly left in its original styling.\n- **Probes affordances \u2014 VISIBLE.** The recording visibly exercises close/\u00d7 controls, Cancel, editable input, validation feedback, category tabs, search field, shape thumbnails, and a disabled **Add Shape** action.\n\n## LAYER 2 \u2014 Product-aim conformance\n\n### Working affordances observed\n\n- The extension UI is **clearly distinguishable** from D&D Beyond through its black/codex-like panels, gold hairlines and buttons, custom typography, and modal design.\n- The floating control panel and Layer Management panel remain legible while overlaying the character sheet.\n- The hint toast provides visible state feedback: **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n- Extension modals use a dimmed backdrop that focuses attention on the active dialog.\n- Dialogs provide recognizable close **\u00d7**, Cancel, and primary-action controls.\n- Empty-name validation works and clearly identifies the problem in red.\n- The shape picker\u2019s **Add Shape** button is appropriately disabled before a valid thumbnail selection.\n- The template picker gives useful visual previews and explanatory descriptions.\n- The sheet enhancement visibly differs from the ordinary website presentation through added borders, card framing, alignment treatment, and decorative artwork.\n\n### Missing or rough affordances observed\n\n- **No extension loading or transition affordance is visible during activation.** The sheet enhancement simply appears already applied when the character sheet becomes visible; there is no brief extension-specific \u201cloading\u2026\u201d overlay or staged transition. The earlier D&D Beyond logo spinner is website-owned and cannot count as the extension\u2019s activation affordance.\n- The **plain/off-state character sheet is not visibly established** before enhancement. The recording reaches the character sheet after the loading screen, and it is already enhanced, so the claimed plain-to-enhanced transition cannot be verified from these frames.\n- The toolbar icon and its **ON badge** are not visible, so activation-state feedback from the toolbar cannot be verified.\n- The shape picker\u2019s disabled state is visible, but the video does not visibly show selection enabling **Add Shape** or a successful \u201cShape added\u201d confirmation.\n- The rename error is shown, but no successful rename confirmation is shown.\n- The Templates dialog is not visibly completed, and no successful layout-application confirmation is shown.\n- Although **Undo** is present in the left panel, no undo operation is visibly exercised.\n- The recording provides no visible success, failure, or busy state for save, print, export, or template application beyond the initial informational toast.\n\nBecause the modal behaviors are well evidenced, but the activation transition is absent and several extension affordances are only present rather than visibly exercised or confirmed, the certification does not qualify for WORKING.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: modal_primitive_visual_capture.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464842943
+}

@@ -1,0 +1,24 @@
+{
+  "name": "Launcher - unit_track_sequencer_20261029",
+  "purpose": "Launch ONE separate Reasonix session that executes the 18 unit-track re-verifications sequentially (POOL_SIZE=1 by design); resume-safe via progress.jsonl",
+  "created": "2026-10-29",
+  "launcher_kind": "single-session sequential (deliberately NOT the fleet rolling pool - see deliberation/candidate_b_parallel_pool_across_sessions.md)",
+  "repo_root": "C:\\luiscla27\\projects\\dndbeyond-printenhance",
+  "track_dir": "conductor/tracks/unit_track_sequencer_20261029",
+  "launch_prompt": "conductor/tracks/unit_track_sequencer_20261029/LAUNCH-PROMPT.md",
+  "operator_actions_required": [
+    "start one fresh Reasonix session (separate chat/session) against this repo",
+    "paste the LAUNCH-PROMPT.md body as the session's task",
+    "wait for the session to commit sequencer_verdict.md + progress.jsonl (or a partial verdict if it paused mid-run)",
+    "relaunch and re-paste the same prompt to resume from progress.jsonl's last row if a pause happened"
+  ],
+  "expected_artifacts": [
+    "conductor/tracks/unit_track_sequencer_20261029/sequencer_verdict.md",
+    "conductor/tracks/unit_track_sequencer_20261029/progress.jsonl"
+  ],
+  "safeguards": [
+    "session must not modify js/**, manifest.json, or any test file (AC-4 aborts on any)",
+    "session must commit only the two expected artifacts with explicit paths",
+    "verification-only: a RED certificate is reported, never patched"
+  ]
+}

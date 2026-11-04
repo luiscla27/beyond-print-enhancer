@@ -1,0 +1,71 @@
+{
+ "feature": "feature_01_ai_arrange",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_arrange_roundtrip.spec.js",
+   "file_id": "458225087078915",
+   "mp4_bytes": 1271158,
+   "upload_response": {
+    "file": {
+     "file_id": 458225087078915,
+     "bytes": 1271158,
+     "created_at": 1793424254,
+     "filename": "byok_arrange_roundtrip.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_arrange_roundtrip.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_01_ai_arrange\\byok_arrange_roundtrip.webm",
+   "webm_bytes": 3837869
+  }
+ ],
+ "usage": {
+  "total_tokens": 43584,
+  "total_characters": 0,
+  "prompt_tokens": 42841,
+  "completion_tokens": 743,
+  "completion_tokens_details": {
+   "reasoning_tokens": 348
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- The video begins on a largely blank D&D Beyond page, followed by a loading screen and the real character sheet for \u201cCorvo Saggio.\u201d A cookie/privacy dialog appears and then closes.\n- After the sheet finishes loading, the Print Enhancer extension panel appears on the left, with a \u201cLAYOUT\u201d section containing \u201cAI Arrange\u201d and \u201cAI Settings.\u201d A separate \u201cLAYER MANAGEMENT\u201d panel is visible on the right.\n- The extension displays several visible dialogs:\n  - \u201cPREVIEW THE AI ARRANGEMENT,\u201d stating that section boxes will reflow, with **Cancel** and **Apply** buttons.\n  - An **\u201cAI ARRANGE\u201d** dialog titled \u201cPREVIEW THE AI ARRANGEMENT,\u201d also offering **Cancel** and **Apply**.\n  - Another \u201cPREVIEW THE AI ARRANGEMENT\u201d dialog stating that it will move 1 section and notes nothing else.\n- After one preview closes, a yellow **\u201cApply 1\u201d** control appears near the lower portion of the sheet, indicating a pending arrangement-related action. Near the end, a small light-gray ghost-like box marked **\u201c1\u201d** becomes visible over the sheet near the top stat area.\n- The ordinary sheet layout otherwise remains visible, including the character portrait, ability scores, skill list, actions, defenses, and conditions.\n- The video does **not** visibly show the pending arrangement being accepted and applied to the live record, a real Ctrl+Z undo restoring the prior layout, a rejected-patch/Cancel preservation check, byte-identical record comparisons, save-count verification, the \u201cAI Arrange\u201d row being enabled by storing a key, or evidence that the request was served by a worker stub with zero network traffic.\n\nThus, the extension and its AI-arrange preview flow are visibly present, and a pending ghost appears, but the required apply/save/undo end-to-end round trip is not completed on camera.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793424274057
+}

@@ -1,12 +1,13 @@
 {
   "name": "dndbeyond-print",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint js/ test/ scripts/",
+    "lint": "eslint js/ test/ scripts/ && node scripts/check_border_svg_injection.js && node scripts/check_scripts_hygiene.js",
+    "smoke": "node scripts/smoke_low_risk.js",
     "pretest": "npm run lint",
-    "test": "mocha --recursive test/unit test/e2e test/manifest.test.js",
+    "test": "node scripts/smoke_low_risk.js && mocha --recursive test/unit test/e2e test/manifest.test.js",
     "release:check": "node scripts/release_gate.js",
     "test:browser-gate": "node scripts/browser_gate.js",
     "test:browser-gate:sharded": "node scripts/browser_gate.js --shards 4",
@@ -22,6 +23,8 @@
     "test:e2e:byokpersist": "mocha test/browser_e2e/byok_settings_persistence.spec.js --timeout 900000",
     "test:e2e:byokrelay": "mocha test/browser_e2e/byok_relay.spec.js --timeout 900000",
     "test:e2e:byokarrange": "mocha test/browser_e2e/byok_arrange_roundtrip.spec.js --timeout 900000",
+    "test:e2e:byokborder": "mocha test/browser_e2e/byok_border_roundtrip.spec.js --timeout 900000",
+    "test:e2e:byokgallery": "mocha test/browser_e2e/byok_border_gallery.spec.js --timeout 900000",
     "test:e2e:autoscroll": "mocha test/browser_e2e/sheet_autoscroll.spec.js --timeout 900000",
     "test:e2e:deletes": "mocha test/browser_e2e/layer_delete_constraints.spec.js --timeout 900000",
     "test:e2e:upload": "mocha test/browser_e2e/custom_shapes_upload.spec.js --timeout 900000",
@@ -66,6 +69,7 @@
     "mocha": "^11.7.5",
     "pdfjs-dist": "^4.10.38",
     "playwright": "^1.63.0",
+    "pngjs": "^7.0.0",
     "sharp": "^0.34.5"
   }
 }

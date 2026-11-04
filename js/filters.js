@@ -219,6 +219,39 @@ function clearBorderStyles(el) {
     (window.AssetCatalog && window.AssetCatalog.ALL_BORDER_STYLES) ||
     ["no-border"];
   el.classList.remove(...styles);
+  // R-1 (operator ruling 2026-10-01, track byok_svg_borders_20260927): an AI border rides
+  // INLINE custom properties (+ `dataset.borderRawSvg`), and inline beats every stylesheet
+  // rule — so a raster-border path that only removed the CLASS left the AI border painted
+  // (`Filters.applyBorderStyle(section, "spikes_border")` was a visual no-op on an
+  // AI-bordered section, reachable from js/main.js, js/layout_apply.js,
+  // js/properties_panel.js and js/catalog_service.js — all four already funnel through
+  // THIS function). Picking a raster border (or "None") now CLEARS the AI border; the
+  // reverse direction (an AI border over a class border) was already true, because
+  // `renderBorderSvg`'s four inline properties override the class. One picker, one
+  // winner.
+  //
+  // The choke point owns the clear — resolved at CALL time, never captured, so a load
+  // order that reaches here before `js/ai_border.js` degrades instead of throwing (the
+  // same discipline js/layout_apply.js uses for the rehydrate call). The fallback is
+  // REMOVAL-ONLY: `scripts/check_border_svg_injection.js` R4 bans WRITING `--border-img`
+  // outside `js/ai_border.js`, and `removeProperty`/`delete` are not write sites, so the
+  // AC-9 single-writer invariant is untouched either way.
+  const AiBorder = typeof window !== "undefined" ? window.AiBorder : null;
+  if (AiBorder && typeof AiBorder.clearBorderSvg === "function") {
+    AiBorder.clearBorderSvg(el);
+    return;
+  }
+  if (el.style && typeof el.style.removeProperty === "function") {
+    for (const prop of [
+      "--border-img",
+      "--border-img-slice",
+      "--border-img-width",
+      "--border-img-outset",
+    ]) {
+      el.style.removeProperty(prop);
+    }
+  }
+  if (el.dataset) delete el.dataset.borderRawSvg;
 }
 
 function applyBorderStyle(section, style) {

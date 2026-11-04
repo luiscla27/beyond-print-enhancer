@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 /**
  * The distribution of scales the fit-to-container feature applies on the live demo sheet.

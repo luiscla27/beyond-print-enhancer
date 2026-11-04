@@ -34,11 +34,21 @@ const storageNotifyError = (msg) => {
    * Uses IndexedDB to persist layout configurations and custom data.
    */
   const DB_NAME = "DDBPrintEnhancerDB";
-  const DB_VERSION = 4;
+  // 5 (was 4): track `byok_svg_borders_20260927` (AC-7) adds the `custom_borders` object
+  // store. IndexedDB only runs `onupgradeneeded` when the VERSION changes, so adding a
+  // store without this bump would leave the store absent on an existing profile — and the
+  // library half of AC-7 would fail at runtime, not at test time. The bump is additive:
+  // `onupgradeneeded` only ever CREATES what is missing, so no existing row is touched.
+  const DB_VERSION = 5;
   const STORE_NAME = "layouts";
   const SPELL_CACHE_STORE = "spell_cache";
   const CUSTOM_SHAPES_STORE = "custom_shapes";
-  const SCHEMA_VERSION = "1.5.0";
+  const CUSTOM_BORDERS_STORE = "custom_borders";
+  // 1.6.0 (was 1.5.0): the per-section `borderSvg` field of AC-7. The migration is a
+  // deliberate NO-OP — see `migrateLayout` — because the field is optional and absent
+  // means "this section has no border"; the version bump is what tells a reader that a
+  // record MAY carry it.
+  const SCHEMA_VERSION = "1.6.0";
 
   let db = null;
 
@@ -98,6 +108,13 @@ const storageNotifyError = (msg) => {
                 keyPath: "id",
               });
             }
+            // AC-7's reuse library. Id-keyed like `custom_shapes` (the pattern the spec
+            // names), so an upsert replaces rather than duplicates.
+            if (!upgradeDb.objectStoreNames.contains(CUSTOM_BORDERS_STORE)) {
+              upgradeDb.createObjectStore(CUSTOM_BORDERS_STORE, {
+                keyPath: "id",
+              });
+            }
           };
 
           request.onsuccess = (event) => {
@@ -139,16 +156,42 @@ const storageNotifyError = (msg) => {
 
       const migrated = { ...data };
 
+      // 1.5.0 -> 1.6.0 (track byok_svg_borders_20260927, AC-7) is deliberately a NO-OP
+      // beyond the version stamp below. The new `borderSvg` field is OPTIONAL and its
+      // absence is MEANINGFUL ("this section has no border"), so a migration that
+      // materialised `borderSvg: null` on every section would be a corruption: every
+      // rehydrate path would then read a truthy-ish key and could paint an empty overlay,
+      // and `Object.keys` equality tests on records would fail for no reason. There is
+      // nothing to convert, so nothing is converted — the version stamp is the whole edit,
+      // and `test/unit/ai_border_storage.test.js` asserts the field is NOT invented.
+
       // Ensure shapeLayers exists
-      if (!migrated.shapeLayers) {
+      const hasShapeLayersKey = Object.prototype.hasOwnProperty.call(
+        data,
+        "shapeLayers",
+      );
+      if (!hasShapeLayersKey) {
         migrated.shapeLayers = [];
       }
 
-      // If shapeLayers is empty and it's a legacy version, migrate legacy data
-      if (
-        migrated.shapeLayers.length === 0 &&
-        data.version !== SCHEMA_VERSION
-      ) {
+      // The legacy-flat-shapes migration must key off the RECORD'S OWN SHAPE, not off a
+      // version comparison. It used to read `shapeLayers.length === 0 && version !==
+      // SCHEMA_VERSION`, which was accidentally correct while SCHEMA_VERSION was the
+      // version every live record already carried — and became a CORRUPTION the moment
+      // 1.6.0 (AC-7) made `version !== SCHEMA_VERSION` true for every 1.5.0 record:
+      // MEASURED, it injected a phantom "Default Shapes Layer" into layouts that never
+      // had one, and in `test/unit/destructive_recovery_phase2.test.js` the phantom
+      // layer produced a `.be-layer-row` whose handlers outlived the restore surface —
+      // i.e. a real listener leak caused by a migration that should have been a no-op.
+      // A record is legacy ONLY when it has no `shapeLayers` key AND actually carries the
+      // pre-1.5.0 markers this branch consumes (`shapes`, or `layers.shapes` state).
+      // `Array.isArray(data.shapeLayers)` — even empty — means "already the new format".
+      const hasLegacyFlatShapes =
+        !hasShapeLayersKey &&
+        (Object.prototype.hasOwnProperty.call(data, "shapes") ||
+          !!data.layers?.shapes);
+
+      if (hasLegacyFlatShapes) {
         const legacyShapes = data.shapes || [];
         const legacyShapeLayerState = data.layers?.shapes || {
           isLocked: false,
@@ -337,6 +380,62 @@ const storageNotifyError = (msg) => {
     },
 
     /**
+     * Save a custom border into the reuse library (AC-7, track
+     * `byok_svg_borders_20260927`). Id-keyed, so this is an upsert.
+     * @param {object} border {id, prompt?, svg, createdAt?}
+     */
+    saveCustomBorder: async (border) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [CUSTOM_BORDERS_STORE],
+          "readwrite",
+        );
+        const store = transaction.objectStore(CUSTOM_BORDERS_STORE);
+        const request = store.put(border);
+        request.onsuccess = () => resolve();
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
+
+    /**
+     * Get all reusable borders.
+     * @returns {Promise<Array>}
+     */
+    getCustomBorders: async () => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [CUSTOM_BORDERS_STORE],
+          "readonly",
+        );
+        const store = transaction.objectStore(CUSTOM_BORDERS_STORE);
+        const request = store.getAll();
+        request.onsuccess = (event) => resolve(event.target.result || []);
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
+
+    /**
+     * Remove one reusable border by id.
+     * @param {string} id
+     * @returns {Promise<boolean>} true when a row was deleted.
+     */
+    deleteCustomBorder: async (id) => {
+      const database = await Storage.init();
+      return new Promise((resolve, reject) => {
+        const transaction = database.transaction(
+          [CUSTOM_BORDERS_STORE],
+          "readwrite",
+        );
+        const store = transaction.objectStore(CUSTOM_BORDERS_STORE);
+        const request = store.delete(id);
+        request.onsuccess = () => resolve(true);
+        request.onerror = (event) => reject(event.target.error);
+      });
+    },
+
+    /**
      * Save multiple spells to the cache.
      * @param {Array} spells
      */
@@ -404,6 +503,7 @@ Object.assign(Storage, {
   STORE_NAME,
   SPELL_CACHE_STORE,
   CUSTOM_SHAPES_STORE,
+  CUSTOM_BORDERS_STORE,
 });
 
 if (typeof module !== "undefined" && module.exports) {

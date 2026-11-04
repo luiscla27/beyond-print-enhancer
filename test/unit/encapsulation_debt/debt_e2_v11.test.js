@@ -168,7 +168,10 @@ describe("E2 d98e64e — save/load surface", function () {
   it("scanLayout returns a versioned layout object", async function () {
     const layout = await window.scanLayout();
     assert.ok(layout);
-    assert.strictEqual(layout.version, "1.5.0");
+    // Read the CONSTANT: this case asserts the scan STAMPS the current version, and a
+    // re-typed literal made it red on the legitimate 1.6.0 bump (AC-7) with no behaviour
+    // change at all.
+    assert.strictEqual(layout.version, window.Storage.SCHEMA_VERSION);
   });
 
   it("applyLayout tolerates an empty layout", async function () {
@@ -189,7 +192,7 @@ describe("E2 d98e64e — save/load surface", function () {
 
   it("migrateLayout stamps the current schema version", function () {
     const out = window.Storage.migrateLayout({ version: "1.4.0", sections: {} });
-    assert.strictEqual(out.version, "1.5.0");
+    assert.strictEqual(out.version, window.Storage.SCHEMA_VERSION);
   });
 });
 

@@ -291,7 +291,12 @@ describe("Shape Layers PS visual captures", function () {
         await page.waitForSelector(".be-modal-overlay input", { timeout: 15000 });
         await page.fill(".be-modal-overlay input", "Gold Dividers");
         await page.evaluate(() => {
-          const ok = Array.from(document.querySelectorAll(".be-modal-actions button")).find((b) => b.textContent.trim() === "OK");
+          // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator
+          // ruling 2026-10-31): the input modal's primary control is ratifying-labelled
+          // "Continue" (js/modals.js showInputModal; the confirm vocabulary is pinned by
+          // test/unit/ia_consistency.test.js), so the native "OK" this looked for does not
+          // and must not exist. Found by class instead of by copy.
+          const ok = document.querySelector(".be-modal-actions .be-modal-ok");
           if (ok) ok.click();
         });
         await page.waitForTimeout(700);
@@ -391,7 +396,12 @@ describe("Shape Layers PS visual captures", function () {
         await page.waitForSelector(".be-modal-overlay input", { timeout: 15000 });
         await page.fill(".be-modal-overlay input", "Top Layer");
         await page.evaluate(() => {
-          const ok = Array.from(document.querySelectorAll(".be-modal-actions button")).find((b) => b.textContent.trim() === "OK");
+          // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator
+          // ruling 2026-10-31): the input modal's primary control is ratifying-labelled
+          // "Continue" (js/modals.js showInputModal; the confirm vocabulary is pinned by
+          // test/unit/ia_consistency.test.js), so the native "OK" this looked for does not
+          // and must not exist. Found by class instead of by copy.
+          const ok = document.querySelector(".be-modal-actions .be-modal-ok");
           if (ok) ok.click();
         });
         await page.waitForTimeout(700);

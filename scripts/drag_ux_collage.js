@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Collage composer for the drag_ux_overhaul_20260909 visual gates.
  *

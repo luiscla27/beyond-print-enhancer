@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+// extract_preliminary_borders.js - one-off: crop candidate BORDER regions out of the demo sheet into
+// demo/ignored/extracted, the first step of the archer asset setup. Input and output are absent.
 const sharp = require('sharp');
 const fs = require('fs');
 

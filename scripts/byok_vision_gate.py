@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Vision-gate dispatcher for byok_ai_layout_20260915 (AC-V1-lite), reviewer-selectable.
 
 Derived from scripts/drag_ux_visual_gate.py, with the ONE thing that file could not do made
@@ -23,6 +23,9 @@ import json
 import os
 import sys
 import urllib.request
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "perf"))
+from model_call_telemetry import call_model  # noqa: E402  (track runtime_perf_20261015)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..")
@@ -80,9 +83,35 @@ def resolve_key(env_name):
 
 
 def extract_text(resp_bytes):
+    """The reviewer's text, ALWAYS a string.
+
+    MEASURED DEFECT, FIXED 2026-10-06 (track byok_border_prompt_adoption_20261006). This used
+    to return `message.content` raw, and a REASONING-HEAVY answer can legitimately be null:
+    Muse Spark spends its whole completion budget inside `reasoning_tokens` and returns
+    `content: null` with `finish_reason: "length"`. MEASURED on round-31's canonical cells —
+    at `max_tokens` 8000 the SAME image that answers in ~5000 tokens came back null with
+    8000/8000 reasoning tokens; at 16000 it answered (5239 completion, 5178 of them reasoning).
+    The old contract turned that into `write() argument must be str, not None` inside the
+    caller, i.e. a crash in the seat driver instead of a recorded answer — the exact "a
+    reasoning-only answer is not evidence" class the archived track already met at 2000 tokens.
+    So: the budget is raised, and an unreadable answer is returned as a NAMED string carrying
+    the finish reason and the reasoning-token count, which is what a caller must record.
+    """
     data = json.loads(resp_bytes.decode("utf-8", errors="replace"))
     try:
-        return data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        msg = choice.get("message") or {}
+        content = msg.get("content")
+        if isinstance(content, str) and content.strip():
+            return content
+        usage = data.get("usage") or {}
+        details = usage.get("completion_tokens_details") or {}
+        return (
+            "(NO READABLE ANSWER — finish_reason=%s, completion_tokens=%s, reasoning_tokens=%s; "
+            "a reasoning-only completion is NOT a verdict and must not be read as one)"
+            % (choice.get("finish_reason"), usage.get("completion_tokens"),
+               details.get("reasoning_tokens"))
+        )
     except (KeyError, IndexError, TypeError):
         return json.dumps(data, indent=2)[:2000]
 
@@ -111,7 +140,7 @@ def dispatch(review, image_path, brief_path):
             },
         ],
         "temperature": 0.0,
-        "max_tokens": 8000,
+        "max_tokens": 16000,
     }
     req = urllib.request.Request(
         review["base_url"] + "/chat/completions",
@@ -119,8 +148,40 @@ def dispatch(review, image_path, brief_path):
         headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=420) as r:
-        return extract_text(r.read())
+
+    # BUDGETED + OBSERVED (track runtime_perf_20261015). Before this, the call's only bound was
+    # `urlopen(timeout=420)`, and a socket timeout bounds each READ rather than the whole call, so a
+    # slowly-trickling response could outlive it; and the call emitted no terminal event anywhere, so
+    # the area's own model traffic was invisible. The declared budget for this site lives in
+    # scripts/perf/budgets.json (with its reason), and the terminal event lands in
+    # temp/perf/model_calls.jsonl.
+    #
+    # TORN DOWN AT THE DEADLINE (track runtime_perf_maintenance_20261017, E-5). The supervisor used
+    # to release the CALLER at its budget and leave this response object draining: measured, a
+    # 0.2 s budget returned at 0.25 s while the transport ran to 1.562 s. Registering the handle
+    # means a budget expiry (or a cancel) CLOSES it, so the socket stops and a late answer is not
+    # merely unread — it is never delivered.
+    def transport(timeout_s, abort=None):
+        r = urllib.request.urlopen(req, timeout=timeout_s)
+        if abort is not None:
+            abort.register_closer(r.close)
+        with r:
+            return r.read()
+
+    result = call_model(
+        site="scripts/byok_vision_gate.py",
+        role="reasonix-agent",
+        model=review["model"],
+        provider=review["base_url"],
+        fingerprint_material=frame_b64 + "\n" + brief,
+        transport=transport,
+    )
+    if not result.ok:
+        raise RuntimeError(
+            "vision seat call %s after %dms (class=%s, attempts=%s, error=%s)"
+            % (result.status, result.duration_ms, result.request_class, result.attempts,
+               result.error))
+    return extract_text(result.value)
 
 
 def main():

@@ -1,0 +1,71 @@
+{
+ "feature": "feature_11_spells_ui",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "file_id": "458220363371005",
+   "mp4_bytes": 957879,
+   "upload_response": {
+    "file": {
+     "file_id": 458220363371005,
+     "bytes": 957879,
+     "created_at": 1793424519,
+     "filename": "spell_detail_sections.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "spell_detail_sections.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\spell_detail_sections.webm",
+   "webm_bytes": 3132768
+  }
+ ],
+ "usage": {
+  "total_tokens": 36715,
+  "total_characters": 0,
+  "prompt_tokens": 36389,
+  "completion_tokens": 326,
+  "completion_tokens_details": {
+   "reasoning_tokens": 102
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- The video loads the real D&D Beyond character sheet for \u201cCorvo Saggio,\u201d showing the character\u2019s abilities and the **ACTIONS / SPELLS / INVENTORY / FEATURES & TRAITS / EXTRAS** tabs.\n- The sheet remains on the **ACTIONS** tab, where actions such as Longbow of Warning, Thorn Whip, and Guiding Bolt are visible.\n- The view briefly shifts/zooms toward the sheet, but no spell row is opened and no **Details** trigger is visibly shown.\n- The unpacked extension\u2019s panel subsequently appears on both sides of the sheet. The left panel shows layout and output controls, while the right **LAYER MANAGEMENT** panel shows sections and shapes.\n- A notice says, \u201cNo saved layout yet \u2014 the default template is loaded.\u201d The panels remain visible while the default character sheet layout stays on screen.\n- No visible click on a spell\u2019s **Details** control occurs, and no floating spell detail section, duplicate-prevention behavior, loaded spell content, or retry/delete error state appears in the sampled frames.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: spell_detail_sections.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793424531853
+}

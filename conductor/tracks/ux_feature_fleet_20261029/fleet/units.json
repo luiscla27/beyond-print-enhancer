@@ -1,0 +1,255 @@
+[
+  {
+    "id": "feature_01_ai_arrange",
+    "name": "AI Arrange (BYOK Layout Arranger)",
+    "description": "AI-powered layout arrangement - model proposes JSON patch over layout.sections, code disposes via applyLayout/saveLayout",
+    "files": [
+      "js/ai_arrange.js",
+      "js/ai_layout.js",
+      "js/background.js"
+    ],
+    "component_key": "js/ai_arrange",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/ai_arrange.js",
+    "test_paths": [
+      "test/unit/ai_layout_schema.test.js",
+      "test/browser_e2e/byok_arrange_roundtrip.spec.js"
+    ]
+  },
+  {
+    "id": "feature_02_ai_borders",
+    "name": "AI Borders (SVG Border Generation)",
+    "description": "AI-generated SVG borders with centralized render choke point (renderBorderSvg), border-image CSS slot",
+    "files": [
+      "js/ai_border.js",
+      "js/ai_settings.js"
+    ],
+    "component_key": "js/ai_border",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/ai_border.js",
+    "test_paths": [
+      "test/browser_e2e/byok_border_gallery.spec.js",
+      "test/unit/border_metric.test.js"
+    ]
+  },
+  {
+    "id": "feature_03_layer_management",
+    "name": "Layer Management (Three-State Visibility)",
+    "description": "Per-layer print control with Print only / Both / Screen only modes, derived from isHidden/isDisabledOnPrint flags",
+    "files": [
+      "js/dom/layer_manager.js"
+    ],
+    "component_key": "js/dom/layer_manager",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/dom/layer_manager.js",
+    "test_paths": [
+      "test/browser_e2e/layer_print_visibility.spec.js",
+      "test/browser_e2e/layer_reorder_keyboard.spec.js"
+    ]
+  },
+  {
+    "id": "feature_04_shape_picker",
+    "name": "Shape Picker (Asset Grid Modal)",
+    "description": "Unified asset picker for borders/shapes/custom uploads plus Section Styles surface",
+    "files": [
+      "js/shape_picker.js",
+      "js/asset_catalog.js"
+    ],
+    "component_key": "js/shape_picker",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/shape_picker.js",
+    "test_paths": [
+      "test/unit/asset_catalog.test.js"
+    ]
+  },
+  {
+    "id": "feature_05_controls_panel",
+    "name": "Controls Panel (Fixed Panel with Filters/Color Picker)",
+    "description": "Fixed control panel with collapsible trays, filter sliders, color picker, action buttons",
+    "files": [
+      "js/controls.js"
+    ],
+    "component_key": "js/controls",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/controls.js",
+    "test_paths": [
+      "test/unit/encapsulation_debt/controls_panel.test.js"
+    ]
+  },
+  {
+    "id": "feature_06_print_styles",
+    "name": "Print Styles (Print CSS + Layout Bounds)",
+    "description": "Print CSS generation, layout-bounds, page separators, compact styles, full-height enforcement",
+    "files": [
+      "js/print_styles.js"
+    ],
+    "component_key": "js/print_styles",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/print_styles.js",
+    "test_paths": [
+      "test/unit/print_styles.test.js",
+      "test/browser_e2e/print_styles.spec.js"
+    ]
+  },
+  {
+    "id": "feature_07_persistence",
+    "name": "Persistence (Save/Load + Layout Serialization)",
+    "description": "User save/load flows, DOM<->layout-data serialization, applyLayout, custom shapes/borders, spell cache",
+    "files": [
+      "js/persistence.js",
+      "js/storage.js"
+    ],
+    "component_key": "js/persistence",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/persistence.js",
+    "test_paths": [
+      "test/unit/persistence.test.js",
+      "test/browser_e2e/byok_settings_persistence_types.spec.js"
+    ]
+  },
+  {
+    "id": "feature_08_layout_operations",
+    "name": "Layout Operations (Scan/Apply/Mutate)",
+    "description": "Layout scanning, migration, application, portrait/defenses/quick-info separation, inner-content width",
+    "files": [
+      "js/layout_scan.js",
+      "js/layout_apply.js",
+      "js/layout_ops.js"
+    ],
+    "component_key": "js/layout_ops",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/layout_scan.js",
+    "test_paths": [
+      "test/unit/layout_scan.test.js",
+      "test/unit/layout_apply.test.js"
+    ]
+  },
+  {
+    "id": "feature_09_section_cloning",
+    "name": "Section Cloning (Extraction + Rollback)",
+    "description": "Section snapshot capture, cloned section rendering, extraction rollback",
+    "files": [
+      "js/section_cloning.js",
+      "js/section_utils.js"
+    ],
+    "component_key": "js/section_cloning",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/section_cloning.js",
+    "test_paths": [
+      "test/unit/section_cloning.test.js"
+    ]
+  },
+  {
+    "id": "feature_10_undo_system",
+    "name": "Undo System (General Undo + Snapshot Gate)",
+    "description": "General undo with snapshot gate on every destructive action, beginMutation/pushMutation",
+    "files": [
+      "js/undo.js"
+    ],
+    "component_key": "js/undo",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/undo.js",
+    "test_paths": [
+      "test/unit/undo.test.js",
+      "test/unit/destructive_recovery.test.js"
+    ]
+  },
+  {
+    "id": "feature_11_spells_ui",
+    "name": "Spells UI (Spell Detail Sections)",
+    "description": "Floating spell detail sections, spell fetch/cache, character spell injection",
+    "files": [
+      "js/spells.js",
+      "js/spells_ui.js"
+    ],
+    "component_key": "js/spells_ui",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/spells_ui.js",
+    "test_paths": [
+      "test/unit/spells_ui.test.js"
+    ]
+  },
+  {
+    "id": "feature_12_properties_panel",
+    "name": "Properties Panel (Active Section State)",
+    "description": "Active section state management, properties panel updates",
+    "files": [
+      "js/properties_panel.js"
+    ],
+    "component_key": "js/properties_panel",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhace/js/properties_panel.js",
+    "test_paths": [
+      "test/unit/encapsulation_debt/properties_panel.test.js"
+    ]
+  },
+  {
+    "id": "feature_13_ui_theme",
+    "name": "UI Theme (Theme Management)",
+    "description": "Theme management, CSS variables, visual consistency",
+    "files": [
+      "js/ui_theme.js"
+    ],
+    "component_key": "js/ui_theme",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/ui_theme.js",
+    "test_paths": [
+      "test/unit/ui_theme.test.js"
+    ]
+  },
+  {
+    "id": "feature_14_filters",
+    "name": "Filters (Global Filter CSS + Border Styles)",
+    "description": "Global filter CSS, border-style helpers, decoration filter",
+    "files": [
+      "js/filters.js",
+      "js/icons.js"
+    ],
+    "component_key": "js/filters",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/filters.js",
+    "test_paths": [
+      "test/unit/filters.test.js"
+    ]
+  },
+  {
+    "id": "feature_15_modals",
+    "name": "Modals (Modal Toolkit)",
+    "description": "Modal toolkit: input modal, fallback modal, feedback toast, empty state dialog",
+    "files": [
+      "js/modals.js"
+    ],
+    "component_key": "js/modals",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/modals.js",
+    "test_paths": [
+      "test/unit/modals.test.js"
+    ]
+  },
+  {
+    "id": "feature_16_background_context",
+    "name": "Background + Context Menu (Extension Core)",
+    "description": "Service worker, BYOK_CHAT messaging, context menu primitives",
+    "files": [
+      "js/background.js",
+      "js/context_menu.js"
+    ],
+    "component_key": "js/background",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/background.js",
+    "test_paths": [
+      "test/unit/background.test.js"
+    ]
+  },
+  {
+    "id": "feature_17_dnd",
+    "name": "Drag and Drop (Drag Handles + Reorder)",
+    "description": "Drag handles, section reorder, drag-over drop zones, keyboard reorder",
+    "files": [
+      "js/dnd.js"
+    ],
+    "component_key": "js/dnd",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/dnd.js",
+    "test_paths": [
+      "test/unit/dnd.test.js",
+      "test/browser_e2e/layer_reorder_keyboard.spec.js"
+    ]
+  },
+  {
+    "id": "feature_18_image_processor",
+    "name": "Image Processor (Canvas Operations)",
+    "description": "Canvas read/resize/compress for custom shape/border uploads",
+    "files": [
+      "js/image_processor.js"
+    ],
+    "component_key": "js/image_processor",
+    "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/image_processor.js",
+    "test_paths": [
+      "test/unit/image_processor.test.js"
+    ]
+  }
+]

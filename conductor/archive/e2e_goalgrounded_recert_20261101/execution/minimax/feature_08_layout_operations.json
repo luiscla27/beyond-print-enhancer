@@ -1,0 +1,95 @@
+{
+ "feature": "feature_08_layout_operations",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 2 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_per_layer.spec.js",
+   "file_id": "458389030228440",
+   "mp4_bytes": 796823,
+   "upload_response": {
+    "file": {
+     "file_id": 458389030228440,
+     "bytes": 796823,
+     "created_at": 1793464609,
+     "filename": "print_per_layer.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  },
+  {
+   "suite": "section_print_order.spec.js",
+   "file_id": "458386159309300",
+   "mp4_bytes": 861188,
+   "upload_response": {
+    "file": {
+     "file_id": 458386159309300,
+     "bytes": 861188,
+     "created_at": 1793464612,
+     "filename": "section_print_order.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_per_layer.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_per_layer.webm",
+   "webm_bytes": 2858338
+  },
+  {
+   "suite": "section_print_order.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_print_order.webm",
+   "webm_bytes": 2785141
+  }
+ ],
+ "usage": {
+  "total_tokens": 69664,
+  "total_characters": 0,
+  "prompt_tokens": 67536,
+  "completion_tokens": 2128,
+  "completion_tokens_details": {
+   "reasoning_tokens": 736
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Video 1 \u2014 `print_per_layer`\n\n### What is visibly observed\n\n- **WEBSITE:** The video begins with D&D Beyond\u2019s own navigation, loading screen, promotional banner, cookie/privacy dialog, and the underlying character sheet. These are not extension work and receive no behavioral credit.\n- **EXTENSION:** By roughly 7.6 seconds, the character-sheet sections have extension-added styling such as colored borders and reorganized/enhanced presentation. No loading indicator or transitional overlay is visible while this enhancement appears.\n- **EXTENSION:** Near 30.2 seconds, the dark codex-style control panel and the right-side **LAYER MANAGEMENT** panel appear. The panels contain:\n  - a **SECTIONS (22)** list with named rows;\n  - a **SHAPES** area;\n  - print/screen filter controls;\n  - the main panel\u2019s LAYOUT and OUTPUT sections, including a highlighted **PRINT** button.\n- **EXTENSION:** The Layer Management panel is visually distinct from the D&D Beyond site through its dark workbench styling, gold accents, and typography.\n- **EXTENSION:** After the panels appear, the recording remains essentially static. No Print, Visibility, Edit, or lock/unlock control is visibly operated, no row is dragged, and no print result or print-preview state is shown.\n\n### LAYER 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Evidence on camera |\n|---|---|\n| Layer Management panel lists layer rows with Print/Visibility/Edit controls | **PARTIALLY VISIBLE / NOT-VISIBLE for the asserted controls.** The panel and section rows are visible, but per-row Print/Visibility/Edit controls are not legibly demonstrated. |\n| Toggling Print Visibility disables the layer on print, including data, button, and CSS | **NOT-VISIBLE** |\n| Toggling Print Visibility back re-enables it and clears the print-disabled rule | **NOT-VISIBLE** |\n| Toggling layer Visibility hides and restores the layer DOM container | **NOT-VISIBLE** |\n| Locking/unlocking a shape layer flips Edit and applies locked styling | **NOT-VISIBLE** |\n| Section list mirrors front-to-back order and syncs print z-index | **NOT-VISIBLE** |\n| Print CSS enforces layer priority, sections 1000 versus shape layers 2000 | **NOT-VISIBLE** |\n\n### LAYER 2 \u2014 Product-aim conformance\n\n**Working or clearly available affordances**\n\n- The extension\u2019s floating control panel is clearly distinguishable from D&D Beyond\u2019s native UI.\n- The Layer Management panel exposes section rows and separate section/shape groupings.\n- Print-related controls are surfaced in the extension UI, including the prominent **PRINT** button and print/screen filters.\n- The extension-enhanced sheet and panels use a coherent dark, gold-accented visual treatment rather than imitating the website.\n\n**Missing or rough affordances**\n\n- **No activation/loading transition is visible.** The enhancement and panels appear abruptly; there is no \u201cloading\u2026\u201d overlay or other clear progress affordance.\n- **No successful-operation toast is shown.** The video does not demonstrate feedback such as \u201cLayout saved\u201d or another confirmation after a control is used.\n- **No error or failure state is shown.**\n- **No disabled state is shown.** Although some controls appear dimmed, the frames do not demonstrate why or whether they become actionable.\n- **No first-run hint card is shown.**\n- The extension\u2019s controls are **not visibly operated**, so their responsiveness, state feedback, and disabled behavior cannot be judged.\n- The right panel is dense and its small per-row controls are difficult to distinguish at the recorded scale.\n\n**Video 1 verdict:** The extension UI is present, but nearly all asserted interactions are absent from the sampled footage, and the activation transition is visibly missing.\n\n---\n\n## Video 2 \u2014 `section_print_order`\n\n### What is visibly observed\n\n- **WEBSITE:** The beginning again shows D&D Beyond\u2019s own navigation, loading state, promotional banner, cookie/privacy dialog, and character sheet. None of these count as extension functionality.\n- **EXTENSION:** Around 7.6 seconds, the sheet gains extension styling and reorganized/enhanced section presentation. There is again no loading overlay or other activation progress indicator.\n- **EXTENSION:** At approximately 28.6\u201329 seconds, the floating control panel and Layer Management panel appear. The Layer Management panel visibly lists **22 sections** and multiple shapes.\n- **EXTENSION:** The layer rows are visible, but no card is dragged. The camera then remains static through the end.\n- No front-to-back ordering change, DOM reordering animation, print z-index value, or printed output is shown.\n\n### LAYER 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Evidence on camera |\n|---|---|\n| Top-of-list card carries the highest print z, mirroring front-to-back order | **NOT-VISIBLE** |\n| Dragging the top card to the bottom lowers its print z and reorders the DOM | **NOT-VISIBLE** |\n| Dragging the last card back to the top gives it the highest print z | **NOT-VISIBLE** |\n\n### LAYER 2 \u2014 Product-aim conformance\n\n**Working or clearly available affordances**\n\n- The Layer Management panel is clearly extension-owned and visually separate from the base website.\n- Section and shape layers are presented in organized lists.\n- The visible list structure provides an apparent prerequisite for reorder operations.\n- The extension\u2019s visual language remains consistent across the main control panel, Layer Management panel, and enhanced sheet.\n\n**Missing or rough affordances**\n\n- **No activation/loading transition is visible.** The extension UI appears suddenly without a loading/progress overlay.\n- **No drag interaction or drag feedback is shown:** no grabbed-card state, drop target, insertion guide, or animated reordering is visible.\n- **No toast or other reorder confirmation appears.**\n- **No error state appears** when no drag is performed.\n- **No disabled state is demonstrated** for list items or controls.\n- **No first-run hint card appears.**\n- Although section ordering is central to this suite, the recording never demonstrates reordering or gives visible feedback about the resulting print priority.\n\n**Video 2 verdict:** The extension\u2019s layer list is visible, but the complete asserted drag-and-print-order behavior is not sampled on camera.\n\n## Overall certification\n\nBoth videos visibly establish that the extension has a distinct, polished UI over D&D Beyond. However, neither video shows the interactions constituting the tested behavior: there are no visible print/visibility/edit operations, no shape lock/unlock demonstration, and no section-card dragging or print-order verification. Both also lack a visible activation/loading transition. The relevant behaviors are therefore not witnessed rather than inferred from code or suite titles.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_per_layer.spec.js, section_print_order.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793464634522
+}

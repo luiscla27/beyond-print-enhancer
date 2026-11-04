@@ -1,0 +1,28 @@
+{
+  "name": "Launcher - e2e_feature_inventory_minimax_20261029",
+  "purpose": "Launch ONE separate Reasonix session that (a) runs all 82 browser_e2e suites live against the unpacked MV3 extension with full-video capture, (b) sends each feature's full video to MiniMax-3.1-Flash via the official MiniMax API for certification, (c) writes the verdict. Sequential (POOL_SIZE=1) by deliberation decision - the certifier is ONE seat (operator directive).",
+  "created": "2026-10-29",
+  "launcher_kind": "single-session sequential (deliberation/ADOPTED candidate A; candidate B fleet pool REJECTED on AC-6 singular-seat + AC-2 bundle-split)",
+  "repo_root": "C:\\luiscla27\\projects\\dndbeyond-printenhance",
+  "track_dir": "conductor/archive/e2e_feature_inventory_minimax_20261029",
+  "launch_prompt": "conductor/archive/e2e_feature_inventory_minimax_20261029/LAUNCH-PROMPT.md",
+  "operator_actions_required": [
+    "start one fresh Reasonix session (separate chat/session) against this repo",
+    "paste the LAUNCH-PROMPT.md body as the session's task",
+    "the session needs the unpacked extension path (it builds the video-capturing launcher itself from test/browser_e2e/_helpers/dom.js's launchExtensionContext) and the project's official MiniMax API credential (first-party minimax family already integrated in vendor/relay/model_catalog.py)",
+    "wait for the session to commit verdict.md + progress.jsonl (or a partial verdict if it paused mid-run)",
+    "relaunch and re-paste the same prompt to resume from progress.jsonl's last row"
+  ],
+  "expected_artifacts": [
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/verdict.md",
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/progress.jsonl",
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/execution/evidence/<feature>/<video> (full Playwright videos, retained)",
+    "conductor/archive/e2e_feature_inventory_minimax_20261029/execution/minimax/<feature>.json (request, resolved model id, verbatim verdict)"
+  ],
+  "safeguards": [
+    "session must not modify js/**, manifest.json, or any EXISTING test file (AC-4 aborts on any)",
+    "new launcher/videography code lives ONLY under this track's execution/ directory",
+    "certifier is MiniMax via the official API only; a RED suite is reported, never patched",
+    "the requested model id 'minimax 3.1 flash' must be pinned to the real official-api model name at Phase 0, with the resolution (or mismatch) recorded"
+  ]
+}

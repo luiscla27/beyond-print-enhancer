@@ -60,6 +60,14 @@ const CONTENT_PROBE_NAMES = [
   // byok_ai_layout_20260915 Phase 3 — the BYOK relay, driven from the ISOLATED world (the only
   // world whose sender passes the worker's own gate), plus the worker's decision counters.
   "byokRelayProbe",
+  // ux_quick_wins_20261025 Phase 2 (BEYOND-13) does NOT add a probe here: the network-failure
+  // injection must patch `self.fetch` in the SERVICE WORKER's own scope, and a probe declared in
+  // this list runs in the content script's isolated world — the wrong scope, where patching
+  // `self.fetch` would leave the worker's dial untouched and the injected "failure" would be a
+  // no-op that still lets a real request through. `byok_relay.spec.js` therefore injects with
+  // `serviceWorker(ctx).evaluate(...)` directly, which is the only place that scope exists. (Two
+  // probes were declared here first; they were unreachable — no spec called them — and a dead probe
+  // that looks like it does something is worse than an absent one.)
   // byok_ai_layout_20260915 Phase 4 — the arrange flow, its panel row, and the counters that make
   // "zero applies" / "exactly one save" observable in the REAL page.
   "aiArrangeModuleRead",
@@ -68,8 +76,45 @@ const CONTENT_PROBE_NAMES = [
   "aiArrangeProbe",
   "aiArrangePanelRead",
   "aiArrangePanelClick",
+  // ux_quick_wins_20261025 Phase 3 (AC-5 / BEYOND-14) — every persistence seam the
+  // track's reload cases drive: the shape + border reuse libraries (IndexedDB
+  // CUSTOM_SHAPES_STORE / CUSTOM_BORDERS_STORE via window.__DDBStorage, the SAME
+  // object a real upload or an AI border save writes through), the layer manager's
+  // own mode/delete seams, the template application, and the two read-backs that
+  // make "survived a reload" observable (the library contents and the layout
+  // record's own customShapes array). These are PROBES and not page.evaluate reads
+  // because __DDBStorage and DomManager are content-script-world globals — invisible
+  // from the page's MAIN world, like window.Modals.
+  "saveShapeLibraryEntry",
+  "deleteShapeLibraryEntry",
+  "readShapeLibrary",
+  "addCustomShapeToCurrentLayout",
+  "readCurrentLayoutCustomShapes",
+  "saveBorderLibraryEntry",
+  "deleteBorderLibraryEntry",
+  "readBorderLibrary",
+  "setLayerMode",
+  "removeShapeLayer",
+  "reorderLayersProbe",
+  "toggleLayerLockProbe",
+  "focusedLayerRowProbe",
+  "focusRowProbe",
+  "reorderShapeLayersProbe",
+  "persistLayoutNow",
+  "applyTemplateRecord",
+  "readTemplateSideEffects",
+  "readBootRestoreState",
+  // ux_quick_wins_20261025 Phase 6 (BEYOND-12) — settings export/import E2E.
+  "collectSettingsBundleRead",
+  "validateSettingsBundleProbe",
+  "applySettingsBundleProbe",
+  "readGlobalFiltersProbe",
+  "writeGlobalFiltersProbe",
+  "readAiSettingsProbe",
+  "writeAiSettingsProbe",
+  // BEYOND-19 AC-5 — the save-to-browser in-flight marker (content-script world).
+  "saveBrowserProbe",
 ];
-
 /**
  * Run a named probe INSIDE the extension's isolated world — the world the
  * content script and this enhancer actually run in — and return its
@@ -804,7 +849,10 @@ async function contentCall(ctx, name, args = []) {
             st.applies = 0;
             st.saves = 0;
             st.out = undefined;
-            st.running = api.arrangeWithAi(o.instruction);
+            st.running = api.arrangeWithAi(o.instruction, {
+              capabilities: o.capabilities,
+              selectedSectionId: o.selectedSectionId,
+            });
             st.running.then(
               (r) => {
                 st.out = r;
@@ -824,6 +872,28 @@ async function contentCall(ctx, name, args = []) {
               tick();
             });
             return Object.assign({ ok: true, seen, out: st.out }, count());
+          }
+
+          if (o.action === "async_start") {
+            await S.setApiKey(o.key);
+            await S.saveSettings({ provider: "openai", model: o.model || "gpt-4o-mini" });
+            st.applies = 0;
+            st.saves = 0;
+            st.out = undefined;
+            st.running = api.arrangeWithAi(o.instruction, {
+              capabilities: o.capabilities,
+              selectedSectionId: o.selectedSectionId,
+            });
+            st.running.then(
+              (r) => {
+                st.out = r;
+              },
+              (err) => {
+                st.out = { ok: false, stage: "threw", code: String((err && err.message) || err) };
+              },
+            );
+            // Return immediately without waiting - caller will poll with "await"
+            return Object.assign({ ok: true, started: true }, count());
           }
 
           if (o.action === "answer") {
@@ -872,6 +942,363 @@ async function contentCall(ctx, name, args = []) {
           if (o.action === "settings") {
             await S.saveSettings({ provider: "openai", model: o.model || "gpt-4o-mini" });
             return { ok: true, settings: await S.loadSettings() };
+          }
+
+          // Phase 4 (measured defect, 2026-09-29). The gallery's first Muse round returned NOT MET
+          // on all six criteria and named the SAME thing in every cell: "dark gray/black spiky barbed
+          // rectangle". The gallery was photographing the wrong section: `aiArrangeFirstSection`
+          // takes the first row with `width >= 100`, which on the demo sheet is the section at
+          // record x 16..240, and the extension's OWN control tray is `position: fixed` at viewport
+          // x 10..258 with `z-index: 10000` (window.Z.PANEL, js/controls.js:104) while a section is
+          // z-index 10. MEASURED here with `elementsFromPoint` at the section's centre: the stack is
+          // `.be-ctl-tray-head` > `.be-ctl-tray` > `.be-ctl-scroll` > the fixed `z-index:10000`
+          // tray — the border overlay (`z-index: -1`, behind the section) can never be in that stack,
+          // and the tray's own `rgb(25, 20, 16)` background is the "dark rectangle" the reviewer saw.
+          //
+          // The fix is in the CAMERA, not the product: pick a section that is (a) large enough to
+          // read, (b) clear of every fixed/opaque surface at its own centre and at its four corners,
+          // and (c) as far down the page as such a section can be. `aiArrangeEvidenceTarget` already
+          // implements (a)-(c) but is tuned for a GEOMETRY move (it needs a free destination at
+          // least `minDist` away), which is why the diag run above found no `pick` for a static
+          // border. This action is the border-specific version: it reports the candidate AND its
+          // clearance numbers so the choice is falsifiable rather than curated.
+          if (o.action === "pickBorderTarget") {
+            const api = window.AiArrange;
+            if (!api || typeof window.scanLayout !== "function") {
+              return { ok: false, why: "no AiArrange or scanLayout in this world" };
+            }
+            const layout = await window.scanLayout();
+            const wrap = document.getElementById("print-layout-wrapper");
+            const origin = wrap ? wrap.getBoundingClientRect() : { x: 0, y: 0 };
+
+            // Every surface that would PAINT OVER a section: the tool's own fixed panels (z 10000+)
+            // and any opaque ancestor between the sheet and the section.
+            const fixedChrome = Array.from(document.body.querySelectorAll("*"))
+              .filter((el) => {
+                const cs = getComputedStyle(el);
+                if (cs.position !== "fixed" || cs.display === "none" || cs.visibility === "hidden") return false;
+                if (parseInt(cs.zIndex, 10) < 1000) return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 20 && r.height > 20;
+              })
+              .map((el) => {
+                const r = el.getBoundingClientRect();
+                return {
+                  cls: String(el.className || "").slice(0, 40),
+                  z: parseInt(getComputedStyle(el).zIndex, 10) || 0,
+                  x: r.x, y: r.y, w: r.width, h: r.height,
+                };
+              });
+
+            const rows = api.collectSections(layout).rows.filter(
+              (r) =>
+                r.width >= 150 &&
+                r.height >= 100 &&
+                Number.isFinite(r.left) &&
+                Number.isFinite(r.top) &&
+                Boolean(document.getElementById(r.id)),
+            );
+            const scored = rows.map((r) => {
+              const el = document.getElementById(r.id);
+              const rect = el.getBoundingClientRect();
+              // Centre + four corners, in viewport space. A border is a FRAME, so the four corners
+              // are the pixels a reviewer judges — a section whose centre is clear but whose corner
+              // is under the tray is exactly the case that made round 1 unreadable.
+              const probes = [
+                [rect.x + rect.width / 2, rect.y + rect.height / 2],
+                [rect.x + 6, rect.y + 6],
+                [rect.x + rect.width - 6, rect.y + 6],
+                [rect.x + 6, rect.y + rect.height - 6],
+                [rect.x + rect.width - 6, rect.y + rect.height - 6],
+              ];
+              const obstructions = [];
+              for (const [px, py] of probes) {
+                for (const c of fixedChrome) {
+                  if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) {
+                    obstructions.push(c.cls || "fixed@" + c.z);
+                  }
+                }
+                // A non-section element painted above the section at this point is equally fatal.
+                const top = document.elementFromPoint(px, py);
+                if (top && !(el === top || el.contains(top) || top.contains(el))) {
+                  const cls = String(top.className || "").slice(0, 40);
+                  if (cls) obstructions.push(cls);
+                }
+              }
+              return {
+                id: r.id,
+                title: r.title,
+                left: r.left,
+                top: r.top,
+                width: r.width,
+                height: r.height,
+                viewport: { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width), h: Math.round(rect.height) },
+                obstructions: Array.from(new Set(obstructions)),
+                area: Math.round(rect.width * rect.height),
+              };
+            });
+            scored.sort((a, b) => a.obstructions.length - b.obstructions.length || b.area - a.area);
+            const clean = scored.filter((s) => s.obstructions.length === 0);
+            const best = clean[0] || scored[0] || null;
+            return {
+              ok: Boolean(best),
+              pick: best,
+              cleanCount: clean.length,
+              candidateCount: scored.length,
+              fixedChrome: fixedChrome.slice(0, 8),
+              wrapperOrigin: { x: origin.x, y: origin.y },
+              rejected: scored
+                .filter((s) => s.obstructions.length > 0)
+                .slice(0, 6)
+                .map((s) => ({ id: s.id, obstructions: s.obstructions })),
+            };
+          }
+
+          // Phase 4: the isolated-world seam probe. Returns the border-choke-point names so
+          // the gallery spec can assert the module exists in the SAME world the product's own
+          // content script runs in. This is deliberately a NAMES-only answer: a real border
+          // is applied below via `applyBorder`, and the choke point's own verdict (rendered?
+          // hostile? z-index?) is what the gallery measures, not the existence of the seam.
+          if (o.action === "probeAiBorder") {
+            const api = window.AiBorder;
+            return {
+              ok: Boolean(api),
+              render: typeof (api && api.renderBorderSvg),
+              read: typeof (api && api.readBorderSvg),
+              clear: typeof (api && api.clearBorderSvg),
+              adjust: typeof (api && api.adjustBorderSvg),
+              transform: typeof (api && api.transformBorderSvg),
+              canAdjust: typeof (api && api.canAdjustBorder),
+            };
+          }
+
+          // Phase 4 gallery-only: render a raw SVG through the choke point without the BYOK relay.
+          // The gallery's designs come from a local generator (not the extension's dialog), and the
+          // point of the proof is the choke point's DOM verdict — rendered? hostile? z-index? — so
+          // this drives `window.AiBorder.renderBorderSvg` directly and reads back the geometry the
+          // overlaid div's own inline styles carry (AC-8). It reuses the SAME clear-before-each loop
+          // the per-design case above uses, so a leaked border cannot make the next frame carry a
+          // stale overlay. `aiArrangeFirstSection`'s answer is trusted for the section id — the
+          // caller picked a real, scanned section, which is exactly the precondition AC-5 enforces
+          // in the product flow.
+          if (o.action === "applyBorder") {
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            if (!section) return { ok: false, reason: "no_section", id: sid };
+            const api = window.AiBorder;
+            if (!api || typeof api.renderBorderSvg !== "function") {
+              return { ok: false, reason: "no_AiBorder" };
+            }
+            // Always clear the previous border first, so the per-design verdict is the ONLY overlay.
+            api.clearBorderSvg(section);
+            const res = api.renderBorderSvg(section, o.rawSvg || "");
+            if (!res || !res.ok) {
+              return {
+                ok: false,
+                reason: (res && (res.reason || res.error)) || "rejected",
+                rendered: false,
+                read: null,
+                hostile: false,
+                geom: null,
+              };
+            }
+            const read = api.readBorderSvg(section);
+            // D4: the border is painted by the product's own ::before border-image slot,
+            // driven by four inline custom properties on the section. The geometry the
+            // spec asserts (behind content, non-interactive) is the ::before rule's, so
+            // the probe reads the COMPUTED style of that pseudo-element.
+            const cs = getComputedStyle(section, "::before");
+            const geom = {
+              position: cs.position,
+              pointerEvents: cs.pointerEvents,
+              zIndex: parseInt(cs.zIndex, 10),
+              borderImageSource: cs.borderImageSource,
+            };
+            return {
+              ok: true,
+              rendered: api.hasBorderSvg(section),
+              read,
+              hostile: /<script|<foreignObject|onload=|xlink:href|href="[^#]/i.test(read || ""),
+              geom,
+            };
+          }
+
+          // AC-2 (option A): apply a client-side weight/style adjustment through the choke point.
+          // Reaches `window.AiBorder.adjustBorderSvg`, which re-runs the transformed bytes through
+          // `renderBorderSvg` (the trust root re-validates). Returns the adjusted SVG record, the
+          // original bytes (for compare), the `adjustable` gate, and the before/after stroke-width
+          // so the spec can assert the transform actually changed the painted bytes.
+          if (o.action === "adjustBorder") {
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            if (!section) return { ok: false, reason: "no_section", id: sid };
+            const api = window.AiBorder;
+            if (!api || typeof api.adjustBorderSvg !== "function") {
+              return { ok: false, reason: "no_AiBorder" };
+            }
+            const before = api.readBorderSvg(section);
+            const beforeSw = before ? (before.match(/stroke-width="([\d.]+)"/) || [])[1] : null;
+            const res = api.adjustBorderSvg(section, { weight: o.weight || 1, styleIndex: o.styleIndex || 0 });
+            const after = api.readBorderSvg(section);
+            const afterSw = after ? (after.match(/stroke-width="([\d.]+)"/) || [])[1] : null;
+            const afterDash = after ? (after.match(/stroke-dasharray="([^"]*)"/) || [])[1] : null;
+            return {
+              ok: res.ok,
+              reason: res.reason,
+              adjustable: res.adjustable,
+              original: res.original,
+              weightChanged: beforeSw !== null && afterSw !== null && beforeSw !== afterSw,
+              beforeSw,
+              afterSw,
+              afterDash,
+            };
+          }
+
+          // BEYOND-10 (AC-1/AC-2/AC-3): the refinement LOOP, driven through the surface the product
+          // renders. The probe never calls the seam "instead of" the UI — every `click` op dispatches
+          // a real click on a real button inside the surface, so what is measured is the wiring the
+          // user has, not a private path. `open` and `close` exist because a probe cannot reach into
+          // a closed surface; the section comes from the caller (a real scanned section id).
+          if (o.action === "refineBorder") {
+            const api = window.BorderRefine;
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            const surface = () => document.querySelector("[data-be-border-refine]");
+            const facts = () => {
+              const root = surface();
+              if (!root) return { open: false, state: api ? api.getState() : null };
+              const attr = (sel, name) => {
+                const n = root.querySelector(sel);
+                return n ? n.getAttribute(name) : null;
+              };
+              return {
+                open: true,
+                state: api ? api.getState() : null,
+                weights: Array.from(root.querySelectorAll("[data-be-refine-weight]")).map((n) =>
+                  n.getAttribute("data-be-refine-weight"),
+                ),
+                styles: Array.from(root.querySelectorAll("[data-be-refine-style]")).map((n) =>
+                  n.getAttribute("data-be-refine-style"),
+                ),
+                variants: Array.from(root.querySelectorAll("[data-be-refine-variant]")).map((n) =>
+                  n.getAttribute("data-be-refine-variant"),
+                ),
+                pressedWeight: attr('[data-be-refine-weight][aria-pressed="true"]', "data-be-refine-weight"),
+                pressedStyle: attr('[data-be-refine-style][aria-pressed="true"]', "data-be-refine-style"),
+                // The surface's INLINE reason text, kept under its own key. It must not be called
+                // `reason`: this object is spread into every op's return value, and a refusal op
+                // (`click` on a disabled control) has a machine `reason` of its own — the collision
+                // overwrote "control_disabled" with the prose and made the fill-only case unreadable.
+                inlineReason: (root.querySelector("[data-be-refine-reason]") || {}).textContent || "",
+                diff: (root.querySelector("[data-be-refine-diff]") || {}).textContent || "",
+                regenerateDisabled: !!(() => {
+                  const b = root.querySelector("[data-be-refine-regenerate]");
+                  return b && b.disabled;
+                })(),
+              };
+            };
+            if (o.op === "open") {
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              if (!api || typeof api.open !== "function") return { ok: false, reason: "no_BorderRefine" };
+              api.open(section);
+              return Object.assign({ ok: true }, facts());
+            }
+            if (o.op === "close") {
+              if (api && typeof api.close === "function") api.close();
+              return { ok: true, open: !!surface() };
+            }
+            if (o.op === "panelRow") {
+              // The PRODUCT's own affordance: the properties panel's "Refine AI border" row, rendered
+              // by the real panel for the real selected section (AC-1's discoverability half).
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              const panel = document.getElementById("print-enhance-properties-panel");
+              if (!window.PropertiesPanel || !panel) return { ok: false, reason: "no_panel" };
+              window.PropertiesPanel.setActiveSection(section);
+              window.PropertiesPanel.updatePropertiesPanel(panel);
+              const row = panel.querySelector(".be-prop-border-refine");
+              return {
+                ok: !!row,
+                label: row ? String(row.textContent || "") : null,
+                title: row ? row.getAttribute("title") : null,
+              };
+            }
+            if (o.op === "state") return Object.assign({ ok: !!api }, facts());
+            if (o.op === "click") {
+              const root = surface();
+              if (!root) return { ok: false, reason: "no_surface" };
+              const node = root.querySelector(o.selector);
+              if (!node) return { ok: false, reason: "no_control", selector: o.selector };
+              if (node.disabled) return Object.assign({ ok: false, reason: "control_disabled" }, facts());
+              node.click();
+              return Object.assign({ ok: true }, facts());
+            }
+            if (o.op === "record") {
+              // THE SETTINGS HALF OF AC-3, read through the product's OWN scan: what would be
+              // written by the debounced autosave is exactly this record.
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              if (typeof window.scanLayout !== "function") return { ok: false, reason: "no_scanLayout" };
+              return window.scanLayout().then((layout) => {
+                const rec = (layout && layout.sections && layout.sections[sid]) || null;
+                const painted = window.AiBorder.readBorderSvg(section);
+                return {
+                  ok: !!rec,
+                  borderSvgSw: painted ? (painted.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                  borderSvgDash: painted ? (painted.match(/stroke-dasharray="([^"]*)"/) || [])[1] || null : null,
+                  borderAdjust: rec ? rec.borderAdjust : null,
+                  recordBorderSvgSw: rec && rec.borderSvg ? (rec.borderSvg.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                };
+              });
+            }
+            if (o.op === "compare") {
+              if (!section) return { ok: false, reason: "no_section", id: sid };
+              if (!api || typeof api.compare !== "function") return { ok: false, reason: "no_BorderRefine" };
+              const cmp = api.compare(section);
+              return {
+                ok: cmp.ok,
+                differs: cmp.differs,
+                weight: cmp.weight,
+                styleIndex: cmp.styleIndex,
+                originalSw: cmp.original ? (cmp.original.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                refinedSw: cmp.refined ? (cmp.refined.match(/stroke-width="([\d.]+)"/) || [])[1] || null : null,
+                refinedDash: cmp.refined ? (cmp.refined.match(/stroke-dasharray="([^"]*)"/) || [])[1] || null : null,
+              };
+            }
+            return { ok: false, reason: "unknown_op", op: o.op };
+          }
+
+          if (o.action === "printState") {
+            // AC-9a path H — the PRINT pipeline. The probe reads what the border looks like
+            // while the page is emulating print media: the ::before slot's COMPUTED border
+            // image source (the product's own paint), the section's own carried bytes, and
+            // the values a criterion could forbid. It reads the DOM, not the helper's
+            // return, so a path that short-circuited the choke point could not pass it.
+            const sid = o.sectionId;
+            const section = sid ? document.getElementById(sid) : null;
+            if (!section) return { ok: false, reason: "no_section", id: sid };
+            const api = window.AiBorder;
+            if (!api || typeof api.hasBorderSvg !== "function") {
+              return { ok: false, reason: "no_AiBorder" };
+            }
+            const cs = getComputedStyle(section, "::before");
+            const raw = section.dataset ? section.dataset.borderRawSvg || null : null;
+            const slice = section.style ? section.style.getPropertyValue("--border-img-slice") : "";
+            const width = section.style ? section.style.getPropertyValue("--border-img-width") : "";
+            const outset = section.style ? section.style.getPropertyValue("--border-img-outset") : "";
+            return {
+              ok: true,
+              hasBorder: api.hasBorderSvg(section),
+              // The computed `border-image-source` is what Chromium would actually load in
+              // print. An empty string means the slot painted nothing at all.
+              printedSource: cs.borderImageSource,
+              slice,
+              width,
+              outset,
+              svg: raw,
+              hostile: raw
+                ? /<script|<foreignObject|onload=|onerror=|xlink:href|href="[^#]|@import/i.test(raw)
+                : false,
+              noScriptInSource: !/<script|javascript:/i.test(cs.borderImageSource || ""),
+            };
           }
 
           return { ok: false, why: "unknown action " + o.action };
@@ -1298,6 +1725,664 @@ async function contentCall(ctx, name, args = []) {
             ok: true,
             hueVar: root.getPropertyValue("--be-hue-filter").trim(),
             decorationVar: root.getPropertyValue("--be-decoration-filter").trim(),
+          };
+        },
+
+        // ---------------------------------------------------------------- *
+        // ux_quick_wins_20261025 Phase 3 (AC-5 / BEYOND-14) probes.         *
+        // ---------------------------------------------------------------- *
+
+        /**
+         * Write one row into the CUSTOM_SHAPES store — the exact join a real
+         * upload takes (js/shape_picker.js uploadFromFile -> __DDBStorage.
+         * saveCustomShape). The store is keyed on `id`, so this is an upsert.
+         */
+        saveShapeLibraryEntry: async (shape) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.saveCustomShape !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveCustomShape in this world" };
+          }
+          if (!shape || !shape.id) return { ok: false, why: "probe needs {id, name, data}" };
+          try {
+            await s.saveCustomShape(shape);
+            return { ok: true, id: shape.id };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /** Deletes through the store directly: js/storage.js exposes NO
+         * deleteCustomShape product seam (only deleteCustomBorder), and this
+         * probe exists so a test can leave the library as it found it. Same
+         * IndexedDB, same store name the product's own writes go to. */
+        deleteShapeLibraryEntry: async (id) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.init !== "function") {
+            return { ok: false, why: "no __DDBStorage in this world" };
+          }
+          const db = await s.init();
+          return new Promise((resolve) => {
+            const tx = db.transaction(["custom_shapes"], "readwrite");
+            const req = tx.objectStore("custom_shapes").delete(id);
+            req.onsuccess = () => resolve({ ok: true });
+            req.onerror = () =>
+              resolve({ ok: false, why: String(req.error && req.error.message) });
+          });
+        },
+        readShapeLibrary: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.getCustomShapes !== "function") {
+            return { ok: false, why: "no __DDBStorage.getCustomShapes in this world" };
+          }
+          try {
+            return await s.getCustomShapes();
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /** Push the id onto the CHARACTER layout record's customShapes — the
+         * second half of a real upload, which persists BOTH the library row and
+         * the record that tells the sheet which library shapes belong to it. */
+        addCustomShapeToCurrentLayout: async (shapeId) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.loadLayout !== "function" || !s.saveLayout) {
+            return { ok: false, why: "no __DDBStorage layout seams in this world" };
+          }
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          const layout = (await s.loadLayout(cid)) || {
+            version: s.SCHEMA_VERSION,
+            sections: {},
+          };
+          if (!layout.customShapes) layout.customShapes = [];
+          if (!layout.customShapes.includes(shapeId)) layout.customShapes.push(shapeId);
+          await s.saveLayout(cid, layout);
+          return { ok: true, id: shapeId, characterId: cid };
+        },
+        readCurrentLayoutCustomShapes: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.loadLayout !== "function") {
+            return { ok: false, why: "no __DDBStorage.loadLayout in this world" };
+          }
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          const layout = await s.loadLayout(cid);
+          return (layout && layout.customShapes) || [];
+        },
+        saveBorderLibraryEntry: async (border) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.saveCustomBorder !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveCustomBorder in this world" };
+          }
+          if (!border || !border.id) return { ok: false, why: "probe needs {id, svg}" };
+          try {
+            await s.saveCustomBorder(border);
+            return { ok: true, id: border.id };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        deleteBorderLibraryEntry: async (id) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.deleteCustomBorder !== "function") {
+            return { ok: false, why: "no __DDBStorage.deleteCustomBorder in this world" };
+          }
+          try {
+            await s.deleteCustomBorder(id);
+            return { ok: true };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        readBorderLibrary: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.getCustomBorders !== "function") {
+            return { ok: false, why: "no __DDBStorage.getCustomBorders in this world" };
+          }
+          try {
+            return await s.getCustomBorders();
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /** One of the three AC-1 modes for the NAMED layer, through the layer
+         * manager's own setLayerMode — the same mutation path the mode strip's
+         * segments take. */
+        setLayerMode: async (layerId, mode) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const layer = lm.shapeLayers.find((l) => l.id === layerId);
+          if (!layer) return { ok: false, why: `no shape layer ${layerId}` };
+          if (typeof lm.setLayerMode !== "function") {
+            return { ok: false, why: "no setLayerMode on the layer manager" };
+          }
+          const got = lm.setLayerMode(layer, mode);
+          if (!got) return { ok: false, why: `mode "${mode}" refused` };
+          return { ok: true, mode: got, id: layerId };
+        },
+        removeShapeLayer: async (layerId) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          if (typeof lm.deleteShapeLayer !== "function") {
+            return { ok: false, why: "no deleteShapeLayer on the layer manager" };
+          }
+          lm.deleteShapeLayer(layerId);
+          return { ok: true, id: layerId };
+        },
+        /**
+         * Phase 5 (AC-6) lock control for the REFUSAL cases ONLY. args =
+         * { layerId, locked: true }. Flips the lock flag on ONE layer through the
+         * manager's own state field (the isLocked flip a real lock click makes),
+         * then refreshes the drag affordance. Two deliberate deviations from a
+         * real lock UI click, both recorded:
+         *   1. no pushMutation — a real toggle pushes a LAYER_FLAG undo record,
+         *      and this case's undo-depth assertions must not be polluted by a
+         *      record that has nothing to do with the arrow press under test.
+         *   2. no UNLOCK cascade — the product's unlock locks every OTHER layer
+         *      (_toggleLayerLockNow, layer_manager.js:1865-1872), which would
+         *      poison the rest of the page's stack for no reason the AC-6
+         *      refusal case needs. Only the named layer's flag changes.
+         */
+        toggleLayerLockProbe: async ({ layerId, locked }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const layer = lm.shapeLayers.find((l) => l.id === layerId);
+          if (!layer) return { ok: false, why: `no shape layer ${layerId}` };
+          layer.isLocked = locked === true;
+          if (typeof lm.syncLayerRowDrag === "function") lm.syncLayerRowDrag();
+          return { ok: true, id: layerId, isLocked: layer.isLocked };
+        },
+        /**
+         * Phase 5 (AC-6): which layer row holds focus in the panel — the proof
+         * restoreRowFocus re-attached the caret to the moved row after the
+         * rebuild instead of letting it drop with the detached element.
+         */
+        focusedLayerRowProbe: async () => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const activeEl = document.activeElement;
+          let focusedLayerId = null;
+          if (activeEl && typeof activeEl.closest === "function") {
+            const focusedRow = activeEl.closest(".be-layer-row");
+            if (focusedRow) focusedLayerId = focusedRow.getAttribute("data-layer-id");
+          }
+          return { ok: true, focusedLayerId };
+        },
+        /**
+         * Phase 5 (AC-6): FOCUS a layer row inside the content world. The panel
+         * rows are content-script-world DOM (js/dom/layer_manager.js's rebuildPanel),
+         * so the caret must be set here, in the same world the keydown handler
+         * lives in — a page-side focus would target an element whose row the
+         * handler still owns, and the AC-6 cases press keys (page.keyboard.press)
+         * that only reach the element holding the caret. Returns the row's
+         * tabindex and draggable state so a case can precondition on them.
+         */
+        focusRowProbe: async ({ layerId }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          const row = lm.panel
+            ? lm.panel.querySelector(`[data-layer-id="${layerId}"]`)
+            : null;
+          if (!row) return { ok: false, why: `no panel row for ${layerId}` };
+          row.focus({ preventScroll: true });
+          return {
+            ok: document.activeElement === row,
+            tabindex: row.getAttribute("tabindex"),
+            draggable: row.getAttribute("draggable"),
+            focusedLayerId: document.activeElement === row ? layerId : null,
+          };
+        },
+        /**
+         * Phase 5 (AC-6), drag-equivalence case: commit a move through
+         * reorderShapeLayers ITSELF — the exact API bindRowDrag's drop handler
+         * calls (js/dom/layer_manager.js:859 region) with the beforeId a drop
+         * computes. Runs the same tail a drop runs (print-z banding + the
+         * RESTACK-class undo record opened BEFORE the reorder), so the order it
+         * writes is the order a real drop writes — NOT a shortcut around the
+         * drag path. args = { layerId, beforeId (null = end of stack) }.
+         */
+        reorderShapeLayersProbe: async ({ layerId, beforeId }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          if (typeof lm.reorderShapeLayers !== "function") {
+            return { ok: false, why: "no reorderShapeLayers on the layer manager" };
+          }
+          if (typeof window.undoDepth !== "function") {
+            return { ok: false, why: "no window.undoDepth" };
+          }
+          const orderBefore = lm.shapeLayers.map((l) => l.id);
+          const depthBefore = window.undoDepth();
+          const snapshot = lm.snapshotStackState ? lm.snapshotStackState() : null;
+          const mut = window.beginMutation ? window.beginMutation(snapshot) : null;
+          const changed = lm.reorderShapeLayers(layerId, beforeId || null);
+          const orderAfter = lm.shapeLayers.map((l) => l.id);
+          if (changed && mut && window.pushMutation) {
+            window.pushMutation(mut, "Reorder layers (drop-path probe)", window.MUTATION_CLASSES.RESTACK,
+              (layout, snap) => lm.repairStackState(layout, snap));
+          }
+          return {
+            ok: changed === true,
+            orderBefore,
+            orderAfter,
+            undoDepthBefore: depthBefore,
+            undoDepthAfter: window.undoDepth(),
+          };
+        },
+        /**
+         * ux_quick_wins_20261025 Phase 5 (AC-6 / BEYOND-15) — read back a keyboard
+         * restack. args = { layerId, dir ('up'|'down') }. Returns:
+         *   ok        — reorderLayerByKeyboard returned true (the stack actually changed)
+         *   orderBefore / orderAfter — the shapeLayers ids around the move
+         *   undoDepth — window.undoDepth() after the move: the keyboard path opens a
+         *               RESTACK-class mutation before it reorders (the same record a
+         *               drag drop pushes), so a true move must leave the stack ≥1 deep
+         *               and a refused move must leave it untouched.
+         * The REAL ArrowUp/ArrowDown keypress is driven from the spec with
+         * page.keyboard.press on a focused row — this probe only READS the result,
+         * so the case exercises the DOM keydown handler, not a side-door call.
+         */
+        reorderLayersProbe: async ({ layerId, dir }) => {
+          const lm = window.DomManager
+            ? window.DomManager.getInstance().getLayerManager()
+            : null;
+          if (!lm) return { ok: false, why: "no layer manager" };
+          if (typeof lm.reorderLayerByKeyboard !== "function") {
+            return { ok: false, why: "no reorderLayerByKeyboard on the layer manager" };
+          }
+          if (typeof window.undoDepth !== "function") {
+            return { ok: false, why: "no window.undoDepth" };
+          }
+          const orderBefore = lm.shapeLayers.map((l) => l.id);
+          const depthBefore = window.undoDepth();
+          // "report" = READ-ONLY: the order + undo depth as they stand RIGHT NOW,
+          // no reorderLayerByKeyboard call at all. (Passing any other dir would
+          // MOVE the layer — a "read" that mutates would corrupt every case that
+          // asserts over several reads.) "up"/"down" remain the real directions.
+          let orderAfter = orderBefore;
+          let undoDepthAfter = depthBefore;
+          let changed = false;
+          if (dir === "up" || dir === "down") {
+            changed = lm.reorderLayerByKeyboard(layerId, dir);
+            orderAfter = lm.shapeLayers.map((l) => l.id);
+            undoDepthAfter = window.undoDepth();
+          }
+          return {
+            ok: changed === true,
+            moved: changed === true,
+            orderBefore,
+            orderAfter,
+            undoDepthBefore: depthBefore,
+            undoDepthAfter,
+          };
+        },
+        /**
+         * Force the CURRENT live layout into the character store (the exact
+         * scanLayout -> saveLayout->saveGlobalLayout join of js/dnd.js persistLayout).
+         * The product's own autosave fires on a debounce AFTER a drop/nudge/property
+         * event — a probe-driven layer mutation is NOT one of those, so a test that
+         * wants to ask "does the record survive?" must persist FIRST and then reload;
+         * otherwise it would be measuring whether the autosave wiring noticed an
+         * event nobody emitted (that is the autosave track's question, not AC-5's).
+         */
+        persistLayoutNow: async () => {
+          if (
+            typeof window.scanLayout !== "function" ||
+            !window.__DDBStorage ||
+            typeof window.__DDBStorage.saveLayout !== "function"
+          ) {
+            return { ok: false, why: "no scanLayout/saveLayout seam in this world" };
+          }
+          const layout = await window.scanLayout();
+          const characterId =
+            typeof window.getCharacterId === "function"
+              ? window.getCharacterId()
+              : null;
+          const storage = window.__DDBStorage;
+          if (characterId) await storage.saveLayout(characterId, layout);
+          if (typeof storage.saveGlobalLayout === "function") {
+            await storage.saveGlobalLayout(layout);
+          }
+          return { ok: true, saved: !!characterId, shapeLayers: (layout.shapeLayers || []).length };
+        },
+        /** CatalogService.applyTemplate(templateId, true) — the product's own
+         * template path (js/persistence.js applyDefaultLayout calls "archer"
+         * the same way), with skipConfirm so a dialog never blocks the run. */
+        applyTemplateRecord: async (templateId) => {
+          const cs = window.CatalogService;
+          if (!cs || typeof cs.applyTemplate !== "function") {
+            return { ok: false, why: "no window.CatalogService in this world" };
+          }
+          const ok = await cs.applyTemplate(templateId, true);
+          return ok ? { ok: true, id: templateId } : { ok: false, why: `applyTemplate ${templateId} returned false` };
+        },
+        /** The observable residue of a template application: how many decorative
+         * shapes sit on the sheet, how many section wrappers carry the template's
+         * geometry, and how many borders the record carries (the borderSvg fields
+         * a template can seed — js/catalog_service.js AC-9a path C). */
+        readTemplateSideEffects: async () => {
+          const s = window.__DDBStorage;
+          const shapeCount = document.querySelectorAll(".be-shape-wrapper").length;
+          const positioned = Array.from(
+            document.querySelectorAll(".be-section-wrapper"),
+          ).filter((w) => w.style.left || w.style.top).length;
+          let borderCount = 0;
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          if (s && typeof s.loadLayout === "function") {
+            const layout = await s.loadLayout(cid);
+            const sections = (layout && layout.sections) || {};
+            borderCount = Object.values(sections).filter((cfg) =>
+              cfg && Object.prototype.hasOwnProperty.call(cfg, "borderSvg"),
+            ).length;
+          }
+          return { ok: true, shapeCount, sectionCount: positioned, borderCount };
+        },
+        /**
+         * Whether the boot path actually restored a saved record AND announced
+         * it. The announcement is the product's own cross-reload net
+         * (js/persistence.js announceBootRestore -> js/modals.js showFeedback):
+         * a `.be-feedback` toast carrying "Restored your saved layout." when a
+         * record came back. Read THIS FIRST after reinject — the toast self-
+         * dismisses in 3s, so a late read is vacuous. The layout record's own
+         * existence is the second witness (the fact the toast announces);
+         * either one answers the criterion's "not silent data loss".
+         */
+        readBootRestoreState: async () => {
+          const s = window.__DDBStorage;
+          const characterId =
+            window.getCharacterId ||
+            (() => window.location.pathname.split("/").pop());
+          const cid = (typeof characterId === "function" ? characterId() : characterId) || "GLOBAL";
+          let hasRecord = false;
+          if (s && typeof s.loadLayout === "function") {
+            const layout = await s.loadLayout(cid);
+            hasRecord = !!(layout && (layout.sections || layout.customShapes || layout.shapeLayers));
+          }
+          const toasts = Array.from(document.querySelectorAll(".be-feedback")).map((t) =>
+            (t.textContent || "").replace(/\s+/g, " ").trim(),
+          );
+          return {
+            ok: true,
+            hasRecord,
+            toasts,
+            restoredAnnounced: toasts.some((t) => t.includes("Restored your saved layout")),
+            defaultAnnounced: toasts.some((t) => t.includes("No saved layout yet")),
+          };
+        },
+
+        // ---------------------------------------------------------------- *
+        // BEYOND-12 / ux_quick_wins_20261025 Phase 6 probes.               *
+        // Settings export/import: drive the real Persistence seams from    *
+        // the ISOLATED world, where window.Persistence / __DDBStorage /    *
+        // AiSettings live (invisible to page.evaluate in the main world).  *
+        // ---------------------------------------------------------------- *
+
+        /**
+         * Call `collectSettingsBundle()` — the product's own export collector —
+         * and return the resulting bundle. Each field is gathered through the
+         * product's storage seam, so the bundle is the REAL one, not a fixture.
+         */
+        collectSettingsBundleRead: async () => {
+          if (
+            !window.Persistence ||
+            typeof window.Persistence.collectSettingsBundle !== "function"
+          ) {
+            return { ok: false, why: "no window.Persistence.collectSettingsBundle in this world" };
+          }
+          try {
+            const bundle = await window.Persistence.collectSettingsBundle();
+            return { ok: true, bundle };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Validate an arbitrary object through `validateSettingsBundle` — the
+         * product's own schema gate. Passed a raw bundle object; returns the
+         * `{ok, error?}` verdict the import path uses to refuse a malformed file.
+         */
+        validateSettingsBundleProbe: (data) => {
+          if (
+            !window.Persistence ||
+            typeof window.Persistence.validateSettingsBundle !== "function"
+          ) {
+            return { ok: false, why: "no window.Persistence.validateSettingsBundle in this world" };
+          }
+          try {
+            const verdict = window.Persistence.validateSettingsBundle(data);
+            return { ok: true, verdict };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Drive `applySettingsBundle` (the MERGE CORE) directly — no file
+         * picker is involved, so the harness never has to type into a native
+         * dialog. `destructiveGate` is stubbed to auto-confirm (the gate's UX
+         * is covered by destructive_recovery.test.js; this probe only tests
+         * whether the merge lands), and `createBackupSnapshot` is stubbed to
+         * succeed in-memory (the backup store is IndexedDB; a real one would
+         * persist across cases and pollute the next). `window.showFeedback`
+         * is captured so a test can assert the success / failure copy without
+         * a toast surviving across pages.
+         *
+         * args = { bundle, expectOk }
+         */
+        applySettingsBundleProbe: async ({ bundle, expectOk }) => {
+          if (
+            !window.Persistence ||
+            typeof window.Persistence.applySettingsBundle !== "function"
+          ) {
+            return { ok: false, why: "no window.Persistence.applySettingsBundle in this world" };
+          }
+          const feedback = [];
+          const origFeedback = window.showFeedback;
+          const origGate = window.destructiveGate;
+          const origBackup = window.createBackupSnapshot;
+          const origOfferUndo = window.offerUndo;
+          window.showFeedback = (msg, type) => feedback.push({ msg, type });
+          window.destructiveGate = () => Promise.resolve({ ok: true, record: "probe-backup" });
+          window.createBackupSnapshot = () => Promise.resolve({ ok: true, record: { id: "probe-backup", layout: null } });
+          window.offerUndo = () => {}; // no-op: the test does not walk the undo stack
+          try {
+            const result = await window.Persistence.applySettingsBundle(bundle, { source: "probe" });
+            const ok = result.ok === true;
+            if (expectOk !== undefined && ok !== expectOk) {
+              return {
+                ok: false,
+                why: `expected ok=${expectOk} but got ok=${ok}`,
+                verdict: result,
+                feedback,
+              };
+            }
+            return {
+              ok: true,
+              applied: result.applied,
+              feedback,
+              hasKeyInBundle: JSON.stringify(bundle).match(/be\.ai\.key|\bapiKey\b/) !== null,
+            };
+          } catch (err) {
+            return {
+              ok: false,
+              why: String(err && err.message ? err.message : err),
+              feedback,
+            };
+          } finally {
+            if (origFeedback) window.showFeedback = origFeedback;
+            if (origGate) window.destructiveGate = origGate; else delete window.destructiveGate;
+            if (origBackup) window.createBackupSnapshot = origBackup; else delete window.createBackupSnapshot;
+            if (origOfferUndo) window.offerUndo = origOfferUndo; else delete window.offerUndo;
+          }
+        },
+
+        /**
+         * Read the global filters + hue shift from __DDBStorage getFilters(),
+         * the same seam collectSettingsBundle reads. Returns the raw filter
+         * record so a test can assert a value that survived an import.
+         */
+        readGlobalFiltersProbe: async () => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.getFilters !== "function") {
+            return { ok: false, why: "no __DDBStorage.getFilters in this world" };
+          }
+          try {
+            const filters = await s.getFilters();
+            const hue = await s.getHueShift();
+            return { ok: true, filters, hueShift: hue };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Read the safe BYOK settings record — the same object
+         * collectSettingsBundle reads via window.AiSettings.loadSettings().
+         * Confirms the credential is NEVER in the bundle and that keyPresent
+         * is the derived flag only.
+         */
+        readAiSettingsProbe: async () => {
+          if (!window.AiSettings || typeof window.AiSettings.loadSettings !== "function") {
+            return { ok: false, why: "no window.AiSettings.loadSettings in this world" };
+          }
+          try {
+            const settings = await window.AiSettings.loadSettings();
+            return {
+              ok: true,
+              provider: settings.provider || "",
+              model: settings.model || "",
+              baseUrl: settings.baseUrl || "",
+              keyPresent: !!settings.keyPresent,
+              hasKeyField: Object.prototype.hasOwnProperty.call(settings, "key"),
+              hasApiKeyField: Object.prototype.hasOwnProperty.call(settings, "apiKey"),
+            };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Write global filters + hue through the product's own storage seams
+         * (__DDBStorage.saveFilter / saveHueShift) — the same calls the filter
+         * sliders make. Used to give an export something distinctive to
+         * carry, so a round-trip can be asserted on VALUES, not on shape.
+         * args = { filters: {contrast, greyscale, saturate, sepia}, hueShift }
+         */
+        writeGlobalFiltersProbe: async ({ filters, hueShift }) => {
+          const s = window.__DDBStorage;
+          if (!s || typeof s.saveFilter !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveFilter in this world" };
+          }
+          try {
+            for (const [key, val] of Object.entries(filters || {})) {
+              if (typeof val === "number") await s.saveFilter(key, val);
+            }
+            if (typeof hueShift === "number" && typeof s.saveHueShift === "function") {
+              await s.saveHueShift(hueShift);
+            }
+            const readBack = await s.getFilters();
+            const hue = await s.getHueShift();
+            return { ok: true, filters: readBack, hueShift: hue };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+
+        /**
+         * Write the SAFE BYOK record (provider/model/baseUrl) through
+         * window.AiSettings.saveSettings — the exact seam applySettingsBundle
+         * merges into. Never touches the credential store: saveSettings
+         * physically cannot (js/ai_settings.js:299-320).
+         * args = { provider, model, baseUrl }
+         */
+        writeAiSettingsProbe: async (settings) => {
+          if (!window.AiSettings || typeof window.AiSettings.saveSettings !== "function") {
+            return { ok: false, why: "no window.AiSettings.saveSettings in this world" };
+          }
+          try {
+            const result = await window.AiSettings.saveSettings(settings || {});
+            return {
+              ok: result.ok === true,
+              error: result.error || null,
+              provider: result.settings ? result.settings.provider : "",
+              model: result.settings ? result.settings.model : "",
+              baseUrl: result.settings ? result.settings.baseUrl : "",
+              keyPresent: result.settings ? !!result.settings.keyPresent : false,
+            };
+          } catch (err) {
+            return { ok: false, why: String(err && err.message ? err.message : err) };
+          }
+        },
+        /**
+         * BEYOND-19 AC-5 — the save-to-browser in-flight marker, driven from the world that
+         * OWNS `window.handleSaveBrowser`.
+         *
+         * WHY A PROBE AND NOT `page.evaluate`. `handleSaveBrowser` is a content-script-world
+         * global: `page.evaluate` runs in the page's MAIN world where it reads `undefined`
+         * (MEASURED — the first version of this spec drove it that way and every read came back
+         * `undefined`, which looks exactly like a missing seam). A probe runs in the isolated
+         * world, the same one the product runs in.
+         *
+         * HOW THE LATENCY WINDOW IS MADE REAL. `__DDBStorage.saveGlobalLayout` is WRAPPED (count
+         * + 400 ms delay + forward), never replaced: the write still happens through the
+         * product's own IndexedDB path, so the marker is observed around a real store write
+         * rather than a stub that returns immediately. The marker is sampled by the wrap itself —
+         * once when the save is IN FLIGHT (the only moment that can prove the raise preceded the
+         * await) and once after it settles.
+         */
+        saveBrowserProbe: async (opts) => {
+          const o = opts || {};
+          if (typeof window.handleSaveBrowser !== "function") {
+            return { ok: false, why: "no window.handleSaveBrowser in this world" };
+          }
+          const storage = window.__DDBStorage;
+          if (!storage || typeof storage.saveGlobalLayout !== "function") {
+            return { ok: false, why: "no __DDBStorage.saveGlobalLayout in this world" };
+          }
+          const markers = () => document.querySelectorAll(".be-progress").length;
+          const orig = storage.saveGlobalLayout;
+          const seen = { duringWrite: null };
+          storage.saveGlobalLayout = async function (layout) {
+            // The seam is entered AFTER the marker's raise and BEFORE the write resolves, so a
+            // count here is the in-flight truth — not a sample taken too early or too late.
+            if (seen.duringWrite === null) seen.duringWrite = markers();
+            await new Promise((r) => setTimeout(r, o.delayMs || 400));
+            return orig.call(this, layout);
+          };
+          const before = markers();
+          try {
+            await window.handleSaveBrowser();
+          } finally {
+            storage.saveGlobalLayout = orig;
+          }
+          await new Promise((r) => setTimeout(r, 50));
+          const toast = Array.from(document.querySelectorAll(".be-feedback"))
+            .map((n) => n.textContent)
+            .join(" / ");
+          return {
+            ok: true,
+            markersBefore: before,
+            markersDuringWrite: seen.duringWrite,
+            markersAfter: markers(),
+            toast,
           };
         },
       };

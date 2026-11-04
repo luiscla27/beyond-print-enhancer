@@ -1,0 +1,72 @@
+{
+ "feature": "feature_09_section_cloning",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "section_cloning.spec.js",
+   "file_id": "458400975823302",
+   "mp4_bytes": 974468,
+   "upload_response": {
+    "file": {
+     "file_id": 458400975823302,
+     "bytes": 974468,
+     "created_at": 1793467176,
+     "filename": "section_cloning.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "section_cloning.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\section_cloning.webm",
+   "webm_bytes": 2840005
+  }
+ ],
+ "usage": {
+  "total_tokens": 36216,
+  "total_characters": 0,
+  "prompt_tokens": 34654,
+  "completion_tokens": 1562,
+  "completion_tokens_details": {
+   "reasoning_tokens": 318
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations, in order\n\n1. **0:00\u20130:03 \u2014 Website loading surface:** The recording opens on a mostly blank white page, then the **D&D Beyond website\u2019s own header and loading logo** appear. This is website work, not extension work.\n2. **0:03\u20130:07 \u2014 Website loading and privacy notice:** The D&D Beyond loading animation continues, followed by the website\u2019s **\u201cYour Privacy Choices\u201d cookie panel**. The cookie banner and its buttons are D&D Beyond\u2019s own surface.\n3. **0:07\u20130:29 \u2014 Plain D&D Beyond character sheet:** The character sheet for \u201cCorvo Saggio\u201d becomes visible with the website\u2019s normal dark header, character statistics, sections, and content. The red outlines around individual sheet regions are visible, but no extension control panel or layer-management panel appears during this long interval.\n4. **0:29\u20130:32 \u2014 Extension enhancement and panels appear:** The sheet changes into the extension-enhanced presentation. A dark, gold-accented **extension control panel** appears on the left with LAYOUT and OUTPUT sections, and a dark **LAYER MANAGEMENT** panel appears on the right. A first-run hint card says, \u201cNo saved layout yet \u2014 the default template is loaded.\u201d These panels, the hint card, and the ornate enhanced template are extension work.\n5. **0:32\u20130:33 \u2014 Clone naming dialog:** A dark extension modal titled **\u201cCLONE SECTION\u201d** opens. It asks, \u201cEnter a name for this Section 1 clone:\u201d and shows the default input value **\u201cSection 1 (Clone)\u201d**, with Cancel and Continue buttons. The background panels and enhanced sheet are dimmed. This is extension work.\n6. **0:33\u2013end \u2014 Recording ends with the modal open:** No frame shows Continue being pressed, a completed clone appearing, the clone title being double-clicked, a rename modal, a Delete control being used, or a clone disappearing. The claimed apply/undo flow is therefore not witnessed.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Asserted behavior | Visible on camera | Evidence |\n|---|---|---|\n| Cloning prompts for a name and creates a titled clone | **NOT-VISIBLE** | The extension clearly prompts for a clone name and pre-fills \u201cSection 1 (Clone),\u201d but the video ends before Continue is activated or a titled clone is created. |\n| Clone preserves content but excludes extension chrome and spell filters | **NOT-VISIBLE** | No completed clone appears, so its copied content and exclusions cannot be inspected. |\n| Double-clicking the clone title renames it via the input modal | **NOT-VISIBLE** | No clone title is double-clicked and no rename interaction is shown. |\n| A clone can be deleted via its visible Delete control | **NOT-VISIBLE** | No completed clone or visible Delete control is shown, and no deletion occurs. |\n\n## Layer 2 \u2014 Product-aim conformance\n\nThe extension\u2019s work is **clearly distinguishable** from the base website. Its floating panels use a dark \u201ccodex on the workbench\u201d treatment with gold hairlines and buttons, unlike the normal D&D Beyond interface. The enhancement also visibly changes the sheet into a more decorative, bordered template.\n\n### Basic affordances observed working\n\n- The website\u2019s loading state is visible, including its branded loading animation.\n- The website\u2019s cookie/privacy dialog is visible with recognizable choices.\n- The extension\u2019s enhanced sheet loads and displays after the plain website sheet.\n- The extension\u2019s left control panel appears and exposes LAYOUT and OUTPUT controls.\n- The **LAYER MANAGEMENT** panel appears, including section and shape sections.\n- A first-run hint card is shown with a dismiss control and explains the default-template state.\n- A **Manage Clones** affordance is visible in the extension\u2019s LAYOUT panel.\n- Activating that affordance opens a clearly styled **CLONE SECTION** modal.\n- The clone modal provides a named text input, a useful default title, **Cancel**, and **Continue** controls.\n- The modal correctly dims and de-emphasizes the underlying enhanced page and extension panels.\n\n### Basic affordances missing or rough\n\n- The clone creation flow is not completed on camera; **Continue is never demonstrated**, so successful creation and its result are absent.\n- No success toast such as \u201cShape added\u201d/\u201cLayout saved,\u201d or a clone-specific success confirmation, is observed.\n- No rename affordance or rename modal is observed.\n- No visible **Delete** control on a clone is observed.\n- No deletion confirmation, deletion toast, or undone deletion is observed.\n- No apply/undo flow is demonstrated despite the task description referring to one.\n- The clone-preservation behavior cannot be evaluated because the original and resulting clone are not both shown.\n- Exclusion of extension chrome and spell filters cannot be evaluated because no completed clone appears.\n- There is no observable error state, validation state, disabled state, or empty-name behavior for the clone dialog.\n- The extension panels occupy substantial screen space and visually cover parts of the underlying sheet, though this alone does not prevent the central controls from being read.\n- The first-run hint remains visible while the clone workflow starts; no dismissal behavior is demonstrated.\n- The extension activation transition itself is brief and partly obscured by the panel appearance. The enhanced template and panels appear together rather than showing a clear progressive loading/transition state.\n- The toolbar icon and its claimed ON badge are not visible in the captured browser framing, so that activation affordance is not assessable.\n- The extension does not visibly interrupt or alter the website\u2019s cookie choice in the recording; the website privacy panel simply disappears during the underlying page load. This is website behavior rather than extension functionality.\n\nThe core extension concept and the initial clone-name prompt are demonstrable, but most of the asserted cloning lifecycle is not sampled. The visible implementation is visually distinct and the modal\u2019s basic presentation is coherent, but the critical create, rename, delete, confirmation, and content-fidelity behaviors remain unwitnessed.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: section_cloning.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793467189705
+}

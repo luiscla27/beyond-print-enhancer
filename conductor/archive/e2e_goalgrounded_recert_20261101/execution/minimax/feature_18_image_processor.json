@@ -1,0 +1,72 @@
+{
+ "feature": "feature_18_image_processor",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v2 GOAL-GROUNDED (2026-11-01): PRODUCT_BRIEF (what the product is / base-sheet exclusion / activation arc) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "webp_assets.spec.js",
+   "file_id": "458390587027986",
+   "mp4_bytes": 980671,
+   "upload_response": {
+    "file": {
+     "file_id": 458390587027986,
+     "bytes": 980671,
+     "created_at": 1793464994,
+     "filename": "webp_assets.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "webp_assets.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\webp_assets.webm",
+   "webm_bytes": 3009842
+  }
+ ],
+ "usage": {
+  "total_tokens": 37534,
+  "total_characters": 0,
+  "prompt_tokens": 36296,
+  "completion_tokens": 1238,
+  "completion_tokens_details": {
+   "reasoning_tokens": 87
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 195
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations in order\n\n1. **0.0\u20131.4s \u2014 Blank/loading page:** Mostly white with a gray strip at the bottom. No identifiable extension or website UI is visible. **Website/browser surface only; no extension work visible.**\n2. **1.4\u20134.0s \u2014 D&D Beyond navigation/loading state:** The D&D Beyond header and branding appear while the page is mostly blank. **Website surface.**\n3. **4.0\u20136.6s \u2014 D&D Beyond loading overlay and privacy dialog:** A centered D&D Beyond loading graphic appears, followed by the website\u2019s \u201cYour Privacy Choices\u201d cookie panel at lower left. **Website surface.**\n4. **6.6\u201329.2s \u2014 Character sheet renders:** The Corvo Saggio character sheet, statistics, actions, inventory, and other character information become visible. The repeated red outlines around many sheet regions are associated with the enhancement layer, but the underlying sheet content, artwork, and stats are **website content**.\n5. **29.4\u201330.2s \u2014 Enhanced sheet view changes:** The visible region changes to another portion of the enhanced sheet. Gold/red styling around components remains visible, but no extension panel or interaction is shown yet. **Extension enhancement styling is visible over website content.**\n6. **30.4s \u2014 Extension panels appear:** The dark, gold-accented floating control panel appears on the left, and the \u201cLAYER MANAGEMENT\u201d panel appears on the right. These are clearly **extension work**. A centered hint reads, \u201cNo saved layout yet \u2014 the default template is loaded.\u201d This is also **extension work**.\n7. **30.6\u201333.4s \u2014 Default template and layer state:** The sheet displays a gray ornamental frame/decorative design, and a small toast states \u201cShapes (Default) Unloaded.\u201d The Layer Manager shows **SECTIONS (22)** and **SHAPES (1)** with visible shape thumbnails. The panels and toast are **extension work**; the character sheet beneath remains website content.\n8. **33.6\u201334.0s \u2014 Shape selection begins:** The \u201cSELECT DECORATIVE SHAPE\u201d dialog opens over a dimmed extension-panel background. This is **extension work**.\n9. **34.0\u201335.4s \u2014 Shape picker remains open:** The extension dialog shows tabs **BORDERS / SHAPES / CUSTOM**, category filters, a search field, and three visible previews labeled **Archer Accent A**, **Archer Accent B**, and **Archer Divider**. The previews visibly render. The **Add Shape** button appears disabled because no item is visibly selected. The dialog and controls are **extension work**.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n- **A shape added from the picker renders from a `.webp` asset \u2014 NOT-VISIBLE.**  \n  The picker is opened, but no shape is selected and no shape-add action completes on camera. The newly added shape is not shown.\n\n- **Picker previews load from `.webp` assets (no `.gif` references) \u2014 NOT-VISIBLE.**  \n  Three preview images visibly load, so the previews render on camera. However, the frames do not expose asset URLs or file formats, so the `.webp` format and absence of `.gif` references cannot be visually confirmed.\n\n- **Layer Manager shape thumbnails point at `.webp` assets that load \u2014 NOT-VISIBLE.**  \n  A shape thumbnail is visible in the Layer Manager and appears loaded, but its URL and `.webp` format are not exposed on camera. Consequently, the format-specific assertion is not visibly proven.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Extension work observed working\n\n- The extension UI is **clearly distinguishable** from D&D Beyond: it uses dark codex/workbench panels, gold accents, and its own Layer Management interface.\n- The floating control panel and Layer Management panel remain legible and visually separated from the website.\n- The default-template status is communicated by a **hint/toast**.\n- A successful/default-state toast is shown for the loaded shapes.\n- The shape picker opens as a proper modal, dims the background, exposes tabs, category filters, search, and image previews.\n- Visible picker previews successfully render rather than appearing as broken-image placeholders.\n- The **Add Shape** action appears disabled until a selection is made, which is a sensible disabled-state affordance.\n- The enhancement visibly changes the character sheet into bordered/componentized regions with an ornamental gray frame.\n\n### Missing or rough affordances\n\n- **No activation/loading transition is shown.** When the extension activates, the panels and enhanced layout simply appear around 30.4s. There is no brief \u201cloading\u2026,\u201d progress overlay, fade, or other transition indicating that enhancement work is underway. This is an explicit **Layer 2 absence finding**.\n- The picker is left open at the end of the video. No selection, insertion, success toast, or error state is demonstrated.\n- No error state is exercised.\n- The visible picker previews prove that images render, but not that they are WebP rather than GIF; the certification-specific asset-format behavior is therefore unverified on camera.\n- The video contains a very long static character-sheet interval before the extension interaction begins. Although the video is not blank and later interaction is sampled, this does not help witness the required WebP assertions.\n\nBecause none of the format-specific Layer 1 assertions is visibly established\u2014and the extension also lacks an observed activation-transition affordance\u2014the result cannot be certified as fully working.\n\nVERDICT: PARTIAL",
+ "parsed_verdict": "PARTIAL",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: webp_assets.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793465012699
+}

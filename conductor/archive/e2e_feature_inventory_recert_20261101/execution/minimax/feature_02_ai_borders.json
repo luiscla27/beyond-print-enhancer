@@ -1,0 +1,71 @@
+{
+ "feature": "feature_02_ai_borders",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "file_id": "458220808073790",
+   "mp4_bytes": 2837410,
+   "upload_response": {
+    "file": {
+     "file_id": 458220808073790,
+     "bytes": 2837410,
+     "created_at": 1793424309,
+     "filename": "byok_border_gallery.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "byok_border_gallery.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_02_ai_borders\\byok_border_gallery.webm",
+   "webm_bytes": 8545389
+  }
+ ],
+ "usage": {
+  "total_tokens": 148871,
+  "total_characters": 0,
+  "prompt_tokens": 148376,
+  "completion_tokens": 495,
+  "completion_tokens_details": {
+   "reasoning_tokens": 133
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "- The browser loads the D&D Beyond site and then a character sheet for **Corvo Saggio**.\n- A **\u201cYour Privacy Choices\u201d** cookie dialog appears and is later dismissed.\n- The character sheet displays the character\u2019s statistics, abilities, actions, defenses, hit points, and other sections. Red outlines are visible around many sheet elements.\n- An unpacked **Beyond Print Enhancer** panel is visible on the left, with sections including **Templates, Layout, Output, Print, Print settings, Save to Browser, Save to PC, Export Settings, Import Settings, Undo,** and **Restore backup**.\n- A **Layer Management** panel is visible on the right, listing sections and shapes. A banner says that no layout has been saved yet and the default template is loaded.\n- The view changes to the generated print output: a white printable sheet with character information and a visible decorative frame around the character portrait. The view then zooms out to show the full sheet, including inventory and actions pages.\n- Later, the print output is shown with the extension panels over it, but **no AI-border gallery, border-selection controls, refinement controls, adjustment controls, accept/apply flow, or undo action specific to AI borders are visibly shown**.\n- No visible interaction demonstrates selecting a border, adjusting a stroke, receiving a `not_adjustable` result for a fill-only border, or applying an AI-generated border. The labeled-frame capture behavior is also not visibly demonstrated.\n- The isolated-world `window.AiBorder` seam and its `adjust`, `transform`, and `canAdjust` properties cannot be verified from the visible frames.\n\nThe page and extension panels are visible, but the AI-border feature\u2019s end-to-end interaction is not visible in this video.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": false,
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793424321797
+}

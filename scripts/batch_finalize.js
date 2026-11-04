@@ -1,3 +1,7 @@
+#!/usr/bin/env node
+// batch_finalize.js - one-off batch driver for the archer asset set: runs perfect_finalize.js over a
+// hard-coded input/output list. The inputs under nanobanana-output/ are no longer in the tree, so
+// this is the record of how those assets were prepared rather than a runnable step.
 const cp = require('child_process');
 const tasks = [
     { in: 'nanobanana-output/editisolate_the_braided_rope_bor_3.png', out: 'assets/border_archer_header.webp' },

@@ -84,7 +84,13 @@ async function clearLayouts(ctx) {
     await page.evaluate(
       () =>
         new Promise((res) => {
-          const req = indexedDB.open("DDBPrintEnhancerDB", 4);
+          // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator
+          // ruling 2026-10-31): this used to open the store at a hard-coded version 4 while
+          // the product ships DB_VERSION 5 (js/storage.js), and opening a live v5 database
+          // at v4 throws VersionError — so this "known-empty store" reset silently did
+          // nothing and the previous case's corrupted layout leaked into the next boot.
+          // Opened WITHOUT a version so it attaches to whatever the product actually ships.
+          const req = indexedDB.open("DDBPrintEnhancerDB");
           req.onsuccess = () => {
             const db = req.result;
             try {
@@ -152,7 +158,17 @@ describe("UI/UX audit visual captures", function () {
             hasClose: !!m.querySelector(".be-modal-close"),
           };
         });
-        assert.strictEqual(modalState.role, "dialog", "in-app dialog, not native confirm");
+        // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator ruling
+        // 2026-10-31): this demanded role="dialog". The Reset gate is the DESTRUCTIVE gate
+        // (js/recovery_ui.js confirmDestructive), and since track modal_primitive_20260910 the
+        // shared primitive announces a destructive surface as `role="alertdialog"` — MEASURED:
+        // the live dialog reports `alertdialog`. The intent the assertion was written for is
+        // unchanged and still checked on the next line: it is an IN-APP dialog with its own
+        // close affordance, not a native `confirm()`. Only the role name is superseded.
+        assert.ok(
+          modalState.role === "alertdialog" || modalState.role === "dialog",
+          "in-app dialog, not native confirm: " + modalState.role,
+        );
         assert.strictEqual(modalState.hasClose, true, "has a close affordance");
         assert.ok(/backup/i.test(modalState.body), "copy mentions the backup: " + modalState.body);
         assert.ok(/deletes your saved layout/.test(modalState.body), "copy names what is erased");
@@ -187,10 +203,21 @@ describe("UI/UX audit visual captures", function () {
         });
         await page.waitForSelector(".be-feedback", { timeout: 20000 });
         await page.waitForTimeout(500);
+        // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator ruling
+        // 2026-10-31): this used to read the FIRST `.be-feedback` in the DOM. Toasts stack in
+        // one lane, and a boot can legitimately leave one of its own in front of this one (the
+        // restore-confirmation "Restored your saved layout." is a `success` toast, emitted by
+        // announceBootRestore in the same profile this suite just saved into — MEASURED as the
+        // `be-feedback-success` the inventory reported). The behaviour under test was never
+        // "whatever toast came first", it was "a user action's own toast is an info toast", so
+        // the assertion now selects THIS action's toast by its text.
         const info = await page.evaluate(() => {
-          const f = document.querySelector(".be-feedback");
-          return { cls: f.className, role: f.getAttribute("role") };
+          const f = Array.from(document.querySelectorAll(".be-feedback")).find((el) =>
+            /Saved to browser/i.test(el.textContent || ""),
+          );
+          return f ? { cls: f.className, role: f.getAttribute("role"), text: f.textContent.trim() } : null;
         });
+        assert.ok(info, "the save action produced its own toast");
         assert.ok(/be-feedback-info/.test(info.cls), "info toast class: " + JSON.stringify(info));
         await frame(page, "shots-phase1", "12-success-toast.png");
 
@@ -242,7 +269,15 @@ describe("UI/UX audit visual captures", function () {
         await page.evaluate(
           () =>
             new Promise((resolve) => {
-              const req = indexedDB.open("DDBPrintEnhancerDB", 4);
+              // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator
+              // ruling 2026-10-31): this used to open the database at a hard-coded version 4.
+              // The product's DB_VERSION is 5 (js/storage.js, the `custom_borders` store added
+              // by track byok_svg_borders_20260927), and opening a live v5 database at v4 throws
+              // VersionError — MEASURED: `{"ok":false,"err":"VersionError"}`. The corruption this
+              // test needs to plant therefore never happened, and the boot it then observed had
+              // nothing to fail on, so the recovery card legitimately never appeared. Opened
+              // WITHOUT a version so it attaches to whatever the product actually ships.
+              const req = indexedDB.open("DDBPrintEnhancerDB");
               req.onsuccess = () => {
                 const db = req.result;
                 const tx = db.transaction(["layouts"], "readwrite");
@@ -379,25 +414,77 @@ describe("UI/UX audit visual captures", function () {
         //      must be genuinely unlocked first.
         // Previously a zero-size handle just skipped the screenshot
         // (`if (h && h.w > 0)`), which is how the gap went unnoticed.
+        // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator ruling
+        // 2026-10-31): this used to CLICK the shapes layer's lock control unconditionally,
+        // assuming the layer started locked. It does not reach this line locked — the AC-5
+        // step above already unlocked it (that click is what makes the sections layer the
+        // locked one it measures), so this second click LOCKED it again. MEASURED on the live
+        // boot: the run ended with `be-lock-shapes-default` back on `<body>`,
+        // `print-enhance-shapes-layer` both `.be-layer-locked` and NOT `.be-active-layer`, and
+        // the rotation handle hidden by `.be-layer-locked .be-rotation-handle`. The intent was
+        // never "toggle", it was "make sure the layer holding the shape is unlocked", so the
+        // click is now conditional on the state it is trying to leave.
         await page.evaluate(() => {
+          // Resolve the layer by the SHAPE, not by a hard-coded element id: this suite
+          // shares one persistent profile across its cases, so a layout persisted by an
+          // earlier case can boot a layer topology whose container id is not
+          // `print-enhance-shapes-layer`. The invariant is about the layer that HOLDS the
+          // shape wrapper the reveal is dispatched on.
+          const firstShape = document.querySelector(".be-shape-wrapper");
+          const layerEl = firstShape ? firstShape.closest(".pe-layer") : null;
+          if (layerEl && !layerEl.classList.contains("be-layer-locked")) return;
+          const layerId = layerEl && layerEl.id.startsWith("print-enhance-layer-")
+            ? layerEl.id.slice("print-enhance-layer-".length)
+            : "shapes-default";
           const panel = document.getElementById("print-enhance-layer-manager");
-          const row = panel.querySelector('.be-layer-row[data-layer-id="shapes-default"]');
+          const row =
+            panel.querySelector(`.be-layer-row[data-layer-id="${layerId}"]`) ||
+            panel.querySelector('.be-layer-row[data-layer-id="shapes-default"]');
           const lock = row && row.querySelector('button[title="Toggle Edit Mode"]');
           if (lock) lock.click();
         });
         await page.waitForTimeout(700);
-        const pre = await page.evaluate(() => ({
-          bodyLocks: document.body.className.split(/\s+/).filter((c) => c.startsWith("be-lock-")),
-          lockedLayers: document.querySelectorAll(".be-layer-locked").length,
-          shapeWrappers: document.querySelectorAll(".be-shape-wrapper").length,
-          rotateButtons: document.querySelectorAll(".be-shape-rotate").length,
-        }));
+        const pre = await page.evaluate(() => {
+          const firstShape = document.querySelector(".be-shape-wrapper");
+          const shapesLayer = firstShape
+            ? firstShape.closest(".pe-layer")
+            : document.getElementById("print-enhance-shapes-layer");
+          return {
+            bodyLocks: document.body.className.split(/\s+/).filter((c) => c.startsWith("be-lock-")),
+            lockedLayers: Array.from(document.querySelectorAll(".be-layer-locked")).map((e) => e.id),
+            shapeLayerLocked: !!(shapesLayer && shapesLayer.classList.contains("be-layer-locked")),
+            shapeLayerActive: !!(shapesLayer && shapesLayer.classList.contains("be-active-layer")),
+            firstShapeLayerLocked: !!(firstShape && firstShape.closest(".be-layer-locked")),
+            shapeWrappers: document.querySelectorAll(".be-shape-wrapper").length,
+            rotateButtons: document.querySelectorAll(".be-shape-rotate").length,
+          };
+        });
+        // SUPERSEDED BEHAVIOUR (track visual_capture_red_closure_20261031, operator ruling
+        // 2026-10-31). Two assertions here used to demand `bodyLocks.length === 0` and
+        // `lockedLayers === 0` — "no layer stays locked" — after unlocking the shapes layer.
+        // That is not a state this product can reach, and it must not be: the lock paradigm is
+        // EXCLUSIVE by design (js/dom/layer_manager.js _toggleLayerLockNow locks every OTHER
+        // layer when one is unlocked, pinned by test/unit/layer_manager.test.js), because
+        // "the layer you are working on" is singular. MEASURED on the live boot: unlocking
+        // shapes-default leaves exactly `body.be-lock-sections` and the sections LAYER marked
+        // `.be-layer-locked`. The invariant the reveal actually needs is that the layer holding
+        // the shape is unlocked (and, by this product's model, is the active one), so that is
+        // what is asserted now — the stale form would have required breaking exclusive locking.
         assert.strictEqual(
-          pre.bodyLocks.length,
-          0,
-          "no body be-lock-* class remains before the reveal: " + JSON.stringify(pre),
+          pre.bodyLocks.includes("be-lock-shapes-default"),
+          false,
+          "no body lock class for the shapes layer remains: " + JSON.stringify(pre),
         );
-        assert.strictEqual(pre.lockedLayers, 0, "no layer stays locked before the reveal: " + JSON.stringify(pre));
+        assert.strictEqual(
+          pre.shapeLayerLocked,
+          false,
+          "the shapes LAYER is unlocked before the reveal: " + JSON.stringify(pre),
+        );
+        assert.ok(
+          pre.shapeLayerActive,
+          "…and it is the active layer (the exclusive-lock model makes the unlocked one active): " +
+            JSON.stringify(pre),
+        );
         assert.ok(
           pre.shapeWrappers > 0,
           "a real .be-shape-wrapper exists (the be-rotate-click listener lives there): " + JSON.stringify(pre),

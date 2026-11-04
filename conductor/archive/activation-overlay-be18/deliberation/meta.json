@@ -1,0 +1,7 @@
+{
+  "deliberation": "required",
+  "date": "2026-11-01",
+  "decision": "Implement the activation overlay as a new js/activation_overlay.js module (boot-owned DOM node, be-* theme vocabulary, dismissed by main.js at the end of the boot sequence), wired into the production script list in manifest.json and the shared test-harness boot.",
+  "adjudicator": "operator-follow-up + e2e judge record (BEYOND-18 filing)",
+  "notes": "Single-answer decision with inadmissible alternatives recorded — see evaluation_matrix.md."
+}

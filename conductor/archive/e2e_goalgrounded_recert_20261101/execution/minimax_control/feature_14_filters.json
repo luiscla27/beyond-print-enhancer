@@ -1,0 +1,72 @@
+{
+ "feature": "feature_14_filters",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution; every call below was made to the official API",
+ "prompt_version": "v3 CONTROL (2026-11-01): identical to v2 EXCEPT the seeded activation-transition absence instruction (the ACTIVATION-ARC NOTE telling the judge to expect a loading/transition overlay) was REMOVED. The judge is told what the product is, but NOT which absence classes to report \u2014 so any overlay-class finding on this arm is the judge's own discovery. This arm measures which findings the judge produces independently. PRODUCT_BRIEF is / base-sheet exclusion / activation arc (described, not prescribed)) + TWO-LAYER rubric (LAYER 1 suite assertions, LAYER 2 product-aim conformance with REQUIRED absence findings) + defined verdict scale. The prompt template lives in temp/scratch/certify_goalgrounded.py::judge_prompt_for and is deterministic from temp/scratch/suite_titles.json.",
+ "certified": true,
+ "judge_call_pattern": "bundle (one judge call over all 1 suite video(s) of this feature; the model aggregates across them in-call, per AC-3's per-feature call shape and the track's authored max_judge_calls=18 bound)",
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "low",
+  "max_completion_tokens": 8000,
+  "sampling": {
+   "detail": "default",
+   "fps": 5
+  },
+  "knob_probe_record": "reasoning=low + max_completion_tokens=8000 chosen from measured probes A-F (temp/scratch/probe_token_caps.py, probe_video_cap.py): reasoning=medium on VIDEO calls burns the completion budget on reasoning tokens (feature_07 attempt 1: finish=length at exactly 1600 tokens, verdict text truncated mid-list -> UNPARSED); reasoning=low keeps reasoning ~208 tokens, leaving room for 600-900 word verdicts (probe E: finish=stop, 1115 tokens total). Observed completions land 1115-1600 anyway (the platform caps observed output ~1600) - ample. reasoning=none is rejected HTTP 400 (enum is low|medium).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_filter_identity_probe.spec.js",
+   "file_id": "458410308174359",
+   "mp4_bytes": 1318402,
+   "upload_response": {
+    "file": {
+     "file_id": 458410308174359,
+     "bytes": 1318402,
+     "created_at": 1793469851,
+     "filename": "print_filter_identity_probe.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_filter_identity_probe.spec.js",
+   "webm": "conductor\\archive\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\cross-cutting\\print_filter_identity_probe.webm",
+   "webm_bytes": 5155076
+  }
+ ],
+ "usage": {
+  "total_tokens": 61742,
+  "total_characters": 0,
+  "prompt_tokens": 59911,
+  "completion_tokens": 1831,
+  "completion_tokens_details": {
+   "reasoning_tokens": 439
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 188
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "## Observations, in order\n\n1. **Website loading and navigation \u2014 WEBSITE\u2019s work.**  \n   The video opens on a mostly blank D&D Beyond page, followed by the site\u2019s dark navigation bar, promotional banner, and loading spinner. These are not extension features.\n\n2. **Privacy overlay \u2014 WEBSITE\u2019s work.**  \n   D&D Beyond\u2019s \u201cYour Privacy Choices\u201d cookie dialog appears in the lower-left while the site continues loading. The dimmed page and red \u201cCREATE ACCOUNT\u201d control also belong to the website.\n\n3. **Character sheet loads \u2014 WEBSITE\u2019s work.**  \n   The Corvo Saggio character sheet appears with its artwork, character data, abilities, hit points, actions, inventory, and other D&D Beyond content. The initial character-sheet layout and content are the website\u2019s product.\n\n4. **Sheet enhancement appears \u2014 EXTENSION\u2019s work.**  \n   The sheet is subsequently overlaid with red outlines around many sections, decorative framing, and altered section presentation. These outlines and ornamental treatment are visibly distinct from the ordinary D&D Beyond presentation and are attributable to Beyond Print Enhancer.\n\n5. **Extension control panels appear \u2014 EXTENSION\u2019s work.**  \n   A dark, gold-accented \u201cBEYOND P\u2026\u201d control panel opens on the left. Its visible sections include **LAYOUT** and **OUTPUT**, with controls such as Load, Reset to Default, Manage Clones, Add Shape, Manage Compact, AI Arrange, AI Settings, **PRINT**, Print settings, and Save to Browser.\n\n6. **Layer Management panel appears \u2014 EXTENSION\u2019s work.**  \n   A separate dark panel opens on the right. It shows **SECTIONS (22)**, a list of sheet boxes, and **SHAPES (1)** with several shape/style thumbnails. Its visual treatment is clearly the extension\u2019s own \u201ccodex on the workbench\u201d style rather than D&D Beyond UI.\n\n7. **Initial-state notification \u2014 EXTENSION\u2019s work.**  \n   A dark toast at the top reads, **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d** This provides feedback that the default template\u2014not a saved layout\u2014is active.\n\n8. **Shape/color interaction \u2014 EXTENSION\u2019s work.**  \n   The ornamental frame and many section borders change visibly from red to green and later back to a neutral/dark treatment. The corresponding shape thumbnail in Layer Management also appears selected. This demonstrates that shape/style choices can update the enhanced sheet on camera.\n\n9. **No print output or filter verification is shown \u2014 absence.**  \n   Although the extension\u2019s **PRINT** button and **Print settings** entry are visible, the video never opens a print preview, browser print dialog, or paper/output view. No **CANVAS FILTERS** section, filter slider, Greyscale control, hue control, Apply/Undo operation, or output comparison is sampled.\n\n## Layer 1 \u2014 Asserted-behavior evidence\n\n| Suite assertion | Camera status | Basis |\n|---|---|---|\n| The shipped identity chains are `none`, and the sheet\u2019s own type reaches the paper | **NOT-VISIBLE** | No paper, print preview, rendered output, CSS identity chain, or emitted type is shown on camera. |\n| All sliders at their defaults is not neutral and costs colour | **NOT-VISIBLE** | No filter sliders or before/after printed output are shown. The visible red/green sheet changes concern shapes/borders, not the asserted default filter chain. |\n| A user\u2019s own setting reaches the paper: Greyscale 0% through the panel\u2019s own slider | **NOT-VISIBLE** | No Greyscale slider or its use is shown, and no paper output is shown. |\n| A real hue is emitted again rather than neutralised, and the defaults come back byte-identical | **NOT-VISIBLE** | No emitted hue is sampled, no default restoration is demonstrated, and no byte-identical comparison can be observed visually. |\n\nAlthough the frames are numerous enough to inspect the interface, they do not sample the behavior covered by this suite. In particular, visual inspection alone cannot establish byte identity.\n\n## Layer 2 \u2014 Product-aim conformance\n\n### Basic affordances observed working\n\n- **Distinct extension identity:** The dark floating panels, gold hairlines, typography, and ornament styling are visibly unlike D&D Beyond\u2019s native UI.\n- **Layer/section management UI:** Layer Management visibly enumerates 22 sections and provides shape thumbnails and per-section controls.\n- **Default-template feedback:** The toast clearly reports that no saved layout exists and the default template is loaded.\n- **Visible sheet decoration:** The extension\u2019s red outlines and ornamental frame are clearly visible over the sheet.\n- **Shape/style selection feedback:** Selection of a shape/color thumbnail corresponds with a visible red/green/neutral change to the sheet decoration.\n- **Print entry points:** **PRINT** and **Print settings** are visibly present and clearly styled as extension controls.\n\n### Missing or rough affordances observed within the demonstrated scope\n\n- The central claimed capability\u2014**canvas/print filter behavior reaching paper**\u2014is not demonstrated at all.\n- The **CANVAS FILTERS** controls mentioned in the product scope are not shown open, so Greyscale, hue, defaults, reset, Apply, and Undo cannot be assessed.\n- The **PRINT** control is visible but never visibly invoked; there is no print-preview or paper-output state.\n- No **loading/transition state** for the extension\u2019s print/filter operation is shown. The only spinner belongs to D&D Beyond\u2019s site loading.\n- No extension **error state** is shown.\n- No **disabled state** is shown, despite the layer/shape lists containing small action icons whose enabled/disabled behavior is unclear.\n- No **toast confirming a filter applied, print started, or undo occurred** is shown; the only toast concerns the missing saved layout.\n- No **reset-to-defaults result** is demonstrated.\n- No **undo/redo recovery path** is demonstrated.\n- The toolbar icon and its **ON badge** are outside the captured area, so activation-state affordances cannot be verified.\n- The first-run hint card mentioned in the product scope is not visibly shown; the visible \u201cNo saved layout yet\u2026\u201d toast serves a different informational purpose.\n- The right panel remains focused on Sections and Shapes during the sampled period; no filter-management state is exposed there.\n- A red border is also visible on some underlying sheet areas before the full extension panels appear, making ownership of every red outline visually ambiguous. The later green/neutral changes clearly belong to the extension\u2019s styling, but the full extension styling cannot be separated from website state in every early frame.\n\nBecause the asserted print/filter identity and output behavior are never sampled, and several relevant basic states are absent, this video cannot certify the suite\u2019s behavioral contract.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "call_detail": {
+  "attempts": 1,
+  "concise_retry_used": false
+ },
+ "bundle_source": "track plan.md feature checklist (cross-checked against units.json test_paths); every judged suite named in video_evidence",
+ "unit_only_in_fleet": true,
+ "adjoined_from_cross_cutting": "unit-only-in-fleet (units.json lists no browser_e2e spec for this unit); certified via the adjoined real e2e suite(s) named by the track plan.md checklist: print_filter_identity_probe.spec.js \u2014 the video is that suite's full capture, not a fabricated one",
+ "ts": 1793469866342
+}

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 /**
  * A side-by-side of the SAME printed page, before vs after the scaling wiring, for the

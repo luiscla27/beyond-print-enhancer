@@ -1,0 +1,26 @@
+{
+ "track_id": "track-15",
+ "code_count": 1,
+ "component_keys": [
+  "js/spells_ui"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/spells_ui.js"
+ ],
+ "units": [
+  {
+   "id": "feature_11_spells_ui",
+   "name": "Spells UI (Spell Detail Sections)",
+   "description": "Floating spell detail sections, spell fetch/cache, character spell injection",
+   "files": [
+    "js/spells.js",
+    "js/spells_ui.js"
+   ],
+   "component_key": "js/spells_ui",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/spells_ui.js",
+   "test_paths": [
+    "test/unit/spells_ui.test.js"
+   ]
+  }
+ ]
+}

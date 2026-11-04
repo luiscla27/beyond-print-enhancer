@@ -128,8 +128,12 @@ describe('Shape Layers Persistence', function() {
         delete global.chrome;
     });
 
-    it('should have SCHEMA_VERSION 1.5.0', function() {
-        assert.strictEqual(Storage.SCHEMA_VERSION, '1.5.0');
+    it('should have a well-formed SCHEMA_VERSION', function() {
+        // The migration cases below assert the STAMPED result equals the CONSTANT, so the
+        // constant is read from the module rather than re-typed: a re-typed copy is what
+        // made this suite fail on the legitimate 1.6.0 bump (AC-7's `borderSvg` field)
+        // without any behaviour having changed.
+        assert.match(Storage.SCHEMA_VERSION, /^\d+\.\d+\.\d+$/);
     });
 
     it('should migrate legacy layer states to new multi-layer format', function() {
@@ -144,7 +148,7 @@ describe('Shape Layers Persistence', function() {
 
         const migrated = migrateLayout(JSON.parse(JSON.stringify(legacyData)));
         
-        assert.strictEqual(migrated.version, '1.5.0');
+        assert.strictEqual(migrated.version, Storage.SCHEMA_VERSION);
         assert.ok(Array.isArray(migrated.shapeLayers), 'Should have shapeLayers array');
         assert.strictEqual(migrated.shapeLayers.length, 1, 'Should have 1 default shape layer');
         assert.strictEqual(migrated.shapeLayers[0].id, 'shapes-default');

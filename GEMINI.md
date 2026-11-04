@@ -9,6 +9,16 @@
 - Follow the guidelines in `vendor/conductor/workflow.md`.
 - Keep the implementation plan (`plan.md`) updated.
 - Maintain tests for all new features and bug fixes.
+- **Conductor tracks are working state, not history (operator rule 2026-10-03).** A live track
+  under `conductor/tracks/` is NOT versioned — it enters git only when it is archived to
+  `conductor/archive/`. Do not flag an untracked/modified live track (or its `plan.md` /
+  `metadata.json`) as missing-commit debt; that is the intended state. In THIS public project the
+  whole `conductor/` tree lives under the gitignored `vendor/` overlay, so both live and archived
+  tracks stay out of history here by layout — the rule is stated so agents do not misread that as a
+  gap. (msf-side reconciliation of the canonical skill's "committed with the phase" wording is
+  handed off as an MD issue — `modelstack_framework/temp/issues/ISSUE_conductor_live_tracks_versioned_before_archive_20261003.md`,
+  filed 2026-10-04, with the same findings re-measured there; this project's own half is done and
+  `git ls-files vendor` here is 0.)
 - **CRITICAL MANDATE - Commit Safety:** You MUST NEVER perform a `git commit` unless you have JUST executed all `mocha` tests and verified that they pass. Committing broken or unverified code is strictly prohibited.
 
 ## Asset Management

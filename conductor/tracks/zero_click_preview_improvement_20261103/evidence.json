@@ -1,0 +1,58 @@
+{
+  "track_id": "zero_click_preview_improvement_20261103",
+  "evidence_attached": true,
+  "evidence": {
+    "origin": "temp/ux_matrix/ evidence store, scored 2026-10-26, re-verified + SC-C2 rescored 2026-10-27",
+    "primary_evidence_file": "temp/ux_matrix/evidence_current.json",
+    "baseline_evidence_file": "temp/ux_matrix/evidence_baseline_corrected.json",
+    "score_run_record": "temp/ux_matrix/score_run_20261029.json",
+    "matrix_source": "temp/e2e_test_matrix_scored.md",
+    "runner": "python vendor/.reasonix/skills/ux-scoring-matrix/run.py score --evidence temp/ux_matrix/evidence_current.json",
+    "live_recompute": {
+      "raw_score": 83.92,
+      "gate_caps": {"zero_click": 84, "data_safety": 100, "accessibility": 100},
+      "severity_penalties": {"critical": 0, "major": -4, "minor": -2, "total": -6},
+      "final_score": 78,
+      "score_band": "Good",
+      "note": "Live run from evidence_current.json against run.py."
+    },
+    "gate_state_proof": {
+      "gate": "Zero-click preview success rate",
+      "matrix_gate_definition": "Percentage of representative sheets that enter preview with no blocking print defect and require no user adjustment",
+      "current_rate_in_evidence": 0.886,
+      "current_rate_source": "evidence_current.json gate_results.zero_click_preview_success_rate = 0.886",
+      "note_on_rate": "0.886 is NOT measured against the matrix's representative-sheet definition (10 sheets, no adjustment required). It is the SC-A2 mean/5 proxy recorded in the 2026-10-29 evidence derivation. score_run_20261029.json disposition P3 explicitly rejects this as an invalid gate measurement. Treat 0.886 as the current evidence artifact's number, not as a matrix-valid gate measurement.",
+      "current_cap_from_runpy": 84,
+      "target_rate": 0.95,
+      "target_cap_from_runpy": 100,
+      "why_94_vs_886": "The prompt's '94%' is the figure from the prior consultation narrative; the evidence artifact currently on disk carries 0.886 for the same proxy slot. A fresh session must reconcile these before claiming any rate. Do not trust either number as a matrix-valid measurement without a representative-sheet run.",
+      "prompt_claim_map": {
+        "claim_in_prompt": "current 94% -> cap 84",
+        "claim_in_prompt_target": "95%+ -> cap 100",
+        "cap_arithmetic_verified": true,
+        "cap_94_from_runpy": 84,
+        "cap_95_from_runpy": 100,
+        "evidence_file_rate": 0.886,
+        "evidence_file_cap_from_runpy": 84,
+        "reconciliation_status": "CAP arithmetic is verified by run.py for both 94% and 95%. The current RATE in the evidence file is 0.886, not 0.94. Which rate is authoritative for the gate is an open question for the fresh session; the cap contract is not."
+      }
+    },
+    "ceiling_effect_proof": {
+      "claim": "pushing the rate from 94% to 95%+ lifts the cap from 84 to 100, raising final score to ~88-89 even without criterion changes",
+      "arithmetic_check": {
+        "if_all_criteria_hold_at_current_ratings_and_rate_goes_to_0.95": "raw_score stays 83.92, severity stays -6, cap goes 84 -> 100, so final goes min(100, 83.92-6) = 78 -> stays 78 UNTIL criteria also rise; the cap alone does not raise final above raw+penalties",
+        "correct_reading": "the cap currently BINDs at 84 only if raw+penalties would exceed 84. With current evidence, raw+penalties = 77.92, which is already below 84, so the cap is NOT binding on the current evidence. Raising the cap to 100 does not by itself raise this evidence's final score.",
+        "when_the_95%_claim_matters": "if a future evidence set has raw+penalties above 84 (e.g. criteria rise toward 90+), then the 84 cap binds and raising it to 100 lets that higher raw flow through. That is the ceiling-lift effect the prompt describes; it is conditional on the rest of the matrix also improving.",
+        "summary": "the cap contract (94%->84, 95%->100) is verified. The claim that 95% alone lifts the current final score to 88-89 is NOT supported by the current evidence_current.json numbers (78 final, cap non-binding). The fresh session must treat the ceiling-lift claim as conditional, not as a guaranteed outcome of moving the gate alone."
+      }
+    },
+    "existing_print_certs_and_artifacts": {
+      "print_styles_unit": "test/unit/print_styles.test.js",
+      "print_output_audit_e2e": "test/browser_e2e/print_output_audit.spec.js",
+      "print_per_layer_e2e": "test/browser_e2e/print_per_layer.spec.js",
+      "layer_print_visibility_e2e": "test/browser_e2e/layer_print_visibility.spec.js",
+      "note": "These certify print behavior, not the matrix's zero-click representative-sheet rate. They are relevant supporting evidence but are not a substitute for the gate measurement."
+    },
+    "important_caveat": "This is the most evidence-fragile of the five tracks. The current rate is a proxy, the 94% figure and the 0.886 figure disagree, and the cap may not even be binding on the current evidence. The fresh session should start by reconciling the rate before planning any code change."
+  }
+}

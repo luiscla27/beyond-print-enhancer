@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 /**
  * Per-page pixel diff of two printed-page rasters (mean absolute channel difference and the share of

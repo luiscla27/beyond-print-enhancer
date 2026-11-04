@@ -55,6 +55,17 @@ const PATCH_KEYS = Object.freeze({
   moves: "moves",
   hide: "hide",
   note: "note",
+  /**
+   * ADDED by track `byok_svg_borders_20260927` (Phase 1, AC-2). The model's THIRD carrier: a
+   * `{svg, note?}` object describing ONE border for the section the user has selected. It earns a
+   * top-level envelope slot rather than a member of `moves` because it is not geometry — it is a
+   * whole new artefact — and because AC-3 gates it independently: a patch must be able to carry a
+   * border while the arrange capability is switched OFF, and vice versa.
+   *
+   * The envelope therefore has THREE carriers, and `envelope_empty` counts all three (a
+   * border-only answer is a complete answer).
+   */
+  border: "border",
 });
 
 /** The fields a move may write on one section (spec AC-1). */
@@ -65,6 +76,45 @@ const PATCH_SECTION_KEYS = Object.freeze({
   zIndex: "zIndex",
   minimized: "minimized",
 });
+
+/**
+ * The members of the patch's `border` carrier (track `byok_svg_borders_20260927`, AC-2):
+ * `{svg, note?}` — EXACTLY. `svg` is the model's proposed markup, a non-empty string that the
+ * trust root (`validateSvg`, below in this file) must ACCEPT; `note` is the same one-sentence
+ * courtesy the envelope carries.
+ *
+ * Declared once, like every other vocabulary here, so `validatePatch`, the prompt constructor and
+ * Phase 3's copy cannot drift apart.
+ */
+const BORDER_PATCH_KEYS = Object.freeze({
+  svg: "svg",
+  note: "note",
+});
+
+/**
+ * The two per-request capability switches (spec `[AC-3]`/`[AC-4]`): `{arrange, border}`, both ON.
+ *
+ * WHY A DEFAULT OBJECT RATHER THAN "options.capabilities is required": every caller that predates
+ * this track — and Phase 1's own fixtures — passes no capability state at all, and a missing
+ * argument must mean the documented DEFAULT (both on), not a silent "everything disabled" verdict
+ * that would read as a working validator refusing perfectly good patches.
+ *
+ * The gate itself fails CLOSED (`capabilityOn` below): only a literal `true` enables, so a caller
+ * that passes `{border: "yes"}` does not thereby hand the model a permission it was not granted.
+ * That direction is the only safe one for a boundary that decides what the model may emit.
+ *
+ * PHASE 3's `arrangeWithAi(instruction, opts)` is the FIRST product caller to pass `opts.capabilities`
+ * and `opts.selectedSectionId` from the dialog surface. A `selectedSectionId` is required only when
+ * the border capability is on (AC-5): the flow refuses locally before a network call when it is
+ * missing, so the border model cannot propose geometry for a section the user has not targeted.
+ */
+const DEFAULT_CAPABILITIES = Object.freeze({ arrange: true, border: true });
+
+/** True only for a literal `true` — see DEFAULT_CAPABILITIES' header for why. */
+function capabilityOn(capabilities, name) {
+  if (!isPlainObject(capabilities)) return DEFAULT_CAPABILITIES[name] === true;
+  return capabilities[name] === true;
+}
 
 /**
  * O-3's payload: what the model is TOLD about each section. Ratified 2026-09-15 as
@@ -106,7 +156,7 @@ const Z_ORDER_MAX = 2147483647;
 
 /**
  * The smallest `width` a patch may write. NOT an invention: a user dragging the resize
- * handle cannot produce anything under it — `js/main.js:2303` clamps `newWidth < 50` up to
+ * handle cannot produce anything under it — `js/main.js:2314` clamps `newWidth < 50` up to
  * 48 — so a 0 (or a hairline) is a value the sheet's own UI cannot make, i.e. malformed
  * geometry rather than a legitimate destructive ask. This is what closes GATE-3's D1: the
  * blank-the-sheet patch dies as a `geometry_value` rejection, with no new schema field and
@@ -169,9 +219,14 @@ const CREDENTIAL_PATTERNS = [
  * A finding is `{code, path, message}` — a CODE, not just prose. R2's gate list demands
  * "a DISTINCT error code" per reject class, because "it failed" is satisfied by a
  * validator that rejects everything.
+ *
+ * `extra` (added by track `byok_svg_borders_20260927`, AC-2) lets a finding carry the
+ * DETAIL behind its code without inventing a second code per detail: the SVG reject carries
+ * the trust root's own AC-1 vector as `reason`, so the user-facing copy stays one sentence
+ * per code while the diagnostic keeps naming which vector fired.
  */
-function finding(code, path, message) {
-  return { code, path, message };
+function finding(code, path, message, extra) {
+  return extra ? { code, path, message, ...extra } : { code, path, message };
 }
 
 function isPlainObject(value) {
@@ -220,9 +275,9 @@ function toNumber(value) {
  *   ok       an integer (or an integer-valued `"300px"`, the record's own spelling)
  *
  * The product's user path cannot produce a fractional width: the resize handle snaps to
- * multiples of 16 and clamps to integers (`js/main.js:2294-2305`), and the scaling
+ * multiples of 16 and clamps to integers (`js/main.js:2310-2315`), and the scaling
  * compensation travels as `--be-scale`, which no inline-style scan reads
- * (`js/print_styles.js:1234-1246`).
+ * (`js/print_styles.js:1298-1304`).
  */
 function classifyNumber(value) {
   if (value === null) return { kind: "value", n: null };
@@ -343,6 +398,15 @@ function validatePatch(patch, liveSectionIds, options) {
   }
 
   // --- the envelope ---------------------------------------------------------
+  // AC-3 gates arrive BEFORE the shape rules, because "this capability is switched off" is a
+  // different event from "this patch is malformed" and the spec forbids the second from standing
+  // in for the first (`[AC-2]`: "never a silent drop and never a wrong `envelope_*` finding").
+  const caps = isPlainObject(options) ? options.capabilities : null;
+  const arrangeOn = capabilityOn(caps, "arrange");
+  const borderOn = capabilityOn(caps, "border");
+  checks.arrange = arrangeOn;
+  checks.border = borderOn;
+
   if (!isPlainObject(patch)) {
     errors.push(
       finding("envelope_shape", "$", "a patch must be an object, got " + describeValue(patch)),
@@ -359,17 +423,67 @@ function validatePatch(patch, liveSectionIds, options) {
           `"${key}" is not a patch field (allowed: ${Object.keys(PATCH_KEYS).join(", ")})`,
         ),
       );
+      continue;
+    }
+    // A key that EXISTS in the schema but whose capability is switched off. Reported once per
+    // key, with the code the spec names, and with the switch spelled out so the user can act.
+    //
+    // `note` IS NOT OWNED BY A CAPABILITY — MEASURED 2026-09-30 (this track, Phase 4). The first
+    // version read `owner = key === border ? "border" : "arrange"`, which swept the top-level
+    // `note` into the arrange half and REFUSED the exact answer the product's own prompt asks for
+    // when the dialog has Arrange layout off and Border design on: `buildMessages` describes
+    // `note` unconditionally ("one short sentence to the user about what you did"), so the model
+    // reliably sends it, and the patch was then unwrappable for a capability it had not touched.
+    // `note` is prose ABOUT the patch, not a modification; it is also what `summarizePatch`
+    // reports. Only the three carriers that change something are owned.
+    //
+    // EMPTY CARRIER LENIENCY — MEASURED 2026-10-01 (this track, Phase 4). The product's own
+    // prompt says "do NOT emit `moves` and `hide`" when arrange is off, but the model
+    // reliably sends `moves: {}` and `hide: []` anyway (empty, zero changes). A strict read
+    // triggered `capability_disabled` for BOTH keys, which meant the ONE answer the border
+    // capability exists to produce — `{border: {svg: …}, note: "…"}` plus empty arrange keys
+    // the model could not suppress — was refused as "The AI tried to use a capability you
+    // switched off." before the border ever reached the trust root. The border-only path
+    // through `arrangeWithAi` (the roundtrip spec's path A) died at `stage: "validate"`,
+    // and the hostile-svg test never reached the trust root either — the `capability_disabled`
+    // error short-circuited the verdict. The fix: an empty carrier (empty object for `moves`,
+    // empty array for `hide`, null/undefined/empty for `border`) is silently dropped, not
+    // refused. The capability gate fires only when the key carries SUBSTANTIVE data.
+    const owner =
+      key === PATCH_KEYS.border ? "border" : key === PATCH_KEYS.note ? null : "arrange";
+    if (owner && ((owner === "border" && !borderOn) || (owner === "arrange" && !arrangeOn))) {
+      // Check if the carrier is empty — no changes proposed.
+      const val = patch[key];
+      const isEmpty =
+        owner === "arrange"
+          ? (key === PATCH_KEYS.moves ? isPlainObject(val) && Object.keys(val).length === 0
+             : key === PATCH_KEYS.hide ? Array.isArray(val) && val.length === 0
+             : false)
+          : owner === "border"
+          ? (!val || (typeof val === "object" && !isPlainObject(val)))
+          : false;
+      if (!isEmpty) {
+        errors.push(
+          finding(
+            "capability_disabled",
+            key,
+            `\`${key}\` was sent, but "${owner === "border" ? "Border design" : "Arrange layout"}" ` +
+              "is switched off for this request",
+          ),
+        );
+      }
     }
   }
 
   const hasMoves = Object.prototype.hasOwnProperty.call(patch, PATCH_KEYS.moves);
   const hasHide = Object.prototype.hasOwnProperty.call(patch, PATCH_KEYS.hide);
-  if (!hasMoves && !hasHide) {
+  const hasBorder = Object.prototype.hasOwnProperty.call(patch, PATCH_KEYS.border);
+  if (!hasMoves && !hasHide && !hasBorder) {
     errors.push(
       finding(
         "envelope_empty",
         "$",
-        "a patch must carry `moves` and/or `hide`; an empty patch changes nothing",
+        "a patch must carry `moves`, `hide` and/or `border`; an empty patch changes nothing",
       ),
     );
   }
@@ -501,7 +615,7 @@ function validatePatch(patch, liveSectionIds, options) {
             "geometry_value",
             where,
             `a width of ${num.n}px is below the ${MIN_WIDTH_PX}px the sheet's own resize ` +
-              "handle clamps to (js/main.js:2303) — a collapsed section is a malformed ask, " +
+              "handle clamps to (js/main.js:2314) — a collapsed section is a malformed ask, " +
               "not something to confirm",
           ),
         );
@@ -540,6 +654,86 @@ function validatePatch(patch, liveSectionIds, options) {
       continue;
     }
     hideOut.push(id);
+  }
+
+  // --- the border carrier (AC-2) -------------------------------------------------
+  // Shape first, then the trust root. The trust root is NOT re-implemented here: `validateSvg` is
+  // the only routine allowed to declare an SVG clean (spec §Trust boundary), so a second copy of
+  // "is this script-bearing" in this file would be exactly the ambiguity AC-9 exists to remove.
+  let borderOut = null;
+  if (hasBorder && borderOn) {
+    const borderIn = patch[PATCH_KEYS.border];
+    if (!isPlainObject(borderIn)) {
+      errors.push(
+        finding(
+          "border_shape",
+          PATCH_KEYS.border,
+          "`border` must be an object `{svg, note?}`, got " + describeValue(borderIn),
+        ),
+      );
+    } else {
+      for (const field of Object.keys(borderIn)) {
+        if (!Object.prototype.hasOwnProperty.call(BORDER_PATCH_KEYS, field)) {
+          errors.push(
+            finding(
+              "border_shape",
+              `${PATCH_KEYS.border}.${field}`,
+              `"${field}" is not a border member (allowed: ` +
+                `${Object.keys(BORDER_PATCH_KEYS).join(", ")})`,
+            ),
+          );
+        }
+      }
+      // The member's own `note` is the same courtesy the envelope carries, with the same cap.
+      const svg = borderIn[BORDER_PATCH_KEYS.svg];
+      if (!isNonEmptyString(svg)) {
+        errors.push(
+          finding(
+            "border_shape",
+            `${PATCH_KEYS.border}.${BORDER_PATCH_KEYS.svg}`,
+            "`svg` must be a non-empty string, got " + describeValue(svg),
+          ),
+        );
+      } else {
+        const verdictSvg = validateSvg(svg);
+        if (!verdictSvg.ok) {
+          errors.push(
+            finding(
+              "border_svg_rejected",
+              `${PATCH_KEYS.border}.${BORDER_PATCH_KEYS.svg}`,
+              `the border SVG was refused by the trust root (${verdictSvg.error}); nothing ` +
+                "was rendered",
+              { reason: verdictSvg.error },
+            ),
+          );
+        } else {
+          borderOut = {
+            // THE SANITIZED STRING, not the model's bytes: `sanitize-then-inject, never
+            // inject-if-caller-says-clean` starts at the verdict, so nothing downstream is ever
+            // handed raw model markup to "remember" to clean.
+            svg: verdictSvg.sanitized,
+          };
+          if (borderIn[BORDER_PATCH_KEYS.note] !== undefined) {
+            if (typeof borderIn[BORDER_PATCH_KEYS.note] !== "string") {
+              errors.push(
+                finding(
+                  "border_shape",
+                  `${PATCH_KEYS.border}.${BORDER_PATCH_KEYS.note}`,
+                  "`note` must be a string",
+                ),
+              );
+            } else {
+              borderOut.note = borderIn[BORDER_PATCH_KEYS.note].slice(0, 2000);
+            }
+          }
+          borderOut = Object.freeze(borderOut);
+        }
+      }
+    }
+  } else if (hasBorder && !borderOn) {
+    // The capability finding above already fired; a second `border_shape` here would double-report
+    // one event (`[AC-2]`: the disabled capability must produce ITS code, not a shape verdict).
+    checks.borderRejected = true;
   }
 
   // --- the note ---------------------------------------------------------------
@@ -615,6 +809,10 @@ function validatePatch(patch, liveSectionIds, options) {
     ),
     hide: Object.freeze(hideOut),
     note,
+    // The border carrier: ALWAYS present in the normalised patch (as `null` when the model sent
+    // none), so Phase 3 can read `patch.border` without a `hasOwnProperty` dance and a missing
+    // border is not confused with an absent key.
+    border: borderOut,
   });
   return verdict(errors, advisories, normalized, checks);
 }
@@ -635,7 +833,7 @@ function describeValue(value) {
  * normalised patch the apply consumes.
  */
 function summarizePatch(patch) {
-  if (!isPlainObject(patch)) return { moves: 0, hides: 0, resized: 0, restacked: 0 };
+  if (!isPlainObject(patch)) return { moves: 0, hides: 0, resized: 0, restacked: 0, borders: 0 };
   const moves = isPlainObject(patch.moves) ? patch.moves : {};
   let resized = 0;
   let restacked = 0;
@@ -649,7 +847,27 @@ function summarizePatch(patch) {
     hides: Array.isArray(patch.hide) ? patch.hide.length : 0,
     resized,
     restacked,
+    /**
+     * ADDED by track `byok_svg_borders_20260927` (Phase 4, MEASURED defect).
+     *
+     * The count is 1 or 0 because a patch carries at most ONE border (`BORDER_PATCH_KEYS` is
+     * `{svg, note?}`, a single artefact for the one selected section — AC-2). It is REPORTED
+     * rather than implied because `js/ai_arrange.js` used to ask "did anything change?" as
+     * `!summary.moves && !summary.hides`, and a border-only patch — the shape the product's own
+     * prompt produces with Arrange off / Border on, ratified decision D3 — answers 0/0/0/0 to
+     * that question. The flow therefore refused the ONE answer the border capability exists to
+     * produce, with `envelope_empty` ("The AI proposed no changes.") and before the preview ever
+     * opened: `test/browser_e2e/byok_border_roundtrip.spec.js` measured every border case dying
+     * on `stage: "preview"`. A summary that cannot tell "no border" from "a border" is the bug.
+     */
+    borders: hasOwnBorder(patch) ? 1 : 0,
   };
+}
+
+/** Does this patch carry a well-formed border carrier? (The single-vs-absent test above.) */
+function hasOwnBorder(patch) {
+  const b = isPlainObject(patch) ? patch[PATCH_KEYS.border] : null;
+  return isPlainObject(b) && typeof b[BORDER_PATCH_KEYS.svg] === "string" && b[BORDER_PATCH_KEYS.svg] !== "";
 }
 
 // ---------------------------------------------------------------------------
@@ -673,7 +891,10 @@ function summarizePatch(patch) {
  *
  * @param {Array<{id, title, left, top, width, height}>} sections the scanned table.
  * @param {string} instruction what the user asked for.
- * @param {{liveSectionIds?: string[]}} options optional live-id cross-check.
+ * @param {{liveSectionIds?: string[], capabilities?: {arrange?: boolean, border?: boolean}}}
+ *        options live-id cross-check, and the per-request capability switches (AC-3). ABSENT
+ *        `capabilities` means the documented both-ON default; a PRESENT object enables only the
+ *        members set to a literal `true` (see `capabilityOn`).
  * @return {Array<{role: string, content: string}>}
  */
 function buildMessages(sections, instruction, options) {
@@ -718,32 +939,98 @@ function buildMessages(sections, instruction, options) {
     rows.push(pickSectionContext(row));
   }
 
+  // AC-3: the switch state decides WHAT THE MODEL IS TAUGHT, not merely what it is allowed to
+  // send. A capability that is off contributes no schema sentence and no rule; it is named once,
+  // in a prohibition, which is the other half of AC-3 ("the message tells the model not to emit
+  // those keys"). Built as arrays so the enabled half and the disabled half cannot interleave.
+  const caps = isPlainObject(options) ? options.capabilities : null;
+  const arrangeOn = capabilityOn(caps, "arrange");
+  const borderOn = capabilityOn(caps, "border");
+
+  /** The JSON example's members, in a stable order, for the SHAPE paragraph. */
+  const shape = [];
+  if (arrangeOn) {
+    shape.push(
+      `${JSON.stringify(PATCH_KEYS.moves)}: {<sectionId>: {` +
+        `${PATCH_SECTION_KEYS.left}, ${PATCH_SECTION_KEYS.top}, ${PATCH_SECTION_KEYS.width}, ` +
+        `${PATCH_SECTION_KEYS.zIndex}, ${PATCH_SECTION_KEYS.minimized}}}`,
+      `${JSON.stringify(PATCH_KEYS.hide)}: [<sectionId>, ...]`,
+    );
+  }
+  if (borderOn) {
+    shape.push(
+      `${JSON.stringify(PATCH_KEYS.border)}: {${BORDER_PATCH_KEYS.svg}: "<svg ...>", ` +
+        `${BORDER_PATCH_KEYS.note}?: string}`,
+    );
+  }
+  shape.push(`${JSON.stringify(PATCH_KEYS.note)}: string`);
+
+  const rules = [];
+  if (arrangeOn) {
+    rules.push(
+      `- ${PATCH_KEYS.moves} and ${PATCH_KEYS.hide} are both optional; every id you use MUST be`,
+      "  one of the SECTION TABLE ids below. Any other id fails the whole patch.",
+      `- ${PATCH_KEYS.left}/${PATCH_KEYS.top}/${PATCH_KEYS.width} are pixel numbers >= 0.` +
+        " Integers only.",
+      `- ${PATCH_KEYS.zIndex} is an integer 0..${Z_ORDER_MAX}; higher sits on top.` +
+        " Keep headings above art.",
+      `- ${PATCH_KEYS.minimized} is true/false: a minimized section shows only its heading.` +
+        ` Each section below reports its CURRENT ${PATCH_KEYS.zIndex} and` +
+        ` ${PATCH_KEYS.minimized}, so move/stack against what is there instead of guessing.`,
+      `- ${PATCH_KEYS.hide} removes a section from the printed page without deleting it.`,
+      "- Do NOT reuse a section's reported width as a NEW width for another section, and never",
+      "  send a percentage or a decimal: widths are the USER's pixel choices.",
+      `- \`width\` has a floor of ${MIN_WIDTH_PX}px (a section cannot be collapsed to nothing).`,
+      "  Do NOT hide every section: the user can always undo, but a blank page is not a layout.",
+    );
+  }
+  if (borderOn) {
+    rules.push(
+      `- ${PATCH_KEYS.border} draws the border of ONE section: ${BORDER_PATCH_KEYS.svg} is a`,
+      "  complete, static `<svg>` element carrying a `viewBox`. It is decoration only — draw",
+      "  with shapes, paths and gradients, and never include `<script>`, `on*` attributes,",
+      "  `<foreignObject>`, animation elements, an external `href`/`xlink:href` that does not",
+      `  start with \`#\`, or a \`@import\`. At most ${MAX_SVG_CHARS} characters.`,
+      "  Anything that fails those rules is REFUSED and renders nothing.",
+      // The three certified conventions (track byok_template_tuning_20261014, candidate
+      // C-1): the knowledge the certified border corpus cost 31+ rounds to earn, stated
+      // as guidance the model can act on. Each is traced to a corpus-wide prompt line or
+      // a pipeline measurement recorded in the track's deliberation record.
+      "  Design for greyscale print: use luminance contrast only — near-black ink",
+      "  (#111-#555) or light fills (#E8E8E8 and lighter), never hue — the print pipeline",
+      "  renders the band in greyscale.",
+      "  Keep artwork in the outer edge bands of the viewBox and the four corners; leave",
+      "  the CENTRE empty — the pipeline paints only the source's edge and corner slices,",
+      "  so centre ink is cropped away and wasted.",
+      "  For the left and right rails draw shapes wider than they are tall in viewBox",
+      "  units — the pipeline compresses those rails horizontally — and express every",
+      "  size in viewBox units, never px.",
+    );
+  }
+  // The prohibitions. Named with the BARE key (never the quoted schema token), so AC-3's
+  // "the disabled capability's schema is absent" is exactly decidable in the message.
+  const forbidden = [];
+  if (!arrangeOn) forbidden.push(PATCH_KEYS.moves, PATCH_KEYS.hide);
+  if (!borderOn) forbidden.push(PATCH_KEYS.border);
+
   const system = [
-    "You arrange a printable Dungeons & Dragons character sheet. Every section is already",
-    "absolutely positioned on one page; you change WHERE it goes, never what it contains.",
+    "You assist a printable Dungeons & Dragons character sheet. Every section is already",
+    "absolutely positioned on one page, and you never change what a section CONTAINS.",
     "",
     "Reply with ONE JSON object and NOTHING else — no prose, no markdown fence. Shape:",
-    `  {${JSON.stringify(PATCH_KEYS.moves)}: {<sectionId>: {` +
-      `${PATCH_SECTION_KEYS.left}, ${PATCH_SECTION_KEYS.top}, ${PATCH_SECTION_KEYS.width}, ` +
-      `${PATCH_SECTION_KEYS.zIndex}, ${PATCH_SECTION_KEYS.minimized}}}, ` +
-      `${JSON.stringify(PATCH_KEYS.hide)}: [<sectionId>, ...], ` +
-      `${JSON.stringify(PATCH_KEYS.note)}: string}`,
+    `  {${shape.join(", ")}}`,
     "",
     "Rules:",
-    `- ${PATCH_KEYS.moves} and ${PATCH_KEYS.hide} are both optional; every id you use MUST be`,
-    "  one of the SECTION TABLE ids below. Any other id fails the whole patch.",
-    `- ${PATCH_KEYS.left}/${PATCH_KEYS.top}/${PATCH_KEYS.width} are pixel numbers >= 0.` +
-      " Integers only.",
-    `- ${PATCH_KEYS.zIndex} is an integer 0..${Z_ORDER_MAX}; higher sits on top.` +
-      " Keep headings above art.",
-    `- ${PATCH_KEYS.minimized} is true/false: a minimized section shows only its heading.` +
-      ` Each section below reports its CURRENT ${PATCH_KEYS.zIndex} and` +
-      ` ${PATCH_KEYS.minimized}, so move/stack against what is there instead of guessing.`,
-    `- ${PATCH_KEYS.hide} removes a section from the printed page without deleting it.`,
-    "- Do NOT reuse a section's reported width as a NEW width for another section, and never",
-    "  send a percentage or a decimal: widths are the USER's pixel choices.",
-    `- \`width\` has a floor of ${MIN_WIDTH_PX}px (a section cannot be collapsed to nothing).`,
-    "  Do NOT hide every section: the user can always undo, but a blank page is not a layout.",
+    ...rules,
+    ...(forbidden.length
+      ? [
+          `- ${forbidden.join(" and ")} ${forbidden.length > 1 ? "are" : "is"} DISABLED for this`,
+          "  request: do NOT emit " +
+            (forbidden.length > 1 ? "those keys" : "that key") +
+            ", and do not ask the user to enable",
+          "  anything. A patch carrying one is refused outright.",
+        ]
+      : []),
     `- ${PATCH_KEYS.note}: one short sentence to the user about what you did.`,
     "",
     // The marker is load-bearing for the unit case that reads this payload back as data.
@@ -1095,6 +1382,528 @@ function parseModelOutput(text, liveSectionIds, options) {
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// The SVG trust root (AC-1) — the pure sanitizer/validator for AI border SVGs
+// ---------------------------------------------------------------------------
+
+/**
+ * `MAX_SVG_CHARS` — spec.md's bounded-length ceiling for an AI-authored border. A model that
+ * answers with a megabyte of markup is REFUSED, not truncated: a truncated SVG is a silently
+ * deformed border, which is exactly the "never inject a partially-cleaned string" rule AC-9
+ * states for the choke point.
+ *
+ * MEASURED (Phase 1, this suite): the ceiling is applied to the SERIALIZED, SANITIZED string, so
+ * a short-but-script-bearing payload is rejected for `script` (its own named reason), never
+ * mislabelled `oversize` — the two FAIL conditions stay distinguishable, which is what makes the
+ * named-error contract testable.
+ */
+const MAX_SVG_CHARS = 16000;
+
+
+
+/**
+ * The named rejection reasons. ONE constant per AC-1 FAIL condition, so a caller (Phase 2's
+ * choke point, Phase 3's copy table) never matches on prose. `[AC-1]`'s FAIL condition is "a
+ * script-bearing or non-svg-root string is returned accepted" — a boolean alone cannot report
+ * WHICH vector fired, and the flow needs to tell the user which one it refused.
+ */
+const SVG_REJECT_REASONS = Object.freeze({
+  NON_SVG_ROOT: "non_svg_root",
+  MISSING_VIEWBOX: "missing_viewbox",
+  SCRIPT: "script",
+  FOREIGN_OBJECT: "foreign_object",
+  EVENT_HANDLER: "event_handler",
+  EXTERNAL_REFERENCE: "external_reference",
+  CSS_IMPORT: "css_import",
+  ANIMATION: "animation",
+  OVERSIZE: "oversize",
+  /**
+   * ADDED by the allowlist-grammar hardening (fork #1, accepted before Phase 3).
+   * The prior blacklist accepted every element it did not name, which left
+   * `<style>`, `<metadata>`, `<a>`, `<image>`, `<foreignObject*>`, and any
+   * future SVG2 element as silent allowances. The allowlist flips that: an
+   * element or attribute that is NOT explicitly listed is refused with a
+   * DISTINCT reason so the copy table (Phase 3) can tell the user what the
+   * model sent that this extension will not render.
+   */
+  SVG_DISALLOWED_ELEMENT: "svg_disallowed_element",
+  SVG_DISALLOWED_ATTRIBUTE: "svg_disallowed_attribute",
+  SVG_EXTERNAL_URL: "svg_external_url",
+});
+
+/**
+ * The allowlisted SVG element vocabulary. Every element NOT in this set is
+ * refused with `svg_disallowed_element`. This replaces the prior blacklist
+ * (`FORBIDDEN_SVG_ELEMENTS`) because a blacklist accepts every element it does
+ * not name — including `<style>`, `<a>`, `<metadata>`, and any future SVG2
+ * element — while an allowlist fails closed on novelty.
+ *
+ * The chosen set is the static-drawing subset of SVG1.1 that a section border
+ * can legitimately use, plus `<defs>` and `<use>` for reusable tile patterns
+ * (which the product's own raster borders already rely on). Three things are
+ * deliberately OUT:
+ *
+ *   `<text>` — AI-generated decorative borders must be pure geometry, and a
+ *   text run inside a border overlay would be a localization surface the
+ *   extension does not own;
+ *   `<image>` — its whole purpose is to load an external resource, which is
+ *   exactly the fetch AC-9 forbids;
+ *   `<style>` — a CSS block reaches the document's cascade, so it is a
+ *   styling escape rather than a drawing primitive. AC-1's `@import` vector
+ *   is therefore refused with `svg_disallowed_element` rather than
+ *   `css_import`, which the allowlist makes unrepresentable: the grammar has
+ *   no CSS surface to hide an `@import` in.
+ */
+const SVG_ALLOWED_ELEMENTS = Object.freeze(new Set([
+  "svg",
+  "g",
+  "rect",
+  "circle",
+  "ellipse",
+  "line",
+  "polyline",
+  "polygon",
+  "path",
+  "defs",
+  "use",
+  "title",
+  "desc",
+  // SVG spells these in camelCase (`linearGradient`) but an XML `tagName` is
+  // case-SENSITIVE, so the element set keeps the canonical spelling and is
+  // compared case-insensitively (`allowlistedSvgElement` below).
+  "lineargradient",
+  "radialgradient",
+  "stop",
+  "clippath",
+  "pattern",
+  "mask",
+  "symbol",
+  "marker",
+]));
+
+/**
+ * The allowlisted SVG attribute vocabulary. An attribute on an allowlisted
+ * element that is NOT in this set is removed and reported as
+ * `svg_disallowed_attribute`. `href` / `xlink:href` are allowed ONLY when
+ * their value is a same-document fragment (`#id`), which the external-
+ * reference check enforces separately.
+ *
+ * `style` and `class` are deliberately OUTSIDE the allowlist. Both are CSS
+ * surfaces: an inline `style="background:url(https://…)"` would perform a
+ * network fetch the extension must never make, and a `class` hook reaches the
+ * page's own stylesheet. A decorative border built from the allowlisted set --
+ * `viewBox` plus presentation attributes (`fill`, `stroke`, `stroke-width`,
+ * `opacity`) plus `defs`/`use`/`gradient` for tiling -- needs neither, and a
+ * model that sends `style="…"` loses that attribute and keeps its geometry.
+ * The allowlist blocks the attribute NAME, so there is no spelling of a CSS
+ * escape that survives: any other name is refused the same way.
+ */
+/** The SVG namespace binding every image decoder requires; see the namespace
+ *  normalisation inside `validateSvg` for why the trust root stamps it. */
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+const SVG_ALLOWED_ATTRIBUTES = Object.freeze(new Set([
+  // ALL KEYS ARE LOWERCASE. The check below lowercases the attribute name before the
+  // membership test, so a camelCase key ("viewBox") would never match and would
+  // strip the very attribute the contract requires -- MEASURED in this phase: EVERY
+  // vector reported `svg_disallowed_attribute` because `viewBox` was being removed
+  // from the root. SVG's own spelling is restored on the way out by the browser's
+  // serializer, so the stored string keeps `viewBox` / `preserveAspectRatio`.
+  // Structural / root
+  "xmlns",
+  "xmlns:xlink",
+  "viewbox",
+  "width",
+  "height",
+  "preserveaspectratio",
+  "overflow",
+  "visibility",
+  "display",
+  // Geometry
+  "x", "y", "cx", "cy", "rx", "ry", "r",
+  "x1", "y1", "x2", "y2",
+  "points",
+  "d",
+  // Appearance (presentation attributes — the set the product's own borders use)
+  "fill", "fill-opacity", "fill-rule",
+  "stroke", "stroke-width", "stroke-opacity",
+  "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "stroke-dashoffset",
+  "opacity",
+  "color",
+  // Transforms
+  "transform",
+  // use / href (fragment-only; enforced by `isAllowedSvgHref`)
+  "href",
+  "xlink:href",
+  // gradient stops. `stop-color`/`stop-opacity` are the paint properties a
+  // <stop> actually draws with -- MEASURED: with them absent, a model-authored
+  // `<linearGradient>` came back `svg_disallowed_attribute` and lost every stop
+  // colour, i.e. the allowlist refused a border the product is meant to accept.
+  "offset",
+  "stop-color",
+  "stop-opacity",
+  // clip / mask / pattern / marker geometry
+  "clippathunits",
+  "maskunits", "maskcontentunits",
+  "patternunits", "patterncontentunits",
+  "patterntransform",
+  "markerwidth", "markerheight",
+  "refx", "refy",
+  "orient",
+  "markerunits",
+  // Structural: `id` is required by `<use href="#tile">`.
+  "id",
+  // `title` / `desc` carry no attributes beyond `id`, which is already listed
+]));
+
+/** `onclick`, `onload`, … — any `on*` attribute, case-insensitively. */
+function isForbiddenSvgAttribute(name) {
+  return /^on[a-z]/i.test(String(name || ""));
+}
+
+/**
+ * The AC-1 vectors, checked BEFORE the allowlist so each keeps its OWN named reason
+ * instead of collapsing into the generic `svg_disallowed_element`.
+ *
+ * WHY BOTH, AND WHY THIS ORDER. The allowlist alone would report
+ * `<script>`, `<foreignObject>` and `<animate>` all as
+ * `svg_disallowed_element` — true, but it throws away the one thing AC-1's named
+ * vocabulary exists for: telling the user WHICH vector fired. So the four AC-1
+ * element classes are recognised first and keep `script` / `foreign_object` /
+ * `animation` / `css_import`; every OTHER element it does not name falls
+ * through to the allowlist and is reported as `svg_disallowed_element`, which is
+ * the case the blacklist could not express at all. Lower-cased because an XML
+ * `tagName` keeps the document's own spelling and `<SCRIPT>` is the same element.
+ */
+const AC1_FORBIDDEN_SVG_ELEMENTS = Object.freeze({
+  script: SVG_REJECT_REASONS.SCRIPT,
+  foreignobject: SVG_REJECT_REASONS.FOREIGN_OBJECT,
+  animate: SVG_REJECT_REASONS.ANIMATION,
+  animatetransform: SVG_REJECT_REASONS.ANIMATION,
+  animatemotion: SVG_REJECT_REASONS.ANIMATION,
+  animatecolor: SVG_REJECT_REASONS.ANIMATION,
+  mpath: SVG_REJECT_REASONS.ANIMATION,
+  set: SVG_REJECT_REASONS.ANIMATION,
+});
+
+/**
+ * The named reason for `tag`, or `null` when the allowlist should decide.
+ * `<style>` is special: AC-1 names only the `@import` case, so a `<style>` whose
+ * content carries no `@import` is refused by the allowlist (it is not a drawing
+ * primitive) while one carrying `@import` reports the specific `css_import`.
+ */
+function ac1SvgElementReason(tag, textContent) {
+  const own = Object.prototype.hasOwnProperty.call(AC1_FORBIDDEN_SVG_ELEMENTS, tag)
+    ? AC1_FORBIDDEN_SVG_ELEMENTS[tag]
+    : null;
+  if (own) return own;
+  if (tag === "style" && /@import/i.test(textContent || "")) {
+    return SVG_REJECT_REASONS.CSS_IMPORT;
+  }
+  return null;
+}
+
+/**
+ * The named reason for an `href` on an element the allowlist REFUSES ALREADY.
+ *
+ * `<image href="https://…">` is the one case where AC-1 named `external_reference`
+ * but the allowlist is what refuses it, and reporting
+ * `svg_disallowed_element` there would describe the mechanism instead of the
+ * vector — the user's own message is "it may not link to other sites", not "image
+ * is not on the list". So an external `href` on any refused element reports
+ * `external_reference`; an `<image>` with a same-document fragment still reports
+ * `svg_disallowed_element`, because the fetch is not the problem there.
+ */
+function hrefSvgElementReason(el, tag) {
+  for (const attr of Array.from(el.attributes || [])) {
+    const name = String(attr.name || "").toLowerCase();
+    if ((name === "href" || name === "xlink:href") && !isAllowedSvgHref(attr.value)) {
+      return SVG_REJECT_REASONS.EXTERNAL_REFERENCE;
+    }
+  }
+  return ac1SvgElementReason(tag, el.textContent) || SVG_REJECT_REASONS.SVG_DISALLOWED_ELEMENT;
+}
+
+/**
+ * Accept `href` / `xlink:href` only when the value is a same-document fragment.
+ * The product's own gradients/clip-paths use the `#id` form (`<use href="#tile">`),
+ * so blanking it would break every legitimate border; everything else — a URL, a
+ * `data:` payload, even a relative file — is a load the extension must never perform.
+ * The prior code called this `isExternalSvgHref`; the allowlist grammar wraps it in
+ * a named reason (`svg_external_url`) so the copy table can tell the user what the
+ * model referenced.
+ */
+function isAllowedSvgHref(value) {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  return trimmed.length === 0 || trimmed.startsWith("#");
+}
+
+/**
+ * Walk the ELEMENT children of `node` and enforce the allowlist grammar, collecting
+ * the named reasons. The root element is NOT visited here (it is not its own child) —
+ * `validateSvg` inspects the root's own attributes, which is the half a naive
+ * `firstChild` walk misses: MEASURED during Phase 1, `<svg viewBox="…" onload="alert(1)">`
+ * came back `ok: true` from a walk that started at `firstChild`, because the handler was
+ * on the root itself.
+ *
+ * Attributes are snapshotted with `Array.from` BEFORE any `removeAttribute`: a
+ * `NamedNodeMap` is LIVE, so mutating it while iterating silently skips the next
+ * attribute. That is the second measured defect of this routine's first draft.
+ */
+function enforceSvgAllowlist(node) {
+  const errors = [];
+  const toRemove = [];
+
+  for (let child = node.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType !== 1 /* ELEMENT_NODE */) continue;
+    const tag = String(child.tagName || "").toLowerCase();
+
+    if (!SVG_ALLOWED_ELEMENTS.has(tag)) {
+      // AC-1's own vectors keep their specific names (script / foreign_object /
+      // animation / css_import / external_reference); everything else the
+      // allowlist refuses is the generic `svg_disallowed_element` — the reject
+      // the blacklist could not express, because it accepted every element it
+      // did not name.
+      errors.push(hrefSvgElementReason(child, tag));
+      toRemove.push(child);
+      continue;
+    }
+
+    for (const attr of Array.from(child.attributes || [])) {
+      const name = String(attr.name || "").toLowerCase();
+
+      if (isForbiddenSvgAttribute(name)) {
+        child.removeAttribute(attr.name);
+        if (errors.indexOf(SVG_REJECT_REASONS.EVENT_HANDLER) === -1) {
+          errors.push(SVG_REJECT_REASONS.EVENT_HANDLER);
+        }
+        continue;
+      }
+
+      if ((name === "href" || name === "xlink:href") && !isAllowedSvgHref(attr.value)) {
+        child.setAttribute(attr.name, "");
+        if (errors.indexOf(SVG_REJECT_REASONS.EXTERNAL_REFERENCE) === -1) {
+          // AC-1's name for the vector, kept so the Phase 1 suite and Phase 3's
+          // copy table still read `external_reference`; the allowlist fork's
+          // `svg_external_url` is the SAME reject under the grammar's vocabulary,
+          // and both are mapped to one user-facing sentence (see spec AC-1/AC-2).
+          errors.push(SVG_REJECT_REASONS.EXTERNAL_REFERENCE);
+        }
+        continue;
+      }
+
+      // Allowlisted elements may carry any attribute in the allowlisted set.
+      // Presentation attributes (`fill`, `stroke`, `opacity`, …) are the dominant
+      // use case, and `id` is required by `<use href="#…">`.
+      if (!SVG_ALLOWED_ATTRIBUTES.has(name)) {
+        child.removeAttribute(attr.name);
+        if (errors.indexOf(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE) === -1) {
+          errors.push(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE);
+        }
+      }
+    }
+
+    for (const nested of enforceSvgAllowlist(child)) {
+      if (errors.indexOf(nested) === -1) errors.push(nested);
+    }
+  }
+
+  for (const child of toRemove) {
+    if (child.parentNode) child.parentNode.removeChild(child);
+  }
+
+  return errors;
+}
+
+/**
+ * Parse `markup` into a DOM Document. `DOMParser` is the browser's own (the content script has
+ * it); `XMLSerializer`/`outerHTML` on the other side are the same split. In Node (this suite)
+ * neither global exists, so `jsdom` is the fallback — a devDependency the test tree already
+ * loads, reached ONLY on that branch, which is why the product never ships a `jsdom` import.
+ *
+ * Returns `null` when the markup will not parse as XML at all (jsdom THROWS a `SyntaxError` from
+ * `parseFromString`; the browser returns a `<parsererror>` document instead — both are handled by
+ * the caller's root-tag check).
+ */
+function parseSvgDocument(markup) {
+  try {
+    // Prefer the explicit SVG namespace parse when a DOMParser is available.
+    // jsdom + image/svg+xml gives us a DOCUMENT whose root IS the <svg>.
+    // The JSDOM fallback mirrors that exact path (contentType image/svg+xml).
+    if (typeof DOMParser !== "undefined") {
+      return new DOMParser().parseFromString(markup, "image/svg+xml");
+    }
+    if (typeof require === "function") {
+      const { JSDOM } = require("jsdom");
+      return new JSDOM(markup, { contentType: "image/svg+xml" }).window.document;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+
+/** Serialize a parsed element back to a string — the ONLY place this module produces markup. */
+function serializeSvgElement(root) {
+  if (typeof XMLSerializer !== "undefined") {
+    return new XMLSerializer().serializeToString(root);
+  }
+  return String(root.outerHTML);
+}
+
+
+function validateSvg(input) {
+  if (typeof input !== "string" || !input.trim()) {
+    return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.NON_SVG_ROOT };
+  }
+
+  const trimmed = input.trim();
+  const doc = parseSvgDocument(trimmed);
+  // parseFromString returns a DOCUMENT, not a root element.  When the MIME
+  // type is image/svg+xml the documentElement IS the <svg>, but the property
+  // is a live accessor in jsdom when the outer wrapper is text/html — the
+  // <html> root has the <svg> as its child and documentElement is not the
+  // node we want.  Falling back to the first <svg> descendant keeps the
+  // contract without requiring a specific DOMParser / JSDOM mode.
+  let root = doc && doc.documentElement;
+  if (root && String(root.tagName || "").toLowerCase() !== "svg") {
+    const inner = doc.getElementsByTagName("svg")[0];
+    if (inner) root = inner;
+  }
+  if (!root || String(root.tagName || "").toLowerCase() !== "svg") {
+    return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.NON_SVG_ROOT };
+  }
+
+  const viewBox = root.getAttribute("viewBox");
+  if (!viewBox || !String(viewBox).trim()) {
+    return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.MISSING_VIEWBOX };
+  }
+
+  // NORMALISE THE SVG NAMESPACE — MEASURED 2026-10-06 (track
+  // byok_border_prompt_adoption_20261006, gallery round 30).
+  //
+  // The product paints the border as an IMAGE: `borderImageValue` (js/ai_border.js) ships the
+  // sanitized string as `url("data:image/svg+xml;utf8,…")`, and Chromium's image decoder needs
+  // a valid XML document — an <svg> without the namespace binding is not an SVG root to it and
+  // paints NOTHING. The trust root accepted exactly such payloads: its parser path does not
+  // require the binding (an xmlns-less <svg> parses; jsdom gives its root `namespaceURI: null`),
+  // and both serializer paths (XMLSerializer on a namespace-less node, outerHTML) emit the
+  // string back WITHOUT any xmlns — so `renderBorderSvg` returned ok with a rendered=false-class
+  // payload the caller could not distinguish from a real border. MEASURED on the round-30
+  // gallery: 6 of 41 frames (01-gilded-frame, 04-dragon-scale, 07-corner-arcs canonicals and
+  // 04's three superseded blobs) are byte-identical page states with no border pigment — 41/41
+  // correlation between "no xmlns in the first 300 bytes" and "no paint", 0 violations.
+  //
+  // The fix is the same class as the preserveAspectRatio normalisation above: an attribute the
+  // model may omit, whose absence the pipeline cannot survive, stamped at the trust root so
+  // EVERY downstream painter receives it. A DOM-surgery re-anchor (creating a namespaced root
+  // and moving children under it) is NOT sufficient — MEASURED in jsdom: children parsed under
+  // a null namespace keep xmlns="" on serialization, which is again non-SVG content to the
+  // decoder. So the binding is stamped on the SERIALIZED string and the document is re-parsed:
+  // the re-parse puts every descendant into the SVG namespace by inheritance, and all
+  // allow-list work below runs on that fresh tree.
+  if (!root.namespaceURI) {
+    const stamped = serializeSvgElement(root).replace(/^<svg/i, '<svg xmlns="' + SVG_NS + '"');
+    const redoc = parseSvgDocument(stamped);
+    const reroot = redoc && (String(redoc.documentElement.tagName || "").toLowerCase() === "svg"
+      ? redoc.documentElement
+      : redoc.getElementsByTagName("svg")[0]);
+    if (!reroot || !reroot.namespaceURI) {
+      // Unreachable in practice (the stamp is well-formed XML); a failure here is a refusal,
+      // never a silently un-namespaced payload.
+      return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.NON_SVG_ROOT };
+    }
+    root = reroot;
+  }
+
+  // NORMALISE preserveAspectRatio — MEASURED 2026-10-01 (this track, Phase 4).
+  //
+  // The overlay div is sized to 100% x 100% by CSS (the overlay contract). The AI draws
+  // complete frame designs on a small canvas (224×144 or 224×256) and expects them to STRETCH
+  // across the section. Without this normalisation, the browser's own default
+  // preserveAspectRatio="xMidYMid meet" letterboxes the content: only the top slice of a
+  // 224×144 design reaching a 656×1920 section is visible, and the Muse gate consistently
+  // scores the cropped frame as NOT MET ("fragmented top/bottom dotted segments", "isolated
+  // triangular points", "no distinct top arc"). With preserveAspectRatio="none" the design
+  // fills the section — the exact visual the model drew. The attribute is in the SVG allowlist
+  // and is already in the sanitized output when the model includes it; this normalisation
+  // ensures every accepted SVG fills its target, even when the model omits the attribute
+  // (which it does in 100% of the 20 corpus designs, measured).
+  root.setAttribute("preserveAspectRatio", "none");
+
+  const errors = [];
+
+  // The ROOT's own attributes -- the half a `firstChild` walk cannot see (measured defect above).
+  // The root is allow-list-gated like any child: every attribute on the <svg> must be in
+  // SVG_ALLOWED_ATTRIBUTES, must not be an `on*` handler, and `href`/`xlink:href` (which a bare
+  // <svg> never legitimately carries anyway) must be a fragment. A disallowed root attribute
+  // produces a named reason rather than a silent accept, because the root is where a clever
+  // payload hides (`viewBox` is not the only thing a synthetic `<svg>` can carry).
+  for (const attr of Array.from(root.attributes || [])) {
+    const name = String(attr.name || "").toLowerCase();
+
+    if (isForbiddenSvgAttribute(name)) {
+      root.removeAttribute(attr.name);
+      if (errors.indexOf(SVG_REJECT_REASONS.EVENT_HANDLER) === -1) {
+        errors.push(SVG_REJECT_REASONS.EVENT_HANDLER);
+      }
+      continue;
+    }
+
+    if ((name === "href" || name === "xlink:href") && !isAllowedSvgHref(attr.value)) {
+      root.setAttribute(attr.name, "");
+      if (errors.indexOf(SVG_REJECT_REASONS.EXTERNAL_REFERENCE) === -1) {
+        errors.push(SVG_REJECT_REASONS.EXTERNAL_REFERENCE);
+      }
+      continue;
+    }
+
+    if (!SVG_ALLOWED_ATTRIBUTES.has(name)) {
+      root.removeAttribute(attr.name);
+      if (errors.indexOf(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE) === -1) {
+        errors.push(SVG_REJECT_REASONS.SVG_DISALLOWED_ATTRIBUTE);
+      }
+    }
+  }
+
+  // Enforce the same grammar on the subtree, then merge the two error lists so the
+  // first named reason is the one the caller reports.
+  const childErrors = enforceSvgAllowlist(root);
+  for (const e of childErrors) if (errors.indexOf(e) === -1) errors.push(e);
+
+  const serialized = serializeSvgElement(root);
+
+  // The ceiling is checked on the SERIALIZED, SANITIZED string so `oversize` means
+  // "the border is too big to ship", never "the raw answer was long" (see MAX_SVG_CHARS' header).
+  if (serialized.length > MAX_SVG_CHARS) {
+    return { ok: false, sanitized: null, error: SVG_REJECT_REASONS.OVERSIZE };
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, sanitized: serialized, error: errors[0] };
+  }
+  return { ok: true, sanitized: serialized, error: null };
+}
+
+
+/**
+ * `sanitizeSvg(svg)` — the string-only half of the trust root.
+ *
+ * Returns a (possibly empty) STRING and never a verdict, because its callers are DOM writers that
+ * must not be able to forget the `ok` check: the choke point calls `validateSvg` FIRST and only
+ * reaches this on `ok: true`. Empty string for anything that could not be parsed — the
+ * fail-closed value, so a bug in a caller renders nothing rather than raw model markup.
+ *
+ * @param {unknown} input
+ * @return {string}
+ */
+function sanitizeSvg(input) {
+  const verdict = validateSvg(input);
+  return verdict.sanitized === null ? "" : verdict.sanitized;
+}
+
 // The module surface
 // ---------------------------------------------------------------------------
 
@@ -1125,6 +1934,31 @@ const AiLayout = {
   buildRequest,
   parseResponse,
   redactCredentials,
+  // `BORDER_PATCH_KEYS` / `DEFAULT_CAPABILITIES` — Public API (track
+  // byok_svg_borders_20260927, Phase 1/AC-2): the border vocabulary and the switch
+  // defaults. Read by Phase 2's choke point (`js/ai_border.js`) and by Phase 3's
+  // dialog; reached today by `test/unit/ai_layout_schema.test.js`.
+  BORDER_PATCH_KEYS,
+  DEFAULT_CAPABILITIES,
+  // `MAX_SVG_CHARS` / `SVG_REJECT_REASONS` — Public API (same track, AC-1): the
+  // bounded-length ceiling and the named reject vocabulary a caller matches on.
+  // Reached today by `test/unit/ai_svg.test.js`.
+  MAX_SVG_CHARS,
+  SVG_REJECT_REASONS,
+  // `SVG_ALLOWED_ELEMENTS` / `SVG_ALLOWED_ATTRIBUTES` — Public API (same track,
+  // allowlist-grammar hardening before Phase 3): the element/attribute vocabulary the
+  // trust root enforces instead of the prior blacklist. Reached today by
+  // `test/unit/ai_svg.test.js`; Phase 3's copy table matches on
+  // `svg_disallowed_element` / `svg_disallowed_attribute` / `svg_external_url`.
+  SVG_ALLOWED_ELEMENTS,
+  SVG_ALLOWED_ATTRIBUTES,
+  // `validateSvg` / `sanitizeSvg` — Public API (same track, AC-1): THE trust root.
+  // Deliberately kept with no caller in `js/` YET: Phase 2's choke point
+  // (`renderBorderSvg`) is their first product reader and lands in this same track, so
+  // retiring them now would delete the routine the next sub-step exists to call. Reached
+  // today by `test/unit/ai_svg.test.js` and by `js/ai_layout.js`'s own `validatePatch`.
+  validateSvg,
+  sanitizeSvg,
 };
 
 if (typeof module !== "undefined" && module.exports) {

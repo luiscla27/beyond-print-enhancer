@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 /**
  * Does a RESIZE of a section re-fire the fit-to-container measure? (Option 4 of

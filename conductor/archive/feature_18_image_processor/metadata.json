@@ -1,0 +1,29 @@
+{
+ "name": "Image Processor (Canvas Operations)",
+ "id": "feature_18_image_processor",
+ "created": "2026-10-29",
+ "status": "COMPLETE",
+ "release": "no release — test certificate only (landed under the UX feature fleet carrier 2026-10-29); js/** product code and manifest.json untouched by this track",
+ "deliberation": "required",
+ "criteria_sealed": "2026-10-29T16:00:00Z",
+ "source": "ux_feature_fleet_20261029 unit feature_18_image_processor (fleet track track-07)",
+ "acceptance": [
+  "AC-1: the unit's test certificate exists at the fleet-declared path and its suite is green (mocha)",
+  "AC-2: every write the unit declares is disjoint from every other unit's writes (fleet ownership proof, progress records)",
+  "AC-3: the certificate is integrated into the npm test suite via an explicit-path landing commit and the full suite stays green",
+  "AC-4: the unit's landing commit SHA is recorded here and in the fleet traceability index"
+ ],
+ "delivery_landed": "0b6c98b",
+ "task_fit": {
+  "mode": "alternatives",
+  "strategy": "deliberate",
+  "bounds": {
+   "max_candidates": 2,
+   "max_depth": 1,
+   "max_fanout": 1,
+   "max_judge_calls": 1,
+   "max_cost_usd": 0.01
+  },
+  "note": "single-node deliberation over two candidate execution shapes; one evaluation matrix, one judge call, negligible cost (bound 0.01 USD)."
+ }
+}

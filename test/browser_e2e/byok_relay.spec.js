@@ -550,4 +550,85 @@ describe("AC-5 — the BYOK relay's three named refusals, in a real browser (byo
     assert.ok(!stats.includes(PROBE_KEY), "the worker's counters carry no credential: " + stats);
     assert.ok(!/"body"|"headers"/.test(stats), "the counters carry no request body or headers: " + stats);
   });
+
+  // -------------------------------------------------------------------------
+  // ux_quick_wins_20261025 Phase 2 (BEYOND-13) — AI network error handling
+  // -------------------------------------------------------------------------
+
+  it("network failure: inject fetch failure and verify network error class", async function () {
+    // Inject a fetch failure in the service worker (must use serviceWorker.evaluate directly)
+    await serviceWorker(ctx).evaluate(async ({ message }) => {
+      const originalFetch = self.fetch;
+      self.fetch = async () => {
+        self.fetch = originalFetch;
+        throw new TypeError(message);
+      };
+      return { ok: true, injected: true };
+    }, { message: "Network error injected" });
+    const reply = await contentCall(ctx, "byokRelayProbe", [{}]);
+    assert.strictEqual(reply.ok, false, "the relay must fail on network error");
+    assert.strictEqual(reply.errorClass, "network", "error class must be 'network'");
+    assert.strictEqual(reply.retryable, true, "network errors must be retryable");
+    assert.ok(reply.message && reply.message.length > 0, "error message must be present");
+    assert.ok(!reply.message.includes("sk-"), "error message must not leak credentials");
+    // Clear the injection for subsequent tests
+    await serviceWorker(ctx).evaluate(async () => {
+      // The injection already restores on first call, but ensure clean state
+      return { ok: true, cleared: true };
+    });
+  });
+
+  it("network failure: the NEXT dial reaches the provider gate once the network is back", async function () {
+    // Scope note (measured 2026-10-26): this case is about the RELAY's recovery, not about the
+    // dialog's Retry control. The Retry button lives in `js/ai_arrange.js`'s refusal dialog, which
+    // this spec does not mount — `test/unit/ai_arrange.test.js` ("AC-4: a retryable refusal offers
+    // Retry…") is where the button and its re-run are asserted, on the real dialog. The old title
+    // here claimed "retry button appears" while asserting nothing of the kind; a claim in a title
+    // with no assertion under it is worse than no case at all.
+    // First, inject a fetch failure
+    await serviceWorker(ctx).evaluate(async ({ message }) => {
+      const originalFetch = self.fetch;
+      self.fetch = async () => {
+        self.fetch = originalFetch;
+        throw new TypeError(message);
+      };
+      return { ok: true, injected: true };
+    }, { message: "Network error injected" });
+    let reply = await contentCall(ctx, "byokRelayProbe", [{}]);
+    assert.strictEqual(reply.ok, false, "first call must fail");
+    assert.strictEqual(reply.errorClass, "network");
+    assert.strictEqual(reply.retryable, true);
+    // …and before the recovery, NOTHING reached a provider: the failure is the transport's, which
+    // is what makes the next case's `unknown_provider` a recovery rather than a different error.
+    assert.ok(!reply.transport || reply.transport === "network", "a failed dial still reported a transport: " + reply.transport);
+
+    // Clear the injection (simulating network recovery) - the first call already restored fetch
+    // Second call should succeed (mock provider returns unknown_provider since we don't have a real one)
+    reply = await contentCall(ctx, "byokRelayProbe", [{ provider: "positive-control-x" }]);
+    // The positive control should reach the handler (not fail at sender gate)
+    assert.ok(reply.transport !== "sender_identity" && reply.transport !== "sender_origin" && reply.transport !== "request_smuggling");
+    // It will stop at unknown_provider which is correct - the point is the network layer works
+    assert.strictEqual(reply.transport, "unknown_provider", "the second dial did not get past the network layer");
+  });
+
+  it("network failure: clear actionable error message for network class", async function () {
+    await serviceWorker(ctx).evaluate(async ({ message }) => {
+      const originalFetch = self.fetch;
+      self.fetch = async () => {
+        self.fetch = originalFetch;
+        throw new TypeError(message);
+      };
+      return { ok: true, injected: true };
+    }, { message: "Network error injected" });
+    const reply = await contentCall(ctx, "byokRelayProbe", [{}]);
+    assert.strictEqual(reply.ok, false);
+    assert.strictEqual(reply.errorClass, "network");
+    // The error message should be user-actionable (tell them to check connection)
+    assert.ok(reply.message && reply.message.toLowerCase().includes("connection"), "network error message should mention connection");
+    assert.ok(!reply.message.includes("sk-"), "must not leak credentials");
+    assert.ok(!reply.message.includes("Bearer"), "must not leak auth headers");
+    await serviceWorker(ctx).evaluate(async () => {
+      return { ok: true, cleared: true };
+    });
+  });
 });

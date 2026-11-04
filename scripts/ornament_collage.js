@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * Scratch: build the compact, redable collages for the ornament_symmetry_20260910
  * visual gates from the frames the capture harness already saved.

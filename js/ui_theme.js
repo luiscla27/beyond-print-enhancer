@@ -1032,6 +1032,22 @@ div[style*="z-index: 20000"] label {
   gap: 4px;
   margin-bottom: 3px;
 }
+/* AC-6 (BEYOND-15): smooth reorder. A layer restack — one drag drop OR one arrow-key
+ * press — moves a row's slot, and the panel rebuild that follows (reorderShapeLayers to
+ * rebuildPanel) re-creates the rows at their new slots. The AC-6 criterion names
+ * "smooth animation"; the cheapest honest form here is not a FLIP transform (the rebuild
+ * detaches the old row before a translate can be measured against it) but a transition on
+ * the properties a restack actually changes — the row's background as it settles into
+ * its new active/selection state — plus the 140ms place-opacity ramp on the row group so
+ * a rebuilt panel fades in rather than popping. 60fps-safe: transform/opacity only, no
+ * layout-triggering property is animated (animating width/height/top here would force a
+ * reflow per frame on a panel that repaints on every keystroke). */
+.be-layer-group {
+  transition: opacity 140ms ease;
+}
+.be-layer-row {
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
 .be-layer-row > span:first-child {
   flex: 1 1 auto;
   min-width: 0;
@@ -1117,6 +1133,58 @@ div[style*="z-index: 20000"] label {
   color: ${TOKENS.bone} !important;
   font-family: ${TOKENS.fontTool};
 }
+/* AC-1 (BEYOND-9, track ux_quick_wins_20261025) — the per-layer three-state control.
+ *
+ * It lives on its OWN LINE inside the layer group, not in the row's control cluster: MEASURED
+ * 2026-10-26 in the real panel (248px panel, 229px row) adding anything beside the
+ * printer/eye/lock cluster costs the label its text at every size tried (3x16px left the sections
+ * label 66px for 83px of content; 3x28px left it 0). On its own line the literal AC-1 wording
+ * "Print only / Both / Screen only" measures 172px of 229px available.
+ *
+ * The strips are buttons, not a <select>: a native select cannot show the three states AT ONCE,
+ * and "which of the three am I in?" is the whole question this control answers. */
+.be-layer-mode-strip {
+  display: flex !important;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 3px 0;
+  padding: 0 0 0 1px;
+}
+.be-layer-mode-seg {
+  flex: 0 0 auto;
+  height: 20px;
+  padding: 0 8px;
+  margin: 0;
+  font-family: ${TOKENS.fontTool};
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  background: transparent !important;
+  border: 1px solid ${TOKENS.hairGold} !important;
+  border-radius: 4px;
+  color: ${TOKENS.taupe} !important;
+  cursor: pointer;
+}
+.be-layer-mode-seg:hover {
+  color: ${TOKENS.goldHi} !important;
+  border-color: ${TOKENS.goldHi} !important;
+}
+.be-layer-mode-seg.be-layer-mode-on {
+  background: ${TOKENS.rowSelected} !important;
+  border-color: ${TOKENS.gold} !important;
+  color: ${TOKENS.bone} !important;
+  font-weight: 700;
+}
+.be-layer-mode-seg:focus-visible {
+  outline: 2px solid ${TOKENS.focusRing} !important;
+  outline-offset: 1px;
+}
+/* A "Print only" layer is hidden ON SCREEN, so the row has to say which hidden it is. */
+.be-layer-row-hidden[data-mode="print"] > span:first-child {
+  font-style: normal;
+}
+
 .be-add-layer-btn:hover {
   color: ${TOKENS.goldHi} !important;
   border-color: ${TOKENS.goldHi} !important;
@@ -1499,6 +1567,28 @@ div[style*="z-index: 20000"] label {
   padding: 6px 12px;
   box-shadow: none !important;
 }
+/* The generic in-flight marker (BEYOND-19, track state-feedback-be19). .be-ai-busy above
+   belongs to the AI flow and says so in its copy; this one is the SHARED affordance for any
+   operation that crosses a latency boundary (a print preparation, an assembly rebuild, a
+   store write). It is the same pill shape and the same top rung ON PURPOSE - two different
+   in-flight markers on one screen would read as two different subsystems failing - but it is
+   a separate class so a spec can tell WHICH operation is pending. It is print-hidden by the
+   same @media print block every other chrome surface uses. */
+.be-progress {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  background: ${TOKENS.groundModal};
+  border: 1px solid ${TOKENS.hairGold};
+  border-radius: ${TOKENS.radius};
+  color: ${TOKENS.boneDim};
+  font-family: ${TOKENS.fontTool};
+  font-size: 12px;
+  padding: 6px 12px;
+  box-shadow: none !important;
+}
 .be-ai-preview-counts {
   font-weight: 600;
 }
@@ -1511,6 +1601,75 @@ div[style*="z-index: 20000"] label {
 .be-ai-preview-note {
   font-style: italic;
 }
+/* Activation overlay (BEYOND-18, track activation-overlay-be18). The certified
+ * gap was ATTRIBUTION: during the plain-sheet -> enhanced-sheet transition the
+ * only spinner on screen belonged to D&D Beyond, so a first-run user watched
+ * the website load and then a wholly new UI appear with no indication an
+ * extension did it. The overlay is the extension's own claim on that middle of
+ * the boot — leather ground, bone text, antique-gold spinner, blind-tooled
+ * seam — with a brass focus ring on its focusable, dismissible surface. It is
+ * a full-viewport claim (z-index 2147483000, above the section-utils band's
+ * 10000 and the feedback lane's 800: the transition owns the whole screen
+ * until the sheet is enhanced), and it is print-reinforced hidden like every
+ * other chrome surface below — the overlay must never reach paper. */
+.be-activation-overlay {
+  position: fixed;
+  inset: 0;
+  /* 2147483646 = one under INT32_MAX: the host page's own chrome (consent
+   * banners, modals) can claim 2147483647, and this overlay must sit ABOVE
+   * every one of them for the whole transition — the certified gap was the
+   * extension being invisible during exactly this window. */
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 13, 10, 0.82);
+  cursor: pointer;
+}
+.be-activation-overlay[data-be-activation-state="dismissed"] {
+  display: none !important;
+}
+.be-activation-overlay-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 26px;
+  background: ${TOKENS.groundModal};
+  border: 1px solid ${TOKENS.hairGold};
+  border-radius: ${TOKENS.radius};
+  box-shadow: 0 0 0 4px ${TOKENS.seamDeep};
+}
+.be-activation-overlay:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px ${TOKENS.goldHi};
+}
+.be-activation-overlay-spinner {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid ${TOKENS.hairGold};
+  border-top-color: ${TOKENS.goldHi};
+  animation: be-activation-spin 0.9s linear infinite;
+}
+@keyframes be-activation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.be-activation-overlay-line {
+  color: ${TOKENS.bone};
+  font-family: ${TOKENS.fontTitle};
+  font-size: 18px;
+}
+.be-activation-overlay-sub {
+  margin-top: 2px;
+  color: ${TOKENS.taupe};
+  font-family: ${TOKENS.fontTool};
+  font-size: 12px;
+}
+/* Print reinforcement lives with the chrome print block below — do not add a
+ * second @media print rule here (see .be-activation-overlay there). */
 /* The hint text used to be reachable only as a <p> (.be-modal p), which is why
  * it never needed a rule. The dialog's key-state line is a span inside a row, and
  * a status line is a live region — both must read as secondary text, not as the
@@ -2081,6 +2240,8 @@ ${ornamentSurface(
   .be-modal,
   .be-context-menu,
   .be-color-picker-popup,
+  .be-activation-overlay,
+  .be-progress,
   div[style*="z-index: 20000"] {
     display: none !important;
   }

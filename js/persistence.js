@@ -13,6 +13,10 @@
 
 async function handleSaveBrowser() {
   window.safeLog?.("log", "[DDB Print] handleSaveBrowser: starting...");
+  // BEYOND-19 AC-5: show progress during the async store write
+  const marker = typeof window.showProgress === "function"
+    ? window.showProgress("Saving to browser…")
+    : null;
   try {
     await window.__DDBStorage.init();
     const layout = await window.scanLayout();
@@ -35,6 +39,8 @@ async function handleSaveBrowser() {
   } catch (err) {
     _safeLog("error", "[DDB Print] Save failed", err);
     window.showFeedback("Failed to save layout to your browser.", "error");
+  } finally {
+    if (marker && typeof window.clearProgress === "function") window.clearProgress(marker);
   }
 }
 
@@ -660,6 +666,339 @@ function handleLoadFile() {
   input.click();
 }
 
+// ---------------------------------------------------------------------------
+// Settings export/import (AC-3, track ux_quick_wins_20261025 Phase 6, BEYOND-12)
+//
+// WHY A SEPARATE EXPORT/IMPORT FROM THE LAYOUT FILES: `handleSavePC` /
+// `handleLoadFile` deal in a SINGLE layout record (sections + clones +
+// extractions + shapeLayers). The settings surface that AC-3 names is BROADER:
+// it must also carry the reuse libraries (custom shapes, custom borders), the
+// global filters / hue shift, and the BYOK AI settings record — the safe half
+// only, never the credential. `handleSavePC` cannot carry those because it is a
+// layout snapshot, not a settings bundle, and mixing them would make a load
+// that intends to overwrite the layout ALSO clobber the user's shape library.
+//
+// The two are kept as independent bundles on purpose: Export Settings gives the
+// user a single JSON they can back up or migrate, and Import Settings MERGES
+// (does not replace) — so a library that already has shapes gains the imported
+// ones rather than losing its own.
+// ---------------------------------------------------------------------------
+
+/** Schema version for the settings bundle. Bump when the shape of any section
+ * changes so an old bundle can be refused by name in `validateSettingsBundle`. */
+const SETTINGS_BUNDLE_VERSION = "1.0";
+
+/**
+ * Collect EVERY customization type the user controls into one plain object.
+ *
+ * The layout record (via `scanLayout`) covers sections, clones, extractions,
+ * shapeLayers, spell_details, merges and spell_cache. That is the structural
+ * part of the sheet. The two reuse libraries (custom shapes and custom borders)
+ * live in SEPARATE IndexedDB object stores and are therefore NOT inside the
+ * layout record — `scanLayout` never writes to them (uploadFromFile does,
+ * js/shape_picker.js:1035; js/ai_border.js). Global filters and hue shift live
+ * on the GLOBAL layout record. The BYOK settings are the safe `be.ai` record
+ * only — the credential (`be.ai.key`) is NEVER read into the bundle, which is
+ * AC-4's hard rule ("the key is never persisted into a layout record or
+ * telemetry") applied to the exported JSON as well.
+ *
+ * Each collection is gathered through the product's OWN storage seam so the
+ * bundle is always internally consistent with what the live store holds, not
+ * with a fixture-shaped view of it.
+ */
+async function collectSettingsBundle() {
+  const result = {
+    version: SETTINGS_BUNDLE_VERSION,
+    exportedAt: new Date().toISOString(),
+    layout: null,
+    customShapes: [],
+    customBorders: [],
+    globalFilters: null,
+    aiSettings: null,
+  };
+
+  // 1. The live layout record (sections, shapeLayers, clones, extractions, etc.)
+  try {
+    result.layout = await window.scanLayout();
+  } catch (err) {
+    _safeLog("warn", "[DDB Print] collectSettingsBundle: layout capture failed", err);
+  }
+
+  // 2. Reusable custom shapes (CUSTOM_SHAPES_STORE)
+  try {
+    if (window.__DDBStorage && typeof window.__DDBStorage.getCustomShapes === "function") {
+      result.customShapes = await window.__DDBStorage.getCustomShapes();
+    }
+  } catch (err) {
+    _safeLog("warn", "[DDB Print] collectSettingsBundle: custom shapes capture failed", err);
+  }
+
+  // 3. Reusable custom borders (CUSTOM_BORDERS_STORE)
+  try {
+    if (window.__DDBStorage && typeof window.__DDBStorage.getCustomBorders === "function") {
+      result.customBorders = await window.__DDBStorage.getCustomBorders();
+    }
+  } catch (err) {
+    _safeLog("warn", "[DDB Print] collectSettingsBundle: custom borders capture failed", err);
+  }
+
+  // 4. Global filters + hue shift (read off the GLOBAL layout record)
+  try {
+    if (window.__DDBStorage && typeof window.__DDBStorage.getFilters === "function") {
+      const filters = await window.__DDBStorage.getFilters();
+      result.globalFilters = {
+        ...filters,
+        hueShift: await window.__DDBStorage.getHueShift(),
+      };
+    }
+  } catch (err) {
+    _safeLog("warn", "[DDB Print] collectSettingsBundle: global filters capture failed", err);
+  }
+
+  // 5. BYOK AI settings — the safe record ONLY. The credential is read solely
+  //    through getApiKey() and never placed in the bundle; `keyPresent` is the
+  //    derived flag the safe record already carries.
+  try {
+    if (window.AiSettings && typeof window.AiSettings.loadSettings === "function") {
+      const settings = await window.AiSettings.loadSettings();
+      result.aiSettings = {
+        provider: settings.provider || "",
+        model: settings.model || "",
+        baseUrl: settings.baseUrl || "",
+        keyPresent: !!settings.keyPresent,
+      };
+    }
+  } catch (err) {
+    _safeLog("warn", "[DDB Print] collectSettingsBundle: AI settings capture failed", err);
+  }
+
+  return result;
+}
+
+/**
+ * Validate a parsed settings bundle. Returns `{ok: true}` or `{ok: false, error}`.
+ * A missing top-level shape is rejected by name — a malformed file must fail
+ * loudly, not silently produce an empty import (Edge 6 of destructive_recovery,
+ * generalised: "a load that intends to overwrite must not be mistaken for a
+ * no-op").
+ */
+function validateSettingsBundle(data) {
+  if (!data || typeof data !== "object") {
+    return { ok: false, error: "bundle_not_object" };
+  }
+  if (data.version !== SETTINGS_BUNDLE_VERSION) {
+    return { ok: false, error: "version_mismatch" };
+  }
+  // The layout record is the spine: without it the bundle is not a settings
+  // export this extension produced.
+  if (!data.layout || typeof data.layout !== "object") {
+    return { ok: false, error: "missing_layout" };
+  }
+  if (!data.layout.version || !data.layout.sections) {
+    return { ok: false, error: "layout_invalid" };
+  }
+  // The two reuse libraries, if present, must be arrays.
+  if (data.customShapes != null && !Array.isArray(data.customShapes)) {
+    return { ok: false, error: "custom_shapes_not_array" };
+  }
+  if (data.customBorders != null && !Array.isArray(data.customBorders)) {
+    return { ok: false, error: "custom_borders_not_array" };
+  }
+  // The credential must NEVER appear in the bundle. This is AC-4's hard
+  // boundary, checked here so a hand-edited (or tampered) file cannot smuggle
+  // one in.
+  const raw = JSON.stringify(data);
+  if (/be\.ai\.key|\bapiKey\b/.test(raw)) {
+    return { ok: false, error: "credential_in_bundle" };
+  }
+  return { ok: true };
+}
+
+/**
+ * Export all settings to a downloaded JSON file. Reuses the `handleSavePC`
+ * download shape (Blob + anchor click) but writes the SETTINGS bundle, not the
+ * layout record.
+ */
+async function handleExportSettings() {
+  _safeLog("log", "[DDB Print] handleExportSettings: collecting bundle...");
+  let bundle;
+  try {
+    bundle = await collectSettingsBundle();
+  } catch (err) {
+    _safeLog("error", "[DDB Print] handleExportSettings: bundle collection failed", err);
+    window.showFeedback("Could not collect settings — nothing was downloaded.", "error");
+    return;
+  }
+
+  const filename = `ddb-printenhance-settings-${new Date().toISOString().split("T")[0]}.json`;
+  try {
+    const data = JSON.stringify(bundle, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 0);
+
+    _safeLog("log", "[DDB Print] handleExportSettings: download started");
+    window.showFeedback("Settings exported!");
+  } catch (err) {
+    _safeLog("error", "[DDB Print] handleExportSettings: download failed", err);
+    window.showFeedback("Export failed — showing the data instead.", "error");
+  }
+}
+
+/**
+ * Import settings from a file: file picker → validate schema → MERGE.
+ *
+ * Merge semantics (BEYOND-12 AC-3: "validate schema and merge"):
+ *   - layout:        replaces the current layout record (a settings bundle
+ *                    carries the entire sheet's structure — there is no
+ *                    meaningful per-section merge)
+ *   - custom shapes:  upserted into the reuse library (id-keyed, so existing
+ *                    shapes are replaced and new ones added — never a wipe)
+ *   - custom borders: upserted the same way
+ *   - global filters: replaced wholesale (the bundle carries the full set)
+ *   - AI settings:    merged provider/model/baseUrl; keyPresent is re-derived
+ *                    on load, never imported
+ *
+ * The merge is gated by `confirmDestructive` for the layout (the one
+ * replace-semantics piece) and writes a backup snapshot first (track
+ * destructive_recovery_20260911, AC-1).
+ */
+function handleImportSettings() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    let bundle;
+    try {
+      const text = await file.text();
+      bundle = JSON.parse(text);
+    } catch (err) {
+      _safeLog("error", "[DDB Print] handleImportSettings: parse failed", err);
+      window.showFeedback(`"${file.name}" is not valid JSON.`, "error");
+      return;
+    }
+
+    const result = await applySettingsBundle(bundle, { source: file.name });
+    if (!result.ok) {
+      window.showFeedback(
+        result.error === "validation"
+          ? `"${file.name}" is not a valid settings file (${result.detail}).`
+          : result.error === "backup"
+            ? "Could not snapshot the current layout before importing — nothing was changed."
+            : `Failed to apply "${file.name}".`,
+        "error",
+      );
+    }
+  };
+
+  input.click();
+}
+
+/**
+ * The MERGE CORE — validate a parsed bundle, snapshot, apply. Separated from the
+ * file-picker handler above so the merge can be driven without a file dialog
+ * (the browser e2e harness has no way to type into a native file picker, and a
+ * probe that re-implemented the merge would be asserting on its own copy of the
+ * product). The handler's only remaining job is "get the file's text".
+ *
+ * @param {object} bundle  a parsed settings bundle
+ * @param {{source?:string}} [opts]
+ * @returns {Promise<{ok:boolean, error?:string, detail?:string, applied?:object}>}
+ */
+async function applySettingsBundle(bundle, opts = {}) {
+  const valid = validateSettingsBundle(bundle);
+  if (!valid.ok) return { ok: false, error: "validation", detail: valid.error };
+
+  const source = opts.source ? `"${opts.source}"` : "a settings file";
+
+  // Snapshot before the layout replace (the only destructive piece).
+  const gate = await window.destructiveGate?.(`Import layout from ${source}`);
+  if (gate && !gate.ok) return { ok: false, error: "cancelled" };
+
+  const backup = await window.createBackupSnapshot?.("settings_import");
+  if (backup && !backup.ok) return { ok: false, error: "backup" };
+
+  const applied = { layout: false, shapes: 0, borders: 0, filters: false, aiSettings: false };
+
+  try {
+    // 1. Layout: replace (the bundle carries the full sheet structure).
+    await window.applyLayout(bundle.layout);
+    applied.layout = true;
+
+    // 2. Custom shapes: upsert each (id-keyed → replaces if present, adds if not).
+    if (Array.isArray(bundle.customShapes) && window.__DDBStorage?.saveCustomShape) {
+      for (const shape of bundle.customShapes) {
+        await window.__DDBStorage.saveCustomShape(shape);
+        applied.shapes += 1;
+      }
+    }
+
+    // 3. Custom borders: upsert each.
+    if (Array.isArray(bundle.customBorders) && window.__DDBStorage?.saveCustomBorder) {
+      for (const border of bundle.customBorders) {
+        await window.__DDBStorage.saveCustomBorder(border);
+        applied.borders += 1;
+      }
+    }
+
+    // 4. Global filters + hue: replace the global record's filter block.
+    if (bundle.globalFilters && window.__DDBStorage) {
+      const { contrast, greyscale, saturate, sepia, hueShift } = bundle.globalFilters;
+      if (typeof hueShift === "number" && typeof window.__DDBStorage.saveHueShift === "function") {
+        await window.__DDBStorage.saveHueShift(hueShift);
+      }
+      const known = { contrast, greyscale, saturate, sepia };
+      if (typeof window.__DDBStorage.saveFilter === "function") {
+        for (const [key, val] of Object.entries(known)) {
+          if (typeof val === "number") {
+            await window.__DDBStorage.saveFilter(key, val);
+          }
+        }
+      }
+      applied.filters = true;
+    }
+
+    // 5. AI settings: merge the safe fields only (provider/model/baseUrl).
+    //    The key is NEVER imported — `keyPresent` is re-derived from the
+    //    credential store on the next load.
+    if (bundle.aiSettings && window.AiSettings && typeof window.AiSettings.saveSettings === "function") {
+      const current = await window.AiSettings.loadSettings();
+      const merged = {
+        ...current,
+        provider: bundle.aiSettings.provider || current.provider || "",
+        model: bundle.aiSettings.model || current.model || "",
+        baseUrl: bundle.aiSettings.baseUrl || current.baseUrl || "",
+        keyPresent: !!current.keyPresent,
+      };
+      await window.AiSettings.saveSettings(merged);
+      applied.aiSettings = true;
+    }
+  } catch (err) {
+    _safeLog("error", "[DDB Print] applySettingsBundle: apply failed", err);
+    return { ok: false, error: "apply", detail: String((err && err.message) || err), applied };
+  }
+
+  _safeLog("log", "[DDB Print] applySettingsBundle: merge complete");
+  window.showFeedback("Settings imported!");
+  if (window.offerUndo && gate && gate.record) {
+    window.offerUndo(gate.record, `Imported settings from ${source}`);
+  }
+  return { ok: true, applied };
+}
+
 /**
  * Restores the saved layout. Returns a RESULT OBJECT (AC-1/Edge 4) so the boot
  * path can tell "nothing saved yet" apart from "a saved layout failed to
@@ -743,6 +1082,16 @@ const Persistence = {
   handleSaveBrowser,
   handleSavePC,
   handleLoadFile,
+  handleExportSettings,
+  handleImportSettings,
+  // The MERGE CORE, separated from the file-picker handler so the merge can be
+  // driven without a native file dialog (browser e2e has no way to type into
+  // one). Exported for the same reason `collectSettingsBundle` is: the harness
+  // must drive the product's own merge, never a re-implementation of it.
+  applySettingsBundle,
+  collectSettingsBundle,
+  validateSettingsBundle,
+  SETTINGS_BUNDLE_VERSION,
   restoreLayout,
   applyDefaultLayout,
   handleLoadDefault,
@@ -800,11 +1149,11 @@ if (typeof window !== "undefined") {
   window.pruneBackups = pruneBackups;
   window.detectLegacyLayout = detectLegacyLayout;
   window.versionNotice = versionNotice;
-  // Test seam (track dead_exports_20260910 — the ONLY reader; KEEP): the boot
-  // path calls the internal showRestoreFailureCard directly, so this alias is
-  // reached by test/unit/persistence_backup.test.js:217 to drive the card
-  // without a full boot. Remove only together with that assertion.
   // AC-2 (U-15) seam: the boot glue in js/main.js (loaded after this file)
-  // resolves it lazily; also the seam the unit suite drives.
+  // resolves restoreFailureCard lazily via window.Persistence, and announces
+  // boot restore via announceBootRestore; both are also the seams the unit suite drives.
+  // window.restoreFailureCard is already published by js/recovery_ui.js (the canonical
+  // assignment for this seam); do NOT re-publish it here under window — that is the
+  // duplication the split guard checks for.
   window.announceBootRestore = announceBootRestore;
 }

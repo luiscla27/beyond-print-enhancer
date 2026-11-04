@@ -1,0 +1,26 @@
+{
+ "track_id": "track-17",
+ "code_count": 1,
+ "component_keys": [
+  "js/undo"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/undo.js"
+ ],
+ "units": [
+  {
+   "id": "feature_10_undo_system",
+   "name": "Undo System (General Undo + Snapshot Gate)",
+   "description": "General undo with snapshot gate on every destructive action, beginMutation/pushMutation",
+   "files": [
+    "js/undo.js"
+   ],
+   "component_key": "js/undo",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/undo.js",
+   "test_paths": [
+    "test/unit/undo.test.js",
+    "test/unit/destructive_recovery.test.js"
+   ]
+  }
+ ]
+}

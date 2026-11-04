@@ -1,0 +1,69 @@
+{
+ "feature": "feature_06_print_styles",
+ "endpoint": "https://api.minimax.io/v1/chat/completions",
+ "files_endpoint": "https://api.minimax.io/v1/files/upload",
+ "model_id": "MiniMax-M3.1-Flash",
+ "model_resolution": "operator phrase 'minimax 3.1 flash' pinned to MiniMax-M3.1-Flash (platform.minimax.io docs + live model-list smoke, 2026-10-30)",
+ "certifier_seat": "MiniMax-M3.1-Flash ONLY (AC-6): no gemini/muse/deepseek/relay substitution",
+ "certified": true,
+ "request": {
+  "model": "MiniMax-M3.1-Flash",
+  "reasoning_effort": "medium",
+  "max_completion_tokens": 1600,
+  "video_parts": [
+   {
+    "video_url": {
+     "url": "mm_file://457929159131623",
+     "detail": "default",
+     "fps": 5
+    }
+   }
+  ],
+  "prompt": "You are certifying a D&D Beyond Print Enhancer browser extension feature by watching its e2e test video evidence. CERTIFICATION RULES: (1) base every claim only on what is visibly present in the video frames \u2014 never invent UI you cannot see; (2) if a video shows too few frames to witness the interaction (low frame sampling), say NOT-VISIBLE for that video rather than guessing; (3) say what you observe FIRST, verdict LAST.\n\nBEHAVIORAL CONTRACT UNDER TEST (verbatim from the suites' own describe/it titles):\nSuite print_styles \u2014 feature_06_print_styles \u2014 Print CSS + Layout Bounds (Playwright e2e); its cases assert: injected @media print hides the Layer Management panel and selection highlights; print CSS forces full opacity for locked layers and sets layer ordering; data-print-z elements get z-index overrides and disabled layers get hide rules; layout bounds and page separators are computed (updateLayoutBounds / drawPageSeparators); tool's own surfaces are hidden in print (panel controls, feedback, separators, overlays)\n\nThis video records one browser e2e test suite for the extension's feature_06_print_styles feature. Watch the FULL video: the page loads the real demo sheet with the unpacked extension panel present, the suite then drives the feature through its real UI (panel buttons, dialogs, layers, apply/undo flows). Describe, in order, what you visibly observe the extension doing (panel present -> the feature's controls/actions -> the visible result on the sheet). Do not speculate about what you cannot see. Then give your verdict on whether the feature visibly completes its end-to-end interaction in the video.\n\nEND your answer with a final line formatted exactly as: VERDICT: WORKING | PARTIAL | NOT-VISIBLE (pick one).",
+  "authorization": "Bearer <REDACTED-MINIMAX_API_KEY env>"
+ },
+ "uploaded_files": [
+  {
+   "suite": "print_styles.spec.js",
+   "file_id": "457929159131623",
+   "mp4_bytes": 808172,
+   "upload_response": {
+    "file": {
+     "file_id": 457929159131623,
+     "bytes": 808172,
+     "created_at": 1793352361,
+     "filename": "print_styles.mp4",
+     "purpose": "video_understanding"
+    },
+    "base_resp": {
+     "status_code": 0,
+     "status_msg": "success"
+    }
+   }
+  }
+ ],
+ "video_evidence": [
+  {
+   "suite": "print_styles.spec.js",
+   "webm": "conductor\\tracks\\e2e_feature_inventory_minimax_20261029\\execution\\evidence\\feature_06_print_styles\\print_styles.webm",
+   "webm_bytes": 2764552
+  }
+ ],
+ "usage": {
+  "total_tokens": 34977,
+  "total_characters": 0,
+  "prompt_tokens": 33662,
+  "completion_tokens": 1315,
+  "completion_tokens_details": {
+   "reasoning_tokens": 995
+  },
+  "prompt_tokens_details": {
+   "cached_tokens": 197
+  }
+ },
+ "finish_reason": "stop",
+ "verbatim_verdict_text": "Observed in order:\n\n1. The browser loads the D&D Beyond site: the navigation bar appears, followed by a loading overlay and a \u201cYour Privacy Choices\u201d cookie dialog. The dialog later disappears without a visible click.\n2. The real character sheet loads for **Corvo Saggio**, with the sheet\u2019s statistics, skills, senses, defenses, initiative, and actions visible. Numerous red outlines/highlights are visible around the sheet\u2019s components.\n3. The view later changes to a closer/cropped portion of the sheet. A brief page-like print rendering appears, followed by the extension\u2019s dark interface surfaces:\n   - A left control panel containing sections such as **Templates**, **Layout**, and **Output**, with visible **PRINT**, **Print settings**, and **Save to Browser** controls.\n   - A right **Layer Management** panel listing **Sections (22)** and **Shapes (1)**.\n   - A notification reading **\u201cNo saved layout yet \u2014 the default template is loaded.\u201d**\n4. From that point through the end, the character sheet and both extension panels remain essentially static. No visible button press, print dialog, apply/undo operation, layer change, or subsequent sheet transformation occurs.\n\nConsequently, the video does not visibly demonstrate the asserted print CSS or layout-bound behavior: panel/highlight hiding, locked-layer opacity, layer ordering, z-index/hide rules, computed layout bounds, or page separators are not observable as completed actions or results. The interface and sheet are visible, but the end-to-end interaction under certification is not.\n\nVERDICT: NOT-VISIBLE",
+ "parsed_verdict": "NOT-VISIBLE",
+ "adjoined_from_cross_cutting": null,
+ "ts": 1793352408779
+}

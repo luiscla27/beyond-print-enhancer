@@ -177,7 +177,23 @@ describe("AC-6 — the capture plumbing is shared and the roster stopped growing
     // suite stubs `fetch` inside the MV3 SERVICE WORKER (`serviceWorker.evaluate`) and plants a
     // test key in `beforeEach`, so its cases must not interleave with another file's store or
     // relay assertions in the same context.
-    const ROSTER_AFTER = 42;
+    // 42 -> 44, byok_svg_borders_20260927 Phase 4 (2026-10-01): `test:e2e:byokborder` and
+    // `test:e2e:byokgallery`, the same shape and for the same reason as `byokarrange` above —
+    // but two files rather than one, because the phase's evidence splits by PREMISE:
+    //
+    //  * `byokborder` (byok_border_roundtrip.spec.js) owns AC-9a/b's per-path DOM assertions and
+    //    the undo path. Its cases plant a `fetch` stub in the MV3 service worker and drive the
+    //    isolated world through `contentCall`, so they must not interleave with another file's
+    //    store or relay assertions in the same context — exactly the `byokrelay` argument.
+    //  * `byokgallery` (byok_border_gallery.spec.js) is the visual-gate ARTIFACT: it renders the
+    //    frozen corpus through the choke point and writes one labelled frame per design under
+    //    `BORDER_GALLERY_SHOTS=1`. A Muse verdict is argued over across many runs of exactly this
+    //    file, and a `--grep` cannot express it because the capture flag, the output directory and
+    //    the corpus-identity check are file-level, not case-level.
+    //
+    // A `--grep` over the recursive run was considered and rejected for both on that ground; the
+    // retired `verify0`..`verify4` aliases are unrelated and remain retired (asserted above).
+    const ROSTER_AFTER = 44;
     assert.strictEqual(
       perSpec.length,
       ROSTER_AFTER,

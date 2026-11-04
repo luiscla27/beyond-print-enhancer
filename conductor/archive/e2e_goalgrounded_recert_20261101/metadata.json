@@ -1,0 +1,33 @@
+{
+  "name": "Goal-grounded e2e certification re-run (the v1 prompt judged suites, not the product)",
+  "id": "e2e_goalgrounded_recert_20261101",
+  "created": "2026-11-01",
+  "status": "COMPLETE -- all AC met 2026-11-01 (AC-1: 19/19 bundles re-judged under prompt v2, all finish=stop; AC-2: prompt v2 recorded on every JSON + template in temp/scratch/certify_goalgrounded.py; AC-3: three-way verdict table + LAYER 2 absence findings in verdict.md (loading overlay 13/19); AC-4: js/manifest/test untouched + archive bytes untouched; AC-5: explicit-path local commit, never push, guard green; AC-6: MiniMax-M3.1-Flash via official api.minimax.io only)",
+  "release": "no release - verification verdict only (documentation + video evidence), never product code",
+  "operator_directive": "The operator challenged the 2026-11-01 recert: the judge prompt grounded the model in the SUITES' own assertions only, never stated WHAT THE PRODUCT IS or what activation is supposed to look like, so MiniMax scored the D&D Beyond sheet itself (which fills the first frames) instead of the extension's work. Example miss: no suite asserts a basic activation loading overlay, so its absence was never priced. Re-run ALL 19 bundles with a goal-grounded prompt that (a) states the product brief, (b) explicitly excludes the base D&D sheet from being the extension's work, (c) judges in two layers: LAYER 1 = the suite's asserted behavior as before, LAYER 2 = product-aim conformance incl. basic affordances visible on camera even when no suite asserts them. Deliberation: adopted in-session with the operator (2026-11-01): scope = full re-run; rubric = both layers; single-answer decisions recorded as inadmissible candidates, not padded.",
+  "task_fit": {
+    "mode": "alternatives",
+    "bounds": {
+      "max_candidates": 2,
+      "max_depth": 1,
+      "max_fanout": 82,
+      "max_judge_calls": 19,
+      "max_cost_usd": 60
+    }
+  },
+  "execution": {
+    "shape": "this same session, sequential, one bundle call per feature (19 calls) — same wire shape as the adopted recert (temp/scratch/certify_recert.py), ONLY the judge prompt and the output dir change",
+    "instrument": "temp/scratch/certify_goalgrounded.py (copy of certify_recert.py; TRACK repointed here, judge prompt replaced by goal-grounded v2)",
+    "evidence_class": "EXISTING FULL VIDEO per feature from conductor/archive/e2e_feature_inventory_minimax_20261029/execution/evidence/ — the SAME corpus as both prior runs, so verdict deltas are attributable to the prompt change alone",
+    "certifier_seat": "MiniMax-M3.1-Flash ONLY via official api.minimax.io (AC-6 carried over)"
+  },
+  "acceptance": [
+    "AC-1: every one of the 19 bundles gets a fresh goal-grounded verdict recorded verbatim in execution/minimax/<feature>.json (endpoint, model id, redacted request, file ids, usage, verbatim text)",
+    "AC-2: the prompt records the product brief, the base-sheet exclusion ('frames of the plain D&D sheet are NOT the extension's work'), and the two-layer rubric; every record carries prompt_v2 identification",
+    "AC-3: verdict.md carries a three-way comparison (original run / recert / goal-grounded re-run) per bundle, and names every LAYER-2 affordance finding explicitly (loading overlay class included)",
+    "AC-4: no js/**, no manifest.json, no EXISTING test file modified; archive track bytes untouched (git status clean on those paths)",
+    "AC-5: explicit-path local commit, never push; guard green at close",
+    "AC-6: single certifier seat MiniMax-M3.1-Flash, official API only, no relay substitution"
+  ],
+  "track_id": "e2e_goalgrounded_recert_20261101"
+}

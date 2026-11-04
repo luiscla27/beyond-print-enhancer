@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 "use strict";
 /**
  * PROBE: does the fit-to-container compensation width land on the SAME element and SAME inline

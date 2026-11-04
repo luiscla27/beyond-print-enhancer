@@ -158,6 +158,20 @@ chrome.action.onClicked.addListener(function(tab) {
       // `importScripts` at the top of this file.
       'js/ai_layout.js',
       'js/ai_arrange.js',
+      // Track byok_svg_borders_20260927 (Phase 2): the SVG render choke point (AC-9).
+      // A separate file from js/ai_layout.js on purpose: the pure core may not touch the
+      // DOM, and the whole job of this module is to be the ONE place allowed to. It loads
+      // before the modules that call it (layout_apply, layout_scan, section_cloning,
+      // undo) and its readers resolve `window.AiBorder` at CALL time anyway, so its
+      // position in this list is tidiness rather than a correctness constraint.
+      'js/ai_border.js',
+      // Track beyond10_ai_border_refine_loop (BEYOND-10, AC-1): the refinement LOOP surface. It
+      // reads/writes borders ONLY through `window.AiBorder`, so it must load after the choke point;
+      // `js/properties_panel.js` (below) is its product caller and resolves it at CALL time anyway.
+      // NOTE: no quote marks of any kind in this comment. `test/browser_e2e/_helpers/dom.js`
+      // rebuilds this file list by scanning the array for single-quoted tokens, so a stray quote in
+      // a comment becomes a bogus "file" and every e2e boot dies with "Could not load file".
+      'js/border_refine.js',
       'js/shape_picker.js',
       'js/properties_panel.js',
       'js/controls.js',
@@ -170,6 +184,20 @@ chrome.action.onClicked.addListener(function(tab) {
       'js/recovery_ui.js',
       'js/persistence.js',
       'js/dnd.js',
+      // BEYOND-18 (track activation-overlay-be18): the overlay module loads
+      // immediately before js/main.js. Its whole job is to own the plain
+      // sheet -> enhanced sheet transition, so it must be mounted before the
+      // boot async work (Storage.init, layout restore) starts - the certified
+      // gap was exactly this middle being extension-invisible. js/main.js
+      // dismisses it once restore/apply + announceBootRestore settle.
+      'js/activation_overlay.js',
+      // Track refactor_surface_20261101 (Phase 1): the boot orchestration extracted out of
+      // js/main.js. It loads immediately before js/main.js, the only caller: main.js keeps the
+      // overlay mount and the re-run gate, then delegates the rest of startup to the boot module.
+      // Every main.js symbol it drives is resolved through window at CALL time, so its position
+      // in this list is tidiness rather than a correctness constraint - which is exactly what
+      // makes the extraction safe for the harness, whose boot order mirrors this one.
+      'js/boot.js',
       'js/main.js'
     ]
   }).then(function () {
@@ -576,6 +604,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (reply && typeof reply.status === "number") out.status = reply.status;
     if (reply && typeof reply.retryAfterSeconds === "number") {
       out.retryAfterSeconds = reply.retryAfterSeconds;
+    }
+    if (reply && reply.retryable === true) {
+      out.retryable = true;
     }
     sendResponse(out);
   };

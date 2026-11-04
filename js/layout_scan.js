@@ -181,6 +181,44 @@ async function scanLayout() {
       );
     };
 
+    // AC-7 (track `byok_svg_borders_20260927`): the AI border SVG is persisted as a
+    // per-section RECORD FIELD, exactly like `borderStyle` beside it. It is read through
+    // the choke point's own reader (`window.AiBorder.readBorderSvg`) and NOT through a
+    // local selector, so the stored bytes are the bytes the DOM actually holds and the
+    // overlay's shape stays known to exactly one module.
+    //
+    // Deliberately `|| null` rather than `??`/undefined: `null` round-trips through
+    // JSON.stringify and IndexedDB as an explicit "no border", which is what the apply
+    // path tests against. `readBorderSvg` already returns null when there is no overlay.
+    const readBorder = (el) => {
+      const api = typeof window !== "undefined" ? window.AiBorder : null;
+      if (!api || typeof api.readBorderSvg !== "function") return null;
+      try {
+        return api.readBorderSvg(el) || null;
+      } catch {
+        return null;
+      }
+    };
+
+    // BEYOND-10 (AC-3): the refinement PARAMETERS travel beside `borderSvg`, through the choke
+    // point's own reader, and only when the border IS refined — `null` otherwise. Two reasons for
+    // the null, both load-bearing: a record that materialised `{weight:1, styleIndex:0}` on every
+    // section would be noise in every stored layout, and it would make an UNREFINED border
+    // indistinguishable from one the user deliberately reverted (which is the same state, so the
+    // field may as well say so by being absent). The base is the DESIGN, so a reload can put the
+    // refinement controls back where the user left them AND keep re-deriving from the same artwork.
+    const readBorderAdjust = (el) => {
+      const api = typeof window !== "undefined" ? window.AiBorder : null;
+      if (!api || typeof api.readBorderAdjust !== "function") return null;
+      try {
+        const adj = api.readBorderAdjust(el);
+        if (!adj || !adj.adjusted || !adj.base) return null;
+        return { base: adj.base, weight: adj.weight, styleIndex: adj.styleIndex };
+      } catch {
+        return null;
+      }
+    };
+
     if (section.classList.contains("be-clone")) {
       const sanitizedHtml = content
         ? window.SectionUtils.getSanitizedContent(content).innerHTML
@@ -199,6 +237,11 @@ async function scanLayout() {
         minimized: section.dataset.minimized === "true",
         compact: section.classList.contains("be-compact-mode"),
         borderStyle: getBorderStyle(section),
+        // AC-7: the SVG border travels as a FIELD beside `borderStyle`, never inside
+        // `html` — a section's content clone must not carry the overlay (paths E/F).
+        borderSvg: readBorder(section),
+        // BEYOND-10: a clone carries the refinement too, or a cloned section loses its parameters.
+        borderAdjust: readBorderAdjust(section),
       });
       return;
     }
@@ -216,6 +259,11 @@ async function scanLayout() {
         fontSize: wrapper.style.fontSize,
         minimized: section.dataset.minimized === "true",
         borderStyle: getBorderStyle(section),
+        // AC-7: the SVG border travels as a FIELD beside `borderStyle`, never inside
+        // `html` — a section's content clone must not carry the overlay (paths E/F).
+        borderSvg: readBorder(section),
+        // BEYOND-10: a spell-detail section carries its refinement like any other section.
+        borderAdjust: readBorderAdjust(section),
       });
       return;
     }
@@ -256,6 +304,11 @@ async function scanLayout() {
         minimized: section.dataset.minimized === "true",
         compact: section.classList.contains("be-compact-mode"),
         borderStyle: getBorderStyle(section),
+        // AC-7: the SVG border travels as a FIELD beside `borderStyle`, never inside
+        // `html` — a section's content clone must not carry the overlay (paths E/F).
+        borderSvg: readBorder(section),
+        // BEYOND-10: an extracted section carries its refinement like any other section.
+        borderAdjust: readBorderAdjust(section),
       };
 
       if (original) {
@@ -288,6 +341,11 @@ async function scanLayout() {
       // written by js/layout_apply.js from this field, so there is one writer and one reader.
       printHidden: section.dataset.printHidden === "true",
       borderStyle: getBorderStyle(section),
+      // AC-7: the SVG border travels as a FIELD beside `borderStyle`, never inside
+      // `html` — a section's content clone must not carry the overlay (paths E/F).
+      borderSvg: readBorder(section),
+      // BEYOND-10 (AC-3): the refinement parameters, or null when this border is unrefined.
+      borderAdjust: readBorderAdjust(section),
       innerWidths: {},
     };
 

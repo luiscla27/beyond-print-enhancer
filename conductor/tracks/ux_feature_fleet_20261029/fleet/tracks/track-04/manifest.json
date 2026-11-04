@@ -1,0 +1,26 @@
+{
+ "track_id": "track-04",
+ "code_count": 1,
+ "component_keys": [
+  "js/dnd"
+ ],
+ "write_paths": [
+  "C:/luiscla27/projects/dndbeyond-printenhance/js/dnd.js"
+ ],
+ "units": [
+  {
+   "id": "feature_17_dnd",
+   "name": "Drag and Drop (Drag Handles + Reorder)",
+   "description": "Drag handles, section reorder, drag-over drop zones, keyboard reorder",
+   "files": [
+    "js/dnd.js"
+   ],
+   "component_key": "js/dnd",
+   "write_dir": "C:/luiscla27/projects/dndbeyond-printenhance/js/dnd.js",
+   "test_paths": [
+    "test/unit/dnd.test.js",
+    "test/browser_e2e/layer_reorder_keyboard.spec.js"
+   ]
+  }
+ ]
+}
