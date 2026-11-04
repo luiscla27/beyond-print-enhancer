@@ -4,7 +4,7 @@ Question: which accessibility cluster (ARIA remediation vs Focus management) rai
 
 **Basis:** the gap analysis from the UX scoring matrix (`vendor/.reasonix/skills/ux-scoring-matrix/matrix.json`): current 62 (evidence file temp/ux_matrix/evidence_current.json; live score 78 on 2026-11-03), target 90+, weight 6%. Core-flow accessibility gate passes but finer inclusive-interaction details need polish — ARIA attributes, focus management, contrast, screen-reader labels.
 
-**Basis tie:** the track's acceptance criteria are the manifold this rubric judges against — [AC-1] (criterion ≥ 90 on matrix), [AC-2] (core-flow accessibility gate PASS), [AC-3] (no regressions in full suite), [AC-4] (guard disciplines green).
+**Basis tie:** the track's acceptance criteria are the manifold this rubric judges against — baseline #1 ([AC-1], criterion ≥ 90 on matrix), #2 ([AC-2], core-flow accessibility gate PASS), #3 ([AC-3], no regressions in full suite), #4 ([AC-4], guard disciplines green).
 
 ## Comparison
 
