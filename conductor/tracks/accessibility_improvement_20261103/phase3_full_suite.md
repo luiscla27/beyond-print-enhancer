@@ -38,6 +38,34 @@ node_modules/.bin/mocha --timeout 20000 test/unit/accessibility/aria_labels.test
 
 The full unit suite (`test/unit/**/*.test.js`) is large; the targeted run above covers all new accessibility tests plus the full encapsulation-debt suite (which exercises the button-building helpers, panel chrome, modals, and all the surfaces touched by Phase 1). The counts are consistent with the project's known baseline.
 
+### Full unit suite — the UNTARGETED run, and why its 24 failures are not this track's (added at close-out, 2026-11-03)
+
+AC-3 is sealed as "no regressions in full unit suite (≥ 2229 passing, 0 new failures)", so the targeted
+run above is not sufficient evidence on its own. The untargeted run was executed at close-out:
+
+```
+node_modules/.bin/mocha --recursive test/unit test/e2e test/manifest.test.js --timeout 20000
+```
+**2272 passing · 24 failing** — and the same command at the pre-session commit `32267ab`
+(detached worktree, same `node_modules`) measures **2206 passing · 30 failing**, whose failure set is a
+SUPERSET of this tree's. No failure is new to this track; the residual 24 are pre-existing.
+
+The 24 reduce to two pre-existing causes, neither of them this track's surface:
+
+- **`js/boot.js did not load — startup sequence skipped` (23 of 24).** The boot/restore extraction
+  (`14403c4`, track `refactor_surface_20261101`) moved the startup sequence into `js/boot.js`, and these
+  legacy jsdom suites still inject `js/main.js` + friends WITHOUT `js/boot.js`, so the style tag is never
+  created (`border_assets`, `border_styles`, `sidebar_styles`, `print media` before-all hook,
+  `boot restore` fires-once, `activation_overlay_contract` mount-order, `test/e2e/extraction`).
+- **`vendored_overlay.test.js` — "the overlay member vendor/conductor/tracks.md is missing".** This
+  project keeps its live registry at the ROOT (`conductor/tracks.md`); the test (unchanged since
+  `6f56514`, 2026-10-11) asserts the whole overlay under `vendor/`. Pre-existing contract mismatch
+  between the layout pin and the root registry — recorded here, not patched by this track.
+
+Both classes are filed as findings to carry forward; neither is a Phase 1 regression (Phase 1 touched
+`aria-label` attributes only, and the 432-case targeted gate above — which includes the full
+encapsulation-debt suite over the same button-building helpers — is 0 failing).
+
 ### Accessibility regression tests (new)
 ```
 node_modules/.bin/mocha --timeout 20000 test/unit/accessibility/aria_labels.test.js
