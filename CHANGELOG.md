@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-11-03, accessibility_improvement_20261103 — Phase 1 ARIA remediation, Cluster A of the UX-scoring gap analysis)
+- **Explicit accessible names on the tool's own controls (`js/main.js`, `js/controls.js`,
+  `js/context_menu.js`, `js/modals.js`)** — `aria-label` added so a screen reader's name is
+  deterministic instead of inferred: `addRobustButton` mirrors `title` on all 10 in-sheet button
+  types; `makeActionBtn` mirrors `btnInfo.title || btnInfo.label`; tray heads mirror their visible
+  label text; the templates chip, hue-picker accept, per-panel resets, filter reset, help close,
+  print-settings close and turn-off confirm all name themselves; `createMenuTrigger` reads
+  "More Options"; the modal OK/copy buttons (`showInputModal`, `confirmAction`,
+  `showFallbackModal`, `showEmptyStateDialog`) read their own confirm/copy labels. Additive DOM
+  attributes only — no behaviour, no CSS, no module changes. Regression-seamed by
+  `test/unit/accessibility/aria_labels.test.js` (9 tests: panel buttons, in-sheet buttons,
+  crossover with the pre-existing ARIA chrome). Guard-discipline at the checkpoint: lint 37/37,
+  smoke 11/11, injected-scope 5/5, dead-exports 9/9, scripts hygiene 26/26, targeted suite
+  432 passing. Sealed AC-2/AC-3/AC-4; AC-1 (criterion ≥ 90) DEFERRED to a future accessibility
+  re-score (evidence file holds 62). Track record:
+  `conductor/tracks/accessibility_improvement_20261103/` (registry row in `conductor/tracks.md`).
+
 ### Added (2026-10-31, visual_capture_red_closure_20261031 — closure of the 11 RED browser_e2e visual-capture findings; product fixes in js/)
 - **Two product fixes in the shipped content scripts, closing the behavioural half of the 11 RED
   findings** (the e2e inventory certification, archived `e2e_feature_inventory_minimax_20261029`,
